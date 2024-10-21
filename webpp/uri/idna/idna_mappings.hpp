@@ -90,7 +90,7 @@ namespace webpp::uri::idna {
         //   first-code-point: this is the element we should find and compare against
         // Binary Search:
         for (;;) {
-            length        >>= 1U;     // divided by 2
+            length      >>= 1U;     // divided by 2
             auto middle   = chosen; // NOLINT(*-qualified-auto)
             std::advance(middle, length);
 

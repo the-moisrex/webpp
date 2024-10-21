@@ -224,10 +224,10 @@ namespace webpp::unicode {
             if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
                 val  &= 0b0000'0111U;
-                val  <<= 18U;
+                val <<= 18U;
                 val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
-                val   |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                val   |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
             return val; // return this one anyway
@@ -284,7 +284,7 @@ namespace webpp::unicode {
             if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
                 val  &= 0b0000'0111U;
-                val  <<= 18U;
+                val <<= 18U;
                 val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
                 if (++pos != end) {
                     val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;

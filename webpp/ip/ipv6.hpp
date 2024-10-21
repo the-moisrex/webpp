@@ -522,7 +522,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is the Unspecified Address.
+         * This method indicates whether the IPv6 address is the Unspecified Address.
          * Unspecified IPv6 Address == ::0
          *
          * @retval TRUE   If the IPv6 address is the Unspecified Address.
@@ -534,7 +534,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is the Loopback Address.
+         * This method indicates whether the IPv6 address is the Loopback Address.
          *
          * @retval TRUE   If the IPv6 address is the Loopback Address.
          * @retval FALSE  If the IPv6 address is not the Loopback Address.
@@ -547,7 +547,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address scope is Interface-Local.
+         * This method indicates whether the IPv6 address scope is Interface-Local.
          *
          * @retval TRUE   If the IPv6 address scope is Interface-Local.
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
@@ -558,7 +558,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is multicast address.
+         * This method indicates whether the IPv6 address is multicast address.
          *
          * @retval TRUE   If the IPv6 address is a multicast address.
          * @retval FALSE  If the IPv6 address scope is not a multicast address.
@@ -597,7 +597,7 @@ namespace webpp {
         }
 
         /**
-         * Determine whether the address is a org-local multicast address
+         * Determine whether the address is an org-local multicast address
          * @return bool
          */
         [[nodiscard]] constexpr bool is_multicast_org_local() const noexcept {
@@ -635,7 +635,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a link-local multicast address.
+         * This method indicates whether the IPv6 address is a link-local multicast address.
          *
          * @retval TRUE   If the IPv6 address is a link-local multicast address.
          * @retval FALSE  If the IPv6 address scope is not a link-local multicast address.
@@ -646,7 +646,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a link-local
+         * This method indicates whether the IPv6 address is a link-local
          * all nodes multicast address.
          *
          * @retval TRUE   If the IPv6 address is a link-local all nodes multicast address.
@@ -662,7 +662,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a link-local
+         * This method indicates whether the IPv6 address is a link-local
          * all routers multicast address.
          *
          * @retval TRUE   If the IPv6 address is a link-local all routers multicast address.
@@ -678,7 +678,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a
+         * This method indicates whether the IPv6 address is a
          * realm-local multicast address.
          *
          * @retval TRUE   If the IPv6 address is a realm-local multicast address.
@@ -690,7 +690,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a
+         * This method indicates whether the IPv6 address is a
          * realm-local all nodes multicast address.
          *
          * @retval TRUE   If the IPv6 address is a realm-local all nodes multicast address.
@@ -702,7 +702,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a realm-local all
+         * This method indicates whether the IPv6 address is a realm-local all
          * routers multicast address.
          *
          * @retval TRUE   If the IPv6 address is a realm-local all routers multicast address.
@@ -718,7 +718,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a realm-local all MPL forwarders address.
+         * This method indicates whether the IPv6 address is a realm-local all MPL forwarders address.
          *
          * @retval TRUE   If the IPv6 address is a realm-local all MPL forwarders address.
          * @retval FALSE  If the IPv6 address is not a realm-local all MPL forwarders address.
@@ -733,7 +733,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is multicast larger than realm local.
+         * This method indicates whether the IPv6 address is multicast larger than realm local.
          *
          * @retval TRUE   If the IPv6 address is multicast larger than realm local.
          * @retval FALSE  If the IPv6 address is not multicast or the scope is not larger than realm local.
@@ -743,7 +743,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a RLOC address.
+         * This method indicates whether the IPv6 address is a RLOC address.
          *
          * @retval TRUE   If the IPv6 address is a RLOC address.
          * @retval FALSE  If the IPv6 address is not a RLOC address.
@@ -761,7 +761,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is an Anycast RLOC address.
+         * This method indicates whether the IPv6 address is an Anycast RLOC address.
          *
          * @retval TRUE   If the IPv6 address is an Anycast RLOC address.
          * @retval FALSE  If the IPv6 address is not an Anycast RLOC address.
@@ -779,7 +779,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is an Anycast Service Locator.
+         * This method indicates whether the IPv6 address is an Anycast Service Locator.
          *
          * @retval TRUE   If the IPv6 address is an Anycast Service Locator.
          * @retval FALSE  If the IPv6 address is not an Anycast Service Locator.
@@ -794,7 +794,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is Subnet-Router Anycast (RFC 4291),
+         * This method indicates whether the IPv6 address is Subnet-Router Anycast (RFC 4291),
          *
          * @retval TRUE   If the IPv6 address is a Subnet-Router Anycast address.
          * @retval FALSE  If the IPv6 address is not a Subnet-Router Anycast address.
@@ -811,7 +811,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is Reserved Subnet Anycast (RFC 2526),
+         * This method indicates whether the IPv6 address is Reserved Subnet Anycast (RFC 2526),
          *
          * @retval TRUE   If the IPv6 address is a Reserved Subnet Anycast address.
          * @retval FALSE  If the IPv6 address is not a Reserved Subnet Anycast address.
@@ -829,7 +829,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address contains Reserved IPv6 IID (RFC 5453),
+         * This method indicates whether the IPv6 address contains Reserved IPv6 IID (RFC 5453),
          *
          * @retval TRUE   If the IPv6 address contains a reserved IPv6 IID.
          * @retval FALSE  If the IPv6 address does not contain a reserved IPv6 IID.

@@ -260,9 +260,9 @@ TEST(DomainsTest, SubDomainTooLongError) {
         str += 'd';
     }
     str                += "example.com";
-    auto const str_beg   = static_cast<char const*>(str.data());
+    auto const str_beg  = static_cast<char const*>(str.data());
     auto const str_end  = str_beg + str.size();
-    auto const status    = parse_domain_name(str_beg, str_end);
+    auto const status   = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::subdomain_too_long) << str << "\n" << to_string(status);
 }
 
@@ -273,9 +273,9 @@ TEST(DomainsTest, DomainTooLongError) {
         str += '.';
     }
     str                += "com";
-    auto const str_beg   = static_cast<char const*>(str.data());
+    auto const str_beg  = static_cast<char const*>(str.data());
     auto const str_end  = str_beg + str.size();
-    auto const status    = parse_domain_name(str_beg, str_end);
+    auto const status   = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::too_long) << str << "\n" << to_string(status);
 }
 
