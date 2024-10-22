@@ -70,10 +70,11 @@ TEST(HTTPRequestParser, HeaderLexer) {
     http_lexer<str, traits::string_allocator<std_traits>> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());
-    EXPECT_EQ((std::ranges::count_if(sample_request,
-                                     [](auto c) {
-                                         return c == '\r' || c == '\n';
-                                     }) /
+    EXPECT_EQ((std::count_if(sample_request.begin(),
+                             sample_request.end(),
+                             [](auto c) {
+                                 return c == '\r' || c == '\n';
+                             }) /
                2),
               lexer.header_views.size())
       << "The lexer size is not a match";

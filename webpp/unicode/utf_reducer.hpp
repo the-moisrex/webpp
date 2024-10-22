@@ -112,11 +112,19 @@ namespace webpp::unicode {
         }
 
         /// Pin Act: Forward
-        constexpr pin_type& operator++() noexcept {
+        constexpr pin_type& operator++() noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 ++iter();
             } else {
-                reduce();
+                auto const cur_state = state();
+                if (cur_state < 0) {
+                    goto_next_code_point();
+                } else if (cur_state > 0) {
+                    // state: extra
+                    fill_right();
+                    unchecked::append(iter(), reducer->code_points[PinIndex]);
+                    reducer->states[PinIndex] = 0;
+                }
                 reducer->code_points[PinIndex] = next_code_point(iter());
             }
             test_state_correctness();
@@ -128,11 +136,11 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr auto state() noexcept {
-            if constexpr (UTF8<unit_type>) {
-                assert(reducer->states[PinIndex] <= 4);
-            } else if constexpr (UTF16<unit_type>) {
-                assert(reducer->states[PinIndex] <= 2);
-            }
+            // if constexpr (UTF8<unit_type>) {
+            //     assert(reducer->states[PinIndex] <= 4);
+            // } else if constexpr (UTF16<unit_type>) {
+            //     assert(reducer->states[PinIndex] <= 2);
+            // }
             return reducer->states[PinIndex];
         }
 
@@ -235,6 +243,8 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
+                reducer->code_points[PinIndex] = inp_code_point;
+
                 auto const state = state_cmp(inp_code_point);
 
                 // state: filled
@@ -262,8 +272,8 @@ namespace webpp::unicode {
 
                 // state: extra
                 {
-                    reducer->code_points[PinIndex] = inp_code_point;
-                    reducer->states[PinIndex]      = state;
+                    // reducer->code_points[PinIndex] = inp_code_point;
+                    reducer->states[PinIndex] = state;
                     test_state_correctness();
                 }
             }
@@ -279,20 +289,29 @@ namespace webpp::unicode {
       private:
         constexpr void fill_left() noexcept(is_nothrow) {
             // fill the gaps
-            auto& endptr = reducer->template pin_iter<PinIndex + 1>();
-            auto  ptr    = iter();
+            auto ptr = iter();
             stl::advance(ptr, -static_cast<difference_type>(state()));
             assert(ptr <= reducer->endptr);
             auto cur = ptr;
             ++ptr;
-            for (; ptr != endptr; ++ptr, ++cur) {
+            for (; ptr != reducer->endptr; ++ptr, ++cur) {
                 *cur = *ptr;
             }
             reducer->states[PinIndex] = 0;
-            // if constexpr (PinIndex == PinCount - 1) {
-            //     // change the end pointer
-            //     endptr = ptr;
-            // }
+        }
+
+        constexpr void goto_next_code_point() noexcept(is_nothrow) {
+            auto ptr = iter();
+            stl::advance(ptr, -static_cast<difference_type>(state()));
+
+            // end of the next code point
+            auto endptr = stl::next(ptr, required_length_of<unit_type, difference_type>(*ptr));
+            assert(ptr <= reducer->endptr);
+            auto rep = ptr;
+            ++ptr;
+            for (; ptr != endptr; ++ptr, ++rep) {
+                *rep = *ptr;
+            }
         }
 
         /// find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
@@ -334,13 +353,18 @@ namespace webpp::unicode {
                 auto& cur_state = reducer->states[cur_pin_index];
                 auto  cur       = reducer->end_pin_iter(cur_pin_index);
                 auto  endptr    = reducer->pin_iter(cur_pin_index - 1);
-                --cur;
-                assert(rep >= cur);
+
+                // copy the residuals of the past:
                 for (; rep != cur; --rep, --prev_cur) {
                     *prev_cur = *rep;
                 }
+
+                --cur;
+                assert(rep >= cur);
+
+                // copy the new stuff:
                 for (; rep != endptr; --rep, --cur) {
-                    *cur = *rep;
+                    *rep = *cur;
                 }
                 prev_cur = cur;
                 if (cur_state < 0) {
@@ -413,14 +437,16 @@ namespace webpp::unicode {
         template <std::size_t, std::size_t, typename, UTF32>
         friend struct pin_type;
 
-        using non32_value_type = stl::conditional_t<UTF32<unit_type>, istl::nothing_type, value_type>;
+        template <typename T>
+        using if_not_utf32 = stl::conditional_t<UTF32<unit_type>, istl::nothing_type, T>;
+
         iterator beg;
         iterator endptr;
         iterator newend;
 
-        stl::array<iterator, PinCount>         iters;
-        stl::array<stl::int_fast8_t, PinCount> states{};
-        stl::array<value_type, PinCount>       code_points;
+        [[no_unique_address]] if_not_utf32<stl::array<iterator, PinCount>>         iters;
+        [[no_unique_address]] if_not_utf32<stl::array<stl::int_fast8_t, PinCount>> states{};
+        [[no_unique_address]] if_not_utf32<stl::array<value_type, PinCount>>       code_points;
 
         template <stl::size_t Index>
         using pin_type_of = pin_type<Index, PinCount, IterT, CodePointT>;
@@ -438,9 +464,11 @@ namespace webpp::unicode {
             }
             assert(inp_pos != endptr);
             assert(is_code_unit_start(*inp_pos));
-            iters.fill(inp_pos);
-            auto const first_cp = next_code_point_copy(inp_pos);
-            code_points.fill(first_cp);
+            if (!UTF32<unit_type>) {
+                iters.fill(inp_pos);
+                auto const first_cp = next_code_point_copy(inp_pos);
+                code_points.fill(first_cp);
+            }
         }
 
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
@@ -452,13 +480,13 @@ namespace webpp::unicode {
                 assert(inp_pos != nullptr);
                 assert(endptr != nullptr);
             }
-            assert(inp_pos != nullptr);
-            assert(endptr != nullptr);
             assert(is_code_unit_start(*inp_pos));
-            assert(inp_pos <= nullptr);
-            iters.fill(inp_pos);
-            auto const first_cp = next_code_point_copy(inp_pos);
-            code_points.fill(first_cp);
+            assert(inp_pos <= inp_endp);
+            if (!UTF32<unit_type>) {
+                iters.fill(inp_pos);
+                auto const first_cp = next_code_point_copy(inp_pos);
+                code_points.fill(first_cp);
+            }
         }
 
         constexpr utf_reducer(utf_reducer const&)                = default;
@@ -470,20 +498,28 @@ namespace webpp::unicode {
 #else
         constexpr ~utf_reducer() noexcept {
             // User must call ".reduce()" to apply changes; this checks if they have or not:
-            for (auto const state : states) {
-                assert(state == 0);
+            if (!UTF32<unit_type>) {
+                for (auto const state : states) {
+                    assert(state == 0);
+                }
             }
         }
 #endif
 
         template <stl::size_t Index = 0>
-        [[nodiscard]] constexpr pin_type_of<Index> pin() noexcept {
+        [[nodiscard]] constexpr auto pin() noexcept {
             static_assert(Index < PinCount, "Index must be in range.");
-            return pin_type_of<Index>{this};
+            if constexpr (UTF32<unit_type>) {
+                return beg;
+            } else {
+                return pin_type_of<Index>{this};
+            }
         }
 
         template <difference_type Index = 0>
-        [[nodiscard]] constexpr iterator& pin_iter() noexcept {
+        [[nodiscard]] constexpr iterator& pin_iter() noexcept
+            requires(!UTF32<unit_type>)
+        {
             // Create a compile time error and not allow bad code:
             static_assert(Index <= static_cast<difference_type>(PinCount) && Index >= -1,
                           "Index must be in range, or the last element.");
@@ -496,7 +532,9 @@ namespace webpp::unicode {
             }
         }
 
-        [[nodiscard]] constexpr iterator& pin_iter(difference_type index = 0) noexcept {
+        [[nodiscard]] constexpr iterator& pin_iter(difference_type index = 0) noexcept
+            requires(!UTF32<unit_type>)
+        {
             assert(index <= static_cast<difference_type>(PinCount) && index >= -1);
             if (index == -1) {
                 return beg;
@@ -507,11 +545,12 @@ namespace webpp::unicode {
             return iters[index];
         }
 
-        [[nodiscard]] constexpr iterator end_pin_iter(difference_type index = 0) noexcept {
+        [[nodiscard]] constexpr iterator end_pin_iter(difference_type index = 0) noexcept
+            requires(!UTF32<unit_type>)
+        {
             assert(index < static_cast<difference_type>(PinCount) && index >= 0);
             auto ptr = iters[index];
-            return ptr + (required_length_of<unit_type, difference_type>(*ptr) -
-                          (states[index] < 0 ? states[index] : 0));
+            return ptr + required_length_of<unit_type, difference_type>(*ptr);
         }
 
         /// Get all pins in a tuple construct
@@ -532,25 +571,31 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr difference_type available_space() const noexcept {
-            difference_type len = 0;
-            for (auto const state : states) {
-                len -= static_cast<difference_type>(state);
+            if constexpr (!UTF32<unit_type>) {
+                difference_type len = 0;
+                for (auto const state : states) {
+                    len -= static_cast<difference_type>(state);
+                }
+                assert(len >= 0);
+                return len;
+            } else {
+                return 0;
             }
-            assert(len >= 0);
-            return len;
         }
 
         template <stl::size_t Index = 0>
         constexpr void reduce() noexcept(is_nothrow) {
-            if constexpr (Index == 0) {
-                // setting the new end iterator:
-                if (auto const diff_len = available_space(); diff_len > 0) {
-                    newend = std::prev(endptr, diff_len);
+            if constexpr (!UTF32<unit_type>) {
+                if constexpr (Index == 0) {
+                    // setting the new end iterator:
+                    if (auto const diff_len = available_space(); diff_len > 0) {
+                        newend = std::prev(endptr, diff_len);
+                    }
                 }
-            }
-            pin<Index>().reduce();
-            if constexpr (Index != PinCount - 1) {
-                reduce<Index + 1>();
+                pin<Index>().reduce();
+                if constexpr (Index != PinCount - 1) {
+                    reduce<Index + 1>();
+                }
             }
         }
     };

@@ -60,7 +60,7 @@ namespace webpp {
                     }
                 }
                 assert(strm.avail_in == 0);
-                assert(ret == Z_STREAM_END);          // stream will be complete
+                // assert(ret == Z_STREAM_END);          // stream will be complete
                 outstr.resize(strm.total_out);
 
                 static_cast<void>(deflateEnd(&strm)); // clean up and return

@@ -58,7 +58,7 @@ TEST(UnicodeAlgos, ReducerIterator) {
 }
 
 TEST(UnicodeAlgos, ReducerPins) {
-    std::u8string  str = u8"تست";
+    std::u8string str = u8"تست";
     {
         utf_reducer<2> reducer{str.data(), str.size()};
         auto [pin1, pin2] = reducer.pins();
@@ -107,9 +107,28 @@ TEST(UnicodeAlgos, SimpleForward) {
         auto [pin] = reducer.pins();
         pin        = U'a';
         ++pin;
+        pin = U'b';
+        ++pin;
         pin = U'\u0800'; // E0-A0-80
         reducer.reduce();
         str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
     }
-    EXPECT_EQ(str, u8"a\xE0\xA0\x{80}ت");
+    EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
 }
+
+// TEST(UnicodeAlgos, DoubleForward) {
+//     std::u8string str = u8"تست";
+//     {
+//         utf_reducer<2> reducer{str.data(), str.size()};
+//         auto [pin1, pin2 ] = reducer.pins();
+//         pin1        = U'a';
+//         ++pin1;
+//         pin2 = pin1;
+//         pin2 = U'b';
+//         ++pin2;
+//         pin2 = U'\u0800'; // E0-A0-80
+//         reducer.reduce();
+//         str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
+//     }
+//     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
+// }

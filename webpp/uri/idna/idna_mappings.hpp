@@ -7,6 +7,8 @@
 #include "../../unicode/unicode.hpp"
 #include "./details/idna_mapping_table.hpp"
 
+#include <cassert>
+
 namespace webpp::uri::idna {
 
     namespace details {

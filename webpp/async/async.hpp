@@ -5,6 +5,8 @@
 
 #include "../std/tag_invoke.hpp"
 
+#include <functional>
+
 namespace webpp::async {
 
     /**

@@ -10,6 +10,7 @@
 #ifdef __cpp_lib_constexpr_bitset
 #    include <bitset>
 #endif
+#include <algorithm> // std::max
 #include <limits>
 #include <utility>
 
@@ -590,7 +591,7 @@ namespace webpp {
     }
 
     template <istl::CharType CharT = char, stl::size_t... N>
-    charmap(CharT const (&... str)[N]) -> charmap<stl::max(N...) - 1>;
+    charmap(CharT const (&... str)[N]) -> charmap<stl::max({N...}) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
     charmap(charmap<N1> const&,
@@ -714,7 +715,7 @@ namespace webpp {
             return end;
         }
 
-        /// find the first character that's is in the range
+        /// find the first character that is in the range
         template <typename Iter>
         [[nodiscard]] constexpr Iter find_first_in(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg) {
@@ -731,7 +732,7 @@ namespace webpp {
     };
 
     template <istl::CharType CharT = char, stl::size_t... N>
-    bitmap(CharT const (&... str)[N]) -> bitmap<stl::max(N...) - 1>;
+    bitmap(CharT const (&... str)[N]) -> bitmap<stl::max({N...}) - 1>;
 
     template <typename... SetN>
         requires(requires { SetN::array_size; } && ...)

@@ -582,9 +582,9 @@ namespace webpp::unicode {
       Iter& ptr,
       EIter end)
       noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
-        auto const          beg = ptr;
-        utf_reducer         cp1_ptr{beg}; // const iterator
-        utf_reducer         rep_ptr{ptr}; // non-const iterator
+        auto const  beg = ptr;
+        utf_reducer cp1_ptr{beg}; // const iterator
+        utf_reducer rep_ptr{ptr}; // non-const iterator
         for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
             auto starter_ptr = rep_ptr;
             rep_ptr.set_code_point(cp1_ptr);
@@ -595,7 +595,6 @@ namespace webpp::unicode {
                 auto       replaced_cp = canonical_composed(cp1, *cp2_ptr);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
-                    // starter_ptr.set_value(replaced_cp, cp2_ptr);
                     cp1 = replaced_cp;
                     continue;
                 }

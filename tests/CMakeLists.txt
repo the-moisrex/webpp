@@ -7,7 +7,7 @@ include(../cmake/common.cmake)
 add_library(test-commons)
 set_target_properties(test-commons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_sources(test-commons PUBLIC common/tests_common_pch.hpp)
-target_precompile_headers(test-commons PUBLIC common/tests_common_pch.hpp)
+# target_precompile_headers(test-commons PUBLIC common/tests_common_pch.hpp)
 if (TARGET gtest AND TARGET gtest_main)
     target_link_libraries(test-commons
             PUBLIC gtest         # GTest::GTest

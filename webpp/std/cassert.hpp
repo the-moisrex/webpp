@@ -7,6 +7,7 @@
 #include "../common/meta.hpp"
 
 #include <cassert>
+#include <exception>
 
 // see this tweet: https://twitter.com/incomputable/status/1247235812271497216
 #ifdef NDEBUG
