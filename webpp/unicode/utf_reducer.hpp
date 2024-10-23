@@ -83,6 +83,35 @@ namespace webpp::unicode {
             }
         }
 
+        /// The number of code units required to set this code new code point
+        [[nodiscard]] constexpr stl::int_fast8_t required_code_units_of_len(stl::int_fast8_t const cp_len)
+          noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                return 1; // always
+            } else {
+                stl::int_fast8_t count    = 0;
+                auto             iter_cpy = istl::deref(iter());
+                while (count <= cp_len) {
+                    auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter_cpy);
+                    iter_cpy           += cur_len;
+                    count              += cur_len;
+                    assert(iter_cpy <= reducer->endptr);
+                }
+                webpp_assume(count <= 6);
+                return count;
+            }
+        }
+
+        /// The number of code units required to set this code new code point
+        [[nodiscard]] constexpr stl::int_fast8_t required_code_units(value_type const inp_cp)
+          noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                return 1; // always
+            } else {
+                return required_code_units_of_len(utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_cp));
+            }
+        }
+
       public:
         constexpr explicit pin_type(reducer_type* inp_reducer) noexcept : reducer(inp_reducer) {}
 
@@ -251,6 +280,7 @@ namespace webpp::unicode {
                 if (state == 0) [[likely]] {
                     auto iter_cpy = istl::deref(iter());
                     unchecked::append(iter_cpy, inp_code_point);
+                    reducer->states[PinIndex] = state;
                     test_state_correctness();
                     return;
                 }
@@ -285,6 +315,27 @@ namespace webpp::unicode {
           noexcept(is_nothrow) {
             set(other_ptr.iter());
         }
+
+        /// Pin Act: Set Spillover
+        constexpr void spillover_set(value_type inp_code_point) noexcept(is_nothrow) {
+            assert(iter() != reducer->endptr);
+            if constexpr (UTF32<unit_type>) {
+                *iter() = inp_code_point;
+            } else {
+                reducer->code_points[PinIndex] = inp_code_point;
+
+                auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
+                auto const rep_len = required_code_units_of_len(cp_len);
+                assert(rep_len >= cp_len);
+                stl::int_fast8_t const state    = cp_len - rep_len;
+                auto                   iter_cpy = istl::deref(iter());
+
+                reducer->states[PinIndex] = state;
+                unchecked::append(iter_cpy, inp_code_point);
+                test_state_correctness();
+            }
+        }
+
 
       private:
         constexpr void fill_left() noexcept(is_nothrow) {
@@ -568,6 +619,10 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr iterator end() const noexcept {
             return newend;
+        }
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return newend - beg;
         }
 
         [[nodiscard]] constexpr difference_type available_space() const noexcept {

@@ -109,9 +109,9 @@ TEST(UnicodeAlgos, SimpleForward) {
         ++pin;
         pin = U'b';
         ++pin;
-        pin = U'\u0800'; // E0-A0-80
+        pin.spillover_set(U'\u0800'); // E0-A0-80
         reducer.reduce();
-        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
+        str.resize(reducer.size());
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
 }
