@@ -341,10 +341,10 @@ namespace webpp::unicode {
         constexpr void fill_left() noexcept(is_nothrow) {
             // fill the gaps
             auto ptr = iter();
+            stl::advance(ptr, required_length_of<unit_type, difference_type>(*ptr));
+            auto cur = ptr;
             stl::advance(ptr, -static_cast<difference_type>(state()));
             assert(ptr <= reducer->endptr);
-            auto cur = ptr;
-            ++ptr;
             for (; ptr != reducer->endptr; ++ptr, ++cur) {
                 *cur = *ptr;
             }
@@ -374,7 +374,7 @@ namespace webpp::unicode {
                 auto& cur_state  = reducer->states[index];
                 stop_state       += static_cast<difference_type>(cur_state);
                 if (stop_state <= 0) {
-                    return stl::make_pair(index, stop_state);
+                    return stl::pair<size_type, difference_type>{index, stop_state};
                 }
             }
 
@@ -403,7 +403,7 @@ namespace webpp::unicode {
             for (; cur_pin_index != PinIndex; --cur_pin_index) {
                 auto& cur_state = reducer->states[cur_pin_index];
                 auto  cur       = reducer->end_pin_iter(cur_pin_index);
-                auto  endptr    = reducer->pin_iter(cur_pin_index - 1);
+                auto  endptr    = reducer->pin_iter(static_cast<difference_type>(cur_pin_index) - 1);
 
                 // copy the residuals of the past:
                 for (; rep != cur; --rep, --prev_cur) {
@@ -593,13 +593,13 @@ namespace webpp::unicode {
             if (index == static_cast<difference_type>(PinCount)) {
                 return endptr;
             }
-            return iters[index];
+            return iters[static_cast<size_type>(index)];
         }
 
-        [[nodiscard]] constexpr iterator end_pin_iter(difference_type index = 0) noexcept
+        [[nodiscard]] constexpr iterator end_pin_iter(size_type index = 0) noexcept
             requires(!UTF32<unit_type>)
         {
-            assert(index < static_cast<difference_type>(PinCount) && index >= 0);
+            assert(index < PinCount);
             auto ptr = iters[index];
             return ptr + required_length_of<unit_type, difference_type>(*ptr);
         }
@@ -622,7 +622,7 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
-            return newend - beg;
+            return static_cast<size_type>(newend - beg);
         }
 
         [[nodiscard]] constexpr difference_type available_space() const noexcept {
