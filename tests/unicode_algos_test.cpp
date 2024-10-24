@@ -108,29 +108,37 @@ TEST(UnicodeAlgos, SimpleForward) {
         utf_reducer<1> reducer{str.data(), str.size()};
         auto [pin] = reducer.pins();
         pin        = U'a';
+        EXPECT_EQ(*pin, U'a');
         ++pin;
         pin = U'b';
+        EXPECT_EQ(*pin, U'b');
         ++pin;
+        EXPECT_EQ(*pin, U'س');
         pin.spillover_set(U'\u0800'); // E0-A0-80
+        EXPECT_EQ(*pin, U'\u0800');
         reducer.reduce();
         str.resize(reducer.size());
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
 }
 
-// TEST(UnicodeAlgos, DoubleForward) {
-//     std::u8string str = u8"تست";
-//     {
-//         utf_reducer<2> reducer{str.data(), str.size()};
-//         auto [pin1, pin2 ] = reducer.pins();
-//         pin1        = U'a';
-//         ++pin1;
-//         pin2 = pin1;
-//         pin2 = U'b';
-//         ++pin2;
-//         pin2 = U'\u0800'; // E0-A0-80
-//         reducer.reduce();
-//         str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
-//     }
-//     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
-// }
+TEST(UnicodeAlgos, DoubleForward) {
+    std::u8string str = u8"تست";
+    {
+        utf_reducer<2> reducer{str.data(), str.size()};
+        auto [pin1, pin2] = reducer.pins();
+        pin2              = U'a';
+        EXPECT_EQ(*pin1, U'a');
+        EXPECT_EQ(*pin2, U'a');
+        ++pin2;
+        pin1 = pin2;
+        pin1 = U'b';
+        EXPECT_EQ(*pin1, U'b');
+        EXPECT_EQ(*pin2, U'b');
+        ++pin2;
+        pin2 = U'\u0800'; // E0-A0-80
+        reducer.reduce();
+        str.resize(reducer.size());
+    }
+    EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
+}

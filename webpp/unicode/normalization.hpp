@@ -583,16 +583,19 @@ namespace webpp::unicode {
       EIter end)
       noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
         auto const  beg = ptr;
-        utf_reducer cp1_ptr{beg}; // const iterator
-        utf_reducer rep_ptr{ptr}; // non-const iterator
-        for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
-            auto starter_ptr = rep_ptr;
-            rep_ptr.set_code_point(cp1_ptr);
-            auto cp2_ptr = stl::next(cp1_ptr); // const iterator as well
-            auto cp1     = *cp1_ptr;
-            for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
-                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_ptr));
-                auto       replaced_cp = canonical_composed(cp1, *cp2_ptr);
+        utf_reducer<4> reducer{ptr, end};
+        auto [cp1_pin, rep_pin, starter_pin, cp2_pin] = reducer.pins();
+        // utf_reducer cp1_ptr{beg}; // const iterator
+        // utf_reducer rep_ptr{ptr}; // non-const iterator
+        for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
+            starter_pin = rep_pin;
+            rep_pin.set(cp1_pin);
+            cp2_pin = cp1_pin; // const iterator as well
+            ++cp2_pin;
+            auto cp1 = *cp1_pin;
+            for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
+                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_pin));
+                auto       replaced_cp = canonical_composed(cp1, *cp2_pin);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
                     cp1 = replaced_cp;
@@ -602,11 +605,11 @@ namespace webpp::unicode {
                     break;
                 }
                 prev_ccc = ccc;
-                (++rep_ptr).set_code_point(cp2_ptr);
+                (++rep_pin).set(cp2_pin);
             }
-            starter_ptr.set_code_point(cp1, end - starter_ptr.base());
+            starter_pin.spillover_set(cp1, end - starter_pin);
         }
-        return static_cast<SizeT>(rep_ptr - beg);
+        return static_cast<SizeT>(rep_pin - beg);
     }
 
     /**

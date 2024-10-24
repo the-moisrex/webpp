@@ -49,6 +49,9 @@ namespace webpp::unicode {
         static constexpr bool is_nothrow = reducer_type::is_nothrow;
 
       private:
+        template <std::size_t, std::size_t, typename, UTF32>
+        friend struct pin_type;
+
         reducer_type* reducer;
 
         /// guarantee the correctness of the state that we're in
@@ -127,12 +130,17 @@ namespace webpp::unicode {
         template <stl::size_t OPinIndex>
         constexpr pin_type& operator=(
           pin_type<OPinIndex, PinCount, IterT, CodePointT> const& other) noexcept {
-            static_assert(OPinIndex > PinCount,
+            static_assert(OPinIndex < PinCount,
                           "You cannot go back; these are forward-only set of constructs.");
+            static_assert(OPinIndex != PinIndex, "Self-assignment is probably a mistake.");
 
-            if (this != &other) {
-                // this is not a copy assignment operator, it's a pin act.
-                assert(reducer == other.reducer);
+            // this is not a copy assignment operator, it's a pin act.
+            assert(reducer == other.reducer);
+            if (state() == 0) [[likely]] {
+                reducer->states[PinIndex]      = reducer->states[OPinIndex];
+                reducer->code_points[PinIndex] = reducer->code_points[OPinIndex];
+                reducer->iters[PinIndex]       = reducer->iters[OPinIndex];
+            } else {
                 for (stl::size_t index = PinIndex; index != OPinIndex; ++index) {
                     operator++();
                 }
@@ -154,13 +162,17 @@ namespace webpp::unicode {
                     unchecked::append(iter(), reducer->code_points[PinIndex]);
                     reducer->states[PinIndex] = 0;
                 }
-                reducer->code_points[PinIndex] = next_code_point(iter());
+                unchecked::next_char(iter());
             }
             test_state_correctness();
             return *this;
         }
 
         [[nodiscard]] constexpr iterator& iter() noexcept {
+            return reducer->iters[PinIndex];
+        }
+
+        [[nodiscard]] constexpr iterator& iter() const noexcept {
             return reducer->iters[PinIndex];
         }
 
@@ -177,7 +189,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 return *iter();
             } else {
-                return reducer->code_points[PinIndex];
+                return next_code_point_copy(iter());
             }
         }
 
@@ -272,7 +284,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
-                reducer->code_points[PinIndex] = inp_code_point;
+                // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const state = state_cmp(inp_code_point);
 
@@ -302,8 +314,8 @@ namespace webpp::unicode {
 
                 // state: extra
                 {
-                    // reducer->code_points[PinIndex] = inp_code_point;
-                    reducer->states[PinIndex] = state;
+                    reducer->code_points[PinIndex] = inp_code_point;
+                    reducer->states[PinIndex]      = state;
                     test_state_correctness();
                 }
             }
@@ -322,7 +334,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
-                reducer->code_points[PinIndex] = inp_code_point;
+                // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const rep_len = required_code_units_of_len(cp_len);
