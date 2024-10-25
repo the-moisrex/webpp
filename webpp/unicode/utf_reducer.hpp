@@ -52,7 +52,15 @@ namespace webpp::unicode {
         template <std::size_t, std::size_t, typename, UTF32>
         friend struct pin_type;
 
-        reducer_type* reducer;
+        template <typename T>
+        using if_not_utf32 = stl::conditional_t<UTF32<unit_type>, istl::nothing_type, T>;
+
+        template <typename T>
+        using if_utf32 = stl::conditional_t<!UTF32<unit_type>, istl::nothing_type, T>;
+
+
+        [[no_unique_address]] if_not_utf32<reducer_type*> reducer;
+        [[no_unique_address]] if_utf32<iterator>          ptr;
 
         /// guarantee the correctness of the state that we're in
         constexpr void test_state_correctness() noexcept {
@@ -116,7 +124,13 @@ namespace webpp::unicode {
         }
 
       public:
-        constexpr explicit pin_type(reducer_type* inp_reducer) noexcept : reducer(inp_reducer) {}
+        constexpr explicit pin_type(reducer_type* inp_reducer) noexcept
+            requires(!UTF32<unit_type>)
+          : reducer(inp_reducer) {}
+
+        constexpr explicit pin_type(reducer_type* inp_reducer) noexcept
+            requires(UTF32<unit_type>)
+          : ptr(inp_reducer->begin()) {}
 
         constexpr pin_type(pin_type&& other) noexcept            = default;
         constexpr pin_type& operator=(pin_type&& other) noexcept = default;
@@ -134,15 +148,19 @@ namespace webpp::unicode {
                           "You cannot go back; these are forward-only set of constructs.");
             static_assert(OPinIndex != PinIndex, "Self-assignment is probably a mistake.");
 
-            // this is not a copy assignment operator, it's a pin act.
-            assert(reducer == other.reducer);
-            if (state() == 0) [[likely]] {
-                reducer->states[PinIndex]      = reducer->states[OPinIndex];
-                reducer->code_points[PinIndex] = reducer->code_points[OPinIndex];
-                reducer->iters[PinIndex]       = reducer->iters[OPinIndex];
+            if constexpr (UTF32<unit_type>) {
+                ptr = other.ptr;
             } else {
-                for (stl::size_t index = PinIndex; index != OPinIndex; ++index) {
-                    operator++();
+                // this is not a copy assignment operator, it's a pin act.
+                assert(reducer == other.reducer);
+                if (state() == 0) [[likely]] {
+                    reducer->states[PinIndex]      = reducer->states[OPinIndex];
+                    reducer->code_points[PinIndex] = reducer->code_points[OPinIndex];
+                    reducer->iters[PinIndex]       = reducer->iters[OPinIndex];
+                } else {
+                    for (stl::size_t index = PinIndex; index != OPinIndex; ++index) {
+                        operator++();
+                    }
                 }
             }
             return *this;
@@ -169,14 +187,24 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr iterator& iter() noexcept {
-            return reducer->iters[PinIndex];
+            if constexpr (UTF32<unit_type>) {
+                return ptr;
+            } else {
+                return reducer->iters[PinIndex];
+            }
         }
 
-        [[nodiscard]] constexpr iterator& iter() const noexcept {
-            return reducer->iters[PinIndex];
+        [[nodiscard]] constexpr iterator const& iter() const noexcept {
+            if constexpr (UTF32<unit_type>) {
+                return ptr;
+            } else {
+                return reducer->iters[PinIndex];
+            }
         }
 
-        [[nodiscard]] constexpr auto state() noexcept {
+        [[nodiscard]] constexpr auto state() noexcept
+            requires(!UTF32<unit_type>)
+        {
             // if constexpr (UTF8<unit_type>) {
             //     assert(reducer->states[PinIndex] <= 4);
             // } else if constexpr (UTF16<unit_type>) {
@@ -197,11 +225,13 @@ namespace webpp::unicode {
             return iter();
         }
 
-        [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
+        template <typename NIterT = iterator>
+        [[nodiscard]] constexpr bool operator==(NIterT other) const noexcept {
             return iter() == other;
         }
 
-        [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
+        template <typename NIterT = iterator>
+        [[nodiscard]] constexpr bool operator!=(NIterT other) const noexcept {
             return iter() != other;
         }
 
@@ -350,37 +380,43 @@ namespace webpp::unicode {
 
 
       private:
-        constexpr void fill_left() noexcept(is_nothrow) {
+        constexpr void fill_left() noexcept(is_nothrow)
+            requires(!UTF32<unit_type>)
+        {
             // fill the gaps
-            auto ptr = iter();
-            stl::advance(ptr, required_length_of<unit_type, difference_type>(*ptr));
-            auto cur = ptr;
-            stl::advance(ptr, -static_cast<difference_type>(state()));
-            assert(ptr <= reducer->endptr);
-            for (; ptr != reducer->endptr; ++ptr, ++cur) {
-                *cur = *ptr;
+            auto cur = iter();
+            stl::advance(cur, required_length_of<unit_type, difference_type>(*cur));
+            auto rep = cur;
+            stl::advance(cur, -static_cast<difference_type>(state()));
+            assert(cur <= reducer->endptr);
+            for (; cur != reducer->endptr; ++cur, ++rep) {
+                *rep = *cur;
             }
             reducer->states[PinIndex] = 0;
         }
 
-        constexpr void goto_next_code_point() noexcept(is_nothrow) {
-            auto ptr = iter();
-            stl::advance(ptr, -static_cast<difference_type>(state()));
+        constexpr void goto_next_code_point() noexcept(is_nothrow)
+            requires(!UTF32<unit_type>)
+        {
+            auto cur = iter();
+            stl::advance(cur, -static_cast<difference_type>(state()));
 
             // end of the next code point
-            auto endptr = stl::next(ptr, required_length_of<unit_type, difference_type>(*ptr));
-            assert(ptr <= reducer->endptr);
-            auto rep = ptr;
-            ++ptr;
-            for (; ptr != endptr; ++ptr, ++rep) {
-                *rep = *ptr;
+            auto endptr = stl::next(cur, required_length_of<unit_type, difference_type>(*cur));
+            assert(cur <= reducer->endptr);
+            auto rep = cur;
+            ++cur;
+            for (; cur != endptr; ++cur, ++rep) {
+                *rep = *cur;
             }
         }
 
         /// find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
         /// can use
         /// We can't return a pin_type since the PinIndex is not known, so we return the index itself
-        [[nodiscard]] constexpr auto find_first_pin(difference_type stop_state) const noexcept {
+        [[nodiscard]] constexpr auto find_first_pin(difference_type stop_state) const noexcept
+            requires(!UTF32<unit_type>)
+        {
             assert(stop_state > 0);
             for (auto index = PinIndex + 1; index < PinCount; ++index) {
                 auto& cur_state  = reducer->states[index];
@@ -396,7 +432,9 @@ namespace webpp::unicode {
             stl::unreachable();
         }
 
-        constexpr void fill_right() noexcept(is_nothrow) {
+        constexpr void fill_right() noexcept(is_nothrow)
+            requires(!UTF32<unit_type>)
+        {
             // 1. find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
             //    can use
             // 2. If there is none, blow up
@@ -439,22 +477,23 @@ namespace webpp::unicode {
 
       public:
         constexpr void reduce() noexcept(is_nothrow) {
-            assert(iter() != reducer->endptr);
+            assert(iter() <= reducer->endptr);
+            if constexpr (!UTF32<unit_type>) {
+                auto const cur_state = state();
+                if (cur_state == 0) [[likely]] {
+                    return;
+                }
+                if (cur_state < 0) {
+                    fill_left();
+                    return;
+                }
 
-            auto const cur_state = state();
-            if (cur_state == 0) [[likely]] {
-                return;
-            }
-            if (cur_state < 0) {
-                fill_left();
-                return;
-            }
-
-            // state: extra
-            {
-                fill_right();
-                unchecked::append(iter(), reducer->code_points[PinIndex]);
-                reducer->states[PinIndex] = 0;
+                // state: extra
+                {
+                    fill_right();
+                    unchecked::append(iter(), reducer->code_points[PinIndex]);
+                    reducer->states[PinIndex] = 0;
+                }
             }
         }
     };
@@ -572,11 +611,7 @@ namespace webpp::unicode {
         template <stl::size_t Index = 0>
         [[nodiscard]] constexpr auto pin() noexcept {
             static_assert(Index < PinCount, "Index must be in range.");
-            if constexpr (UTF32<unit_type>) {
-                return beg;
-            } else {
-                return pin_type_of<Index>{this};
-            }
+            return pin_type_of<Index>{this};
         }
 
         template <difference_type Index = 0>
@@ -675,15 +710,47 @@ namespace webpp::unicode {
               typename CP2>
     [[nodiscard]] static constexpr auto operator-(
       utf_reducer<PinCount1, CharT1, CP1> const& lhs,
-      utf_reducer<PinCount2, CharT2, CP2> const& rhs) -> decltype(lhs.begin() - rhs.begin()) {
-        return lhs.begin() - rhs.begin();
+      utf_reducer<PinCount2, CharT2, CP2> const& rhs) noexcept(noexcept(lhs.begin() - rhs.begin())) {
+        using difference_type = typename utf_reducer<PinCount1, CharT1, CP1>::difference_type;
+        return static_cast<difference_type>(lhs.begin() - rhs.begin());
     }
 
-    template <stl::size_t PinCount, typename CharT1, typename CP1>
+    template <stl::size_t PinCount, typename CharT1, typename CP1, typename IterT>
+    [[nodiscard]] static constexpr auto operator-(utf_reducer<PinCount, CharT1, CP1> const& lhs,
+                                                  IterT rhs_iter) noexcept(noexcept(lhs.begin() - rhs_iter)) {
+        using difference_type = typename utf_reducer<PinCount, CharT1, CP1>::difference_type;
+        return static_cast<difference_type>(lhs.begin() - rhs_iter);
+    }
+
+    template <stl::size_t PinCount, typename CharT1, typename CP1, typename IterT>
     [[nodiscard]] static constexpr auto operator-(
-      utf_reducer<PinCount, CharT1, CP1> const&             lhs,
-      typename utf_reducer<PinCount, CharT1, CP1>::iterator rhs_iter) -> decltype(lhs.begin() - rhs_iter) {
-        return lhs.begin() - rhs_iter;
+      IterT                                     lhs_iter,
+      utf_reducer<PinCount, CharT1, CP1> const& rhs) noexcept(noexcept(lhs_iter - rhs.begin())) {
+        using difference_type = typename utf_reducer<PinCount, CharT1, CP1>::difference_type;
+        return static_cast<difference_type>(lhs_iter - rhs.begin());
+    }
+
+    template <std::size_t PinIndex,
+              std::size_t PinCount,
+              typename IterT,
+              typename CodePointT,
+              typename RIterT>
+    [[nodiscard]] static constexpr auto operator-(pin_type<PinIndex, PinCount, IterT, CodePointT> const& lhs,
+                                                  RIterT rhs_iter) noexcept(noexcept(lhs.iter() - rhs_iter)) {
+        using difference_type = typename pin_type<PinIndex, PinCount, IterT, CodePointT>::difference_type;
+        return static_cast<difference_type>(lhs.iter() - rhs_iter);
+    }
+
+    template <typename LIterT,
+              std::size_t PinIndex,
+              std::size_t PinCount,
+              typename IterT,
+              typename CodePointT>
+    [[nodiscard]] static constexpr auto operator-(
+      LIterT                                                 lhs_iter,
+      pin_type<PinIndex, PinCount, IterT, CodePointT> const& rhs) noexcept(noexcept(lhs_iter - rhs.iter())) {
+        using difference_type = typename pin_type<PinIndex, PinCount, IterT, CodePointT>::difference_type;
+        return static_cast<difference_type>(lhs_iter - rhs.iter());
     }
 
 } // namespace webpp::unicode

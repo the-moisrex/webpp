@@ -6,6 +6,7 @@
 #include "common/tests_common_pch.hpp"
 
 #include <filesystem>
+#include <fstream>
 #include <limits>
 #include <string>
 
@@ -202,21 +203,6 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 ///////////////////////////////// Normalization /////////////////////////////////////
 
-
-TEST(Unicode, BasicCodePointIterator) {
-    std::u8string               str = u8"تست";
-    webpp::unicode::utf_reducer iter{str.data()};
-    iter.set_code_point(U'a');
-    EXPECT_EQ(str, u8"a\xAAست");
-}
-
-TEST(Unicode, BasicCodePointIterator2) {
-    std::u8string               str = u8"تست";
-    webpp::unicode::utf_reducer iter{str.data()};
-    ++iter;
-    iter.set_code_point(U'a');
-    EXPECT_EQ(str, u8"تa\xB3ت");
-}
 
 namespace {
 

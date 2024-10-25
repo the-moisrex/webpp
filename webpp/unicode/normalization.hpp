@@ -577,20 +577,21 @@ namespace webpp::unicode {
      */
     template <stl::integral               SizeT = stl::size_t,
               stl::random_access_iterator Iter  = char32_t*,
-              stl::random_access_iterator EIter = Iter>
+              stl::random_access_iterator EIter = char32_t const* const>
     [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT canonical_compose(
       Iter& ptr,
       EIter end)
       noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
-        auto const  beg = ptr;
-        utf_reducer<4> reducer{ptr, end};
+        using reducer_type = utf_reducer<4, Iter>;
+
+        reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
         auto [cp1_pin, rep_pin, starter_pin, cp2_pin] = reducer.pins();
         // utf_reducer cp1_ptr{beg}; // const iterator
         // utf_reducer rep_ptr{ptr}; // non-const iterator
         for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin;
-            rep_pin.set(cp1_pin);
-            cp2_pin = cp1_pin; // const iterator as well
+            rep_pin     = cp1_pin;
+            cp2_pin     = cp1_pin; // const iterator as well
             ++cp2_pin;
             auto cp1 = *cp1_pin;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
@@ -604,12 +605,12 @@ namespace webpp::unicode {
                 if (ccc == 0) {
                     break;
                 }
-                prev_ccc = ccc;
-                (++rep_pin).set(cp2_pin);
+                prev_ccc    = ccc;
+                (++rep_pin) = cp2_pin;
             }
             starter_pin.spillover_set(cp1, end - starter_pin);
         }
-        return static_cast<SizeT>(rep_pin - beg);
+        return static_cast<SizeT>(rep_pin - reducer.begin());
     }
 
     /**
