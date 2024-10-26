@@ -595,8 +595,9 @@ namespace webpp::unicode {
             ++cp2_pin;
             auto cp1 = *cp1_pin;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
-                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_pin));
-                auto       replaced_cp = canonical_composed(cp1, *cp2_pin);
+                auto const cp2         = *cp2_pin;
+                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
+                auto       replaced_cp = canonical_composed(cp1, cp2);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
                     cp1 = replaced_cp;
@@ -701,6 +702,7 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept {
         using enum normalization_form;
         // todo
+        static_assert_false(Iter, "Not yet implemented.");
         return gibberish;
     }
 

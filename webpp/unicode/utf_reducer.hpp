@@ -94,7 +94,7 @@ namespace webpp::unicode {
             }
         }
 
-        /// The number of code units required to set this code new code point
+        /// The number of code units required to set this new code point with the specified length
         [[nodiscard]] constexpr stl::int_fast8_t required_code_units_of_len(stl::int_fast8_t const cp_len)
           noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
@@ -113,7 +113,7 @@ namespace webpp::unicode {
             }
         }
 
-        /// The number of code units required to set this code new code point
+        /// The number of code units required to set this new code point
         [[nodiscard]] constexpr stl::int_fast8_t required_code_units(value_type const inp_cp)
           noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
@@ -395,24 +395,26 @@ namespace webpp::unicode {
             reducer->states[PinIndex] = 0;
         }
 
+        /// move the next code point and place it into the remaining space
         constexpr void goto_next_code_point() noexcept(is_nothrow)
             requires(!UTF32<unit_type>)
         {
-            auto cur = iter();
-            stl::advance(cur, -static_cast<difference_type>(state()));
+            auto const hollow_space = -static_cast<difference_type>(state());
+            auto       rep          = istl::deref(iter());
+            auto const cur_len      = required_length_of<unit_type, difference_type>(*rep);
+            stl::advance(rep, cur_len);
 
-            // end of the next code point
-            auto endptr = stl::next(cur, required_length_of<unit_type, difference_type>(*cur));
-            assert(cur <= reducer->endptr);
-            auto rep = cur;
-            ++cur;
-            for (; cur != endptr; ++cur, ++rep) {
-                *rep = *cur;
+            auto next_iter   = stl::next(rep, hollow_space);
+            auto next_cp_len = required_length_of<unit_type, stl::int_fast8_t>(*next_iter);
+
+            webpp_assume(next_cp_len <= 6);
+            for (; next_cp_len >= 0; --next_cp_len, ++rep, ++next_iter) {
+                *rep = *next_iter;
             }
         }
 
-        /// find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
-        /// can use
+        /// find the first pin that from that pin to this pin, there's enough
+        /// "Partial" spaces that we can use
         /// We can't return a pin_type since the PinIndex is not known, so we return the index itself
         [[nodiscard]] constexpr auto find_first_pin(difference_type stop_state) const noexcept
             requires(!UTF32<unit_type>)

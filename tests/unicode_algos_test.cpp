@@ -110,6 +110,7 @@ TEST(UnicodeAlgos, SimpleForward) {
         pin        = U'a';
         EXPECT_EQ(*pin, U'a');
         ++pin;
+        EXPECT_EQ(*pin, U'س');
         pin = U'b';
         EXPECT_EQ(*pin, U'b');
         ++pin;
@@ -123,7 +124,7 @@ TEST(UnicodeAlgos, SimpleForward) {
 }
 
 TEST(UnicodeAlgos, DoubleForward) {
-    std::u8string str = u8"تست";
+    std::u8string str = u8"تتت";
     {
         utf_reducer<2> reducer{str.data(), str.size()};
         auto [pin1, pin2] = reducer.pins();
@@ -136,7 +137,7 @@ TEST(UnicodeAlgos, DoubleForward) {
         EXPECT_EQ(*pin1, U'b');
         EXPECT_EQ(*pin2, U'b');
         ++pin2;
-        pin2 = U'\u0800'; // E0-A0-80
+        pin2.spillover_set(U'\u0800'); // E0-A0-80
         reducer.reduce();
         str.resize(reducer.size());
     }
