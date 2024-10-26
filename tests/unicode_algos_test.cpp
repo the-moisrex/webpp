@@ -143,3 +143,24 @@ TEST(UnicodeAlgos, DoubleForward) {
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
 }
+
+TEST(UnicodeAlgos, DoubleForwardUTF32) {
+    std::u32string str = U"تتت";
+    {
+        utf_reducer<2, char32_t*> reducer{str.data(), str.size()};
+        auto [pin1, pin2] = reducer.pins();
+        pin2              = U'a';
+        EXPECT_EQ(*pin1, U'a');
+        EXPECT_EQ(*pin2, U'a');
+        ++pin2;
+        pin1 = pin2;
+        pin1 = U'b';
+        EXPECT_EQ(*pin1, U'b');
+        EXPECT_EQ(*pin2, U'b');
+        ++pin2;
+        pin2.spillover_set(U'\u0800'); // E0-A0-80
+        reducer.reduce();
+        str.resize(reducer.size());
+    }
+    EXPECT_EQ(str, U"ab\u0800");
+}

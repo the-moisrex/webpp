@@ -64,11 +64,13 @@ namespace webpp::unicode {
 
         /// guarantee the correctness of the state that we're in
         constexpr void test_state_correctness() noexcept {
-            // guarantee that each pin's position will be less than or equal to the next one:
-            assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) + 1>() >= iter());
+            if constexpr (!UTF32<unit_type>) {
+                // guarantee that each pin's position will be less than or equal to the next one:
+                assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) + 1>() >= iter());
 
-            // guarantee that each pin's position will be more than or equal to the previous one:
-            assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
+                // guarantee that each pin's position will be more than or equal to the previous one:
+                assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
+            }
 
             // early blow up in case we did not find the correct ptr position:
             assert(is_code_unit_start(*iter()));
@@ -310,10 +312,10 @@ namespace webpp::unicode {
 
         /// Pin Act: Set
         constexpr void set(value_type inp_code_point) noexcept(is_nothrow) {
-            assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
+                assert(iter() != reducer->endptr);
                 // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const state = state_cmp(inp_code_point);
@@ -360,10 +362,10 @@ namespace webpp::unicode {
 
         /// Pin Act: Set Spillover
         constexpr void spillover_set(value_type inp_code_point) noexcept(is_nothrow) {
-            assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
+                assert(iter() != reducer->endptr);
                 // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
@@ -568,7 +570,7 @@ namespace webpp::unicode {
             }
             assert(inp_pos != endptr);
             assert(is_code_unit_start(*inp_pos));
-            if (!UTF32<unit_type>) {
+            if constexpr (!UTF32<unit_type>) {
                 iters.fill(inp_pos);
                 auto const first_cp = next_code_point_copy(inp_pos);
                 code_points.fill(first_cp);
@@ -586,7 +588,7 @@ namespace webpp::unicode {
             }
             assert(is_code_unit_start(*inp_pos));
             assert(inp_pos <= inp_endp);
-            if (!UTF32<unit_type>) {
+            if constexpr (!UTF32<unit_type>) {
                 iters.fill(inp_pos);
                 auto const first_cp = next_code_point_copy(inp_pos);
                 code_points.fill(first_cp);
@@ -602,7 +604,7 @@ namespace webpp::unicode {
 #else
         constexpr ~utf_reducer() noexcept {
             // User must call ".reduce()" to apply changes; this checks if they have or not:
-            if (!UTF32<unit_type>) {
+            if constexpr (!UTF32<unit_type>) {
                 for (auto const state : states) {
                     assert(state == 0);
                 }
