@@ -15,6 +15,75 @@ namespace webpp::unicode {
     template <stl::size_t PinCount = 1, typename IterT = char8_t*, UTF32 CodePointT = char32_t>
     struct utf_reducer;
 
+    template <std::size_t PinCount = 1, typename IterT = char8_t*, UTF32 CodePointT = char32_t>
+    struct const_pin_type {
+        using reducer_type    = utf_reducer<PinCount, IterT, CodePointT>;
+        using iterator        = typename reducer_type::iterator;
+        using size_type       = typename reducer_type::size_type;
+        using value_type      = typename reducer_type::value_type;
+        using unit_type       = typename reducer_type::unit_type;
+        using difference_type = typename reducer_type::difference_type;
+
+        static constexpr bool is_nothrow = reducer_type::is_nothrow;
+
+      private:
+        template <std::size_t, typename, UTF32>
+        friend struct const_pin_type;
+
+        iterator ptr;
+
+        /// guarantee the correctness of the state that we're in
+        constexpr void test_state_correctness() noexcept {
+            // early blow up in case we did not find the correct ptr position:
+            assert(is_code_unit_start(*iter()));
+        }
+
+      public:
+        constexpr explicit const_pin_type(iterator inp_iter) noexcept : ptr{inp_iter} {}
+
+        constexpr const_pin_type(const_pin_type&& other) noexcept                 = default;
+        constexpr const_pin_type& operator=(const_pin_type&& other) noexcept      = default;
+        constexpr ~const_pin_type() noexcept                                      = default;
+        constexpr const_pin_type(const_pin_type const& other) noexcept            = default;
+        constexpr const_pin_type& operator=(const_pin_type const& other) noexcept = default;
+
+        [[nodiscard]] constexpr iterator const& iter() const noexcept {
+            return ptr;
+        }
+
+        [[nodiscard]] constexpr iterator& iter() noexcept {
+            return ptr;
+        }
+
+        constexpr const_pin_type& operator++() noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                ++iter();
+            } else {
+                unchecked::next_char(iter());
+            }
+            test_state_correctness();
+            return *this;
+        }
+
+        [[nodiscard]] constexpr value_type operator*() noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                return *iter();
+            } else {
+                return next_code_point_copy(iter());
+            }
+        }
+
+        template <typename NIterT = iterator>
+        [[nodiscard]] constexpr bool operator==(NIterT other) noexcept(is_nothrow) {
+            return iter() == other;
+        }
+
+        template <typename NIterT = iterator>
+        [[nodiscard]] constexpr bool operator!=(NIterT other) noexcept(is_nothrow) {
+            return iter() != other;
+        }
+    };
+
     /**
      * Pin is a forward-iterator-like type that is designed to be used inside utf_reducer.
      *
@@ -58,6 +127,7 @@ namespace webpp::unicode {
         template <typename T>
         using if_utf32 = stl::conditional_t<!UTF32<unit_type>, istl::nothing_type, T>;
 
+        using const_pin_t = const_pin_type<PinCount, IterT, CodePointT>;
 
         [[no_unique_address]] if_not_utf32<reducer_type*> reducer;
         [[no_unique_address]] if_utf32<iterator>          ptr;
@@ -150,6 +220,7 @@ namespace webpp::unicode {
                           "You cannot go back; these are forward-only set of constructs.");
             static_assert(OPinIndex != PinIndex, "Self-assignment is probably a mistake.");
 
+            assert(other.iter() >= iter());
             if constexpr (UTF32<unit_type>) {
                 ptr = other.ptr;
             } else {
@@ -165,6 +236,29 @@ namespace webpp::unicode {
                     }
                 }
             }
+            return *this;
+        }
+
+        constexpr pin_type& operator=(const_pin_t const& other) noexcept {
+            assert(other.iter() >= iter());
+            if constexpr (UTF32<unit_type>) {
+                ptr = other.iter();
+            } else {
+                // this is not a copy assignment operator, it's a pin act.
+                auto const cur_state = state();
+                if (cur_state < 0) {
+                    while (iter() < other.iter()) {
+                        goto_next_code_point();
+                        unchecked::next_char(iter());
+                    }
+                } else if (cur_state > 0) {
+                    fill_right();
+                    unchecked::append(iter(), reducer->code_points[PinIndex]);
+                    reducer->states[PinIndex] = 0;
+                }
+                reducer->iters[PinIndex] = other.iter();
+            }
+            test_state_correctness();
             return *this;
         }
 
@@ -267,15 +361,15 @@ namespace webpp::unicode {
 
         /// Pin Act: Set
         constexpr void set(iterator other) noexcept(is_nothrow) {
-            if constexpr (stl::is_pointer_v<iterator>) {
-                assert(other != nullptr);
-            } else {
-                assert(other != reducer->endptr);
-            }
-            assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = *other;
             } else {
+                if constexpr (stl::is_pointer_v<iterator>) {
+                    assert(other != nullptr);
+                } else {
+                    assert(other != reducer->endptr);
+                }
+                assert(iter() != reducer->endptr);
                 auto const state = state_cmp_size(required_length_of<unit_type, stl::int_fast8_t>(*other));
 
                 // state: filled
@@ -557,6 +651,8 @@ namespace webpp::unicode {
         template <stl::size_t Index>
         using pin_type_of = pin_type<Index, PinCount, IterT, CodePointT>;
 
+        using const_pin_t = const_pin_type<PinCount, IterT, CodePointT>;
+
       public:
         // the reason why we take length instead of end position is because the end might be a const, but
         // we don't want the end to be a const internally.
@@ -618,6 +714,14 @@ namespace webpp::unicode {
             return pin_type_of<Index>{this};
         }
 
+        [[nodiscard]] constexpr const_pin_t const_pin(difference_type index = 0) noexcept {
+            if constexpr (UTF32<unit_type>) {
+                return const_pin_t{beg + index};
+            } else {
+                return const_pin_t{iters[index]};
+            }
+        }
+
         template <difference_type Index = 0>
         [[nodiscard]] constexpr iterator& pin_iter() noexcept
             requires(!UTF32<unit_type>)
@@ -664,12 +768,36 @@ namespace webpp::unicode {
             })(stl::make_index_sequence<PinCount>{});
         }
 
+        /// Get a new set of const pins.
+        /// "Const Pins" are pins that cannot modify anything and are less restricted in moving around.
+        /// Usage:
+        ///   auto [pin1, pin2, pin3] = reducer.template new_const_pins<3>();
+        template <size_type Count = PinCount>
+        [[nodiscard]] constexpr auto new_const_pins() noexcept {
+            return ([&]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
+                return stl::make_tuple((static_cast<void>(I), const_pin())...);
+            })(stl::make_index_sequence<Count>{});
+        }
+
         [[nodiscard]] constexpr iterator begin() const noexcept {
             return beg;
         }
 
         [[nodiscard]] constexpr iterator end() const noexcept {
             return newend;
+        }
+
+        constexpr void set_end(iterator inp_end) noexcept {
+            newend = inp_end;
+        }
+
+        template <stl::size_t Index>
+        constexpr void set_end(pin_type_of<Index> const& inp_end) noexcept {
+            newend = inp_end.iter();
+        }
+
+        constexpr void set_end(const_pin_t const& inp_end) noexcept {
+            newend = inp_end.iter();
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
@@ -695,6 +823,10 @@ namespace webpp::unicode {
                 if constexpr (Index == 0) {
                     // setting the new end iterator:
                     if (auto const diff_len = available_space(); diff_len > 0) {
+                        // Don't call set_end before reduce
+                        // And don't call reduce multiple times
+                        assert(newend == endptr);
+
                         newend = std::prev(endptr, diff_len);
                     }
                 }

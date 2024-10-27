@@ -164,3 +164,21 @@ TEST(UnicodeAlgos, DoubleForwardUTF32) {
     }
     EXPECT_EQ(str, U"ab\u0800");
 }
+
+TEST(UnicodeAlgos, ConstPin) {
+    std::u8string str = u8"تتت";
+    {
+        utf_reducer<1> reducer{str.data(), str.size()};
+        auto [pin]  = reducer.pins();
+        auto [cpin] = reducer.new_const_pins();
+        pin         = U'a';
+        EXPECT_EQ(*pin, U'a');
+        ++cpin;
+        pin = cpin;
+        pin = 'b';
+        reducer.reduce();
+        reducer.set_end(++pin);
+        str.resize(reducer.size());
+    }
+    EXPECT_EQ(str, u8"ab");
+}
