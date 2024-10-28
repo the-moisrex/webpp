@@ -587,12 +587,9 @@ namespace webpp::unicode {
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
         auto [rep_pin, starter_pin] = reducer.pins();
         auto [cp1_pin, cp2_pin]     = reducer.template new_const_pins<2>();
-        // utf_reducer cp1_ptr{beg}; // const iterator
-        // utf_reducer rep_ptr{ptr}; // non-const iterator
         for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin.iter(); // don't copy the state
-            rep_pin     = cp1_pin;
-            cp2_pin     = cp1_pin; // const iterator as well
+            cp2_pin     = cp1_pin;
             ++cp2_pin;
             auto cp1 = *cp1_pin;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
@@ -604,15 +601,17 @@ namespace webpp::unicode {
                     cp1 = replaced_cp;
                     continue;
                 }
-                if (ccc == 0) {
+                if (ccc == 0) [[likely]] {
                     break;
                 }
                 prev_ccc    = ccc;
-                (++rep_pin) = cp2_pin;
+                (++rep_pin) = cp2;
             }
             starter_pin.spillover_set(cp1);
         }
-        return static_cast<SizeT>(rep_pin - reducer.begin());
+        reducer.reduce();
+        reducer.set_end(rep_pin);
+        return static_cast<SizeT>(reducer.size());
     }
 
     /**

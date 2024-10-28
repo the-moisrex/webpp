@@ -343,7 +343,10 @@ namespace webpp::unicode {
         }
 
         constexpr pin_type& operator=(iterator other) noexcept(is_nothrow) {
-            set(other);
+            if constexpr (!UTF32<unit_type>) {
+                assert(state() == 0);
+            }
+            iter() = other;
             return *this;
         }
 
@@ -714,12 +717,8 @@ namespace webpp::unicode {
             return pin_type_of<Index>{this};
         }
 
-        [[nodiscard]] constexpr const_pin_t const_pin(difference_type index = 0) noexcept {
-            if constexpr (UTF32<unit_type>) {
-                return const_pin_t{beg + index};
-            } else {
-                return const_pin_t{iters[index]};
-            }
+        [[nodiscard]] constexpr const_pin_t const_pin() noexcept {
+            return const_pin_t{beg};
         }
 
         template <difference_type Index = 0>
@@ -797,7 +796,8 @@ namespace webpp::unicode {
         }
 
         constexpr void set_end(const_pin_t const& inp_end) noexcept {
-            newend = inp_end.iter();
+            newend  = inp_end.iter();
+            *newend = static_cast<unit_type>('\0');
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
@@ -827,7 +827,8 @@ namespace webpp::unicode {
                         // And don't call reduce multiple times
                         assert(newend == endptr);
 
-                        newend = std::prev(endptr, diff_len);
+                        newend  = std::prev(endptr, diff_len);
+                        *newend = static_cast<unit_type>('\0');
                     }
                 }
                 pin<Index>().reduce();
