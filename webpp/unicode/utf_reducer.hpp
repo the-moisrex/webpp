@@ -578,8 +578,8 @@ namespace webpp::unicode {
 
       public:
         constexpr void reduce() noexcept(is_nothrow) {
-            assert(iter() <= reducer->endptr);
             if constexpr (!UTF32<unit_type>) {
+                assert(iter() <= reducer->endptr);
                 auto const cur_state = state();
                 if (cur_state == 0) [[likely]] {
                     return;

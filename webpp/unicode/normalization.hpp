@@ -585,7 +585,7 @@ namespace webpp::unicode {
         using reducer_type = utf_reducer<2, Iter>;
 
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
-        auto [rep_pin, starter_pin] = reducer.pins();
+        auto [starter_pin, rep_pin] = reducer.pins();
         auto [cp1_pin, cp2_pin]     = reducer.template new_const_pins<2>();
         for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin.iter(); // don't copy the state
@@ -608,6 +608,7 @@ namespace webpp::unicode {
                 (++rep_pin) = cp2;
             }
             starter_pin.spillover_set(cp1);
+            starter_pin.reduce();
         }
         reducer.reduce();
         reducer.set_end(rep_pin);
