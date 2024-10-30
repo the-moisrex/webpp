@@ -165,6 +165,44 @@ TEST(UnicodeAlgos, DoubleForwardUTF32) {
     EXPECT_EQ(str, U"ab\u0800");
 }
 
+TEST(UnicodeAlgos, TheIteratorIdentityParadox) {
+    std::u8string str = u8"abcdتbت";
+    {
+        utf_reducer<2> reducer{str.data(), str.size()};
+        auto [one, two] = reducer.pins();
+        ++two;
+        ++two;
+        ++two;
+        ++two;
+        one = two;
+        ++two;
+        two = 'a';
+        one = U'س';
+        reducer.reduce();
+        str.resize(reducer.size());
+    }
+    EXPECT_EQ(str, u8"abcdسaت");
+}
+
+TEST(UnicodeAlgos, LinkedStates) {
+    std::u8string str = u8"abcdتbت";
+    {
+        utf_reducer<2> reducer{str.data(), str.size()};
+        auto [one, two] = reducer.pins();
+        ++two;
+        ++two;
+        ++two;
+        ++two;
+        one = two;
+        one = U'x';
+        ++two;
+        two = 'y';
+        reducer.reduce();
+        str.resize(reducer.size());
+    }
+    EXPECT_EQ(str, u8"abcdxyت");
+}
+
 TEST(UnicodeAlgos, ConstPin) {
     std::u8string str = u8"تتت";
     {

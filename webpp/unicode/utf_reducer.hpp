@@ -391,9 +391,9 @@ namespace webpp::unicode {
                     reducer->states[PinIndex] = state;
 
                     // zero out the remaining for use in other algorithms of utf_reducer
-                    for (; rem > 0; --rem) {
-                        *iter_cpy = static_cast<unit_type>('\0');
-                    }
+                    // for (; rem > 0; --rem) {
+                    //     *iter_cpy = static_cast<unit_type>('\0');
+                    // }
                     test_state_correctness();
                     return;
                 }
@@ -429,14 +429,14 @@ namespace webpp::unicode {
                 // state: partial or deleted
                 if (state < 0) {
                     auto iter_cpy = istl::deref(iter());
-                    auto rem      = required_length_of<unit_type>(*iter_cpy);
+                    // auto rem      = required_length_of<unit_type>(*iter_cpy);
                     unchecked::append(iter_cpy, inp_code_point);
                     reducer->states[PinIndex] = state;
 
                     // zero out the remaining for use in other algorithms of utf_reducer
-                    for (; rem > 0; --rem) {
-                        *iter_cpy = static_cast<unit_type>('\0');
-                    }
+                    // for (; rem > 0; --rem) {
+                    //     *iter_cpy = static_cast<unit_type>('\0');
+                    // }
                     test_state_correctness();
                     return;
                 }
@@ -797,7 +797,7 @@ namespace webpp::unicode {
 
         constexpr void set_end(const_pin_t const& inp_end) noexcept {
             newend  = inp_end.iter();
-            *newend = static_cast<unit_type>('\0');
+            // *newend = static_cast<unit_type>('\0');
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
@@ -828,7 +828,7 @@ namespace webpp::unicode {
                         assert(newend == endptr);
 
                         newend  = std::prev(endptr, diff_len);
-                        *newend = static_cast<unit_type>('\0');
+                        // *newend = static_cast<unit_type>('\0');
                     }
                 }
                 pin<Index>().reduce();
