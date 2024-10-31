@@ -373,6 +373,14 @@ namespace webpp::unicode {
                     assert(other != reducer->endptr);
                 }
                 assert(iter() != reducer->endptr);
+
+                // make sure we're not doing this kinda things:
+                //  one = two;
+                //  one = 'x';
+                //  ++two; // two might be at the wrong place now
+                // to fix this, use idle_set('x')
+                assert(iter() != reducer->template pin_iter<PinIndex + 1>());
+
                 auto const state = state_cmp_size(required_length_of<unit_type, stl::int_fast8_t>(*other));
 
                 // state: filled
@@ -413,6 +421,14 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
+
+                // make sure we're not doing this kinda things:
+                //  one = two;
+                //  one = 'x';
+                //  ++two; // two might be at the wrong place now
+                // to fix this, use idle_set('x')
+                assert(iter() != reducer->template pin_iter<PinIndex + 1>());
+
                 // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const state = state_cmp(inp_code_point);
@@ -455,6 +471,25 @@ namespace webpp::unicode {
         constexpr void set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
           noexcept(is_nothrow) {
             set(other_ptr.iter());
+        }
+
+        /// Pin Act: Idle Set
+        /// In order to make sure we're not doing this kinda things:
+        /// @code
+        ///   one = two;
+        ///   one = 'x';
+        ///   ++two; // two might be at the wrong place now
+        /// @endcode
+        /// to fix this, use idle_set('x')
+        constexpr void idle_set(value_type inp_code_point) noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                *iter() = inp_code_point;
+            } else {
+                assert(iter() != reducer->endptr);
+                reducer->code_points[PinIndex] = inp_code_point;
+                reducer->states[PinIndex]      = state_cmp(inp_code_point);
+                test_state_correctness();
+            }
         }
 
         /// Pin Act: Set Spillover
@@ -796,7 +831,7 @@ namespace webpp::unicode {
         }
 
         constexpr void set_end(const_pin_t const& inp_end) noexcept {
-            newend  = inp_end.iter();
+            newend = inp_end.iter();
             // *newend = static_cast<unit_type>('\0');
         }
 
@@ -827,7 +862,7 @@ namespace webpp::unicode {
                         // And don't call reduce multiple times
                         assert(newend == endptr);
 
-                        newend  = std::prev(endptr, diff_len);
+                        newend = std::prev(endptr, diff_len);
                         // *newend = static_cast<unit_type>('\0');
                     }
                 }

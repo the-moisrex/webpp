@@ -133,7 +133,7 @@ TEST(UnicodeAlgos, DoubleForward) {
         EXPECT_EQ(*pin2, U'a');
         ++pin2;
         pin1 = pin2;
-        pin1 = U'b';
+        pin1.idle_set(U'b');
         EXPECT_EQ(*pin1, U'b');
         EXPECT_EQ(*pin2, U'b');
         ++pin2;
@@ -154,7 +154,7 @@ TEST(UnicodeAlgos, DoubleForwardUTF32) {
         EXPECT_EQ(*pin2, U'a');
         ++pin2;
         pin1 = pin2;
-        pin1 = U'b';
+        pin1.idle_set(U'b');
         EXPECT_EQ(*pin1, U'b');
         EXPECT_EQ(*pin2, U'b');
         ++pin2;
@@ -194,7 +194,7 @@ TEST(UnicodeAlgos, LinkedStates) {
         ++two;
         ++two;
         one = two;
-        one = U'x';
+        one.idle_set(U'x');
         ++two;
         two = 'y';
         reducer.reduce();
