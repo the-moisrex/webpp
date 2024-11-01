@@ -61,7 +61,7 @@ namespace webpp::unicode {
             } else {
                 unchecked::next_char(iter());
             }
-            test_state_correctness();
+            // test_state_correctness();
             return *this;
         }
 
@@ -116,6 +116,7 @@ namespace webpp::unicode {
         using difference_type = typename reducer_type::difference_type;
 
         static constexpr bool is_nothrow = reducer_type::is_nothrow;
+        static constexpr auto npos       = reducer_type::npos;
 
       private:
         template <std::size_t, std::size_t, typename, UTF32>
@@ -175,10 +176,10 @@ namespace webpp::unicode {
                 stl::int_fast8_t count    = 0;
                 auto             iter_cpy = istl::deref(iter());
                 while (count <= cp_len) {
+                    assert(iter_cpy <= reducer->endptr);
                     auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter_cpy);
                     iter_cpy           += cur_len;
-                    count              += cur_len;
-                    assert(iter_cpy <= reducer->endptr);
+                    count               += cur_len;
                 }
                 webpp_assume(count <= 6);
                 return count;
@@ -206,7 +207,19 @@ namespace webpp::unicode {
 
         constexpr pin_type(pin_type&& other) noexcept            = default;
         constexpr pin_type& operator=(pin_type&& other) noexcept = default;
-        constexpr ~pin_type() noexcept                           = default;
+#ifdef NDEBUG
+        constexpr ~pin_type() noexcept = default;
+#else
+        constexpr ~pin_type() noexcept
+            requires(UTF32<unit_type>)
+        = default;
+
+        constexpr ~pin_type() noexcept
+            requires(!UTF32<unit_type>)
+        {
+            assert(state() == 0);
+        }
+#endif
 
         /// most likely a not so much great algorithm is being written, so, let's shut copying down:
         constexpr pin_type(pin_type const& other)            = delete;
@@ -486,8 +499,15 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
-                reducer->code_points[PinIndex] = inp_code_point;
-                reducer->states[PinIndex]      = state_cmp(inp_code_point);
+                auto const cur_state = state_cmp(inp_code_point);
+                if (cur_state != 0) {
+                    reducer->code_points[PinIndex] = inp_code_point;
+                    reducer->states[PinIndex]      = cur_state;
+                } else {
+                    reducer->states[PinIndex] = 0;
+                    auto iter_cpy             = istl::deref(iter());
+                    unchecked::append(iter_cpy, inp_code_point);
+                }
                 test_state_correctness();
             }
         }
@@ -621,13 +641,16 @@ namespace webpp::unicode {
                 }
                 if (cur_state < 0) {
                     fill_left();
-                    return;
-                }
-
-                // state: extra
-                {
+                    if (reducer->code_points[PinIndex] != npos) {
+                        unchecked::append(iter(), reducer->code_points[PinIndex]);
+                        reducer->code_points[PinIndex] = npos;
+                    }
+                } else {
+                    // state: extra
                     fill_right();
+                    assert(reducer->code_points[PinIndex] != npos);
                     unchecked::append(iter(), reducer->code_points[PinIndex]);
+                    reducer->code_points[PinIndex] = npos;
                     reducer->states[PinIndex] = 0;
                 }
             }
@@ -659,6 +682,7 @@ namespace webpp::unicode {
         using difference_type = typename stl::iterator_traits<IterT>::difference_type;
         using size_type       = stl::size_t;
 
+        static constexpr value_type  npos      = stl::numeric_limits<value_type>::max();
         static constexpr stl::size_t pin_count = PinCount;
         static constexpr bool        is_nothrow =
           stl::is_nothrow_copy_assignable_v<unit_type> && requires(iterator iter, unit_type unit) {
@@ -706,8 +730,9 @@ namespace webpp::unicode {
             assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<unit_type>) {
                 iters.fill(inp_pos);
-                auto const first_cp = next_code_point_copy(inp_pos);
-                code_points.fill(first_cp);
+                // auto const first_cp = next_code_point_copy(inp_pos);
+                // code_points.fill(first_cp);
+                code_points.fill(npos);
             }
         }
 
@@ -724,8 +749,9 @@ namespace webpp::unicode {
             assert(inp_pos <= inp_endp);
             if constexpr (!UTF32<unit_type>) {
                 iters.fill(inp_pos);
-                auto const first_cp = next_code_point_copy(inp_pos);
-                code_points.fill(first_cp);
+                // auto const first_cp = next_code_point_copy(inp_pos);
+                // code_points.fill(first_cp);
+                code_points.fill(npos);
             }
         }
 
@@ -741,6 +767,9 @@ namespace webpp::unicode {
             if constexpr (!UTF32<unit_type>) {
                 for (auto const state : states) {
                     assert(state == 0);
+                }
+                for (auto const code_point : code_points) {
+                    assert(code_point == npos);
                 }
             }
         }
