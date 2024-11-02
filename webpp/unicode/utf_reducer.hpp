@@ -283,13 +283,15 @@ namespace webpp::unicode {
                 auto const cur_state = state();
                 if (cur_state < 0) {
                     goto_next_code_point();
+                    unchecked::next_char(iter());
                 } else if (cur_state > 0) {
                     // state: extra
                     fill_right();
                     unchecked::append(iter(), reducer->code_points[PinIndex]);
                     reducer->states[PinIndex] = 0;
+                } else {
+                    unchecked::next_char(iter());
                 }
-                unchecked::next_char(iter());
             }
             test_state_correctness();
             return *this;
@@ -538,7 +540,7 @@ namespace webpp::unicode {
             requires(!UTF32<unit_type>)
         {
             // fill the gaps
-            auto cur = iter();
+            auto cur = istl::deref(iter());
             stl::advance(cur, required_length_of<unit_type, difference_type>(*cur));
             auto rep = cur;
             stl::advance(cur, -static_cast<difference_type>(state()));
@@ -640,18 +642,19 @@ namespace webpp::unicode {
                     return;
                 }
                 if (cur_state < 0) {
-                    fill_left();
                     if (reducer->code_points[PinIndex] != npos) {
-                        unchecked::append(iter(), reducer->code_points[PinIndex]);
+                        auto iter_copy = istl::deref(iter());
+                        unchecked::append(iter_copy, reducer->code_points[PinIndex]);
                         reducer->code_points[PinIndex] = npos;
                     }
+                    fill_left();
                 } else {
                     // state: extra
                     fill_right();
                     assert(reducer->code_points[PinIndex] != npos);
                     unchecked::append(iter(), reducer->code_points[PinIndex]);
                     reducer->code_points[PinIndex] = npos;
-                    reducer->states[PinIndex] = 0;
+                    reducer->states[PinIndex]      = 0;
                 }
             }
         }
