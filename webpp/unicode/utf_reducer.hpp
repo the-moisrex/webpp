@@ -313,7 +313,7 @@ namespace webpp::unicode {
             }
         }
 
-        [[nodiscard]] constexpr auto state() noexcept
+        [[nodiscard]] constexpr stl::int_fast8_t state() noexcept
             requires(!UTF32<unit_type>)
         {
             // if constexpr (UTF8<unit_type>) {
@@ -446,23 +446,23 @@ namespace webpp::unicode {
 
                 // reducer->code_points[PinIndex] = inp_code_point;
 
-                auto const state = state_cmp(inp_code_point);
+                stl::int_fast8_t const cur_state = state_cmp(inp_code_point) + state();
 
                 // state: filled
-                if (state == 0) [[likely]] {
+                if (cur_state == 0) [[likely]] {
                     auto iter_cpy = istl::deref(iter());
                     unchecked::append(iter_cpy, inp_code_point);
-                    reducer->states[PinIndex] = state;
+                    reducer->states[PinIndex] = cur_state;
                     test_state_correctness();
                     return;
                 }
 
                 // state: partial or deleted
-                if (state < 0) {
+                if (cur_state < 0) {
                     auto iter_cpy = istl::deref(iter());
                     // auto rem      = required_length_of<unit_type>(*iter_cpy);
                     unchecked::append(iter_cpy, inp_code_point);
-                    reducer->states[PinIndex] = state;
+                    reducer->states[PinIndex] = cur_state;
 
                     // zero out the remaining for use in other algorithms of utf_reducer
                     // for (; rem > 0; --rem) {
@@ -475,7 +475,7 @@ namespace webpp::unicode {
                 // state: extra
                 {
                     reducer->code_points[PinIndex] = inp_code_point;
-                    reducer->states[PinIndex]      = state;
+                    reducer->states[PinIndex]      = cur_state;
                     test_state_correctness();
                 }
             }
@@ -501,7 +501,11 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
-                auto const cur_state = state_cmp(inp_code_point);
+                assert(state() == 0 || reducer->template pin_iter<PinIndex + 1>() != iter());
+                assert(state() == 0 ||
+                       reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() != iter());
+
+                stl::int_fast8_t const cur_state = state_cmp(inp_code_point) + state();
                 if (cur_state != 0) {
                     reducer->code_points[PinIndex] = inp_code_point;
                     reducer->states[PinIndex]      = cur_state;
@@ -520,6 +524,9 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
+                assert(state() == 0 || reducer->template pin_iter<PinIndex + 1>() != iter());
+                assert(state() == 0 ||
+                       reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() != iter());
                 // reducer->code_points[PinIndex] = inp_code_point;
 
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);

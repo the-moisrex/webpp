@@ -125,6 +125,7 @@ TEST(UnicodeAlgos, SimpleForward) {
 
 TEST(UnicodeAlgos, DoubleForward) {
     std::u8string str = u8"تتت";
+    EXPECT_EQ(str.size(), 3 * 2);
     {
         utf_reducer<2> reducer{str.data(), str.size()};
         auto [pin1, pin2] = reducer.pins();
@@ -142,6 +143,7 @@ TEST(UnicodeAlgos, DoubleForward) {
         str.resize(reducer.size());
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
+    EXPECT_EQ(str.size(), 5);
 }
 
 TEST(UnicodeAlgos, DoubleForwardUTF32) {
