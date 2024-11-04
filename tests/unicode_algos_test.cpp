@@ -133,7 +133,7 @@ TEST(UnicodeAlgos, DoubleForward) {
         EXPECT_EQ(*pin1, U'a');
         EXPECT_EQ(*pin2, U'a');
         ++pin2;
-        pin1 = pin2;
+        pin1 = pin2.iter();
         pin1.idle_set(U'b');
         EXPECT_EQ(*pin1, U'b');
         EXPECT_EQ(*pin2, U'b');

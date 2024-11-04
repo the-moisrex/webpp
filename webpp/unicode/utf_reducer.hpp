@@ -532,6 +532,7 @@ namespace webpp::unicode {
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const rep_len = required_code_units_of_len(cp_len);
                 assert(rep_len >= cp_len);
+                assert(iter() + rep_len < reducer->endptr);
                 stl::int_fast8_t const state    = cp_len - rep_len;
                 auto                   iter_cpy = istl::deref(iter());
 
