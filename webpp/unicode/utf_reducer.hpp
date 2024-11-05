@@ -531,13 +531,20 @@ namespace webpp::unicode {
 
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const rep_len = required_code_units_of_len(cp_len);
-                assert(rep_len >= cp_len);
-                assert(iter() + rep_len < reducer->endptr);
-                stl::int_fast8_t const state    = cp_len - rep_len;
-                auto                   iter_cpy = istl::deref(iter());
+                stl::int_fast8_t const state = cp_len - rep_len;
 
-                reducer->states[PinIndex] = state;
-                unchecked::append(iter_cpy, inp_code_point);
+                assert(rep_len >= cp_len);
+
+                // we'll be writing past the end if this happens
+                if (iter() + rep_len >= reducer->endptr) {
+                    reducer->states[PinIndex]      = state;
+                    reducer->code_points[PinIndex] = inp_code_point;
+                } else {
+                    auto iter_cpy = istl::deref(iter());
+
+                    reducer->states[PinIndex] = state;
+                    unchecked::append(iter_cpy, inp_code_point);
+                }
                 test_state_correctness();
             }
         }
