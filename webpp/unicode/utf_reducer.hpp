@@ -558,12 +558,20 @@ namespace webpp::unicode {
             auto cur = istl::deref(iter());
             stl::advance(cur, required_length_of<unit_type, difference_type>(*cur));
             auto rep = cur;
-            stl::advance(cur, -static_cast<difference_type>(state()));
+            difference_type const saved_len = -static_cast<difference_type>(state());
+            stl::advance(cur, saved_len);
             assert(cur <= reducer->endptr);
             for (; cur != reducer->endptr; ++cur, ++rep) {
                 *rep = *cur;
             }
             reducer->states[PinIndex] = 0;
+
+            // fixing the other iterators:
+            if constexpr (PinIndex + 1 != PinCount) {
+                for (auto index = PinIndex + 1; index != PinCount; ++index) {
+                    reducer->iters[index] -= saved_len;
+                }
+            }
         }
 
         /// move the next code point and place it into the remaining space
