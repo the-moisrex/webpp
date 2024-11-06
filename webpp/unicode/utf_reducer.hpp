@@ -539,6 +539,7 @@ namespace webpp::unicode {
                 if (iter() + rep_len >= reducer->endptr) {
                     reducer->states[PinIndex]      = state;
                     reducer->code_points[PinIndex] = inp_code_point;
+                    reducer->required_extra_units  = (iter() + rep_len) - reducer->endptr;
                 } else {
                     auto iter_cpy = istl::deref(iter());
 
@@ -557,7 +558,7 @@ namespace webpp::unicode {
             // fill the gaps
             auto cur = istl::deref(iter());
             stl::advance(cur, required_length_of<unit_type, difference_type>(*cur));
-            auto rep = cur;
+            auto                  rep       = cur;
             difference_type const saved_len = -static_cast<difference_type>(state());
             stl::advance(cur, saved_len);
             assert(cur <= reducer->endptr);
@@ -735,6 +736,7 @@ namespace webpp::unicode {
         [[no_unique_address]] if_not_utf32<stl::array<iterator, PinCount>>         iters;
         [[no_unique_address]] if_not_utf32<stl::array<stl::int_fast8_t, PinCount>> states{};
         [[no_unique_address]] if_not_utf32<stl::array<value_type, PinCount>>       code_points;
+        [[no_unique_address]] if_not_utf32<difference_type>                        required_extra_units{};
 
         template <stl::size_t Index>
         using pin_type_of = pin_type<Index, PinCount, IterT, CodePointT>;
@@ -901,7 +903,7 @@ namespace webpp::unicode {
                     len -= static_cast<difference_type>(state);
                 }
                 assert(len >= 0);
-                return len;
+                return len - required_extra_units;
             } else {
                 return 0;
             }
