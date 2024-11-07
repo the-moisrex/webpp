@@ -252,29 +252,6 @@ namespace webpp::unicode {
             return *this;
         }
 
-        constexpr pin_type& operator=(const_pin_t const& other) noexcept {
-            assert(other.iter() >= iter());
-            if constexpr (UTF32<unit_type>) {
-                ptr = other.iter();
-            } else {
-                // this is not a copy assignment operator, it's a pin act.
-                auto const cur_state = state();
-                if (cur_state < 0) {
-                    while (iter() < other.iter()) {
-                        goto_next_code_point();
-                        unchecked::next_char(iter());
-                    }
-                } else if (cur_state > 0) {
-                    fill_right();
-                    unchecked::append(iter(), reducer->code_points[PinIndex]);
-                    reducer->states[PinIndex] = 0;
-                }
-                reducer->iters[PinIndex] = other.iter();
-            }
-            test_state_correctness();
-            return *this;
-        }
-
         /// Pin Act: Forward
         constexpr pin_type& operator++() noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
@@ -357,11 +334,31 @@ namespace webpp::unicode {
             return iter() <=> other.iter();
         }
 
+        constexpr pin_type& operator=(const_pin_t const& other) noexcept(is_nothrow) {
+            operator=(other.iter());
+            return *this;
+        }
+
         constexpr pin_type& operator=(iterator other) noexcept(is_nothrow) {
-            if constexpr (!UTF32<unit_type>) {
-                assert(state() == 0);
+            assert(other >= iter());
+            if constexpr (UTF32<unit_type>) {
+                ptr = other;
+            } else {
+                auto const cur_state = state();
+                if (cur_state < 0) {
+                    while (iter() < other) {
+                        goto_next_code_point();
+                        unchecked::next_char(iter());
+                    }
+                } else if (cur_state > 0) {
+                    fill_right();
+                    auto iter_copy = istl::deref(iter());
+                    unchecked::append(iter_copy, reducer->code_points[PinIndex]);
+                    reducer->states[PinIndex] = 0;
+                }
+                reducer->iters[PinIndex] = other;
             }
-            iter() = other;
+            test_state_correctness();
             return *this;
         }
 
@@ -534,6 +531,7 @@ namespace webpp::unicode {
                 stl::int_fast8_t const state = cp_len - rep_len;
 
                 assert(rep_len >= cp_len);
+                assert(reducer->required_extra_units == 0);
 
                 // we'll be writing past the end if this happens
                 if (iter() + rep_len >= reducer->endptr) {

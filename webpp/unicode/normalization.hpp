@@ -607,8 +607,8 @@ namespace webpp::unicode {
                 prev_ccc    = ccc;
                 (++rep_pin) = cp2;
             }
-            starter_pin.idle_set(cp1);
-            starter_pin.reduce();
+            // starter_pin.span_set(cp1, cp2_pin - starter_pin);
+            starter_pin.spillover_set(cp1);
         }
         reducer.reduce();
         reducer.set_end(rep_pin);
