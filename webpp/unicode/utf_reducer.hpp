@@ -66,6 +66,7 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr value_type operator*() noexcept(is_nothrow) {
+            assert(is_code_unit_start(*iter()));
             if constexpr (UTF32<unit_type>) {
                 return *iter();
             } else {
@@ -341,6 +342,7 @@ namespace webpp::unicode {
 
         constexpr pin_type& operator=(iterator other) noexcept(is_nothrow) {
             assert(other >= iter());
+            // assert(is_code_unit_start(*other));
             if constexpr (UTF32<unit_type>) {
                 ptr = other;
             } else {
@@ -350,13 +352,17 @@ namespace webpp::unicode {
                         goto_next_code_point();
                         unchecked::next_char(iter());
                     }
+                    assert(iter() == other);
                 } else if (cur_state > 0) {
                     fill_right();
                     auto iter_copy = istl::deref(iter());
                     unchecked::append(iter_copy, reducer->code_points[PinIndex]);
                     reducer->states[PinIndex] = 0;
+                    iter()                    = other;
+                    // todo: this is not complete
+                } else [[likely]] {
+                    iter() = other;
                 }
-                reducer->iters[PinIndex] = other;
             }
             test_state_correctness();
             return *this;

@@ -5920,6 +5920,14 @@ TEST(Unicode, Compose) {
     // clang-format on
 }
 
+TEST(Unicode, CanonicalComposeSpecial) {
+    if constexpr (enable_utf8_composition_tests) {
+        std::u8string str8 = u8"⋬⋬⋬";
+        webpp::unicode::canonical_compose(str8);
+        EXPECT_EQ(str8, u8"⋬⋬⋬");
+    }
+}
+
 TEST(Unicode, ComposeStr) {
     using std::u32string;
     using std::u8string;
