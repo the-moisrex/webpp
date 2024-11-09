@@ -13,6 +13,7 @@ import {
     updateProgressBar,
     utf32To8,
 } from "./utils.mjs";
+import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 
 export const fileUrl =
     "https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt";
@@ -299,6 +300,14 @@ export const getCanonicalDecompositions = async (onlyValidMappings = false, acti
         lastMapped: table.lastMapped,
     };
 };
+
+/// Recursively apply the decompositions
+export const getRecursiveCanonicalDecompositions = async () => {
+    const exclusions = await getFullCompositionExclusions();
+    return (await getCanonicalDecompositions(true, (codePoint, {mappedTo}) => {
+        return exclusions[Number(codePoint)] === undefined;
+    }));
+}
 
 export const extractedCanonicalDecompositions = async (data = null) => {
     if (data === null || data === undefined) {
@@ -690,6 +699,31 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
         case "replace-size": {
             const maps = (await getCanonicalDecompositions()).data;
+            let isThereAny = false;
+            for (let codePoint in maps) {
+                codePoint = parseInt(codePoint);
+                if (codePoint === undefined || isNaN(codePoint) || !Number.isSafeInteger(codePoint)) {
+                    continue;
+                }
+                let [cp1, cp2] = maps[codePoint];
+                if (cp2 === undefined) {
+                    continue;
+                }
+                cp1 = utf32To8(cp1);
+                cp2 = utf32To8(cp2);
+                codePoint = utf32To8(codePoint);
+                const cond = (cp1.length + cp2.length) < codePoint.length;
+                isThereAny = !isThereAny ? cond : isThereAny;
+                console.log(cond, `${codePoint.length} <= ${cp1.length} + ${cp2.length} `, cp1, cp2, codePoint);
+            }
+            console.log(
+                "Found any pair that makes the string longer?",
+                isThereAny,
+            );
+            break;
+        }
+        case "replace-size-recursive": {
+            const maps = (await getRecursiveCanonicalDecompositions()).data;
             let isThereAny = false;
             for (let codePoint in maps) {
                 codePoint = parseInt(codePoint);
