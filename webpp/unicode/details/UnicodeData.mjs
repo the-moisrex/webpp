@@ -693,13 +693,19 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             let isThereAny = false;
             for (let codePoint in maps) {
                 codePoint = parseInt(codePoint);
+                if (codePoint === undefined || isNaN(codePoint) || !Number.isSafeInteger(codePoint)) {
+                    continue;
+                }
                 let [cp1, cp2] = maps[codePoint];
+                if (cp2 === undefined) {
+                    continue;
+                }
                 cp1 = utf32To8(cp1);
                 cp2 = utf32To8(cp2);
                 codePoint = utf32To8(codePoint);
-                const cond = cp1.length + cp2.length < codePoint.length;
+                const cond = (cp1.length + cp2.length) < codePoint.length;
                 isThereAny = !isThereAny ? cond : isThereAny;
-                console.log(cond, cp1, cp2, codePoint);
+                console.log(cond, `${codePoint.length} <= ${cp1.length} + ${cp2.length} `, cp1, cp2, codePoint);
             }
             console.log(
                 "Found any pair that makes the string longer?",
