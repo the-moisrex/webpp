@@ -582,11 +582,11 @@ namespace webpp::unicode {
       Iter& ptr,
       EIter end)
       noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
-        using reducer_type = utf_reducer<2, Iter>;
+        using reducer_type = utf_reducer<4, Iter>;
 
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
-        auto [starter_pin, rep_pin] = reducer.pins();
-        auto [cp1_pin, cp2_pin]     = reducer.template new_const_pins<2>();
+        auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
+        // auto [cp1_pin, cp2_pin]     = reducer.template new_const_pins<2>();
         for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin.iter(); // don't copy the state
             cp2_pin     = cp1_pin;
