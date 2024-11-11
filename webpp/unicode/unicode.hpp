@@ -127,48 +127,6 @@ namespace webpp::unicode {
         return code_point <= max_legal_utf32<u32>;
     }
 
-    /// utf8_length_from_utf32
-    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr SizeT utf8_length_from_utf32(CharT const code_point) noexcept {
-        if (code_point < 0x80U) {
-            return 1U;
-        }
-        if (code_point < 0x800U) {
-            return 2U;
-        }
-        if (code_point >= 0xDC00U && code_point < 0xE000U) {
-            return 0U;
-        }
-        if (code_point >= 0xD800U && code_point < 0xDC00U) {
-            return 4U;
-        }
-        return 3U;
-    }
-
-    /// utf16_length_from_utf32
-    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr SizeT utf16_length_from_utf32(CharT const code_point) noexcept {
-        if (code_point > 0xFFFFU) {
-            return 2U;
-        }
-        return 1U;
-    }
-
-    /// utf_length_from_utf32
-    template <typename T, stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr SizeT utf_length_from_utf32(CharT const code_point) noexcept {
-        if constexpr (UTF32<T>) {
-            return 1;
-        } else if constexpr (UTF16<T>) {
-            return utf16_length_from_utf32<SizeT>(code_point);
-        } else if constexpr (UTF8<T>) {
-            return utf8_length_from_utf32<SizeT>(code_point);
-        } else {
-            static_assert_false(T, "Invalid return type specified.");
-            return 0;
-        }
-    }
-
     /**
      * Check whether a Unicode code point is in a valid range.
      *
@@ -440,6 +398,99 @@ namespace webpp::unicode {
             return static_cast<SizeT>(details::utf8_skip<value_type>[value]);
         } else {
             return 1U;
+        }
+    }
+
+    /// utf8_length_from_utf32
+    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf8_length_from_utf32(CharT const code_point) noexcept {
+        if (code_point < 0x80U) {
+            return 1U;
+        }
+        if (code_point < 0x800U) {
+            return 2U;
+        }
+        if (code_point >= 0xDC00U && code_point < 0xE000U) {
+            return 0U;
+        }
+        if (code_point >= 0xD800U && code_point < 0xDC00U) {
+            return 4U;
+        }
+        return 3U;
+    }
+
+    /// utf16_length_from_utf32
+    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf16_length_from_utf32(CharT const code_point) noexcept {
+        if (code_point > 0xFFFFU) {
+            return 2U;
+        }
+        return 1U;
+    }
+
+    /// utf_length_from_utf32
+    template <typename T, stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf_length_from_utf32(CharT const code_point) noexcept {
+        if constexpr (UTF32<T>) {
+            return 1;
+        } else if constexpr (UTF16<T>) {
+            return utf16_length_from_utf32<SizeT>(code_point);
+        } else if constexpr (UTF8<T>) {
+            return utf8_length_from_utf32<SizeT>(code_point);
+        } else {
+            static_assert_false(T, "Invalid return type specified.");
+            return 0;
+        }
+    }
+
+    template <UTF8 T, stl::integral SizeT = stl::size_t, UTF16 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf16_length_from_utf8(CharT const code_unit) noexcept {
+        SizeT length = 0U;
+
+        // -65 is 0b10111111, anything larger in two-complement's should start a new code point
+        if (static_cast<stl::int8_t>(code_unit) > static_cast<stl::int8_t>(0b1011'1111)) {
+            ++length;
+        }
+        if (static_cast<T>(code_unit) >= 240) {
+            ++length;
+        }
+        return length;
+    }
+
+    template <UTF8 T, stl::integral SizeT = stl::size_t, UTF16 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf8_length_from_utf16(CharT const code_unit) noexcept {
+        if (is_surrogate(code_unit)) {
+            // surrogate pairs are always 4 bytes.
+            return static_cast<SizeT>(4);
+        }
+        return utf8_length_from_utf32<SizeT>(static_cast<char32_t>(code_unit));
+    }
+
+    /// Count the required length to store this code unit
+    /// Attention: this is a code unit, not a code point
+    template <typename T, stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf_length_from(CharT const code_unit) noexcept {
+        if constexpr (UTF32<T>) {
+            return 1;
+        } else if constexpr (UTF16<T>) {
+            if constexpr (UTF32<CharT>) {
+                return utf16_length_from_utf32<SizeT>(code_unit);
+            } else if constexpr (UTF8<T>) {
+                return utf16_length_from_utf8<SizeT>(code_unit);
+            } else {
+                return required_length_of<SizeT>(code_unit); // both are UTF-16
+            }
+        } else if constexpr (UTF8<T>) {
+            if constexpr (UTF32<CharT>) {
+                return utf8_length_from_utf32<SizeT>(code_unit);
+            } else if constexpr (UTF16<CharT>) {
+                return utf8_length_from_utf16<SizeT>(code_unit);
+            } else {
+                return required_length_of<SizeT>(code_unit); // both are UTF-8
+            }
+        } else {
+            static_assert_false(T, "Invalid return type specified.");
+            return 0;
         }
     }
 
