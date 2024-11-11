@@ -610,7 +610,6 @@ namespace webpp::unicode {
             // starter_pin.span_set(cp1, cp2_pin - starter_pin);
             starter_pin.spillover_set(cp1);
         }
-        reducer.reduce();
         reducer.set_end(rep_pin);
         return static_cast<SizeT>(reducer.size());
     }
