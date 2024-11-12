@@ -302,6 +302,49 @@ namespace webpp::unicode {
             return *this;
         }
 
+      private:
+        constexpr void move_iterators(iterator old_iter, difference_type const diff) noexcept {
+            auto const base_iter = iter();
+            stl::advance(reducer->newend, diff);
+            *reducer->newend = static_cast<unit_type>('\0');
+            for (auto index = PinIndex + 1; index < PinCount; ++index) {
+                auto& cur_iter = reducer->iters[index];
+                if (cur_iter <= base_iter) {
+                    continue;
+                }
+                if (cur_iter <= old_iter) {
+                    cur_iter = base_iter;
+                } else {
+                    stl::advance(cur_iter, diff);
+                }
+            }
+        }
+
+        constexpr void set_diff(value_type inp_code_point, stl::int_fast8_t const diff) noexcept(is_nothrow) {
+            assert(diff >= 0);
+            if constexpr (UTF32<unit_type>) {
+                *iter() = inp_code_point;
+            } else {
+                assert(iter() != reducer->endptr);
+
+                auto iter_cpy = istl::deref(iter());
+                unchecked::append(iter_cpy, inp_code_point);
+
+                // state: filled
+                if (diff == 0) {
+                    return;
+                }
+
+                // state: partial or deleted
+                {
+                    stl::copy(stl::next(iter_cpy, diff), reducer->newend, iter_cpy);
+                    move_iterators(iter_cpy, -diff);
+                }
+                test_state_correctness();
+            }
+        }
+
+      public:
         /// Pin Act: Set
         constexpr void set(iterator other) noexcept(is_nothrow) {
             if constexpr (stl::is_pointer_v<iterator>) {
@@ -315,7 +358,8 @@ namespace webpp::unicode {
                 auto const cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(*other);
 
-                set(*other, cur_len - new_len);
+                assert(cur_len >= new_len);
+                set_diff(*other, cur_len - new_len);
             }
         }
 
@@ -329,7 +373,8 @@ namespace webpp::unicode {
                 auto const cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
 
-                set(inp_code_point, cur_len - new_len);
+                assert(cur_len >= new_len);
+                set_diff(inp_code_point, cur_len - new_len);
             }
         }
 
@@ -340,22 +385,9 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
-                assert(iter() != reducer->endptr);
-
-                auto iter_cpy = istl::deref(iter());
-                unchecked::append(iter_cpy, inp_code_point);
-
-                // state: filled
-                if (code_unit_len == 0) {
-                    return;
-                }
-
-                // state: partial or deleted
-                {
-                    stl::copy(stl::next(iter_cpy, code_unit_len), reducer->newend, iter_cpy);
-                    std::advance(reducer->newend, -code_unit_len);
-                }
-                test_state_correctness();
+                auto const cp_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
+                difference_type const diff = code_unit_len - cp_len;
+                set_diff(inp_code_point, diff);
             }
         }
 
@@ -376,7 +408,8 @@ namespace webpp::unicode {
                 auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const rep_len = required_code_units_of_len(cp_len);
 
-                set(inp_code_point, rep_len);
+                assert(rep_len >= cp_len);
+                set_diff(inp_code_point, rep_len - cp_len);
             }
         }
     };
