@@ -586,12 +586,13 @@ namespace webpp::unicode {
 
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
         auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
-        // auto [cp1_pin, cp2_pin]     = reducer.template new_const_pins<2>();
         for (; cp1_pin != reducer.end(); ++cp1_pin, ++rep_pin) {
-            starter_pin = rep_pin.iter(); // don't copy the state
+            starter_pin = rep_pin;
             cp2_pin     = cp1_pin;
             ++cp2_pin;
             auto cp1 = *cp1_pin;
+            auto const             cp1_orig = cp1;
+            utf_range_marker<Iter> hole_marker;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -599,6 +600,7 @@ namespace webpp::unicode {
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
                     cp1 = replaced_cp;
+                    hole_marker.mark(cp2_pin.iter());
                     continue;
                 }
                 if (ccc == 0) [[likely]] {
@@ -607,8 +609,10 @@ namespace webpp::unicode {
                 prev_ccc    = ccc;
                 (++rep_pin) = cp2;
             }
-            // starter_pin.span_set(cp1, cp2_pin - starter_pin);
-            starter_pin.set(cp1, cp2_pin - starter_pin);
+            if (cp1 != cp1_orig) {
+                // starter_pin.set(cp1, cp2_pin - starter_pin);
+                starter_pin.set(cp1, hole_marker);
+            }
         }
         reducer.set_end(rep_pin);
         return static_cast<SizeT>(reducer.size());

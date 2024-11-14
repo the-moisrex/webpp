@@ -12,6 +12,78 @@
 
 namespace webpp::unicode {
 
+    /**
+     * Mark a range of UTF-8 or UTF-16 code units
+     * @tparam IterT Iterator Type
+     */
+    template <typename IterT = char8_t*>
+    struct utf_range_marker {
+        static_assert(stl::is_default_constructible_v<IterT>, "Iterator is not default constructible");
+
+        using iter_traits     = stl::iterator_traits<IterT>;
+        using value_type      = typename iter_traits::value_type;
+        using difference_type = typename iter_traits::difference_type;
+
+      private:
+        IterT beginp{};
+        IterT endp{};
+
+      public:
+        constexpr utf_range_marker() noexcept                          = default;
+        constexpr utf_range_marker(utf_range_marker const&)            = delete;
+        constexpr utf_range_marker(utf_range_marker&&)                 = delete;
+        constexpr utf_range_marker& operator=(utf_range_marker const&) = delete;
+        constexpr utf_range_marker& operator=(utf_range_marker&&)      = delete;
+        constexpr ~utf_range_marker() noexcept                         = default;
+
+        constexpr void mark(IterT inp_beg, IterT inp_end) noexcept {
+            beginp = inp_beg;
+            endp   = inp_end;
+        }
+
+        constexpr void mark(IterT inp_beg) noexcept {
+            beginp = inp_beg;
+            endp   = stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg));
+        }
+
+        [[nodiscard]] constexpr IterT begin() const noexcept {
+            return beginp;
+        }
+
+        [[nodiscard]] constexpr IterT end() const noexcept {
+            return endp;
+        }
+
+        [[nodiscard]] constexpr difference_type size() const noexcept {
+            return endp - beginp;
+        }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return beginp == endp;
+        }
+
+        /// Move the hole
+        constexpr void move(difference_type diff) const noexcept {
+            // it's most-likely a bug somewhere in the code if diff is zero
+            assert(diff != 0);
+
+            if (diff > 0) {
+                stl::shift_left(beginp, endp, -diff);
+            } else if (diff > 0) [[likely]] {
+                stl::shift_right(beginp, endp, diff);
+            }
+        }
+    };
+
+    /// We don't need UTF-32 ranges, so we disable it
+    template <typename IterT>
+        requires(UTF32<typename stl::iterator_traits<IterT>::value_type>)
+    struct utf_range_marker<IterT> {
+        constexpr void mark([[maybe_unused]] auto&&... args) noexcept {
+            // do nothing
+        }
+    };
+
     template <stl::size_t PinCount = 1, typename IterT = char8_t*, UTF32 CodePointT = char32_t>
     struct utf_reducer;
 
@@ -305,8 +377,10 @@ namespace webpp::unicode {
       private:
         constexpr void move_iterators(iterator old_iter, difference_type const diff) noexcept {
             auto const base_iter = iter();
-            stl::advance(reducer->newend, diff);
-            *reducer->newend = static_cast<unit_type>('\0');
+            if (diff != 0) {
+                stl::advance(reducer->newend, diff);
+                *reducer->newend = static_cast<unit_type>('\0');
+            }
             for (auto index = PinIndex + 1; index < PinCount; ++index) {
                 auto& cur_iter = reducer->iters[index];
                 if (cur_iter <= base_iter) {
@@ -318,6 +392,11 @@ namespace webpp::unicode {
                     stl::advance(cur_iter, diff);
                 }
             }
+        }
+
+        constexpr void shift_range(iterator begin, iterator end, difference_type diff) noexcept(is_nothrow) {
+            stl::shift_left(begin, end, diff);
+            move_iterators(begin, -diff);
         }
 
         constexpr void set_diff(value_type inp_code_point, stl::int_fast8_t const diff) noexcept(is_nothrow) {
@@ -332,13 +411,13 @@ namespace webpp::unicode {
 
                 // state: filled
                 if (diff == 0) {
+                    move_iterators(iter_cpy, 0);
                     return;
                 }
 
                 // state: partial or deleted
                 {
-                    stl::copy(stl::next(iter_cpy, diff), reducer->newend, iter_cpy);
-                    move_iterators(iter_cpy, -diff);
+                    shift_range(iter_cpy, reducer->endptr, static_cast<difference_type>(diff));
                 }
                 test_state_correctness();
             }
@@ -373,6 +452,33 @@ namespace webpp::unicode {
                 auto const cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
 
+                assert(cur_len >= new_len);
+                set_diff(inp_code_point, cur_len - new_len);
+            }
+        }
+
+        /// Pin Act: Set
+        constexpr void set(value_type inp_code_point, [[maybe_unused]] utf_range_marker<iterator> const& hole)
+          noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                *iter() = inp_code_point;
+            } else {
+                assert(iter() != reducer->endptr);
+                assert(reducer->beg <= hole.begin());
+                assert(reducer->endptr >= hole.end());
+
+                auto       cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
+                auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
+
+                if (new_len > cur_len) {
+                    assert(!hole.empty());
+
+                    // move the hole
+                    hole.move(iter() + cur_len - hole.begin());
+                    cur_len += hole.size();
+                    // todo: move the pin's iterators too
+                    move_iterators(stl::next(iter(), new_len), cur_len - new_len);
+                }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);
             }

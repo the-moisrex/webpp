@@ -5925,6 +5925,13 @@ TEST(Unicode, CanonicalComposeSpecial) {
         std::u8string str8 = u8"⋬⋬⋬";
         webpp::unicode::canonical_compose(str8);
         EXPECT_EQ(str8, u8"⋬⋬⋬");
+
+        EXPECT_EQ(U"Ḍ̇", webpp::unicode::toNFC<std::u32string>(U"Ḍ̇"));
+        EXPECT_EQ(u8"Ḍ̇", webpp::unicode::toNFC<std::u8string>(u8"Ḍ̇"));
+
+        std::u8string const      source8 = u8"Ḋ";
+        std::u8string_view const nfc8    = u8"Ḋ";
+        EXPECT_EQ(nfc8, webpp::unicode::toNFC(source8));
     }
 }
 
