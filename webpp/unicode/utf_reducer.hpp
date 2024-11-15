@@ -411,7 +411,6 @@ namespace webpp::unicode {
 
                 // state: filled
                 if (diff == 0) {
-                    move_iterators(iter_cpy, 0);
                     return;
                 }
 
@@ -474,10 +473,18 @@ namespace webpp::unicode {
                     assert(!hole.empty());
 
                     // move the hole
-                    hole.move(iter() + cur_len - hole.begin());
+                    auto const old_loc = hole.begin();
+                    auto const new_loc = iter() + cur_len;
+                    auto const diff    = new_loc - old_loc;
+                    for (auto& cur : reducer->iters) {
+                        if (cur <= new_loc && cur > iter()) {
+                            cur = iter();
+                        } else if (cur > hole.begin() && cur <= hole.end()) {
+                            cur = new_loc;
+                        }
+                    }
+                    hole.move(diff);
                     cur_len += hole.size();
-                    // todo: move the pin's iterators too
-                    move_iterators(stl::next(iter(), new_len), cur_len - new_len);
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);

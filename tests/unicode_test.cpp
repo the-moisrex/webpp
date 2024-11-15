@@ -5922,6 +5922,7 @@ TEST(Unicode, Compose) {
 
 TEST(Unicode, CanonicalComposeSpecial) {
     if constexpr (enable_utf8_composition_tests) {
+        EXPECT_EQ(U"⋬⋬⋬", webpp::unicode::toNFC<std::u32string>(U"⋬⋬⋬"));
         std::u8string str8 = u8"⋬⋬⋬";
         webpp::unicode::canonical_compose(str8);
         EXPECT_EQ(str8, u8"⋬⋬⋬");
