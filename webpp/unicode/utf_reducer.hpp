@@ -67,10 +67,10 @@ namespace webpp::unicode {
             // it's most-likely a bug somewhere in the code if diff is zero
             assert(diff != 0);
 
-            if (diff > 0) {
-                stl::shift_left(beginp, endp, -diff);
+            if (diff < 0) {
+                stl::shift_right(beginp - diff, endp - diff, -diff);
             } else if (diff > 0) [[likely]] {
-                stl::shift_right(beginp, endp, diff);
+                stl::shift_left(beginp + diff, endp + diff, diff);
             }
         }
     };
@@ -480,7 +480,9 @@ namespace webpp::unicode {
                         if (cur <= new_loc && cur > iter()) {
                             cur = iter();
                         } else if (cur > hole.begin() && cur <= hole.end()) {
-                            cur = new_loc;
+                            cur = hole.end();
+                            assert(hole.end() != reducer->endptr);
+                            assert(hole.end() != reducer->newend);
                         }
                     }
                     hole.move(diff);
