@@ -63,14 +63,18 @@ namespace webpp::unicode {
         }
 
         /// Move the hole
-        constexpr void move(difference_type diff) const noexcept {
+        constexpr void move(difference_type diff) noexcept {
             // it's most-likely a bug somewhere in the code if diff is zero
             assert(diff != 0);
 
             if (diff < 0) {
                 stl::shift_right(beginp - diff, endp - diff, -diff);
+                beginp += diff;
+                endp   += diff;
             } else if (diff > 0) [[likely]] {
                 stl::shift_left(beginp + diff, endp + diff, diff);
+                beginp -= diff;
+                endp   -= diff;
             }
         }
     };
@@ -457,7 +461,7 @@ namespace webpp::unicode {
         }
 
         /// Pin Act: Set
-        constexpr void set(value_type inp_code_point, [[maybe_unused]] utf_range_marker<iterator> const& hole)
+        constexpr void set(value_type inp_code_point, [[maybe_unused]] utf_range_marker<iterator>& hole)
           noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
@@ -487,6 +491,9 @@ namespace webpp::unicode {
                     }
                     hole.move(diff);
                     cur_len += hole.size();
+
+                    // storing the length of the hole, inside the hole itself.
+                    *hole.begin() = unicode::utf_leading_code_units<unit_type>[cur_len];
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);

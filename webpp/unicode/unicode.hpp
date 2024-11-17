@@ -10,6 +10,7 @@
 #include "./unicode_concepts.hpp"
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 
 // NOLINTBEGIN(*-magic-numbers)
@@ -73,6 +74,44 @@ namespace webpp::unicode {
     static constexpr int  half_shift = 10; // used for shifting by 10 bits
     static constexpr auto half_base  = 0x001'0000UL;
     static constexpr auto half_mask  = 0x3FFUL;
+
+
+    /// utf8_leading_code_units[N] gives you the start of code unit that is required to
+    /// be followed by N other code units.
+    template <UTF8 T = char8_t>
+    static constexpr stl::array<T, 9UL> utf8_leading_code_units{
+      0,           // should be invalid
+      0b0,         // length: 1 unit
+      0b1100'0000, // length: 2 units
+      0b1110'0000, // length: 3 units
+      0b1111'0000, // length: 4 units
+      0b1111'1000, // length: 5 units
+      0b1111'1100, // length: 6 units
+      0,           // Cannot happen
+      0,           // Cannot happen
+    };
+
+    /// utf16_leading_code_units[N] gives you the start of code unit that is required to
+    /// be followed by N other code units.
+    template <UTF16 T = char16_t>
+    static constexpr stl::array<T, 3UL> utf16_leading_code_units{
+      0,                     // should not be possible
+      0b1101'1000'0000'0000, // length: 1 unit
+      0b1101'1100'0000'0000, // length: 2 units
+    };
+
+    /// Automatically deduce the type
+    template <typename T>
+    static constexpr auto utf_leading_code_units = [] consteval {
+        if constexpr (UTF8<T>) {
+            return utf8_leading_code_units<T>;
+        } else if constexpr (UTF16<T>) {
+            return utf16_leading_code_units<T>;
+        } else {
+            static_assert_false(T, "UTF-32 Does not make sense; you might have a bug.");
+            return 1;
+        }
+    }();
 
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
