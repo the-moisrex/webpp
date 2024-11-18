@@ -480,6 +480,7 @@ namespace webpp::unicode {
                     auto const old_loc = hole.begin();
                     auto const new_loc = iter() + cur_len;
                     auto const diff    = new_loc - old_loc;
+                    assert(iter() < hole.begin());
                     for (auto& cur : reducer->iters) {
                         if (cur <= new_loc && cur > iter()) {
                             cur = iter();
@@ -493,7 +494,10 @@ namespace webpp::unicode {
                     cur_len += hole.size();
 
                     // storing the length of the hole, inside the hole itself.
-                    *hole.begin() = unicode::utf_leading_code_units<unit_type>[cur_len];
+                    auto cur_diff = hole.size();
+                    for (auto& cur : hole) {
+                        cur = unicode::utf_leading_code_units<unit_type>[cur_diff--];
+                    }
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);
