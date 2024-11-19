@@ -68,13 +68,13 @@ namespace webpp::unicode {
             assert(diff != 0);
 
             if (diff < 0) {
-                stl::shift_right(beginp - diff, endp - diff, -diff);
-                beginp += diff;
-                endp   += diff;
-            } else if (diff > 0) [[likely]] {
-                stl::shift_left(beginp + diff, endp + diff, diff);
+                stl::shift_right(beginp + diff, endp, -diff);
                 beginp -= diff;
                 endp   -= diff;
+            } else if (diff > 0) [[likely]] {
+                stl::shift_left(beginp, endp + diff, diff);
+                beginp += diff;
+                endp   += diff;
             }
         }
     };
@@ -419,9 +419,8 @@ namespace webpp::unicode {
                 }
 
                 // state: partial or deleted
-                {
-                    shift_range(iter_cpy, reducer->endptr, static_cast<difference_type>(diff));
-                }
+                shift_range(iter_cpy, reducer->newend, static_cast<difference_type>(diff));
+
                 test_state_correctness();
             }
         }
@@ -494,9 +493,10 @@ namespace webpp::unicode {
                     cur_len += hole.size();
 
                     // storing the length of the hole, inside the hole itself.
+                    // todo: optimize this:
                     auto cur_diff = hole.size();
-                    for (auto& cur : hole) {
-                        cur = unicode::utf_leading_code_units<unit_type>[cur_diff--];
+                    for (auto& unit : hole) {
+                        unit = unicode::utf_leading_code_units<unit_type>[cur_diff--];
                     }
                 }
                 assert(cur_len >= new_len);
