@@ -96,8 +96,8 @@ namespace webpp::unicode {
     template <UTF16 T = char16_t>
     static constexpr stl::array<T, 3UL> utf16_leading_code_units{
       0,                     // should not be possible
-      0b1101'1000'0000'0000, // length: 1 unit
-      0b1101'1100'0000'0000, // length: 2 units
+      0b0,                   // length: 1 unit
+      0b1101'1000'0000'0000, // length: 2 units
     };
 
     /// Automatically deduce the type

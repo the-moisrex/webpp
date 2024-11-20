@@ -5920,6 +5920,26 @@ TEST(Unicode, Compose) {
     // clang-format on
 }
 
+TEST(Unicode, UTFLeadingCodeUnitsTest) {
+    std::size_t index = 0;
+    for (auto const unit : webpp::unicode::utf8_leading_code_units<char8_t>) {
+        EXPECT_TRUE(webpp::unicode::is_code_unit_start(unit));
+        if (index != 0 && index <= 6) {
+            EXPECT_EQ(webpp::unicode::required_length_of(unit), index);
+        }
+        ++index;
+    }
+
+    index = 0;
+    for (auto const unit : webpp::unicode::utf16_leading_code_units<char16_t>) {
+        EXPECT_TRUE(webpp::unicode::is_code_unit_start(unit)) << static_cast<std::size_t>(unit);
+        if (index != 0) {
+            EXPECT_EQ(webpp::unicode::required_length_of(unit), index);
+        }
+        ++index;
+    }
+}
+
 TEST(Unicode, CanonicalComposeSpecial) {
     if constexpr (enable_utf8_composition_tests) {
         EXPECT_EQ(U"⋬⋬⋬", webpp::unicode::toNFC<std::u32string>(U"⋬⋬⋬"));

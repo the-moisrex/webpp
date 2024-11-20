@@ -63,16 +63,27 @@ namespace webpp::unicode {
         }
 
         /// Move the hole
-        constexpr void move(difference_type diff) noexcept {
+        template <typename IterableT>
+        constexpr void move(difference_type diff, IterableT& iters) noexcept {
             // it's most-likely a bug somewhere in the code if diff is zero
             assert(diff != 0);
 
             if (diff < 0) {
                 stl::shift_right(beginp + diff, endp, -diff);
+                for (auto& cur : iters) {
+                    if (cur >= (beginp + diff) && cur <= endp) {
+                        cur -= diff;
+                    }
+                }
                 beginp += diff;
                 endp   += diff;
             } else if (diff > 0) [[likely]] {
                 stl::shift_left(beginp, endp + diff, diff);
+                for (auto& cur : iters) {
+                    if (cur >= beginp && cur <= (endp + diff)) {
+                        cur -= diff;
+                    }
+                }
                 beginp += diff;
                 endp   += diff;
             }
@@ -480,16 +491,11 @@ namespace webpp::unicode {
                     auto const new_loc = iter() + cur_len;
                     auto const diff    = new_loc - old_loc;
                     assert(iter() < hole.begin());
-                    for (auto& cur : reducer->iters) {
-                        if (cur <= new_loc && cur > iter()) {
-                            cur = iter();
-                        } else if (cur > hole.begin() && cur <= hole.end()) {
-                            cur = hole.end();
-                            assert(hole.end() != reducer->endptr);
-                            assert(hole.end() != reducer->newend);
-                        }
-                    }
-                    hole.move(diff);
+                    hole.move(diff, reducer->iters);
+                    assert(hole.end() < reducer->endptr);
+                    assert(hole.end() < reducer->newend);
+                    assert(hole.begin() < reducer->endptr);
+                    assert(hole.begin() < reducer->newend);
                     cur_len += hole.size();
 
                     // storing the length of the hole, inside the hole itself.
