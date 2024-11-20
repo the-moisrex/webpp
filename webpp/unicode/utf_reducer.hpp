@@ -69,8 +69,8 @@ namespace webpp::unicode {
 
             if (diff < 0) {
                 stl::shift_right(beginp + diff, endp, -diff);
-                beginp -= diff;
-                endp   -= diff;
+                beginp += diff;
+                endp   += diff;
             } else if (diff > 0) [[likely]] {
                 stl::shift_left(beginp, endp + diff, diff);
                 beginp += diff;
