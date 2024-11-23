@@ -39,11 +39,13 @@ namespace webpp::unicode {
         constexpr void mark(IterT inp_beg, IterT inp_end) noexcept {
             beginp = inp_beg;
             endp   = inp_end;
+            assert(beginp != endp);
         }
 
         constexpr void mark(IterT inp_beg) noexcept {
             beginp = inp_beg;
             endp   = stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg));
+            assert(beginp != endp);
         }
 
         [[nodiscard]] constexpr IterT begin() const noexcept {
@@ -68,24 +70,25 @@ namespace webpp::unicode {
             // it's most-likely a bug somewhere in the code if diff is zero
             assert(diff != 0);
 
+            auto const length = this->size();
             if (diff < 0) {
-                stl::shift_right(beginp + diff, endp, -diff);
+                stl::shift_right(beginp + diff, endp, length);
                 for (auto& cur : iters) {
                     if (cur >= (beginp + diff) && cur <= endp) {
-                        cur -= diff;
+                        cur += length;
                     }
                 }
-                beginp += diff;
-                endp   += diff;
+                beginp -= length;
+                endp   -= length;
             } else if (diff > 0) [[likely]] {
-                stl::shift_left(beginp, endp + diff, diff);
+                stl::shift_left(beginp, endp + diff, length);
                 for (auto& cur : iters) {
                     if (cur >= beginp && cur <= (endp + diff)) {
-                        cur -= diff;
+                        cur -= length;
                     }
                 }
-                beginp += diff;
-                endp   += diff;
+                beginp += length;
+                endp   += length;
             }
         }
     };
@@ -485,6 +488,7 @@ namespace webpp::unicode {
 
                 if (new_len > cur_len) {
                     assert(!hole.empty());
+                    assert(hole.begin() != hole.end());
 
                     // move the hole
                     auto const old_loc = hole.begin();
