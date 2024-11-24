@@ -17,10 +17,10 @@ namespace webpp::http {
     struct basic_response;
 
     /**
-     * @brief A Router that's is fully customizable at runtime
+     * @brief A Router that is fully customizable at runtime
      *
      * This class will be used directly by the developers using this whole library. So be nice and careful
-     * and user friendly.
+     * and user-friendly.
      */
     template <Traits TraitsType>
     struct basic_dynamic_router : enable_traits<TraitsType>, valve<void> {

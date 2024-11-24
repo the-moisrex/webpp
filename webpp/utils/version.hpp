@@ -153,7 +153,7 @@ namespace webpp {
          * Load the version from string
          * @tparam StrT String-View-Like type
          * @param inp_str the string to load
-         * @return bool, whether or not the parsing of the string value was a success or not.
+         * @return bool, whether the parsing of the string value was a success or not.
          */
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
@@ -228,13 +228,13 @@ namespace webpp {
         }
 
         // Array comparison
-        [[nodiscard]] inline constexpr bool operator==(basic_version const& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(basic_version const& other) const noexcept {
             return std::equal(this->begin(), this->end(), other.begin());
         }
 
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
-        [[nodiscard]] inline constexpr bool operator==(StrT&& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
             if (!other_ver.from_string(stl::forward<StrT>(other))) {
