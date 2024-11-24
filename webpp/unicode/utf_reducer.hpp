@@ -394,20 +394,14 @@ namespace webpp::unicode {
 
       private:
         constexpr void move_iterators(iterator old_iter, difference_type const diff) noexcept {
-            auto const base_iter = iter();
             if (diff != 0) {
                 stl::advance(reducer->newend, diff);
                 *reducer->newend = static_cast<unit_type>('\0');
             }
             for (auto index = PinIndex + 1; index < PinCount; ++index) {
-                auto& cur_iter = reducer->iters[index];
-                if (cur_iter <= base_iter) {
-                    continue;
-                }
-                if (cur_iter <= old_iter) {
-                    cur_iter = base_iter;
-                } else {
-                    stl::advance(cur_iter, diff);
+                auto& cur = reducer->iters[index];
+                if (cur > old_iter) {
+                    stl::advance(cur, diff);
                 }
             }
         }
