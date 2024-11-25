@@ -78,8 +78,8 @@ namespace webpp::unicode {
                         cur += length;
                     }
                 }
-                beginp -= length;
-                endp   -= length;
+                beginp += diff;
+                endp   += diff;
             } else if (diff > 0) [[likely]] {
                 stl::shift_left(beginp, endp + diff, length);
                 for (auto& cur : iters) {
@@ -87,8 +87,8 @@ namespace webpp::unicode {
                         cur -= length;
                     }
                 }
-                beginp += length;
-                endp   += length;
+                beginp -= diff;
+                endp   -= diff;
             }
         }
     };
@@ -407,6 +407,7 @@ namespace webpp::unicode {
         }
 
         constexpr void shift_range(iterator begin, iterator end, difference_type diff) noexcept(is_nothrow) {
+            assert(diff >= 1);
             stl::shift_left(begin, end, diff);
             move_iterators(begin, -diff);
         }
@@ -480,13 +481,16 @@ namespace webpp::unicode {
                 auto       cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
 
+                // Move the hole to the current place in order to make cur_len bigger than the new_len
                 if (new_len > cur_len) {
                     assert(!hole.empty());
                     assert(hole.begin() != hole.end());
 
-                    // move the hole
+                    // Moving the hole:
+                    //   +1 is because we want the hole to be appended to the end of the current code point,
+                    //   not to replace the last code unit of the current code point.
+                    auto const new_loc = iter() + (cur_len + 1);
                     auto const old_loc = hole.begin();
-                    auto const new_loc = iter() + cur_len;
                     auto const diff    = new_loc - old_loc;
                     assert(iter() < hole.begin());
                     hole.move(diff, reducer->iters);
@@ -494,6 +498,7 @@ namespace webpp::unicode {
                     assert(hole.end() < reducer->newend);
                     assert(hole.begin() < reducer->endptr);
                     assert(hole.begin() < reducer->newend);
+                    assert(hole.begin() == stl::next(iter(), cur_len + 1));
                     cur_len += hole.size();
 
                     // storing the length of the hole, inside the hole itself.
