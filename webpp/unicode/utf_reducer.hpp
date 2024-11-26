@@ -486,10 +486,7 @@ namespace webpp::unicode {
                     assert(!hole.empty());
                     assert(hole.begin() != hole.end());
 
-                    // Moving the hole:
-                    //   +1 is because we want the hole to be appended to the end of the current code point,
-                    //   not to replace the last code unit of the current code point.
-                    auto const new_loc = iter() + (cur_len + 1);
+                    auto const new_loc = iter() + cur_len;
                     auto const old_loc = hole.begin();
                     auto const diff    = new_loc - old_loc;
                     assert(iter() < hole.begin());
@@ -498,7 +495,7 @@ namespace webpp::unicode {
                     assert(hole.end() < reducer->newend);
                     assert(hole.begin() < reducer->endptr);
                     assert(hole.begin() < reducer->newend);
-                    assert(hole.begin() == stl::next(iter(), cur_len + 1));
+                    assert(hole.begin() == stl::next(iter(), cur_len));
                     cur_len += hole.size();
 
                     // storing the length of the hole, inside the hole itself.
