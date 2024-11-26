@@ -66,7 +66,6 @@ option(WEBPP_DEV "Enable/Disable Web++ library development (for developers of th
 option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)
 option(VERBOSE "Verbose printing" OFF)
 option(USE_EVE "Use Eve Library for vectorization" OFF)
-option(USE_CTRE "Use CTRE Library for compile-time-regular-expressions" OFF)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     option(USE_OS_LIBURING "Use OS liburing instead of our own header-only liburing" OFF)
 endif ()
@@ -101,7 +100,6 @@ if (WEBPP_DEV)
     message(STATUS "Install include dir expression : ${INSTALL_INCLUDEDIR}")
     message(STATUS "Building Fuzz Tests            : ${FUZZ_TESTS}")
     message(STATUS "Use eve library                : ${USE_EVE}")
-    message(STATUS "Use CTRE library               : ${USE_CTRE}")
 
 
     add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})

@@ -2,7 +2,6 @@
 #define WEBPP_VALIDATION_H
 
 #include "../convert/casts.hpp"
-#include "../libs/ctre.hpp"
 #include "../std/concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
@@ -67,21 +66,6 @@ namespace webpp::is {
         return false;
     }
 
-    /**
-     * @brief check if the specified str is an email or not
-     * @param inp_str
-     * @return true if the specified str is an email
-     */
-    [[nodiscard]] bool email(istl::StringViewifiable auto&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<decltype(inp_str)>(inp_str));
-        // constexpr auto pattern =
-        //   ctll::fixed_string{R"regex(^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+)regex"};
-        // constexpr auto pattern =
-        // ctll::fixed_string{"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+"
-        //                                             "(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$"};
-        // return ctre::match<pattern>(str);
-        return false;
-    }
 
     // [[nodiscard]] constexpr bool FQDN(istl::StringViewifiable auto&& _str) noexcept;
 
@@ -89,7 +73,7 @@ namespace webpp::is {
     // [[nodiscard]] constexpr bool url(istl::StringViewifiable auto&& _str) noexcept;
 
     /**
-     * @brief checks if an string is a valid host based on RFC3986
+     * @brief checks if a string is a valid host based on RFC3986
      * (https://tools.ietf.org/html/rfc3986)
      * @param inp_str
      * @return

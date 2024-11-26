@@ -17,7 +17,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/libs/ioring.hpp
         ${LIB_INCLUDE_DIR}/libs/brotli.hpp
         ${LIB_INCLUDE_DIR}/libs/eve.hpp
-        ${LIB_INCLUDE_DIR}/libs/ctre.hpp
         ${LIB_INCLUDE_DIR}/libs/cryptopp.hpp
         ${LIB_INCLUDE_DIR}/libs/zlib.hpp
         ${LIB_INCLUDE_DIR}/libs/fmt.hpp
@@ -375,12 +374,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     else ()
         target_link_libraries(${LIB_NAME} PUBLIC liburing::uring)
     endif ()
-endif ()
-
-if (USE_CTRE)
-    target_link_libraries(${LIB_NAME}
-            PUBLIC ctre::ctre)
-    target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_CTRE=1)
 endif ()
 
 if (USE_EVE)
