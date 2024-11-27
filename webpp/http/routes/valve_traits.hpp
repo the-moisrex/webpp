@@ -242,7 +242,7 @@ namespace webpp::http {
     /**
      * Context Chaining
      * @code
-     *   // Calla get_data with ctx, and then call add_layout with ctx;
+     *   // Call get_data with ctx, and then call add_layout with ctx;
      *   ctx >> get_data >> add_layout;
      * @endcode
      */

@@ -102,7 +102,7 @@ namespace webpp::unicode {
 
     /// Automatically deduce the type
     template <typename T>
-    static constexpr auto utf_leading_code_units = [] consteval {
+    static constexpr auto utf_leading_code_units = []() consteval {
         if constexpr (UTF8<T>) {
             return utf8_leading_code_units<T>;
         } else if constexpr (UTF16<T>) {

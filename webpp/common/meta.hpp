@@ -31,8 +31,10 @@
 
 #ifdef CXX23
 #    define IF_CXX23(val) val
+#    define IF_ELSE_CXX23(val, else_val) val
 #else
 #    define IF_CXX23(val)
+#    define IF_ELSE_CXX23(val, else_val) else_val
 #endif
 
 // For usage in a constexpr function, C++20 doesn't allow for usage of "static constexpr" stuff inside
