@@ -73,22 +73,32 @@ namespace webpp::unicode {
             auto const length = this->size();
             if (diff < 0) {
                 stl::shift_right(beginp + diff, endp, length);
+                auto const new_beg = beginp + diff;
+                auto const new_end = endp + diff;
                 for (auto& cur : iters) {
-                    if (cur >= (beginp + diff) && cur <= endp) {
+                    if (cur >= new_beg && cur < new_end) {
                         cur += length;
+                    } else if (cur >= beginp && cur < endp) {
+                        for (; !is_code_unit_start(*cur); --cur) {
+                            // moving the iterator to the beginning of the last code point
+                        }
                     }
                 }
-                beginp += diff;
-                endp   += diff;
-            } else if (diff > 0) [[likely]] {
+                beginp = new_beg;
+                endp   = new_end;
+            } else if (diff > 0) [[unlikely]] {
                 stl::shift_left(beginp, endp + diff, length);
+                auto const new_beg = beginp + diff;
+                auto const new_end = endp + diff;
                 for (auto& cur : iters) {
-                    if (cur >= beginp && cur <= (endp + diff)) {
+                    if (cur >= new_beg && cur < new_end) {
                         cur -= length;
+                    } else if (cur >= beginp && cur < endp) {
+                        cur += diff;
                     }
                 }
-                beginp -= diff;
-                endp   -= diff;
+                beginp = new_beg;
+                endp   = new_end;
             }
         }
     };
