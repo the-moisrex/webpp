@@ -500,7 +500,9 @@ namespace webpp::unicode {
                     auto const old_loc = hole.begin();
                     auto const diff    = new_loc - old_loc;
                     assert(iter() < hole.begin());
-                    hole.move(diff, reducer->iters);
+                    if (diff != 0) {
+                        hole.move(diff, reducer->iters);
+                    }
                     assert(hole.end() < reducer->endptr);
                     assert(hole.end() < reducer->newend);
                     assert(hole.begin() < reducer->endptr);
