@@ -503,8 +503,8 @@ namespace webpp::unicode {
                     if (diff != 0) {
                         hole.move(diff, reducer->iters);
                     }
-                    assert(hole.end() < reducer->endptr);
-                    assert(hole.end() < reducer->newend);
+                    assert(hole.end() <= reducer->endptr);
+                    assert(hole.end() <= reducer->newend);
                     assert(hole.begin() < reducer->endptr);
                     assert(hole.begin() < reducer->newend);
                     assert(hole.begin() == stl::next(iter(), cur_len));
@@ -519,6 +519,14 @@ namespace webpp::unicode {
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);
+
+                // fixing the iterator positions:
+                auto const code_point_end = stl::next(iter(), new_len);
+                for (auto& cur : this->reducer->iters) {
+                    if (cur > iter() && cur < code_point_end) {
+                        cur = iter();
+                    }
+                }
             }
         }
 
