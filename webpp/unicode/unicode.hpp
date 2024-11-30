@@ -443,19 +443,28 @@ namespace webpp::unicode {
     /// utf8_length_from_utf32
     template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr SizeT utf8_length_from_utf32(CharT const code_point) noexcept {
-        if (code_point < 0x80U) {
+        if (code_point < 0x80U) [[likely]] {
             return 1U;
         }
-        if (code_point < 0x800U) {
+        if (code_point < 0x800U) [[likely]] {
             return 2U;
         }
-        if (code_point >= 0xDC00U && code_point < 0xE000U) {
-            return 0U;
+        if (code_point < 0x1'0000U) {
+            if (is_surrogate(code_point)) [[unlikely]] {
+                // Surrogates are invalid UTF-32 characters.
+                return 0U;
+            }
+            return 3U;
         }
-        if (code_point >= 0xD800U && code_point < 0xDC00U) {
+        // Max code point for Unicode is 0x0010FFFF.
+        if (code_point <= max_legal_utf32<CharT>) {
             return 4U;
         }
-        return 3U;
+
+        [[unlikely]] {
+            // Invalid UTF-32 character.
+            return 0;
+        }
     }
 
     /// utf16_length_from_utf32

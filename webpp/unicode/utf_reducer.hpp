@@ -242,6 +242,11 @@ namespace webpp::unicode {
 
                 // guarantee that each pin's position will be more than or equal to the previous one:
                 assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
+
+
+                // range check
+                assert(iter() <= reducer->end());
+                assert(iter() >= reducer->begin());
             }
 
             // early blow up in case we did not find the correct ptr position:
@@ -485,14 +490,16 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
-                assert(reducer->beg <= hole.begin());
-                assert(reducer->endptr >= hole.end());
 
                 auto       cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
                 if (new_len > cur_len) {
+                    assert(hole.begin() != nullptr);
+                    assert(hole.end() != nullptr);
+                    assert(reducer->beg <= hole.begin());
+                    assert(reducer->endptr >= hole.end());
                     assert(!hole.empty());
                     assert(hole.begin() != hole.end());
 
