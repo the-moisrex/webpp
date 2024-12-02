@@ -443,6 +443,7 @@ namespace webpp::unicode {
     /// utf8_length_from_utf32
     template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr SizeT utf8_length_from_utf32(CharT const code_point) noexcept {
+        // todo: check if this function can be optimized by making it branch-less
         if (code_point < 0x80U) [[likely]] {
             return 1U;
         }

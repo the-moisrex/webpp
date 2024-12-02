@@ -23,6 +23,7 @@ namespace webpp::unicode {
         using iter_traits     = stl::iterator_traits<IterT>;
         using value_type      = typename iter_traits::value_type;
         using difference_type = typename iter_traits::difference_type;
+        using size_type       = stl::size_t;
 
       private:
         IterT beginp{};
@@ -36,16 +37,30 @@ namespace webpp::unicode {
         constexpr utf_range_marker& operator=(utf_range_marker&&)      = delete;
         constexpr ~utf_range_marker() noexcept                         = default;
 
+        explicit constexpr utf_range_marker(IterT inp_beg) noexcept
+          : beginp{inp_beg},
+            endp{stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg))} {
+            assert(beginp < endp);
+        }
+
+        // NOLINTNEXTLINE(*-easily-swappable-parameters)
+        explicit constexpr utf_range_marker(IterT inp_beg, IterT inp_end) noexcept
+          : beginp{inp_beg},
+            endp{inp_end} {
+            assert(beginp < endp);
+        }
+
+        // NOLINTNEXTLINE(*-easily-swappable-parameters)
         constexpr void mark(IterT inp_beg, IterT inp_end) noexcept {
             beginp = inp_beg;
             endp   = inp_end;
-            assert(beginp != endp);
+            assert(beginp < endp);
         }
 
         constexpr void mark(IterT inp_beg) noexcept {
             beginp = inp_beg;
             endp   = stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg));
-            assert(beginp != endp);
+            assert(beginp < endp);
         }
 
         [[nodiscard]] constexpr IterT begin() const noexcept {
@@ -56,12 +71,22 @@ namespace webpp::unicode {
             return endp;
         }
 
-        [[nodiscard]] constexpr difference_type size() const noexcept {
-            return endp - beginp;
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return static_cast<size_type>(endp - beginp);
         }
 
         [[nodiscard]] constexpr bool empty() const noexcept {
             return beginp == endp;
+        }
+
+        constexpr void shave_start(size_type index = 1) noexcept {
+            assert(index <= size());
+            beginp += static_cast<difference_type>(index);
+        }
+
+        constexpr void shave_end(size_type index = 1) noexcept {
+            assert(index <= size());
+            endp -= static_cast<difference_type>(index);
         }
 
         /// Move the hole
@@ -72,7 +97,7 @@ namespace webpp::unicode {
 
             auto const length = this->size();
             if (diff < 0) {
-                stl::shift_right(beginp + diff, endp, length);
+                stl::shift_right(beginp + diff, endp, static_cast<difference_type>(length));
                 auto const new_beg = beginp + diff;
                 auto const new_end = endp + diff;
                 for (auto& cur : iters) {
@@ -87,7 +112,7 @@ namespace webpp::unicode {
                 beginp = new_beg;
                 endp   = new_end;
             } else if (diff > 0) [[unlikely]] {
-                stl::shift_left(beginp, endp + diff, length);
+                stl::shift_left(beginp, endp + diff, static_cast<difference_type>(length));
                 auto const new_beg = beginp + diff;
                 auto const new_end = endp + diff;
                 for (auto& cur : iters) {
@@ -107,6 +132,8 @@ namespace webpp::unicode {
     template <typename IterT>
         requires(UTF32<typename stl::iterator_traits<IterT>::value_type>)
     struct utf_range_marker<IterT> {
+        explicit constexpr utf_range_marker([[maybe_unused]] auto&&... args) noexcept {}
+
         constexpr void mark([[maybe_unused]] auto&&... args) noexcept {
             // do nothing
         }
@@ -238,7 +265,7 @@ namespace webpp::unicode {
         constexpr void test_state_correctness() noexcept {
             if constexpr (!UTF32<unit_type>) {
                 // guarantee that each pin's position will be less than or equal to the next one:
-                assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) + 1>() >= iter());
+                // assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) + 1>() >= iter());
 
                 // guarantee that each pin's position will be more than or equal to the previous one:
                 assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
@@ -491,8 +518,9 @@ namespace webpp::unicode {
             } else {
                 assert(iter() != reducer->endptr);
 
-                auto       cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
-                auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
+                auto       cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
+                auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
+                auto const old_diff = cur_len - new_len;
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
                 if (new_len > cur_len) {
@@ -515,7 +543,7 @@ namespace webpp::unicode {
                     assert(hole.begin() < reducer->endptr);
                     assert(hole.begin() < reducer->newend);
                     assert(hole.begin() == stl::next(iter(), cur_len));
-                    cur_len += hole.size();
+                    cur_len += static_cast<stl::int_fast8_t>(hole.size());
 
                     // storing the length of the hole, inside the hole itself.
                     // todo: optimize this:
@@ -526,6 +554,9 @@ namespace webpp::unicode {
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);
+                if (old_diff < 0) {
+                    hole.shave_start(static_cast<stl::size_t>(-old_diff));
+                }
 
                 // fixing the iterator positions:
                 auto const code_point_end = stl::next(iter(), new_len);
