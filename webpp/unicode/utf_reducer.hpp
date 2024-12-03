@@ -137,6 +137,10 @@ namespace webpp::unicode {
         constexpr void mark([[maybe_unused]] auto&&... args) noexcept {
             // do nothing
         }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return true;
+        }
     };
 
     template <stl::size_t PinCount = 1, typename IterT = char8_t*, UTF32 CodePointT = char32_t>

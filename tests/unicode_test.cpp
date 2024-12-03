@@ -5959,6 +5959,12 @@ TEST(Unicode, CanonicalComposeSpecial) {
         EXPECT_EQ(u8"ąུ̡᷎b", webpp::unicode::toNFC<std::u8string>(u8"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎b", webpp::unicode::toNFC<std::u8string>(u8"ąུ̡᷎b"));
 
+
+        EXPECT_EQ(
+          u8"\xC3\xA0\xD6\xAE\xCC\x80\xCC\x95"
+          u8"b",
+          webpp::unicode::toNFC<std::u8string>(u8"\x61\xcc\x95\xcc\x80\xd6\xae\xcc\x80\x62"));
+
         std::u8string const      source8 = u8"Ḋ";
         std::u8string_view const nfc8    = u8"Ḋ";
         EXPECT_EQ(nfc8, webpp::unicode::toNFC(source8));
@@ -6755,7 +6761,7 @@ TEST(Unicode, NormalizationTests) {
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
-                << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
+                << "  Source: " << u32ToString(source) << "  Source8: " << u32ToString(source8)
                 << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
                 << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
