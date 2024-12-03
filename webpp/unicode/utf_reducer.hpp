@@ -21,7 +21,7 @@ namespace webpp::unicode {
         static_assert(stl::is_default_constructible_v<IterT>, "Iterator is not default constructible");
 
         using iter_traits     = stl::iterator_traits<IterT>;
-        using value_type      = typename iter_traits::value_type;
+        using unit_type       = typename iter_traits::value_type;
         using difference_type = typename iter_traits::difference_type;
         using size_type       = stl::size_t;
 
@@ -39,7 +39,7 @@ namespace webpp::unicode {
 
         explicit constexpr utf_range_marker(IterT inp_beg) noexcept
           : beginp{inp_beg},
-            endp{stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg))} {
+            endp{stl::next(beginp, required_length_of<unit_type, difference_type>(*inp_beg))} {
             assert(beginp < endp);
         }
 
@@ -59,7 +59,7 @@ namespace webpp::unicode {
 
         constexpr void mark(IterT inp_beg) noexcept {
             beginp = inp_beg;
-            endp   = stl::next(beginp, required_length_of<value_type, difference_type>(*inp_beg));
+            endp   = stl::next(beginp, required_length_of<unit_type, difference_type>(*inp_beg));
             assert(beginp < endp);
         }
 
@@ -87,6 +87,16 @@ namespace webpp::unicode {
         constexpr void shave_end(size_type index = 1) noexcept {
             assert(index <= size());
             endp -= static_cast<difference_type>(index);
+        }
+
+        /// The direction of expansion is determined by the sign of the length
+        constexpr void expand(difference_type length) noexcept {
+            assert(length != 0);
+            if (length > 0) {
+                endp += length;
+            } else {
+                beginp += length;
+            }
         }
 
         /// Move the hole
@@ -126,6 +136,52 @@ namespace webpp::unicode {
                 endp   = new_end;
             }
         }
+
+        /// Append a new hole to this hole, combining two holes
+        template <typename IterableT>
+        constexpr void append(utf_range_marker& other, IterableT& iters) noexcept {
+            assert(other.begin() < other.end());
+            assert(other.begin() >= endp || other.begin() < beginp);
+            if (other.empty()) {
+                return;
+            }
+            if (this->empty()) [[unlikely]] {
+                beginp = other.begin();
+                endp   = other.end();
+            } else {
+                auto const tail_diff = other.begin() - endp;
+                if (tail_diff == 0) {
+                    endp = other.end();
+                } else if (tail_diff > 0) {
+                    other.move(-tail_diff, iters);
+                    this->expand(static_cast<difference_type>(other.size()));
+                } else {
+                    auto const head_diff = beginp - other.end() - 1;
+                    assert(head_diff > 0);
+                    other.move(head_diff, iters);
+                    this->expand(-static_cast<difference_type>(other.size()));
+                }
+            }
+            other.clear();
+        }
+
+        template <typename IterableT>
+        constexpr void append(IterT start, IterT end, IterableT& iters) noexcept {
+            utf_range_marker other(start, end);
+            this->append(other, iters);
+        }
+
+        template <typename IterableT>
+        constexpr void append(IterT start, IterableT& iters) noexcept {
+            auto const       len = required_length_of<unit_type, stl::int_fast8_t>(*start);
+            auto             end = stl::next(start, len);
+            utf_range_marker other(start, end);
+            this->append(other, iters);
+        }
+
+        constexpr void clear() noexcept {
+            beginp = endp = IterT{};
+        }
     };
 
     /// We don't need UTF-32 ranges, so we disable it
@@ -140,6 +196,10 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr bool empty() const noexcept {
             return true;
+        }
+
+        constexpr void append([[maybe_unused]] auto&&... args) noexcept {
+            // do nothing
         }
     };
 
@@ -712,6 +772,10 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr const_pin_t const_pin() noexcept {
             return const_pin_t{beg};
+        }
+
+        [[nodiscard]] constexpr auto& all_pins() noexcept {
+            return iters;
         }
 
         template <difference_type Index = 0>

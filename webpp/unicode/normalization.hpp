@@ -586,13 +586,12 @@ namespace webpp::unicode {
 
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
         auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
+        utf_range_marker<Iter> hole;
         for (; cp1_pin != reducer.end(); ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin;
             cp2_pin     = cp1_pin;
             ++cp2_pin;
-            auto                   cp1      = *cp1_pin;
-            // auto const             cp1_orig = cp1;
-            utf_range_marker<Iter> hole;
+            auto cp1 = *cp1_pin;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -606,11 +605,10 @@ namespace webpp::unicode {
                 if (ccc == 0) [[likely]] {
                     break;
                 }
-                prev_ccc    = ccc;
-                hole.mark(cp2_pin.iter());
+                prev_ccc = ccc;
+                hole.append(cp2_pin.iter(), reducer.all_pins());
                 (++rep_pin).set(cp2, hole);
             }
-            // starter_pin.set(cp1, cp2_pin - starter_pin);
             starter_pin.set(cp1, hole);
         }
         reducer.set_end(rep_pin);
