@@ -89,6 +89,30 @@ namespace webpp::unicode {
             endp -= static_cast<difference_type>(index);
         }
 
+        constexpr void shave(IterT const start, size_type const length = 1) noexcept {
+            assert(length != 0);
+            if (start == beginp) {
+                shave_start(length);
+                return;
+            }
+
+            if (start < beginp || start >= endp) {
+                return;
+            }
+
+            auto const tail_ptr = stl::next(beginp, length);
+            if (tail_ptr >= endp) {
+                shave_end(static_cast<size_type>(tail_ptr - endp));
+                return;
+            }
+
+            // It's in the middle of the hole
+            [[unlikely]] {
+                // let's just blow up for now, because moving requires access to iters
+                assert(false);
+            }
+        }
+
         /// The direction of expansion is determined by the sign of the length
         constexpr void expand(difference_type length) noexcept {
             assert(length != 0);
@@ -152,6 +176,11 @@ namespace webpp::unicode {
                 auto const tail_diff = other.begin() - endp;
                 if (tail_diff == 0) {
                     endp = other.end();
+                    // for (auto& cur : iters) {
+                    //     if (cur > beginp && cur < endp) {
+                    //         cur = endp;
+                    //     }
+                    // }
                 } else if (tail_diff > 0) {
                     other.move(-tail_diff, iters);
                     this->expand(static_cast<difference_type>(other.size()));
@@ -618,9 +647,10 @@ namespace webpp::unicode {
                 }
                 assert(cur_len >= new_len);
                 set_diff(inp_code_point, cur_len - new_len);
-                if (old_diff < 0) {
-                    hole.shave_start(static_cast<stl::size_t>(-old_diff));
-                }
+                // if (old_diff < 0) {
+                //     hole.shave_start(static_cast<stl::size_t>(-old_diff));
+                // }
+                hole.shave(iter(), new_len);
 
                 // fixing the iterator positions:
                 auto const code_point_end = stl::next(iter(), new_len);
