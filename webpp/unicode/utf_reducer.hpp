@@ -146,9 +146,6 @@ namespace webpp::unicode {
         /// Move the hole
         template <typename IterableT>
         constexpr void move(difference_type diff, IterableT& iters) noexcept {
-            // it's most-likely a bug somewhere in the code if diff is zero
-            assert(diff != 0);
-
             auto const length = this->size();
             if (diff < 0) {
                 stl::shift_right(beginp + diff, endp, static_cast<difference_type>(length));
@@ -165,16 +162,23 @@ namespace webpp::unicode {
                 }
                 beginp = new_beg;
                 endp   = new_end;
-            } else if (diff > 0) [[unlikely]] {
+            } else if (diff > 0) {
                 stl::shift_left(beginp, endp + diff, static_cast<difference_type>(length));
                 auto const new_beg = beginp + diff;
                 auto const new_end = endp + diff;
                 for (auto& cur : iters) {
-                    if (cur >= new_beg && cur < new_end) {
+                    if (cur >= endp && cur < new_end) {
                         cur -= length;
-                    } else if (cur >= beginp && cur < endp) {
-                        cur += diff;
+                    } else if (cur > beginp && cur < endp) {
+                        for (; !is_code_unit_start(*cur); --cur) {
+                            // moving the iterator to the beginning of the last code point
+                        }
                     }
+                    // if (cur >= new_beg && cur < new_end) {
+                    //     cur -= length;
+                    // } else if (cur >= beginp && cur < endp) {
+                    //     cur += diff;
+                    // }
                 }
                 beginp = new_beg;
                 endp   = new_end;
@@ -183,11 +187,25 @@ namespace webpp::unicode {
 
         /// Storing the length of the hole, inside the hole itself.
         constexpr void sequence_fill() noexcept {
-            // todo: optimize this:
             auto cur_diff = this->size();
             for (auto& unit : *this) {
                 unit = unicode::utf_leading_code_units<unit_type>[cur_diff--];
             }
+        }
+
+        /// Shrinks the code hole to the specified length, and fills the removed parts
+        constexpr void shrink_into(size_type const length) noexcept {
+            assert(length != 0);
+            assert(length <= size());
+            if (length == size()) {
+                return;
+            }
+            auto const old_beginp = beginp;
+            auto const mid        = beginp + static_cast<difference_type>(length);
+            beginp                = mid;
+            sequence_fill();
+            endp   = mid;
+            beginp = old_beginp;
         }
 
         /// Append a new hole to this hole, combining two holes
@@ -570,42 +588,45 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void shift_range(iterator begin, iterator end, difference_type diff) noexcept(is_nothrow) {
-            assert(diff >= 1);
-            stl::shift_left(begin, end, diff);
-            move_iterators(begin, -diff);
-        }
-
-        constexpr void set_diff(value_type inp_code_point, stl::int_fast8_t const diff) noexcept(is_nothrow) {
-            assert(diff >= 0);
-            if constexpr (UTF32<unit_type>) {
-                *iter() = inp_code_point;
+        /// Either expand the hole at [loc] by [+diff] amount,
+        /// or Shrink the hole at [loc] by [-diff] amount.
+        /// The extra space used is at [newend]
+        constexpr void adjust_hole(iterator loc, difference_type diff) noexcept(is_nothrow) {
+            assert(loc <= reducer->newend);
+            assert(loc >= reducer->beg);
+            if (diff == 0) {
+                return;
+            }
+            if (diff > 0) {
+                // We have additional space we need to fill
+                stl::shift_left(loc, reducer->newend, diff);
+                move_iterators(loc, -diff);
             } else {
-                assert(iter() != reducer->endptr);
-
-                auto iter_cpy = istl::deref(iter());
-                unchecked::append(iter_cpy, inp_code_point);
-
-                // state: filled
-                if (diff == 0) {
-                    return;
-                }
-
-                // state: partial or deleted
-                shift_range(iter_cpy, reducer->newend, static_cast<difference_type>(diff));
-
-                test_state_correctness();
+                // we need to make more space
+                // we're making a hole now
+                auto const length = -diff;
+                assert(reducer->empty_size() >= length);
+                stl::shift_right(loc, stl::next(reducer->newend, length), length);
+                move_iterators(loc, length);
             }
         }
 
-        /// Moves a piece of the hole at the end, to the specified location
-        constexpr void make_hole_at(iterator loc, size_type len) noexcept(is_nothrow) {
-            auto cur_len = reducer->endptr - reducer->newend;
-            assert(cur_len >= len);
-            assert(loc <= reducer->newend);
-            assert(loc >= reducer->beg);
-            stl::shift_right(loc, stl::next(reducer->newend, len), len);
-            // move_iterators(loc, len);
+        constexpr void set_inplace(value_type inp_code_point, difference_type const new_len)
+          noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                *iter() = inp_code_point;
+            } else {
+                assert(iter() < reducer->newend);
+
+                auto const cur_len  = required_length_of<unit_type, difference_type>(*iter());
+                auto const diff     = cur_len - new_len;
+                auto       iter_cpy = istl::deref(iter());
+
+                adjust_hole(stl::next(iter(), cur_len), diff);
+                unchecked::append(iter_cpy, inp_code_point);
+
+                test_state_correctness();
+            }
         }
 
       public:
@@ -614,20 +635,13 @@ namespace webpp::unicode {
             if constexpr (stl::is_pointer_v<iterator>) {
                 assert(other != nullptr);
             } else {
-                assert(other != reducer->endptr);
+                assert(other < reducer->endptr);
             }
             if constexpr (UTF32<unit_type>) {
                 *iter() = *other;
             } else {
-                auto const cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(*other);
-                auto const diff    = cur_len - new_len;
-                if (diff < 0) {
-                    make_hole_at(stl::next(iter(), cur_len), -diff);
-                }
-                auto iter_cpy = istl::deref(iter());
-                unchecked::append(iter_cpy, *other);
-                move_iterators(stl::next(iter(), cur_len), diff);
+                set_inplace(*other, new_len);
             }
         }
 
@@ -638,19 +652,12 @@ namespace webpp::unicode {
             } else {
                 assert(iter() < reducer->endptr);
 
-                auto const cur_len = required_length_of<unit_type, stl::int_fast8_t>(*iter());
-                auto const new_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
-                auto const diff    = cur_len - new_len;
-                if (diff < 0) {
-                    make_hole_at(stl::next(iter(), cur_len), -diff);
-                }
-                auto iter_cpy = istl::deref(iter());
-                unchecked::append(iter_cpy, inp_code_point);
-                move_iterators(stl::next(iter(), cur_len), diff);
+                auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
+                set_inplace(inp_code_point, new_len);
             }
         }
 
-        /// Pin Act: Set
+        /// Pin Act: Set (and use the hole if needed as extra space)
         constexpr void set(value_type inp_code_point, [[maybe_unused]] utf_range_marker<iterator>& hole)
           noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
@@ -658,64 +665,53 @@ namespace webpp::unicode {
             } else {
                 assert(iter() != reducer->endptr);
 
-                auto       cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
+                auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
-                if (new_len > cur_len) {
+                if (old_diff < 0 && this->reducer->empty_size() < -old_diff) {
                     assert(hole.begin() != nullptr);
                     assert(hole.end() != nullptr);
                     assert(reducer->beg <= hole.begin());
                     assert(reducer->endptr >= hole.end());
                     assert(!hole.empty());
                     assert(hole.begin() != hole.end());
-
-                    auto const new_loc = iter() + cur_len;
-                    auto const old_loc = hole.begin();
-                    auto const diff    = new_loc - old_loc;
-                    assert(iter() < hole.begin());
-                    if (diff != 0) {
-                        hole.move(diff, reducer->iters);
-                    }
-                    assert(hole.end() <= reducer->endptr);
-                    assert(hole.end() <= reducer->newend);
-                    assert(hole.begin() < reducer->endptr);
-                    assert(hole.begin() < reducer->newend);
-                    assert(hole.begin() == stl::next(iter(), cur_len));
-                    cur_len += static_cast<stl::int_fast8_t>(hole.size());
-
-                    hole.sequence_fill();
+                    auto const diff = reducer->newend - hole.end();
+                    hole.move(diff, reducer->iters);
+                    reducer->newend  = hole.begin();
+                    *reducer->newend = static_cast<unit_type>('\0');
                 }
-                assert(cur_len >= new_len);
-                auto const diff = cur_len - new_len;
+                // assert(cur_len >= new_len);
+                // auto const diff = cur_len - new_len;
                 // set_diff(inp_code_point, diff);
+                set_inplace(inp_code_point, new_len);
 
-                {
-                    auto iter_cpy = istl::deref(iter());
-                    unchecked::append(iter_cpy, inp_code_point);
-
-                    if (diff != 0) {
-                        // shift_range(iter_cpy, reducer->newend, static_cast<difference_type>(diff));
-                        stl::shift_left(iter_cpy, reducer->newend, diff);
-                        // move_iterators(iter_cpy, -diff);
-                        auto const cdiff = -diff;
-                        stl::advance(reducer->newend, cdiff);
-                        *reducer->newend = static_cast<unit_type>('\0');
-                        if (hole.empty()) {
-                            hole.mark(stl::prev(reducer->newend, cdiff), reducer->newend);
-                        } else {
-                            hole.expand(cdiff);
-                        }
-                        for (auto index = PinIndex + 1; index < PinCount; ++index) {
-                            auto& cur = reducer->iters[index];
-                            if (cur > iter_cpy) {
-                                stl::advance(cur, cdiff);
-                            }
-                        }
-                    }
-                    test_state_correctness();
-                }
+                // {
+                //     auto iter_cpy = istl::deref(iter());
+                //     unchecked::append(iter_cpy, inp_code_point);
+                //
+                //     if (diff != 0) {
+                //         // shift_range(iter_cpy, reducer->newend, static_cast<difference_type>(diff));
+                //         stl::shift_left(iter_cpy, reducer->newend, diff);
+                //         // move_iterators(iter_cpy, -diff);
+                //         auto const cdiff = -diff;
+                //         stl::advance(reducer->newend, cdiff);
+                //         *reducer->newend = static_cast<unit_type>('\0');
+                //         if (hole.empty()) {
+                //             hole.mark(stl::prev(reducer->newend, cdiff), reducer->newend);
+                //         } else {
+                //             hole.expand(cdiff);
+                //         }
+                //         for (auto index = PinIndex + 1; index < PinCount; ++index) {
+                //             auto& cur = reducer->iters[index];
+                //             if (cur > iter_cpy) {
+                //                 stl::advance(cur, cdiff);
+                //             }
+                //         }
+                //     }
+                //     test_state_correctness();
+                // }
 
                 // if (old_diff < 0) {
                 //     hole.shave_start(static_cast<stl::size_t>(-old_diff));
@@ -723,25 +719,12 @@ namespace webpp::unicode {
                 // hole.shave(iter(), new_len);
 
                 // fixing the iterator positions:
-                auto const code_point_end = stl::next(iter(), new_len);
-                for (auto& cur : this->reducer->iters) {
-                    if (cur > iter() && cur < code_point_end) {
-                        cur = iter();
-                    }
-                }
-            }
-        }
-
-        /// Pin Act: Replace
-        constexpr void set(value_type inp_code_point, stl::int_fast8_t const code_unit_len)
-          noexcept(is_nothrow) {
-            assert(code_unit_len >= 0);
-            if constexpr (UTF32<unit_type>) {
-                *iter() = inp_code_point;
-            } else {
-                auto const cp_len = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
-                difference_type const diff = code_unit_len - cp_len;
-                set_diff(inp_code_point, diff);
+                // auto const code_point_end = stl::next(iter(), new_len);
+                // for (auto& cur : this->reducer->iters) {
+                //     if (cur > iter() && cur < code_point_end) {
+                //         cur = iter();
+                //     }
+                // }
             }
         }
 
@@ -750,21 +733,6 @@ namespace webpp::unicode {
         constexpr void set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
           noexcept(is_nothrow) {
             set(other_ptr.iter());
-        }
-
-        /// Pin Act: Set Spillover
-        constexpr void spillover_set(value_type inp_code_point) noexcept(is_nothrow) {
-            if constexpr (UTF32<unit_type>) {
-                *iter() = inp_code_point;
-            } else {
-                assert(iter() != reducer->endptr);
-
-                auto const cp_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
-                auto const rep_len = required_code_units_of_len(cp_len);
-
-                assert(rep_len >= cp_len);
-                set_diff(inp_code_point, rep_len - cp_len);
-            }
         }
     };
 
@@ -959,6 +927,11 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr size_type size() const noexcept {
             return static_cast<size_type>(newend - beg);
+        }
+
+        /// Get the length of the empty hole at the end of the reducer
+        [[nodiscard]] constexpr size_type empty_size() const noexcept {
+            return static_cast<size_type>(endptr - newend);
         }
     };
 
