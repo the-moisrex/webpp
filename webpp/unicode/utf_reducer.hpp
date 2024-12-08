@@ -152,11 +152,12 @@ namespace webpp::unicode {
                 auto const new_beg = beginp + diff;
                 auto const new_end = endp + diff;
                 for (auto& cur : iters) {
-                    if (cur >= new_beg && cur < new_end) {
+                    if (cur >= new_beg && cur < beginp) {
                         cur += length;
                     } else if (cur >= beginp && cur < endp) {
-                        for (; !is_code_unit_start(*cur); --cur) {
-                            // moving the iterator to the beginning of the last code point
+                        cur = beginp;
+                        while (!is_code_unit_start(*--cur)) {
+                            // moving the iterator to the beginning of the previous code point
                         }
                     }
                 }
@@ -169,9 +170,10 @@ namespace webpp::unicode {
                 for (auto& cur : iters) {
                     if (cur >= endp && cur < new_end) {
                         cur -= length;
-                    } else if (cur > beginp && cur < endp) {
-                        for (; !is_code_unit_start(*cur); --cur) {
-                            // moving the iterator to the beginning of the last code point
+                    } else if (cur >= beginp && cur < endp) {
+                        cur = beginp;
+                        while (!is_code_unit_start(*--cur)) {
+                            // moving the iterator to the beginning of the previous code point
                         }
                     }
                     // if (cur >= new_beg && cur < new_end) {
@@ -623,7 +625,8 @@ namespace webpp::unicode {
                 auto       iter_cpy = istl::deref(iter());
 
                 adjust_hole(stl::next(iter(), cur_len), diff);
-                unchecked::append(iter_cpy, inp_code_point);
+                auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
+                assert(changed_length == new_len);
 
                 test_state_correctness();
             }
