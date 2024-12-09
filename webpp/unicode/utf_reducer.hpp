@@ -143,48 +143,71 @@ namespace webpp::unicode {
             }
         }
 
+        /// Move the content of the hole
+        constexpr void move_content(difference_type diff) noexcept {
+            if constexpr (stl::is_pointer_v<IterT>) {
+                assert(this->begin() != nullptr);
+                assert(this->end() != nullptr);
+            }
+            assert(!this->empty());
+            assert(this->begin() < this->end());
+            assert(diff != 0);
+            auto const length = this->size();
+            assert(length > 0);
+            if (diff < 0) {
+                stl::shift_right(beginp + diff, endp, static_cast<difference_type>(length));
+            } else if (diff > 0) {
+                stl::shift_left(beginp, endp + diff, static_cast<difference_type>(length));
+            }
+            beginp += diff;
+            endp   += diff;
+        }
+
+        /// Move the pack of iterators that you pass, and move them to the right position according to the
+        /// previously moved content by move_content.
+        template <typename IterableT>
+        constexpr void move_iterators(difference_type diff, IterableT& iters) noexcept {
+            if constexpr (stl::is_pointer_v<IterT>) {
+                assert(this->begin() != nullptr);
+                assert(this->end() != nullptr);
+            }
+            assert(!this->empty());
+            assert(this->begin() < this->end());
+            auto const length  = this->size();
+            auto const old_beg = beginp - diff;
+            auto const old_end = endp - diff;
+            auto const new_beg = beginp;
+            auto const new_end = endp;
+            if (diff < 0) {
+                for (auto& cur : iters) {
+                    if (cur >= new_beg && cur < old_beg) {
+                        cur += length;
+                    } else if (cur >= old_beg && cur < old_end) {
+                        cur = old_beg;
+                        while (!is_code_unit_start(*--cur)) {
+                            // moving the iterator to the beginning of the previous code point
+                        }
+                    }
+                }
+            } else if (diff > 0) {
+                for (auto& cur : iters) {
+                    if (cur >= old_end && cur < new_end) {
+                        cur -= length;
+                    } else if (cur >= old_beg && cur < old_end) {
+                        cur = old_beg;
+                        while (!is_code_unit_start(*--cur)) {
+                            // moving the iterator to the beginning of the previous code point
+                        }
+                    }
+                }
+            }
+        }
+
         /// Move the hole
         template <typename IterableT>
         constexpr void move(difference_type diff, IterableT& iters) noexcept {
-            auto const length = this->size();
-            if (diff < 0) {
-                stl::shift_right(beginp + diff, endp, static_cast<difference_type>(length));
-                auto const new_beg = beginp + diff;
-                auto const new_end = endp + diff;
-                for (auto& cur : iters) {
-                    if (cur >= new_beg && cur < beginp) {
-                        cur += length;
-                    } else if (cur >= beginp && cur < endp) {
-                        cur = beginp;
-                        while (!is_code_unit_start(*--cur)) {
-                            // moving the iterator to the beginning of the previous code point
-                        }
-                    }
-                }
-                beginp = new_beg;
-                endp   = new_end;
-            } else if (diff > 0) {
-                stl::shift_left(beginp, endp + diff, static_cast<difference_type>(length));
-                auto const new_beg = beginp + diff;
-                auto const new_end = endp + diff;
-                for (auto& cur : iters) {
-                    if (cur >= endp && cur < new_end) {
-                        cur -= length;
-                    } else if (cur >= beginp && cur < endp) {
-                        cur = beginp;
-                        while (!is_code_unit_start(*--cur)) {
-                            // moving the iterator to the beginning of the previous code point
-                        }
-                    }
-                    // if (cur >= new_beg && cur < new_end) {
-                    //     cur -= length;
-                    // } else if (cur >= beginp && cur < endp) {
-                    //     cur += diff;
-                    // }
-                }
-                beginp = new_beg;
-                endp   = new_end;
-            }
+            move_content(diff);
+            move_iterators(diff, iters);
         }
 
         /// Storing the length of the hole, inside the hole itself.
@@ -674,21 +697,20 @@ namespace webpp::unicode {
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
                 if (old_diff < 0 && this->reducer->empty_size() < -old_diff) {
-                    assert(hole.begin() != nullptr);
-                    assert(hole.end() != nullptr);
                     assert(reducer->beg <= hole.begin());
                     assert(reducer->endptr >= hole.end());
-                    assert(!hole.empty());
-                    assert(hole.begin() != hole.end());
                     auto const diff = reducer->newend - hole.end();
-                    hole.move(diff, reducer->iters);
+                    hole.move_content(diff);
                     reducer->newend  = hole.begin();
                     *reducer->newend = static_cast<unit_type>('\0');
+                    set_inplace(inp_code_point, new_len);
+                    hole.move_iterators(diff, reducer->iters);
+                } else {
+                    // assert(cur_len >= new_len);
+                    // auto const diff = cur_len - new_len;
+                    // set_diff(inp_code_point, diff);
+                    set_inplace(inp_code_point, new_len);
                 }
-                // assert(cur_len >= new_len);
-                // auto const diff = cur_len - new_len;
-                // set_diff(inp_code_point, diff);
-                set_inplace(inp_code_point, new_len);
 
                 // {
                 //     auto iter_cpy = istl::deref(iter());
