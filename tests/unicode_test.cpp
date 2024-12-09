@@ -35,6 +35,22 @@ static constexpr bool enable_utf8_composition_tests = true;
 
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
 
+TEST(UnicodeAlgos, UnitStart) {
+    using webpp::unicode::is_code_unit_start;
+    EXPECT_TRUE(is_code_unit_start(u'a'));
+    EXPECT_TRUE(is_code_unit_start(u'\0'));
+    EXPECT_TRUE(is_code_unit_start(U'\0'));
+    EXPECT_TRUE(is_code_unit_start(u'\xB3'));
+    EXPECT_FALSE(is_code_unit_start(static_cast<char>(0b1000'0111)));
+    EXPECT_FALSE(is_code_unit_start(static_cast<char16_t>(0xDF62)));
+    EXPECT_FALSE(is_code_unit_start(static_cast<char16_t>(0xDC37)));
+    EXPECT_TRUE(is_code_unit_start(static_cast<char16_t>(0x01D8)));
+    EXPECT_TRUE(is_code_unit_start(static_cast<char16_t>(0x52D8)));
+    EXPECT_FALSE(is_code_unit_start('\xAC'));
+    EXPECT_FALSE(is_code_unit_start('\x8B'));
+    EXPECT_TRUE(is_code_unit_start('\xE2'));
+}
+
 TEST(Unicode, U8UnChecked) {
     char8_t const* str = u8"این یک تست است.";
     // have to use static_cast<int> because the google-test doesn't seem to understand char8_t

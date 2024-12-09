@@ -584,7 +584,7 @@ namespace webpp::unicode {
             }
             for (auto index = PinIndex + 1; index < PinCount; ++index) {
                 auto& cur = reducer->iters[index];
-                if (cur > old_iter) {
+                if (cur >= old_iter) {
                     stl::advance(cur, diff);
                 }
             }
