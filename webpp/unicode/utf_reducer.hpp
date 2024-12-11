@@ -206,8 +206,45 @@ namespace webpp::unicode {
         /// Move the hole
         template <typename IterableT>
         constexpr void move(difference_type diff, IterableT& iters) noexcept {
+            if (diff == 0 || empty()) {
+                return;
+            }
             move_content(diff);
             move_iterators(diff, iters);
+        }
+
+        /// Move a piece of the hole
+        template <typename IterableT>
+        constexpr void
+        split_move(size_type const length, difference_type const diff, IterableT& iters) noexcept {
+            assert(length != 0);
+            assert(length <= size());
+            assert(!empty());
+            auto const old_beg = beginp;
+            auto const old_end = endp;
+            if (length == size()) {
+                move_content(diff);
+                move_iterators(diff, iters);
+                return;
+            }
+            if (diff > 0) {
+                // cutting the end half of the hole
+                auto const mid = beginp + static_cast<difference_type>(length);
+                beginp         = mid;
+                move_content(diff);
+                move_iterators(diff, iters);
+                endp   = mid;
+                beginp = old_beg;
+            } else if (diff < 0) {
+                // cutting the first half of the hole
+                auto const mid = endp - static_cast<difference_type>(length);
+                endp           = mid;
+                move_content(diff);
+                move_iterators(diff, iters);
+                beginp = mid;
+                endp   = old_end;
+            }
+            assert(beginp <= endp);
         }
 
         /// Storing the length of the hole, inside the hole itself.
@@ -699,57 +736,29 @@ namespace webpp::unicode {
                 if (old_diff < 0 && this->reducer->empty_size() < -old_diff) {
                     assert(reducer->beg <= hole.begin());
                     assert(reducer->endptr >= hole.end());
-                    auto const diff = reducer->newend - hole.end();
-                    hole.move_content(diff);
-                    reducer->newend  = hole.begin();
-                    *reducer->newend = static_cast<unit_type>('\0');
-                    set_inplace(inp_code_point, new_len);
-                    hole.move_iterators(diff, reducer->iters);
+                    auto const cur_end = iter() + cur_len;
+                    auto const diff    = reducer->newend - hole.end();
+                    assert(hole.end() + diff <= reducer->endptr);
+                    assert(hole.end() >= cur_end);
+                    auto       iter_cpy      = istl::deref(iter());
+                    auto const hole_distance = cur_end - hole.begin();
+                    if (hole_distance != 0) {
+                        hole.split_move(-old_diff, hole_distance, reducer->iters);
+                        {
+                            auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
+                            assert(changed_length == new_len);
+                        }
+                        hole.move(diff, reducer->iters);
+                        reducer->newend  = hole.begin();
+                        *reducer->newend = static_cast<unit_type>('\0');
+                    } else {
+                        auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
+                        assert(changed_length == new_len);
+                    }
+                    test_state_correctness();
                 } else {
-                    // assert(cur_len >= new_len);
-                    // auto const diff = cur_len - new_len;
-                    // set_diff(inp_code_point, diff);
                     set_inplace(inp_code_point, new_len);
                 }
-
-                // {
-                //     auto iter_cpy = istl::deref(iter());
-                //     unchecked::append(iter_cpy, inp_code_point);
-                //
-                //     if (diff != 0) {
-                //         // shift_range(iter_cpy, reducer->newend, static_cast<difference_type>(diff));
-                //         stl::shift_left(iter_cpy, reducer->newend, diff);
-                //         // move_iterators(iter_cpy, -diff);
-                //         auto const cdiff = -diff;
-                //         stl::advance(reducer->newend, cdiff);
-                //         *reducer->newend = static_cast<unit_type>('\0');
-                //         if (hole.empty()) {
-                //             hole.mark(stl::prev(reducer->newend, cdiff), reducer->newend);
-                //         } else {
-                //             hole.expand(cdiff);
-                //         }
-                //         for (auto index = PinIndex + 1; index < PinCount; ++index) {
-                //             auto& cur = reducer->iters[index];
-                //             if (cur > iter_cpy) {
-                //                 stl::advance(cur, cdiff);
-                //             }
-                //         }
-                //     }
-                //     test_state_correctness();
-                // }
-
-                // if (old_diff < 0) {
-                //     hole.shave_start(static_cast<stl::size_t>(-old_diff));
-                // }
-                // hole.shave(iter(), new_len);
-
-                // fixing the iterator positions:
-                // auto const code_point_end = stl::next(iter(), new_len);
-                // for (auto& cur : this->reducer->iters) {
-                //     if (cur > iter() && cur < code_point_end) {
-                //         cur = iter();
-                //     }
-                // }
             }
         }
 
