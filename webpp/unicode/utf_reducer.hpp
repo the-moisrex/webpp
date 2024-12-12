@@ -151,7 +151,9 @@ namespace webpp::unicode {
             }
             assert(!this->empty());
             assert(this->begin() < this->end());
-            assert(diff != 0);
+            if (diff == 0) {
+                return;
+            }
             auto const length = this->size();
             assert(length > 0);
             if (diff < 0) {
@@ -737,24 +739,26 @@ namespace webpp::unicode {
                     assert(reducer->beg <= hole.begin());
                     assert(reducer->endptr >= hole.end());
                     auto const cur_end = iter() + cur_len;
-                    auto const diff    = reducer->newend - hole.end();
-                    assert(hole.end() + diff <= reducer->endptr);
                     assert(hole.end() >= cur_end);
                     auto       iter_cpy      = istl::deref(iter());
                     auto const hole_distance = cur_end - hole.begin();
-                    if (hole_distance != 0) {
-                        hole.split_move(-old_diff, hole_distance, reducer->iters);
-                        {
-                            auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
-                            assert(changed_length == new_len);
+                    hole.split_move(-old_diff, hole_distance, reducer->iters);
+                    auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
+                    assert(changed_length == new_len);
+
+                    // Moving the iterators if they've been replaced
+                    auto const new_end = iter() + new_len;
+                    for (auto& cur : reducer->iters) {
+                        if (cur > iter() && cur < new_end) {
+                            cur = iter();
                         }
-                        hole.move(diff, reducer->iters);
-                        reducer->newend  = hole.begin();
-                        *reducer->newend = static_cast<unit_type>('\0');
-                    } else {
-                        auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
-                        assert(changed_length == new_len);
                     }
+
+                    auto const distance_till_hold_end = reducer->newend - hole.end();
+                    assert(hole.end() + distance_till_hold_end <= reducer->endptr);
+                    hole.move(distance_till_hold_end, reducer->iters);
+                    reducer->newend  = hole.begin();
+                    *reducer->newend = static_cast<unit_type>('\0');
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, new_len);
