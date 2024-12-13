@@ -590,7 +590,7 @@ namespace webpp::unicode {
             starter_pin = rep_pin;
             cp2_pin     = cp1_pin;
             ++cp2_pin;
-            auto cp1 = *cp1_pin;
+            auto                   cp1 = *cp1_pin;
             utf_range_marker<Iter> hole;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;

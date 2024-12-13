@@ -750,7 +750,7 @@ namespace webpp::unicode {
                     auto const new_end = iter() + new_len;
                     for (auto& cur : reducer->iters) {
                         if (cur > iter() && cur < new_end) {
-                            cur = iter();
+                            cur = new_end;
                         }
                     }
 
