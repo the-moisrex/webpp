@@ -606,10 +606,8 @@ namespace webpp::unicode {
                     break;
                 }
                 prev_ccc = ccc;
-                // hole.append(cp2_pin.iter(), reducer.all_pins());
                 utf_range_marker cp2_hole{cp2_pin.iter()};
                 (++rep_pin).set(cp2, cp2_hole);
-                // hole.mark(stl::move(cp2_hole));
             }
 
             // use the hole if you run out of space in UTF-8 and UTF-16 mode

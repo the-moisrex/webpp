@@ -756,9 +756,11 @@ namespace webpp::unicode {
 
                     auto const distance_till_hold_end = reducer->newend - hole.end();
                     assert(hole.end() + distance_till_hold_end <= reducer->endptr);
-                    hole.move(distance_till_hold_end, reducer->iters);
-                    reducer->newend  = hole.begin();
-                    *reducer->newend = static_cast<unit_type>('\0');
+                    if (hole_distance != 0) {
+                        hole.move(distance_till_hold_end, reducer->iters);
+                        reducer->newend  = hole.begin();
+                        *reducer->newend = static_cast<unit_type>('\0');
+                    }
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, new_len);
