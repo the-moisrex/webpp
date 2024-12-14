@@ -108,14 +108,20 @@ namespace webpp::unicode {
             }
         }
 
+        /// Remove part of the hole
+        /// The behavior is undefined (asserted) if the specified range is in the middle of the hole.
         constexpr void shave(IterT const start, size_type const length = 1) noexcept {
             assert(length != 0);
-            if (start == beginp) {
-                shave_start(length);
+            if (start <= beginp) {
+                auto const new_length = static_cast<difference_type>(length - (beginp - start));
+                if (new_length <= 0) {
+                    return;
+                }
+                shave_start(static_cast<size_type>(new_length));
                 return;
             }
 
-            if (start < beginp || start >= endp) {
+            if (start >= endp) {
                 return;
             }
 
@@ -745,6 +751,7 @@ namespace webpp::unicode {
                     hole.split_move(-old_diff, hole_distance, reducer->iters);
                     auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
                     assert(changed_length == new_len);
+                    hole.shave(iter(), new_len);
 
                     // Moving the iterators if they've been replaced
                     auto const new_end = iter() + new_len;
@@ -754,9 +761,9 @@ namespace webpp::unicode {
                         }
                     }
 
-                    auto const distance_till_hold_end = reducer->newend - hole.end();
-                    assert(hole.end() + distance_till_hold_end <= reducer->endptr);
-                    if (hole_distance != 0) {
+                    if (!hole.empty()) {
+                        auto const distance_till_hold_end = reducer->newend - hole.end();
+                        assert(hole.end() + distance_till_hold_end <= reducer->endptr);
                         hole.move(distance_till_hold_end, reducer->iters);
                         reducer->newend  = hole.begin();
                         *reducer->newend = static_cast<unit_type>('\0');

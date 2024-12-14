@@ -5957,33 +5957,34 @@ TEST(Unicode, UTFLeadingCodeUnitsTest) {
 }
 
 TEST(Unicode, CanonicalComposeSpecial) {
+    using webpp::unicode::toNFC;
     if constexpr (enable_utf8_composition_tests) {
-        EXPECT_EQ(U"⋬⋬⋬", webpp::unicode::toNFC<std::u32string>(U"⋬⋬⋬"));
+        EXPECT_EQ(U"⋬⋬⋬", toNFC<std::u32string>(U"⋬⋬⋬"));
         std::u8string str8 = u8"⋬⋬⋬";
         webpp::unicode::canonical_compose(str8);
         EXPECT_EQ(str8, u8"⋬⋬⋬");
 
-        EXPECT_EQ(U"Ḍ̇", webpp::unicode::toNFC<std::u32string>(U"Ḍ̇"));
-        EXPECT_EQ(u8"Ḍ̇", webpp::unicode::toNFC<std::u8string>(u8"Ḍ̇"));
+        EXPECT_EQ(U"Ḍ̇", toNFC<std::u32string>(U"Ḍ̇"));
+        EXPECT_EQ(u8"Ḍ̇", toNFC<std::u8string>(u8"Ḍ̇"));
 
-        EXPECT_EQ(U"Ḋ̛", webpp::unicode::toNFC<std::u32string>(U"Ḋ̛"));
-        EXPECT_EQ(u8"Ḋ̛", webpp::unicode::toNFC<std::u8string>(u8"Ḋ̛"));
+        EXPECT_EQ(U"Ḋ̛", toNFC<std::u32string>(U"Ḋ̛"));
+        EXPECT_EQ(u8"Ḋ̛", toNFC<std::u8string>(u8"Ḋ̛"));
 
-        EXPECT_EQ(u8"ֱָֹ֑׃ְ֬֟", webpp::unicode::toNFC<std::u8string>(u8"ֱָֹ֑׃ְ֬֟"));
-        EXPECT_EQ(u8"𤋮", webpp::unicode::toNFC<std::u8string>(u8"𤋮"));
-        EXPECT_EQ(u8"ąུ̡᷎b", webpp::unicode::toNFC<std::u8string>(u8"ąུ̡᷎b"));
-        EXPECT_EQ(u8"ąུ̡᷎b", webpp::unicode::toNFC<std::u8string>(u8"ąུ̡᷎b"));
-        EXPECT_EQ(u8"ąུ̡᷎b", webpp::unicode::toNFC<std::u8string>(u8"ąུ̡᷎b"));
+        EXPECT_EQ(u8"ֱָֹ֑׃ְ֬֟", toNFC<std::u8string>(u8"ֱָֹ֑׃ְ֬֟"));
+        EXPECT_EQ(u8"𤋮", toNFC<std::u8string>(u8"𤋮"));
+        EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
+        EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
+        EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
 
 
         EXPECT_EQ(
           u8"\xC3\xA0\xD6\xAE\xCC\x80\xCC\x95"
           u8"b",
-          webpp::unicode::toNFC<std::u8string>(u8"\x61\xcc\x95\xcc\x80\xd6\xae\xcc\x80\x62"));
+          toNFC<std::u8string>(u8"\x61\xcc\x95\xcc\x80\xd6\xae\xcc\x80\x62"));
 
         std::u8string const      source8 = u8"Ḋ";
         std::u8string_view const nfc8    = u8"Ḋ";
-        EXPECT_EQ(nfc8, webpp::unicode::toNFC(source8));
+        EXPECT_EQ(nfc8, toNFC(source8));
     }
 }
 
