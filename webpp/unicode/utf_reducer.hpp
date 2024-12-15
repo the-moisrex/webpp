@@ -658,9 +658,9 @@ namespace webpp::unicode {
             }
         }
 
-        /// Either expand the hole at [loc] by [+diff] amount,
-        /// or Shrink the hole at [loc] by [-diff] amount.
-        /// The extra space used is at [newend]
+        /// Either shrink the hole at [loc end] by [+diff] amount,
+        /// or Expand the hole at [loc end] by [-diff] amount.
+        /// The extra space used is at [newend-endptr]
         constexpr void adjust_hole(iterator loc, difference_type diff) noexcept(is_nothrow) {
             assert(loc <= reducer->newend);
             assert(loc >= reducer->beg);
@@ -669,12 +669,14 @@ namespace webpp::unicode {
             }
             if (diff > 0) {
                 // We have additional space we need to fill
-                stl::shift_left(loc, reducer->newend, diff);
+                auto const new_loc_end = loc - diff;
+                stl::shift_left(new_loc_end, reducer->newend, diff);
+                // It should be UB if there's some iterator between [new_loc_end, loc]
                 move_iterators(loc, -diff);
             } else {
                 // we need to make more space
                 // we're making a hole now
-                auto const length = -diff;
+                auto const length = static_cast<size_type>(-diff);
                 assert(reducer->empty_size() >= length);
                 stl::shift_right(loc, stl::next(reducer->newend, length), length);
                 move_iterators(loc, length);
@@ -694,7 +696,7 @@ namespace webpp::unicode {
 
                 adjust_hole(stl::next(iter(), cur_len), diff);
                 auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
-                assert(changed_length == new_len);
+                assert(static_cast<difference_type>(changed_length) == new_len);
 
                 test_state_correctness();
             }
@@ -741,7 +743,7 @@ namespace webpp::unicode {
                 auto const old_diff = cur_len - new_len;
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
-                if (old_diff < 0 && this->reducer->empty_size() < -old_diff) {
+                if (old_diff < 0 && this->reducer->empty_size() < static_cast<size_type>(-old_diff)) {
                     assert(reducer->beg <= hole.begin());
                     assert(reducer->endptr >= hole.end());
                     auto const cur_end = iter() + cur_len;
@@ -750,7 +752,7 @@ namespace webpp::unicode {
                     auto const hole_distance = cur_end - hole.begin();
                     hole.split_move(-old_diff, hole_distance, reducer->iters);
                     auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
-                    assert(changed_length == new_len);
+                    assert(static_cast<stl::int_fast8_t>(changed_length) == new_len);
                     hole.shave(iter(), new_len);
 
                     // Moving the iterators if they've been replaced
