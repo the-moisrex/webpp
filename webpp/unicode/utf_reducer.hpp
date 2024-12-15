@@ -328,6 +328,14 @@ namespace webpp::unicode {
         constexpr void clear() noexcept {
             beginp = endp = IterT{};
         }
+
+        [[nodiscard]] constexpr bool has_overlaps(IterT const& start, IterT const& end) const noexcept {
+            return endp >= start && end >= beginp;
+        }
+
+        [[nodiscard]] constexpr bool has_overlaps(IterT const& start, size_type length) const noexcept {
+            return has_overlaps(start, stl::next(start, length));
+        }
     };
 
     /// We don't need UTF-32 ranges, so we disable it
@@ -345,6 +353,10 @@ namespace webpp::unicode {
         }
 
         constexpr void append([[maybe_unused]] auto&&... args) noexcept {
+            // do nothing
+        }
+
+        constexpr void fallback_hole([[maybe_unused]] auto&... holes) noexcept {
             // do nothing
         }
     };
@@ -658,6 +670,16 @@ namespace webpp::unicode {
             }
         }
 
+        constexpr void snap_hole_to_end(utf_range_marker<iterator>& hole) noexcept(is_nothrow) {
+            if (!hole.empty()) {
+                auto const distance_till_hold_end = reducer->newend - hole.end();
+                assert(hole.end() + distance_till_hold_end <= reducer->endptr);
+                hole.move(distance_till_hold_end, reducer->iters);
+                reducer->newend  = hole.begin();
+                *reducer->newend = static_cast<unit_type>('\0');
+            }
+        }
+
         /// Either shrink the hole at [loc end] by [+diff] amount,
         /// or Expand the hole at [loc end] by [-diff] amount.
         /// The extra space used is at [newend-endptr]
@@ -763,16 +785,22 @@ namespace webpp::unicode {
                         }
                     }
 
-                    if (!hole.empty()) {
-                        auto const distance_till_hold_end = reducer->newend - hole.end();
-                        assert(hole.end() + distance_till_hold_end <= reducer->endptr);
-                        hole.move(distance_till_hold_end, reducer->iters);
-                        reducer->newend  = hole.begin();
-                        *reducer->newend = static_cast<unit_type>('\0');
-                    }
+                    snap_hole_to_end(hole);
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, new_len);
+                }
+            }
+        }
+
+        /// Replace the LHS hole with RHS hole if it is in the current code point range.
+        constexpr void fallback_hole(utf_range_marker<iterator>& lhs, utf_range_marker<iterator>& rhs)
+          noexcept(is_nothrow) {
+            if constexpr (!UTF32<unit_type>) {
+                if (auto const cur_len = required_length_of<unit_type, size_type>(*iter());
+                    lhs.has_overlaps(iter(), cur_len))
+                {
+                    lhs.mark(stl::move(rhs));
                 }
             }
         }
