@@ -191,7 +191,7 @@ namespace webpp::unicode {
                     if (cur >= new_beg && cur < old_beg) {
                         cur += length;
                     } else if (cur >= old_beg && cur < old_end) {
-                        cur = old_beg;
+                        cur = old_end;
                         while (!is_code_unit_start(*--cur)) {
                             // moving the iterator to the beginning of the previous code point
                         }
@@ -251,6 +251,8 @@ namespace webpp::unicode {
                 move_iterators(diff, iters);
                 beginp = mid;
                 endp   = old_end;
+            } else if (diff == 0) {
+                endp = beginp + static_cast<difference_type>(length);
             }
             assert(beginp <= endp);
         }
@@ -492,7 +494,6 @@ namespace webpp::unicode {
                 // guarantee that each pin's position will be more than or equal to the previous one:
                 assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
 
-
                 // range check
                 assert(iter() <= reducer->end());
                 assert(iter() >= reducer->begin());
@@ -562,6 +563,7 @@ namespace webpp::unicode {
             } else {
                 // this is not a copy assignment operator, it's a pin act.
                 assert(reducer == other.reducer);
+                assert(other.iter() <= reducer->end());
                 reducer->iters[PinIndex] = reducer->iters[OPinIndex];
                 test_state_correctness();
             }
@@ -677,6 +679,9 @@ namespace webpp::unicode {
                 hole.move(distance_till_hold_end, reducer->iters);
                 reducer->newend  = hole.begin();
                 *reducer->newend = static_cast<unit_type>('\0');
+                if (hole.has_overlaps(reducer->newend, reducer->endptr)) {
+                    hole.clear();
+                }
             }
         }
 
@@ -779,9 +784,11 @@ namespace webpp::unicode {
 
                     // Moving the iterators if they've been replaced
                     auto const new_end = iter() + new_len;
+                    // auto const old_end = iter() + cur_len;
+                    // assert(old_end < new_end);
                     for (auto& cur : reducer->iters) {
                         if (cur > iter() && cur < new_end) {
-                            cur = new_end;
+                            cur = iter();
                         }
                     }
 

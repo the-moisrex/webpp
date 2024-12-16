@@ -5982,9 +5982,12 @@ TEST(Unicode, CanonicalComposeSpecial) {
           u8"b",
           toNFC<std::u8string>(u8"\x61\xcc\x95\xcc\x80\xd6\xae\xcc\x80\x62"));
 
-        std::u8string const      source8 = u8"Ḋ";
-        std::u8string_view const nfc8    = u8"Ḋ";
-        EXPECT_EQ(nfc8, toNFC(source8));
+        EXPECT_EQ(U"Ḋ", toNFC<std::u32string>(U"Ḋ"));
+        EXPECT_EQ(u8"Ḋ", toNFC<std::u8string>(u8"Ḋ"));
+
+        EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
+        EXPECT_EQ(u8"ąུ̡᷎", toNFC<std::u8string>(u8"ąུ̡᷎")); // without the tail "b"
+        EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(toNFC<std::u8string>(u8"ąུ̡᷎b")));
     }
 }
 
