@@ -252,7 +252,7 @@ namespace webpp::unicode {
                 beginp = mid;
                 endp   = old_end;
             } else if (diff == 0) {
-                endp = beginp + static_cast<difference_type>(length);
+                beginp += static_cast<difference_type>(length);
             }
             assert(beginp <= endp);
         }
