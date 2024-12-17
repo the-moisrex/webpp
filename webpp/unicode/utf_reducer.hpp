@@ -672,19 +672,6 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void snap_hole_to_end(utf_range_marker<iterator>& hole) noexcept(is_nothrow) {
-            if (!hole.empty()) {
-                auto const distance_till_hold_end = reducer->newend - hole.end();
-                assert(hole.end() + distance_till_hold_end <= reducer->endptr);
-                hole.move(distance_till_hold_end, reducer->iters);
-                reducer->newend  = hole.begin();
-                *reducer->newend = static_cast<unit_type>('\0');
-                if (hole.has_overlaps(reducer->newend, reducer->endptr)) {
-                    hole.clear();
-                }
-            }
-        }
-
         /// Either shrink the hole at [loc end] by [+diff] amount,
         /// or Expand the hole at [loc end] by [-diff] amount.
         /// The extra space used is at [newend-endptr]
@@ -784,15 +771,14 @@ namespace webpp::unicode {
 
                     // Moving the iterators if they've been replaced
                     auto const new_end = iter() + new_len;
-                    // auto const old_end = iter() + cur_len;
-                    // assert(old_end < new_end);
                     for (auto& cur : reducer->iters) {
                         if (cur > iter() && cur < new_end) {
                             cur = iter();
                         }
                     }
 
-                    snap_hole_to_end(hole);
+                    // reducer->snap_hole_to_end(hole);
+                    hole.sequence_fill();
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, new_len);
@@ -993,6 +979,28 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr iterator end() const noexcept {
             return newend;
+        }
+
+        constexpr void snap_hole_to_end(utf_range_marker<iterator>& hole) noexcept(is_nothrow) {
+            if constexpr (!UTF32<unit_type>) {
+                if (!hole.empty()) {
+                    auto const distance_till_hold_end = this->newend - hole.end();
+                    assert(hole.end() + distance_till_hold_end <= this->endptr);
+                    hole.move(distance_till_hold_end, this->iters);
+                    this->newend  = hole.begin();
+                    *this->newend = static_cast<unit_type>('\0');
+                    if (hole.has_overlaps(this->newend, this->endptr)) {
+                        hole.clear();
+                    }
+                    for (auto& cur : iters) {
+                        if (cur >= newend) {
+                            while (!is_code_unit_start(*--cur)) {
+                                // go to the start of the latest code point
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         constexpr void set_end(iterator inp_end) noexcept {

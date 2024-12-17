@@ -597,7 +597,7 @@ namespace webpp::unicode {
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
                 auto       replaced_cp = canonical_composed(cp1, cp2);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
-                    // found a composition
+                    // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
                     hole.mark(cp2_pin.iter());
                     continue;
@@ -615,9 +615,9 @@ namespace webpp::unicode {
 
             // use the hole if you run out of space in UTF-8 and UTF-16 mode
             starter_pin.set(cp1, hole);
+            reducer.snap_hole_to_end(hole);
         }
         reducer.set_end(rep_pin);
-        // reducer.set_end(hole.begin());
         return static_cast<SizeT>(reducer.size());
     }
 

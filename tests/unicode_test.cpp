@@ -5972,6 +5972,8 @@ TEST(Unicode, CanonicalComposeSpecial) {
 
         EXPECT_EQ(u8"ֱָֹ֑׃ְ֬֟", toNFC<std::u8string>(u8"ֱָֹ֑׃ְ֬֟"));
         EXPECT_EQ(u8"𤋮", toNFC<std::u8string>(u8"𤋮"));
+
+        EXPECT_EQ(U"ąུ̡᷎b", toNFC<std::u32string>(U"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
@@ -5988,6 +5990,8 @@ TEST(Unicode, CanonicalComposeSpecial) {
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎", toNFC<std::u8string>(u8"ąུ̡᷎")); // without the tail "b"
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(toNFC<std::u8string>(u8"ąུ̡᷎b")));
+
+        EXPECT_EQ(u8"ೊ̴ೕ", toNFC<std::u8string>(u8"ೊ̴ೕ"));
     }
 }
 
