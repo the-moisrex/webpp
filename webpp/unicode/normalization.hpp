@@ -692,16 +692,16 @@ namespace webpp::unicode {
 
     /// to Normalization Form C (this is not inplace)
     template <istl::String StrT = stl::u32string>
-    [[nodiscard]] static constexpr StrT toNFC(StrT out) {
-        normalize<normalization_form::NFC>(out);
-        return out;
+    [[nodiscard]] static constexpr StrT toNFC(StrT src) {
+        normalize<normalization_form::NFC>(src);
+        return src;
     }
 
     /// to Normalization Form D (this is not inplace)
     template <istl::String StrT = stl::u32string>
-    [[nodiscard]] static constexpr StrT toNFD(StrT out) {
-        normalize<normalization_form::NFD>(out);
-        return out;
+    [[nodiscard]] static constexpr StrT toNFD(StrT src) {
+        normalize<normalization_form::NFD>(src);
+        return src;
     }
 
     /// Check the Normalization Form

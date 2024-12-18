@@ -6762,6 +6762,13 @@ namespace {
     }
 } // namespace
 
+TEST(Unicode, SpacialNormalization16) {
+    using std::u16string;
+    using webpp::unicode::toNFC;
+    ASSERT_TRUE(webpp::unicode::is_code_unit_start(static_cast<char16_t>(0xFC00)));
+    EXPECT_EQ(u"ﰀ", toNFC<std::u16string>(u"ﰀ"));
+}
+
 TEST(Unicode, NormalizationTests) {
     using std::u32string;
     using std::u32string_view;
@@ -6828,7 +6835,7 @@ TEST(Unicode, NormalizationTests) {
                 << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
 
               EXPECT_EQ(nfc16, toNFC(source16))
-                << "  Source: " << u32ToString(source) << "  Source8: " << u32ToString(source16)
+                << "  Source: " << u32ToString(source) << "  Source16: " << u32ToString(source16)
                 << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
                 << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
