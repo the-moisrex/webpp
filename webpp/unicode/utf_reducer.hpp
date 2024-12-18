@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 #define WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 
+#include "../std/tuple.hpp"
 #include "../std/type_traits.hpp"
 #include "../std/utility.hpp"
 #include "./unicode.hpp"
