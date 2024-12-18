@@ -92,6 +92,14 @@ namespace webpp::unicode {
             return beginp == endp;
         }
 
+        constexpr void move_mark(difference_type diff) noexcept {
+            if (empty()) {
+                return;
+            }
+            beginp += diff;
+            endp   += diff;
+        }
+
         constexpr void shave_start(size_type index = 1) noexcept {
             assert(index <= size());
             beginp += static_cast<difference_type>(index);
@@ -113,7 +121,8 @@ namespace webpp::unicode {
         constexpr void shave(IterT const start, size_type const length = 1) noexcept {
             assert(length != 0);
             if (start <= beginp) {
-                auto const new_length = static_cast<difference_type>(length - (beginp - start));
+                auto const new_length =
+                  static_cast<difference_type>(length) - static_cast<difference_type>(beginp - start);
                 if (new_length <= 0) {
                     return;
                 }
@@ -125,7 +134,7 @@ namespace webpp::unicode {
                 return;
             }
 
-            auto const tail_ptr = stl::next(beginp, length);
+            auto const tail_ptr = stl::next(beginp, static_cast<difference_type>(length));
             if (tail_ptr >= endp) {
                 shave_end(static_cast<size_type>(tail_ptr - endp));
                 return;
@@ -336,7 +345,7 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr bool has_overlaps(IterT const& start, size_type length) const noexcept {
-            return has_overlaps(start, stl::next(start, length));
+            return has_overlaps(start, stl::next(start, static_cast<difference_type>(length)));
         }
     };
 
@@ -690,8 +699,8 @@ namespace webpp::unicode {
             } else {
                 // we need to make more space
                 // we're making a hole now
-                auto const length = static_cast<size_type>(-diff);
-                assert(reducer->empty_size() >= length);
+                auto const length = -diff;
+                assert(static_cast<difference_type>(reducer->empty_size()) >= length);
                 stl::shift_right(loc, stl::next(reducer->newend, length), length);
                 move_iterators(loc, length);
             }
@@ -764,10 +773,10 @@ namespace webpp::unicode {
                     assert(hole.end() >= cur_end);
                     auto       iter_cpy      = istl::deref(iter());
                     auto const hole_distance = cur_end - hole.begin();
-                    hole.split_move(-old_diff, hole_distance, reducer->iters);
+                    hole.split_move(static_cast<size_type>(-old_diff), hole_distance, reducer->iters);
                     auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
                     assert(static_cast<stl::int_fast8_t>(changed_length) == new_len);
-                    hole.shave(iter(), new_len);
+                    hole.shave(iter(), static_cast<size_type>(new_len));
 
                     // Moving the iterators if they've been replaced
                     auto const new_end = iter() + new_len;
@@ -782,6 +791,7 @@ namespace webpp::unicode {
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, new_len);
+                    hole.move_mark(static_cast<difference_type>(-old_diff));
                 }
             }
         }
