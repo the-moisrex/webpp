@@ -271,7 +271,7 @@ namespace webpp::unicode {
         constexpr void sequence_fill() noexcept {
             auto cur_diff = this->size();
             for (auto& unit : *this) {
-                unit = unicode::utf_leading_code_units<unit_type>[cur_diff--];
+                unit = static_cast<unit_type>(unicode::utf_leading_code_units<unit_type>[cur_diff--]);
             }
         }
 

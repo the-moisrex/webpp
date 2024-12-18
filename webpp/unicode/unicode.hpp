@@ -79,7 +79,7 @@ namespace webpp::unicode {
     /// utf8_leading_code_units[N] gives you the start of code unit that is required to
     /// be followed by N other code units.
     template <UTF8 T = char8_t>
-    static constexpr stl::array<T, 9UL> utf8_leading_code_units{
+    static constexpr stl::array<stl::make_unsigned_t<T>, 9UL> utf8_leading_code_units{
       0,           // should be invalid
       0b0,         // length: 1 unit
       0b1100'0000, // length: 2 units
@@ -439,7 +439,8 @@ namespace webpp::unicode {
             // return 1;
 
             // impl 3:
-            return static_cast<SizeT>(details::utf8_skip<value_type>[value]);
+            using unsigned_type = stl::make_unsigned_t<value_type>; // to avoid using "char" warnings
+            return static_cast<SizeT>(details::utf8_skip<value_type>[static_cast<unsigned_type>(value)]);
         } else {
             return 1U;
         }
@@ -590,7 +591,8 @@ namespace webpp::unicode {
             if constexpr (UTF8<char_type>) {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
-                pos += details::utf8_skip<char_type>[*pos];
+                using unsigned_type  = stl::make_unsigned_t<char_type>;
+                pos                 += details::utf8_skip<char_type>[static_cast<unsigned_type>(*pos)];
             } else if constexpr (UTF16<char_type>) {
                 ++pos;
                 if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
