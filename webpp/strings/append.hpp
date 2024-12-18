@@ -14,6 +14,10 @@
 #    include <stdexcept>
 #endif
 
+#ifdef __cpp_lib_to_chars
+#    include <array>
+#endif
+
 namespace webpp {
 
 
