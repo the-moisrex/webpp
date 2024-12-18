@@ -489,6 +489,23 @@ namespace {
         return utf8_str;
     }
 
+    std::u16string utf32_to_utf16(std::u32string const& utf32_str) {
+        std::u16string utf16_str;
+        utf16_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+        std::u16string test_str;
+        for (char32_t const code_point : utf32_str) {
+            old_impl::append(test_str, code_point);
+            if (!webpp::unicode::checked::append(utf16_str, code_point)) {
+                throw webpp::stl::invalid_argument("Invalid code point");
+            }
+
+            EXPECT_EQ(utf16_str, test_str);
+        }
+
+        return utf16_str;
+    }
+
     constexpr char32_t utf8_to_utf32(std::u8string_view const input) {
         char32_t codepoint = 0;
 
@@ -6656,6 +6673,14 @@ namespace {
         return oss.str();
     }
 
+    [[maybe_unused]] std::string u32ToString(std::u16string const& hexString) {
+        std::ostringstream oss;
+        for (auto const codePoint : hexString) {
+            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+        }
+        return oss.str();
+    }
+
     [[maybe_unused]] std::string u32ToString(std::string const& hexString) {
         std::ostringstream oss;
         for (auto const codePoint : hexString) {
@@ -6763,6 +6788,10 @@ TEST(Unicode, NormalizationTests) {
           u8string const nfc8    = utf32_to_utf8(nfc);
           u8string const nfd8    = utf32_to_utf8(nfd);
 
+          u16string const source16 = utf32_to_utf16(source);
+          u16string const nfc16    = utf32_to_utf16(nfc);
+          u16string const nfd16    = utf32_to_utf16(nfd);
+
           EXPECT_EQ(nfd, toNFD(source))
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
             << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line << "\n  index: " << test_index
@@ -6786,6 +6815,20 @@ TEST(Unicode, NormalizationTests) {
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
                 << "  Source: " << u32ToString(source) << "  Source8: " << u32ToString(source8)
+                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "\n  index: " << test_index
+                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+          }
+
+          {
+              EXPECT_EQ(nfd16, toNFD(source16))
+                << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source16)
+                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "\n  index: " << test_index
+                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+
+              EXPECT_EQ(nfc16, toNFC(source16))
+                << "  Source: " << u32ToString(source) << "  Source8: " << u32ToString(source16)
                 << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
                 << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));

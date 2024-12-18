@@ -12,10 +12,13 @@ namespace webpp::unicode {
     concept UTF16 = (sizeof(T) == sizeof(char16_t));
 
     template <typename T>
-    concept WChar = (sizeof(T) >= sizeof(char32_t));
+    concept WChar = (sizeof(T) >= sizeof(wchar_t));
 
     template <typename T>
-    concept UTF32 = WChar<T>;
+    concept UTF32 = (sizeof(T) >= sizeof(wchar_t));
+
+    template <typename T>
+    concept UTF = UTF8<T> || UTF16<T> || UTF32<T>;
 
 } // namespace webpp::unicode
 

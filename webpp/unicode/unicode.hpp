@@ -58,8 +58,8 @@ namespace webpp::unicode {
     static constexpr u32 replacement_char = 0x0000'FFFD;
 
     /// Basic Multilingual Plane (BMP)
-    template <UTF32 u32 = char32_t>
-    static constexpr u32 max_bmp = 0x0000'FFFF;
+    template <UTF T = char32_t>
+    static constexpr T max_bmp = 0x0000'FFFF;
 
     template <UTF32 u32 = char32_t>
     static constexpr u32 max_utf16 = 0x0010'FFFF;
