@@ -330,10 +330,11 @@ namespace webpp::unicode {
             }
 
             // not it has to be 2 bytes, let's fix the Unicode residuals first:
-            val &= 0b0000'0011'1111'1111U;
+            val &= 0x3FFU;
+            val += 0x1'0000U;
 
             // now let's add the second byte:
-            val |= (static_cast<code_point_type>(*pos) & 0b0000'0011'1111'1111U) << 10U;
+            val |= (static_cast<code_point_type>(*--pos) & 0x3FFU) << 10U;
 
             return val;
         } else if constexpr (UTF8<char_type>) {

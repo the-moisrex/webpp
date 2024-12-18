@@ -6765,9 +6765,18 @@ namespace {
 TEST(Unicode, SpacialNormalization16) {
     using std::u16string;
     using webpp::unicode::toNFC;
+    using webpp::unicode::toNFD;
+
     ASSERT_TRUE(webpp::unicode::is_code_unit_start(static_cast<char16_t>(0xFC00)));
     EXPECT_EQ(u"ﰀ", toNFC<std::u16string>(u"ﰀ"));
     EXPECT_EQ(u"\x7280", toNFC<std::u16string>(u"\xd87e\xdd24"));
+
+    u16string const str16 = u"\xd81b\xdff0|";
+    auto            nxt   = next(next(str16.begin()));
+    EXPECT_EQ(0x1'6ff0, prev_code_point(nxt));
+
+    EXPECT_EQ(u"\x61\x334\x334\xd81b\xdff0\x62", toNFD<std::u16string>(u"\x61\xd81b\xdff0\x334\x334\x62"));
+    EXPECT_EQ(u"\x61\x334\x334\xd81b\xdff0\x62", toNFC<std::u16string>(u"\x61\xd81b\xdff0\x334\x334\x62"));
 }
 
 TEST(Unicode, NormalizationTests) {
