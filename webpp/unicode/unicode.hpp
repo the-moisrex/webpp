@@ -152,7 +152,7 @@ namespace webpp::unicode {
             // byte 2, 3, and 4 all start with 0b10xx'xxxx
             return (static_cast<stl::uint8_t>(unit) & 0b1100'0000U) != 0b1000'0000U;
         } else if constexpr (UTF16<T>) {
-            return (static_cast<std::uint16_t>(unit) & 0b1111'1110'0000'0000U) != 0b1101'1100'0000'0000U;
+            return (static_cast<std::uint16_t>(unit) & 0xFC00U) != 0xDC00U;
         } else {
             return true;
         }
@@ -193,8 +193,10 @@ namespace webpp::unicode {
         if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
-                val <<= sizeof(char16_t) * 8U;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0x3FFU;
+                val <<= 10U;
+                val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
+                val  += 0x1'0000U;
                 return val;
             }
             return val; // this is the only char
@@ -251,8 +253,10 @@ namespace webpp::unicode {
         if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
-                val <<= sizeof(char16_t) * 8U;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0x3FFU;
+                val <<= 10U;
+                val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
+                val  += 0x1'0000U;
                 return val;
             }
             return val; // this is the only char
@@ -826,8 +830,8 @@ namespace webpp::unicode {
                 }
             } else if constexpr (UTF16<CharT>) {
                 if constexpr (UTF8<char_type>) {
-                    if (code_point & 0xff80) {
-                        if (code_point & 0xf800) {
+                    if (code_point & 0xFF80U) {
+                        if (code_point & 0xF800U) {
                             // UCS-2 = U+0800 - U+FFFF -> UTF-8 (3 bytes)
                             iter_append(out, 0xE0U | (code_point >> 12U));
                             iter_append(out, 0x80U | ((code_point >> 6U) & 0x3FU));

@@ -6767,6 +6767,7 @@ TEST(Unicode, SpacialNormalization16) {
     using webpp::unicode::toNFC;
     ASSERT_TRUE(webpp::unicode::is_code_unit_start(static_cast<char16_t>(0xFC00)));
     EXPECT_EQ(u"ﰀ", toNFC<std::u16string>(u"ﰀ"));
+    EXPECT_EQ(u"\x7280", toNFC<std::u16string>(u"\xd87e\xdd24"));
 }
 
 TEST(Unicode, NormalizationTests) {
