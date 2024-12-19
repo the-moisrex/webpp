@@ -510,7 +510,7 @@ namespace webpp::unicode {
             }
 
             // early blow up in case we did not find the correct ptr position:
-            assert(is_code_unit_start(*iter()));
+            // assert(is_code_unit_start(*iter()));
         }
 
         /// The number of code units required to set this new code point with the specified length
@@ -586,6 +586,12 @@ namespace webpp::unicode {
                 ++iter();
             } else {
                 unchecked::next_char(iter());
+
+                // bounds check:
+                auto& cur = iter();
+                if (cur > reducer->end()) {
+                    cur = reducer->end();
+                }
             }
             test_state_correctness();
             return *this;
@@ -611,7 +617,8 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 return *iter();
             } else {
-                return next_code_point_copy(iter());
+                assert(iter() < reducer->end());
+                return next_code_point_copy(iter(), reducer->end());
             }
         }
 
@@ -738,6 +745,10 @@ namespace webpp::unicode {
                 *iter() = *other;
             } else {
                 auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(*other);
+
+                // if new length is 0, a bad code point is given to the input.
+                assert(new_len != 0);
+
                 set_inplace(*other, new_len);
             }
         }
@@ -765,6 +776,9 @@ namespace webpp::unicode {
                 auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
+
+                // if new length is 0, a bad code point is given to the input.
+                assert(new_len != 0);
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
                 if (old_diff < 0 && this->reducer->empty_size() < static_cast<size_type>(-old_diff)) {
@@ -884,8 +898,8 @@ namespace webpp::unicode {
                 assert(inp_pos != nullptr);
                 assert(endptr != nullptr);
             }
-            assert(inp_pos != endptr);
-            assert(is_code_unit_start(*inp_pos));
+            assert(inp_pos <= endptr);
+            // assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<unit_type>) {
                 iters.fill(beg);
             }
@@ -900,8 +914,8 @@ namespace webpp::unicode {
                 assert(inp_pos != nullptr);
                 assert(endptr != nullptr);
             }
-            assert(is_code_unit_start(*inp_pos));
             assert(inp_pos <= inp_endp);
+            // assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<unit_type>) {
                 iters.fill(beg);
             }

@@ -188,8 +188,10 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
+        using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
-        auto val = static_cast<code_point_type>(*pos++);
+        // double casting to make sure negative values can't come out of it
+        auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
         if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
@@ -235,18 +237,20 @@ namespace webpp::unicode {
         }
     }
 
-    template <stl::forward_iterator Iter          = char8_t const*,
-              stl::forward_iterator EIter         = Iter,
-              UTF32                 CodePointType = char32_t>
+    template <stl::bidirectional_iterator Iter          = char8_t const*,
+              stl::bidirectional_iterator EIter         = Iter,
+              UTF32                       CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
+        using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
         if (pos == end) {
             return static_cast<code_point_type>(0);
         }
 
-        auto val = static_cast<code_point_type>(*pos++);
+        // double casting to make sure negative values can't come out of it
+        auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
         if (pos == end) {
             return val;
         }
@@ -277,9 +281,10 @@ namespace webpp::unicode {
                 val  &= 0b0000'1111U;
                 val <<= 12U;
                 val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
-                if (++pos != end) {
-                    val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                if (++pos == end) {
+                    return *stl::prev(--pos); // bad code point found, return the first code unit
                 }
+                val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
             if ((val & 0b1111'1000U) == 0b1111'0000U) {
@@ -287,12 +292,15 @@ namespace webpp::unicode {
                 val  &= 0b0000'0111U;
                 val <<= 18U;
                 val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
-                if (++pos != end) {
-                    val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
-                    if (++pos != end) {
-                        val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                    }
+                if (++pos == end) {
+                    return *stl::prev(--pos); // bad code point found, return the first code unit
                 }
+                val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
+                if (++pos == end) {
+                    stl::advance(pos, -2);
+                    return *stl::prev(pos); // bad code point found, return the first code unit
+                }
+                val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
             return val; // return this one anyway
@@ -306,9 +314,9 @@ namespace webpp::unicode {
         return next_code_point<Iter, CodePointType>(pos);
     }
 
-    template <stl::forward_iterator Iter  = char8_t const*,
-              stl::forward_iterator EIter = Iter,
-              typename CodePointType      = char32_t>
+    template <stl::bidirectional_iterator Iter  = char8_t const*,
+              stl::bidirectional_iterator EIter = Iter,
+              typename CodePointType            = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
         return next_code_point<Iter, EIter, CodePointType>(pos, end);
     }

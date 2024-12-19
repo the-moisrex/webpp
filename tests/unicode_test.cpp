@@ -6908,4 +6908,12 @@ TEST(Unicode, NormalizationTests) {
     file.close();
 }
 
+TEST(Unicode, FuzzFixes) {
+    using webpp::unicode::toNFC;
+    EXPECT_EQ(u"", toNFC<std::u16string>(u""));
+    EXPECT_EQ("\xac", toNFC<std::string>("\xac"));
+    EXPECT_EQ("\x90\xe", toNFC<std::string>("\x90\xe"));
+    EXPECT_EQ("\xa\x8a", toNFC<std::string>("\xa\x8a"));
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
