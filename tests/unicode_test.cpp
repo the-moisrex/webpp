@@ -6908,6 +6908,18 @@ TEST(Unicode, NormalizationTests) {
     file.close();
 }
 
+TEST(Unicode, CheckedNextCodePoint) {
+    using webpp::unicode::replacement_char;
+    using webpp::unicode::checked::next_code_point_copy;
+    using enum webpp::unicode::checked::error_handling;
+
+    std::u8string str = u8"\xac";
+    EXPECT_EQ(next_code_point_copy(str.begin(), str.end()), U'\xac');
+    EXPECT_EQ(next_code_point_copy<return_negated_char>(str.begin(), str.end()), -U'\xac');
+    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()),
+              replacement_char<char32_t>);
+}
+
 TEST(Unicode, FuzzFixes) {
     using webpp::unicode::toNFC;
     EXPECT_EQ(u"", toNFC<std::u16string>(u""));
