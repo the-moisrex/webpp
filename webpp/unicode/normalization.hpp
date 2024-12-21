@@ -157,7 +157,7 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <stl::input_iterator Iter = char8_t const*>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(Iter const pos) noexcept {
-        return ccc_of(unicode::next_code_point_copy(pos));
+        return ccc_of(unchecked::next_code_point_copy(pos));
     }
 
     /**
@@ -185,7 +185,7 @@ namespace webpp::unicode {
 
     template <stl::input_iterator Iter = char8_t const*>
     [[nodiscard]] static constexpr bool is_starter(Iter const pos) noexcept {
-        return ccc_of(unicode::next_code_point_copy(pos)) == 0;
+        return ccc_of(unchecked::next_code_point_copy(pos)) == 0;
     }
 
     /**
@@ -243,7 +243,7 @@ namespace webpp::unicode {
 
         for (auto pos = next_char_copy(start); pos != end;) {
             auto       back_pos = pos;
-            auto       cur_cp   = next_code_point(pos);
+            auto       cur_cp   = unchecked::next_code_point(pos);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip next code point as well, the next one is never going to be swapped with this one
@@ -258,7 +258,7 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto prev = back_pos;
-                if (auto const prev_cp = prev_code_point(prev); ccc_of(prev_cp) <= ccc) {
+                if (auto const prev_cp = unchecked::prev_code_point(prev); ccc_of(prev_cp) <= ccc) {
                     break;
                 }
                 swap_code_points(back_pos, prev);
@@ -387,7 +387,7 @@ namespace webpp::unicode {
       noexcept(istl::NothrowAppendable<Iter>) {
         SizeT count = 0;
         for (auto pos = stl::begin(str); pos != stl::end(str);) {
-            count += canonical_decompose_to(out, next_code_point(pos));
+            count += canonical_decompose_to(out, unchecked::next_code_point(pos));
         }
         return count;
     }
@@ -433,7 +433,7 @@ namespace webpp::unicode {
             decomposition_details<SizeT> info;
             auto const                   actual_length = static_cast<SizeT>(end - pos);
             while (pos != end) {
-                auto const code_point = unicode::next_code_point(pos);
+                auto const code_point = unchecked::next_code_point(pos);
 
                 // handling hangul code points
                 if (is_hangul_code_point(code_point)) [[unlikely]] {
@@ -502,7 +502,7 @@ namespace webpp::unicode {
                   auto       backup_start = ptr;
                   auto const backup_end   = ptr + cur_len;
                   while (backup_start != backup_end) {
-                      canonical_decompose_to(ptr, next_code_point(backup_start));
+                      canonical_decompose_to(ptr, unchecked::next_code_point(backup_start));
                   }
                   return static_cast<size_type>(ptr - beg);
               }
@@ -513,7 +513,7 @@ namespace webpp::unicode {
               stl::copy(ptr, ptr + cur_len, backup_start);
 
               while (backup_start != backup_end) {
-                  canonical_decompose_to(ptr, next_code_point(backup_start));
+                  canonical_decompose_to(ptr, unchecked::next_code_point(backup_start));
               }
               return static_cast<size_type>(ptr - beg);
           };

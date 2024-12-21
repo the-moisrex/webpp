@@ -24,11 +24,11 @@ using webpp::unicode::canonical_decomposed;
 using webpp::unicode::ccc_of;
 using webpp::unicode::max_bmp;
 using webpp::unicode::max_legal_utf32;
-using webpp::unicode::prev_code_point;
 using webpp::unicode::checked::append;
 using webpp::unicode::unchecked::next_char;
 using webpp::unicode::unchecked::next_char_copy;
 using webpp::unicode::unchecked::prev_char_copy;
+using webpp::unicode::unchecked::prev_code_point;
 using webpp::unicode::unchecked::swap_code_points;
 
 static constexpr bool enable_utf8_composition_tests = true;
@@ -530,7 +530,7 @@ namespace {
         utf32_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
 
         for (auto pos = utf8_str.begin(); pos != utf8_str.end();) {
-            auto const impl_copy = webpp::unicode::next_code_point_copy(pos, utf8_str.end());
+            auto const impl_copy = webpp::unicode::unchecked::next_code_point_copy(pos, utf8_str.end());
             auto const impl2     = utf8_to_utf32(webpp::stl::u8string_view{pos, utf8_str.end()});
             webpp::unicode::unchecked::append(utf32_str, pos);
 
@@ -4914,25 +4914,25 @@ TEST(Unicode, PrevCodePoint16) {
     u16string str = u"✅❎";
     auto      beg = str.begin();
     next_char(beg);
-    auto const code_point = webpp::unicode::prev_code_point(beg);
+    auto const code_point = webpp::unicode::unchecked::prev_code_point(beg);
     EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
 
     str = u"1✅❎";
     beg = str.begin();
     next_char(beg, 2);
-    EXPECT_EQ(webpp::unicode::prev_code_point(beg), U'✅');
+    EXPECT_EQ(webpp::unicode::unchecked::prev_code_point(beg), U'✅');
 
     str = u"1✅❎";
     beg = str.begin();
     next_char(beg);
-    EXPECT_EQ(webpp::unicode::prev_code_point(beg), U'1');
+    EXPECT_EQ(webpp::unicode::unchecked::prev_code_point(beg), U'1');
 }
 
 TEST(Unicode, PrevCodePoint32) {
     u32string str = U"✅❎";
     auto      beg = str.begin();
     next_char(beg);
-    auto const code_point = webpp::unicode::prev_code_point(beg);
+    auto const code_point = webpp::unicode::unchecked::prev_code_point(beg);
     EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
 }
 
@@ -6918,6 +6918,9 @@ TEST(Unicode, CheckedNextCodePoint) {
     EXPECT_EQ(next_code_point_copy<return_negated_char>(str.begin(), str.end()), -U'\xac');
     EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()),
               replacement_char<char32_t>);
+
+    std::u8string str2 = u8"\xac\xac";
+    EXPECT_EQ(next_code_point_copy<return_negated_char>(str2.begin(), str2.end()), -U'\xac');
 }
 
 TEST(Unicode, FuzzFixes) {

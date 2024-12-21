@@ -431,7 +431,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 return *iter();
             } else {
-                return next_code_point_copy(iter());
+                return checked::next_code_point_copy(iter());
             }
         }
 
@@ -618,7 +618,7 @@ namespace webpp::unicode {
                 return *iter();
             } else {
                 assert(iter() < reducer->end());
-                return next_code_point_copy(iter(), reducer->end());
+                return checked::next_code_point_copy(iter(), reducer->end());
             }
         }
 

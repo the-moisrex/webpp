@@ -184,220 +184,6 @@ namespace webpp::unicode {
         // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));
     }
 
-    // todo: check out the glib/gutf8.c implementation
-    template <stl::forward_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
-        using code_point_type    = CodePointType;
-        using char_type          = typename stl::iterator_traits<Iter>::value_type;
-        using unsigned_char_type = stl::make_unsigned_t<char_type>;
-
-        // double casting to make sure negative values can't come out of it
-        auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-        if constexpr (UTF16<char_type>) {
-            if ((val & 0xFC00U) == 0xD800U) {
-                // we have two chars
-                val  &= 0x3FFU;
-                val <<= 10U;
-                val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
-                val  += 0x1'0000U;
-                return val;
-            }
-            return val; // this is the only char
-        } else if constexpr (UTF8<char_type>) {
-            if ((val & 0b1000'0000U) == 0) {
-                // we have one char
-                return val;
-            }
-            if ((val & 0b1110'0000U) == 0b1100'0000U) {
-                // we have 2 chars
-                val  &= 0b0001'1111U;
-                val <<= 6U;
-                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            if ((val & 0b1111'0000U) == 0b1110'0000U) {
-                // we have 3 chars
-                val  &= 0b0000'1111U;
-                val <<= 12U;
-                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            if ((val & 0b1111'1000U) == 0b1111'0000U) {
-                // we have 4 chars
-                val  &= 0b0000'0111U;
-                val <<= 18U;
-                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
-                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            return val; // return this one anyway
-        } else {
-            return val;
-        }
-    }
-
-    template <stl::bidirectional_iterator Iter          = char8_t const*,
-              stl::bidirectional_iterator EIter         = Iter,
-              UTF32                       CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
-        using code_point_type    = CodePointType;
-        using char_type          = typename stl::iterator_traits<Iter>::value_type;
-        using unsigned_char_type = stl::make_unsigned_t<char_type>;
-
-        if (pos == end) {
-            return static_cast<code_point_type>(0);
-        }
-
-        // double casting to make sure negative values can't come out of it
-        auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-        if (pos == end) {
-            return val;
-        }
-        if constexpr (UTF16<char_type>) {
-            if ((val & 0xFC00U) == 0xD800U) {
-                // we have two chars
-                val  &= 0x3FFU;
-                val <<= 10U;
-                val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
-                val  += 0x1'0000U;
-                return val;
-            }
-            return val; // this is the only char
-        } else if constexpr (UTF8<char_type>) {
-            if ((val & 0b1000'0000U) == 0) {
-                // we have one char
-                return val;
-            }
-            if ((val & 0b1110'0000U) == 0b1100'0000U) {
-                // we have 2 chars
-                val  &= 0b0001'1111U;
-                val <<= 6U;
-                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            if ((val & 0b1111'0000U) == 0b1110'0000U) {
-                // we have 3 chars
-                val  &= 0b0000'1111U;
-                val <<= 12U;
-                val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
-                if (++pos == end) {
-                    return *stl::prev(--pos); // bad code point found, return the first code unit
-                }
-                val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            if ((val & 0b1111'1000U) == 0b1111'0000U) {
-                // we have 4 chars
-                val  &= 0b0000'0111U;
-                val <<= 18U;
-                val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
-                if (++pos == end) {
-                    return *stl::prev(--pos); // bad code point found, return the first code unit
-                }
-                val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
-                if (++pos == end) {
-                    stl::advance(pos, -2);
-                    return *stl::prev(pos); // bad code point found, return the first code unit
-                }
-                val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                return val;
-            }
-            return val; // return this one anyway
-        } else {
-            return val;
-        }
-    }
-
-    template <stl::forward_iterator Iter = char8_t const*, typename CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos) noexcept {
-        return next_code_point<Iter, CodePointType>(pos);
-    }
-
-    template <stl::bidirectional_iterator Iter  = char8_t const*,
-              stl::bidirectional_iterator EIter = Iter,
-              typename CodePointType            = char32_t>
-    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
-        return next_code_point<Iter, EIter, CodePointType>(pos, end);
-    }
-
-    template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos) noexcept {
-        using code_point_type = CodePointType;
-        using char_type       = typename stl::iterator_traits<Iter>::value_type;
-
-        auto val = static_cast<code_point_type>(*--pos);
-        if constexpr (UTF16<char_type>) {
-            // UTF-16 Encoding
-            // byte1            | byte2            |
-            // 0xxxxxxxxxxxxxxx |                  |
-            // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
-
-            if ((val & 0xFC00U) != 0b1101'1100'0000'0000U) {
-                return val; // 1 byte
-            }
-
-            // not it has to be 2 bytes, let's fix the Unicode residuals first:
-            val &= 0x3FFU;
-            val += 0x1'0000U;
-
-            // now let's add the second byte:
-            val |= (static_cast<code_point_type>(*--pos) & 0x3FFU) << 10U;
-
-            return val;
-        } else if constexpr (UTF8<char_type>) {
-            // byte1    | byte2    |  byte3   | byte4    |
-            // 0xxxxxxx |          |          |          |
-            // 110xxxxx | 10xxxxxx |          |          |
-            // 1110xxxx | 10xxxxxx | 10xxxxxx |          |
-            // 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
-            if (val >> 6U != 0b10) [[likely]] {
-                return val; // 1 byte
-            }
-
-            // let's clean up the first byte's Unicode residuals
-            val &= 0b0011'1111U;
-
-            if (*--pos >> 6U != 0b10) {
-                val |= (static_cast<code_point_type>(*pos) & 0b0001'1111U) << 6U; // byte 2
-                return val;                                                       // 2 bytes
-            }
-
-            // now there have to be 3 or 4 bytes, let's add byte 2 first:
-            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U; // byte 2
-
-            // checking byte 3:
-            if (*--pos >> 6U != 0b10) {
-                val |= (static_cast<code_point_type>(*pos) & 0b0000'1111U) << 12U; // byte 3
-                return val;                                                        // 3 bytes
-            }
-
-            // now we have to have 4 bytes, let's add byte 3 first:
-            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U; // byte 3
-
-            // checking byte 4
-            if (*--pos >> 6U != 0b10) [[likely]] {
-                val |= (static_cast<code_point_type>(*pos) & 0b0000'0111U) << 18U; // byte 4
-                return val;                                                        // 3 bytes
-            }
-
-            // we had to have 4 bytes, seems like a broken code point, let's add the 4th byte first:
-            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 18U;
-
-            // invalid code point found, let's just return whatever we have now:
-            return val;
-        } else {
-            // UTF-32 is trivial
-            return val;
-        }
-    }
-
-    template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos) noexcept {
-        return prev_code_point<Iter, CodePointType>(pos);
-    }
-
     namespace details {
 
         // from glib/gutf8.c
@@ -559,6 +345,220 @@ namespace webpp::unicode {
     }
 
     namespace unchecked {
+
+        // todo: check out the glib/gutf8.c implementation
+        template <stl::forward_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
+        [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
+            using code_point_type    = CodePointType;
+            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using unsigned_char_type = stl::make_unsigned_t<char_type>;
+
+            // double casting to make sure negative values can't come out of it
+            auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+            if constexpr (UTF16<char_type>) {
+                if ((val & 0xFC00U) == 0xD800U) {
+                    // we have two chars
+                    val  &= 0x3FFU;
+                    val <<= 10U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
+                    val  += 0x1'0000U;
+                    return val;
+                }
+                return val; // this is the only char
+            } else if constexpr (UTF8<char_type>) {
+                if ((val & 0b1000'0000U) == 0) {
+                    // we have one char
+                    return val;
+                }
+                if ((val & 0b1110'0000U) == 0b1100'0000U) {
+                    // we have 2 chars
+                    val  &= 0b0001'1111U;
+                    val <<= 6U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                if ((val & 0b1111'0000U) == 0b1110'0000U) {
+                    // we have 3 chars
+                    val  &= 0b0000'1111U;
+                    val <<= 12U;
+                    val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                if ((val & 0b1111'1000U) == 0b1111'0000U) {
+                    // we have 4 chars
+                    val  &= 0b0000'0111U;
+                    val <<= 18U;
+                    val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
+                    val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                return val; // return this one anyway
+            } else {
+                return val;
+            }
+        }
+
+        template <stl::bidirectional_iterator Iter          = char8_t const*,
+                  stl::bidirectional_iterator EIter         = Iter,
+                  UTF32                       CodePointType = char32_t>
+        [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
+            using code_point_type    = CodePointType;
+            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using unsigned_char_type = stl::make_unsigned_t<char_type>;
+
+            if (pos == end) {
+                return static_cast<code_point_type>(0);
+            }
+
+            // double casting to make sure negative values can't come out of it
+            auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+            if (pos == end) {
+                return val;
+            }
+            if constexpr (UTF16<char_type>) {
+                if ((val & 0xFC00U) == 0xD800U) {
+                    // we have two chars
+                    val  &= 0x3FFU;
+                    val <<= 10U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
+                    val  += 0x1'0000U;
+                    return val;
+                }
+                return val; // this is the only char
+            } else if constexpr (UTF8<char_type>) {
+                if ((val & 0b1000'0000U) == 0) {
+                    // we have one char
+                    return val;
+                }
+                if ((val & 0b1110'0000U) == 0b1100'0000U) {
+                    // we have 2 chars
+                    val  &= 0b0001'1111U;
+                    val <<= 6U;
+                    val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                if ((val & 0b1111'0000U) == 0b1110'0000U) {
+                    // we have 3 chars
+                    val  &= 0b0000'1111U;
+                    val <<= 12U;
+                    val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
+                    if (++pos == end) {
+                        return *stl::prev(--pos); // bad code point found, return the first code unit
+                    }
+                    val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                if ((val & 0b1111'1000U) == 0b1111'0000U) {
+                    // we have 4 chars
+                    val  &= 0b0000'0111U;
+                    val <<= 18U;
+                    val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
+                    if (++pos == end) {
+                        return *stl::prev(--pos); // bad code point found, return the first code unit
+                    }
+                    val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
+                    if (++pos == end) {
+                        stl::advance(pos, -2);
+                        return *stl::prev(pos); // bad code point found, return the first code unit
+                    }
+                    val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                    return val;
+                }
+                return val; // return this one anyway
+            } else {
+                return val;
+            }
+        }
+
+        template <stl::forward_iterator Iter = char8_t const*, typename CodePointType = char32_t>
+        [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos) noexcept {
+            return next_code_point<Iter, CodePointType>(pos);
+        }
+
+        template <stl::bidirectional_iterator Iter  = char8_t const*,
+                  stl::bidirectional_iterator EIter = Iter,
+                  typename CodePointType            = char32_t>
+        [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
+            return next_code_point<Iter, EIter, CodePointType>(pos, end);
+        }
+
+        template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
+        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos) noexcept {
+            using code_point_type = CodePointType;
+            using char_type       = typename stl::iterator_traits<Iter>::value_type;
+
+            auto val = static_cast<code_point_type>(*--pos);
+            if constexpr (UTF16<char_type>) {
+                // UTF-16 Encoding
+                // byte1            | byte2            |
+                // 0xxxxxxxxxxxxxxx |                  |
+                // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
+
+                if ((val & 0xFC00U) != 0b1101'1100'0000'0000U) {
+                    return val; // 1 byte
+                }
+
+                // not it has to be 2 bytes, let's fix the Unicode residuals first:
+                val &= 0x3FFU;
+                val += 0x1'0000U;
+
+                // now let's add the second byte:
+                val |= (static_cast<code_point_type>(*--pos) & 0x3FFU) << 10U;
+
+                return val;
+            } else if constexpr (UTF8<char_type>) {
+                // byte1    | byte2    |  byte3   | byte4    |
+                // 0xxxxxxx |          |          |          |
+                // 110xxxxx | 10xxxxxx |          |          |
+                // 1110xxxx | 10xxxxxx | 10xxxxxx |          |
+                // 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
+                if (val >> 6U != 0b10) [[likely]] {
+                    return val; // 1 byte
+                }
+
+                // let's clean up the first byte's Unicode residuals
+                val &= 0b0011'1111U;
+
+                if (*--pos >> 6U != 0b10) {
+                    val |= (static_cast<code_point_type>(*pos) & 0b0001'1111U) << 6U; // byte 2
+                    return val;                                                       // 2 bytes
+                }
+
+                // now there have to be 3 or 4 bytes, let's add byte 2 first:
+                val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U; // byte 2
+
+                // checking byte 3:
+                if (*--pos >> 6U != 0b10) {
+                    val |= (static_cast<code_point_type>(*pos) & 0b0000'1111U) << 12U; // byte 3
+                    return val;                                                        // 3 bytes
+                }
+
+                // now we have to have 4 bytes, let's add byte 3 first:
+                val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U; // byte 3
+
+                // checking byte 4
+                if (*--pos >> 6U != 0b10) [[likely]] {
+                    val |= (static_cast<code_point_type>(*pos) & 0b0000'0111U) << 18U; // byte 4
+                    return val;                                                        // 3 bytes
+                }
+
+                // we had to have 4 bytes, seems like a broken code point, let's add the 4th byte first:
+                val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 18U;
+
+                // invalid code point found, let's just return whatever we have now:
+                return val;
+            } else {
+                // UTF-32 is trivial
+                return val;
+            }
+        }
+
+        template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
+        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos) noexcept {
+            return prev_code_point<Iter, CodePointType>(pos);
+        }
 
         template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
         static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from)
@@ -955,7 +955,7 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
+                  stl::random_access_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
@@ -968,97 +968,126 @@ namespace webpp::unicode {
                 return static_cast<code_point_type>(0); // return \0 if we're at the end already
             }
 
-            auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-            // double casting to make sure negative values can't come out of it
-            if constexpr (UTF32<char_type>) {
-                return val;
-            } else if constexpr (UTF16<char_type>) {
-                if (pos == end) {
-                    return val;
-                }
-                if ((val & 0xFC00U) == 0xD800U) {
+            auto const cu1        = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+            auto       code_point = cu1;
+
+            // we're in a constexpr land, we can't use goto; damn all of you developers who think goto
+            // is not good enough for you; well, guess what, you're not smart enough to use goto.
+            for (;;) {
+                // double casting to make sure negative values can't come out of it
+                if constexpr (UTF32<char_type>) {
+                    return cu1;
+                } else if constexpr (UTF16<char_type>) {
+                    if (pos == end) [[unlikely]] {
+                        break;
+                    }
+                    auto const cu2    = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                    bool       error  = (cu1 & 0xFC00U) != 0xD800U;
+                    error            |= (cu2 & 0xFC00U) != 0xDC00U;
                     // we have two chars
-                    val  &= 0x3FFU;
-                    val <<= 10U;
-                    val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
-                    val  += 0x1'0000U;
-                    return val;
-                }
-                return val; // this is the only char
-            } else if constexpr (UTF8<char_type>) {
-                // we're in a constexpr land, we can't use goto; damn all of you developers who think goto is
-                // not good enough for you; well, guess what, you're not smart enough to use goto.
-                for (;;) {
-                    auto const len = required_length_of<difference_type>(val);
-                    if constexpr (stl::random_access_iterator<Iter>) {
-                        if (end - pos < len) {
-                            break;
-                        }
+                    code_point       &= 0x3FFU;
+                    code_point <<= 10U;
+                    code_point  |= cu2 & 0x3FFU;
+                    code_point  += 0x1'0000U;
+                    if (error) [[unlikely]] {
+                        --pos;
+                        code_point = cu1;
+                        break;
+                    }
+                    return code_point;
+                } else if constexpr (UTF8<char_type>) {
+                    auto const len = required_length_of<char_type, difference_type>(cu1);
+                    if (end - pos < len - 1) [[unlikely]] {
+                        break;
                     }
                     switch (len) {
-                        case 1: assert(val & 0b1000'0000U == 0); return val;
-                        case 2:
-                            assert((val & 0b1110'0000U) == 0b1100'0000U);
-                            val  &= 0b0001'1111U;
-                            val <<= 6U;
-                            val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                            return val;
-                        case 3:
-                            assert((val & 0b1111'0000U) == 0b1110'0000U);
-                            val  &= 0b0000'1111U;
-                            val <<= 12U;
-                            val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                            if constexpr (!stl::random_access_iterator<Iter>) {
-                                if (pos == end) {
-                                    val = *stl::prev(--pos); // bad code point found
-                                    break;
-                                }
+                        case 1:
+                            if ((cu1 & 0b1000'0000U) != 0) [[unlikely]] {
+                                break;
                             }
-                            val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                            return val;
-                        case 4:
-                            assert((val & 0b1111'1000U) == 0b1111'0000U);
-                            val  &= 0b0000'0111U;
-                            val <<= 18U;
-                            val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
-                            if constexpr (!stl::random_access_iterator<Iter>) {
-                                if (pos == end) {
-                                    val = *stl::prev(--pos); // bad code point found
-                                    break;
-                                }
+                            return cu1;
+                        case 2: {
+                            auto const cu2 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool error   = (cu1 & 0b1110'0000U) != 0b1100'0000U;
+                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                            code_point  &= 0b0001'1111U;
+                            code_point <<= 6U;
+                            code_point  |= cu2 & 0b0011'1111U;
+                            if (error || code_point < 0x80 || 0x7ff < code_point) [[unlikely]] {
+                                --pos;
+                                code_point = cu1;
+                                break;
                             }
-                            val |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                            if constexpr (!stl::random_access_iterator<Iter>) {
-                                if (pos == end) {
-                                    stl::advance(pos, -2);
-                                    val = *stl::prev(pos); // bad code point found
-                                    break;
-                                }
+                            return code_point;
+                        }
+                        case 3: {
+                            auto const cu2 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu3 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool error   = (cu1 & 0b1111'0000U) != 0b1110'0000U;
+                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                            error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
+                            code_point  &= 0b0000'1111U;
+                            code_point <<= 12U;
+                            code_point  |= (cu2 & 0b0011'1111U) << 6U;
+                            code_point  |= cu3 & 0b0011'1111U;
+                            if (error || code_point < 0x800U || 0xFFFFU < code_point ||
+                                (0xD7FFU < code_point && code_point < 0xE000U)) [[unlikely]]
+                            {
+                                stl::advance(pos, -2);
+                                code_point = cu1;
+                                break;
                             }
-                            val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
-                            return val;
+                            return code_point;
+                        }
+                        case 4: {
+                            auto const cu2 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu3 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu4 =
+                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool error   = (cu1 & 0b1111'0000) != 0b1111'0000;
+                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                            error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
+                            error       |= (cu4 & 0b1100'0000U) != 0b1000'0000U;
+                            code_point  &= 0b0000'0111U;
+                            code_point <<= 18U;
+                            code_point  |= (cu2 & 0b0011'1111U) << 12U;
+                            code_point  |= (cu3 & 0b0011'1111U) << 6U;
+                            code_point  |= cu4 & 0b0011'1111U;
+                            if (error || code_point <= 0xFFFFU || 0x10'FFFFU < code_point) [[unlikely]] {
+                                stl::advance(pos, -3);
+                                code_point = cu1;
+                                break;
+                            }
+                            return code_point;
+                        }
                         default: break;
                     }
                     break;
-                }
 
-                // handle errors:
-                if constexpr (ErrorHandling == return_replacement_char) {
-                    return replacement_char<code_point_type>;
-                } else if constexpr (ErrorHandling == return_negated_char) {
-                    return -val;
                 } else {
-                    return val;
+                    static_assert_false(char_type, "Invalid code unit type.");
+                    return cu1;
                 }
+            }
+
+            // handle errors:
+            if constexpr (ErrorHandling == return_replacement_char) {
+                return replacement_char<code_point_type>;
+            } else if constexpr (ErrorHandling == return_negated_char) {
+                return -code_point;
             } else {
-                static_assert_false(char_type, "Invalid code unit type.");
-                return val;
+                return code_point;
             }
         }
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
+                  stl::random_access_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point_copy(
           Iter        pos,
           Iter const& end) noexcept {
