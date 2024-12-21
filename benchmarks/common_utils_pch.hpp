@@ -14,7 +14,7 @@ static StrType str_generator(
     StrType str;
     str.reserve(size);
     for (std::size_t i = 0; i < size; i++) {
-        str.append(chars);
+        str.push_back(chars[i % chars.size()]);
     }
     std::shuffle(str.begin(), str.end(), std::mt19937(std::random_device()()));
     return str.substr(0, size);

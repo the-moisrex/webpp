@@ -2,6 +2,8 @@
 #include "../benchmark.hpp"
 #include "../common_utils_pch.hpp"
 
+#include <cstring>
+
 // NOLINTBEGIN(*-magic-numbers)
 namespace v1 {
 
@@ -83,7 +85,23 @@ namespace v1 {
 
     std::u32string utf8_to_utf32(std::u8string const& src) {
         std::u32string out;
-        out.reserve(src.length() * 4); // Estimate maximum size of UTF-8 string
+        out.resize_and_overwrite(src.size(), [&](char32_t* buf, std::size_t buf_size) {
+            auto pos = src.begin();
+            while (pos != src.end()) {
+                auto const code_point = next_code_point(pos, src.end());
+                if (code_point == 0) {
+                    break;
+                }
+                *buf++ = code_point;
+            }
+            return pos - src.begin();
+        });
+        return out;
+    }
+
+    std::u32string utf8_to_utf32_variant(std::u8string const& src) {
+        std::u32string out;
+        out.reserve(src.size());
 
         auto pos = src.begin();
         while (pos != src.end()) {
@@ -240,7 +258,23 @@ namespace v2 {
 
     std::u32string utf8_to_utf32(std::u8string const& src) {
         std::u32string out;
-        out.reserve(src.length() * 4); // Estimate maximum size of UTF-8 string
+        out.resize_and_overwrite(src.size(), [&](char32_t* buf, std::size_t buf_size) {
+            auto pos = src.begin();
+            while (pos != src.end()) {
+                auto const code_point = next_code_point(pos, src.end());
+                if (code_point == 0) {
+                    break;
+                }
+                *buf++ = code_point;
+            }
+            return pos - src.begin();
+        });
+        return out;
+    }
+
+    std::u32string utf8_to_utf32_variant(std::u8string const& src) {
+        std::u32string out;
+        out.reserve(src.size());
 
         auto pos = src.begin();
         while (pos != src.end()) {
@@ -257,24 +291,179 @@ namespace v2 {
 
 } // namespace v2
 
-auto const str = str8_generator(10'000);
+namespace other_impl {
+    /// this is not my implementation
+    size_t utf8_to_utf32(char8_t const* buf, size_t len, char32_t* out) {
+        uint8_t const* ptr = reinterpret_cast<uint8_t const*>(buf);
+        size_t         pos = 0;
+        char32_t*      start{out};
+        while (pos < len) {
+            if (pos + 16 <= len) {
+                uint64_t v1;
+                std::memcpy(&v1, ptr + pos, sizeof(uint64_t));
+                uint64_t v2;
+                std::memcpy(&v2, ptr + pos + sizeof(uint64_t), sizeof(uint64_t));
+                uint64_t v{v1 | v2};
+                if ((v & 0x8080'8080'8080'8080) == 0) {
+                    size_t final_pos = pos + 16;
+                    while (pos < final_pos) {
+                        *out++ = char32_t(buf[pos]);
+                        pos++;
+                    }
+                    continue;
+                }
+            }
+            uint8_t cu1 = ptr[pos];
+            if (cu1 < 0b1000'0000) {
+                *out++ = char32_t(cu1);
+                pos++;
+            } else if ((cu1 & 0b1110'0000) == 0b1100'0000) {
+                // We have a two-byte UTF-8
+                if (pos + 1 >= len) {
+                    return 0;
+                } // minimal bound checking
+                if ((ptr[pos + 1] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+                // range check
+                uint32_t cp = (cu1 & 0b0001'1111) << 6 | (ptr[pos + 1] & 0b0011'1111);
+                if (cp < 0x80 || 0x7ff < cp) {
+                    return 0;
+                }
+                *out++  = char32_t(cp);
+                pos    += 2;
+            } else if ((cu1 & 0b1111'0000) == 0b1110'0000) {
+                if (pos + 2 >= len) {
+                    return 0;
+                }
+
+                if ((ptr[pos + 1] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+                if ((ptr[pos + 2] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+                // range check
+                uint32_t cp = (cu1 & 0b0000'1111) << 12 | (ptr[pos + 1] & 0b0011'1111) << 6 |
+                              (ptr[pos + 2] & 0b0011'1111);
+                if (cp < 0x800 || 0xffff < cp || (0xd7ff < cp && cp < 0xe000)) {
+                    return 0;
+                }
+                *out++  = char32_t(cp);
+                pos    += 3;
+            } else if ((cu1 & 0b1111'1000) == 0b1111'0000) { // 0b11110000
+                if (pos + 3 >= len) {
+                    return 0;
+                }
+                if ((ptr[pos + 1] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+                if ((ptr[pos + 2] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+                if ((ptr[pos + 3] & 0b1100'0000) != 0b1000'0000) {
+                    return 0;
+                }
+
+                uint32_t cp = (cu1 & 0b0000'0111) << 18 | (ptr[pos + 1] & 0b0011'1111) << 12 |
+                              (ptr[pos + 2] & 0b0011'1111) << 6 | (ptr[pos + 3] & 0b0011'1111);
+                if (cp <= 0xffff || 0x10'ffff < cp) {
+                    return 0;
+                }
+                *out++  = char32_t(cp);
+                pos    += 4;
+            } else {
+                return 0;
+            }
+        }
+        return out - start;
+    }
+
+    std::u32string utf8_to_utf32(std::u8string const& src) {
+        std::u32string out;
+        out.resize_and_overwrite(src.size(), [&](char32_t* buf, std::size_t buf_size) {
+            return utf8_to_utf32(src.data(), src.size(), buf);
+        });
+        return out;
+    }
+
+} // namespace other_impl
+
+auto const str8 = str8_generator(10'000);
+auto const str  = str_generator<std::u8string>(10'000);
 
 static void UTFConv_v1(benchmark::State& state) {
     for ([[maybe_unused]] auto _ : state) {
-        auto res = v1::utf8_to_utf32(str);
+        auto res = v1::utf8_to_utf32(str8);
         benchmark::DoNotOptimize(res);
     }
 }
 
 BENCHMARK(UTFConv_v1);
 
+static void UTFConv_v1_variant(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v1::utf8_to_utf32_variant(str8);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_v1_variant);
+
 static void UTFConv_v2(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v2::utf8_to_utf32(str8);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_v2);
+
+static void UTFConv_v2_variant(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v2::utf8_to_utf32_variant(str8);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_v2_variant);
+
+static void UTFConv_OtherImpl(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v2::utf8_to_utf32(str8);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_OtherImpl);
+
+//////////////////////////////// ASCII ////////////////////////////
+
+static void UTFConv_v1_ascii(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v1::utf8_to_utf32(str);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_v1_ascii);
+
+static void UTFConv_v2_ascii(benchmark::State& state) {
     for ([[maybe_unused]] auto _ : state) {
         auto res = v2::utf8_to_utf32(str);
         benchmark::DoNotOptimize(res);
     }
 }
 
-BENCHMARK(UTFConv_v2);
+BENCHMARK(UTFConv_v2_ascii);
+
+static void UTFConv_OtherImpl_ascii(benchmark::State& state) {
+    for ([[maybe_unused]] auto _ : state) {
+        auto res = v2::utf8_to_utf32(str);
+        benchmark::DoNotOptimize(res);
+    }
+}
+
+BENCHMARK(UTFConv_OtherImpl_ascii);
 
 // NOLINTEND(*-magic-numbers)

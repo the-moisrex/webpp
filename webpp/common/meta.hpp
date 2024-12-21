@@ -150,7 +150,7 @@ namespace webpp::details {
 
 } // namespace webpp::details
 
-#    if defined(__cpp_if_consteval) && CXX23
+#    if defined(__cpp_if_consteval) && defined(CXX23)
 #        define webpp_assume(...)                                   \
             do {                                                    \
                 if consteval {                                      \
