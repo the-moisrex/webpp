@@ -948,12 +948,12 @@ namespace webpp::unicode {
         }
 
         enum struct error_handling : stl::uint8_t {
-            return_unchanged        = 0,
-            return_replacement_char = 1,
+            return_replacement_char = 0,
+            return_unchanged        = 1,
             return_negated_char     = 2,
         };
 
-        template <error_handling              ErrorHandling = error_handling::return_unchanged,
+        template <error_handling              ErrorHandling = error_handling::return_replacement_char,
                   UTF32                       CodePointType = char32_t,
                   stl::random_access_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {

@@ -37,6 +37,7 @@ set(FILE_SOURCES
         uri/uri_benchmark.cpp
         charset/charset_benchmark.cpp
         interleave_bits/interleave_benchmark.cpp
+        utf_convertion/utf_conversion_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 

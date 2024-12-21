@@ -6914,7 +6914,7 @@ TEST(Unicode, CheckedNextCodePoint) {
     using enum webpp::unicode::checked::error_handling;
 
     std::u8string str = u8"\xac";
-    EXPECT_EQ(next_code_point_copy(str.begin(), str.end()), U'\xac');
+    EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
     EXPECT_EQ(next_code_point_copy<return_negated_char>(str.begin(), str.end()), -U'\xac');
     EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()),
               replacement_char<char32_t>);
