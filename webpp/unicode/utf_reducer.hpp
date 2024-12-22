@@ -615,10 +615,11 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr value_type operator*() const noexcept {
             if constexpr (UTF32<unit_type>) {
-                return *iter();
+                return static_cast<value_type>(*iter());
             } else {
+                using enum checked::error_handling;
                 assert(iter() < reducer->end());
-                return checked::next_code_point_copy(iter(), reducer->end());
+                return checked::next_code_point_copy<return_negated_char, value_type>(iter(), reducer->end());
             }
         }
 
@@ -744,12 +745,19 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 *iter() = *other;
             } else {
-                auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(*other);
+                auto const inp_code_point = *other;
+
+                // handling invalid code points
+                if (static_cast<stl::int32_t>(inp_code_point) < 0) [[unlikely]] {
+                    *iter() = -static_cast<unit_type>(inp_code_point);
+                    return;
+                }
+
+                auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
 
                 // if new length is 0, a bad code point is given to the input.
                 assert(new_len != 0);
-
-                set_inplace(*other, new_len);
+                set_inplace(inp_code_point, new_len);
             }
         }
 
@@ -759,6 +767,12 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() < reducer->endptr);
+
+                // handling invalid code points
+                if (static_cast<stl::int32_t>(inp_code_point) < 0) [[unlikely]] {
+                    *iter() = -static_cast<unit_type>(inp_code_point);
+                    return;
+                }
 
                 auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
                 set_inplace(inp_code_point, new_len);
@@ -772,6 +786,12 @@ namespace webpp::unicode {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() != reducer->endptr);
+
+                // handling invalid code points
+                if (static_cast<stl::int32_t>(inp_code_point) < 0) [[unlikely]] {
+                    *iter() = -static_cast<unit_type>(inp_code_point);
+                    return;
+                }
 
                 auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);

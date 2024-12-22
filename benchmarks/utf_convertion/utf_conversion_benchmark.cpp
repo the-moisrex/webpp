@@ -149,18 +149,21 @@ namespace v2 {
             if constexpr (UTF32<char_type>) {
                 return cu1;
             } else if constexpr (UTF16<char_type>) {
-                if (pos == end) [[unlikely]] {
-                    break;
+                bool const requires_2_units = (cu1 & 0xFC00U) == 0xD800U;
+                bool       error            = false;
+                if (requires_2_units) {
+                    code_point  &= 0x3FFU;
+                    code_point <<= 10U;
+                    if (pos == end) [[unlikely]] {
+                        break;
+                    }
+                    auto const cu2  = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                    error          |= (cu1 & 0xFC00U) != 0xD800U;
+                    error          |= (cu2 & 0xFC00U) != 0xDC00U;
+                    code_point     |= cu2 & 0x3FFU;
+                    code_point     += 0x1'0000U;
                 }
-                auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                bool       error   = (cu1 & 0xFC00U) != 0xD800U;
-                error             |= (cu2 & 0xFC00U) != 0xDC00U;
-                // we have two chars
-                code_point        &= 0x3FFU;
-                code_point       <<= 10U;
-                code_point        |= cu2 & 0x3FFU;
-                code_point        += 0x1'0000U;
-                if (error) [[unlikely]] {
+                if (error || is_surrogate(code_point)) [[unlikely]] {
                     --pos;
                     code_point = cu1;
                     break;
@@ -250,6 +253,9 @@ namespace v2 {
         if constexpr (ErrorHandling == return_replacement_char) {
             return replacement_char<code_point_type>;
         } else if constexpr (ErrorHandling == return_negated_char) {
+            static_assert(stl::is_unsigned_v<code_point_type>,
+                          "The code point type should support negative values if you want us to return "
+                          "negative values as errors.");
             return -code_point;
         } else {
             return code_point;
