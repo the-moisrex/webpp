@@ -1000,7 +1000,8 @@ namespace webpp::unicode {
                     }
                     return code_point;
                 } else if constexpr (UTF8<char_type>) {
-                    auto const len = required_length_of<char_type, difference_type>(cu1);
+                    auto const len =
+                      required_length_of<char_type, difference_type>(static_cast<char_type>(cu1));
                     if (end - pos < len - 1) [[unlikely]] {
                         break;
                     }

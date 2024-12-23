@@ -6930,6 +6930,9 @@ TEST(Unicode, FuzzFixes) {
     EXPECT_EQ("\x90\xe", toNFC<std::string>("\x90\xe"));
     EXPECT_EQ("\xa\x8a", toNFC<std::string>("\xa\x8a"));
     EXPECT_EQ("\xb6\x4a", toNFC<std::string>("\xb6\x4a"));
+    EXPECT_EQ("\xa\xc0", toNFC<std::string>("\xa\xc0"));
+    EXPECT_EQ("\xce", toNFC<std::string>("\xce"));
+    EXPECT_EQ("\x10\xf4", toNFC<std::string>("\x10\xf4"));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
