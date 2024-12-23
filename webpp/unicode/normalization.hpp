@@ -236,15 +236,24 @@ namespace webpp::unicode {
       noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
         using unchecked::next_char_copy;
         using unchecked::swap_code_points;
+        using enum checked::error_handling;
 
         if (start == end) {
             return;
         }
 
-        for (auto pos = next_char_copy(start); pos != end;) {
-            auto       back_pos = pos;
-            auto       cur_cp   = unchecked::next_code_point(pos);
-            auto const ccc      = ccc_of(cur_cp);
+        auto pos    = start;
+        stl::ignore = checked::next_code_point<return_replacement_char>(pos, end);
+        if (pos == end) {
+            return;
+        }
+        for (;;) {
+            auto back_pos = pos;
+            auto cur_cp   = checked::next_code_point<return_replacement_char>(pos, end);
+            if (cur_cp == 0) {
+                break;
+            }
+            auto const ccc = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip next code point as well, the next one is never going to be swapped with this one
                 if (pos == end) {
@@ -427,13 +436,17 @@ namespace webpp::unicode {
             using details::decomp_indices;
             using details::decomp_values;
             using details::trailing_mapped_deomps;
+            using enum checked::error_handling;
 
             using char_type = typename std::iterator_traits<Iter>::value_type;
 
             decomposition_details<SizeT> info;
             auto const                   actual_length = static_cast<SizeT>(end - pos);
-            while (pos != end) {
-                auto const code_point = unchecked::next_code_point(pos);
+            for (;;) {
+                auto const code_point = checked::next_code_point<return_replacement_char>(pos, end);
+                if (code_point == 0) {
+                    break;
+                }
 
                 // handling hangul code points
                 if (is_hangul_code_point(code_point)) [[unlikely]] {

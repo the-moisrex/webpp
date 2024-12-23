@@ -951,6 +951,7 @@ namespace webpp::unicode {
             return_replacement_char = 0,
             return_unchanged        = 1,
             return_negated_char     = 2,
+            return_zero_char        = 3,
         };
 
         template <error_handling              ErrorHandling = error_handling::return_replacement_char,
@@ -1088,6 +1089,8 @@ namespace webpp::unicode {
                               "The code point type should support negative values if you want us to return "
                               "negative values as errors.");
                 return -code_point;
+            } else if constexpr (ErrorHandling == return_zero_char) {
+                return static_cast<code_point_type>(0);
             } else {
                 return code_point;
             }
