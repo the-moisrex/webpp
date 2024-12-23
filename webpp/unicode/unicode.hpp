@@ -613,6 +613,39 @@ namespace webpp::unicode {
         }
 
         template <stl::forward_iterator Iter = char8_t*>
+        [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
+            using iter_type       = stl::iterator_traits<Iter>;
+            using char_type       = typename iter_type::value_type;
+            using difference_type = typename iter_type::difference_type;
+            if (pos == end) {
+                return false;
+            }
+            if constexpr (UTF8<char_type>) {
+                // alternative implementation:
+                // for (++p; (*p & 0xc0) == 0x80; ++p) ;
+                using unsigned_type = stl::make_unsigned_t<char_type>;
+                auto const len      = static_cast<difference_type>(
+                  details::utf8_skip<char_type>[static_cast<unsigned_type>(*pos)]);
+                if (end - pos < len) {
+                    ++pos;
+                    return false;
+                }
+                stl::advance(pos, len);
+            } else if constexpr (UTF16<char_type>) {
+                ++pos;
+                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
+                    if (pos == end) {
+                        return false;
+                    }
+                    ++pos;
+                }
+            } else {
+                ++pos;
+            }
+            return true;
+        }
+
+        template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos, stl::size_t count) noexcept {
             using char_type = typename stl::iterator_traits<Iter>::value_type;
             using diff_type = typename stl::iterator_traits<Iter>::difference_type;

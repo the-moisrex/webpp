@@ -231,8 +231,8 @@ namespace webpp::unicode {
      *       No                    ccc(A) < ccc(B)
      *       Yes                   ccc(A) > ccc(B)
      */
-    template <stl::indirectly_swappable Iter = char8_t*, stl::indirectly_swappable EIter = Iter>
-    static constexpr void canonical_reorder(Iter start, EIter end)
+    template <stl::indirectly_swappable Iter = char8_t*>
+    static constexpr void canonical_reorder(Iter start, Iter const& end)
       noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
         using unchecked::next_char_copy;
         using unchecked::swap_code_points;
@@ -243,23 +243,22 @@ namespace webpp::unicode {
         }
 
         auto pos    = start;
-        stl::ignore = checked::next_code_point<return_replacement_char>(pos, end);
+        stl::ignore = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
         if (pos == end) {
             return;
         }
         for (;;) {
             auto back_pos = pos;
-            auto cur_cp   = checked::next_code_point<return_replacement_char>(pos, end);
+            auto cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             if (cur_cp == 0) {
                 break;
             }
             auto const ccc = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip next code point as well, the next one is never going to be swapped with this one
-                if (pos == end) {
+                if (!unchecked::next_char<Iter>(pos, end)) {
                     break;
                 }
-                unchecked::next_char(pos);
 
                 continue; // Skip non-combining characters (starter code points)
             }
@@ -267,10 +266,10 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto prev = back_pos;
-                if (auto const prev_cp = unchecked::prev_code_point(prev); ccc_of(prev_cp) <= ccc) {
+                if (auto const prev_cp = unchecked::prev_code_point<Iter>(prev); ccc_of(prev_cp) <= ccc) {
                     break;
                 }
-                swap_code_points(back_pos, prev);
+                swap_code_points<Iter>(back_pos, prev);
                 back_pos = prev;
             }
         }
@@ -280,7 +279,8 @@ namespace webpp::unicode {
     static constexpr void canonical_reorder(StrT& out)
       noexcept(stl::is_nothrow_swappable_v<
                typename stl::iterator_traits<typename stl::remove_cvref_t<StrT>::iterator>::value_type>) {
-        canonical_reorder(stl::begin(out), stl::end(out));
+        using iterator_type = typename stl::remove_cvref_t<StrT>::iterator;
+        canonical_reorder<iterator_type>(stl::begin(out), stl::end(out));
     }
 
     // /**
@@ -427,11 +427,10 @@ namespace webpp::unicode {
          *   2. and should we continue mapping or not
          */
         template <stl::integral               SizeT = stl::size_t,
-                  stl::random_access_iterator Iter  = stl::u8string::const_iterator,
-                  stl::random_access_iterator EIter = Iter>
+                  stl::random_access_iterator Iter  = stl::u8string::const_iterator>
         [[nodiscard]] static constexpr decomposition_details<SizeT> canon_decomp_details(
-          Iter  pos,
-          EIter end) noexcept {
+          Iter        pos,
+          Iter const& end) noexcept {
             using details::decomp_index;
             using details::decomp_indices;
             using details::decomp_values;
@@ -443,7 +442,8 @@ namespace webpp::unicode {
             decomposition_details<SizeT> info;
             auto const                   actual_length = static_cast<SizeT>(end - pos);
             for (;;) {
-                auto const code_point = checked::next_code_point<return_replacement_char>(pos, end);
+                auto const code_point =
+                  checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
                 if (code_point == 0) {
                     break;
                 }
