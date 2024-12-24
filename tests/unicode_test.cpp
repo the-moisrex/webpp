@@ -3,6 +3,7 @@
 
 #include "../webpp/std/format.hpp"
 #include "../webpp/unicode/normalization.hpp"
+#include "./unicode_fuzz.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <filesystem>
@@ -6924,7 +6925,9 @@ TEST(Unicode, CheckedNextCodePoint) {
 }
 
 TEST(Unicode, FuzzFixes) {
+    using webpp::tests::unicode_fuzz;
     using webpp::unicode::toNFC;
+
     EXPECT_EQ(u"", toNFC<std::u16string>(u""));
     EXPECT_EQ("\xac", toNFC<std::string>("\xac"));
     EXPECT_EQ("\x90\xe", toNFC<std::string>("\x90\xe"));
@@ -6935,6 +6938,12 @@ TEST(Unicode, FuzzFixes) {
     EXPECT_EQ("\x10\xf4", toNFC<std::string>("\x10\xf4"));
     EXPECT_EQ("\xa\xa\xfc", toNFC<std::string>("\xa\xa\xfc"));
     EXPECT_EQ("\x75\xb2\xf5\xf5", toNFC<std::string>("\x75\xb2\xf5\xf5"));
+
+    unicode_fuzz("\xa\xa");
+    unicode_fuzz("\xa\xdf");
+    unicode_fuzz("\xa\xdd\xdd\xdd\xdd\xdd\xdd\xdd");
+    unicode_fuzz("\xa\xdf\xff\xff\xff");
+    unicode_fuzz("\x2e\xdd\xa");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
