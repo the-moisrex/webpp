@@ -1028,7 +1028,9 @@ namespace webpp::unicode {
                         code_point += 0x1'0000U;
                     }
                     if (error || is_surrogate(code_point)) [[unlikely]] {
-                        --pos;
+                        if (requires_2_units) {
+                            --pos;
+                        }
                         code_point = cu1;
                         break;
                     }
