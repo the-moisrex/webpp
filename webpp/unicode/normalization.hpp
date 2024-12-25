@@ -112,6 +112,7 @@
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
+#include "traits/traits.hpp"
 #include "utf_reducer.hpp"
 
 #include <cassert>
@@ -497,7 +498,9 @@ namespace webpp::unicode {
      */
     template <istl::String StrT = stl::u32string>
     static constexpr void canonical_decompose(StrT& out) {
-        using size_type = typename stl::remove_cvref_t<StrT>::size_type;
+        using size_type = typename StrT::size_type;
+        using char_type = typename StrT::value_type;
+        using enum checked::error_handling;
 
         auto const [max_length, requires_mapping] = details::canon_decomp_details(out.begin(), out.end());
         auto const cur_len                        = out.size();
@@ -508,25 +511,26 @@ namespace webpp::unicode {
 
         assert(out.size() <= max_length);
         auto const overwrite =
-          [cur_len](auto* ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
+          [cur_len]<typename T>(T* ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
               auto const* const beg = ptr;
 
-              if (cur_len == length) {
-                  auto       backup_start = ptr;
-                  auto const backup_end   = ptr + cur_len;
-                  while (backup_start != backup_end) {
-                      canonical_decompose_to(ptr, unchecked::next_code_point(backup_start));
-                  }
-                  return static_cast<size_type>(ptr - beg);
-              }
               auto       backup_start = ptr + length - cur_len;
               auto const backup_end   = ptr + length;
+              if (cur_len != length) {
+                  // moving everything to the end
+                  stl::copy(ptr, ptr + cur_len, backup_start);
+              }
 
-              // moving everything to the end
-              stl::copy(ptr, ptr + cur_len, backup_start);
-
-              while (backup_start != backup_end) {
-                  canonical_decompose_to(ptr, unchecked::next_code_point(backup_start));
+              for (;;) {
+                  auto const cur_cp = checked::next_code_point<return_negated_char>(backup_start, backup_end);
+                  if (cur_cp == 0) {
+                      break;
+                  }
+                  if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                      *ptr++ = static_cast<char_type>(-cur_cp); // NOLINT(*-pro-bounds-pointer-arithmetic)
+                      continue;
+                  }
+                  canonical_decompose_to(ptr, cur_cp);
               }
               return static_cast<size_type>(ptr - beg);
           };
