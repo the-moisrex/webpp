@@ -245,16 +245,10 @@ namespace webpp::unicode {
 
         auto pos    = start;
         stl::ignore = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
-        if (pos == end) {
-            return;
-        }
-        for (;;) {
-            auto back_pos = pos;
-            auto cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
-            if (cur_cp == 0) {
-                break;
-            }
-            auto const ccc = ccc_of(cur_cp);
+        while (pos != end) {
+            auto       back_pos = pos;
+            auto       cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+            auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip next code point as well, the next one is never going to be swapped with this one
                 if (!unchecked::next_char<Iter>(pos, end)) {
@@ -395,9 +389,18 @@ namespace webpp::unicode {
               istl::Iterable   InpStr = stl::u32string_view>
     static constexpr SizeT canonical_decompose_to(Iter& out, InpStr const str)
       noexcept(istl::NothrowAppendable<Iter>) {
-        SizeT count = 0;
-        for (auto pos = stl::begin(str); pos != stl::end(str);) {
-            count += canonical_decompose_to(out, unchecked::next_code_point(pos));
+        using enum checked::error_handling;
+        using char_type  = istl::appendable_value_type_t<Iter>;
+        SizeT      count = 0;
+        auto const endp  = stl::end(str);
+        for (auto pos = stl::begin(str); pos != endp;) {
+            auto const code_point = checked::next_code_point<return_negated_char>(pos, endp);
+            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                istl::iter_append(out, static_cast<char_type>(-code_point));
+                ++count;
+                continue;
+            }
+            count += canonical_decompose_to(out, code_point);
         }
         return count;
     }
@@ -442,12 +445,9 @@ namespace webpp::unicode {
 
             decomposition_details<SizeT> info;
             auto const                   actual_length = static_cast<SizeT>(end - pos);
-            for (;;) {
+            while (pos != end) {
                 auto const code_point =
                   checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
-                if (code_point == 0) {
-                    break;
-                }
 
                 // handling hangul code points
                 if (is_hangul_code_point(code_point)) [[unlikely]] {
@@ -521,11 +521,8 @@ namespace webpp::unicode {
                   stl::copy(ptr, ptr + cur_len, backup_start);
               }
 
-              for (;;) {
+              while (backup_start != backup_end) {
                   auto const cur_cp = checked::next_code_point<return_negated_char>(backup_start, backup_end);
-                  if (cur_cp == 0) {
-                      break;
-                  }
                   if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
                       *ptr++ = static_cast<char_type>(-cur_cp); // NOLINT(*-pro-bounds-pointer-arithmetic)
                       continue;
