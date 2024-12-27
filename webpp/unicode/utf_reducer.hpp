@@ -585,7 +585,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 ++iter();
             } else {
-                unchecked::next_char(iter());
+                stl::ignore = checked::next_char(iter(), reducer->end());
 
                 // bounds check:
                 auto& cur = iter();

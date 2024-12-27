@@ -1120,9 +1120,9 @@ namespace webpp::unicode {
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char<code_point_type>;
             } else if constexpr (ErrorHandling == return_negated_char) {
-                static_assert(stl::is_unsigned_v<code_point_type>,
-                              "The code point type should support negative values if you want us to return "
-                              "negative values as errors.");
+                // static_assert(stl::is_signed_v<code_point_type>,
+                //               "The code point type should support negative values if you want us to return
+                //               " "negative values as errors.");
                 return -code_point;
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<code_point_type>(0);
@@ -1139,6 +1139,15 @@ namespace webpp::unicode {
           Iter const& end) noexcept {
             return next_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
         }
+
+        template <stl::random_access_iterator Iter = char8_t*>
+        [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
+            // todo: is there a way to optimize this?
+            auto const code_point =
+              next_code_point<error_handling::return_negated_char, stl::int32_t, Iter>(pos, end);
+            return code_point > 0;
+        }
+
 
     } // namespace checked
 

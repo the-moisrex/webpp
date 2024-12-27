@@ -6658,59 +6658,26 @@ namespace {
         return result;
     }
 
-    std::string u32ToString(std::u32string const& hexString) {
-        std::ostringstream oss;
-        for (auto const codePoint : hexString) {
-            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
-        }
-        return oss.str();
-    }
-
-    [[maybe_unused]] std::string u32ToString(std::u8string const& hexString) {
-        std::ostringstream oss;
-        for (auto const codePoint : hexString) {
-            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
-        }
-        return oss.str();
-    }
-
-    [[maybe_unused]] std::string u32ToString(std::u16string const& hexString) {
-        std::ostringstream oss;
-        for (auto const codePoint : hexString) {
-            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
-        }
-        return oss.str();
-    }
-
-    [[maybe_unused]] std::string u32ToString(std::string const& hexString) {
-        std::ostringstream oss;
-        for (auto const codePoint : hexString) {
-            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
-        }
-        return oss.str();
-    }
-
     void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
+        using webpp::tests::to_hex;
         using webpp::unicode::toNFC;
         using webpp::unicode::toNFD;
 
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
-          << "  Src: " << u32ToString(str) << "\n  NFC Layer 1: " << u32ToString(toNFC(str))
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd)
-          << "\n  index: " << test_index;
+          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str)) << "\n  NFC Answer: "
+          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
         EXPECT_EQ(toNFC(str), toNFC(toNFD(str)))
-          << "  NFD: " << u32ToString(toNFD(str)) << "\n  Source: " << u32ToString(str) << "\n  NFC Answer: "
-          << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd) << "\n  index: " << test_index;
+          << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: "
+          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
 
         // toNFD
         EXPECT_EQ(toNFD(str), toNFD(toNFC(str)))
-          << "  NFC: " << u32ToString(toNFC(str)) << "\n  Source: " << u32ToString(str) << "\n  NFC Answer: "
-          << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd) << "\n  index: " << test_index;
+          << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: "
+          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
         EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
-          << "  Src: " << u32ToString(str) << "\n  NFD Layer 1: " << u32ToString(toNFD(str))
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd)
-          << "\n  index: " << test_index;
+          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str)) << "\n  NFC Answer: "
+          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
 
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
@@ -6785,6 +6752,7 @@ TEST(Unicode, NormalizationTests) {
     using std::u32string_view;
     using std::u8string;
     using std::u8string_view;
+    using webpp::tests::to_hex;
     using webpp::unicode::canonical_composed;
     using webpp::unicode::canonical_decomposed;
     using webpp::unicode::toNFC;
@@ -6811,45 +6779,44 @@ TEST(Unicode, NormalizationTests) {
           u16string const nfd16    = utf32_to_utf16(nfd);
 
           EXPECT_EQ(nfd, toNFD(source))
-            << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
-            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line << "\n  index: " << test_index
-            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+            << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc)
+            << "\n  line: " << line << "\n  index: " << test_index
+            << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfd8, toNFD(source8))
-                << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source)
+                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
-                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+                << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
           EXPECT_EQ(nfc, toNFC(source))
-            << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
-            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
-            << "\n  Calculated NFD: " << u32ToString(toNFD(source)) << "\n  index: " << test_index
-            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source))
+            << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc)
+            << "\n  line: " << line << "\n  Calculated NFD: " << to_hex(toNFD(source)) << "\n  index: "
+            << test_index << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source))
             << report_composition_list(source);
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
-                << "  Source: " << u32ToString(source) << "  Source8: " << u32ToString(source8)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "  Source: " << to_hex(source) << "  Source8: " << to_hex(source8)
+                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
-                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+                << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
           {
               EXPECT_EQ(nfd16, toNFD(source16))
-                << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source16)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source16)
+                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
-                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+                << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
 
               EXPECT_EQ(nfc16, toNFC(source16))
-                << "  Source: " << u32ToString(source) << "  Source16: " << u32ToString(source16)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "  Source: " << to_hex(source) << "  Source16: " << to_hex(source16)
+                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
-                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+                << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
           check_idempotent(source, nfc, nfd);
@@ -6954,10 +6921,43 @@ TEST(Unicode, FuzzFixes) {
 
     unicode_fuzz("\x0\xd8"sv);
     unicode_fuzz(
-      "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xd8"sv);
+      "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0"
+      "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xd8"sv);
     unicode_fuzz(
       "\xa\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0"
       "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xd8"sv);
+
+    unicode_fuzz(
+      "\x3d\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0"
+      "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0"
+      "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0"sv);
+    unicode_fuzz(
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x0\xf9\xff\xff\xff\xff\xff\xff\xff\xff"
+      "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+      "\xff\xff\xff\xff\xff\xff\xa\x3f"sv);
+    unicode_fuzz("\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xa"sv);
+
+    unicode_fuzz("\xdd\xbe\xdd\xdd\xdd\x8\xa\xdd"sv);
+    unicode_fuzz(
+      "\xec\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86"
+      "\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\x86\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec"
+      "\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec"
+      "\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec"
+      "\xec\xec\xec\xec\xec\x1a\x13\x13\x13\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec\xec"
+      "\xec\xec\xec\xec\xec\xec\xa"sv);
+
+    unicode_fuzz("\x0\xffffffdb\x0\x3"sv);
+    unicode_fuzz("\x0\xffffffdb\x3\x3"sv);
+    unicode_fuzz("\x0\xffffffda\x0\x3\xa"sv);
+    unicode_fuzz("\x0\xffffffd9\x8\x3"sv);
+    unicode_fuzz("\x2c\xffffffd8\x3\x3\x3"sv);
+
+    unicode_fuzz("\xe0\xde\xbc\xa"sv);
+    unicode_fuzz("\x7a\xdf\xef\x8"sv);
+    unicode_fuzz("\xe0\xde\xbc\xa"sv);
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

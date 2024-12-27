@@ -7,6 +7,17 @@
 #include "./common/tests_common_pch.hpp"
 
 namespace webpp::tests {
+
+    template <typename CharT>
+    std::string to_hex(std::basic_string<CharT> const& hexString) {
+        std::ostringstream oss;
+        for (auto const codePoint : hexString) {
+            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+        }
+        return oss.str();
+    }
+
+
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
         using webpp::unicode::toNFC;
@@ -29,18 +40,18 @@ namespace webpp::tests {
         auto const res16 = toNFC<std::u16string>(str16);
         auto const res32 = toNFC<std::u32string>(str32);
         if (!str8.empty()) {
-            ASSERT_NE(str8.size(), 0);
+            ASSERT_NE(str8.size(), 0) << to_hex(str);
             if (length / 2 != 0) {
-                ASSERT_NE(str16.size(), 0);
-                ASSERT_NE(res16.size(), 0);
+                ASSERT_NE(str16.size(), 0) << to_hex(str);
+                ASSERT_NE(res16.size(), 0) << to_hex(str);
             }
             if (length / 4 != 0) {
-                ASSERT_NE(str32.size(), 0);
-                ASSERT_NE(res32.size(), 0);
+                ASSERT_NE(str32.size(), 0) << to_hex(str);
+                ASSERT_NE(res32.size(), 0) << to_hex(str);
             }
-            ASSERT_NE(str.size(), 0);
-            ASSERT_NE(res.size(), 0);
-            ASSERT_NE(res8.size(), 0);
+            ASSERT_NE(str.size(), 0) << to_hex(str);
+            ASSERT_NE(res.size(), 0) << to_hex(str);
+            ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
     }
 } // namespace webpp::tests
