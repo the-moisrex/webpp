@@ -1015,17 +1015,17 @@ namespace webpp::unicode {
                     bool const requires_2_units = (cu1 & 0xFC00U) == 0xD800U;
                     bool       error            = false;
                     if (requires_2_units) {
-                        code_point  &= 0x3FFU;
-                        code_point <<= 10U;
                         if (pos == end) [[unlikely]] {
                             break;
                         }
                         auto const cu2 =
                           static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        error      |= (cu1 & 0xFC00U) != 0xD800U;
-                        error      |= (cu2 & 0xFC00U) != 0xDC00U;
-                        code_point |= cu2 & 0x3FFU;
-                        code_point += 0x1'0000U;
+                        error       |= (cu1 & 0xFC00U) != 0xD800U;
+                        error       |= (cu2 & 0xFC00U) != 0xDC00U;
+                        code_point  &= 0x3FFU;
+                        code_point <<= 10U;
+                        code_point  |= cu2 & 0x3FFU;
+                        code_point  += 0x1'0000U;
                     }
                     if (error || is_surrogate(code_point)) [[unlikely]] {
                         if (requires_2_units) {
