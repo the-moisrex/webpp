@@ -1012,7 +1012,7 @@ namespace webpp::unicode {
                 if constexpr (UTF32<char_type>) {
                     return cu1;
                 } else if constexpr (UTF16<char_type>) {
-                    bool const requires_2_units = (cu1 & 0xFC00U) == 0xD800U;
+                    bool const requires_2_units = (cu1 & 0xFC00) == 0xD800;
                     bool       error            = false;
                     if (requires_2_units) {
                         if (pos == end) [[unlikely]] {
@@ -1020,12 +1020,12 @@ namespace webpp::unicode {
                         }
                         auto const cu2 =
                           static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        error       |= (cu1 & 0xFC00U) != 0xD800U;
-                        error       |= (cu2 & 0xFC00U) != 0xDC00U;
-                        code_point  &= 0x3FFU;
+                        error       |= (cu1 & 0xFC00) != 0xD800;
+                        error       |= (cu2 & 0xFC00) != 0xDC00;
+                        code_point  &= 0x3FF;
                         code_point <<= 10U;
-                        code_point  |= cu2 & 0x3FFU;
-                        code_point  += 0x1'0000U;
+                        code_point  |= cu2 & 0x3FF;
+                        code_point  += 0x1'0000;
                     }
                     if (error || is_surrogate(code_point)) [[unlikely]] {
                         if (requires_2_units) {
@@ -1043,19 +1043,19 @@ namespace webpp::unicode {
                     }
                     switch (len) {
                         case 1:
-                            if ((cu1 & 0b1000'0000U) != 0) [[unlikely]] {
+                            if ((cu1 & 0b1000'0000) != 0) [[unlikely]] {
                                 break;
                             }
                             return cu1;
                         case 2: {
                             auto const cu2 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                            bool error   = (cu1 & 0b1110'0000U) != 0b1100'0000U;
-                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                            code_point  &= 0b0001'1111U;
+                            bool error   = (cu1 & 0b1110'0000) != 0b1100'0000;
+                            error       |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            code_point  &= 0b0001'1111;
                             code_point <<= 6U;
-                            code_point  |= cu2 & 0b0011'1111U;
-                            if (error || code_point < 0x80 || 0x7ff < code_point) [[unlikely]] {
+                            code_point  |= cu2 & 0b0011'1111;
+                            if (error || code_point < 0x80 || 0x7FF < code_point) [[unlikely]] {
                                 --pos;
                                 code_point = cu1;
                                 break;
@@ -1067,15 +1067,15 @@ namespace webpp::unicode {
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             auto const cu3 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                            bool error   = (cu1 & 0b1111'0000U) != 0b1110'0000U;
-                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                            error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
-                            code_point  &= 0b0000'1111U;
+                            bool error   = (cu1 & 0b1111'0000) != 0b1110'0000;
+                            error       |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            error       |= (cu3 & 0b1100'0000) != 0b1000'0000;
+                            code_point  &= 0b0000'1111;
                             code_point <<= 12U;
-                            code_point  |= (cu2 & 0b0011'1111U) << 6U;
-                            code_point  |= cu3 & 0b0011'1111U;
-                            if (error || code_point < 0x800U || 0xFFFFU < code_point ||
-                                (0xD7FFU < code_point && code_point < 0xE000U)) [[unlikely]]
+                            code_point  |= (cu2 & 0b0011'1111) << 6U;
+                            code_point  |= cu3 & 0b0011'1111;
+                            if (error || code_point < 0x800 || 0xFFFF < code_point ||
+                                (0xD7FF < code_point && code_point < 0xE000)) [[unlikely]]
                             {
                                 stl::advance(pos, -2);
                                 code_point = cu1;
@@ -1091,15 +1091,15 @@ namespace webpp::unicode {
                             auto const cu4 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             bool error   = (cu1 & 0b1111'0000) != 0b1111'0000;
-                            error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                            error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
-                            error       |= (cu4 & 0b1100'0000U) != 0b1000'0000U;
-                            code_point  &= 0b0000'0111U;
+                            error         |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            error         |= (cu3 & 0b1100'0000) != 0b1000'0000;
+                            error         |= (cu4 & 0b1100'0000) != 0b1000'0000;
+                            code_point    &= 0b0000'0111;
                             code_point <<= 18U;
-                            code_point  |= (cu2 & 0b0011'1111U) << 12U;
-                            code_point  |= (cu3 & 0b0011'1111U) << 6U;
-                            code_point  |= cu4 & 0b0011'1111U;
-                            if (error || code_point <= 0xFFFFU || 0x10'FFFFU < code_point) [[unlikely]] {
+                            code_point    |= (cu2 & 0b0011'1111) << 12U;
+                            code_point    |= (cu3 & 0b0011'1111) << 6U;
+                            code_point    |= cu4 & 0b0011'1111;
+                            if (error || code_point <= 0xFFFF || 0x10'FFFF < code_point) [[unlikely]] {
                                 stl::advance(pos, -3);
                                 code_point = cu1;
                                 break;
@@ -1148,6 +1148,197 @@ namespace webpp::unicode {
             return code_point > 0;
         }
 
+        namespace details {
+            static constexpr stl::array<stl::uint8_t, 256> utf8_magic_lengths{
+              // std::array<uint8_t, 256> lens;
+              // lens.fill(0);
+              // for (uint8_t cp = 0; cp != 0xFF; ++cp) {
+              //     lens[(cp & ~0b11) | 0b00]               = 1;
+              //     lens[(cp & ~0b11) | 0b01]               = 1;
+              //     lens[(cp & ~0b1111) | 0b1110]           = 2;
+              //     lens[(cp & ~0b11'1111) | 0b11'1010]     = 3;
+              //     lens[(cp & ~0b1111'1111) | 0b1110'1010] = 4;
+              // }
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
+              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 4, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2,
+            };
+        } // namespace details
+
+        template <error_handling              ErrorHandling = error_handling::return_unchanged,
+                  UTF32                       CodePointType = char32_t,
+                  stl::random_access_iterator Iter          = char8_t const*>
+        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, Iter const& beg) noexcept {
+            using enum error_handling;
+            using code_point_type    = CodePointType;
+            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using unsigned_char_type = stl::make_unsigned_t<char_type>;
+
+            if (pos == beg) {
+                return static_cast<code_point_type>(0);
+            }
+
+            // Last Code Unit of the code point:
+            auto const cu_last    = static_cast<code_point_type>(*--pos);
+            auto       code_point = cu_last;
+
+            for (;;) {
+                if constexpr (UTF16<char_type>) {
+                    // UTF-16 Encoding
+                    // byte1            | byte2            |
+                    // 0xxxxxxxxxxxxxxx |                  |
+                    // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
+                    bool       error            = false;
+                    auto const cu2              = cu_last;
+                    bool const requires_2_units = (cu2 & 0xFC00) == 0xDC00;
+                    if (requires_2_units) {
+                        if (pos == beg) [[unlikely]] {
+                            break;
+                        }
+                        auto const cu1 =
+                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                        error      |= (cu1 & 0xFC00) != 0xD800;
+                        // error      |= (cu2 & 0xFC00) != 0xDC00;
+                        code_point &= 0x3FF;
+                        code_point |= (cu1 & 0x3FF) << 10U;
+                        code_point += 0x1'0000;
+                    }
+
+                    if (error || is_surrogate(code_point)) [[unlikely]] {
+                        if (requires_2_units) {
+                            ++pos;
+                        }
+                        code_point = cu_last;
+                        break;
+                    }
+                    return code_point;
+                } else if constexpr (UTF8<char_type>) {
+                    // byte1    | byte2    |  byte3   | byte4    |
+                    // 0xxxxxxx |          |          |          |
+                    // 110xxxxx | 10xxxxxx |          |          |
+                    // 1110xxxx | 10xxxxxx | 10xxxxxx |          |
+                    // 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
+
+                    if (code_point >> 6U != 0b10) [[likely]] {
+                        return code_point; // 1 byte
+                    }
+
+                    auto const        cu4 = cu_last;
+                    code_point_type   cu1, cu2, cu3; // NOLINT(*-isolate-declaration)
+                    stl::uint_fast8_t magic_code = 0;
+                    stl::uint8_t      length;        // NOLINT(*-init-variables)
+                    if (pos - beg >= 3) {
+                        cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                        cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                        cu1 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+
+                        magic_code |= (cu4 & 0b1100'0000) >> 6U;
+                        magic_code |= (cu3 & 0b1100'0000) >> 4U;
+                        magic_code |= (cu2 & 0b1100'0000) >> 2U;
+                        magic_code |= cu1 & 0b1100'0000;
+
+                        // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
+                        length = details::utf8_magic_lengths[magic_code];
+
+                        pos += 4 - length;
+                    } else {
+                        for (;;) {
+                            auto const before_beg  = stl::prev(beg);
+                            magic_code            |= (cu4 & 0b1100'0000) >> 6U;
+                            if (pos == before_beg) {
+                                break;
+                            }
+                            cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            magic_code |= (cu3 & 0b1100'0000) >> 4U;
+                            if (pos == before_beg) {
+                                break;
+                            }
+                            cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            magic_code |= (cu2 & 0b1100'0000) >> 2U;
+                            break;
+                        }
+                        // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
+                        length = details::utf8_magic_lengths[magic_code];
+
+                        pos += 3 - length;
+                    }
+
+                    switch (length) {
+                        [[unlikely]] case 0: {
+                            code_point = cu_last;
+                            break;
+                        }
+                        case 1: {
+                            return code_point;
+                        }
+                        case 2: {
+                            code_point &= 0b0011'1111U;
+                            code_point |= (cu3 & 0b0001'1111) << 6U;
+                            if ((cu3 & 0b1110'0000) != 0b1100'0000 || code_point < 0x80 || 0x7FF < code_point)
+                              [[unlikely]]
+                            {
+                                ++pos;
+                                code_point = cu_last;
+                                break;
+                            }
+                            return code_point;
+                        }
+                        case 3: {
+                            code_point &= 0b0011'1111U;
+                            code_point |= (cu3 & 0b0011'1111) << 6U;
+                            code_point |= (cu2 & 0b0000'1111) << 12U;
+                            if ((cu2 & 0b1111'0000) != 0b1110'0000 || code_point < 0x800 ||
+                                0xFFFF < code_point || (0xD7FF < code_point && code_point < 0xE000))
+                              [[unlikely]]
+                            {
+                                stl::advance(pos, 2);
+                                code_point = cu_last;
+                                break;
+                            }
+                            return code_point;
+                        }
+                        case 4: {
+                            code_point &= 0b0011'1111U;
+                            code_point |= (cu3 & 0b0011'1111) << 6U;
+                            code_point |= (cu2 & 0b0011'1111) << 12U;
+                            code_point |= (cu1 & 0b0000'0111) << 18U;
+                            if ((cu1 & 0b1111'0000) != 0b1111'0000 || code_point <= 0xFFFF ||
+                                0x10'FFFF < code_point) [[unlikely]]
+                            {
+                                stl::advance(pos, 3);
+                                code_point = cu_last;
+                                break;
+                            }
+                            return code_point;
+                        }
+                        default: stl::unreachable();
+                    }
+                } else {
+                    // UTF-32 is trivial
+                    return code_point;
+                }
+                break;
+            }
+
+            // handle errors:
+            if constexpr (ErrorHandling == return_replacement_char) {
+                return replacement_char<code_point_type>;
+            } else if constexpr (ErrorHandling == return_negated_char) {
+                // static_assert(stl::is_signed_v<code_point_type>,
+                //               "The code point type should support negative values if you want us to return
+                //               " "negative values as errors.");
+                return -code_point;
+            } else if constexpr (ErrorHandling == return_zero_char) {
+                return static_cast<code_point_type>(0);
+            } else {
+                return code_point;
+            }
+        }
 
     } // namespace checked
 

@@ -260,8 +260,9 @@ namespace webpp::unicode {
 
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
-                auto prev = back_pos;
-                if (auto const prev_cp = unchecked::prev_code_point<Iter>(prev); ccc_of(prev_cp) <= ccc) {
+                auto       prev    = back_pos;
+                auto const prev_cp = checked::prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
                 swap_code_points<Iter>(back_pos, prev);
