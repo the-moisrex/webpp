@@ -251,7 +251,7 @@ namespace webpp::unicode {
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip next code point as well, the next one is never going to be swapped with this one
-                if (!unchecked::next_char<Iter>(pos, end)) {
+                if (!checked::next_char<Iter>(pos, end)) {
                     break;
                 }
 

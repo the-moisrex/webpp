@@ -639,14 +639,14 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void set_inplace(value_type inp_code_point, difference_type const new_len)
-          noexcept(is_nothrow) {
+        constexpr void set_inplace(value_type            inp_code_point,
+                                   difference_type const cur_len,
+                                   difference_type const new_len) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
                 assert(iter() < reducer->newend);
 
-                auto const cur_len  = required_length_of<unit_type, difference_type>(*iter());
                 auto const diff     = cur_len - new_len;
                 auto       iter_cpy = istl::deref(iter());
 
@@ -659,32 +659,6 @@ namespace webpp::unicode {
         }
 
       public:
-        /// Pin Act: Set
-        constexpr void set(iterator other) noexcept(is_nothrow) {
-            if constexpr (stl::is_pointer_v<iterator>) {
-                assert(other != nullptr);
-            } else {
-                assert(other < reducer->endptr);
-            }
-            if constexpr (UTF32<unit_type>) {
-                *iter() = *other;
-            } else {
-                auto const inp_code_point = *other;
-
-                // handling invalid code points
-                if (static_cast<stl::int32_t>(inp_code_point) < 0) [[unlikely]] {
-                    *iter() = -static_cast<unit_type>(inp_code_point);
-                    return;
-                }
-
-                auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
-
-                // if new length is 0, a bad code point is given to the input.
-                assert(new_len != 0);
-                set_inplace(inp_code_point, new_len);
-            }
-        }
-
         /// Pin Act: Set
         constexpr void set(value_type inp_code_point) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
@@ -699,7 +673,9 @@ namespace webpp::unicode {
                 }
 
                 auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
-                set_inplace(inp_code_point, new_len);
+                auto const cur_len =
+                  checked::code_point_length<iterator, difference_type>(iter(), reducer->end());
+                set_inplace(inp_code_point, cur_len, new_len);
             }
         }
 
@@ -717,7 +693,8 @@ namespace webpp::unicode {
                     return;
                 }
 
-                auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter());
+                auto const cur_len =
+                  checked::code_point_length<iterator, stl::int_fast8_t>(iter(), reducer->end());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
 
@@ -749,7 +726,7 @@ namespace webpp::unicode {
                     hole.sequence_fill();
                     test_state_correctness();
                 } else {
-                    set_inplace(inp_code_point, new_len);
+                    set_inplace(inp_code_point, cur_len, new_len);
                     hole.move_mark(static_cast<difference_type>(-old_diff));
                 }
             }

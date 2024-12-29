@@ -7,6 +7,7 @@
 #include "../std/iterator.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
+#include "../std/utility.hpp"
 #include "./unicode_concepts.hpp"
 
 #include <algorithm>
@@ -1339,6 +1340,41 @@ namespace webpp::unicode {
                 return code_point;
             }
         }
+
+        /// Length of Code Units in current Code Point:
+        ///   Safely check the length of the current code point that the iterator is pointing to even if
+        ///   the values are not a valid code point (upon which we return the length of 1).
+        template <stl::random_access_iterator Iter = char8_t const*, stl::integral SizeT = stl::size_t>
+        [[nodiscard]] static constexpr SizeT code_point_length(Iter pos, Iter const& end) noexcept {
+            using value_type = typename std::iterator_traits<Iter>::value_type;
+            if (pos == end) {
+                return 0;
+            }
+
+            if constexpr (UTF32<value_type>) {
+                return 1;
+            } else if constexpr (UTF16<value_type>) {
+                // UTF-16 Encoding
+                // byte1            | byte2            |
+                // 0xxxxxxxxxxxxxxx |                  |
+                // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
+                auto const cu1 = *pos++;
+                if (pos == end) [[unlikely]] {
+                    return 1; // it doesn't matter if it's valid or not
+                }
+                auto const cu2         = *pos;
+                auto const clamped_CUs = (cu1 & 0xFC00) | (cu2 >> 10U);
+                return clamped_CUs == 0xD837 ? 2 : 1;
+            } else if constexpr (UTF8<value_type>) {
+                // todo: find a better way of doing this:
+                auto const beg = pos;
+                stl::ignore    = next_char<Iter>(pos, end);
+                return static_cast<SizeT>(pos - beg);
+            } else {
+                static_assert_false(value_type, "Invalid iterator.");
+            }
+        }
+
 
     } // namespace checked
 
