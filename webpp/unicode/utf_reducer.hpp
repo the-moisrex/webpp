@@ -725,8 +725,8 @@ namespace webpp::unicode {
                     if (hole.begin() > iter()) {
                         hole.move_mark(static_cast<difference_type>(-old_diff));
                     }
-                    ((holes.begin() > iter() &&
-                      (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
+                    (stl::ignore.operator=(holes.begin() > iter() &&
+                                           (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
                      ...);
                 }
             }
