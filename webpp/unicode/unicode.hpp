@@ -189,8 +189,7 @@ namespace webpp::unicode {
 
         // from glib/gutf8.c
         // NOLINTBEGIN(*-avoid-c-arrays)
-        template <typename CharT = char8_t>
-        static constexpr CharT utf8_skip[256] = {
+        static constexpr stl::array<stl::uint8_t, 256> utf8_skip{
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -236,7 +235,7 @@ namespace webpp::unicode {
 
             // impl 3:
             using unsigned_type = stl::make_unsigned_t<value_type>; // to avoid using "char" warnings
-            return static_cast<SizeT>(details::utf8_skip<value_type>[static_cast<unsigned_type>(value)]);
+            return static_cast<SizeT>(details::utf8_skip[static_cast<unsigned_type>(value)]);
         } else {
             return 1U;
         }
@@ -569,7 +568,7 @@ namespace webpp::unicode {
             static_assert(sizeof(char_type) == sizeof(src_char_type),
                           "Character types need to have the same size.");
             if constexpr (UTF8<char_type>) {
-                auto const size = static_cast<stl::size_t>(details::utf8_skip<src_char_type>[*from]);
+                auto const size = static_cast<stl::size_t>(details::utf8_skip[*from]);
                 webpp_assume(size <= 6);
                 for (stl::size_t index = 0U; index != size; ++index) {
                     istl::iter_append(ito, *from++);
@@ -602,7 +601,7 @@ namespace webpp::unicode {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
                 using unsigned_type  = stl::make_unsigned_t<char_type>;
-                pos                 += details::utf8_skip<char_type>[static_cast<unsigned_type>(*pos)];
+                pos                  += details::utf8_skip[static_cast<unsigned_type>(*pos)];
             } else if constexpr (UTF16<char_type>) {
                 ++pos;
                 if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
@@ -625,8 +624,8 @@ namespace webpp::unicode {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
                 using unsigned_type = stl::make_unsigned_t<char_type>;
-                auto const len      = static_cast<difference_type>(
-                  details::utf8_skip<char_type>[static_cast<unsigned_type>(*pos)]);
+                auto const len =
+                  static_cast<difference_type>(details::utf8_skip[static_cast<unsigned_type>(*pos)]);
                 if (end - pos < len) {
                     ++pos;
                     return false;

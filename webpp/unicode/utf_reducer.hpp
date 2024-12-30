@@ -38,12 +38,6 @@ namespace webpp::unicode {
         constexpr utf_range_marker& operator=(utf_range_marker&&)      = delete;
         constexpr ~utf_range_marker() noexcept                         = default;
 
-        explicit constexpr utf_range_marker(IterT inp_beg) noexcept
-          : beginp{inp_beg},
-            endp{stl::next(beginp, required_length_of<unit_type, difference_type>(*inp_beg))} {
-            assert(beginp < endp);
-        }
-
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
         explicit constexpr utf_range_marker(IterT inp_beg, IterT inp_end) noexcept
           : beginp{inp_beg},
@@ -71,9 +65,10 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void mark(IterT inp_beg) noexcept {
-            beginp = inp_beg;
-            endp   = stl::next(beginp, required_length_of<unit_type, difference_type>(*inp_beg));
+        /// str_end is the end of the string, and has nothing to do with the hole's end
+        constexpr void mark_code_point(IterT const& cp_beg, IterT const& str_end) noexcept {
+            beginp = cp_beg;
+            endp   = stl::next(beginp, checked::code_point_length<IterT, difference_type>(cp_beg, str_end));
             assert(beginp < endp);
         }
 
@@ -329,14 +324,6 @@ namespace webpp::unicode {
             this->append(other, iters);
         }
 
-        template <typename IterableT>
-        constexpr void append(IterT start, IterableT& iters) noexcept {
-            auto const       len = required_length_of<unit_type, stl::int_fast8_t>(*start);
-            auto             end = stl::next(start, len);
-            utf_range_marker other(start, end);
-            this->append(other, iters);
-        }
-
         constexpr void clear() noexcept {
             beginp = endp = IterT{};
         }
@@ -357,6 +344,10 @@ namespace webpp::unicode {
         explicit constexpr utf_range_marker([[maybe_unused]] auto&&... args) noexcept {}
 
         constexpr void mark([[maybe_unused]] auto&&... args) noexcept {
+            // do nothing
+        }
+
+        constexpr void mark_code_point([[maybe_unused]] auto&&... args) noexcept {
             // do nothing
         }
 
@@ -452,9 +443,10 @@ namespace webpp::unicode {
                 auto             iter_cpy = istl::deref(iter());
                 while (count <= cp_len) {
                     assert(iter_cpy <= reducer->endptr);
-                    auto const cur_len  = required_length_of<unit_type, stl::int_fast8_t>(*iter_cpy);
-                    iter_cpy           += cur_len;
-                    count               += cur_len;
+                    auto const cur_len =
+                      checked::code_point_length<iterator, stl::int_fast8_t>(iter_cpy, reducer->end());
+                    iter_cpy += cur_len;
+                    count    += cur_len;
                 }
                 webpp_assume(count <= 6);
                 return count;
@@ -680,8 +672,11 @@ namespace webpp::unicode {
         }
 
         /// Pin Act: Set (and use the hole if needed as extra space)
-        constexpr void set(value_type inp_code_point, [[maybe_unused]] utf_range_marker<iterator>& hole)
-          noexcept(is_nothrow) {
+        template <typename... HoleT>
+            requires(stl::same_as<HoleT, utf_range_marker<iterator>> && ...)
+        constexpr void set(value_type                                   inp_code_point,
+                           [[maybe_unused]] utf_range_marker<iterator>& hole,
+                           [[maybe_unused]] HoleT&... holes) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
             } else {
@@ -727,7 +722,12 @@ namespace webpp::unicode {
                     test_state_correctness();
                 } else {
                     set_inplace(inp_code_point, cur_len, new_len);
-                    hole.move_mark(static_cast<difference_type>(-old_diff));
+                    if (hole.begin() > iter()) {
+                        hole.move_mark(static_cast<difference_type>(-old_diff));
+                    }
+                    ((holes.begin() > iter() &&
+                      (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
+                     ...);
                 }
             }
         }
@@ -736,9 +736,8 @@ namespace webpp::unicode {
         constexpr void fallback_hole(utf_range_marker<iterator>& lhs, utf_range_marker<iterator>& rhs)
           noexcept(is_nothrow) {
             if constexpr (!UTF32<unit_type>) {
-                if (auto const cur_len = required_length_of<unit_type, size_type>(*iter());
-                    lhs.has_overlaps(iter(), cur_len))
-                {
+                auto const cur_len = checked::code_point_length<iterator, size_type>(iter(), reducer->end());
+                if (lhs.has_overlaps(iter(), cur_len)) {
                     lhs.mark(stl::move(rhs));
                 }
             }
@@ -883,14 +882,6 @@ namespace webpp::unicode {
                 return endptr;
             }
             return iters[static_cast<size_type>(index)];
-        }
-
-        [[nodiscard]] constexpr iterator end_pin_iter(size_type index = 0) noexcept
-            requires(!UTF32<unit_type>)
-        {
-            assert(index < PinCount);
-            auto ptr = iters[index];
-            return ptr + required_length_of<unit_type, difference_type>(*ptr);
         }
 
         /// Get all pins in a tuple construct

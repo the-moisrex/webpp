@@ -614,7 +614,7 @@ namespace webpp::unicode {
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
-                    hole.mark(cp2_pin.iter());
+                    hole.mark_code_point(cp2_pin.iter(), reducer.end());
                     continue;
                 }
                 if (ccc == 0) [[likely]] {
@@ -622,9 +622,10 @@ namespace webpp::unicode {
                 }
                 prev_ccc = ccc;
 
-                utf_range_marker cp2_hole{cp2_pin.iter()};
+                utf_range_marker<Iter> cp2_hole;
+                cp2_hole.mark_code_point(cp2_pin.iter(), reducer.end());
                 ++rep_pin;
-                rep_pin.set(cp2, cp2_hole);
+                rep_pin.set(cp2, cp2_hole, hole);
                 rep_pin.fallback_hole(hole, cp2_hole);
             }
 
