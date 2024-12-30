@@ -617,7 +617,7 @@ namespace webpp::unicode {
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
-                    hole.mark_code_point(cp2_pin.iter(), reducer.end());
+                    hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
                     continue;
                 }
                 if (ccc == 0) [[likely]] {

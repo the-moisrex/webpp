@@ -324,6 +324,14 @@ namespace webpp::unicode {
             this->append(other, iters);
         }
 
+        template <typename IterableT>
+        constexpr void append_code_point(IterT start, IterT str_end, IterableT& iters) noexcept {
+            auto const end =
+              stl::next(start, checked::code_point_length<IterT, difference_type>(start, str_end));
+            utf_range_marker other(start, end);
+            this->append(other, iters);
+        }
+
         constexpr void clear() noexcept {
             beginp = endp = IterT{};
         }
@@ -348,6 +356,10 @@ namespace webpp::unicode {
         }
 
         constexpr void mark_code_point([[maybe_unused]] auto&&... args) noexcept {
+            // do nothing
+        }
+
+        constexpr void append_code_point([[maybe_unused]] auto&&... args) noexcept {
             // do nothing
         }
 
