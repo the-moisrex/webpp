@@ -552,7 +552,6 @@ namespace webpp::unicode {
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
 
-        // no need to check if lhs or rhs are in range, the cp2s_rem will take care of such situation.
 
         // there are less second code points, so there will be more early bailouts
         stl::size_t const pos2 = static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem);
@@ -575,8 +574,12 @@ namespace webpp::unicode {
         // have the max number of elements.
         auto [cp1_mask, replacement] = cp1s[pos];
 
+        bool error  = !is_code_point_valid(lhs);
+        error      |= !is_code_point_valid(rhs);
+
         // Invalid code points are visible with 0
-        if (static_cast<std::uint8_t>(lhs) != cp1_mask) {
+        error |= static_cast<std::uint8_t>(lhs) != cp1_mask;
+        if (error) [[unlikely]] {
             return replacement_char<CharT>;
         }
         return static_cast<CharT>(replacement);

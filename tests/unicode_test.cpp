@@ -6974,9 +6974,13 @@ TEST(Unicode, FuzzFixes2) {
     unicode_fuzz("\x0\xda\x0\x3"sv);
 }
 
-TEST(Unicode, FuzzFixes3) {
+TEST(Unicode, FuzzTestFixes3) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
+    using webpp::unicode::canonical_composed;
+    using webpp::unicode::replacement_char;
+
+    EXPECT_EQ(canonical_composed<char32_t>(0xffff'ff74, 0x30c), replacement_char<char32_t>);
 
     unicode_fuzz("\xed\x96\x96\xd6\x96"sv);
     unicode_fuzz("\xa\xae\xae\xae"sv);
