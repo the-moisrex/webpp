@@ -19,7 +19,7 @@ namespace webpp::uri {
     using punycode_uint = stl::uint32_t;
 
 
-    enum struct punycode_status {
+    enum struct punycode_status : stl::uint8_t {
         success,
         overflow,
         big_output,
@@ -27,7 +27,7 @@ namespace webpp::uri {
     };
 
     /**
-     * Converts an UTF-8 input into punycode.
+     * Converts a UTF-8 input into punycode.
      * This function is non-allocating and it does not throw.
      *
      * Parameters:
@@ -38,7 +38,7 @@ namespace webpp::uri {
      *    The errors include: an invalid UTF-8 input, a punycode overflow (unlikely) or
      *    an output that might exceed 63 bytes.
      */
-    constexpr int utf8_to_punycode(char const* input, stl::size_t input_length, char* output) noexcept {
+    constexpr int utf8_to_punycode(char const* input, stl::size_t const input_length, char* output) noexcept {
         // NOLINTBEGIN(*-magic-numbers)
         // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 

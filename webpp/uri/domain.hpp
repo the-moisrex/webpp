@@ -101,6 +101,7 @@ namespace webpp::uri {
             }
 
             switch (char_type const cur_char = *pos++) {
+                // todo: are we handling label-separators? https://www.unicode.org/reports/tr46/#Notation
                 case static_cast<char_type>('.'):
                     if (pos == end) {
                         return dot_at_end;
@@ -198,6 +199,8 @@ namespace webpp::uri {
         /// Top-Level-Domain
         template <istl::StringLike StrT = storage_type>
         [[nodiscard]] constexpr StrT tld() const noexcept {
+            // todo: this does not handle label separators (only in string_view probably)
+            // https://www.unicode.org/reports/tr46/#Notation
             if (auto const pos = storage.rfind('.'); pos != StrT::npos) {
                 return storage.substr(pos + 1);
             }

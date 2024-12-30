@@ -20,17 +20,17 @@ namespace webpp::uri {
     /// Default values are WHATWG-Compliant values (if relevant)
     static constexpr struct alignas(32) uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
-        /// know the end of your string and you may enable if you're working with a stream
+        /// know the end of your string, and you may enable if you're working with a stream
         bool eof_is_valid = true;
 
         /// Parse username and password part of the authority (you may want to disable it if you're trying to
         /// parse Host Authority which doesn't have credentials)
-        bool parse_credentails = true;
+        bool parse_credentials = true;
 
         /// Empty Host is an error (file:// URIs can have empty hosts)
         bool empty_host_is_error = true;
 
-        /// Parse punny codes
+        /// Parse puny codes
         bool parse_punycodes = true;
 
         /// Parse port (file:// scheme doesn't have a port, this is used there)
@@ -56,11 +56,11 @@ namespace webpp::uri {
         /// Example if true:  https://127.0.0.1..../  ==> Warning
         bool allow_multiple_trailing_empty_ipv4_octets = false;
 
-        /// Hexadecimals and Octals octets are allowed to be used in IPv4 addresses (not in IPv6 though)
+        /// Hexadecimals and Octal octets are allowed to be used in IPv4 addresses (not in IPv6 though)
         bool allow_ipv4_hex_octets   = true;
         bool allow_ipv4_octal_octets = true;
 
-        /// Invalid characters (except in domains and schems and what not) are considered a warning, not an
+        /// Invalid characters (except in domains and schemas and what not) are considered a warning, not an
         /// error in WHATWG
         bool allow_invalid_characters = true;
 
@@ -75,8 +75,8 @@ namespace webpp::uri {
 
 
         /// For some reason, WHATWG just simply removes tabs and newlines (TAB, LF, and CR) characters before
-        /// it starts the parsing process; I don't think everybody needs such a feature and it may even cause
-        /// problems for some people, so here's an option to not ignore the newliens and tabs.
+        /// it starts the parsing process; I don't think everybody needs such a feature, and it may even cause
+        /// problems for some people, so here's an option to not ignore the newlines and tabs.
         bool ignore_tabs_or_newlines = true;
 
 
@@ -105,7 +105,7 @@ namespace webpp::uri {
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
       .eof_is_valid                              = false,
-      .parse_credentails                         = true,
+      .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_punycodes                           = true,
       .parse_port                                = true,
@@ -126,7 +126,7 @@ namespace webpp::uri {
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
       .eof_is_valid                              = true,
-      .parse_credentails                         = true,
+      .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_punycodes                           = true,
       .parse_port                                = true,
@@ -243,7 +243,7 @@ namespace webpp::uri {
         valid_opaque_path                    = valid_bit | 9U,
         reverse_solidus_used                 = warning_bit >> 5U,
         windows_drive_letter_used            = warning_bit >> 6U,
-        windows_drive_letter_in_ralative_url = warning_bit >> 7U,
+        windows_drive_letter_in_relative_url = warning_bit >> 7U,
         windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
@@ -297,7 +297,7 @@ namespace webpp::uri {
                   "parsing is not done yet."};
 
                 // scheme-specific errors:
-            case invalid_scheme_character: return {"Invlaid character found in the scheme of the URI."};
+            case invalid_scheme_character: return {"Invalid character found in the scheme of the URI."};
             case scheme_ended_unexpectedly:
                 return {"This URI doesn't seem to have enough information, not even a qualified scheme."};
             case incompatible_schemes:
@@ -410,7 +410,7 @@ namespace webpp::uri {
                   "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus"};
             case windows_drive_letter_used:
                 return {"Windows Drive Letters is being used inside the 'file:' scheme."};
-            case windows_drive_letter_in_ralative_url:
+            case windows_drive_letter_in_relative_url:
                 return {
                   "The URI is relative, starts with Windows Drive Letter, "
                   "and the base URI's scheme is 'file:'; "
@@ -531,9 +531,8 @@ namespace webpp::uri {
      *        }) | join_with('\n') | to<std::string>();
      *
      *     // If status is already in type of uri_status, you can just use status directly,
-     *     // because std::begin(status) returns a uri_status_iterator:
-     *     string error_string2 =
-     *        status | transform(...) | join_with('\n') | to<string>();
+     *     // because std::begin(status) returns uri_status_iterator:
+     *     string error_string2 = status | transform(...) | join_with('\n') | to<string>();
      * @endcode
      */
     struct uri_status_iterator {

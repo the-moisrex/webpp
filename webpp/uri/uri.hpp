@@ -16,44 +16,46 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-    static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        switch (get_value(ctx.status)) {
-            using enum uri_status;
-            case valid:                       // we're done parsing
-            case valid_punycode: return true; // todo?
-            case valid_authority: parse_authority<Options>(ctx); break;
-            case valid_file_host:
-                if constexpr (Options.allow_file_hosts) {
-                    parse_file_host<Options>(ctx);
-                } else {
-                    stl::unreachable(); // should be impossible.
-                }
-                break;
-            case valid_port: parse_port<Options>(ctx); break;
-            case valid_authority_end: parse_authority_end<Options>(ctx); break;
-            case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
-            case valid_path: parse_path<Options>(ctx); break;
-            case valid_queries: parse_queries<Options>(ctx); break;
-            case valid_fragment: parse_fragment<Options>(ctx); break;
-            case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
-            default: stl::unreachable(); break;               // should be impossible
+    namespace details {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            switch (get_value(ctx.status)) {
+                using enum uri_status;
+                case valid:                       // we're done parsing
+                case valid_punycode: return true; // todo?
+                case valid_authority: parse_authority<Options>(ctx); break;
+                case valid_file_host:
+                    if constexpr (Options.allow_file_hosts) {
+                        parse_file_host<Options>(ctx);
+                    } else {
+                        stl::unreachable(); // should be impossible.
+                    }
+                    break;
+                case valid_port: parse_port<Options>(ctx); break;
+                case valid_authority_end: parse_authority_end<Options>(ctx); break;
+                case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
+                case valid_path: parse_path<Options>(ctx); break;
+                case valid_queries: parse_queries<Options>(ctx); break;
+                case valid_fragment: parse_fragment<Options>(ctx); break;
+                case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
+                default: stl::unreachable(); break;               // should be impossible
+            }
+            return false;
         }
-        return false;
-    }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-    static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        while (!has_error(ctx.status)) {
-            if (parse_uri_step<Options>(ctx)) {
-                break;
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            while (!has_error(ctx.status)) {
+                if (parse_uri_step<Options>(ctx)) {
+                    break;
+                }
             }
         }
-    }
+    } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        continue_parsing_uri<Options>(ctx);
+        details::continue_parsing_uri<Options>(ctx);
     }
 
     template <uri_parsing_options Options = uri_parsing_options{}, istl::StringView StrV = stl::string_view>
@@ -138,7 +140,7 @@ namespace webpp::uri {
     };
 
     /**
-     * @brief Customization of uri components that holds all of the URI components with all the bells and the
+     * @brief Customization of uri components that holds all the URI components with all the bells and the
      * whistles
      * @tparam StrT String or String View type
      * @tparam AllocT Allocator type (we're not extracting it from StrT, because you may pass a string view)
@@ -453,7 +455,7 @@ namespace webpp::uri {
                    this->has_fragment();
         }
 
-        /// Get the total string size WITHOUT DELIMITERS, and not considering the the encoding bloat
+        /// Get the total string size WITHOUT DELIMITERS, and not considering the encoding bloat
         ///
         /// Attention: The size will be different based on the string type used because non-modifiable string
         ///            types won't be able to hold decoded/encoded values.
@@ -510,7 +512,7 @@ namespace webpp::uri {
         }
 
         /**
-         * This method returns an indication of whether or not the URI includes
+         * This method returns an indication of whether the URI includes
          * any element that is part of the authority URI.
          * @return bool
          */
@@ -599,7 +601,7 @@ namespace webpp::uri {
             ctx.end    = end;
             ctx.out    = static_cast<components_type*>(this);
             ctx.status = stl::to_underlying(status);
-            parse_uri_step<Options>(ctx);
+            details::parse_uri_step<Options>(ctx);
             m_status = ctx.status;
             return m_status;
         }

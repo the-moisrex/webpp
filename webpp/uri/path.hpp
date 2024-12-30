@@ -417,8 +417,8 @@ namespace webpp::uri {
         using container_type      = stl::vector<slug_type, allocator_type>;
         using value_type          = slug_type;
         using char_type           = istl::char_type_of_t<slug_type>;
-        using string_type         = istl::defaulted_string<value_type, allocator_type>;
-        using string_view_type    = istl::string_view_type_of<value_type>;
+        using string_type         = istl::defaulted_string<slug_type, allocator_type>;
+        using string_view_type    = istl::string_view_type_of<slug_type>;
         using path_type           = basic_path;
         using iterator            = typename container_type::iterator;
         using const_iterator      = typename container_type::const_iterator;

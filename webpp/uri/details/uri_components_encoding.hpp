@@ -244,7 +244,7 @@ namespace webpp::uri::details {
             }
         }
 
-        /// parsing path requires this so we can make sure the modifable strings's separator is always '/' and
+        /// Parsing path requires this so we can make sure the modifiable strings' separator is always '/' and
         /// not '\\' if the input contains that separator
         constexpr void skip_separator(char_type separator, difference_type count = 1) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {

@@ -336,7 +336,7 @@ namespace webpp::ascii {
           '%', 'F', '5', 0, '%', 'F', '6', 0, '%', 'F', '7', 0, '%', 'F', '8', 0, '%', 'F', '9', 0,
           '%', 'F', 'A', 0, '%', 'F', 'B', 0, '%', 'F', 'C', 0, '%', 'F', 'D', 0, '%', 'F', 'E', 0,
           '%', 'F', 'F', 0};
-        // same as above, but it wouldn't support other charater types
+        // same as above, but it wouldn't support other character types
         // "%00\0%01\0%02\0%03\0%04\0%05\0%06\0%07\0"
         // "%08\0%09\0%0A\0%0B\0%0C\0%0D\0%0E\0%0F\0"
         // "%10\0%11\0%12\0%13\0%14\0%15\0%16\0%17\0"
@@ -382,7 +382,7 @@ namespace webpp::ascii {
     }
 
     /**
-     * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
+     * Return the value of CH as a hexadecimal digit, or -1 if it is a different type of character.
      * Almost the same as hex_to_binary
      */
     template <typename IntegerType  = int,
@@ -410,7 +410,7 @@ namespace webpp::ascii {
     }
 
     /**
-     * Return the value of CH as a hexademical digit, or NotANumber if it is a different type of character.
+     * Return the value of CH as a hexadecimal digit, or NotANumber if it is a different type of character.
      * I benchmarked it, and it seems like a lookup table has no value here.
      * todo: write an specific benchmark for the lookup-table implementation
      */

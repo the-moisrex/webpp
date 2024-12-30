@@ -196,6 +196,7 @@ namespace webpp::uri {
                     return false;
                 }
                 str.remove_prefix(piece_it->size());
+                // todo: does this support label-separators?
                 if (!str.starts_with('.')) {
                     ++piece_it;
                     break;

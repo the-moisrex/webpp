@@ -72,7 +72,7 @@ namespace webpp::uri {
 
         using ctx_type = CtxT;
 
-        if constexpr (Options.parse_credentails) {
+        if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
                 return;
             }
@@ -100,7 +100,7 @@ namespace webpp::uri {
 
         using ctx_type = CtxT;
 
-        if constexpr (Options.parse_credentails) {
+        if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
                 return;
             }

@@ -9,7 +9,7 @@
 #include "../strings/charset.hpp"
 #include "../strings/hex.hpp"
 
-namespace webpp {
+namespace webpp::uri {
 
     enum struct uri_encoding_policy : stl::uint_fast8_t {
         skip_chars,  // allow the specified chars
@@ -274,6 +274,6 @@ namespace webpp {
 
 
 
-} // namespace webpp
+} // namespace webpp::uri
 
 #endif // WEBPP_URI_ENCODING_HPP

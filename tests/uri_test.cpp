@@ -228,21 +228,21 @@ TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
     stl::string                out;
     constexpr stl::string_view inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     constexpr stl::string_view decoded = "سلام";
-    EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component(inp, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);
 
     out      = inp;
     auto ptr = out.begin();
-    EXPECT_TRUE(decode_uri_component_inplace(ptr, out.end(), ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component_inplace(ptr, out.end(), ALPHA_DIGIT<char>));
     out.resize(static_cast<stl::size_t>(ptr - out.begin()));
     EXPECT_EQ(out, decoded);
 
     stl::string output2;
-    encode_uri_component(out, output2, ALPHA_DIGIT<char>);
+    uri::encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
     stl::string output3;
-    EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
     EXPECT_EQ(output3, decoded) << out;
 }
 
@@ -250,23 +250,24 @@ TYPED_TEST(URITests, PercentEncodeDecodePointer) {
     stl::string                out;
     constexpr stl::string_view inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     constexpr stl::string_view decoded = "سلام";
-    EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component(inp, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);
 
     out       = inp;
     auto* ptr = out.data();
-    EXPECT_TRUE(decode_uri_component_inplace(ptr,
-                                             ptr + out.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
-                                             ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component_inplace(
+      ptr,
+      ptr + out.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
+      ALPHA_DIGIT<char>));
     out.resize(static_cast<stl::size_t>(ptr - out.data()));
     EXPECT_EQ(out, decoded);
 
     stl::string output2;
-    encode_uri_component(out, output2, ALPHA_DIGIT<char>);
+    uri::encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
     stl::string output3;
-    EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(uri::decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
     EXPECT_EQ(output3, decoded) << out;
 }
 

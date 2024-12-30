@@ -50,7 +50,7 @@ namespace webpp::uri {
                         port_value *= 10U; // NOLINT(*-magic-numbers)
                         port_value += static_cast<port_type>(*ctx.pos - '0');
                         ++ctx.pos;
-                        if (port_value > max_port_number) {
+                        if (port_value > max_port_number) [[unlikely]] {
                             set_error(ctx.status, uri_status::port_out_of_range);
                             return;
                         }

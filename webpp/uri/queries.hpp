@@ -288,11 +288,11 @@ namespace webpp::uri {
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             // NOLINTNEXTLINE(*-avoid-c-arrays)
-            webpp_static_constexpr char_type queries_seperators[3]{'=', '&', '\0'};
+            webpp_static_constexpr char_type queries_separators[3]{'=', '&', '\0'};
 
             auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             while (!str.empty()) {
-                auto const name = str.substr(0, str.find_first_of(queries_seperators));
+                auto const name = str.substr(0, str.find_first_of(queries_separators));
                 str.remove_prefix(name.size());
                 if (str.starts_with('=')) {
                     str.remove_prefix(1);

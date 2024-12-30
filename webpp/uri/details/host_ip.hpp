@@ -13,7 +13,7 @@ namespace webpp::uri::details {
     /// we should parse it normally.
     /// If the last host segment is
     ///   - a number, or
-    ///   - an hexadecimal starting with 0x, or 0X
+    ///   - a hexadecimal starting with 0x, or 0X
     ///   - an octal value,
     /// then the host MUST be an ipv4, otherwise, it's an INVALID HOST.
     template <uri_parsing_options Options, typename Iter, ParsingURIContext CtxT>
@@ -22,7 +22,7 @@ namespace webpp::uri::details {
 
         webpp_assume(fin != ctx.end);
 
-        // Prunning last dot characters (considering them as empty IPv4 octets)
+        // Pruning last dot characters (considering them as empty IPv4 octets)
         // todo: move this to the end of the algorithm if possible
         if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
             while (*fin == '.') {
@@ -95,7 +95,7 @@ namespace webpp::uri::details {
             break;
         }
 
-        // the size and what not will be check while parsing the IPv4
+        // the size and what not will be checked while parsing the IPv4
         return !must_be_hex || is_hex;
     }
 
@@ -133,9 +133,9 @@ namespace webpp::uri::details {
 
                 // find the current octet's base
                 if (*src == '0') {
-                    // octet, hex, or a seris of zeros (000000)
+                    // octet, hex, or a series of zeros (000000)
                     if constexpr (Options.allow_ipv4_octal_octets) {
-                        // asume it's octal (all zero decimals will be parsed correctly as octals)
+                        // assume it's octal (all zero decimals will be parsed correctly as octal)
                         octet_base = 8;
                     }
                     if constexpr (Options.allow_ipv4_hex_octets) {

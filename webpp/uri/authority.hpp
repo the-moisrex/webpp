@@ -86,11 +86,11 @@ namespace webpp::uri {
                         }
                         break;
                     case ':': {
-                        if constexpr (!Options.parse_credentails && !Options.parse_port) {
+                        if constexpr (!Options.parse_credentials && !Options.parse_port) {
                             set_warning(ctx.status, invalid_character);
                             ++ctx.pos;
                             continue;
-                        } else if constexpr (!Options.parse_credentails) {
+                        } else if constexpr (!Options.parse_credentials) {
                             set_valid(ctx.status, valid_port);
                         } else {
                             // the first colon is the start of the password section
@@ -196,7 +196,7 @@ namespace webpp::uri {
                         }
                     case '@':
                         must_contain_credentials = false;
-                        if constexpr (Options.parse_credentails) {
+                        if constexpr (Options.parse_credentials) {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
                             ++ctx.pos;
                             clear<components::host>(ctx);
@@ -325,7 +325,7 @@ namespace webpp::uri {
 
         webpp_static_constexpr auto parsing_options = []() constexpr noexcept {
             uri_parsing_options options = Options;
-            options.parse_credentails   = false;
+            options.parse_credentials   = false;
             options.empty_host_is_error = false;
             options.parse_port          = false;
             return options;
@@ -462,7 +462,7 @@ namespace webpp::uri {
         for (;;) {
             switch (*ctx.pos) {
                 case ':':
-                    if constexpr (!Options.parse_credentails) {
+                    if constexpr (!Options.parse_credentials) {
                         if constexpr (Options.empty_host_is_error) {
                             set_error(ctx.status, host_missing);
                         } else {

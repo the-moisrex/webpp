@@ -33,7 +33,7 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 // Assert base's scheme is not file
-                assert(!is_file_scheme(ctx.base.scheme()));
+                assert(!is_file_scheme(ctx.base.get_scheme()));
 
                 set_value<components::scheme>(ctx, ctx.base.get_scheme());
             }
@@ -68,7 +68,7 @@ namespace webpp::uri {
             }
 
 
-            // from now on in the algorithms: realtive slash state
+            // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
             if constexpr (ctx_type::has_base_uri) {
                 set_value<components::username>(ctx, ctx.base.get_username());

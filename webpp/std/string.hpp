@@ -80,7 +80,9 @@ namespace webpp::istl {
     using defaulted_string = stl::conditional_t<
       String<T>,
       stl::remove_cvref_t<T>,
-      stl::basic_string<char_type_of_t<T>, char_traits_type_of<T>, stl::remove_cvref_t<AllocType>>>;
+      stl::basic_string<char_type_of_t<T>,
+                        char_traits_type_of<T>,
+                        typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type_of_t<T>>>>;
 
     template <typename T>
     concept Stringifiable = StringifiableOf<defaulted_string<T>, stl::remove_cvref_t<T>>;

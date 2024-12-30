@@ -8,7 +8,7 @@ namespace webpp::uri::idna {
     enum struct domain_to_ascii_status {
         success = 0,
         invalid_code_point,
-        dissallowed_code_point_found
+        disallowed_code_point_found
     };
 
     /**
