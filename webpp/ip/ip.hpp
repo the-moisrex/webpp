@@ -18,10 +18,8 @@ namespace webpp {
 
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t
 
-    // ipv4 octet/byte count
-    static constexpr auto ipv4_byte_count = 4U;
-    // ipv6 octet/byte count
-    static constexpr auto ipv6_byte_count = 16U;
+    static constexpr auto ipv4_byte_count = 4U;                      // ipv4 octet/byte count
+    static constexpr auto ipv6_byte_count = 16U;                     // ipv6 octet/byte count
 
     static constexpr std::uint8_t ipv4_max_prefix = 32U;
     static constexpr std::uint8_t ipv6_max_prefix = 128U;
@@ -32,9 +30,9 @@ namespace webpp {
      *   - inet_pton6_status
      *
      * Attention: keep the underlying type of this enum match the uri_status' underlying type, they are
-     * convertible
+     * convertible to each other.
      */
-    enum struct ip_address_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
+    enum struct ip_address_status : stl::uint32_t { // NOLINT(*-enum-size)
         valid             = 255U,
         valid_special     = 254U, // valid ip, found the specified special character at the end (prefix, ...)
         too_little_octets = 253U, // not enough octets
@@ -48,11 +46,11 @@ namespace webpp {
     };
 
     /**
-     * Status of the result of a ipv4 parse.
+     * Status of the result of an ipv4 parse.
      * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
-     * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
+     * able to use that uint8_t for an ipv4/ipv6 prefix (which only requires 0-128)
      */
-    enum struct inet_pton4_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
+    enum struct inet_pton4_status : stl::uint32_t { // NOLINT(*-enum-size)
         valid = stl::to_underlying(ip_address_status::valid),
 
         // valid ipv4, special character found at the end
@@ -81,11 +79,11 @@ namespace webpp {
     };
 
     /**
-     * Status of the result of a ipv6 parse.
+     * Status of the result of an ipv6 parse.
      * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
-     * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
+     * able to use that uint8_t for an ipv4/ipv6 prefix (which only requires 0-128)
      */
-    enum struct inet_pton6_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
+    enum struct inet_pton6_status : stl::uint32_t { // NOLINT(*-enum-size)
         valid = stl::to_underlying(ip_address_status::valid),
 
         // valid ipv6, special character found at the end

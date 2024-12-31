@@ -13,6 +13,7 @@
 namespace webpp::uri {
 
     enum struct host_status {
+        // todo: do we need to match the values to uri_status values?
         valid,              // valid but no port
         valid_with_port,    // valid + has port
         invalid_host,       // the host is not a reg-name or an ip addr
@@ -189,6 +190,7 @@ namespace webpp::uri {
                     get<struct ipv6>(endpoint).status_to(out);
                     break;
                 }
+                default: stl::unreachable();
             }
         }
 
@@ -244,7 +246,7 @@ namespace webpp::uri {
             return {};
         }
 
-        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 const default_ip) const noexcept {
+        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 const& default_ip) const noexcept {
             if (auto const* ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }

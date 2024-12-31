@@ -26,6 +26,7 @@ namespace webpp::uri {
                   ParsingURIContext   CtxT>
         static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
+            using enum uri_encoding_policy;
             using details::ascii_bitmap;
             using details::FORBIDDEN_DOMAIN_CODE_POINTS;
             using details::FORBIDDEN_HOST_CODE_POINTS;
@@ -59,14 +60,12 @@ namespace webpp::uri {
                 bool done; // NOLINT(*-init-variables)
                 if constexpr (!IsSpecial) {
                     // for opaque hosts:
-                    done = coder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-                      C0_CONTROL_ENCODE_SET,
-                      interesting_characters);
+                    done = coder.template encode_or_validate<encode_chars>(C0_CONTROL_ENCODE_SET,
+                                                                           interesting_characters);
                 } else {
                     // for domain names:
                     // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                    done = coder.template decode_or_tolower<uri_encoding_policy::encode_chars>(
-                      interesting_characters);
+                    done = coder.template decode_or_tolower<encode_chars>(interesting_characters);
                 }
                 if (done) {
                     if constexpr (Options.empty_host_is_error && !IsSpecial) {
@@ -104,7 +103,7 @@ namespace webpp::uri {
                             set_valid(ctx.status, valid_port);
                             parse_port(ctx);
 
-                            // rollback if it's not a port, we rollback and assume it's a password
+                            // rollback if it's not a port, we roll back and assume it's a password
                             if (get_value(ctx.status) == port_invalid) {
                                 must_contain_credentials = true;
                                 clear<components::port>(ctx);

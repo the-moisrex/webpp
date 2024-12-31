@@ -185,7 +185,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/authority.hpp
         ${LIB_INCLUDE_DIR}/uri/domain.hpp
         ${LIB_INCLUDE_DIR}/uri/idna/idna_mappings.hpp
-        ${LIB_INCLUDE_DIR}/uri/idna/idna_ascii.hpp
+        ${LIB_INCLUDE_DIR}/uri/idna/idna_to_ascii.hpp
         ${LIB_INCLUDE_DIR}/uri/idna/punycodes.hpp
         ${LIB_INCLUDE_DIR}/uri/idna/details/idna_mapping_table.hpp
 

@@ -164,6 +164,8 @@ namespace webpp::uri {
     ///            |
     ///         error bit == 1
     ///         valid bit == 0
+    ///
+    /// Keep this uri_status_type and ip_address_status the same type so they're trivially convertible.
     using uri_status_type                        = stl::uint32_t;
     static constexpr uri_status_type valid_bit   = 0U;
     static constexpr uri_status_type error_bit   = 1U << 20U;
@@ -201,20 +203,21 @@ namespace webpp::uri {
         missing_scheme_non_relative_url = error_bit | 6U,
 
         // host-specific errors:
-        valid_path_or_authority = valid_bit | 3U,
-        valid_authority         = valid_bit | 4U,
-        valid_file_host         = valid_bit | 5U,
-        valid_port              = valid_bit | 6U,
-        valid_authority_end     = valid_bit | 7U,
-        subdomain_too_long      = error_bit | 7U,  // the subdomain is too long
-        dot_at_end              = error_bit | 8U,  // the domain ended unexpectedly
-        begin_with_hyphen       = error_bit | 9U,  // the domain cannot start with hyphens
-        end_with_hyphen         = error_bit | 10U, // the domain cannot end with hyphens
-        double_hyphen   = error_bit | 11U, // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain = error_bit | 12U, // a domain/subdomain cannot be empty (no double dotting)
-        host_missing    = error_bit | 13U,
+        valid_path_or_authority   = valid_bit | 3U,
+        valid_authority           = valid_bit | 4U,
+        valid_file_host           = valid_bit | 5U,
+        valid_port                = valid_bit | 6U,
+        valid_authority_end       = valid_bit | 7U,
+        subdomain_too_long        = error_bit | 7U,  // the subdomain is too long
+        dot_at_end                = error_bit | 8U,  // the domain ended unexpectedly
+        begin_with_hyphen         = error_bit | 9U,  // the domain cannot start with hyphens
+        end_with_hyphen           = error_bit | 10U, // the domain cannot end with hyphens
+        double_hyphen             = error_bit | 11U, // domain can't have double hyphens unless it's punycode
+        empty_subdomain           = error_bit | 12U, // a (sub)domain cannot be empty (no double dotting)
+        host_missing              = error_bit | 13U,
         invalid_host_code_point   = error_bit | 14U, // non-special (opaque) host contains invalid character
         invalid_domain_code_point = error_bit | 15U, // domain name contains invalid chars
+        domain_to_ascii_error     = error_bit | 16U, // domain to ascii process has failed
         has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
@@ -231,12 +234,12 @@ namespace webpp::uri {
         ip_invalid_colon_usage  = error_bit | stl::to_underlying(ip_address_status::invalid_colon_usage),
 
         // ipv6-specific errors and warnings:
-        ipv6_unclosed           = error_bit | 16U,
-        ipv6_char_after_closing = error_bit | 17U,
+        ipv6_unclosed           = error_bit | 17U,
+        ipv6_char_after_closing = error_bit | 18U,
 
         // port-specific errors:
-        port_out_of_range = error_bit | 18U,
-        port_invalid      = error_bit | 19U, // invalid characters and what not
+        port_out_of_range = error_bit | 19U,
+        port_invalid      = error_bit | 20U, // invalid characters and what not
 
         // path-specific errors/warnings:
         valid_path                           = valid_bit | 8U,
@@ -248,7 +251,7 @@ namespace webpp::uri {
 
         // queries-specific errors/warnings:
         valid_queries             = valid_bit | 10U,
-        invalid_queries_character = error_bit | 20U,
+        invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
         valid_fragment = valid_bit | 11U,
@@ -338,6 +341,10 @@ namespace webpp::uri {
                   "(domain name is not host; "
                   "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
                   "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
+            case domain_to_ascii_error:
+                return {
+                  "Domain could not be converted to ASCII; "
+                  "more info: https://url.spec.whatwg.org/#validation-error-domain-to-ascii"};
             case has_credentials:
                 return {
                   "The input has credentials (username or password), it is a deprecated feature of URIs; "
