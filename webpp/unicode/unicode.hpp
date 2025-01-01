@@ -750,14 +750,10 @@ namespace webpp::unicode {
                 }
                 auto const lhs_length = required_length_of<char_type, diff_type>(*lhs);
                 auto const rhs_length = required_length_of<char_type, diff_type>(*rhs);
-                if constexpr (UTF8<char_type>) {
-                    webpp_assume(lhs_length >= 0 && lhs_length <= 6U);
-                    webpp_assume(rhs_length >= 0 && rhs_length <= 6U);
-                } else {
-                    // utf-16
-                    webpp_assume(lhs_length >= 0 && lhs_length <= 2U);
-                    webpp_assume(rhs_length >= 0 && rhs_length <= 2U);
-                }
+
+                webpp_static_constexpr auto max_len = UTF8<char_type> ? 6U : 2U;
+                webpp_assume(lhs_length >= 0 && lhs_length <= max_len);
+                webpp_assume(rhs_length >= 0 && rhs_length <= max_len);
 
                 // [X|X|X|X| | |X|X| ]
                 //  -------     ---
@@ -778,52 +774,6 @@ namespace webpp::unicode {
             }
         }
 
-        template <typename CharT = char8_t>
-        [[nodiscard]] static constexpr stl::size_t count(CharT const* pos, stl::size_t max) noexcept {
-            if constexpr (UTF8<CharT> || UTF16<CharT>) {
-                stl::size_t  len   = 0;
-                CharT const* start = pos;
-                if (max == 0 || !*pos) {
-                    return 0;
-                }
-
-                next_char(pos);
-
-                while (pos - start < max && *pos) {
-                    ++len;
-                    next_char(pos);
-                }
-
-                /* only do the last len increment if we got a complete
-                 * char (don't count partial chars)
-                 */
-                if (pos - start <= max) {
-                    ++len;
-                }
-                return len;
-            } else {
-                // todo
-            }
-        }
-
-        template <typename CharT = char8_t>
-        [[nodiscard]] static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
-            if constexpr (UTF8<CharT> || UTF16<CharT>) {
-                // todo
-            } else {
-                return end - start;
-            }
-        }
-
-        // There's a better way to count 32bit Unicode if you know the start and the end.
-        template <typename CharT = char8_t>
-        [[nodiscard]] static constexpr stl::size_t count(CharT const* pos) noexcept {
-            stl::size_t len = 0;
-            for (; *pos; next_char(pos)) {
-                ++len;
-            }
-            return len;
-        }
 
         /**
          * Append a code point to a string
@@ -944,7 +894,7 @@ namespace webpp::unicode {
                   stl::forward_iterator EIter = Iter>
         static constexpr SizeT append(StrT& out, Iter& src, EIter end)
           noexcept(istl::NothrowAppendable<StrT>) {
-            using out_char_type = istl::char_traits_type_of<StrT>;
+            using out_char_type = istl::char_traits_type_of_t<StrT>;
             using src_char_type = typename stl::iterator_traits<Iter>::value_type;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
                 // no need to convert to UTF32 then convert to whatever
@@ -1371,6 +1321,7 @@ namespace webpp::unicode {
                 return static_cast<SizeT>(pos - beg);
             } else {
                 static_assert_false(value_type, "Invalid iterator.");
+                return 0;
             }
         }
 

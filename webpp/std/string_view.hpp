@@ -54,6 +54,11 @@ namespace webpp::istl {
 
     } // namespace details::string_view
 
+    /// Get the basic_string_view<...> type based on std::basic_string<...> template parameters
+    template <typename T>
+    using string_view_type_of = stl::
+      conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>, char_traits_type_of_t<T>>>;
+
     namespace details {
         template <typename StrViewType, typename T>
         concept StringViewifiableOf =
@@ -86,13 +91,7 @@ namespace webpp::istl {
       StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
     template <typename T>
-    using defaulted_string_view =
-      stl::conditional_t<StringView<T>,
-                         stl::remove_cvref_t<T>,
-                         stl::basic_string_view<char_type_of_t<T>, char_traits_type_of<T>>>;
-
-    template <typename T>
-    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, T>;
+    concept StringViewifiable = StringViewifiableOf<string_view_type_of<T>, T>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
@@ -152,22 +151,9 @@ namespace webpp::istl {
      */
     template <StringViewifiable StrT>
     [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
-        using str_view_t = defaulted_string_view<StrT>;
+        using str_view_t = string_view_type_of<StrT>;
         return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
     }
-
-    // template <typename T>
-    // using char_type_of_t = typename
-    // decltype(string_viewify(stl::declval<stl::remove_cvref_t<T>>()))::value_type;
-
-
-
-    //    template <typename T>
-    //    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
-
-    template <typename T>
-    using string_view_type_of =
-      stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>>>;
 
     template <StringViewifiable T>
     [[nodiscard]] static constexpr auto to_std_string_view(T&& str) noexcept {

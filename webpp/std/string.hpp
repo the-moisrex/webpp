@@ -48,7 +48,7 @@ namespace webpp::istl {
     namespace details::string {
         /**
          * Due to a GCC bug in 10.2.0, we're doing this to deduce the template type, because GCC doesn't
-         * seem to be able to deduce a template type in a concept but it can do it from here.
+         * seem to be able to deduce a template type in a concept, but it can do it from here.
          */
         template <template <typename...> typename TT, typename... T>
         using deduced_type = decltype(TT{T{}...});
@@ -81,7 +81,7 @@ namespace webpp::istl {
       String<T>,
       stl::remove_cvref_t<T>,
       stl::basic_string<char_type_of_t<T>,
-                        char_traits_type_of<T>,
+                        char_traits_type_of_t<T>,
                         typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type_of_t<T>>>>;
 
     template <typename T>

@@ -21,9 +21,7 @@ namespace webpp::uri::idna {
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      */
     template <istl::String StrT = stl::string>
-    static constexpr domain_to_ascii_status domain_to_ascii(
-      StrT&                                                                         out,
-      stl::basic_string_view<typename StrT::value_type, typename StrT::char_traits> src) {
+    static constexpr domain_to_ascii_status domain_to_ascii(StrT& out, istl::string_view_type_of<StrT> src) {
         using enum domain_to_ascii_status;
     }
 

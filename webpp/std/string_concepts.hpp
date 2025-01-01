@@ -100,11 +100,6 @@ namespace webpp::istl {
         };
 
         template <typename T>
-        struct traits_extractor {
-            using type = typename T::traits_type;
-        };
-
-        template <typename T>
         struct allocator_type_extractor {
             using type = typename T::allocator_type;
         };
@@ -132,16 +127,20 @@ namespace webpp::istl {
       templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
       lazy_type<DefaultAllocator>>;
 
-    namespace details {
-        template <typename T>
-        concept has_traits_type = requires { typename stl::remove_cvref_t<T>::traits_type; };
-    } // namespace details
+    template <typename T>
+    struct char_traits_type_of {
+        using type = stl::char_traits<char_type_of_t<T>>;
+    };
 
-    template <typename T, typename Default = stl::char_traits<char_type_of_t<T>>>
-    using char_traits_type_of =
-      lazy_conditional_t<details::has_traits_type<T>,
-                         templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
-                         lazy_type<Default>>;
+    template <typename T>
+        requires requires { typename T::traits_type; }
+    struct char_traits_type_of<T> {
+        using type = typename T::traits_type;
+    };
+
+    template <typename T>
+    using char_traits_type_of_t = typename char_traits_type_of<T>::type;
+
 
     template <typename T>
     using char_type_of_t_string_literals =
