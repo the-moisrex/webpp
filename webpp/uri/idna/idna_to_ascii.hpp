@@ -6,6 +6,7 @@
 #include "../../std/string.hpp"
 #include "../../unicode/normalization.hpp"
 #include "../uri_status.hpp"
+#include "./idna_mappings.hpp"
 
 namespace webpp::uri::idna {
 
@@ -23,6 +24,16 @@ namespace webpp::uri::idna {
     template <istl::String StrT = stl::string>
     static constexpr domain_to_ascii_status domain_to_ascii(StrT& out, istl::string_view_type_of<StrT> src) {
         using enum domain_to_ascii_status;
+
+        auto const beg_index = out.size();
+
+        // todo: mapping simply ignores invalid code points, is that okay?
+        if (!idna::map(src.begin(), src.end(), out)) {
+            // todo: is this error code the correct error?
+            return invalid_domain_code_point;
+        }
+
+        return valid;
     }
 
 

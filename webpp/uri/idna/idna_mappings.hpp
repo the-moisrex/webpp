@@ -4,6 +4,7 @@
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
 #include "../../std/string.hpp"
+#include "../../std/string_view.hpp"
 #include "../../unicode/unicode.hpp"
 #include "./details/idna_mapping_table.hpp"
 
@@ -62,23 +63,23 @@ namespace webpp::uri::idna {
      *                +[ [32bits = range-end] ]
      *             Disallowed is really contains range start and range end.
      */
-    template <typename CharT>
+    template <unicode::UTF32 CharT>
     [[nodiscard]] static constexpr details::idna_mapping_table_iterator find_mapping_code_point(
-      CharT const inp_ch) {
+      CharT const inp_cp) {
         using details::disallowed_mask;
         using details::idna_mapping_table;
         using details::map_table_byte_type;
         using details::mapped_mask;
 
-        auto const asked_char = static_cast<map_table_byte_type>(inp_ch);
+        auto const code_point = static_cast<map_table_byte_type>(inp_cp);
 
         // anything bigger than the last element is disallowed
-        if ((asked_char & disallowed_mask) != 0U) {
+        if ((code_point & disallowed_mask) != 0U) {
             // last element:
             return idna_mapping_table.begin() + (idna_mapping_table.size() - 1);
         }
 
-        map_table_byte_type const element = asked_char | disallowed_mask;
+        map_table_byte_type const element = code_point | disallowed_mask;
         auto                      length  = idna_mapping_table.size();
         auto                      chosen  = idna_mapping_table.begin(); // NOLINT(*-qualified-auto)
 
@@ -146,19 +147,14 @@ namespace webpp::uri::idna {
      * Perform the mapping for a single character
      * @returns false if the character is not allowed
      */
-    template <bool UseSTD3ASCIIRules = false, typename CharT, istl::String OutStrT>
-    [[nodiscard]] static constexpr bool perform_mapping(CharT const inp_ch, OutStrT& out) {
+    template <bool UseSTD3ASCIIRules = false, unicode::UTF32 CharT, istl::String OutStrT>
+    [[nodiscard]] static constexpr bool perform_mapping(CharT const inp_cp, OutStrT& out) {
         using details::disallowed_mask;
         using details::map_table_byte_type;
         using details::mapped_mask;
 
-        // todo: uncomment this
-        // static_assert(sizeof(CharT) >= 16U, // NOLINT(*-magic-numbers)
-        //               "UTF-8 characters should not be used here, "
-        //               "should first be converted to a 32bit character.");
-
-        auto const cur_char         = static_cast<map_table_byte_type>(inp_ch);
-        auto const pos              = find_mapping_code_point(inp_ch);
+        auto const code_point       = static_cast<map_table_byte_type>(inp_cp);
+        auto const pos              = find_mapping_code_point(inp_cp);
         auto const first_code_point = *pos;
         auto const length           = (first_code_point & ~mapped_mask) >> 24U;
 
@@ -168,7 +164,7 @@ namespace webpp::uri::idna {
 
             // we don't really need to check this because the all the scenarios that this would not be true,
             // the user has passed an invalid character anyway.
-            assert(cur_char >= range_start && cur_char <= range_end);
+            assert(code_point >= range_start && code_point <= range_end);
             return false;
         }
 
@@ -181,20 +177,20 @@ namespace webpp::uri::idna {
 
             // we don't really need to check the range because all the scenarios that this would either be
             // caught by the "reference table", or it's already detected that it's an invalid character.
-            assert(cur_char >= range_start && cur_char <= range_end);
+            assert(code_point >= range_start && code_point <= range_end);
 
             if (is_sequenced_mapping) {
                 // It's a sequenced mapping
-                auto const diff       = cur_char - range_start;
-                auto const code_point = (*next_pos & ~disallowed_mask) + diff;
-                unicode::unchecked::append(out, code_point);
+                auto const diff   = code_point - range_start;
+                auto const cur_cp = (*next_pos & ~disallowed_mask) + diff;
+                unicode::unchecked::append(out, cur_cp);
             } else {
                 // loop until we find the next "first-code-point"
                 // we don't need to check the length of the array, there's a valid `first-code-point`
                 // character at the end of the table intentionally inserted for this purpose.
                 for (auto cur_pos = next_pos; (*cur_pos & mapped_mask) == 0; ++cur_pos) {
-                    auto const code_point = *cur_pos & ~disallowed_mask;
-                    unicode::unchecked::append(out, code_point);
+                    auto const cur_cp = *cur_pos & ~disallowed_mask;
+                    unicode::unchecked::append(out, cur_cp);
                 }
             }
         }
@@ -210,34 +206,43 @@ namespace webpp::uri::idna {
      */
     template <bool UseSTD3ASCIIRules = false, istl::String OutStrT, typename Iter>
     [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out) {
+        using enum unicode::checked::error_handling;
         using details::idna_reference_table;
-        using ref_table_byte_type = typename decltype(idna_reference_table)::value_type;
 
-        auto pos = beg;
-        for (; pos != end; ++pos) {
-            // todo: handle utf-8 characters:
+
+        for (auto pos = beg; pos != end;) {
+            auto const code_point = unicode::checked::next_code_point<return_negated_char>(pos, end);
+            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                unicode::unchecked::append(out, -code_point);
+                continue;
+            }
 
             // the last byte of the reference table is specially designed so we here can help reduce the size
             // of the table; everything after the size of the table is being the same as the last element of
             // the table.
             stl::size_t const byte_index =
-              stl::min(static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type),
-                       idna_reference_table.size() - 1);
-            unsigned const rem_index       = static_cast<stl::size_t>(*pos) % sizeof(ref_table_byte_type);
-            ref_table_byte_type const byte = idna_reference_table[byte_index];
+              stl::min(static_cast<stl::size_t>(code_point), idna_reference_table.size() - 1);
+            auto const byte = idna_reference_table[byte_index];
 
-            if ([[maybe_unused]] bool const should_map = (byte & rem_index) != 0) {
+            if ([[maybe_unused]] bool const should_map = (byte & code_point) != 0) {
                 // now we should look at the mapping table
-                if (!perform_mapping<UseSTD3ASCIIRules>(*pos)) {
+                if (!perform_mapping<UseSTD3ASCIIRules>(code_point, out)) {
                     return false;
                 }
                 continue;
             }
 
             // it's a valid character
-            out.append(*pos);
+            unicode::unchecked::append(out, code_point);
         }
         return true;
+    }
+
+    template <bool UseSTD3ASCIIRules = false, istl::String OutStrT, istl::StringViewifiable InpStrT>
+    [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out) {
+        auto const src_view = istl::string_viewify(stl::forward<InpStrT>(src));
+        using iterator      = typename decltype(src_view)::iterator;
+        return map<UseSTD3ASCIIRules, OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
     }
 
 } // namespace webpp::uri::idna
