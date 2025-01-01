@@ -774,7 +774,6 @@ namespace webpp::unicode {
             }
         }
 
-
         /**
          * Append a code point to a string
          * "out" can be an iterator/pointer or a string
@@ -1317,7 +1316,7 @@ namespace webpp::unicode {
             } else if constexpr (UTF8<value_type>) {
                 // todo: find a better way of doing this:
                 auto const beg = pos;
-                stl::ignore    = next_char<Iter>(pos, end);
+                static_cast<void>(next_char<Iter>(pos, end));
                 return static_cast<SizeT>(pos - beg);
             } else {
                 static_assert_false(value_type, "Invalid iterator.");
