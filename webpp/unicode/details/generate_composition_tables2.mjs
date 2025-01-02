@@ -53,7 +53,7 @@ class CP1 {
             struct alignas(std::uint${this.typeSize()}_t) CP1 {
                 std::uint8_t cp1_mask : 8 = 0; // a mask to identify if you have found the right code point
                 char32_t replacement : 24 = 0U; // the composition code point
-            };
+            } WEBPP_GCC_PACKED;
 
             static_assert(sizeof(CP1) == ${this.typeSize() / 8}U, "Type size is not valid.");
         `;
@@ -111,7 +111,7 @@ class CP2 {
                 char32_t cp2 = 0; // second code point, in order for you to check if you have found the right CP
                 std::uint16_t cp1_pos = 0U; // start position
                 std::uint16_t cp1_rem = 0U; // modulus value required to find your code CP1 of the composition
-            };
+            } WEBPP_GCC_PACKED;
 
             static_assert(sizeof(CP2) == ${this.typeSize() / 8}U, "Type size is not valid.");
         `;
@@ -244,9 +244,15 @@ class CompTable {
                 ${/*static constexpr auto cp2s_mask = 0x${this.cp2sMask.toString(16).toUpperCase()}U;*/ ""}
                 static constexpr auto cp2s_rem = ${this.cp2sRem}U;
 
+#ifdef _WIN32
+#pragma pack(push, 1)
+#endif
                 ${CP1.renderStruct()}
                 ${CP2.renderStruct()}
 
+#ifdef _WIN32
+#pragma pack(push, 0)
+#endif
                 /**
                  * Size: ${((this.cp2s.length * CP2.typeSizeBytes()) / 1024).toFixed(1)} KiB
                  */
@@ -313,6 +319,14 @@ const createTableFile = async (tables) => {
 
 #include <array>
 #include <cstdint>
+
+#ifndef _WIN32
+#define WEBPP_GCC_PACKED __attribute__((packed))
+#else 
+#define WEBPP_GCC_PACKED
+#endif
+
+
 
 namespace webpp::unicode::details {
 

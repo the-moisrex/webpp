@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_composition_tables2.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 02 Oct 2024 20:53:45 GMT
+ *   This file's generation date:        Thu, 02 Jan 2025 13:08:20 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bytes:      13776 B
@@ -33,6 +33,14 @@
 #include <array>
 #include <cstdint>
 
+#ifndef _WIN32
+#    define WEBPP_GCC_PACKED __attribute__((packed))
+#else
+#    define WEBPP_GCC_PACKED
+#endif
+
+
+
 namespace webpp::unicode::details {
 
 
@@ -41,13 +49,17 @@ namespace webpp::unicode::details {
 
         static constexpr auto cp2s_rem = 313U;
 
+#ifdef _WIN32
+#    pragma pack(push, 1)
+#endif
+
         /**
          * First Code Point of the compositions
          */
         struct alignas(std::uint32_t) CP1 {
             std::uint8_t cp1_mask    : 8  = 0;  // a mask to identify if you have found the right code point
             char32_t     replacement : 24 = 0U; // the composition code point
-        };
+        } WEBPP_GCC_PACKED;
 
         static_assert(sizeof(CP1) == 4U, "Type size is not valid.");
 
@@ -58,11 +70,14 @@ namespace webpp::unicode::details {
             char32_t cp2 = 0; // second code point, in order for you to check if you have found the right CP
             std::uint16_t cp1_pos = 0U; // start position
             std::uint16_t cp1_rem = 0U; // modulus value required to find your code CP1 of the composition
-        };
+        } WEBPP_GCC_PACKED;
 
         static_assert(sizeof(CP2) == 8U, "Type size is not valid.");
 
 
+#ifdef _WIN32
+#    pragma pack(push, 0)
+#endif
         /**
          * Size: 2.4 KiB
          */
