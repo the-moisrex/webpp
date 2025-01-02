@@ -751,7 +751,7 @@ namespace webpp::unicode {
                 auto const lhs_length = required_length_of<char_type, diff_type>(*lhs);
                 auto const rhs_length = required_length_of<char_type, diff_type>(*rhs);
 
-                webpp_static_constexpr auto max_len = UTF8<char_type> ? 6U : 2U;
+                [[maybe_unused]] webpp_static_constexpr auto max_len = UTF8<char_type> ? 6U : 2U;
                 webpp_assume(lhs_length >= 0 && lhs_length <= max_len);
                 webpp_assume(rhs_length >= 0 && rhs_length <= max_len);
 

@@ -543,8 +543,6 @@ namespace webpp::unicode {
     /**
      * Compose 2 code points into one
      * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
-     *
-     * Canonical Composition code points are embedded inside Decomposition tables to save space.
      */
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr CharT canonical_composed(CharT const lhs, CharT const rhs) noexcept {
@@ -561,6 +559,7 @@ namespace webpp::unicode {
         auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
 
         // early bailout:
+        // todo: use -1 as invalid values for cp2 instead of 0 to eliminate the necessity of cp2 == 0 comparison
         if (cp2 == 0 || static_cast<CharT>(cp2) != rhs) {
             auto const hangul = compose_hangul(lhs, rhs);
             if (hangul != 0) {
@@ -705,7 +704,7 @@ namespace webpp::unicode {
             canonical_compose(out);
         } else {
             // todo: NFKC and NFKD
-            throw stl::invalid_argument("NFKC and NFKD are not implemented yet.");
+            throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");
         }
     }
 
@@ -724,13 +723,14 @@ namespace webpp::unicode {
     }
 
     /// Check the Normalization Form
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept {
-        using enum normalization_form;
-        // todo
-        static_assert_false(Iter, "Not yet implemented.");
-        return gibberish;
-    }
+    // template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    // [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept
+    // {
+    //     using enum normalization_form;
+    //     // todo
+    //     static_assert_false(Iter, "Not yet implemented.");
+    //     return gibberish;
+    // }
 
     template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
     [[nodiscard]] static constexpr bool isNFC(Iter start, EIter end) noexcept {
