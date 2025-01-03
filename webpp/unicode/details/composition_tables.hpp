@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_composition_tables2.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 03 Jan 2025 11:55:58 GMT
+ *   This file's generation date:        Fri, 03 Jan 2025 11:58:46 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bytes:      13776 B
@@ -76,7 +76,7 @@ namespace webpp::unicode::details {
 
 
 #ifdef _WIN32
-#    pragma pack(push, 0)
+#    pragma pack(pop)
 #endif
         /**
          * Size: 2.4 KiB

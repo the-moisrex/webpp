@@ -251,7 +251,7 @@ class CompTable {
                 ${CP2.renderStruct()}
 
 #ifdef _WIN32
-#pragma pack(push, 0)
+#pragma pack(pop)
 #endif
                 /**
                  * Size: ${((this.cp2s.length * CP2.typeSizeBytes()) / 1024).toFixed(1)} KiB
