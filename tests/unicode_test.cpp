@@ -587,13 +587,21 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F87F'), U"\x5D6B") << desc_decomp_of(U'\x2F87F');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F83E'), U"\x5448") << desc_decomp_of(U'\x2F83E');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F83F'), U"\x5468") << desc_decomp_of(U'\x2F83F');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16121'), U"\x1611E\x1611E") << desc_decomp_of(U'\x16121');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16122'), U"\x1611E\x16129") << desc_decomp_of(U'\x16122');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16123'), U"\x1611E\x1611F") << desc_decomp_of(U'\x16123');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x226D'), U"\x224D\x0338") << desc_decomp_of(U'\x226D');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16124'), U"\x16129\x1611F") << desc_decomp_of(U'\x16124');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xFB40'), U"\x05E0\x05BC") << desc_decomp_of(U'\xFB40');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x226E'), U"\x003C\x0338") << desc_decomp_of(U'\x226E');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16125'), U"\x1611E\x16120") << desc_decomp_of(U'\x16125');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xFB41'), U"\x05E1\x05BC") << desc_decomp_of(U'\xFB41');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x226F'), U"\x003E\x0338") << desc_decomp_of(U'\x226F');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16126'), U"\x1611E\x1611E\x1611F") << desc_decomp_of(U'\x16126');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16127'), U"\x1611E\x16129\x1611F") << desc_decomp_of(U'\x16127');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xFB43'), U"\x05E3\x05BC") << desc_decomp_of(U'\xFB43');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EF0'), U"\x0055\x031B\x0323") << desc_decomp_of(U'\x1EF0');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16128'), U"\x1611E\x1611E\x16120") << desc_decomp_of(U'\x16128');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xFB44'), U"\x05E4\x05BC") << desc_decomp_of(U'\xFB44');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EF1'), U"\x0075\x031B\x0323") << desc_decomp_of(U'\x1EF1');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EB0'), U"\x0041\x0306\x0300") << desc_decomp_of(U'\x1EB0');
@@ -682,6 +690,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF996'), U"\x7DF4") << desc_decomp_of(U'\xF996');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF955'), U"\x51CC") << desc_decomp_of(U'\xF955');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF914'), U"\x6A02") << desc_decomp_of(U'\xF914');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x105E4'), U"\x105DA\x0307") << desc_decomp_of(U'\x105E4');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xFB4D'), U"\x05DB\x05BF") << desc_decomp_of(U'\xFB4D');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9A9'), U"\x56F9") << desc_decomp_of(U'\xF9A9');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF997'), U"\x806F") << desc_decomp_of(U'\xF997');
@@ -810,9 +819,11 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F998'), U"\x82E5") << desc_decomp_of(U'\x2F998');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F957'), U"\x79EB") << desc_decomp_of(U'\x2F957');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F916'), U"\x3D96") << desc_decomp_of(U'\x2F916');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16D68'), U"\x16D67\x16D67") << desc_decomp_of(U'\x16D68');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F999'), U"\x831D") << desc_decomp_of(U'\x2F999');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F958'), U"\x412F") << desc_decomp_of(U'\x2F958');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F917'), U"\x704A") << desc_decomp_of(U'\x2F917');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16D69'), U"\x16D63\x16D67") << desc_decomp_of(U'\x16D69');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F959'), U"\x7A40") << desc_decomp_of(U'\x2F959');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F918'), U"\x707D") << desc_decomp_of(U'\x2F918');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F919'), U"\x7077") << desc_decomp_of(U'\x2F919');
@@ -828,6 +839,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9AC'), U"\x8564") << desc_decomp_of(U'\x2F9AC');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F99A'), U"\x8363") << desc_decomp_of(U'\x2F99A');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1D1BE'), U"\x1D1BA\x1D165\x1D16E") << desc_decomp_of(U'\x1D1BE');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x16D6A'), U"\x16D63\x16D67\x16D67") << desc_decomp_of(U'\x16D6A');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9EE'), U"\x958B") << desc_decomp_of(U'\x2F9EE');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9AD'), U"\x26F2C") << desc_decomp_of(U'\x2F9AD');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F99B'), U"\x83AD") << desc_decomp_of(U'\x2F99B');
@@ -1235,6 +1247,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9BA'), U"\x4E86") << desc_decomp_of(U'\xF9BA');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E7E'), U"\x0056\x0323") << desc_decomp_of(U'\x1E7E');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E3D'), U"\x006C\x032D") << desc_decomp_of(U'\x1E3D');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x113C5'), U"\x113C2\x113C2") << desc_decomp_of(U'\x113C5');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9FC'), U"\x8B58") << desc_decomp_of(U'\xF9FC');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9BB'), U"\x50DA") << desc_decomp_of(U'\xF9BB');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E7F'), U"\x0076\x0323") << desc_decomp_of(U'\x1E7F');
@@ -1242,9 +1255,11 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9FD'), U"\x4EC0") << desc_decomp_of(U'\xF9FD');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9BC'), U"\x5BEE") << desc_decomp_of(U'\xF9BC');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E3F'), U"\x006D\x0301") << desc_decomp_of(U'\x1E3F');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x113C7'), U"\x113C2\x113B8") << desc_decomp_of(U'\x113C7');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9FE'), U"\x8336") << desc_decomp_of(U'\xF9FE');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9BD'), U"\x5C3F") << desc_decomp_of(U'\xF9BD');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF96A'), U"\x7D22") << desc_decomp_of(U'\xF96A');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x113C8'), U"\x113C2\x113C9") << desc_decomp_of(U'\x113C8');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9FF'), U"\x523A") << desc_decomp_of(U'\xF9FF');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9BE'), U"\x6599") << desc_decomp_of(U'\xF9BE');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF96B'), U"\x53C3") << desc_decomp_of(U'\xF96B');
@@ -1748,6 +1763,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EDE'), U"\x004F\x031B\x0309") << desc_decomp_of(U'\x1EDE');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E8B'), U"\x0078\x0307") << desc_decomp_of(U'\x1E8B');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E4A'), U"\x004E\x032D") << desc_decomp_of(U'\x1E4A');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x105C9'), U"\x105D2\x0307") << desc_decomp_of(U'\x105C9');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EDF'), U"\x006F\x031B\x0309") << desc_decomp_of(U'\x1EDF');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E8C'), U"\x0058\x0308") << desc_decomp_of(U'\x1E8C');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E4B'), U"\x006E\x032D") << desc_decomp_of(U'\x1E4B');
@@ -1765,6 +1781,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E8F'), U"\x0079\x0307") << desc_decomp_of(U'\x1E8F');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E4E'), U"\x004F\x0303\x0308") << desc_decomp_of(U'\x1E4E');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E0D'), U"\x0064\x0323") << desc_decomp_of(U'\x1E0D');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x11383'), U"\x11382\x113C9") << desc_decomp_of(U'\x11383');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9CC'), U"\x7409") << desc_decomp_of(U'\xF9CC');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E4F'), U"\x006F\x0303\x0308") << desc_decomp_of(U'\x1E4F');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E0E'), U"\x0044\x0331") << desc_decomp_of(U'\x1E0E');
@@ -1773,6 +1790,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E0F'), U"\x0064\x0331") << desc_decomp_of(U'\x1E0F');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1B3B'), U"\x1B3A\x1B35") << desc_decomp_of(U'\x1B3B');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x0A5E'), U"\x0A2B\x0A3C") << desc_decomp_of(U'\x0A5E');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x11385'), U"\x11384\x113BB") << desc_decomp_of(U'\x11385');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9CE'), U"\x786B") << desc_decomp_of(U'\xF9CE');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF97B'), U"\x7CE7") << desc_decomp_of(U'\xF97B');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF93A'), U"\x9DFA") << desc_decomp_of(U'\xF93A');
@@ -1800,6 +1818,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1134B'), U"\x11347\x1133E") << desc_decomp_of(U'\x1134B');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1134C'), U"\x11347\x11357") << desc_decomp_of(U'\x1134C');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9C0'), U"\x87E1") << desc_decomp_of(U'\x2F9C0');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x1138E'), U"\x1138B\x113C2") << desc_decomp_of(U'\x1138E');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9C1'), U"\x8801") << desc_decomp_of(U'\x2F9C1');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9C2'), U"\x45F9") << desc_decomp_of(U'\x2F9C2');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F9C3'), U"\x8860") << desc_decomp_of(U'\x2F9C3');
@@ -2280,6 +2299,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1EAF'), U"\x0061\x0306\x0301") << desc_decomp_of(U'\x1EAF');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E5C'), U"\x0052\x0323\x0304") << desc_decomp_of(U'\x1E5C');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E1B'), U"\x0065\x0330") << desc_decomp_of(U'\x1E1B');
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x11391'), U"\x11390\x113C9") << desc_decomp_of(U'\x11391');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\xF9DA'), U"\x6817") << desc_decomp_of(U'\xF9DA');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E5D'), U"\x0072\x0323\x0304") << desc_decomp_of(U'\x1E5D');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x1E1C'), U"\x0045\x0327\x0306") << desc_decomp_of(U'\x1E1C');
@@ -2674,13 +2694,21 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x2F87F", U"\x5D6B");
     test_decomp(U"\x2F83E", U"\x5448");
     test_decomp(U"\x2F83F", U"\x5468");
+    test_decomp(U"\x16121", U"\x1611E\x1611E");
+    test_decomp(U"\x16122", U"\x1611E\x16129");
+    test_decomp(U"\x16123", U"\x1611E\x1611F");
     test_decomp(U"\x226D", U"\x224D\x0338");
+    test_decomp(U"\x16124", U"\x16129\x1611F");
     test_decomp(U"\xFB40", U"\x05E0\x05BC");
     test_decomp(U"\x226E", U"\x003C\x0338");
+    test_decomp(U"\x16125", U"\x1611E\x16120");
     test_decomp(U"\xFB41", U"\x05E1\x05BC");
     test_decomp(U"\x226F", U"\x003E\x0338");
+    test_decomp(U"\x16126", U"\x1611E\x1611E\x1611F");
+    test_decomp(U"\x16127", U"\x1611E\x16129\x1611F");
     test_decomp(U"\xFB43", U"\x05E3\x05BC");
     test_decomp(U"\x1EF0", U"\x0055\x031B\x0323");
+    test_decomp(U"\x16128", U"\x1611E\x1611E\x16120");
     test_decomp(U"\xFB44", U"\x05E4\x05BC");
     test_decomp(U"\x1EF1", U"\x0075\x031B\x0323");
     test_decomp(U"\x1EB0", U"\x0041\x0306\x0300");
@@ -2769,6 +2797,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\xF996", U"\x7DF4");
     test_decomp(U"\xF955", U"\x51CC");
     test_decomp(U"\xF914", U"\x6A02");
+    test_decomp(U"\x105E4", U"\x105DA\x0307");
     test_decomp(U"\xFB4D", U"\x05DB\x05BF");
     test_decomp(U"\xF9A9", U"\x56F9");
     test_decomp(U"\xF997", U"\x806F");
@@ -2897,9 +2926,11 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x2F998", U"\x82E5");
     test_decomp(U"\x2F957", U"\x79EB");
     test_decomp(U"\x2F916", U"\x3D96");
+    test_decomp(U"\x16D68", U"\x16D67\x16D67");
     test_decomp(U"\x2F999", U"\x831D");
     test_decomp(U"\x2F958", U"\x412F");
     test_decomp(U"\x2F917", U"\x704A");
+    test_decomp(U"\x16D69", U"\x16D63\x16D67");
     test_decomp(U"\x2F959", U"\x7A40");
     test_decomp(U"\x2F918", U"\x707D");
     test_decomp(U"\x2F919", U"\x7077");
@@ -2915,6 +2946,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x2F9AC", U"\x8564");
     test_decomp(U"\x2F99A", U"\x8363");
     test_decomp(U"\x1D1BE", U"\x1D1BA\x1D165\x1D16E");
+    test_decomp(U"\x16D6A", U"\x16D63\x16D67\x16D67");
     test_decomp(U"\x2F9EE", U"\x958B");
     test_decomp(U"\x2F9AD", U"\x26F2C");
     test_decomp(U"\x2F99B", U"\x83AD");
@@ -3322,6 +3354,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\xF9BA", U"\x4E86");
     test_decomp(U"\x1E7E", U"\x0056\x0323");
     test_decomp(U"\x1E3D", U"\x006C\x032D");
+    test_decomp(U"\x113C5", U"\x113C2\x113C2");
     test_decomp(U"\xF9FC", U"\x8B58");
     test_decomp(U"\xF9BB", U"\x50DA");
     test_decomp(U"\x1E7F", U"\x0076\x0323");
@@ -3329,9 +3362,11 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\xF9FD", U"\x4EC0");
     test_decomp(U"\xF9BC", U"\x5BEE");
     test_decomp(U"\x1E3F", U"\x006D\x0301");
+    test_decomp(U"\x113C7", U"\x113C2\x113B8");
     test_decomp(U"\xF9FE", U"\x8336");
     test_decomp(U"\xF9BD", U"\x5C3F");
     test_decomp(U"\xF96A", U"\x7D22");
+    test_decomp(U"\x113C8", U"\x113C2\x113C9");
     test_decomp(U"\xF9FF", U"\x523A");
     test_decomp(U"\xF9BE", U"\x6599");
     test_decomp(U"\xF96B", U"\x53C3");
@@ -3835,6 +3870,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1EDE", U"\x004F\x031B\x0309");
     test_decomp(U"\x1E8B", U"\x0078\x0307");
     test_decomp(U"\x1E4A", U"\x004E\x032D");
+    test_decomp(U"\x105C9", U"\x105D2\x0307");
     test_decomp(U"\x1EDF", U"\x006F\x031B\x0309");
     test_decomp(U"\x1E8C", U"\x0058\x0308");
     test_decomp(U"\x1E4B", U"\x006E\x032D");
@@ -3852,6 +3888,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1E8F", U"\x0079\x0307");
     test_decomp(U"\x1E4E", U"\x004F\x0303\x0308");
     test_decomp(U"\x1E0D", U"\x0064\x0323");
+    test_decomp(U"\x11383", U"\x11382\x113C9");
     test_decomp(U"\xF9CC", U"\x7409");
     test_decomp(U"\x1E4F", U"\x006F\x0303\x0308");
     test_decomp(U"\x1E0E", U"\x0044\x0331");
@@ -3860,6 +3897,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1E0F", U"\x0064\x0331");
     test_decomp(U"\x1B3B", U"\x1B3A\x1B35");
     test_decomp(U"\x0A5E", U"\x0A2B\x0A3C");
+    test_decomp(U"\x11385", U"\x11384\x113BB");
     test_decomp(U"\xF9CE", U"\x786B");
     test_decomp(U"\xF97B", U"\x7CE7");
     test_decomp(U"\xF93A", U"\x9DFA");
@@ -3887,6 +3925,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1134B", U"\x11347\x1133E");
     test_decomp(U"\x1134C", U"\x11347\x11357");
     test_decomp(U"\x2F9C0", U"\x87E1");
+    test_decomp(U"\x1138E", U"\x1138B\x113C2");
     test_decomp(U"\x2F9C1", U"\x8801");
     test_decomp(U"\x2F9C2", U"\x45F9");
     test_decomp(U"\x2F9C3", U"\x8860");
@@ -4367,6 +4406,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1EAF", U"\x0061\x0306\x0301");
     test_decomp(U"\x1E5C", U"\x0052\x0323\x0304");
     test_decomp(U"\x1E1B", U"\x0065\x0330");
+    test_decomp(U"\x11391", U"\x11390\x113C9");
     test_decomp(U"\xF9DA", U"\x6817");
     test_decomp(U"\x1E5D", U"\x0072\x0323\x0304");
     test_decomp(U"\x1E1C", U"\x0045\x0327\x0306");

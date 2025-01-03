@@ -1,5 +1,8 @@
 #!/usr/bin/awk
 
+# Usage:
+#  awk -f gen-canonical-decompose-tests.awk UnicodeData.txt
+
 BEGIN{
     FS=";";
     OF=";";
