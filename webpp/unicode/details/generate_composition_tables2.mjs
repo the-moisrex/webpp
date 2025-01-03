@@ -110,7 +110,7 @@ class CP2 {
             struct alignas(std::uint${this.typeSize()}_t) CP2 {
                 char32_t cp2 = 0; // second code point, in order for you to check if you have found the right CP
                 std::uint16_t cp1_pos = 0U; // start position
-                std::uint16_t cp1_rem = 0U; // modulus value required to find your code CP1 of the composition
+                std::uint16_t cp1_rem = 0U; // modulus value required to find CP1 of the composition
             } WEBPP_GCC_PACKED;
 
             static_assert(sizeof(CP2) == ${this.typeSize() / 8}U, "Type size is not valid.");

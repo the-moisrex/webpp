@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_composition_tables2.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Thu, 02 Jan 2025 13:08:20 GMT
+ *   This file's generation date:        Fri, 03 Jan 2025 11:55:58 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bytes:      13776 B
@@ -69,7 +69,7 @@ namespace webpp::unicode::details {
         struct alignas(std::uint64_t) CP2 {
             char32_t cp2 = 0; // second code point, in order for you to check if you have found the right CP
             std::uint16_t cp1_pos = 0U; // start position
-            std::uint16_t cp1_rem = 0U; // modulus value required to find your code CP1 of the composition
+            std::uint16_t cp1_rem = 0U; // modulus value required to find CP1 of the composition
         } WEBPP_GCC_PACKED;
 
         static_assert(sizeof(CP2) == 8U, "Type size is not valid.");
