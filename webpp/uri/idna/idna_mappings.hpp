@@ -221,10 +221,11 @@ namespace webpp::uri::idna {
             // of the table; everything after the size of the table is being the same as the last element of
             // the table.
             stl::size_t const byte_index =
-              stl::min(static_cast<stl::size_t>(code_point), idna_reference_table.size() - 1);
-            auto const byte = idna_reference_table[byte_index];
+              stl::min(static_cast<stl::size_t>(code_point) / 8, idna_reference_table.size() - 1);
+            auto const rem_index = code_point % 8;
+            auto const byte      = idna_reference_table[byte_index];
 
-            if ([[maybe_unused]] bool const should_map = (byte & code_point) != 0) {
+            if ([[maybe_unused]] bool const should_map = (byte & rem_index) != 0) {
                 // now we should look at the mapping table
                 if (!perform_mapping<UseSTD3ASCIIRules>(code_point, out)) {
                     return false;

@@ -502,6 +502,9 @@ export class TableTraits {
             case uint8:
                 this.bytes = new Uint8Array(max);
                 break;
+            case uint16:
+                this.bytes = new Uint16Array(max);
+                break;
             case uint32:
                 this.bytes = new Uint32Array(max);
                 break;
@@ -576,6 +579,14 @@ export class TableTraits {
         return this.bytes.at(index);
     }
 
+    atOr(index, defaultValue = 0) {
+        index = Number(index);
+        if (index >= this.length) {
+            return defaultValue;
+        }
+        return this.bytes.at(index);
+    }
+
     * [Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
@@ -586,6 +597,15 @@ export class TableTraits {
         return (this.bytes[index] = value);
     }
 
+    setOrFill(index, value, fillValue = 0) {
+        if (index >= this.index) {
+            for (; this.index <= index; ++this.index) {
+                this.set(this.index, fillValue);
+            }
+        }
+        this.set(index, value);
+    }
+
     append(value) {
         this.bytes[this.index++] = Number(value);
     }
@@ -594,6 +614,15 @@ export class TableTraits {
         for (const value of list) {
             this.append(value);
         }
+    }
+
+    setLength(len) {
+        this.index = len + 1;
+    }
+
+    clear(value = 0) {
+        this.bytes.fill(value);
+        this.index = 0;
     }
 }
 
