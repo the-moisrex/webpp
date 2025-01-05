@@ -27,51 +27,51 @@ static_assert(stl::is_same_v<int, typename replacer::type>);
 // NOLINTBEGIN(*-magic-numbers)
 
 TEST(Cache, LRUCacheTest) {
-    enable_owner_traits<default_traits> t;
-    lru_cache<>                         c(t);
-    c.set("one", "value");
-    EXPECT_EQ("value", c.get("one", ""));
-    c.set("one", "new value");
-    EXPECT_EQ("new value", c.get("one", ""));
-    c.set("one", "old value");
-    EXPECT_EQ("old value", c.get("one", ""));
+    enable_owner_traits<default_traits> trs;
+    lru_cache<>                         cache(trs);
+    cache.set("one", "value");
+    EXPECT_EQ("value", cache.get("one", ""));
+    cache.set("one", "new value");
+    EXPECT_EQ("new value", cache.get("one", ""));
+    cache.set("one", "old value");
+    EXPECT_EQ("old value", cache.get("one", ""));
 
-    lru_cache<default_traits, int> c2{t, 3};
-    c2.set(1, "hello");
-    c2.set(1, "hello 2");
-    EXPECT_EQ("hello 2", c2.get(1).value());
-    c2.set(2, "two");
-    c2.set(3, "three");
-    c2.set(4, "four");
-    c2.set(5, "five");
-    EXPECT_TRUE(!c2.get(1));
-    EXPECT_TRUE(!c2.get(2));
-    EXPECT_TRUE(!!c2.get(3));
-    EXPECT_TRUE(!!c2.get(4));
-    EXPECT_TRUE(!!c2.get(5));
+    lru_cache<default_traits, int> cache2{trs, 3};
+    cache2.set(1, "hello");
+    cache2.set(1, "hello 2");
+    EXPECT_EQ("hello 2", cache2.get(1).value());
+    cache2.set(2, "two");
+    cache2.set(3, "three");
+    cache2.set(4, "four");
+    cache2.set(5, "five");
+    EXPECT_TRUE(!cache2.get(1));
+    EXPECT_TRUE(!cache2.get(2));
+    EXPECT_TRUE(!!cache2.get(3));
+    EXPECT_TRUE(!!cache2.get(4));
+    EXPECT_TRUE(!!cache2.get(5));
 
-    for (auto const& [key, value] : c2) {
+    for (auto const& [key, value] : cache2) {
         EXPECT_TRUE(key < 10);
     }
 }
 
 TEST(Cache, CacheResultTest) {
-    enable_owner_traits<default_traits>         t;
-    lru_cache<default_traits, stl::string, int> c(t);
-    c["one"] = 1;
-    c["two"] = 2;
+    enable_owner_traits<default_traits>         trs;
+    lru_cache<default_traits, stl::string, int> cache(trs);
+    cache["one"] = 1;
+    cache["two"] = 2;
 
-    EXPECT_EQ(c["one"].value(), 1);
-    EXPECT_EQ(c["two"].value(), 2);
-    EXPECT_EQ(c["one"].key(), "one");
+    EXPECT_EQ(cache["one"].value(), 1);
+    EXPECT_EQ(cache["two"].value(), 2);
+    EXPECT_EQ(cache["one"].key(), "one");
 }
 
 TEST(Cache, DirectoryGateTest) {
-    enable_owner_traits<default_traits> t;
+    enable_owner_traits<default_traits> trs;
     auto                                dir  = stl::filesystem::temp_directory_path();
     dir                                     /= "webpp-directory-gate-test";
     stl::filesystem::create_directory(dir);
-    lru_cache<default_traits, std::string, std::string, directory_gate> c(t, 1024, dir, "one");
+    lru_cache<default_traits, std::string, std::string, directory_gate> c(trs, 1024, dir, "one");
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", "default"));
     c.set("one", "new value");
@@ -79,21 +79,21 @@ TEST(Cache, DirectoryGateTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", "default"));
 
-    lru_cache<default_traits, int, std::string, directory_gate> c2{t, 3, dir, "two"};
-    c2.set(1, "hello");
-    c2.set(1, "hello 2");
-    EXPECT_EQ("hello 2", c2.get(1).value());
-    c2.set(2, "two");
-    c2.set(3, "three");
-    c2.set(4, "four");
-    c2.set(5, "five");
-    EXPECT_TRUE(!c2.get(1));
-    EXPECT_TRUE(!c2.get(2));
-    EXPECT_TRUE(!!c2.get(3));
-    EXPECT_TRUE(!!c2.get(4));
-    EXPECT_TRUE(!!c2.get(5));
+    lru_cache<default_traits, int, std::string, directory_gate> cache2{trs, 3, dir, "two"};
+    cache2.set(1, "hello");
+    cache2.set(1, "hello 2");
+    EXPECT_EQ("hello 2", cache2.get(1).value());
+    cache2.set(2, "two");
+    cache2.set(3, "three");
+    cache2.set(4, "four");
+    cache2.set(5, "five");
+    EXPECT_TRUE(!cache2.get(1));
+    EXPECT_TRUE(!cache2.get(2));
+    EXPECT_TRUE(!!cache2.get(3));
+    EXPECT_TRUE(!!cache2.get(4));
+    EXPECT_TRUE(!!cache2.get(5));
 
-    for (auto const& [key, value] : c2) {
+    for (auto const& [key, value] : cache2) {
         try {
             EXPECT_TRUE(key < 10) << key << istl::to_std_string(value);
         } catch (stl::bad_alloc const& err) {
@@ -106,15 +106,15 @@ TEST(Cache, DirectoryGateTest) {
 }
 
 TEST(Cache, ReferenceTest) {
-    enable_owner_traits<default_traits> t;
-    lru_cache<>                         c(t);
-    c.set("one", "value");
-    EXPECT_EQ("value", *c.get_ptr("one"));
-    c.set("one", "new value");
-    EXPECT_EQ("new value", *c.get_ptr("one"));
-    auto& val_ref = *c.get_ptr("one");
+    enable_owner_traits<default_traits> trs;
+    lru_cache<>                         cache(trs);
+    cache.set("one", "value");
+    EXPECT_EQ("value", *cache.get_ptr("one"));
+    cache.set("one", "new value");
+    EXPECT_EQ("new value", *cache.get_ptr("one"));
+    auto& val_ref = *cache.get_ptr("one");
     val_ref       = "new new value";
-    EXPECT_EQ("new new value", c.get("one").value());
+    EXPECT_EQ("new new value", cache.get("one").value());
 }
 
 // NOLINTEND(*-magic-numbers)

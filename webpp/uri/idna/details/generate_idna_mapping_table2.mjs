@@ -17,7 +17,6 @@ import {
     utf32To8All,
     runClangFormat,
     writePieces,
-    parseCodePointRange,
     parseCodePointRangeExclusive
 } from "../../../unicode/details/utils.mjs";
 
@@ -40,7 +39,6 @@ const VALID = NOT_MAPPED | 0b001;
 const DISALLOWED = NOT_MAPPED | 0b010;
 
 const isMapped = (flags) => flags & NOT_MAPPED === 0;
-const isIgnored = (flags) => isMapped(flags);
 const isValid = (flags) => flags & VALID === VALID;
 const isDisallowed = (flags) => flags & DISALLOWED === DISALLOWED;
 
@@ -90,7 +88,7 @@ class MappingTable {
 
             let pos = 0;
             for (let i = 0; i !== this.#rawMaps.length; ++i) {
-                const {codePoint, flags, mappedTo, utf8MappedTo} = this.#rawMaps[i];
+                const { codePoint, flags, utf8MappedTo } = this.#rawMaps[i];
                 const loc = codePoint % this.#magicRem;
                 const val = isMapped(flags) ? flags | pos : flags;
                 const mag = this.#refs.atOr(loc, invalidFlag);
@@ -238,7 +236,6 @@ const processCachedFile = async fileContent => {
             default:
                 console.error(`Invalid 'status' found: ${status}; line: ${line}`);
                 process.exit(1);
-                return;
         }
         tables.append(rangeStart, rangeEnd, flags, mappedValues);
 
