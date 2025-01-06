@@ -38,9 +38,17 @@ const NOT_MAPPED = 0b100 << 13;
 const VALID = NOT_MAPPED | 0b001;
 const DISALLOWED = NOT_MAPPED | 0b010;
 
-const isMapped = (flags) => flags & NOT_MAPPED === 0;
-const isValid = (flags) => flags & VALID === VALID;
-const isDisallowed = (flags) => flags & DISALLOWED === DISALLOWED;
+const isMapped = (flags) => flags < NOT_MAPPED;
+const isValid = (flags) => flags === VALID;
+const isDisallowed = (flags) => flags === DISALLOWED;
+const flagsStatus = (flags) => {
+    switch (flags) {
+        case VALID: return "<Valid>";
+        case DISALLOWED: return "<Disallowed>";
+        default:
+            return isMapped(flags) ? `<Mapped:${flags}>` : `<invalid:${flags.toString(16)}>`;
+    }
+};
 
 
 class MappingTable {
@@ -59,7 +67,7 @@ class MappingTable {
     }
 
     append(start, end, flags, mappedTo = []) {
-        console.assert((mappedTo?.length || 1) > 0 && !isMapped(flags), "Flags don't match the other inputs.");
+        // console.assert((mappedTo?.length || 1) > 0 && !isMapped(flags), `Flags don't match the other inputs.`, start, end, flags, mappedTo);
 
         for (; start <= end; ++start) {
             const raw = {
@@ -74,30 +82,34 @@ class MappingTable {
     }
 
     calculate() {
-        const invalidFlag = 0b11111111;
+        const invalidFlag = 0xFFFF;
         let tryNum = 0;
+        this.#magicRem = BigInt(Math.floor(this.#rawMaps.length / 1000));
         const nextAttempt = (...info) => {
             console.log(`Attempt #${tryNum} with magic rem of ${this.#magicRem} failed.`, ...info);
-            this.#refs.clear(invalidFlag);
-            this.#maps.clear();
+            // this.#refs.clear(invalidFlag);
+            // this.#maps.clear();
             ++this.#magicRem;
             ++tryNum;
         };
 
         retry: for (; ;) {
+            let refs = [];
+            let maps = [];
 
             let pos = 0;
             for (let i = 0; i !== this.#rawMaps.length; ++i) {
                 const { codePoint, flags, utf8MappedTo } = this.#rawMaps[i];
                 const loc = codePoint % this.#magicRem;
                 const val = isMapped(flags) ? flags | pos : flags;
-                const mag = this.#refs.atOr(loc, invalidFlag);
+                const mag = refs?.[loc] || invalidFlag;
+                // console.log(codePoint, loc, this.#magicRem, mag, invalidFlag, flagsStatus(mag), this.#refs)
                 if (mag !== val && mag !== invalidFlag) {
-                    nextAttempt(codePoint, loc);
+                    nextAttempt(codePoint, loc, val, flagsStatus(mag));
                     continue retry;
                 }
 
-                this.#refs.setOrFill(loc, val, invalidFlag);
+                refs[loc] = val;
 
                 pos += utf8MappedTo.length + 1;
 
@@ -108,6 +120,15 @@ class MappingTable {
                 // this.#maps.push(0);
             }
 
+            for (let pos = 0; pos !== refs.length; ++pos) {
+                const value = refs.at(pos) || invalidFlag;
+                this.#refs.set(pos, value);
+            }
+            for (let pos = 0; pos !== refs.length; ++pos) {
+                const value = maps.at(pos) || invalidFlag;
+                this.#maps.set(pos, value);
+            }
+
             break;
         }
         console.log(`Success on #${tryNum}th try with magic rem of ${this.#magicRem}`);
@@ -116,7 +137,11 @@ class MappingTable {
     serializeTable(table) {
         let res = "";
         for (let pos = 0; pos !== table.length;) {
-            res += `${table[pos]}${table.postfix}, `;
+            const val = table.at(pos);
+            if (val === undefined) {
+                throw new Error(`value: ${val}, pos: ${pos}, length: ${table.length}`);
+            }
+            res += `0x${val.toString(16)}${table.postfix}, `;
             ++pos;
             if (pos % 20 === 0) {
                 res += '\n';
@@ -126,8 +151,8 @@ class MappingTable {
     }
 
     render(version, creationDate) {
-        const refsBitLength = this.#refs.length * this.#refs.sizeof;
-        const mapsBitLength = this.#maps.length * this.#maps.sizeof;
+        const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
+        const mapsBitLength = this.#maps.length * Number(this.#maps.sizeof);
         console.log(`Reference Table size:`);
         console.log(`  in bytes: ${refsBitLength / 8},`);
         console.log(`  in KibiBytes: ${Math.ceil(refsBitLength / 8 / 1024)} KiB\n`);
@@ -139,7 +164,7 @@ class MappingTable {
 /**
  * Attention: Auto-generated file, don't modify.
  * 
- *   Auto generated from:          ${path.basename(__filename)}
+ *   Auto generated from:          ${path.basename(new URL(import.meta.url).pathname)}
  *   IDNA Creation Date:           ${creationDate}
  *   This file's generation date:  ${new Date().toUTCString()}
  *   IDNA Mapping Table Version:   ${version}
@@ -168,7 +193,7 @@ namespace webpp::uri::idna::details {
      *   - in bytes:      ${refsBitLength / 8} B
      *   - in KibiBytes:  ${Math.ceil(refsBitLength / 8 / 1024)} KiB
      */
-    static constexpr std::array<std::${this.#refs.typeString}_t, ${this.#refs.length}ULL> idna_mapping_flags {
+    static constexpr std::array<${this.#refs.typeString}, ${this.#refs.length}ULL> idna_mapping_flags {
        ${this.serializeTable(this.#refs)}
     };
     
@@ -180,7 +205,7 @@ namespace webpp::uri::idna::details {
      *   - in bytes:      ${mapsBitLength / 8} B
      *   - in KibiBytes:  ${Math.ceil(mapsBitLength / 8 / 1024)} KiB
      */
-    static constexpr std::array<std::${this.#maps.typeString}_t, ${this.#maps.length}ULL> idna_mappings {
+    static constexpr std::array<${this.#maps.typeString}, ${this.#maps.length}ULL> idna_mappings {
        ${this.serializeTable(this.#maps)}
     };
     
@@ -202,7 +227,7 @@ const processCachedFile = async fileContent => {
     console.log(`Version: ${version}`);
     console.log(`Creation Date: ${creationDate}`);
 
-    const tables = new MappingTable(200000);
+    const tables = new MappingTable(1114111 + 1);
     let maxMappedCount = 0;
     let cpSum = 0n;
     lines.forEach((line, index) => {

@@ -594,6 +594,9 @@ export class TableTraits {
     }
 
     set(index, value) {
+        if (index > this.index) {
+            this.index = index; // change the length
+        }
         return (this.bytes[index] = value);
     }
 
