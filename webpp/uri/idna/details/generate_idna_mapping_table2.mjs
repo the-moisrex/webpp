@@ -17,7 +17,8 @@ import {
     utf32To8All,
     runClangFormat,
     writePieces,
-    parseCodePointRangeExclusive
+    parseCodePointRangeExclusive,
+    uint8
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -62,7 +63,7 @@ class MappingTable {
     #magicRem = 1n;
 
     constructor(max) {
-        this.#refs = new TableTraits(max, uint16);
+        this.#refs = new TableTraits(max, uint8);
         this.#maps = new TableTraits(max, char8_8);
     }
 
@@ -78,6 +79,56 @@ class MappingTable {
             };
             // console.log(raw)
             this.#rawMaps.push(raw);
+        }
+    }
+
+    process() {
+        const cutSize = 8n;
+        const batchSize = 0b1 << Number(cutSize);
+        const bitLength = Number(this.#refs.sizeof);
+
+        // calculate the position value for the specified range (it's for the refs table)
+        const calcBatch = (start, end) => {
+            let pos = (0b1n << BigInt(bitLength)) - 1n;
+            let utf8Values = new Array(1000000).fill(0); // todo
+            for (let i = start; i < end; ++i) {
+                const { flags, utf8MappedTo } = this.#rawMaps[i];
+                const index = i - start;
+                const bitIndex = BigInt(Math.floor(index % bitLength));
+                if (bitIndex > bitLength) {
+                    console.log(bitIndex, index, bitLength, index / bitLength)
+                    throw new Error(`Can't hold ${bitIndex} in ${bitLength} length`);
+                }
+                // const bit = (pos >>> (bitIndex - 1)) & 0b1;
+                const bitMask = 0b1n << bitIndex;
+                if (!isValid(flags)) {
+                    pos &= ~bitMask;
+                    for (let j = 0; j !== utf8MappedTo.length; ++j) {
+                        utf8Values[j] = utf8MappedTo[j]; // todo
+                    }
+                }
+            }
+
+            if (pos >= (0b1 << bitLength)) {
+                throw new Error(`We don't have the enough bits to store ${pos}; (${start}-${end})`);
+            }
+            return { pos, utf8Values };
+        }
+
+        for (let i = 0; i < this.#rawMaps.length; i += batchSize) {
+            const { codePoint } = this.#rawMaps[i];
+            const tbl1Loc = Number(codePoint) >>> Number(cutSize);
+            const { pos, utf8Values } = calcBatch(i, i + batchSize);
+
+            if (!this.#maps.isAll(Number(pos), utf8Values.length, 0)) {
+                throw new Error(`Replacing is happening: ${pos}+${utf8Values.length}`);
+            }
+
+            this.#refs.set(tbl1Loc, Number(pos));
+            if (pos !== ((0b1n << BigInt(bitLength)) - 1n)) { // contains mapped or disallowed values
+                console.log(pos, utf8Values);
+                this.#maps.setAt(Number(pos), utf8Values);
+            }
         }
     }
 
@@ -154,10 +205,12 @@ class MappingTable {
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
         const mapsBitLength = this.#maps.length * Number(this.#maps.sizeof);
         console.log(`Reference Table size:`);
-        console.log(`  in bytes: ${refsBitLength / 8},`);
+        console.log(`  Count       : ${this.#refs.length} * ${this.#refs.sizeof}`);
+        console.log(`  in bytes    : ${refsBitLength / 8},`);
         console.log(`  in KibiBytes: ${Math.ceil(refsBitLength / 8 / 1024)} KiB\n`);
         console.log(`Map Table size:`);
-        console.log(`  in bytes: ${mapsBitLength / 8},`);
+        console.log(`  Count       : ${this.#maps.length} * ${this.#maps.sizeof}`);
+        console.log(`  in bytes    : ${mapsBitLength / 8},`);
         console.log(`  in KibiBytes: ${Math.ceil(mapsBitLength / 8 / 1024)} KiB\n`);
 
         return `
@@ -274,7 +327,8 @@ const processCachedFile = async fileContent => {
 
 
     console.log("Max Mapped Count: ", maxMappedCount);
-    tables.calculate();
+    // tables.calculate();
+    tables.process();
 
     await writePieces(outFilePath, [tables.render(version, creationDate)]);
 

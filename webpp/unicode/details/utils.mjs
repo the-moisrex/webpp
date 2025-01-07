@@ -1,4 +1,4 @@
-import {promises as fs} from "fs";
+import { promises as fs } from "fs";
 import * as assert from "node:assert";
 import child_process from "node:child_process";
 import * as process from "node:process";
@@ -460,7 +460,7 @@ export class Span {
         return this.#func(this.#arr[Number(this.#start) + index]);
     }
 
-    * [Symbol.iterator]() {
+    *[Symbol.iterator]() {
         for (let i = this.#start; i < this.#end; i++) {
             yield this.#func(this.#arr[i]);
         }
@@ -587,7 +587,7 @@ export class TableTraits {
         return this.bytes.at(index);
     }
 
-    * [Symbol.iterator]() {
+    *[Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
         }
@@ -600,6 +600,17 @@ export class TableTraits {
         return (this.bytes[index] = value);
     }
 
+    setAt(index, values = []) {
+        const endIndex = index + values.length;
+        if (endIndex > this.index) {
+            this.index = endIndex; // change the length
+        }
+
+        for (let value of values) {
+            this.bytes[index++] = value;
+        }
+    }
+
     setOrFill(index, value, fillValue = 0) {
         if (index >= this.index) {
             for (; this.index <= index; ++this.index) {
@@ -607,6 +618,19 @@ export class TableTraits {
             }
         }
         this.set(index, value);
+    }
+
+    isAll(index, length, value) {
+        const end = index + length;
+        if (end > this.index) {
+            return true;
+        }
+        for (; index !== end; ++index) {
+            if (this.bytes[index] !== value) {
+                return false;
+            }
+        }
+        return true;
     }
 
     append(value) {
@@ -764,23 +788,23 @@ export const utf32To8All = (u32Array) => {
     return arr;
 };
 
-export const renderTableValues = ({name, printableValues, type, len}) => {
+export const renderTableValues = ({ name, printableValues, type, len }) => {
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
         ${printableValues
-            .map((val) => {
-                let res = "";
-                if (val.comment) {
-                    res += `
+                .map((val) => {
+                    let res = "";
+                    if (val.comment) {
+                        res += `
         // ${val.comment}
         `;
-                }
-                res += `${prefix}"${val.join("")}"`;
-                return res;
-            })
-            .join("\n")},
+                    }
+                    res += `${prefix}"${val.join("")}"`;
+                    return res;
+                })
+                .join("\n")},
         // done.
         ${len}UL // String Length
     };
@@ -788,17 +812,17 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
     } else {
         valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
         ${printableValues
-            .map((val) => {
-                let res = "";
-                if (val.comment) {
-                    res += `
+                .map((val) => {
+                    let res = "";
+                    if (val.comment) {
+                        res += `
         // ${val.comment}
         `;
-                }
-                res += val.join(", ");
-                return res;
-            })
-            .join(", \n")}
+                    }
+                    res += val.join(", ");
+                    return res;
+                })
+                .join(", \n")}
     };
             `;
     }
@@ -822,7 +846,7 @@ export const findTopLongestZeroRanges = (arr, invalidCodePoint = 0, topN = 5,) =
         } else {
             // If we hit a non-zero, check if we have a valid range
             if (currentLength > 0) {
-                ranges.push({start: startIndex, length: currentLength});
+                ranges.push({ start: startIndex, length: currentLength });
                 currentLength = 0; // Reset for the next range
             }
         }
@@ -966,7 +990,7 @@ export const chunked = (size) => {
     const chunkSize = fillBitsFromRight(BigInt(size)) + 1n;
     const chunkMask = chunkSize - 1n;
     const chunkShift = popcount(chunkMask);
-    return {chunkSize, chunkMask, chunkShift};
+    return { chunkSize, chunkMask, chunkShift };
 };
 
 export function fillEmpty(arr, invalidValue = null) {
