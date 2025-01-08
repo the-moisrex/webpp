@@ -87,10 +87,26 @@ class MappingTable {
         const batchSize = 0b1 << Number(cutSize);
         const bitLength = Number(this.#refs.sizeof);
 
+        const calcLen = (start, end) => {
+            let maxLen = 0;
+            let sumLen = 0;
+            const length = end - start;
+            for (let i = start; i < end; ++i) {
+                const { utf8MappedTo } = this.#rawMaps[i];
+                if (utf8MappedTo.length > maxLen) {
+                    maxLen = utf8MappedTo.length;
+                }
+                sumLen = utf8MappedTo.length;
+            }
+            return { sumLen, maxLen, requiredLen: maxLen * length };
+        };
+
         // calculate the position value for the specified range (it's for the refs table)
         const calcBatch = (start, end) => {
             let pos = (0b1n << BigInt(bitLength)) - 1n;
-            let utf8Values = new Array(1000000).fill(0); // todo
+            const { sumLen, maxLen, requiredLen } = calcLen(start, end);
+            console.log(sumLen, maxLen, requiredLen, end - start);
+            let utf8Values = new Array(requiredLen).fill(0);
             for (let i = start; i < end; ++i) {
                 const { flags, utf8MappedTo } = this.#rawMaps[i];
                 const index = i - start;
@@ -132,58 +148,58 @@ class MappingTable {
         }
     }
 
-    calculate() {
-        const invalidFlag = 0xFFFF;
-        let tryNum = 0;
-        this.#magicRem = BigInt(Math.floor(this.#rawMaps.length / 1000));
-        const nextAttempt = (...info) => {
-            console.log(`Attempt #${tryNum} with magic rem of ${this.#magicRem} failed.`, ...info);
-            // this.#refs.clear(invalidFlag);
-            // this.#maps.clear();
-            ++this.#magicRem;
-            ++tryNum;
-        };
-
-        retry: for (; ;) {
-            let refs = [];
-            let maps = [];
-
-            let pos = 0;
-            for (let i = 0; i !== this.#rawMaps.length; ++i) {
-                const { codePoint, flags, utf8MappedTo } = this.#rawMaps[i];
-                const loc = codePoint % this.#magicRem;
-                const val = isMapped(flags) ? flags | pos : flags;
-                const mag = refs?.[loc] || invalidFlag;
-                // console.log(codePoint, loc, this.#magicRem, mag, invalidFlag, flagsStatus(mag), this.#refs)
-                if (mag !== val && mag !== invalidFlag) {
-                    nextAttempt(codePoint, loc, val, flagsStatus(mag));
-                    continue retry;
-                }
-
-                refs[loc] = val;
-
-                pos += utf8MappedTo.length + 1;
-
-                // Add the UTF-8 encoded mapped to code points:
-                // for (const cu of utf8MappedTo) {
-                //     this.#maps.push(cu);
-                // }
-                // this.#maps.push(0);
-            }
-
-            for (let pos = 0; pos !== refs.length; ++pos) {
-                const value = refs.at(pos) || invalidFlag;
-                this.#refs.set(pos, value);
-            }
-            for (let pos = 0; pos !== refs.length; ++pos) {
-                const value = maps.at(pos) || invalidFlag;
-                this.#maps.set(pos, value);
-            }
-
-            break;
-        }
-        console.log(`Success on #${tryNum}th try with magic rem of ${this.#magicRem}`);
-    }
+    // calculate() {
+    //     const invalidFlag = 0xFFFF;
+    //     let tryNum = 0;
+    //     this.#magicRem = BigInt(Math.floor(this.#rawMaps.length / 1000));
+    //     const nextAttempt = (...info) => {
+    //         console.log(`Attempt #${tryNum} with magic rem of ${this.#magicRem} failed.`, ...info);
+    //         // this.#refs.clear(invalidFlag);
+    //         // this.#maps.clear();
+    //         ++this.#magicRem;
+    //         ++tryNum;
+    //     };
+    //
+    //     retry: for (; ;) {
+    //         let refs = [];
+    //         let maps = [];
+    //
+    //         let pos = 0;
+    //         for (let i = 0; i !== this.#rawMaps.length; ++i) {
+    //             const { codePoint, flags, utf8MappedTo } = this.#rawMaps[i];
+    //             const loc = codePoint % this.#magicRem;
+    //             const val = isMapped(flags) ? flags | pos : flags;
+    //             const mag = refs?.[loc] || invalidFlag;
+    //             // console.log(codePoint, loc, this.#magicRem, mag, invalidFlag, flagsStatus(mag), this.#refs)
+    //             if (mag !== val && mag !== invalidFlag) {
+    //                 nextAttempt(codePoint, loc, val, flagsStatus(mag));
+    //                 continue retry;
+    //             }
+    //
+    //             refs[loc] = val;
+    //
+    //             pos += utf8MappedTo.length + 1;
+    //
+    //             // Add the UTF-8 encoded mapped to code points:
+    //             // for (const cu of utf8MappedTo) {
+    //             //     this.#maps.push(cu);
+    //             // }
+    //             // this.#maps.push(0);
+    //         }
+    //
+    //         for (let pos = 0; pos !== refs.length; ++pos) {
+    //             const value = refs.at(pos) || invalidFlag;
+    //             this.#refs.set(pos, value);
+    //         }
+    //         for (let pos = 0; pos !== refs.length; ++pos) {
+    //             const value = maps.at(pos) || invalidFlag;
+    //             this.#maps.set(pos, value);
+    //         }
+    //
+    //         break;
+    //     }
+    //     console.log(`Success on #${tryNum}th try with magic rem of ${this.#magicRem}`);
+    // }
 
     serializeTable(table) {
         let res = "";
