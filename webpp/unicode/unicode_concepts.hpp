@@ -20,6 +20,15 @@ namespace webpp::unicode {
     template <typename T>
     concept UTF = UTF8<T> || UTF16<T> || UTF32<T>;
 
+    template <typename T>
+    concept UTF8String = UTF8<typename T::value_type>;
+
+    template <typename T>
+    concept UTF16String = UTF16<typename T::value_type>;
+
+    template <typename T>
+    concept UTF32String = UTF32<typename T::value_type>;
+
 } // namespace webpp::unicode
 
 #endif // WEBPP_UNICODE_UNICODE_CONCEPTS_HPP
