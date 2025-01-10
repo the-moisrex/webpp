@@ -54,7 +54,8 @@ const flagsStatus = (flags) => {
 
 class MappingTable {
 
-    #refs; // the flags and what not
+    #refs; // items in this table points to the #refBlocks
+    #refBlocks; // items in this table stores flags and points to the #maps
     #maps; // the mapped code points that the other table point to
 
     #rawMaps = [];
@@ -62,9 +63,19 @@ class MappingTable {
     // the modulus value
     #magicRem = 1n;
 
+
+    #batchBitCount;
+    #batchSize;
+    #bitLength;
+
     constructor(max) {
         this.#refs = new TableTraits(max, uint8);
+        this.#refBlocks = new TableTraits(max, uint16);
         this.#maps = new TableTraits(max, char8_8);
+
+        this.#batchBitCount = 8n;
+        this.#batchSize = 0b1 << Number(this.#batchBitCount);
+        this.#bitLength = Number(this.#refs.sizeof);
     }
 
     append(start, end, flags, mappedTo = []) {
@@ -82,71 +93,120 @@ class MappingTable {
         }
     }
 
-    process() {
-        const cutSize = 8n;
-        const batchSize = 0b1 << Number(cutSize);
-        const bitLength = Number(this.#refs.sizeof);
-
-        const calcLen = (start, end) => {
-            let maxLen = 0;
-            let sumLen = 0;
-            const length = end - start;
-            for (let i = start; i < end; ++i) {
-                const { utf8MappedTo } = this.#rawMaps[i];
-                if (utf8MappedTo.length > maxLen) {
-                    maxLen = utf8MappedTo.length;
-                }
-                sumLen = utf8MappedTo.length;
+    /// Calculate the length of utf8-encoded code points from the specified range
+    #calcLen(start, end) {
+        let maxLen = 0;
+        let sumLen = 0;
+        const length = end - start;
+        for (let i = start; i < end; ++i) {
+            const { utf8MappedTo } = this.#rawMaps[i];
+            if (utf8MappedTo.length > maxLen) {
+                maxLen = utf8MappedTo.length;
             }
-            return { sumLen, maxLen, requiredLen: maxLen * length };
-        };
+            sumLen = utf8MappedTo.length;
+        }
+        return { sumLen, maxLen, requiredLen: maxLen * length };
+    };
 
-        // calculate the position value for the specified range (it's for the refs table)
-        const calcBatch = (start, end) => {
-            let pos = (0b1n << BigInt(bitLength)) - 1n;
-            const { sumLen, maxLen, requiredLen } = calcLen(start, end);
-            console.log(sumLen, maxLen, requiredLen, end - start);
-            let utf8Values = new Array(requiredLen).fill(0);
-            for (let i = start; i < end; ++i) {
-                const { flags, utf8MappedTo } = this.#rawMaps[i];
-                const index = i - start;
-                const bitIndex = BigInt(Math.floor(index % bitLength));
-                if (bitIndex > bitLength) {
-                    console.log(bitIndex, index, bitLength, index / bitLength)
-                    throw new Error(`Can't hold ${bitIndex} in ${bitLength} length`);
-                }
-                // const bit = (pos >>> (bitIndex - 1)) & 0b1;
-                const bitMask = 0b1n << bitIndex;
-                if (!isValid(flags)) {
-                    pos &= ~bitMask;
-                    for (let j = 0; j !== utf8MappedTo.length; ++j) {
-                        utf8Values[j] = utf8MappedTo[j]; // todo
-                    }
+    // calculate the position value for the specified range (it's for the refs table)
+    #calcBatch(start, end) {
+        let pos = (0b1n << BigInt(this.#bitLength)) - 1n;
+        const { sumLen, maxLen, requiredLen } = this.#calcLen(start, end);
+        console.log(sumLen, maxLen, requiredLen, end - start);
+        let utf8Values = new Array(requiredLen).fill(0);
+        for (let i = start; i < end; ++i) {
+            const { flags, utf8MappedTo } = this.#rawMaps[i];
+            const index = i - start;
+            const bitIndex = BigInt(Math.floor(index % this.#bitLength));
+            if (bitIndex > this.#bitLength) {
+                console.log(bitIndex, index, this.#bitLength, index / this.#bitLength)
+                throw new Error(`Can't hold ${bitIndex} in ${this.#bitLength} length`);
+            }
+            // const bit = (pos >>> (bitIndex - 1)) & 0b1;
+            const bitMask = 0b1n << bitIndex;
+            if (!isValid(flags)) {
+                pos &= ~bitMask;
+                for (let j = 0; j !== utf8MappedTo.length; ++j) {
+                    utf8Values[j] = utf8MappedTo[j]; // todo
                 }
             }
-
-            if (pos >= (0b1 << bitLength)) {
-                throw new Error(`We don't have the enough bits to store ${pos}; (${start}-${end})`);
-            }
-            return { pos, utf8Values };
         }
 
-        for (let i = 0; i < this.#rawMaps.length; i += batchSize) {
+        if (pos >= (0b1 << this.#bitLength)) {
+            throw new Error(`We don't have the enough bits to store ${pos}; (${start}-${end})`);
+        }
+        return { pos, utf8Values };
+    }
+
+    process() {
+        for (let i = 0; i < this.#rawMaps.length; i += this.#batchSize) {
             const { codePoint } = this.#rawMaps[i];
-            const tbl1Loc = Number(codePoint) >>> Number(cutSize);
-            const { pos, utf8Values } = calcBatch(i, i + batchSize);
+            const tbl1Loc = Number(codePoint) >>> Number(this.#batchBitCount);
+            const { pos, utf8Values } = this.#calcBatch(i, i + this.#batchSize);
 
             if (!this.#maps.isAll(Number(pos), utf8Values.length, 0)) {
                 throw new Error(`Replacing is happening: ${pos}+${utf8Values.length}`);
             }
 
             this.#refs.set(tbl1Loc, Number(pos));
-            if (pos !== ((0b1n << BigInt(bitLength)) - 1n)) { // contains mapped or disallowed values
+            if (pos !== ((0b1n << BigInt(this.#bitLength)) - 1n)) { // contains mapped or disallowed values
                 console.log(pos, utf8Values);
                 this.#maps.setAt(Number(pos), utf8Values);
             }
         }
     }
+
+    // process() {
+    //     const cutSize = 8n;
+    //     const batchSize = 0b1 << Number(cutSize);
+    //     const bitLength = Number(this.#refs.sizeof);
+    //
+    //     // calculate the position value for the specified range (it's for the refs table)
+    //     const calcBatch = (start, end) => {
+    //         let pos = (0b1n << BigInt(bitLength)) - 1n;
+    //         const { sumLen, maxLen, requiredLen } = this.#calcLen(start, end);
+    //         console.log(sumLen, maxLen, requiredLen, end - start);
+    //         let utf8Values = new Array(requiredLen).fill(0);
+    //         for (let i = start; i < end; ++i) {
+    //             const { flags, utf8MappedTo } = this.#rawMaps[i];
+    //             const index = i - start;
+    //             const bitIndex = BigInt(Math.floor(index % bitLength));
+    //             if (bitIndex > bitLength) {
+    //                 console.log(bitIndex, index, bitLength, index / bitLength)
+    //                 throw new Error(`Can't hold ${bitIndex} in ${bitLength} length`);
+    //             }
+    //             // const bit = (pos >>> (bitIndex - 1)) & 0b1;
+    //             const bitMask = 0b1n << bitIndex;
+    //             if (!isValid(flags)) {
+    //                 pos &= ~bitMask;
+    //                 for (let j = 0; j !== utf8MappedTo.length; ++j) {
+    //                     utf8Values[j] = utf8MappedTo[j]; // todo
+    //                 }
+    //             }
+    //         }
+    //
+    //         if (pos >= (0b1 << bitLength)) {
+    //             throw new Error(`We don't have the enough bits to store ${pos}; (${start}-${end})`);
+    //         }
+    //         return { pos, utf8Values };
+    //     }
+    //
+    //     for (let i = 0; i < this.#rawMaps.length; i += batchSize) {
+    //         const { codePoint } = this.#rawMaps[i];
+    //         const tbl1Loc = Number(codePoint) >>> Number(cutSize);
+    //         const { pos, utf8Values } = calcBatch(i, i + batchSize);
+    //
+    //         if (!this.#maps.isAll(Number(pos), utf8Values.length, 0)) {
+    //             throw new Error(`Replacing is happening: ${pos}+${utf8Values.length}`);
+    //         }
+    //
+    //         this.#refs.set(tbl1Loc, Number(pos));
+    //         if (pos !== ((0b1n << BigInt(bitLength)) - 1n)) { // contains mapped or disallowed values
+    //             console.log(pos, utf8Values);
+    //             this.#maps.setAt(Number(pos), utf8Values);
+    //         }
+    //     }
+    // }
 
     // calculate() {
     //     const invalidFlag = 0xFFFF;
@@ -219,11 +279,17 @@ class MappingTable {
 
     render(version, creationDate) {
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
+        const blockBitLength = this.#refBlocks.length * Number(this.#refBlocks.sizeof);
         const mapsBitLength = this.#maps.length * Number(this.#maps.sizeof);
+        const sumBitLength = refsBitLength + blockBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
         console.log(`  Count       : ${this.#refs.length} * ${this.#refs.sizeof}`);
         console.log(`  in bytes    : ${refsBitLength / 8},`);
         console.log(`  in KibiBytes: ${Math.ceil(refsBitLength / 8 / 1024)} KiB\n`);
+        console.log(`Ref Blocks Table size:`);
+        console.log(`  Count       : ${this.#refBlocks.length} * ${this.#refBlocks.sizeof}`);
+        console.log(`  in bytes    : ${blockBitLength / 8},`);
+        console.log(`  in KibiBytes: ${Math.ceil(blockBitLength / 8 / 1024)} KiB\n`);
         console.log(`Map Table size:`);
         console.log(`  Count       : ${this.#maps.length} * ${this.#maps.sizeof}`);
         console.log(`  in bytes    : ${mapsBitLength / 8},`);
@@ -237,6 +303,8 @@ class MappingTable {
  *   IDNA Creation Date:           ${creationDate}
  *   This file's generation date:  ${new Date().toUTCString()}
  *   IDNA Mapping Table Version:   ${version}
+ *   Size:                         ${sumBitLength / 8} B
+ *                                 ${sumBitLength / 8 / 1024} KiB
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
@@ -253,19 +321,32 @@ namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
 
+    struct idna_ref_unit {
+
+    };
+
     /**
      * IDNA Reference Table
-     * 
-     * This table will let us see if each Unicode code point is mapped/disallowed/ignored/... .
      * 
      * Table size:
      *   - in bytes:      ${refsBitLength / 8} B
      *   - in KibiBytes:  ${Math.ceil(refsBitLength / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.#refs.typeString}, ${this.#refs.length}ULL> idna_mapping_flags {
+    static constexpr std::array<idna_ref_unit, ${this.#refs.length}ULL> idna_refs {
        ${this.serializeTable(this.#refs)}
     };
     
+
+    /**
+     * IDNA Reference Blocks Table
+     * 
+     * Table size:
+     *   - in bytes:      ${blockBitLength / 8} B
+     *   - in KibiBytes:  ${Math.ceil(blocksBitLength / 8 / 1024)} KiB
+     */
+    static constexpr std::array<${this.#refBlocks.typeString}, ${this.#refBlocks.length}ULL> idna_ref_blocks {
+       ${this.serializeTable(this.#refBlocks)}
+    };
     
     /**
      * IDNA Mapped Code Points Table

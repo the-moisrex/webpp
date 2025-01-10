@@ -59,7 +59,7 @@ namespace webpp::uri::idna {
                 return true;
 
             default: { // mapped
-                auto ptr = maps + pos;
+                auto ptr = idna_mappings + pos;
                 if constexpr (unicode::UTF8String<OutStrT>) {
                     for (; *ptr != u8'\0'; ++ptr) {
                         unicode::unchecked::append(out, *ptr);
