@@ -600,6 +600,10 @@ export class TableTraits {
         return (this.bytes[index] = value);
     }
 
+    push(value) {
+        return (this.bytes[this.index++] = value);
+    }
+
     setAt(index, values = []) {
         const endIndex = index + values.length;
         if (endIndex > this.index) {
@@ -792,7 +796,7 @@ export const renderTableValues = ({ name, printableValues, type, len }) => {
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
-        valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
+        valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()} {
         ${printableValues
                 .map((val) => {
                     let res = "";
@@ -805,12 +809,11 @@ export const renderTableValues = ({ name, printableValues, type, len }) => {
                     return res;
                 })
                 .join("\n")},
-        // done.
         ${len}UL // String Length
     };
             `;
     } else {
-        valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
+        valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()} {
         ${printableValues
                 .map((val) => {
                     let res = "";

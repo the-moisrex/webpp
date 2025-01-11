@@ -694,7 +694,7 @@ ${this.#indexAddenda.render()}
      *   - in KibiBytes:  ${Math.ceil(valuesBits / 8 / 1024)} KiB
      */
     ${renderTableValues({
-        name: this.#name,
+        name: `${this.#name}_values`,
         type: this.values.type,
         printableValues,
         len: this.values.length,
