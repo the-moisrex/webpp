@@ -132,3 +132,6 @@ fabric.properties
 .idea/**/*.iml
 
 .idea/libraries
+
+# Vim/Neovim Session files
+*.vim
