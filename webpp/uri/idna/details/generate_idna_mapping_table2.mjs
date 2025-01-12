@@ -173,16 +173,18 @@ class MappingTable {
         if (pos === end) { // we didn't find it, let's insert it then
             const statuses = [];
             for (let i = start; i !== end; ++i) {
-                const { flags, utf8MappedTo } = this.#rawMaps.at(i);
+                const { codePoint, flags, utf8MappedTo } = this.#rawMaps.at(i);
 
                 // insert the utf-8 encoded stuff to the table
                 let mapsPosition = this.#findSimilarMappedTo(i);
                 if (mapsPosition === null) {
                     mapsPosition = this.#maps.length;
+                    this.#maps[mapsPosition] = [];
+                    this.#maps[mapsPosition].comment = `#${mapsPosition}: \\x${codePoint.toString(16)}`;
                     for (const codeUnit of utf8MappedTo) {
-                        this.#maps.push(codeUnit);
+                        this.#maps[mapsPosition].push(codeUnit);
                     }
-                    this.#maps.push(0); // the last EOF '\0' character
+                    this.#maps[mapsPosition].push(0); // the last EOF '\0' character
                 }
 
 
@@ -425,7 +427,7 @@ namespace webpp::uri::idna::details {
     static constexpr char32_t last_diallowed = U'\\x${this.#lastDisallowed.toString(16)}';
 
     struct idna_ref_unit {
-
+        std::uint16_t block_index = 0U;
     };
 
     /**
@@ -436,7 +438,7 @@ namespace webpp::uri::idna::details {
      *   - in KibiBytes:  ${Math.ceil(refsBitLength / 8 / 1024)} KiB
      */
     static constexpr std::array<idna_ref_unit, ${this.#refs.length}ULL> idna_refs {
-       ${this.serializeTable(this.#refs)}
+       ${this.#refs.map(({blockPtr}) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
     };
     
 
@@ -448,9 +450,10 @@ namespace webpp::uri::idna::details {
      *   - in KibiBytes:  ${Math.ceil(blockBitLength / 8 / 1024)} KiB
      */
     static constexpr std::array<${this.#refBlocks.typeString}, ${this.#refBlocks.length}ULL> idna_ref_blocks {
-       ${this.#refBlocks.map((block, blkIndex) => `// Block #${blkIndex}
-          { ${block.statuses.map(({ status }) => `${status}, `)} }
-       `)}
+       ${this.#refBlocks.map((block, blkIndex) => `
+           // Block #${blkIndex}
+           { ${block.statuses.map(flags => `0x${(flags || 0).toString(16)}`).join(", ")} }
+       `).join(", ")}
     };
     
     /**
