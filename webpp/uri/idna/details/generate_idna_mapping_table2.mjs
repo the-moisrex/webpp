@@ -22,7 +22,10 @@ import {
     uint8,
     char8,
     sizeOf,
-    findSimilarRange
+    findSimilarRange,
+    toHexString,
+    recursiveLength,
+    findSimilarSubRange
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -144,7 +147,7 @@ class MappingTable {
         if (isMapped(flags)) {
             let localUtf8MappedTo = utf8MappedTo.slice();
             localUtf8MappedTo.push(0); // add the last EOF '\0'
-            return findSimilarRange(localUtf8MappedTo, this.#maps);
+            return findSimilarSubRange(localUtf8MappedTo, this.#maps);
         }
         return null;
     }
@@ -174,17 +177,21 @@ class MappingTable {
             const statuses = [];
             for (let i = start; i !== end; ++i) {
                 const { codePoint, flags, utf8MappedTo } = this.#rawMaps.at(i);
+                let mapsPosition = 0;
 
                 // insert the utf-8 encoded stuff to the table
-                let mapsPosition = this.#findSimilarMappedTo(i);
-                if (mapsPosition === null) {
-                    mapsPosition = this.#maps.length;
-                    this.#maps[mapsPosition] = [];
-                    this.#maps[mapsPosition].comment = `#${mapsPosition}: \\x${codePoint.toString(16)}`;
-                    for (const codeUnit of utf8MappedTo) {
-                        this.#maps[mapsPosition].push(codeUnit);
+                if (isMapped(flags)) {
+                    mapsPosition = this.#findSimilarMappedTo(i);
+                    if (mapsPosition === null) {
+                        mapsPosition = this.#maps.length;
+                        let mapping = [];
+                        mapping.comment = `#${mapsPosition}: ${toHexString(codePoint)}`;
+                        for (const codeUnit of utf8MappedTo) {
+                            mapping.push(codeUnit);
+                        }
+                        mapping.push(0); // the last EOF '\0' character
+                        this.#maps.push(mapping);
                     }
-                    this.#maps[mapsPosition].push(0); // the last EOF '\0' character
                 }
 
 
@@ -232,26 +239,15 @@ class MappingTable {
     process() {
         // Removing everything that's disallowed after the last one:
         const startLen = this.#rawMaps.length;
-        this.#rawMaps = this.#rawMaps.filter(({codePoint}) => codePoint >= this.#lastDisallowed);
+        this.#rawMaps = this.#rawMaps.filter(({ codePoint }) => codePoint < this.#lastDisallowed);
         const endLen = this.#rawMaps.length;
         console.log("Removed trailing disallowed mappings:", startLen - endLen);
 
         for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize) {
-            const { codePoint } = this.#rawMaps[batchIndex];
-            const tbl1Loc = Number(codePoint) >>> Number(this.#batchBitCount);
-            // const { pos, utf8Values } = this.#calcBatch(i, i + this.#batchSize);
-
-            // if (!this.#maps.isAll(Number(pos), utf8Values.length, 0)) {
-            //     throw new Error(`Replacing is happening: ${pos}+${utf8Values.length}`);
-            // }
-
-            this.#refs[tbl1Loc] = {
+            this.#refs.push({
+                index: batchIndex >>> Number(this.#batchBitCount),
                 blockPtr: this.#findOrInsertBlock(batchIndex, this.#batchSize)
-            };
-            // if (pos !== ((0b1n << BigInt(this.#bitLength)) - 1n)) { // contains mapped or disallowed values
-            //     console.log(pos, utf8Values);
-            //     this.#maps.setAt(Number(pos), utf8Values);
-            // }
+            });
         }
     }
 
@@ -377,9 +373,10 @@ class MappingTable {
     }
 
     render(version, creationDate) {
+        const mapsLength = recursiveLength(this.#maps);
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
         const blockBitLength = this.#refBlocks.length * Number(this.#refBlocks.sizeof);
-        const mapsBitLength = this.#maps.length * Number(this.#maps.sizeof);
+        const mapsBitLength = mapsLength * Number(this.#maps.sizeof);
         const sumBitLength = refsBitLength + blockBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
         console.log(`  Count       : ${this.#refs.length} * ${this.#refs.sizeof}`);
@@ -390,7 +387,7 @@ class MappingTable {
         console.log(`  in bytes    : ${Math.ceil(blockBitLength / 8)},`);
         console.log(`  in KibiBytes: ${Math.ceil(blockBitLength / 8 / 1024)} KiB\n`);
         console.log(`Map Table size:`);
-        console.log(`  Count       : ${this.#maps.length} * ${this.#maps.sizeof}`);
+        console.log(`  Count       : ${mapsLength} * ${this.#maps.sizeof}`);
         console.log(`  in bytes    : ${Math.ceil(mapsBitLength / 8)},`);
         console.log(`  in KibiBytes: ${Math.ceil(mapsBitLength / 8 / 1024)} KiB\n`);
         console.log(`Total Table size:`);
@@ -438,7 +435,7 @@ namespace webpp::uri::idna::details {
      *   - in KibiBytes:  ${Math.ceil(refsBitLength / 8 / 1024)} KiB
      */
     static constexpr std::array<idna_ref_unit, ${this.#refs.length}ULL> idna_refs {
-       ${this.#refs.map(({blockPtr}) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
+       ${this.#refs.map(({ blockPtr }) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
     };
     
 
@@ -449,7 +446,7 @@ namespace webpp::uri::idna::details {
      *   - in bytes:      ${blockBitLength / 8} B
      *   - in KibiBytes:  ${Math.ceil(blockBitLength / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.#refBlocks.typeString}, ${this.#refBlocks.length}ULL> idna_ref_blocks {
+    static constexpr std::array<${this.#refBlocks.type.description}, ${this.#refBlocks.length}ULL> idna_ref_blocks {
        ${this.#refBlocks.map((block, blkIndex) => `
            // Block #${blkIndex}
            { ${block.statuses.map(flags => `0x${(flags || 0).toString(16)}`).join(", ")} }
@@ -466,8 +463,8 @@ namespace webpp::uri::idna::details {
     ${renderTableValues({
             name: "idna_mappings",
             type: this.#maps.type,
-            printableValues: this.#maps,
-            len: this.#maps.length,
+            printableValues: this.#maps.map(block => block.map(val => toHexString(val))),
+            len: mapsLength,
         })}
     
     

@@ -112,7 +112,18 @@ export const stringPrefixOf = (symbol) => {
     }
 };
 
-function toHexString(char) {
+export function isIterable(input) {
+    return typeof input?.[Symbol.iterator] === 'function';
+}
+
+export function recursiveLength(arr) {
+    if (!isIterable(arr)) {
+        return arr?.length || 1;
+    }
+    return arr.reduce((sum, item) => sum + recursiveLength(item), 0);
+}
+
+export function toHexString(char) {
     // random decision, I know both are okay
     if (char <= 0o77) {
         return `\\${char.toString(8)}`;
@@ -656,6 +667,28 @@ export class TableTraits {
         this.index = 0;
     }
 }
+
+// left  =  [1, 2, 3, ...]
+// right = [[1, 2, 3, ...], [...], [...]]
+export const findSimilarSubRange = (left, right) => {
+    assert.ok(Number.isSafeInteger(left.length), "Table should have a valid length",);
+    assert.ok(Number.isSafeInteger(right.length), "Table should have a valid length",);
+    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+        if (left.length !== right[rpos].length) {
+            continue;
+        }
+        for (let lpos = 0; lpos !== left.length; ++lpos) {
+            const rvalue = right[rpos][lpos];
+            const lvalue = left[lpos];
+            if (rvalue !== lvalue) {
+                continue top;
+            }
+        }
+        return rpos;
+    }
+    return null;
+};
+
 
 /// Find the start position of "left" in "right"
 /// This function finds a place in the "right" table where the specified range
