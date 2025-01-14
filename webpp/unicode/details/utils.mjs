@@ -668,6 +668,33 @@ export class TableTraits {
     }
 }
 
+// left  =       [0xFF, 0xFF, 0xFF, ...]
+// right = [0, 0, 0xFF, 0xFF, 0xFF, ...]
+export const findSimilarSubBlocks = (left, right, blockSize = uint8) => {
+    assert.ok(Number.isSafeInteger(left.length), "Table should have a valid length",);
+    assert.ok(Number.isSafeInteger(right.length), "Table should have a valid length",);
+    try {
+        const blockLen = Number(sizeOf(blockSize));
+        top: for (let rpos = 0; rpos !== right.length; rpos += blockLen) {
+            for (let lpos = 0; lpos !== left.length; ++lpos) {
+                const rvalue = right.at(rpos + lpos);
+                const lvalue = left.at(lpos);
+                if (rvalue !== lvalue) {
+                    continue top;
+                }
+            }
+            return rpos;
+        }
+    } catch (err) {
+        if (!(err instanceof RangeError)) {
+            throw err;
+        }
+        // else, just say we found nothing
+    }
+    return null;
+};
+
+
 // left  =  [1, 2, 3, ...]
 // right = [[1, 2, 3, ...], [...], [...]]
 export const findSimilarSubRange = (left, right) => {
@@ -1031,4 +1058,30 @@ export const chunked = (size) => {
 
 export function fillEmpty(arr, invalidValue = null) {
     return Array.from(arr, (val, i) => (i in arr ? val : invalidValue));
+}
+
+
+export function packBoolsIntoInts(boolArray, blockSize = 8) {
+    const result = [];
+    let currentInt = 0;
+
+    for (let i = 0; i < boolArray.length; i++) {
+        // Set the appropriate bit in the current integer
+        if (boolArray[i]) {
+            currentInt |= (1 << (i % blockSize));
+        }
+
+        // If we've packed 8 booleans, push the current integer to the result
+        if ((i + 1) % blockSize === 0) {
+            result.push(currentInt);
+            currentInt = 0; // Reset for the next integer
+        }
+    }
+
+    // If there are remaining booleans that don't fill a complete byte
+    if (boolArray.length % blockSize !== 0) {
+        result.push(currentInt);
+    }
+
+    return result;
 }

@@ -22,7 +22,10 @@ import {
     sizeOf,
     toHexString,
     recursiveLength,
-    findSimilarSubRange
+    findSimilarSubRange,
+    findSimilarRange,
+    findSimilarSubBlocks,
+    packBoolsIntoInts
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -70,6 +73,7 @@ class MappingTable {
 
     #refs = []; // items in this table points to the #refBlocks
     #refBlocks = []; // items in this table stores flags and points to the #maps
+    #refBools = []; // An optimization for #refBlocks for blocks that can contain only bools.
     #maps = []; // the mapped code points that the other table point to
 
     // The last code point that after that everything is disallowed
@@ -87,25 +91,35 @@ class MappingTable {
     #refBlocksMax;
     #refMax;
 
+    // The mask that makes the difference on which table they should choose
+    // between the refBlocks table and refBools table
+    #tablePickMask;
+
     constructor() {
         this.#refs = [];
         this.#refBlocks = [];
+        this.#refBools = [];
         this.#maps = [];
 
-        this.#refs.type = uint8;
+        this.#refs.type = uint16;
         this.#refBlocks.type = uint16;
+        this.#refBools.type = uint8; // boolean
         this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
         this.#refBlocks.sizeof = sizeOf(this.#refBlocks.type);
+        this.#refBools.sizeof = sizeOf(this.#refBools.type);
         this.#maps.sizeof = sizeOf(this.#maps.type);
 
-        this.#batchBitCount = 7n;
+        // this number affects the size of the tables, try chainging it:
+        this.#batchBitCount = 8n;
         this.#batchSize = 0b1 << Number(this.#batchBitCount);
         //     this.#bitLength = Number(this.#refs.sizeof);
-        
+
         this.#refMax = (0b1 << Number(sizeOf(this.#refs.type))) - 1;
         this.#refBlocksMax = (0b1 << Number(sizeOf(this.#refBlocks.type))) - 1;
+
+        this.#tablePickMask = 0b1 << (Number(this.#refs.sizeof) - 1);
     }
 
     append(start, end, flags, mappedTo = []) {
@@ -162,6 +176,44 @@ class MappingTable {
             return findSimilarSubRange(localUtf8MappedTo, this.#maps);
         }
         return null;
+    }
+
+    #areAllNotMapped(start, length) {
+        const end = start + length;
+        for (let pos = start; pos != end; ++pos) {
+            const { flags } = this.#rawMaps.at(pos);
+            if (isMapped(flags)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    #findOrInsertBools(start, length) {
+        length = length <= (this.#rawMaps.length - start) ? length : (this.#rawMaps.length - start);
+        const end = start + length;
+        const block = this.#rawMaps.slice(start, end).map(({ flags }) => isValid(flags));
+        const found = findSimilarRange(block, this.#refBools);
+        let targetIndex = 0;
+        if (found !== null) {
+            targetIndex = found;
+            console.log(`Bool Block Found: `, found, this.#refBools.length);
+        } else {
+
+            // didn't find it,
+            // let's insert it then:
+            targetIndex = this.#refBools.length;
+            this.#refBools.push(...block);
+            console.log(`Bool Block Not found: `, targetIndex, this.#refBools.length);
+        }
+
+        // const blockLen = Number(this.#refBools.sizeof);
+        // if (targetIndex % blockLen !== 0) {
+        //     throw new Error("Index is not aligned.");
+        // }
+        // const index = targetIndex / blockLen;
+        // console.log(`Index: `, index, this.#refBools.length);
+        return targetIndex;
     }
 
     /// Find the specified range from source table in target table
@@ -230,12 +282,23 @@ class MappingTable {
         console.log("Removed trailing disallowed mappings:", startLen - endLen);
 
         for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize) {
-            const ref = {
+            let ref = {
                 index: batchIndex >>> Number(this.#batchBitCount),
-                blockPtr: this.#findOrInsertBlock(batchIndex, this.#batchSize)
             };
+            if (this.#areAllNotMapped(batchIndex, this.#batchSize)) {
+                ref.blockPtr = this.#findOrInsertBools(batchIndex, this.#batchSize);
+                if (ref.blockPtr >= this.#tablePickMask) {
+                    throw new Error(`We ran out of room for bool blocks table; it now has a conflict with the bit mask!`);
+                }
+                ref.blockPtr |= this.#tablePickMask;
+            } else {
+                ref.blockPtr = this.#findOrInsertBlock(batchIndex, this.#batchSize);
+                if (ref.blockPtr >= this.#tablePickMask) {
+                    throw new Error(`We ran out of room for blocks table; it now has a conflict with the bit mask!`);
+                }
+            }
             if (ref.blockPtr > this.#refMax) {
-                throw new Error(`Calculated value ${ref.blockPtr} is greater than ${this.#refMax}, so we can't put it inside the ref table.`);
+                throw new Error(`Calculated value ${ref.blockPtr} is greater than ${this.#refMax}, so we can't put it inside the ref table; ${this.#tablePickMask}`);
             }
             this.#refs.push(ref);
         }
@@ -265,6 +328,7 @@ class MappingTable {
         }
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
         const blockBitLength = blocksLength * Number(this.#refBlocks.sizeof);
+        const boolsBitLength = Math.ceil(this.#refBools.length);
         const mapsBitLength = mapsLength * Number(this.#maps.sizeof);
         const sumBitLength = refsBitLength + blockBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
@@ -275,6 +339,10 @@ class MappingTable {
         console.log(`  Count       : ${blocksLength} * ${this.#refBlocks.sizeof}`);
         console.log(`  in bytes    : ${Math.ceil(blockBitLength / 8)},`);
         console.log(`  in KibiBytes: ${(blockBitLength / 8 / 1024).toFixed(2)} KiB\n`);
+        console.log(`Ref Bools Blocks Table size:`);
+        console.log(`  Count       : ${this.#refBools.length} * 1`);
+        console.log(`  in bytes    : ${Math.ceil(boolsBitLength / 8)},`);
+        console.log(`  in KibiBytes: ${(boolsBitLength / 8 / 1024).toFixed(2)} KiB\n`);
         console.log(`Map Table size:`);
         console.log(`  Count       : ${mapsLength} * ${this.#maps.sizeof}`);
         console.log(`  in bytes    : ${Math.ceil(mapsBitLength / 8)},`);
@@ -326,6 +394,18 @@ namespace webpp::uri::idna::details {
        ${this.#refs.map(({ blockPtr }) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
     };
     
+
+    /**
+     * IDNA Reference Blocks Table (for valid or disallowed values only)
+     * 
+     *  - true:  ${flagsStatus(VALID)}
+     *  - false: ${flagsStatus(DISALLOWED)}
+     * 
+     * Table size: ${boolsBitLength / 8} B or ${(boolsBitLength / 8 / 1024).toFixed(2)} KiB
+     */
+    static constexpr std::array<${this.#refBools.type.description}, ${this.#refBools.length / Number(this.#refBools.sizeof)}ULL> idna_ref_bools {
+       ${packBoolsIntoInts(this.#refBools).map((block) => `0b${block.toString(2)}U`).join(", ")}
+    };
 
     /**
      * IDNA Reference Blocks Table
