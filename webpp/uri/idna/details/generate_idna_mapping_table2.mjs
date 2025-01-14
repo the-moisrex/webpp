@@ -11,18 +11,15 @@ import {
     findVersion,
     findDate,
     cleanComments,
-    TableTraits,
     uint16,
     char8_8,
+    uint8,
     utf32To8All,
     runClangFormat,
     writePieces,
     renderTableValues,
     parseCodePointRangeExclusive,
-    uint8,
-    char8,
     sizeOf,
-    findSimilarRange,
     toHexString,
     recursiveLength,
     findSimilarSubRange
@@ -41,18 +38,27 @@ const start = async () => {
 
 const parseMappedCodePoints = codePoints => codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
 
+// UTF-16 version:
 const MAPPED = 0b000 << 13;
 const NOT_MAPPED = 0b100 << 13;
 const VALID = NOT_MAPPED | 0b001;
 const DISALLOWED = NOT_MAPPED | 0b010;
 
+// UTF-8 version:
+// const MAPPED = 0b0 << 7;
+// const NOT_MAPPED = 0b1 << 7;
+// const VALID = NOT_MAPPED | 0b001;
+// const DISALLOWED = NOT_MAPPED | 0b010;
+
 const isMapped = (flags) => flags < NOT_MAPPED;
 const isValid = (flags) => flags === VALID;
 const isDisallowed = (flags) => flags === DISALLOWED;
+const isNotMapped = (flags) => !isMapped(flags);
 const flagsStatus = (flags) => {
     switch (flags) {
-        case VALID: return "<Valid>";
-        case DISALLOWED: return "<Disallowed>";
+        case VALID: return "valid";
+        case NOT_MAPPED: return "NOT_MAPPED";
+        case DISALLOWED: return "disallowed";
         default:
             return isMapped(flags) ? `<Mapped:${flags}>` : `<invalid:${flags.toString(16)}>`;
     }
@@ -74,26 +80,32 @@ class MappingTable {
     // the modulus value
     #magicRem = 1n;
 
-
     #batchBitCount;
     #batchSize;
 
-    constructor(max) {
+    // Maximum possible value that can be put in the #refBlocks table
+    #refBlocksMax;
+    #refMax;
+
+    constructor() {
         this.#refs = [];
         this.#refBlocks = [];
         this.#maps = [];
 
-        this.#refs.type = uint16;
+        this.#refs.type = uint8;
         this.#refBlocks.type = uint16;
-        this.#maps.type = char8;
+        this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
         this.#refBlocks.sizeof = sizeOf(this.#refBlocks.type);
         this.#maps.sizeof = sizeOf(this.#maps.type);
 
-        this.#batchBitCount = 8n;
+        this.#batchBitCount = 7n;
         this.#batchSize = 0b1 << Number(this.#batchBitCount);
         //     this.#bitLength = Number(this.#refs.sizeof);
+        
+        this.#refMax = (0b1 << Number(sizeOf(this.#refs.type))) - 1;
+        this.#refBlocksMax = (0b1 << Number(sizeOf(this.#refBlocks.type))) - 1;
     }
 
     append(start, end, flags, mappedTo = []) {
@@ -166,8 +178,8 @@ class MappingTable {
                     pos = end;
                     break;
                 }
-                const { blockStart } = block;
-                if (!this.#isSameMapping(blockStart + index, pos)) { // todo
+                const { rawStart } = block;
+                if (!this.#isSameMapping(rawStart + index, pos)) { // todo
                     continue nextTarget;
                 }
             }
@@ -194,8 +206,11 @@ class MappingTable {
                     }
                 }
 
-
-                statuses.push(flagsOr(flags, mapsPosition));
+                const curStatus = flagsOr(flags, mapsPosition);
+                if (curStatus > this.#refBlocksMax) {
+                    throw new Error(`Status ${curStatus} is greater than ${this.#refBlocksMax}, so we can't put it in the ref blocks table.`);
+                }
+                statuses.push(curStatus);
             }
             this.#refBlocks[targetIndex] = {
                 rawStart: start,
@@ -215,10 +230,14 @@ class MappingTable {
         console.log("Removed trailing disallowed mappings:", startLen - endLen);
 
         for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize) {
-            this.#refs.push({
+            const ref = {
                 index: batchIndex >>> Number(this.#batchBitCount),
                 blockPtr: this.#findOrInsertBlock(batchIndex, this.#batchSize)
-            });
+            };
+            if (ref.blockPtr > this.#refMax) {
+                throw new Error(`Calculated value ${ref.blockPtr} is greater than ${this.#refMax}, so we can't put it inside the ref table.`);
+            }
+            this.#refs.push(ref);
         }
     }
 
@@ -292,17 +311,18 @@ namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
     static constexpr char32_t last_diallowed = U'\\x${this.#lastDisallowed.toString(16)}';
+    static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount};
 
-    struct idna_ref_unit {
-        std::uint16_t block_index = 0U;
-    };
+    static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
+    static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
+    static constexpr ${this.#refBlocks.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
 
     /**
      * IDNA Reference Table
      * 
      * Table size: ${refsBitLength / 8} B or ${(refsBitLength / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<idna_ref_unit, ${this.#refs.length}ULL> idna_refs {
+    static constexpr std::array<${this.#refs.type.description}, ${this.#refs.length}ULL> idna_refs {
        ${this.#refs.map(({ blockPtr }) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
     };
     
@@ -315,7 +335,7 @@ namespace webpp::uri::idna::details {
     static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {
        ${this.#refBlocks.map((block, blkIndex) => `
            // Block #${blkIndex}
-           { ${block.statuses.map(flags => `0x${(flags || 0).toString(16)}`).join(", ")} }
+           { ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `0x${(flags || 0).toString(16)}`).join(", ")} }
        `).join(", ")}
     };
     
@@ -350,7 +370,7 @@ const processCachedFile = async fileContent => {
     console.log(`Version: ${version}`);
     console.log(`Creation Date: ${creationDate}`);
 
-    const tables = new MappingTable(1114111 + 1);
+    const tables = new MappingTable();
     let maxMappedCount = 0;
     let cpSum = 0n;
     lines.forEach((line, index) => {
