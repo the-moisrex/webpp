@@ -60,7 +60,7 @@ const isNotMapped = (flags) => !isMapped(flags);
 const flagsStatus = (flags) => {
     switch (flags) {
         case VALID: return "valid";
-        case NOT_MAPPED: return "NOT_MAPPED";
+        case NOT_MAPPED: return "not_mapped";
         case DISALLOWED: return "disallowed";
         default:
             return isMapped(flags) ? `<Mapped:${flags}>` : `<invalid:${flags.toString(16)}>`;
@@ -385,13 +385,26 @@ namespace webpp::uri::idna::details {
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
 
+    // Pick the table with this mask (between bools table and the block table)
+    static constexpr ${this.#refBlocks.type.description} table_pick_mask = 0b${this.#tablePickMask.toString(2)}U;
+    static constexpr auto bt = table_pick_mask; // shortcut
+
     /**
      * IDNA Reference Table
      * 
      * Table size: ${refsBitLength / 8} B or ${(refsBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#refs.type.description}, ${this.#refs.length}ULL> idna_refs {
-       ${this.#refs.map(({ blockPtr }) => `0x${(blockPtr || 0).toString(16)}`).join(", ")}
+       ${this.#refs.map(({ blockPtr }) => {
+            blockPtr = (blockPtr || 0);
+            let ret = '';
+            if ((blockPtr & this.#tablePickMask) === this.#tablePickMask) {
+                ret += `bt | `;
+                blockPtr &= ~this.#tablePickMask; // removing it
+            }
+            ret += `0x${blockPtr.toString(16)}`
+            return ret;
+        }).join(", ")}
     };
     
 
