@@ -1061,25 +1061,26 @@ export function fillEmpty(arr, invalidValue = null) {
 }
 
 
-export function packBoolsIntoInts(boolArray, blockSize = 8) {
+export function packBoolsIntoInts(boolArray, blockSize = 8n) {
     const result = [];
-    let currentInt = 0;
+    const len = BigInt(boolArray.length);
+    let currentInt = 0n;
 
-    for (let i = 0; i < boolArray.length; i++) {
+    for (let i = 0n; i < len; i++) {
         // Set the appropriate bit in the current integer
         if (boolArray[i]) {
-            currentInt |= (1 << (i % blockSize));
+            currentInt |= (1n << (i % blockSize));
         }
 
         // If we've packed 8 booleans, push the current integer to the result
-        if ((i + 1) % blockSize === 0) {
+        if ((i + 1n) % blockSize === 0n) {
             result.push(currentInt);
-            currentInt = 0; // Reset for the next integer
+            currentInt = 0n; // Reset for the next integer
         }
     }
 
     // If there are remaining booleans that don't fill a complete byte
-    if (boolArray.length % blockSize !== 0) {
+    if (len % blockSize !== 0n) {
         result.push(currentInt);
     }
 

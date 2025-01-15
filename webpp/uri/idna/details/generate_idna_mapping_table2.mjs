@@ -25,7 +25,8 @@ import {
     findSimilarSubRange,
     findSimilarRange,
     findSimilarSubBlocks,
-    packBoolsIntoInts
+    packBoolsIntoInts,
+    uint64
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -103,7 +104,7 @@ class MappingTable {
 
         this.#refs.type = uint16;
         this.#refBlocks.type = uint16;
-        this.#refBools.type = uint8; // boolean
+        this.#refBools.type = uint64; // boolean
         this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
@@ -328,7 +329,7 @@ class MappingTable {
         }
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
         const blockBitLength = blocksLength * Number(this.#refBlocks.sizeof);
-        const boolsBitLength = Math.ceil(this.#refBools.length);
+        const boolsBitLength = Math.ceil(this.#refBools.length / Number(this.#refBools.sizeof)) * Number(this.#refBools.sizeof);
         const mapsBitLength = mapsLength * Number(this.#maps.sizeof);
         const sumBitLength = refsBitLength + blockBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
@@ -417,7 +418,7 @@ namespace webpp::uri::idna::details {
      * Table size: ${boolsBitLength / 8} B or ${(boolsBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#refBools.type.description}, ${this.#refBools.length / Number(this.#refBools.sizeof)}ULL> idna_ref_bools {
-       ${packBoolsIntoInts(this.#refBools).map((block) => `0b${block.toString(2)}U`).join(", ")}
+       ${packBoolsIntoInts(this.#refBools, this.#refBools.sizeof).map((block) => `0b${block.toString(2).padStart(Number(this.#refBools.sizeof), '0')}U`).join(", ")}
     };
 
     /**
