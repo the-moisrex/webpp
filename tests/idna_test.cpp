@@ -161,6 +161,8 @@ TEST(BasicIDNATests, TestingAllTheTable) {
 }
 */
 
+
+
 TEST(BasicIDNATests, PerformMappingTest) {
     // 'A' should be mapped to 'a'
     std::string out;
@@ -191,6 +193,66 @@ TEST(BasicIDNATests, UnicodeMapping) {
     std::u8string out8;
     EXPECT_TRUE(uri::idna::map(U"\x1F244", out8));
     EXPECT_EQ(out8, u8"\xE3\x80\x94\xE7\x82\xB9\xE3\x80\x95");
+}
+
+TEST(BasicIDNATests, MostMappings) {
+    using uri::idna::mapped;
+    using uri::idna::status_of;
+    using uri::idna::details::disallowed;
+    using uri::idna::details::valid;
+
+    // awk -f gen-idna-tests.awk IdnaMappingTable.txt
+    // awk -f gen-idna-tests.awk IdnaMappingTable.txt | sort --random-sort | head
+    EXPECT_EQ(status_of(67'454), disallowed);
+    EXPECT_EQ(status_of(119'751), disallowed);
+    EXPECT_EQ(status_of(69'594), disallowed);
+    EXPECT_EQ(status_of(72'361), disallowed);
+    EXPECT_EQ(status_of(40'892), valid);
+    EXPECT_EQ(status_of(71'812), disallowed);
+    EXPECT_EQ(status_of(4021), valid);
+    EXPECT_EQ(mapped<std::u32string>(8315), U"\x2212");               // mapped
+    EXPECT_EQ(status_of(11'676), disallowed);
+    EXPECT_EQ(status_of(6851), valid);
+    EXPECT_EQ(mapped<std::u32string>(404), U"\x0263");                // mapped
+    EXPECT_EQ(status_of(43'130), disallowed);
+    EXPECT_EQ(status_of(70'046), valid);
+    EXPECT_EQ(mapped<std::u32string>(63'972), U"\x7406");             // mapped
+    EXPECT_EQ(mapped<std::u32string>(7586), U"\x0261");               // mapped
+    EXPECT_EQ(status_of(2974), valid);
+    EXPECT_EQ(status_of(64'221), disallowed);
+    EXPECT_EQ(mapped<std::u32string>(120'540), U"\x03B5");            // mapped
+    EXPECT_EQ(status_of(68'926), disallowed);
+    EXPECT_EQ(mapped<std::u32string>(12'808), U"\x0028\x110C\x0029"); // mapped
+    EXPECT_EQ(status_of(43'230), disallowed);
+    EXPECT_EQ(mapped<std::u32string>(7690), U"\x1E0B");               // mapped
+    EXPECT_EQ(mapped<std::u32string>(12'089), U"\x5F50");             // mapped
+    EXPECT_EQ(status_of(68'942), valid);
+    EXPECT_EQ(status_of(3400), valid);
+    EXPECT_EQ(status_of(11'247), valid);
+    EXPECT_EQ(status_of(1569), valid);
+    EXPECT_EQ(mapped<std::u32string>(12'644), U""); // ignored
+    EXPECT_EQ(status_of(66'289), valid);
+    EXPECT_EQ(status_of(72'548), disallowed);
+    EXPECT_EQ(status_of(127'128), disallowed);
+    EXPECT_EQ(mapped<std::u32string>(12'614), U"\x110A");  // mapped
+    EXPECT_EQ(mapped<std::u32string>(42'824), U"\xA749");  // mapped
+    EXPECT_EQ(status_of(11'944), valid);
+    EXPECT_EQ(mapped<std::u32string>(127'538), U"\x7981"); // mapped
+    EXPECT_EQ(status_of(129'205), valid);
+    EXPECT_EQ(status_of(67'386), disallowed);
+    EXPECT_EQ(status_of(6903), disallowed);
+    EXPECT_EQ(status_of(185'478), valid);
+    EXPECT_EQ(status_of(2950), valid);
+    EXPECT_EQ(status_of(7707), valid);
+    EXPECT_EQ(status_of(4814), valid);
+    EXPECT_EQ(status_of(66'008), valid);
+    EXPECT_EQ(status_of(125'274), disallowed);
+    EXPECT_EQ(status_of(2228), valid);
+    EXPECT_EQ(status_of(71'892), valid);
+    EXPECT_EQ(status_of(9932), valid);
+    EXPECT_EQ(status_of(73'902), valid);
+    EXPECT_EQ(status_of(123'211), disallowed);
+    EXPECT_EQ(status_of(481), valid);
 }
 
 // NOLINTEND(*-magic-numbers)

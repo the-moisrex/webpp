@@ -43,13 +43,13 @@ const parseMappedCodePoints = codePoints => codePoints.split(" ").map(codePoint 
 // UTF-16 version:
 const MAPPED = 0b000 << 13;
 const NOT_MAPPED = 0b100 << 13;
-const VALID = NOT_MAPPED | 0b001;
 const DISALLOWED = NOT_MAPPED | 0b010;
+const VALID = DISALLOWED | 0b1;
 
 // UTF-8 version:
 // const MAPPED = 0b0 << 7;
 // const NOT_MAPPED = 0b1 << 7;
-// const VALID = NOT_MAPPED | 0b001;
+// const VALID = NOT_MAPPED | 0b011;
 // const DISALLOWED = NOT_MAPPED | 0b010;
 
 const isMapped = (flags) => flags < NOT_MAPPED;
@@ -379,7 +379,7 @@ class MappingTable {
 namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
-    static constexpr auto last_disallowed = static_cast<char32_t>(0x${this.#lastDisallowed.toString(16)});
+    static constexpr auto last_disallowed = static_cast<char32_t>(0x${this.#lastDisallowed.toString(16).toUpperCase()});
     static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount}U;
     static constexpr std::uint8_t batch_mask = 0x${((0b1 << Number(this.#batchBitCount)) - 1).toString(16).toUpperCase()}U;
 

@@ -4,7 +4,7 @@
  *
  *   Auto generated from:          generate_idna_mapping_table2.mjs
  *   IDNA Creation Date:           2024-07-03, 21:52:28 GMT
- *   This file's generation date:  Thu, 16 Jan 2025 21:06:32 GMT
+ *   This file's generation date:  Thu, 16 Jan 2025 23:43:36 GMT
  *   IDNA Mapping Table Version:   16.0.0
  *   Size:                         59746 B
  *                                 58.35 KiB
@@ -24,12 +24,12 @@
 namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem       = 1U;
-    static constexpr auto          last_disallowed = static_cast<char32_t>(0xe01f0);
+    static constexpr auto          last_disallowed = static_cast<char32_t>(0xE01F0);
     static constexpr std::uint8_t  batch_bit_count = 8U;
     static constexpr std::uint8_t  batch_mask      = 0xFFU;
 
     [[maybe_unused]] static constexpr std::uint16_t not_mapped = 0b1000'0000'0000'0000U;
-    static constexpr std::uint16_t                  valid      = 0b1000'0000'0000'0001U;
+    static constexpr std::uint16_t                  valid      = 0b1000'0000'0000'0011U;
     static constexpr std::uint16_t                  disallowed = 0b1000'0000'0000'0010U;
 
     // Pick the table with this mask (between bools table and the block table)

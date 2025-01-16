@@ -24,7 +24,7 @@ namespace webpp::uri::idna {
         using details::idna_refs;
         using details::not_mapped;
 
-        if (code_point >= details::last_disallowed) {
+        if (code_point >= static_cast<CharT>(details::last_disallowed)) {
             return details::disallowed;
         }
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
@@ -35,7 +35,8 @@ namespace webpp::uri::idna {
             constexpr auto      pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
             stl::uint16_t const status_bit =
               0b1U & (idna_ref_bools[ref_ptr / pack_size] >> (pack_size - (ref_ptr % pack_size)));
-            return details::valid + status_bit; // if it's one, it'll become disallowed
+            return details::disallowed | status_bit; // if it's 1, it'll become valid, otherwise it stays
+                                                     // disallowed
         }
 
         return idna_ref_blocks[ref][code_point & batch_mask];
@@ -76,6 +77,13 @@ namespace webpp::uri::idna {
                 return true;
             }
         }
+    }
+
+    template <istl::String OutStrT = stl::u8string, unicode::UTF32 CharT = char32_t, typename... Args>
+    static constexpr OutStrT mapped(CharT const code_point, Args&&... args) {
+        OutStrT out{stl::forward<Args>(args)...};
+        map(code_point, out);
+        return out;
     }
 
     using idna_mappings_string_type = decltype(details::idna_mappings);
