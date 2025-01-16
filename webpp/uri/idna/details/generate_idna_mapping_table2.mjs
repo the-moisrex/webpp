@@ -391,8 +391,9 @@ namespace webpp::uri::idna::details {
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
     static constexpr char32_t last_diallowed = U'\\x${this.#lastDisallowed.toString(16)}';
     static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount}U;
+    static constexpr std::uint8_t batch_mask = 0x${((0b1 << Number(this.#batchBitCount)) - 1).toString(16)}U;
 
-    static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
+    [[maybe_unused]] static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
 
@@ -436,12 +437,12 @@ namespace webpp::uri::idna::details {
      * 
      * Table size: ${blockBitLength / 8} B or ${(blockBitLength / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {
+    static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {{
        ${this.#refBlocks.map((block, blkIndex) => `
            // Block #${blkIndex}
            {{ ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `0x${(flags || 0).toString(16)}`).join(", ")} }}
        `).join(", ")}
-    };
+    }};
     
     /**
      * IDNA Mapped Code Points Table

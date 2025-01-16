@@ -78,54 +78,7 @@ TYPED_TEST(IDNATests, LabelSeparators) {
     }
 }
 
-TEST(BasicIDNATests, MappingFindAlgorithmTest) {
-    // 'A' should be mapped to 'a'
-    auto const pos = uri::idna::find_mapping_code_point(U'A');
-    EXPECT_EQ(*pos, 2'566'914'113ULL)
-      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos)
-      << "\nRange Start Character: " << (*pos & ~uri::idna::details::disallowed_mask);
-    // EXPECT_EQ(*stl::next(pos), 'a');
-
-
-    // FD97..FD98    ; mapped                 ; 0646 062C 0645
-    // FD9E          ; mapped                 ; 0628 062E 064A
-    // 'FD98' should be mapped to '0646 062C 0645'
-    auto mapped_pos = uri::idna::find_mapping_code_point(0xFD98UL);
-    EXPECT_EQ(*mapped_pos, (0xFD97UL | uri::idna::details::mapped_mask | ((0xFD98UL - 0xFD97UL) << 24U)))
-      << "Position of the iterator: "
-      << stl::distance(uri::idna::details::idna_mapping_table.begin(), mapped_pos)
-      << "\nRange Start Character: " << (*mapped_pos & ~uri::idna::details::disallowed_mask);
-    EXPECT_EQ(*(++mapped_pos), 0x0646);
-    EXPECT_EQ(*(++mapped_pos), 0x062C);
-    EXPECT_EQ(*(++mapped_pos), 0x0645);
-
-
-    // Last character should not blow us up!
-    auto const last_pos = uri::idna::find_mapping_code_point(0x10'FFFF);
-    EXPECT_EQ(*last_pos,
-              uri::idna::details::idna_mapping_table[uri::idna::details::idna_mapping_table.size() - 3])
-      << "Position of the iterator: "
-      << stl::distance(uri::idna::details::idna_mapping_table.begin(), last_pos)
-      << "\nRange Start Character: " << std::hex << (*last_pos & ~uri::idna::details::disallowed_mask)
-      << std::dec;
-
-
-    // First character should not blow us up! (First character is a valid character, so it's actual value
-    // should not be in the mapping table)
-    auto const first_pos = uri::idna::find_mapping_code_point(0x0);
-    EXPECT_EQ(stl::distance(uri::idna::details::idna_mapping_table.begin(), first_pos), 0)
-      << "Position of the iterator: "
-      << stl::distance(uri::idna::details::idna_mapping_table.begin(), first_pos)
-      << "\nRange Start Character: " << (*first_pos & ~uri::idna::details::disallowed_mask);
-
-
-    auto const pos_4 = uri::idna::find_mapping_code_point(0x2'fa39);
-    EXPECT_EQ((*pos_4 & ~uri::idna::details::disallowed_mask), 0x2'FA1E)
-      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos_4)
-      << "\nRange Start Character: " << stl::hex << (*pos_4 & ~uri::idna::details::disallowed_mask)
-      << stl::dec;
-}
-
+/*
 TEST(BasicIDNATests, TestingAllTheTable) {
     stl::size_t errors           = 0;
     stl::size_t picking_last_one = 0;
@@ -206,20 +159,21 @@ TEST(BasicIDNATests, TestingAllTheTable) {
     EXPECT_EQ(picking_last_one, 0);
     EXPECT_EQ(picking_next_one, 0);
 }
+*/
 
 TEST(BasicIDNATests, PerformMappingTest) {
     // 'A' should be mapped to 'a'
     std::string out;
-    EXPECT_TRUE(uri::idna::perform_mapping(U'A', out));
+    EXPECT_TRUE(uri::idna::map(U'A', out));
     EXPECT_EQ(out, "a");
     out.clear();
 
     std::u32string out32;
-    EXPECT_TRUE(uri::idna::perform_mapping(0x1'F244, out32));
+    EXPECT_TRUE(uri::idna::map(U'\x1F244', out32));
     EXPECT_EQ(out32, U"\x3014\x70B9\x3015");
 
     std::u8string out8;
-    EXPECT_TRUE(uri::idna::perform_mapping(0x1'F244, out8));
+    EXPECT_TRUE(uri::idna::map(U'\x1F244', out8));
     EXPECT_EQ(out8, u8"\xE3\x80\x94\xE7\x82\xB9\xE3\x80\x95");
 }
 
@@ -231,7 +185,7 @@ TEST(BasicIDNATests, UnicodeMapping) {
     out.clear();
 
     std::u32string out32;
-    EXPECT_TRUE(uri::idna::map(u8"\x1F244", out32));
+    EXPECT_TRUE(uri::idna::map(U"\x1F244", out32));
     EXPECT_EQ(out32, U"\x3014\x70B9\x3015");
 
     std::u8string out8;

@@ -3,19 +3,24 @@
 #ifndef WEBPP_UNICODE_UNICODE_CONCEPTS_HPP
 #define WEBPP_UNICODE_UNICODE_CONCEPTS_HPP
 
+#include "../std/concepts.hpp"
+
 namespace webpp::unicode {
 
     template <typename T>
-    concept UTF8 = (sizeof(T) == sizeof(char8_t));
+    concept UTFCharType = stl::integral<T>;
 
     template <typename T>
-    concept UTF16 = (sizeof(T) == sizeof(char16_t));
+    concept UTF8 = UTFCharType<T> && (sizeof(T) == sizeof(char8_t));
 
     template <typename T>
-    concept WChar = (sizeof(T) >= sizeof(wchar_t));
+    concept UTF16 = UTFCharType<T> && (sizeof(T) == sizeof(char16_t));
 
     template <typename T>
-    concept UTF32 = (sizeof(T) >= sizeof(wchar_t));
+    concept WChar = UTFCharType<T> && (sizeof(T) >= sizeof(wchar_t));
+
+    template <typename T>
+    concept UTF32 = UTFCharType<T> && (sizeof(T) >= sizeof(char32_t));
 
     template <typename T>
     concept UTF = UTF8<T> || UTF16<T> || UTF32<T>;
