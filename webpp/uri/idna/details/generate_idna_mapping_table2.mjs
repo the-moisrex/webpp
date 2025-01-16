@@ -14,6 +14,8 @@ import {
     uint16,
     char8_8,
     uint8,
+    uint32,
+    uint64,
     utf32To8All,
     runClangFormat,
     writePieces,
@@ -25,8 +27,7 @@ import {
     findSimilarSubRange,
     findSimilarRange,
     findSimilarSubBlocks,
-    packBoolsIntoInts,
-    uint64
+    packBoolsIntoInts
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -104,7 +105,7 @@ class MappingTable {
 
         this.#refs.type = uint16;
         this.#refBlocks.type = uint16;
-        this.#refBools.type = uint64; // boolean
+        this.#refBools.type = uint32; // boolean
         this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
@@ -265,6 +266,15 @@ class MappingTable {
                 }
                 statuses.push(curStatus);
             }
+            if (statuses.length !== this.#batchSize) {
+                if (statuses.length < this.#batchSize) {
+                    for (let i = statuses.length; i !== this.#batchSize; ++i) {
+                        statuses.push(DISALLOWED);
+                    }
+                } else {
+                    throw new Error(`#${start}-${end} Invalid size: ${statuses.length}/${this.#batchSize}`);
+                }
+            }
             this.#refBlocks[targetIndex] = {
                 rawStart: start,
                 rawEnd: end,
@@ -380,7 +390,7 @@ namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
     static constexpr char32_t last_diallowed = U'\\x${this.#lastDisallowed.toString(16)}';
-    static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount};
+    static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount}U;
 
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
@@ -388,7 +398,7 @@ namespace webpp::uri::idna::details {
 
     // Pick the table with this mask (between bools table and the block table)
     static constexpr ${this.#refBlocks.type.description} table_pick_mask = 0b${this.#tablePickMask.toString(2)}U;
-    static constexpr auto bt = table_pick_mask; // shortcut
+    static constexpr auto blt = table_pick_mask; // shortcut
 
     /**
      * IDNA Reference Table
@@ -400,10 +410,10 @@ namespace webpp::uri::idna::details {
             blockPtr = (blockPtr || 0);
             let ret = '';
             if ((blockPtr & this.#tablePickMask) === this.#tablePickMask) {
-                ret += `bt | `;
+                ret += `blt | `;
                 blockPtr &= ~this.#tablePickMask; // removing it
             }
-            ret += `0x${blockPtr.toString(16)}`
+            ret += `0x${blockPtr.toString(16)}U`
             return ret;
         }).join(", ")}
     };
@@ -429,7 +439,7 @@ namespace webpp::uri::idna::details {
     static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {
        ${this.#refBlocks.map((block, blkIndex) => `
            // Block #${blkIndex}
-           { ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `0x${(flags || 0).toString(16)}`).join(", ")} }
+           {{ ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `0x${(flags || 0).toString(16)}`).join(", ")} }}
        `).join(", ")}
     };
     

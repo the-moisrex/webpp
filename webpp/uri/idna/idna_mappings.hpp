@@ -47,7 +47,7 @@ namespace webpp::uri::idna {
      */
     template <unicode::UTF32 CharT, istl::String OutStrT>
     [[nodiscard]] static constexpr bool map(CharT const code_point, OutStrT& out) {
-        using details::idna_mapings;
+        using details::idna_mappings;
         auto const pos = status_of(code_point);
 
         // ignored code points are mapped to nothing, so no special code is needed
