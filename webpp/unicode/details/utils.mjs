@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+import {promises as fs} from "fs";
 import * as assert from "node:assert";
 import child_process from "node:child_process";
 import * as process from "node:process";
@@ -116,11 +116,17 @@ export function isIterable(input) {
     return typeof input?.[Symbol.iterator] === 'function';
 }
 
-export function recursiveLength(arr) {
+export function recursiveLength(arr, length = arr.length) {
     if (!isIterable(arr)) {
         return arr?.length || 1;
     }
-    return arr.reduce((sum, item) => sum + recursiveLength(item), 0);
+
+    // return arr.reduce((sum, item) => sum + recursiveLength(item), 0);
+    let sum = 0;
+    for (let index = 0; index !== length; ++index) {
+        sum += recursiveLength(arr[index]);
+    }
+    return sum
 }
 
 export function toHexString(char) {
@@ -471,7 +477,7 @@ export class Span {
         return this.#func(this.#arr[Number(this.#start) + index]);
     }
 
-    *[Symbol.iterator]() {
+    * [Symbol.iterator]() {
         for (let i = this.#start; i < this.#end; i++) {
             yield this.#func(this.#arr[i]);
         }
@@ -598,7 +604,7 @@ export class TableTraits {
         return this.bytes.at(index);
     }
 
-    *[Symbol.iterator]() {
+    * [Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
         }
@@ -852,40 +858,46 @@ export const utf32To8All = (u32Array) => {
     return arr;
 };
 
-export const renderTableValues = ({ name, printableValues, type, len }) => {
+export const renderTableValues = ({name, printableValues, type, len}) => {
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()} {
         ${printableValues
-                .map((val) => {
-                    let res = "";
-                    if (val.comment) {
-                        res += `
+            .map((val) => {
+                let res = "";
+                if (val.comment) {
+                    res += `
         // ${val.comment}
         `;
-                    }
-                    res += `${prefix}"${val.join("")}"`;
-                    return res;
-                })
-                .join("\n")},
-        ${len}UL // String Length
+                }
+                res += `${prefix}"${val.join("")}"`;
+                if (val.inline_comment) {
+                    res += ` // ${val.inline_comment}`;
+                }
+                return res;
+            })
+            .join("\n")}
+        , ${len}UL // String Length
     };
             `;
     } else {
         valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()} {
         ${printableValues
-                .map((val) => {
-                    let res = "";
-                    if (val.comment) {
-                        res += `
+            .map((val) => {
+                let res = "";
+                if (val.comment) {
+                    res += `
         // ${val.comment}
         `;
-                    }
-                    res += val.join(", ");
-                    return res;
-                })
-                .join(", \n")}
+                }
+                res += val.join(", ");
+                if (val.inline_comment) {
+                    res += ` // ${val.inline_comment}`;
+                }
+                return res;
+            })
+            .join(", \n")}
     };
             `;
     }
@@ -909,7 +921,7 @@ export const findTopLongestZeroRanges = (arr, invalidCodePoint = 0, topN = 5,) =
         } else {
             // If we hit a non-zero, check if we have a valid range
             if (currentLength > 0) {
-                ranges.push({ start: startIndex, length: currentLength });
+                ranges.push({start: startIndex, length: currentLength});
                 currentLength = 0; // Reset for the next range
             }
         }
@@ -1053,7 +1065,7 @@ export const chunked = (size) => {
     const chunkSize = fillBitsFromRight(BigInt(size)) + 1n;
     const chunkMask = chunkSize - 1n;
     const chunkShift = popcount(chunkMask);
-    return { chunkSize, chunkMask, chunkShift };
+    return {chunkSize, chunkMask, chunkShift};
 };
 
 export function fillEmpty(arr, invalidValue = null) {

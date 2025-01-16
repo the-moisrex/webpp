@@ -24,7 +24,7 @@ namespace webpp::uri::idna {
         using details::idna_refs;
         using details::not_mapped;
 
-        if (code_point >= details::last_diallowed) {
+        if (code_point >= details::last_disallowed) {
             return details::disallowed;
         }
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
@@ -32,8 +32,7 @@ namespace webpp::uri::idna {
         auto const ref_ptr = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
         if (ref_ptr != ref) {
             // looking at the idna_ref_bools table
-            constexpr auto pack_size =
-              sizeof(typename decltype(details::idna_ref_bools)::value_type) * CHAR_BIT;
+            constexpr auto      pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
             stl::uint16_t const status_bit =
               0b1U & (idna_ref_bools[ref_ptr / pack_size] >> (pack_size - (ref_ptr % pack_size)));
             return details::valid + status_bit; // if it's one, it'll become disallowed
@@ -82,20 +81,18 @@ namespace webpp::uri::idna {
     using idna_mappings_string_type = decltype(details::idna_mappings);
 
     [[nodiscard]] static constexpr idna_mappings_string_type::iterator mapped_begin(
-      idna_mappings_string_type src) noexcept {
+      idna_mappings_string_type const& src) noexcept {
         using details::disallowed;
-        using details::idna_mappings;
         using details::valid;
         auto const* beg        = stl::begin(src);
         auto const* end        = stl::end(src);
         auto const  code_point = unicode::checked::next_code_point(beg, end);
-        auto const  pos        = status_of(code_point);
 
         // ignored code points are mapped to nothing, so no special code is needed
-        switch (pos) {
+        switch (auto const pos = status_of(code_point)) {
             case disallowed: return end;
             case valid: return beg;
-            default: return idna_mappings.begin() + pos; // mapped
+            default: return details::idna_mappings.begin() + pos; // mapped
         }
     }
 

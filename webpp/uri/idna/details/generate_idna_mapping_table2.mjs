@@ -13,9 +13,7 @@ import {
     cleanComments,
     uint16,
     char8_8,
-    uint8,
     uint32,
-    uint64,
     utf32To8All,
     runClangFormat,
     writePieces,
@@ -26,7 +24,6 @@ import {
     recursiveLength,
     findSimilarSubRange,
     findSimilarRange,
-    findSimilarSubBlocks,
     packBoolsIntoInts
 } from "../../../unicode/details/utils.mjs";
 
@@ -113,7 +110,7 @@ class MappingTable {
         this.#refBools.sizeof = sizeOf(this.#refBools.type);
         this.#maps.sizeof = sizeOf(this.#maps.type);
 
-        // this number affects the size of the tables, try chainging it:
+        // this number affects the size of the tables, try changing it:
         this.#batchBitCount = 8n;
         this.#batchSize = 0b1 << Number(this.#batchBitCount);
         //     this.#bitLength = Number(this.#refs.sizeof);
@@ -145,21 +142,6 @@ class MappingTable {
         }
     }
 
-    /// Calculate the length of utf8-encoded code points from the specified range
-    #calcLen(start, end) {
-        let maxLen = 0;
-        let sumLen = 0;
-        const length = end - start;
-        for (let i = start; i < end; ++i) {
-            const { utf8MappedTo } = this.#rawMaps[i];
-            if (utf8MappedTo.length > maxLen) {
-                maxLen = utf8MappedTo.length;
-            }
-            sumLen = utf8MappedTo.length;
-        }
-        return { sumLen, maxLen, requiredLen: maxLen * length };
-    };
-
     /// check if the mapping for both code point indexes specified are the same
     #isSameMapping(lhsIndex, rhsIndex) {
         if (lhsIndex === rhsIndex) {
@@ -173,8 +155,7 @@ class MappingTable {
     #findSimilarMappedTo(index) {
         const { utf8MappedTo, flags } = this.#rawMaps.at(index);
         if (isMapped(flags)) {
-            let localUtf8MappedTo = utf8MappedTo.slice();
-            localUtf8MappedTo.push(0); // add the last EOF '\0'
+            const localUtf8MappedTo = [...utf8MappedTo, 0]; // add the last EOF '\0'
             return findSimilarSubRange(localUtf8MappedTo, this.#maps);
         }
         return null;
@@ -182,7 +163,7 @@ class MappingTable {
 
     #areAllNotMapped(start, length) {
         const end = start + length;
-        for (let pos = start; pos != end; ++pos) {
+        for (let pos = start; pos !== end; ++pos) {
             const { flags } = this.#rawMaps.at(pos);
             if (isMapped(flags)) {
                 return false;
@@ -196,7 +177,7 @@ class MappingTable {
         const end = start + length;
         const block = this.#rawMaps.slice(start, end).map(({ flags }) => isValid(flags));
         const found = findSimilarRange(block, this.#refBools);
-        let targetIndex = 0;
+        let targetIndex;
         if (found !== null) {
             targetIndex = found;
             console.log(`Bool Block Found: `, found, this.#refBools.length);
@@ -225,7 +206,7 @@ class MappingTable {
         let targetIndex = 0;
         let pos = start;
         nextTarget: for (; ; ++targetIndex) {
-            for (pos = start; pos != end; ++pos) {
+            for (pos = start; pos !== end; ++pos) {
                 const index = pos - start;
                 const block = this.#refBlocks.at(targetIndex);
                 if (!block) {
@@ -233,7 +214,7 @@ class MappingTable {
                     break;
                 }
                 const { rawStart } = block;
-                if (!this.#isSameMapping(rawStart + index, pos)) { // todo
+                if (!this.#isSameMapping(rawStart + index, pos)) {
                     continue nextTarget;
                 }
             }
@@ -242,7 +223,7 @@ class MappingTable {
         if (pos === end) { // we didn't find it, let's insert it then
             const statuses = [];
             for (let i = start; i !== end; ++i) {
-                const { codePoint, flags, utf8MappedTo } = this.#rawMaps.at(i);
+                const { codePoint, flags, utf8MappedTo, mappedTo } = this.#rawMaps.at(i);
                 let mapsPosition = 0;
 
                 // insert the utf-8 encoded stuff to the table
@@ -250,23 +231,32 @@ class MappingTable {
                     mapsPosition = this.#findSimilarMappedTo(i);
                     if (mapsPosition === null) {
                         mapsPosition = this.#maps.length;
-                        let mapping = [];
-                        mapping.comment = `#${mapsPosition}: ${toHexString(codePoint)}`;
-                        for (const codeUnit of utf8MappedTo) {
-                            mapping.push(codeUnit);
-                        }
-                        mapping.push(0); // the last EOF '\0' character
+                        let mapping = [...utf8MappedTo, 0]; // add the extra EOF '\0' at the end too
+                        mapping.position = mapsPosition;
+                        mapping.codePointSources = [codePoint];
+                        mapping.utf32MappedTo = mappedTo;
                         this.#maps.push(mapping);
+                    } else {
+                        this.#maps[mapsPosition].codePointSources.push(codePoint);
+                    }
+
+                    // testing:
+                    const mapping = this.#maps[mapsPosition];
+                    if (mapping.position !== mapsPosition || !mapping.utf32MappedTo.every((cp, idx) => mappedTo[idx] === cp)) {
+                        throw new Error(`Invalid mapping position "${mapsPosition}"`);
                     }
                 }
 
-                const curStatus = flagsOr(flags, mapsPosition);
+                const mapsLength = recursiveLength(this.#maps, mapsPosition);
+                const curStatus = flagsOr(flags, mapsLength);
                 if (curStatus > this.#refBlocksMax) {
                     throw new Error(`Status ${curStatus} is greater than ${this.#refBlocksMax}, so we can't put it in the ref blocks table.`);
                 }
                 statuses.push(curStatus);
             }
             if (statuses.length !== this.#batchSize) {
+
+                // at the end of the IDNA table, we get to this situation:
                 if (statuses.length < this.#batchSize) {
                     for (let i = statuses.length; i !== this.#batchSize; ++i) {
                         statuses.push(DISALLOWED);
@@ -389,9 +379,9 @@ class MappingTable {
 namespace webpp::uri::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
-    static constexpr char32_t last_diallowed = U'\\x${this.#lastDisallowed.toString(16)}';
+    static constexpr auto last_disallowed = static_cast<char32_t>(0x${this.#lastDisallowed.toString(16)});
     static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount}U;
-    static constexpr std::uint8_t batch_mask = 0x${((0b1 << Number(this.#batchBitCount)) - 1).toString(16)}U;
+    static constexpr std::uint8_t batch_mask = 0x${((0b1 << Number(this.#batchBitCount)) - 1).toString(16).toUpperCase()}U;
 
     [[maybe_unused]] static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
@@ -402,7 +392,7 @@ namespace webpp::uri::idna::details {
     static constexpr auto blt = table_pick_mask; // shortcut
 
     /**
-     * IDNA Reference Table
+     * IDNA Reference Table.
      * 
      * Table size: ${refsBitLength / 8} B or ${(refsBitLength / 8 / 1024).toFixed(2)} KiB
      */
@@ -414,14 +404,14 @@ namespace webpp::uri::idna::details {
                 ret += `blt | `;
                 blockPtr &= ~this.#tablePickMask; // removing it
             }
-            ret += `0x${blockPtr.toString(16)}U`
+            ret += `0x${blockPtr.toString(16).toUpperCase()}U`
             return ret;
         }).join(", ")}
     };
     
 
     /**
-     * IDNA Reference Blocks Table (for valid or disallowed values only)
+     * IDNA Reference Blocks Table (for valid or disallowed values only).
      * 
      *  - true:  ${flagsStatus(VALID)}
      *  - false: ${flagsStatus(DISALLOWED)}
@@ -433,19 +423,20 @@ namespace webpp::uri::idna::details {
     };
 
     /**
-     * IDNA Reference Blocks Table
+     * IDNA Reference Blocks Table.
      * 
      * Table size: ${blockBitLength / 8} B or ${(blockBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {{
        ${this.#refBlocks.map((block, blkIndex) => `
+       
            // Block #${blkIndex}
-           {{ ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `0x${(flags || 0).toString(16)}`).join(", ")} }}
+           { ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `${(flags || 0).toString()}U`).join(", ")} }
        `).join(", ")}
     }};
     
     /**
-     * IDNA Mapped Code Points Table
+     * IDNA Mapped Code Points Table.
      * Each mapping ends with EOF '\\0'.
      * 
      * Table size: ${mapsBitLength / 8} B or ${(mapsBitLength / 8 / 1024).toFixed(2)} KiB
@@ -453,7 +444,14 @@ namespace webpp::uri::idna::details {
     ${renderTableValues({
             name: "idna_mappings",
             type: this.#maps.type,
-            printableValues: this.#maps.map(block => block.map(val => toHexString(val))),
+            printableValues: this.#maps.map(block => {
+                let blk = block.map(val => toHexString(val));
+                let {position, codePointSources, utf32MappedTo} = block;
+                codePointSources = codePointSources.map(curCP => curCP.toString(16).toUpperCase());
+                utf32MappedTo = utf32MappedTo.map(curCP => curCP.toString(16).toUpperCase());
+                blk.inline_comment = `#${position}: [${codePointSources.join(', ')}] ==> [${utf32MappedTo.join(', ')}]`;
+                return blk;
+            }),
             len: mapsLength,
         })}
     
@@ -533,4 +531,4 @@ const processCachedFile = async fileContent => {
 }
 
 
-start();
+await start();
