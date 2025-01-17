@@ -753,18 +753,18 @@ export const findSimilarRange = (left, right) => {
 };
 
 // Overlap Inserts Optimization:
-///    if the "right" table's tail has a match for the beginning of the "left" table,
-///    then we can omit inserting the first part of the "left" table.
-export const overlapInserts = (left, right) => {
-    if (left.length === 0) {
+///    if the "left" table's tail has a match for the beginning of the "right" table,
+///    then we can omit inserting the first part of the "right" table.
+export const overlapInserts = (lhs, rhs) => {
+    if (rhs.length === 0) {
         return 0;
     }
-    let rpos = Math.max(0, right.length - left.length);
-    top: for (; rpos !== right.length; ++rpos) {
-        const length = right.length - rpos;
+    let rpos = Math.max(0, lhs.length - rhs.length);
+    top: for (; rpos !== lhs.length; ++rpos) {
+        const length = lhs.length - rpos;
         for (let lpos = 0; lpos !== length; ++lpos) {
-            const lvalue = left.at(lpos);
-            const rvalue = right.at(rpos + lpos);
+            const lvalue = rhs.at(lpos);
+            const rvalue = lhs.at(rpos + lpos);
             if (lvalue !== rvalue) {
                 continue top;
             }
@@ -773,6 +773,28 @@ export const overlapInserts = (left, right) => {
     }
     return 0;
 };
+
+export const removeOverlaps = (lhs, rhs) => {
+    const overlapLen = overlapInserts(lhs, rhs);
+    if (overlapLen !== 0) {
+        lhs = lhs.slice(0, lhs.length - overlapLen);
+        rhs = rhs.slice(overlapLen, rhs.length);
+    }
+    return {lhs, rhs, overlapLen};
+}
+
+export const smashOverlappedBlocks = (blocks, onSmash = noop) => {
+    let smashedBlocks = [];
+    for (let i = 0; i < blocks.length - 1; ++i) {
+        const cur = blocks.at(i);
+        const nxt = blocks.at(i + 1);
+
+        const {lhs, rhs, overlapLen} = removeOverlaps(cur, nxt);
+        onSmash(overlapLen, i, i + 1); // call the callback
+        smashedBlocks.push(lhs, rhs);
+    }
+    return smashedBlocks;
+}
 
 export const popcount = (n) => {
     let c = 0n;
@@ -1073,21 +1095,28 @@ export function fillEmpty(arr, invalidValue = null) {
 }
 
 
+/// This is done in reverse order
 export function packBoolsIntoInts(boolArray, blockSize = 8n) {
     const result = [];
     const len = BigInt(boolArray.length);
+    const lastBit = 0b1n << (blockSize - 1n);
     let currentInt = 0n;
 
-    for (let i = 0n; i < len; i++) {
-        // Set the appropriate bit in the current integer
-        if (boolArray[i]) {
-            currentInt |= (1n << (i % blockSize));
+    let bit = 0b1n;
+    for (const curBit of boolArray) {
+        if (curBit === true) {
+            currentInt |= bit;
+        } else if (curBit !== false) {
+            throw new Error(`Invalid boolean: ${curBit}`);
         }
 
         // If we've packed 8 booleans, push the current integer to the result
-        if ((i + 1n) % blockSize === 0n) {
+        if (bit === lastBit) {
             result.push(currentInt);
             currentInt = 0n; // Reset for the next integer
+            bit = 0b1n;
+        } else {
+            bit <<= 1n;
         }
     }
 

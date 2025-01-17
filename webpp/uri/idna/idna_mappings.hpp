@@ -19,27 +19,45 @@ namespace webpp::uri::idna {
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
         using details::batch_bit_count;
         using details::batch_mask;
+        using details::disallowed;
         using details::idna_ref_blocks;
         using details::idna_ref_bools;
-        using details::idna_refs;
         using details::not_mapped;
 
-        if (code_point >= static_cast<CharT>(details::last_disallowed)) {
-            return details::disallowed;
-        }
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        auto const ref     = idna_refs[code_point >> batch_bit_count];
+        stl::uint16_t ref; // NOLINT(*-init-variables)
+        if (code_point < static_cast<CharT>(details::breakpoint_start)) [[likely]] {
+            ref = details::idna_refs[code_point >> batch_bit_count];
+        } else [[unlikely]] {
+            if (code_point >= static_cast<CharT>(details::last_disallowed)) {
+                return disallowed;
+            }
+            if (code_point >= static_cast<CharT>(details::breakpoint_end)) {
+                auto const pos =
+                  (code_point - static_cast<CharT>(details::breakpoint_end)) >> batch_bit_count;
+                ref = details::idna_refs_extra[pos];
+            } else {
+                return disallowed;
+            }
+        }
+
         auto const ref_ptr = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
         if (ref_ptr != ref) {
             // looking at the idna_ref_bools table
-            constexpr auto      pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
-            stl::uint16_t const status_bit =
-              0b1U & (idna_ref_bools[ref_ptr / pack_size] >> (pack_size - (ref_ptr % pack_size)));
-            return details::disallowed | status_bit; // if it's 1, it'll become valid, otherwise it stays
-                                                     // disallowed
+
+            constexpr auto pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
+            auto const     pos       = ref_ptr / pack_size;
+
+            // the bits in the integer are stored in reverse order, so we don't have to do additional
+            // calculations to get the bit that we need.
+            auto const          remaining  = ref_ptr % pack_size;
+            stl::uint16_t const status_bit = 0b1U & (idna_ref_bools[pos] >> remaining);
+
+            // if it's 1, it'll become valid, otherwise it stays disallowed
+            return disallowed | status_bit;
         }
 
-        return idna_ref_blocks[ref][code_point & batch_mask];
+        return idna_ref_blocks[ref + (code_point & batch_mask)];
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 

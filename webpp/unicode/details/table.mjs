@@ -93,7 +93,7 @@ export class TablePairs {
             };
         }
 
-        const overlapped = overlapInserts(modifiedInserts, this.values);
+        const overlapped = overlapInserts(this.values, modifiedInserts);
         if (overlapped !== 0) {
             pos = BigInt(this.values.length - overlapped);
             inserts = inserts.slice(overlapped, inserts.length);

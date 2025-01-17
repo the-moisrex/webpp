@@ -24,7 +24,7 @@ import {
     recursiveLength,
     findSimilarSubRange,
     findSimilarRange,
-    packBoolsIntoInts
+    packBoolsIntoInts, smashOverlappedBlocks, overlapInserts, removeOverlaps
 } from "../../../unicode/details/utils.mjs";
 
 import * as path from "node:path";
@@ -58,9 +58,12 @@ const isDisallowed = (flags) => flags === DISALLOWED;
 const isNotMapped = (flags) => !isMapped(flags);
 const flagsStatus = (flags) => {
     switch (flags) {
-        case VALID: return "valid";
-        case NOT_MAPPED: return "not_mapped";
-        case DISALLOWED: return "disallowed";
+        case VALID:
+            return "valid";
+        case NOT_MAPPED:
+            return "not_mapped";
+        case DISALLOWED:
+            return "disallowed";
         default:
             return isMapped(flags) ? `<Mapped:${flags}>` : `<invalid:${flags.toString(16)}>`;
     }
@@ -71,12 +74,17 @@ const flagsOr = (flags, pos) => flags | (isMapped(flags) ? pos : 0);
 class MappingTable {
 
     #refs = []; // items in this table points to the #refBlocks
+    #refsExtra = []; // same as refs table; it's heere to save space
     #refBlocks = []; // items in this table stores flags and points to the #maps
     #refBools = []; // An optimization for #refBlocks for blocks that can contain only bools.
     #maps = []; // the mapped code points that the other table point to
 
     // The last code point that after that everything is disallowed
     #lastDisallowed = 0n;
+
+    // This is the point where which reference table will be chosen
+    #refBreakPointStart = 0;
+    #refBreakPointEnd = 0;
 
     #rawMaps = [];
 
@@ -96,22 +104,25 @@ class MappingTable {
 
     constructor() {
         this.#refs = [];
+        this.#refsExtra = [];
         this.#refBlocks = [];
         this.#refBools = [];
         this.#maps = [];
 
         this.#refs.type = uint16;
+        this.#refsExtra.type = this.#refs.type;
         this.#refBlocks.type = uint16;
         this.#refBools.type = uint32; // boolean
         this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
+        this.#refsExtra.sizeof = this.#refs.length;
         this.#refBlocks.sizeof = sizeOf(this.#refBlocks.type);
         this.#refBools.sizeof = sizeOf(this.#refBools.type);
         this.#maps.sizeof = sizeOf(this.#maps.type);
 
         // this number affects the size of the tables, try changing it:
-        this.#batchBitCount = 8n;
+        this.#batchBitCount = 6n;
         this.#batchSize = 0b1 << Number(this.#batchBitCount);
         //     this.#bitLength = Number(this.#refs.sizeof);
 
@@ -142,6 +153,36 @@ class MappingTable {
         }
     }
 
+    findBreakPoint() {
+        let tolerance = 3;
+        let lastDisabled = true;
+        let i = this.#rawMaps.length - 1;
+        let length = 0;
+        let lastLength = 0;
+        for (; i >= 0 && tolerance !== 0; --i) {
+            const cur = this.#rawMaps[i];
+            const isDis = isDisallowed(cur.flags);
+            if (lastDisabled !== isDis) {
+                --tolerance;
+                lastLength = length;
+                length = 0;
+            }
+            lastDisabled = isDis;
+            ++length;
+        }
+        return {start: i, length: lastLength};
+    }
+
+    insertRef(ref) {
+        if (ref.pos < this.#refBreakPointStart) {
+            this.#refs.push(ref);
+        } else if (ref.pos >= this.#refBreakPointEnd) {
+            this.#refsExtra.push(ref);
+        } else {
+            console.log(`Omitted inserting ref:`, ref);
+        }
+    }
+
     /// check if the mapping for both code point indexes specified are the same
     #isSameMapping(lhsIndex, rhsIndex) {
         if (lhsIndex === rhsIndex) {
@@ -153,7 +194,7 @@ class MappingTable {
     }
 
     #findSimilarMappedTo(index) {
-        const { utf8MappedTo, flags } = this.#rawMaps.at(index);
+        const {utf8MappedTo, flags} = this.#rawMaps.at(index);
         if (isMapped(flags)) {
             const localUtf8MappedTo = [...utf8MappedTo, 0]; // add the last EOF '\0'
             return findSimilarSubRange(localUtf8MappedTo, this.#maps);
@@ -164,7 +205,7 @@ class MappingTable {
     #areAllNotMapped(start, length) {
         const end = start + length;
         for (let pos = start; pos !== end; ++pos) {
-            const { flags } = this.#rawMaps.at(pos);
+            const {flags} = this.#rawMaps.at(pos);
             if (isMapped(flags)) {
                 return false;
             }
@@ -175,19 +216,20 @@ class MappingTable {
     #findOrInsertBools(start, length) {
         length = length <= (this.#rawMaps.length - start) ? length : (this.#rawMaps.length - start);
         const end = start + length;
-        const block = this.#rawMaps.slice(start, end).map(({ flags }) => isValid(flags));
+        const block = this.#rawMaps.slice(start, end).map(({flags}) => isValid(flags));
         const found = findSimilarRange(block, this.#refBools);
         let targetIndex;
         if (found !== null) {
             targetIndex = found;
             console.log(`Bool Block Found: `, found, this.#refBools.length);
         } else {
+            const bools = packBoolsIntoInts(block, this.#refBools.sizeof).map(intVal => intVal.toString(2).padStart(Number(this.#refBools.sizeof), '0')).join("|");
 
             // didn't find it,
             // let's insert it then:
             targetIndex = this.#refBools.length;
             this.#refBools.push(...block);
-            console.log(`Bool Block Not found: `, targetIndex, this.#refBools.length);
+            console.log(`Bool Block Not found: `, bools, targetIndex, this.#refBools.length);
         }
 
         // const blockLen = Number(this.#refBools.sizeof);
@@ -213,7 +255,7 @@ class MappingTable {
                     pos = end;
                     break;
                 }
-                const { rawStart } = block;
+                const {rawStart} = block;
                 if (!this.#isSameMapping(rawStart + index, pos)) {
                     continue nextTarget;
                 }
@@ -223,7 +265,7 @@ class MappingTable {
         if (pos === end) { // we didn't find it, let's insert it then
             const statuses = [];
             for (let i = start; i !== end; ++i) {
-                const { codePoint, flags, utf8MappedTo, mappedTo } = this.#rawMaps.at(i);
+                const {codePoint, flags, utf8MappedTo, mappedTo} = this.#rawMaps.at(i);
                 let mapsPosition = 0;
 
                 // insert the utf-8 encoded stuff to the table
@@ -278,13 +320,21 @@ class MappingTable {
     process() {
         // Removing everything that's disallowed after the last one:
         const startLen = this.#rawMaps.length;
-        this.#rawMaps = this.#rawMaps.filter(({ codePoint }) => codePoint < this.#lastDisallowed);
+        this.#rawMaps = this.#rawMaps.filter(({codePoint}) => codePoint < this.#lastDisallowed);
         const endLen = this.#rawMaps.length;
         console.log("Removed trailing disallowed mappings:", startLen - endLen);
 
-        for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize) {
+        // split the reference tables:
+        const {start: splitStart, length: splitLength} = this.findBreakPoint();
+        this.#refBreakPointStart = splitStart;
+        this.#refBreakPointEnd = splitStart + splitLength;
+
+
+        let curBlock = 0;
+        for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize, ++curBlock) {
             let ref = {
                 index: batchIndex >>> Number(this.#batchBitCount),
+                pos: batchIndex
             };
             if (this.#areAllNotMapped(batchIndex, this.#batchSize)) {
                 ref.blockPtr = this.#findOrInsertBools(batchIndex, this.#batchSize);
@@ -294,6 +344,7 @@ class MappingTable {
                 ref.blockPtr |= this.#tablePickMask;
             } else {
                 ref.blockPtr = this.#findOrInsertBlock(batchIndex, this.#batchSize);
+                ref.blockPtr = recursiveLength(this.#refBlocks, ref.blockPtr);
                 if (ref.blockPtr >= this.#tablePickMask) {
                     throw new Error(`We ran out of room for blocks table; it now has a conflict with the bit mask!`);
                 }
@@ -301,41 +352,58 @@ class MappingTable {
             if (ref.blockPtr > this.#refMax) {
                 throw new Error(`Calculated value ${ref.blockPtr} is greater than ${this.#refMax}, so we can't put it inside the ref table; ${this.#tablePickMask}`);
             }
-            this.#refs.push(ref);
+
+            ref = this.optimizeBlocks(ref);
+            this.insertRef(ref);
         }
     }
 
-    serializeTable(table) {
-        let res = "";
-        for (let pos = 0; pos !== table.length;) {
-            const val = table.at(pos);
-            if (val === undefined) {
-                throw new Error(`value: ${val}, pos: ${pos}, length: ${table.length}`);
-            }
-            res += `0x${val.toString(16)}${table.postfix}, `;
-            ++pos;
-            if (pos % 20 === 0) {
-                res += '\n';
+    optimizeBlocks(ref) {
+        if (this.#refBlocks.length > 1) {
+            const curBlock = this.#refBlocks.length - 1;
+            const {
+                lhs,
+                rhs,
+                overlapLen
+            } = removeOverlaps(this.#refBlocks[curBlock - 1].statuses, this.#refBlocks[curBlock].statuses);
+            if (overlapLen !== 0) {
+                this.#refBlocks[curBlock - 1].statuses = lhs;
+                this.#refBlocks[curBlock - 1].length = lhs.length;
+                this.#refBlocks[curBlock].statuses = rhs;
+                this.#refBlocks[curBlock].length = rhs.length;
+                ref.blockPtr -= overlapLen;
             }
         }
-        return res;
+
+        // todo: the bools table can be optimize as well
+        // todo: the findOrInsertBlock algorithm can be optimized as well
+        return ref;
     }
 
     render(version, creationDate) {
+        const packedBools = packBoolsIntoInts(this.#refBools, this.#refBools.sizeof);
+        // const packedLength = Math.ceil(this.#refBools.length / Number(this.#refBools.sizeof));
+        const packedLength = packedBools.length;
+
         const mapsLength = recursiveLength(this.#maps);
         const blocksLength = recursiveLength(this.#refBlocks);
         if (mapsLength === this.#maps.length || blocksLength === this.#refBlocks.length) {
             throw new Error(`Recursive length calculation is wrong; maps len: ${this.#maps.length}, blocks len: ${this.#refBlocks.length} * ${this.#refBlocks[0].length}`);
         }
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
+        const refsExtraBitLength = this.#refsExtra.length * Number(this.#refsExtra.sizeof);
         const blockBitLength = blocksLength * Number(this.#refBlocks.sizeof);
         const boolsBitLength = Math.ceil(this.#refBools.length / Number(this.#refBools.sizeof)) * Number(this.#refBools.sizeof);
         const mapsBitLength = mapsLength * Number(this.#maps.sizeof);
-        const sumBitLength = refsBitLength + blockBitLength + mapsBitLength;
+        const sumBitLength = refsBitLength + refsExtraBitLength + blockBitLength + boolsBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
         console.log(`  Count       : ${this.#refs.length} * ${this.#refs.sizeof}`);
         console.log(`  in bytes    : ${Math.ceil(refsBitLength / 8)},`);
         console.log(`  in KibiBytes: ${(refsBitLength / 8 / 1024).toFixed(2)} KiB\n`);
+        console.log(`Reference Extra Table size:`);
+        console.log(`  Count       : ${this.#refsExtra.length} * ${this.#refsExtra.sizeof}`);
+        console.log(`  in bytes    : ${Math.ceil(refsExtraBitLength / 8)},`);
+        console.log(`  in KibiBytes: ${(refsExtraBitLength / 8 / 1024).toFixed(2)} KiB\n`);
         console.log(`Ref Blocks Table size:`);
         console.log(`  Count       : ${blocksLength} * ${this.#refBlocks.sizeof}`);
         console.log(`  in bytes    : ${Math.ceil(blockBitLength / 8)},`);
@@ -352,6 +420,18 @@ class MappingTable {
         console.log(`  in bytes    : ${Math.ceil(sumBitLength / 8)},`);
         console.log(`  in KibiBytes: ${(sumBitLength / 8 / 1024).toFixed(2)} KiB\n`);
         console.log(`Last Disallowed Code Point: ${this.#lastDisallowed}\n`);
+
+
+        const refPrinter = ({blockPtr}) => {
+            blockPtr = (blockPtr || 0);
+            let ret = '';
+            if ((blockPtr & this.#tablePickMask) === this.#tablePickMask) {
+                ret += `blt | `;
+                blockPtr &= ~this.#tablePickMask; // removing it
+            }
+            ret += `0x${blockPtr.toString(16).toUpperCase()}U`
+            return ret;
+        };
 
         return `
 /**
@@ -386,6 +466,10 @@ namespace webpp::uri::idna::details {
     [[maybe_unused]] static constexpr ${this.#refBlocks.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
     static constexpr ${this.#refBlocks.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
+    
+    // Reference table is split into two tables, these are the where they start and end:
+    static constexpr auto breakpoint_start = static_cast<char32_t>(${(this.#refBreakPointStart)});
+    static constexpr auto breakpoint_end = static_cast<char32_t>(${(this.#refBreakPointEnd)});
 
     // Pick the table with this mask (between bools table and the block table)
     static constexpr ${this.#refBlocks.type.description} table_pick_mask = 0b${this.#tablePickMask.toString(2)}U;
@@ -397,29 +481,33 @@ namespace webpp::uri::idna::details {
      * Table size: ${refsBitLength / 8} B or ${(refsBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#refs.type.description}, ${this.#refs.length}ULL> idna_refs {
-       ${this.#refs.map(({ blockPtr }) => {
-            blockPtr = (blockPtr || 0);
-            let ret = '';
-            if ((blockPtr & this.#tablePickMask) === this.#tablePickMask) {
-                ret += `blt | `;
-                blockPtr &= ~this.#tablePickMask; // removing it
-            }
-            ret += `0x${blockPtr.toString(16).toUpperCase()}U`
-            return ret;
-        }).join(", ")}
+       ${this.#refs.map(refPrinter).join(", ")}
+    };
+    
+
+    /**
+     * IDNA Reference Table part 2 (Extra).
+     * 
+     * Table size: ${refsExtraBitLength / 8} B or ${(refsExtraBitLength / 8 / 1024).toFixed(2)} KiB
+     */
+    static constexpr std::array<${this.#refsExtra.type.description}, ${this.#refsExtra.length}ULL> idna_refs_extra {
+       ${this.#refsExtra.map(refPrinter).join(", ")}
     };
     
 
     /**
      * IDNA Reference Blocks Table (for valid or disallowed values only).
+     *
+     * The bits in the integer are stored in reverse order, so we don't have to
+     * do additional calculations to get the bit that we need.
      * 
      *  - true:  ${flagsStatus(VALID)}
      *  - false: ${flagsStatus(DISALLOWED)}
      * 
      * Table size: ${boolsBitLength / 8} B or ${(boolsBitLength / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<${this.#refBools.type.description}, ${this.#refBools.length / Number(this.#refBools.sizeof)}ULL> idna_ref_bools {
-       ${packBoolsIntoInts(this.#refBools, this.#refBools.sizeof).map((block) => `0b${block.toString(2).padStart(Number(this.#refBools.sizeof), '0')}U`).join(", ")}
+    static constexpr std::array<${this.#refBools.type.description}, ${packedLength}ULL> idna_ref_bools {
+       ${packedBools.map((block) => `0b${block.toString(2).padStart(Number(this.#refBools.sizeof), '0')}U`).join(", ")}
     };
 
     /**
@@ -427,13 +515,13 @@ namespace webpp::uri::idna::details {
      * 
      * Table size: ${blockBitLength / 8} B or ${(blockBitLength / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<std::array<${this.#refBlocks.type.description}, ${this.#refBlocks[0].length}ULL>, ${this.#refBlocks.length}ULL> idna_ref_blocks {{
+    static constexpr std::array<${this.#refBlocks.type.description}, ${blocksLength}ULL> idna_ref_blocks {
        ${this.#refBlocks.map((block, blkIndex) => `
        
-           // Block #${blkIndex}
-           { ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `${(flags || 0).toString()}U`).join(", ")} }
+           // Start of Block #${blkIndex}
+           ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `${(flags || 0).toString()}U`).join(", ")}
        `).join(", ")}
-    }};
+    };
     
     /**
      * IDNA Mapped Code Points Table.

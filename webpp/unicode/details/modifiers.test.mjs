@@ -67,7 +67,7 @@ console.log(
 const tab1 = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 const tab2 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-const res = overlapInserts(tab1, tab2);
+const res = overlapInserts(tab2, tab1);
 console.log("Found:", res, "Real:", tab1.length);
 
 console.log(
