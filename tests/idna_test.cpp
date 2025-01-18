@@ -225,6 +225,39 @@ TEST(BasicIDNATests, MostMappings) {
     EXPECT_EQ(status_of(152), disallowed);
     EXPECT_EQ(status_of(155), disallowed);
 
+    EXPECT_EQ(mapped<std::u32string>(319), U"\x006C\x00B7"); // mapped
+    EXPECT_EQ(mapped<std::u32string>(320), U"\x006C\x00B7"); // mapped
+    EXPECT_EQ(status_of(446), valid);
+    EXPECT_EQ(status_of(447), valid);
+    EXPECT_EQ(status_of(450), valid);
+    EXPECT_EQ(status_of(575), valid);
+    EXPECT_EQ(status_of(576), valid);
+
+    EXPECT_EQ(status_of(1480), disallowed);
+    EXPECT_EQ(status_of(1481), disallowed);
+    EXPECT_EQ(status_of(1482), disallowed);
+    EXPECT_EQ(status_of(1483), disallowed);
+    EXPECT_EQ(status_of(1484), disallowed);
+    EXPECT_EQ(status_of(1485), disallowed);
+    EXPECT_EQ(status_of(1486), disallowed);
+    EXPECT_EQ(status_of(1487), disallowed);
+    EXPECT_EQ(status_of(1488), valid);
+    EXPECT_EQ(status_of(1490), valid);
+    EXPECT_EQ(status_of(1492), valid);
+    EXPECT_EQ(status_of(1494), valid);
+
+    EXPECT_EQ(status_of(1512), valid);
+    EXPECT_EQ(status_of(1514), valid);
+    EXPECT_EQ(status_of(1515), disallowed);
+    EXPECT_EQ(status_of(1516), disallowed);
+    EXPECT_EQ(status_of(1517), disallowed);
+    EXPECT_EQ(status_of(1518), disallowed);
+    EXPECT_EQ(status_of(1519), valid);
+    EXPECT_EQ(status_of(1520), valid);
+
+    EXPECT_EQ(status_of(205'744), disallowed);
+    EXPECT_EQ(status_of(205'742), valid);
+
     EXPECT_EQ(mapped<std::u32string>(173), U"");     // ignored
     EXPECT_EQ(mapped<std::u32string>(847), U"");     // ignored
     EXPECT_EQ(mapped<std::u32string>(4447), U"");    // ignored

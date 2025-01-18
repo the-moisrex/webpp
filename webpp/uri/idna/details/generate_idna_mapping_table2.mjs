@@ -221,7 +221,7 @@ class MappingTable {
         let targetIndex;
         if (found !== null) {
             targetIndex = found;
-            console.log(`Bool Block Found: `, found, this.#refBools.length);
+            console.log(`Bool Block Found: `, found, this.#refBools.length, block.map(val => val ? '1' : '0').join(""));
         } else {
             const bools = packBoolsIntoInts(block, this.#refBools.sizeof).map(intVal => intVal.toString(2).padStart(Number(this.#refBools.sizeof), '0')).join("|");
 
@@ -229,15 +229,8 @@ class MappingTable {
             // let's insert it then:
             targetIndex = this.#refBools.length;
             this.#refBools.push(...block);
-            console.log(`Bool Block Not found: `, bools, targetIndex, this.#refBools.length);
+            console.log(`Bool Block Not found: `, bools, targetIndex, this.#refBools.length, `${start}+${length}`);
         }
-
-        // const blockLen = Number(this.#refBools.sizeof);
-        // if (targetIndex % blockLen !== 0) {
-        //     throw new Error("Index is not aligned.");
-        // }
-        // const index = targetIndex / blockLen;
-        // console.log(`Index: `, index, this.#refBools.length);
         return targetIndex;
     }
 
@@ -277,6 +270,7 @@ class MappingTable {
                         mapping.position = mapsPosition;
                         mapping.codePointSources = [codePoint];
                         mapping.utf32MappedTo = mappedTo;
+                        mapping.start = recursiveLength(this.#maps);
                         this.#maps.push(mapping);
                     } else {
                         this.#maps[mapsPosition].codePointSources.push(codePoint);
@@ -345,6 +339,7 @@ class MappingTable {
             } else {
                 ref.blockPtr = this.#findOrInsertBlock(batchIndex, this.#batchSize);
                 ref.blockPtr = recursiveLength(this.#refBlocks, ref.blockPtr);
+                ref = this.optimizeBlocks(ref);
                 if (ref.blockPtr >= this.#tablePickMask) {
                     throw new Error(`We ran out of room for blocks table; it now has a conflict with the bit mask!`);
                 }
@@ -353,7 +348,6 @@ class MappingTable {
                 throw new Error(`Calculated value ${ref.blockPtr} is greater than ${this.#refMax}, so we can't put it inside the ref table; ${this.#tablePickMask}`);
             }
 
-            ref = this.optimizeBlocks(ref);
             this.insertRef(ref);
         }
     }
@@ -362,16 +356,14 @@ class MappingTable {
         if (this.#refBlocks.length > 1) {
             const curBlock = this.#refBlocks.length - 1;
             const {
-                lhs,
                 rhs,
                 overlapLen
             } = removeOverlaps(this.#refBlocks[curBlock - 1].statuses, this.#refBlocks[curBlock].statuses);
             if (overlapLen !== 0) {
-                this.#refBlocks[curBlock - 1].statuses = lhs;
-                this.#refBlocks[curBlock - 1].length = lhs.length;
                 this.#refBlocks[curBlock].statuses = rhs;
                 this.#refBlocks[curBlock].length = rhs.length;
                 ref.blockPtr -= overlapLen;
+                console.log("Smashed blocks:", overlapLen, ref, this.#refBlocks[curBlock - 1].statuses.slice(this.#refBlocks[curBlock - 1].statuses.length - overlapLen - 2), this.#refBlocks[curBlock].statuses.slice(0, overlapLen + 2)/*, rhs*/);
             }
         }
 
@@ -393,7 +385,7 @@ class MappingTable {
         const refsBitLength = this.#refs.length * Number(this.#refs.sizeof);
         const refsExtraBitLength = this.#refsExtra.length * Number(this.#refsExtra.sizeof);
         const blockBitLength = blocksLength * Number(this.#refBlocks.sizeof);
-        const boolsBitLength = Math.ceil(this.#refBools.length / Number(this.#refBools.sizeof)) * Number(this.#refBools.sizeof);
+        const boolsBitLength = packedLength * Number(this.#refBools.sizeof);
         const mapsBitLength = mapsLength * Number(this.#maps.sizeof);
         const sumBitLength = refsBitLength + refsExtraBitLength + blockBitLength + boolsBitLength + mapsBitLength;
         console.log(`Reference Table size:`);
@@ -517,8 +509,6 @@ namespace webpp::uri::idna::details {
      */
     static constexpr std::array<${this.#refBlocks.type.description}, ${blocksLength}ULL> idna_ref_blocks {
        ${this.#refBlocks.map((block, blkIndex) => `
-       
-           // Start of Block #${blkIndex}
            ${block.statuses.map(flags => isNotMapped(flags) ? flagsStatus(flags) : `${(flags || 0).toString()}U`).join(", ")}
        `).join(", ")}
     };
@@ -534,10 +524,10 @@ namespace webpp::uri::idna::details {
             type: this.#maps.type,
             printableValues: this.#maps.map(block => {
                 let blk = block.map(val => toHexString(val));
-                let {position, codePointSources, utf32MappedTo} = block;
+                let {position, start, codePointSources, utf32MappedTo} = block;
                 codePointSources = codePointSources.map(curCP => curCP.toString(16).toUpperCase());
                 utf32MappedTo = utf32MappedTo.map(curCP => curCP.toString(16).toUpperCase());
-                blk.inline_comment = `#${position}: [${codePointSources.join(', ')}] ==> [${utf32MappedTo.join(', ')}]`;
+                blk.inline_comment = `#${position}/${start}: [${codePointSources.join(', ')}] ==> [${utf32MappedTo.join(', ')}]`;
                 return blk;
             }),
             len: mapsLength,

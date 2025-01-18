@@ -774,6 +774,7 @@ export const overlapInserts = (lhs, rhs) => {
     return 0;
 };
 
+/// We remove both of them, but of course you need to keep one of them:
 export const removeOverlaps = (lhs, rhs) => {
     const overlapLen = overlapInserts(lhs, rhs);
     if (overlapLen !== 0) {

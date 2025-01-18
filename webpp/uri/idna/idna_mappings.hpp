@@ -26,7 +26,7 @@ namespace webpp::uri::idna {
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         stl::uint16_t ref; // NOLINT(*-init-variables)
-        if (code_point < static_cast<CharT>(details::breakpoint_start)) [[likely]] {
+        if (code_point <= static_cast<CharT>(details::breakpoint_start)) [[likely]] {
             ref = details::idna_refs[code_point >> batch_bit_count];
         } else [[unlikely]] {
             if (code_point >= static_cast<CharT>(details::last_disallowed)) {
@@ -41,8 +41,9 @@ namespace webpp::uri::idna {
             }
         }
 
-        auto const ref_ptr = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
-        if (ref_ptr != ref) {
+        auto const clean_ref = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
+        auto const ref_ptr   = clean_ref + (code_point & batch_mask);
+        if (clean_ref != ref) {
             // looking at the idna_ref_bools table
 
             constexpr auto pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
@@ -50,14 +51,15 @@ namespace webpp::uri::idna {
 
             // the bits in the integer are stored in reverse order, so we don't have to do additional
             // calculations to get the bit that we need.
-            auto const          remaining  = ref_ptr % pack_size;
+            auto const          remaining  = (ref_ptr % pack_size);
             stl::uint16_t const status_bit = 0b1U & (idna_ref_bools[pos] >> remaining);
 
             // if it's 1, it'll become valid, otherwise it stays disallowed
             return disallowed | status_bit;
         }
 
-        return idna_ref_blocks[ref + (code_point & batch_mask)];
+        // we don't need to use ref_ptr, but we've already calculated it anyway:
+        return idna_ref_blocks[ref_ptr];
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
