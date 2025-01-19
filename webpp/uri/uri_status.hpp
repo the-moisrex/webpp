@@ -33,6 +33,9 @@ namespace webpp::uri {
         /// Parse puny codes
         bool parse_punycodes = true;
 
+        /// Ignore invalid punycode (IgnoreInvalidPunycode in UTS #46)
+        bool ignore_invalid_punycode = false;
+
         /// Parse port (file:// scheme doesn't have a port, this is used there)
         bool parse_port = true;
 
@@ -108,6 +111,7 @@ namespace webpp::uri {
       .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_punycodes                           = true,
+      .ignore_invalid_punycode                   = false,
       .parse_port                                = true,
       .parse_queries                             = true,
       .parse_fragment                            = true,
@@ -129,6 +133,7 @@ namespace webpp::uri {
       .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_punycodes                           = true,
+      .ignore_invalid_punycode                   = true, // todo: is this a security bug?
       .parse_port                                = true,
       .parse_queries                             = true,
       .parse_fragment                            = true,

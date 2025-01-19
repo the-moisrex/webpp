@@ -237,12 +237,12 @@ int main() {
 ## Development
 
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if
-you're not really good at web development, but you know C++ very well, then we have lots of things that you can help with which doesn't have anything to do with web development
+you're not that good at web development, but you know C++ very well, then we have lots of things that you can help with which doesn't have anything to do with web development
 directly.
 
 ### Examples
 
-In the [examples](./examples) directory you can find examples. That's not much but it'll give you they high level viewpoint.
+In the [examples](./examples) directory you can find examples. That's not much, but it'll give you they high level viewpoint.
 Take a look at them, and you can be sure that we'll try to write tests for all of them; so if you read tests,
 you'll learn even more about the project.
 

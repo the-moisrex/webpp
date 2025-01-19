@@ -95,7 +95,7 @@ namespace webpp::istl {
     constexpr decltype(auto) for_range(Func&& func) noexcept(stl::is_nothrow_invocable_v<Func>) {
         static_assert(std::is_invocable_v<Func, make_index_range<Start, End>>,
                       "Function must have an specific signature.");
-        return func(make_index_range<Start, End>());
+        return stl::forward<Func>(func)(make_index_range<Start, End>());
     }
 
 
