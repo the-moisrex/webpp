@@ -7,7 +7,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
-#include "./details/uri_components_encoding.hpp"
+#include "./parser/uri_components.hpp"
 
 namespace webpp::uri {
 

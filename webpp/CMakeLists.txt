@@ -161,14 +161,24 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/ip/ip_validators.hpp
         ${LIB_INCLUDE_DIR}/ip/default_endpoints.hpp
 
-        ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/iiequals.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/uri_helpers.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/windows_drive_letter.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/uri_components.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/uri_components_encoding.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/special_schemes.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/host_ip.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/constants.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_uri.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_scheme.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_authority.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_authority_pieces.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_credentials.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_host.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_domain.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_port.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_path.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/parse_fragment.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/iiequals.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/uri_helpers.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/windows_drive_letter.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/uri_components.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/uri_components_encoding.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/special_schemes.hpp
+        ${LIB_INCLUDE_DIR}/uri/parser/host_ip.hpp
         ${LIB_INCLUDE_DIR}/uri/uri_status.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/credentials.hpp
@@ -182,7 +192,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/scheme.hpp
         ${LIB_INCLUDE_DIR}/uri/uri.hpp
         ${LIB_INCLUDE_DIR}/uri/uri_string.hpp
-        ${LIB_INCLUDE_DIR}/uri/authority.hpp
         ${LIB_INCLUDE_DIR}/uri/domain.hpp
         ${LIB_INCLUDE_DIR}/uri/idna/idna_mappings.hpp
         ${LIB_INCLUDE_DIR}/uri/idna/idna_to_ascii.hpp

@@ -18,7 +18,7 @@ namespace webpp::uri {
     /// URI Parsing Options,
     /// These options are designed to
     /// Default values are WHATWG-Compliant values (if relevant)
-    static constexpr struct alignas(32) uri_parsing_options {
+    static constexpr struct uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string, and you may enable if you're working with a stream
         bool eof_is_valid = true;
@@ -512,7 +512,20 @@ namespace webpp::uri {
         status = stl::to_underlying(value);
     }
 
-    /// multiple calls with the same value must not affect the result, meaning, if you set an specific warning
+    /// Conditionally set an error or set as valid
+    template <bool Opt>
+    static constexpr void set_error_if(
+      stl::underlying_type_t<uri_status>& status,
+      uri_status const                    invalid_state, // NOLINT(*-easily-swappable-parameters)
+      uri_status const                    valid_state = uri_status::valid) noexcept {
+        if constexpr (Opt) {
+            set_error(status, invalid_state);
+        } else {
+            set_valid(status, valid_state);
+        }
+    }
+
+    /// multiple calls with the same value must not affect the result, meaning, if you set a specific warning
     /// 5 times, the status should not be corrupted.
     static constexpr void set_warning(stl::underlying_type_t<uri_status>& status,
                                       uri_status const                    value) noexcept {

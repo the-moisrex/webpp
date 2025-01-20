@@ -53,6 +53,9 @@ namespace webpp::uri::idna {
             }
         }
 
+        if constexpr (Options.verify_dns_length) {
+        }
+
         return valid;
     }
 
