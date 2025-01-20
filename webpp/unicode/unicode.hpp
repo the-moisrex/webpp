@@ -115,6 +115,12 @@ namespace webpp::unicode {
         }
     }();
 
+    template <typename CharT = char8_t>
+    [[nodiscard]] static constexpr bool is_ascii(CharT const code_point) noexcept {
+        return code_point < 0x80;
+    }
+
+
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
         return static_cast<u8>(0xff & oct);

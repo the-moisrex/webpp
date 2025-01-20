@@ -1,39 +1,90 @@
 #ifndef WEBPP_URL_PUNY_CODES_HPP
 #define WEBPP_URL_PUNY_CODES_HPP
 
+#include "../../std/iterator.hpp"
 #include "../../std/string.hpp"
+#include "../../std/string_view.hpp"
+#include "unicode/unicode.hpp"
 
 #include <cstdint>
 #include <cstring>
 
-namespace webpp::uri {
+namespace webpp::uri::idna {
+
+    // NOLINTBEGIN(*-magic-numbers)
+
+    using punycode_uint = stl::uint32_t;
+
+
+    enum struct punycode_status : stl::uint8_t {
+        success = 0,
+        bad_input, // Input is invalid.
+        overflow   // Input needs wider integers to process.
+    };
+
+    static constexpr stl::string_view to_string(punycode_status const status) noexcept {
+        switch (status) {
+            case punycode_status::success: return "Success";
+            case punycode_status::bad_input: return "Input is invalid";
+            case punycode_status::overflow: return "Input needs wider integers to process";
+            default: return "Unknown error";
+        }
+    }
 
     /**
      * Default values for punycode parameters
      * From: https://www.rfc-editor.org/rfc/rfc3492.html#section-5
      */
-    struct bootstring_parameters {
-        // NOLINTBEGIN(*-magic-numbers)
-        stl::int32_t  base         = 36;
-        stl::int32_t  tmin         = 1;
-        stl::int32_t  tmax         = 26;
-        stl::int32_t  skew         = 38;
-        stl::int32_t  damp         = 700;
-        stl::int32_t  initial_bias = 72;
-        stl::uint32_t initial_n    = 0x80U;
-        // NOLINTEND(*-magic-numbers)
+    struct alignas(32) punycode_options {
+        punycode_uint base         = 36U;
+        punycode_uint tmin         = 1U;
+        punycode_uint tmax         = 26U;
+        punycode_uint skew         = 38U;
+        punycode_uint damp         = 700U;
+        punycode_uint initial_bias = 72U;
+        punycode_uint initial_n    = 0x80U;
+        punycode_uint delimiter    = 0x2DU;
     };
+
+    /**
+     * This function returns the numeric value of a basic code
+     * point (for use in representing integers) in the range 0 to
+     * base-1, or base if cp is, does not represent a value.
+     */
+    template <punycode_options Options = {}>
+    static constexpr punycode_uint decode_digit(punycode_uint const code_point) noexcept {
+        // NOLINTBEGIN(*-avoid-nested-conditional-operator)
+        return code_point - 48 < 10   ? code_point - 22
+               : code_point - 65 < 26 ? code_point - 65
+               : code_point - 97 < 26 ? code_point - 97
+                                      : Options.base;
+        // NOLINTEND(*-avoid-nested-conditional-operator)
+    }
+
+    /**
+     * This function returns the basic code point whose value
+     * (when used for representing integers) is d, which needs to be in
+     * the range 0 to base-1.  The lowercase form is used unless flag is
+     * nonzero, in which case the uppercase form is used.  The behavior
+     * is undefined if flag is nonzero and digit d has no uppercase form.
+     */
+    template <typename CharT = char>
+    static constexpr CharT encode_digit(punycode_uint const code_point) noexcept {
+        //  0...25 map to ASCII a...z or A...Z
+        // 26...35 map to ASCII 0...9
+        return code_point < 26 ? static_cast<CharT>(code_point + 97) : static_cast<CharT>(code_point + 22);
+    }
 
     /**
      * Bias adaptation function
      * https://www.rfc-editor.org/rfc/rfc3492.html#section-6.1
      */
-    template <bootstring_parameters Options = {}>
-    static constexpr stl::int32_t
-    adapt(stl::int32_t delta, stl::int32_t const num_points, bool const first_time) noexcept {
-        delta               = first_time ? delta / Options.damp : delta / 2;
-        delta              += delta / num_points;
-        stl::int32_t k_val  = 0;
+    template <punycode_options Options = {}>
+    static constexpr punycode_uint
+    adapt(punycode_uint delta, punycode_uint const num_points, bool const first_time) noexcept {
+        delta                = first_time ? delta / Options.damp : delta / 2;
+        delta               += delta / num_points;
+        punycode_uint k_val  = 0;
         while (delta > ((Options.base - Options.tmin) * Options.tmax) / 2) {
             delta /= Options.base - Options.tmin;
             k_val += Options.base;
@@ -44,21 +95,123 @@ namespace webpp::uri {
     /**
      * Converts a UTF-8 input into punycode.
      *
+     * We don't need to use unicode::unchecked::append(...) to append the code in the implementation,
+     * since anything that we append, must be in ASCII range.
+     *
      * https://www.rfc-editor.org/info/rfc3492
      * https://www.rfc-editor.org/info/rfc5891
      */
-    template <bootstring_parameters Options = {},
-              istl::CharType        CharT   = char32_t,
-              istl::String          OutStrT = stl::u32string>
-    [[nodiscard]] constexpr bool bootstring(stl::basic_string_view<CharT> src, OutStrT &out) {}
+    template <punycode_options Options = {},
+              istl::CharType   CharT   = char32_t,
+              istl::Appendable Iter    = std::u8string::iterator>
+    [[nodiscard]] static constexpr punycode_status punycode_encode(
+      stl::basic_string_view<CharT> src,
+      Iter                         &out) noexcept(istl::NothrowAppendable<Iter>) {
+        using enum punycode_status;
+        using enum unicode::checked::error_handling;
+        using istl::iter_append;
 
-    /// Convert to punycode
-    template <istl::CharType CharT = char32_t, istl::String OutStrT = stl::u32string>
-    [[nodiscard]] constexpr bool to_punycode(stl::basic_string_view<CharT> src, OutStrT &out) {
-        return bootstring(src, out);
+        out.reserve(src.size() + out.size());
+        punycode_uint n_val       = Options.initial_n;
+        punycode_uint delta       = 0;
+        punycode_uint bias        = Options.initial_bias;
+        stl::size_t   handled_len = 0; // it's the number of code points that have been handled
+        auto          ptr         = src.begin();
+
+        // ASCII characters are put in order they appear:
+        while (ptr != src.end()) {
+            auto const code_point = unicode::checked::next_code_point<return_negated_char>(ptr, src.end());
+            if (unicode::is_ascii(code_point)) {
+                ++handled_len;
+                iter_append(out, code_point);
+            } else if (code_point < 0) [[unlikely]] {
+                return bad_input;
+            }
+        }
+
+        auto const basics_len = handled_len; // it's the number of basic code points
+        if (basics_len > 0) {
+            iter_append(out, Options.delimiter);
+        }
+        while (handled_len < src.size()) {
+            // Find the next larger non-ascii code point:
+            punycode_uint max_m = unicode::max_legal_utf32<punycode_uint>;
+            ptr                 = src.begin();
+            while (ptr != src.end()) {
+                auto const code_point = unicode::checked::next_code_point<return_unchanged>(ptr, src.end());
+                if (code_point >= n_val && code_point < max_m) {
+                    max_m = code_point;
+                }
+            }
+
+            auto const diff = max_m - n_val;
+            if (diff > (unicode::max_utf32<punycode_uint> - delta) / (handled_len + 1)) [[unlikely]] {
+                return overflow;
+            }
+            delta += static_cast<punycode_uint>(diff * (handled_len + 1));
+            n_val  = max_m;
+
+            ptr = src.begin();
+            while (ptr != src.end()) {
+                auto const code_point = unicode::checked::next_code_point<return_unchanged>(ptr, src.end());
+
+                if (code_point < n_val) {
+                    if (delta == unicode::max_utf32<punycode_uint>) [[unlikely]] {
+                        return overflow;
+                    }
+                    ++delta;
+                }
+
+                if (code_point == n_val) {
+                    punycode_uint q_val = delta;
+                    for (punycode_uint k_val = Options.base;; k_val += Options.base) {
+                        punycode_uint const t_val =
+                          k_val <= bias ? Options.tmin
+                          : k_val >= bias + Options.tmax // NOLINT(*-avoid-nested-conditional-operator)
+                            ? Options.tmax
+                            : k_val - bias;
+
+                        if (q_val < t_val) {
+                            break;
+                        }
+                        auto const ascii_char =
+                          encode_digit<CharT>(t_val + ((q_val - t_val) % (Options.base - t_val)));
+                        iter_append(out, ascii_char);
+                        q_val = (q_val - t_val) / (Options.base - t_val);
+                    }
+                    iter_append(out, encode_digit<CharT>(q_val));
+                    bias =
+                      adapt(delta, static_cast<punycode_uint>(handled_len + 1), handled_len == basics_len);
+                    delta = 0;
+                    ++handled_len;
+                }
+            }
+            ++delta;
+            ++n_val;
+        }
+        return success;
     }
 
-} // namespace webpp::uri
+    /// Convert to punycode
+    template <istl::CharType CharT = char32_t, istl::Appendable Iter = std::u8string::iterator>
+    [[nodiscard]] static constexpr punycode_status to_punycode(stl::basic_string_view<CharT> src, Iter &out)
+      noexcept(istl::NothrowAppendable<Iter>) {
+        return punycode_encode<punycode_options{}, CharT, Iter>(src, out);
+    }
+
+    template <istl::String            OutStrT = std::string,
+              istl::StringViewifiable StrVT   = stl::string_view,
+              typename... Args>
+    [[nodiscard]] static constexpr OutStrT punycode_of(StrVT &&src, Args &&...args) {
+        auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
+        using char_type     = istl::char_type_of_t<decltype(src_view)>;
+        OutStrT out{stl::forward<Args>(args)...};
+        stl::ignore = to_punycode<char_type, OutStrT>(src_view, out);
+        return out;
+    }
+
+    // NOLINTEND(*-magic-numbers)
+} // namespace webpp::uri::idna
 
 
 #endif // WEBPP_URL_PUNY_CODES_HPP
