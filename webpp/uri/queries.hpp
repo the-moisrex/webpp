@@ -9,9 +9,11 @@
 namespace webpp::uri {
 
 
-    /// Serialize queries
-    /// Storage type can be structured (not string-like), and also
-    /// Storage type can be string-like (not-structured)
+    /**
+     * Serialize queries
+     * Storage type can be structured (not string-like), and also
+     * Storage type can be string-like (not-structured)
+     */
     template <typename StorageType, istl::StringLike StrT>
     static constexpr void
     render_queries(StorageType const& storage, StrT& out, bool const add_separators = false)

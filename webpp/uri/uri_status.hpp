@@ -196,7 +196,7 @@ namespace webpp::uri {
         valid_punycode = valid_bit | 2U, // valid URI which contains a punycode
 
         // common errors:
-        invalid_character = warning_bit >> 0U, // found an invalid character
+        invalid_character = warning_bit >> 0U, // found an invalid URL Unit (code point or percent encoded)
         too_long          = error_bit | 1U,    // the URI is too long
         empty_string      = error_bit | 2U,    // the URI/URL/.. is empty
 
@@ -280,7 +280,7 @@ namespace webpp::uri {
                 // common errors:
             case invalid_character:
                 return {
-                  "Found an invalid character in the URI; "
+                  "Found an invalid URI Unit (a code point or a percent encoded character) in the URI; "
                   "more info: https://url.spec.whatwg.org/#invalid-url-unit"};
             case too_long: return {"The URI is too long, max allowed character is 255"};
             case empty_string:
@@ -530,6 +530,14 @@ namespace webpp::uri {
     static constexpr void set_warning(stl::underlying_type_t<uri_status>& status,
                                       uri_status const                    value) noexcept {
         status |= stl::to_underlying(value);
+    }
+
+    template <bool Opt>
+    static constexpr void set_warning_if(stl::underlying_type_t<uri_status>& status,
+                                         uri_status const                    value) noexcept {
+        if constexpr (Opt) {
+            set_warning(status, value);
+        }
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status_type const status) noexcept {

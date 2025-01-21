@@ -4,7 +4,8 @@
 #define WEBPP_URI_PORT_HPP
 
 #include "../convert/casts.hpp"
-#include "../std/string.hpp"
+#include "../std/string_like.hpp"
+#include "../std/string_view.hpp"
 #include "../strings/append.hpp"
 #include "./parser/parse_port.hpp"
 #include "host_authority.hpp"

@@ -21,9 +21,11 @@ namespace webpp::uri {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
 
+            using enum uri_status;
+
             using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
                 return;
             }
 
@@ -37,29 +39,27 @@ namespace webpp::uri {
                 case '/': break;
                 case '\\':
                     if (is_special_scheme(ctx.scheme)) {
-                        set_warning(ctx.status, uri_status::reverse_solidus_used);
+                        set_warning(ctx.status, reverse_solidus_used);
                     }
                     break;
                 case '\0':
                     if constexpr (Options.eof_is_valid) {
-                        set_valid(ctx.status, uri_status::valid);
+                        set_valid(ctx.status, valid);
                         return;
                     } else {
-                        set_warning(ctx.status, uri_status::invalid_character);
+                        set_warning(ctx.status, invalid_character);
                     }
                     break;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':
                 [[unlikely]] case '\t':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, uri_status::invalid_character);
-                    }
+                    set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
                     [[fallthrough]];
                 default: break;
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
                 return;
             }
 
@@ -79,57 +79,50 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     clear<components::queries>(ctx);
-                    set_valid(ctx.status, uri_status::valid_queries);
+                    set_valid(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
                 case '#':
                     clear<components::fragment>(ctx);
-                    set_valid(ctx.status, uri_status::valid_fragment);
+                    set_valid(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
                 case '\0':
                     if constexpr (Options.eof_is_valid) {
-                        set_valid(ctx.status, uri_status::valid);
+                        set_valid(ctx.status, valid);
                         return;
                     } else {
-                        set_warning(ctx.status, uri_status::invalid_character);
+                        set_warning(ctx.status, invalid_character);
                     }
                     break;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':
                 [[unlikely]] case '\t':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, uri_status::invalid_character);
-                    }
+                    set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
                     [[fallthrough]];
                 default: break;
             }
             clear<components::queries>(ctx);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
-            set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, valid_path);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void file_slash_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
+            using enum uri_status;
 
             using ctx_type = CtxT;
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
-                    case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                     case '/':
-                        if constexpr (Options.allow_file_hosts) {
-                            set_valid(ctx.status, uri_status::valid_file_host);
-                        } else {
-                            set_valid(ctx.status, uri_status::valid_path);
-                        }
+                        set_valid(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
                         return;
                     [[unlikely]] case '\r':
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                        }
+                        set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
                         [[fallthrough]];
                     default: break;
                 }
@@ -145,12 +138,14 @@ namespace webpp::uri {
                     //    This is a (platform-independent) Windows drive letter quirk.
                 }
             }
-            set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, valid_path);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
+
+            using enum uri_status;
 
             using ctx_type = CtxT;
 
@@ -164,35 +159,35 @@ namespace webpp::uri {
 
             for (;; ++ctx.pos) {
                 if (ctx.pos == ctx.end) {
-                    set_valid(ctx.status, uri_status::valid);
+                    set_valid(ctx.status, valid);
                     return;
                 }
 
                 switch (*ctx.pos) {
-                    case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                     case '/':
                         file_slash_state<Options>(ctx);
                         return;
                     [[unlikely]] case '\0':
                         if constexpr (Options.eof_is_valid) {
-                            set_valid(ctx.status, uri_status::valid);
+                            set_valid(ctx.status, valid);
                             return;
                         } else {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                         }
                         break;
                     [[unlikely]] case '\r':
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\t':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                             continue;
                         }
                         [[fallthrough]];
                     default: break;
                 }
                 if constexpr (Options.allow_file_hosts) {
-                    set_valid(ctx.status, uri_status::valid_file_host);
+                    set_valid(ctx.status, valid_file_host);
                     return;
                 }
                 break;
@@ -204,13 +199,14 @@ namespace webpp::uri {
                 }
             }
 
-            set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, valid_path);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void no_scheme_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
+            using enum uri_status;
             using ctx_type = CtxT;
 
             if constexpr (ctx_type::has_base_uri) {
@@ -222,12 +218,12 @@ namespace webpp::uri {
                                 set_value<components::path>(ctx, ctx.base.get_path());
                                 set_value<components::queries>(ctx, ctx.base.get_queries());
                                 clear<components::fragment>(ctx);
-                                set_valid(ctx.status, uri_status::valid_fragment);
+                                set_valid(ctx.status, valid_fragment);
                                 return;
 
                             [[unlikely]] case '\0':
                                 if constexpr (Options.eof_is_valid) {
-                                    set_error(ctx.status, uri_status::empty_string);
+                                    set_error(ctx.status, empty_string);
                                     return;
                                 }
                                 break;
@@ -235,7 +231,7 @@ namespace webpp::uri {
                             [[unlikely]] case '\n':
                             [[unlikely]] case '\t':
                                 if constexpr (Options.ignore_tabs_or_newlines) {
-                                    set_warning(ctx.status, uri_status::invalid_character);
+                                    set_warning(ctx.status, invalid_character);
                                     continue;
                                 }
                                 [[fallthrough]];
@@ -251,22 +247,24 @@ namespace webpp::uri {
                     return;
                 }
             }
-            set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
+            set_error(ctx.status, missing_scheme_non_relative_url);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
+            using enum uri_status;
+
             for (; ctx.pos != ctx.end; ++ctx.pos) {
                 switch (*ctx.pos) {
                     case '\\':
                     case '/':
-                        set_warning(ctx.status, uri_status::missing_following_solidus);
+                        set_warning(ctx.status, missing_following_solidus);
                         continue;
                     [[unlikely]] case '\0':
                         if constexpr (Options.eof_is_valid) {
-                            set_error(ctx.status, uri_status::scheme_ended_unexpectedly);
+                            set_error(ctx.status, scheme_ended_unexpectedly);
                             return;
                         }
                         break;
@@ -274,7 +272,7 @@ namespace webpp::uri {
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\t':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                             continue;
                         }
                         [[fallthrough]];
@@ -283,7 +281,7 @@ namespace webpp::uri {
                 }
                 break;
             }
-            set_valid(ctx.status, uri_status::valid_authority);
+            set_valid(ctx.status, valid_authority);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
