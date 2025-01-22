@@ -154,6 +154,14 @@ namespace webpp::uri {
             return storage.end();
         }
 
+        [[nodiscard]] constexpr decltype(auto) front() const noexcept {
+            return storage.front();
+        }
+
+        [[nodiscard]] constexpr decltype(auto) back() const noexcept {
+            return storage.front();
+        }
+
         template <typename Arg>
             requires(!stl::integral<Arg>)
         [[nodiscard]] constexpr auto operator[](Arg&& arg) noexcept {

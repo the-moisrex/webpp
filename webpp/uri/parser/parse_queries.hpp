@@ -12,6 +12,9 @@ namespace webpp::uri {
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
+
+        using enum uri_status;
+
         using ctx_type = CtxT;
 
         if constexpr (Options.parse_queries) {
@@ -21,7 +24,7 @@ namespace webpp::uri {
 
 
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
                 return;
             }
 
@@ -43,14 +46,14 @@ namespace webpp::uri {
                 switch (*ctx.pos) {
                     case '#':
                         clear<components::fragment>(ctx);
-                        set_valid(ctx.status, uri_status::valid_fragment);
+                        set_valid(ctx.status, valid_fragment);
                         break;
                     case '%':
                         if (!encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
                             if constexpr (Options.allow_invalid_characters) {
-                                set_warning(ctx.status, uri_status::invalid_character);
+                                set_warning(ctx.status, invalid_character);
                             } else {
-                                set_error(ctx.status, uri_status::invalid_queries_character);
+                                set_error(ctx.status, invalid_queries_character);
                                 return;
                             }
                         }
@@ -83,16 +86,16 @@ namespace webpp::uri {
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\t':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                             encoder.ignore_character();
                             continue;
                         }
                         [[fallthrough]];
                     default: {
                         if constexpr (Options.allow_invalid_characters) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                         } else {
-                            set_error(ctx.status, uri_status::invalid_queries_character);
+                            set_error(ctx.status, invalid_queries_character);
                             return;
                         }
                         encoder.skip_separator();
@@ -112,7 +115,7 @@ namespace webpp::uri {
             encoder.set_value();
 
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
             } else {
                 ++ctx.pos;
             }
@@ -120,12 +123,12 @@ namespace webpp::uri {
 
         } else { // don't parse queries
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
             } else {
                 if constexpr (Options.allow_invalid_characters) {
-                    set_warning(ctx.status, uri_status::invalid_character);
+                    set_warning(ctx.status, invalid_character);
                 } else {
-                    set_error(ctx.status, uri_status::invalid_queries_character);
+                    set_error(ctx.status, invalid_queries_character);
                 }
             }
         }

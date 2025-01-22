@@ -381,6 +381,7 @@ namespace webpp::uri {
 
         template <istl::String NStrT = modifiable_string_type>
         constexpr void to_string(NStrT& out) const {
+            // https://url.spec.whatwg.org/#concept-url-serializer
             out.reserve(size());
             this->scheme().to_string(out, true);
             if (this->hostname().has_value()) {
@@ -398,9 +399,17 @@ namespace webpp::uri {
                 if (!this->port().is_default_port(this->scheme().view())) {
                     this->port().to_string(out, true);
                 }
-                // } else if (this->path().size() > 1 && this->scheme().is_special() && this->path().) {
-                //
+            } else if (!this->path().is_opaque() && this->path().size() > 1 && this->path().front().empty()) {
+                // If url’s host is null, url does not have an opaque path, url’s path’s size is greater than
+                // 1, and url’s path[0] is the empty string, then append U+002F (/) followed by U+002E (.) to
+                // output.c
+                // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and
+                // then serialized, from ending up as web+demo://not-a-host/ (they end up as
+                // web+demo:/.//not-a-host/).
+                istl::append(out, '/');
+                istl::append(out, '.');
             }
+
             this->path().to_string(out);
             this->queries().to_string(out, true);
             this->fragment().to_string(out, true);

@@ -88,6 +88,17 @@ TYPED_TEST(URITests, Generation) {
     EXPECT_EQ(url.as_string(), "https://webpp.dev/");
 }
 
+TYPED_TEST(URITests, SpecialPathRendering) {
+    // From WHATWG Spec:
+    //   This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and then
+    //   serialized, from ending up as web+demo://not-a-host/ (they end up as web+demo:/.//not-a-host/).
+    uri::uri const url = "web+demo:/.//not-a-host/";
+    EXPECT_EQ(url.as_string(), "web+demo:/.//not-a-host/");
+
+    uri::uri const url2 = "web+demo:/path/..//not-a-host/";
+    EXPECT_EQ(url2.as_string(), "web+demo:/.//not-a-host/");
+}
+
 TYPED_TEST(URITests, PathFromString) {
     uri::basic_path path{"/a/b/c/../d"};
     ASSERT_EQ(path.size(), 4);
