@@ -39,7 +39,6 @@ namespace webpp::uri {
         ctx.beg;
         ctx.end;
         ctx.base;
-        ctx.scheme;
         ctx.status;
     };
 
@@ -712,7 +711,7 @@ namespace webpp::uri {
         using iterator       = typename clean_out_type::iterator;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-        using state_type      = stl::underlying_type_t<uri_status>;
+        using state_type      = uri_status_type;
 
         using map_iterator   = typename clean_out_type::map_iterator;
         using vec_iterator   = typename clean_out_type::vec_iterator;
@@ -730,7 +729,6 @@ namespace webpp::uri {
         out_type out{}; // the output uri components
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
-        scheme_type                     scheme = scheme_type::not_special;
     };
 
     // template <typename OutSegType, istl::StringLike OutIter, typename BaseSegType, typename BaseIter>
@@ -743,7 +741,7 @@ namespace webpp::uri {
     //     using iterator        = typename out_type::iterator;
     //     using iterator_traits = stl::iterator_traits<iterator>;
     //     using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-    //     using state_type      = stl::underlying_type_t<uri_status>;
+    //     using state_type      = uri_status_type;
     //
     //     using map_iterator   = typename out_type::map_iterator;
     //     using vec_iterator   = typename out_type::vec_iterator;
@@ -769,7 +767,6 @@ namespace webpp::uri {
     //     out_type out{};
     //     [[no_unique_address]] base_type base{};
     //     state_type                      status = stl::to_underlying(uri_status::unparsed);
-    //     scheme_type                     scheme = scheme_type::not_special;
     // };
 
     enum struct components : stl::uint8_t {
@@ -842,7 +839,7 @@ namespace webpp::uri {
         using iterator        = Iter;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-        using state_type      = stl::underlying_type_t<uri_status>;
+        using state_type      = uri_status_type;
 
         using out_container_type = stl::remove_pointer_t<out_type>;
         using out_seg_type       = out_container_type;
@@ -860,7 +857,6 @@ namespace webpp::uri {
         out_type out{}; // it's a pointer to string, string_view, vector, or a map
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
-        scheme_type                     scheme = scheme_type::not_special;
     };
 
     using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, char const*>;

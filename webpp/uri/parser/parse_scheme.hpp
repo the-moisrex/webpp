@@ -38,7 +38,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '/': break;
                 case '\\':
-                    if (is_special_scheme(ctx.scheme)) {
+                    if (is_special_scheme(ctx.status)) {
                         set_warning(ctx.status, reverse_solidus_used);
                     }
                     break;
@@ -496,7 +496,7 @@ namespace webpp::uri {
             case encoded_scheme("file"): {
                 details::set_scheme(ctx, details::file_scheme<char_type>);
                 ++ctx.pos;
-                ctx.scheme = scheme_type::file_scheme;
+                set_flag(ctx.status, scheme_type::file_scheme);
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
@@ -508,7 +508,7 @@ namespace webpp::uri {
             [[unlikely]] default: {
                 details::set_scheme<Options>(ctx);
                 ++ctx.pos;
-                ctx.scheme = scheme_type::not_special;
+                set_flag(ctx.status, scheme_type::not_special);
                 if (safely_inc_if<Options>(ctx, '/')) {
                     // https://url.spec.whatwg.org/#path-or-authority-state
                     if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
@@ -527,7 +527,7 @@ namespace webpp::uri {
 
 
         ++ctx.pos;
-        ctx.scheme = scheme_type::special_scheme;
+        set_flag(ctx.status, scheme_type::special_scheme);
 
         if constexpr (ctx_type::has_base_uri) {
             if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {

@@ -3,7 +3,8 @@
 #ifndef WEBPP_URI_WINDOWS_DRIVE_LETTERS_HPP
 #define WEBPP_URI_WINDOWS_DRIVE_LETTERS_HPP
 
-#include "constants.hpp"
+#include "./constants.hpp"
+#include "./special_schemes.hpp"
 
 #include <iterator>
 
@@ -81,7 +82,7 @@ namespace webpp::uri::details {
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
         if constexpr (Options.handle_windows_drive_letters) {
-            if (!is_file_scheme(ctx.scheme)) {
+            if (!is_file_scheme(ctx.status)) {
                 return;
             }
 

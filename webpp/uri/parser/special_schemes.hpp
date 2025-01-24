@@ -32,9 +32,9 @@ namespace webpp::uri {
       stl::to_underlying(uri_status::special_scheme) | stl::to_underlying(uri_status::file_scheme);
 
     enum struct scheme_type : uri_status_type {                          // NOLINT(*-enum-size)
-        not_special    = 0U,                                             // everything else
+        not_special    = stl::to_underlying(uri_status::unparsed),       // everything else
         special_scheme = stl::to_underlying(uri_status::special_scheme), // http(s), ws(s), ftp
-        file_scheme    = scheme_mask,
+        file_scheme    = stl::to_underlying(uri_status::file_scheme),
     };
 
     [[nodiscard]] static constexpr scheme_type scheme_type_of(uri_status const status) noexcept {
@@ -114,8 +114,21 @@ namespace webpp::uri {
         return scheme != scheme_type::not_special;
     }
 
+    [[nodiscard]] static constexpr bool is_special_scheme(uri_status_type const status) noexcept {
+        return (status & scheme_mask) != 0ULL;
+    }
+
     [[nodiscard]] static constexpr bool is_special_scheme(uri_status const status) noexcept {
-        return (stl::to_underlying(status) & scheme_mask) != 0ULL;
+        return is_special_scheme(stl::to_underlying(status));
+    }
+
+    [[nodiscard]] static constexpr bool is_file_scheme(uri_status_type const status) noexcept {
+        return (status & stl::to_underlying(scheme_type::file_scheme)) ==
+               stl::to_underlying(scheme_type::file_scheme);
+    }
+
+    static constexpr void set_flag(uri_status_type& status, scheme_type const value) noexcept {
+        set_flag(status, static_cast<uri_status>(stl::to_underlying(value)));
     }
 
 } // namespace webpp::uri

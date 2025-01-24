@@ -29,7 +29,7 @@ namespace webpp::uri {
             }
 
             auto const query_percent_encode_set =
-              is_special_scheme(ctx.scheme)
+              is_special_scheme(ctx.status)
                 ? details::SPECIAL_QUERIES_ENCODE_SET
                 : details::QUERIES_ENCODE_SET;
 

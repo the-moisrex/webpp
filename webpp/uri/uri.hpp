@@ -31,7 +31,7 @@ namespace webpp::uri {
         using iterator       = Iter;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-        using state_type      = stl::underlying_type_t<uri_status>;
+        using state_type      = uri_status_type;
 
         using map_iterator   = typename clean_out_type::map_iterator;
         using vec_iterator   = typename clean_out_type::vec_iterator;
@@ -49,7 +49,6 @@ namespace webpp::uri {
         out_type out{}; // the output uri components
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
-        scheme_type                     scheme = scheme_type::not_special;
     };
 
     /**
@@ -223,6 +222,7 @@ namespace webpp::uri {
             ctx.pos = beg;
             ctx.end = end;
             ctx.out = static_cast<components_type*>(this);
+            ctx.status = flags_of(m_status);
             parse_uri<Options>(ctx);
             m_status = ctx.status;
             return m_status;

@@ -8,7 +8,7 @@
 
 namespace webpp::uri {
 
-    enum struct domain_name_status : stl::underlying_type_t<uri_status> { // NOLINT(*-enum-size)
+    enum struct domain_name_status : uri_status_type { // NOLINT(*-enum-size)
     // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(status) status = stl::to_underlying(uri_status::status)
         webpp_def(unparsed),           // Not yet parsed

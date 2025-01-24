@@ -293,7 +293,7 @@ namespace webpp::uri {
         // we should not check to see if we're at the end of the string because if the path is empty and we're
         // in a special scheme, we have to add "/" to it
 
-        if (!is_special_scheme(ctx.scheme)) {
+        if (!is_special_scheme(ctx.status)) {
             parse_opaque_path<Options>(ctx);
             return;
         }
@@ -363,7 +363,7 @@ namespace webpp::uri {
         } else {
             // handling empty paths
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                if (is_special_scheme(ctx.scheme) && !has_value<components::path>(ctx)) {
+                if (is_special_scheme(ctx.status) && !has_value<components::path>(ctx)) {
                     encoder.next_segment_of('/', 0);
                 }
             }

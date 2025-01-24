@@ -87,7 +87,7 @@ namespace webpp::uri {
             ctx.end    = end;
             ctx.pos    = beg;
             ctx.out    = this;
-            ctx.scheme = scheme_type::special_scheme;
+            // ctx.scheme = scheme_type::special_scheme;
             parse_path<Options>(ctx);
             return ctx.status;
         }

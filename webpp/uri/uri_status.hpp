@@ -263,8 +263,8 @@ namespace webpp::uri {
         valid_fragment = valid_bit | 11U,
 
         // flags:
-        special_scheme = flags_bit >> 0U, // scheme is http/https/ws/wss/ftp/file
-        file_scheme    = flags_bit >> 1U, // scheme is file
+        special_scheme = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
+        file_scheme    = (flags_bit >> 0U) | (flags_bit >> 1U), // file is also special
     };
 
     /**
@@ -446,11 +446,16 @@ namespace webpp::uri {
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
+
+            // flags:
+            case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};
+            case file_scheme: return {"The URI's scheme is special file."};
+
             default: stl::unreachable();
         }
     }
 
-    [[nodiscard]] static constexpr bool is_valid(stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(uri_status_type const status) noexcept {
         return (error_bit & status) == 0;
     }
 
@@ -458,8 +463,7 @@ namespace webpp::uri {
         return is_valid(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_warnings(
-      stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr bool has_warnings(uri_status_type const status) noexcept {
         return (status & warnings_mask) != 0;
     }
 
@@ -467,18 +471,17 @@ namespace webpp::uri {
         return has_warnings(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_warning(stl::underlying_type_t<uri_status> const status,
-                                                    uri_status const warning) noexcept {
+    [[nodiscard]] static constexpr bool has_warning(uri_status_type const status,
+                                                    uri_status const      warning) noexcept {
         return (status & stl::to_underlying(warning)) == stl::to_underlying(warning);
     }
 
-    [[nodiscard]] static constexpr bool has_warning(
-      stl::underlying_type_t<uri_status> const status,
-      stl::underlying_type_t<uri_status> const warning) noexcept {
+    [[nodiscard]] static constexpr bool has_warning(uri_status_type const status,
+                                                    uri_status_type const warning) noexcept {
         return (status & warning) == warning;
     }
 
-    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr bool has_error(uri_status_type const status) noexcept {
         return (error_bit & status) == error_bit;
     }
 
@@ -487,8 +490,7 @@ namespace webpp::uri {
     }
 
     /// get the error/valid value without the warnings if available
-    [[nodiscard]] static constexpr uri_status get_value(
-      stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr uri_status get_value(uri_status_type const status) noexcept {
         return static_cast<uri_status>(status & values_mask);
     }
 
@@ -496,8 +498,8 @@ namespace webpp::uri {
         return get_value(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status,
-                                                  uri_status const expected_err) noexcept {
+    [[nodiscard]] static constexpr bool has_error(uri_status_type const status,
+                                                  uri_status const      expected_err) noexcept {
         return get_value(status) == expected_err;
     }
 
@@ -506,24 +508,36 @@ namespace webpp::uri {
         return has_error(stl::to_underlying(status), expected_err);
     }
 
-    static constexpr void set_valid(stl::underlying_type_t<uri_status>& status,
-                                    uri_status const                    value) noexcept {
+    static constexpr void set_valid(uri_status_type& status, uri_status const value) noexcept {
         status &= ~values_mask;
         status |= stl::to_underlying(value);
     }
 
-    static constexpr void set_error(stl::underlying_type_t<uri_status>& status,
-                                    uri_status const                    value) noexcept {
+    static constexpr void set_error(uri_status_type& status, uri_status const value) noexcept {
         status &= ~values_mask;
         status |= stl::to_underlying(value);
+    }
+
+    static constexpr void set_flag(uri_status_type& status, uri_status const value) noexcept {
+        status &= ~flags_mask;
+        status |= stl::to_underlying(value);
+    }
+
+    [[nodiscard]] static constexpr uri_status_type merge_flags(uri_status_type const lhs,
+                                                               uri_status_type const rhs) noexcept {
+        return (lhs | rhs) & flags_mask;
+    }
+
+    [[nodiscard]] static constexpr uri_status_type flags_of(uri_status_type const status) noexcept {
+        return status & flags_mask;
     }
 
     /// Conditionally set an error or set as valid
     template <bool Opt>
     static constexpr void set_error_if(
-      stl::underlying_type_t<uri_status>& status,
-      uri_status const                    invalid_state, // NOLINT(*-easily-swappable-parameters)
-      uri_status const                    valid_state = uri_status::valid) noexcept {
+      uri_status_type& status,
+      uri_status const invalid_state, // NOLINT(*-easily-swappable-parameters)
+      uri_status const valid_state = uri_status::valid) noexcept {
         if constexpr (Opt) {
             set_error(status, invalid_state);
         } else {
@@ -533,14 +547,12 @@ namespace webpp::uri {
 
     /// multiple calls with the same value must not affect the result, meaning, if you set a specific warning
     /// 5 times, the status should not be corrupted.
-    static constexpr void set_warning(stl::underlying_type_t<uri_status>& status,
-                                      uri_status const                    value) noexcept {
+    static constexpr void set_warning(uri_status_type& status, uri_status const value) noexcept {
         status |= stl::to_underlying(value);
     }
 
     template <bool Opt>
-    static constexpr void set_warning_if(stl::underlying_type_t<uri_status>& status,
-                                         uri_status const                    value) noexcept {
+    static constexpr void set_warning_if(uri_status_type& status, uri_status const value) noexcept {
         if constexpr (Opt) {
             set_warning(status, value);
         }

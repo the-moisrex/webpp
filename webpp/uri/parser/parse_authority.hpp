@@ -30,7 +30,7 @@ namespace webpp::uri {
         }
 
         if constexpr (Options.allow_file_hosts) {
-            if (is_file_scheme(ctx.scheme)) {
+            if (is_file_scheme(ctx.status)) {
                 set_valid(ctx.status, valid_file_host);
                 return;
             }
@@ -55,7 +55,7 @@ namespace webpp::uri {
                         return;
                     }
                 case '?':
-                    if (!is_special_scheme(ctx.scheme)) {
+                    if (!is_special_scheme(ctx.status)) {
                         break;
                     }
                     [[fallthrough]];
@@ -63,7 +63,7 @@ namespace webpp::uri {
                 case '/':
                 case '#':
                     if constexpr (Options.empty_host_is_error) {
-                        if (is_special_scheme(ctx.scheme)) {
+                        if (is_special_scheme(ctx.status)) {
                             set_error(ctx.status, host_missing);
                             return;
                         }
@@ -87,7 +87,7 @@ namespace webpp::uri {
             break;
         }
 
-        if (!is_special_scheme(ctx.scheme)) {
+        if (!is_special_scheme(ctx.status)) {
             details::parse_authority_pieces<Options, false>(ctx);
             return;
         }
@@ -108,7 +108,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid);
             return;
         }
-        if (is_special_scheme(ctx.scheme)) {
+        if (is_special_scheme(ctx.status)) {
             for (;;) {
                 switch (*ctx.pos) {
                     [[unlikely]] case '\t':

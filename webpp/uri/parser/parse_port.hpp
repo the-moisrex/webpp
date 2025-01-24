@@ -54,7 +54,7 @@ namespace webpp::uri {
                         }
                         continue;
                     case '\\':
-                        if (is_special_scheme(ctx.scheme)) {
+                        if (is_special_scheme(ctx.status)) {
                             break; // invalid port
                         }
                         [[fallthrough]];
