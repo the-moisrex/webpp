@@ -5,6 +5,7 @@
 
 #include "../../std/string_like.hpp"
 #include "../../std/string_view.hpp"
+#include "../uri_status.hpp"
 #include "./constants.hpp"
 #include "./iiequals.hpp"
 
@@ -27,27 +28,38 @@ namespace webpp::uri {
 
     } // namespace details
 
-    enum struct scheme_type : stl::uint8_t {
-        not_special,    // everything else
-        special_scheme, // http(s), ws(s), ftp
-        file,           // file scheme
+    static constexpr uri_status_type scheme_mask =
+      stl::to_underlying(uri_status::special_scheme) | stl::to_underlying(uri_status::file_scheme);
+
+    enum struct scheme_type : uri_status_type {                          // NOLINT(*-enum-size)
+        not_special    = 0U,                                             // everything else
+        special_scheme = stl::to_underlying(uri_status::special_scheme), // http(s), ws(s), ftp
+        file_scheme    = scheme_mask,
     };
 
+    [[nodiscard]] static constexpr scheme_type scheme_type_of(uri_status const status) noexcept {
+        return static_cast<scheme_type>(stl::to_underlying(status) & scheme_mask);
+    }
+
     template <istl::StringLike StrT>
-    [[nodiscard]] constexpr bool is_file_scheme(StrT scheme) noexcept {
+    [[nodiscard]] static constexpr bool is_file_scheme(StrT scheme) noexcept {
         using char_type = istl::char_type_of_t<StrT>;
         return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>("file", stl::forward<StrT>(scheme));
     }
 
-    [[nodiscard]] constexpr bool is_file_scheme(scheme_type const scheme) noexcept {
-        return scheme == scheme_type::file;
+    [[nodiscard]] static constexpr bool is_file_scheme(scheme_type const scheme) noexcept {
+        return scheme == scheme_type::file_scheme;
+    }
+
+    [[nodiscard]] static constexpr bool is_file_scheme(uri_status const status) noexcept {
+        return is_file_scheme(scheme_type_of(status));
     }
 
     /**
      * @return 0 if unknown, otherwise return the port
      */
     template <istl::StringView StrT, bool CheckSpecialCharacters = true>
-    [[nodiscard]] constexpr stl::uint16_t known_port(StrT scheme) noexcept {
+    [[nodiscard]] static constexpr stl::uint16_t known_port(StrT scheme) noexcept {
         using details::encoded_scheme;
 
         // NOLINTBEGIN(*-magic-numbers)
@@ -77,7 +89,7 @@ namespace webpp::uri {
     }
 
     /**
-     * An special/known scheme is this:
+     * A special/known scheme is this:
      *   A URL is special if its scheme is a special scheme.
      *   A URL is not special if its scheme is not a special scheme.
      *
@@ -94,12 +106,16 @@ namespace webpp::uri {
      * from https://url.spec.whatwg.org/#is-special
      */
     template <istl::StringView StrT>
-    [[nodiscard]] constexpr bool is_special_scheme(StrT scheme) noexcept {
+    [[nodiscard]] static constexpr bool is_special_scheme(StrT scheme) noexcept {
         return known_port(scheme) != 0U || is_file_scheme(scheme);
     }
 
-    [[nodiscard]] constexpr bool is_special_scheme(scheme_type const scheme) noexcept {
+    [[nodiscard]] static constexpr bool is_special_scheme(scheme_type const scheme) noexcept {
         return scheme != scheme_type::not_special;
+    }
+
+    [[nodiscard]] static constexpr bool is_special_scheme(uri_status const status) noexcept {
+        return (stl::to_underlying(status) & scheme_mask) != 0ULL;
     }
 
 } // namespace webpp::uri

@@ -157,33 +157,34 @@ namespace webpp::uri {
     ///   - which warnings we have found
     ///   - distinguish between a warning flag and an error flag or a success flag
     ///
-    /// indexes: [       B A 9 8    7 6 5 4  3 2 1 0    7 6 5 4  3 2 1 0 ] == 21bits
-    /// integer: [ E     W W W W    W W W W  W W W W    N N N N  N N N N ]
-    ///            ^     -------    ----------------    ----------------
-    ///            |        ^               ^                 ^
-    ///            |        |               |                 |
-    ///            |        |               |         valid/error number
-    ///            |        |               |
-    ///            |        --------------------> Each warning bit
-    ///            |
-    ///            |
-    ///         error bit == 1
-    ///         valid bit == 0
+    /// indexes: [                 C     B A 9 8    7 6 5 4  3 2 1 0    7 6 5 4  3 2 1 0 ] == 28bits
+    /// integer: [ F F F F   _ _ _ E     W W W W    W W W W  W W W W    N N N N  N N N N ]
+    ///            -------         ^     -------    ----------------    ----------------
+    ///               ^            |        ^               ^                 ^
+    ///               |            |        |               |                 |
+    ///             flags          |        |               |         valid/error number
+    ///                            |        |               |
+    ///                            |        --------------------> Each warning bit
+    ///                            |
+    ///                            |
+    ///                         error bit == 1
+    ///                         valid bit == 0
     ///
+    /// Flags are used to store parsing status like if it's a `special` URI or not.
     /// Keep this uri_status_type and ip_address_status the same type so they're trivially convertible.
     using uri_status_type                        = stl::uint32_t;
-    static constexpr uri_status_type valid_bit   = 0U;
-    static constexpr uri_status_type error_bit   = 1U << 20U;
-    static constexpr uri_status_type warning_bit = error_bit >> 1U;
+    static constexpr uri_status_type valid_bit   = 0U;              // same as error bit but the bit is zero
+    static constexpr uri_status_type error_bit   = 0b1U << 20U;     // the exact bit
+    static constexpr uri_status_type warning_bit = error_bit >> 1U; // start from left
+    static constexpr uri_status_type flags_bit   = 0b1U << 27U;     // start from left
 
     /// maximum number between errors and valids must go here,
     /// or you can find out (error_bit | warning_bit) + all the warning bits, and then negate that
     /// considering the IPv4 and IPv6 values that need to match special prefix values, we're going with
     /// all 8 bits even though it's possible to do it with even 4 bits.
-    static constexpr uri_status_type values_mask = 0b0000'0000'1111'1111U | error_bit | valid_bit;
-
-    /// warnings mask
-    static constexpr uri_status_type warnings_mask = ~values_mask; // Warnings' bits
+    static constexpr uri_status_type values_mask   = 0b0000'0000'1111'1111U | error_bit | valid_bit;
+    static constexpr uri_status_type flags_mask    = 0b1111U << 23U;
+    static constexpr uri_status_type warnings_mask = 0b1111'1111'1111U << 8U; // Warnings' bits
 
     /// successes are exclusive
     /// errors are exclusive,
@@ -260,6 +261,10 @@ namespace webpp::uri {
 
         // fragment-specific errors/warnings:
         valid_fragment = valid_bit | 11U,
+
+        // flags:
+        special_scheme = flags_bit >> 0U, // scheme is http/https/ws/wss/ftp/file
+        file_scheme    = flags_bit >> 1U, // scheme is file
     };
 
     /**
@@ -509,7 +514,8 @@ namespace webpp::uri {
 
     static constexpr void set_error(stl::underlying_type_t<uri_status>& status,
                                     uri_status const                    value) noexcept {
-        status = stl::to_underlying(value);
+        status &= ~values_mask;
+        status |= stl::to_underlying(value);
     }
 
     /// Conditionally set an error or set as valid

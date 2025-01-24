@@ -496,7 +496,7 @@ namespace webpp::uri {
             case encoded_scheme("file"): {
                 details::set_scheme(ctx, details::file_scheme<char_type>);
                 ++ctx.pos;
-                ctx.scheme = scheme_type::file;
+                ctx.scheme = scheme_type::file_scheme;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
