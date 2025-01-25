@@ -183,7 +183,7 @@ namespace webpp::uri {
     /// considering the IPv4 and IPv6 values that need to match special prefix values, we're going with
     /// all 8 bits even though it's possible to do it with even 4 bits.
     static constexpr uri_status_type values_mask   = 0b0000'0000'1111'1111U | error_bit | valid_bit;
-    static constexpr uri_status_type flags_mask    = 0b1111U << 23U;
+    static constexpr uri_status_type flags_mask    = 0b1111U << 24U;
     static constexpr uri_status_type warnings_mask = 0b1111'1111'1111U << 8U; // Warnings' bits
 
     /// successes are exclusive
@@ -523,6 +523,11 @@ namespace webpp::uri {
         status |= stl::to_underlying(value);
     }
 
+    static constexpr void set_flags(uri_status_type& status, uri_status_type const value) noexcept {
+        status &= ~flags_mask;
+        status |= value & flags_mask;
+    }
+
     [[nodiscard]] static constexpr uri_status_type merge_flags(uri_status_type const lhs,
                                                                uri_status_type const rhs) noexcept {
         return (lhs | rhs) & flags_mask;
@@ -602,11 +607,11 @@ namespace webpp::uri {
         constexpr uri_status_iterator() noexcept = default;
 
         constexpr explicit uri_status_iterator(uri_status const inp_status) noexcept
-          : status{stl::to_underlying(inp_status)},
+          : status{stl::to_underlying(inp_status) & flags_mask},
             current{get_warning(status)} {}
 
         constexpr explicit uri_status_iterator(storage_type const inp_status) noexcept
-          : status{inp_status},
+          : status{inp_status & flags_mask},
             current{get_warning(status)} {}
 
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;

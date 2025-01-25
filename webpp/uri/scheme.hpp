@@ -48,12 +48,17 @@ namespace webpp::uri {
 
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+        constexpr uri_status_type parse(
+          Iter                  beg,
+          Iter                  end,
+          uri_status_type const initial_status = stl::to_underlying(uri_status::unparsed))
+          noexcept(is_nothrow) {
             parsing_uri_component_context<components::scheme, basic_scheme*, stl::remove_cvref_t<Iter>> ctx{};
-            ctx.beg = beg;
-            ctx.pos = beg;
-            ctx.end = end;
-            ctx.out = this;
+            ctx.beg    = beg;
+            ctx.pos    = beg;
+            ctx.end    = end;
+            ctx.out    = this;
+            ctx.status = initial_status;
             parse_scheme<Options>(ctx);
             return ctx.status;
         }
