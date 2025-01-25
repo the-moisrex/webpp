@@ -232,10 +232,10 @@ namespace webpp::uri {
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_structured_uri_context<components_type*, Iter> ctx{};
-            ctx.beg = beg;
-            ctx.pos = beg;
-            ctx.end = end;
-            ctx.out = static_cast<components_type*>(this);
+            ctx.beg    = beg;
+            ctx.pos    = beg;
+            ctx.end    = end;
+            ctx.out    = static_cast<components_type*>(this);
             ctx.status = stl::to_underlying(uri_status::unparsed);
             parse_uri<Options>(ctx);
             m_status = ctx.status;
@@ -559,6 +559,11 @@ namespace webpp::uri {
         template <uri_parsing_options     Options = uri_parsing_options{},
                   istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         constexpr uri_status_type hostname(NStrT&& inp_str) noexcept(is_modifiable) {
+            // https://url.spec.whatwg.org/#dom-url-hostname
+            // If this’s URL has an opaque path, then return.
+            if (this->path().is_opaque()) [[unlikely]] {
+                return stl::to_underlying(uri_status::setting_hostname_on_opaque_path);
+            }
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }

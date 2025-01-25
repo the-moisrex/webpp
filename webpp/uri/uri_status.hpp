@@ -262,6 +262,9 @@ namespace webpp::uri {
         // fragment-specific errors/warnings:
         valid_fragment = valid_bit | 11U,
 
+        // API errors:
+        setting_hostname_on_opaque_path = error_bit | 22U,
+
         // flags:
         special_scheme = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
         file_scheme    = (flags_bit >> 0U) | (flags_bit >> 1U), // file is also special
@@ -446,6 +449,12 @@ namespace webpp::uri {
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
+
+            // API errors:
+            case setting_hostname_on_opaque_path:
+                return {
+                  "You cannot set the hostname on a URL that has an opaque path; "
+                  "more info: https://url.spec.whatwg.org/#dom-url-hostname"};
 
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};
