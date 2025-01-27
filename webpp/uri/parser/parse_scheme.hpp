@@ -459,11 +459,8 @@ namespace webpp::uri {
                 case ':':
                     break;
                 [[unlikely]] case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        set_error(ctx.status, scheme_ended_unexpectedly);
-                    } else {
-                        set_error(ctx.status, invalid_scheme_character);
-                    }
+                    set_error(ctx.status,
+                              Options.eof_is_valid ? scheme_ended_unexpectedly : invalid_scheme_character);
                     return;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':

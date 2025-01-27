@@ -56,8 +56,9 @@ namespace webpp::uri {
           !ctx_type::is_segregated ? details::ascii_bitmap('%', '\r', '\n', '\t', '\0')
                                    : details::ascii_bitmap('%', '=', '&', '\r', '\n', '\t', '\0');
         webpp_static_constexpr auto interesting_characters =
-          Options.parse_fragment ? details::ascii_bitmap(base_interesting_characters, '#')
-                                 : base_interesting_characters;
+          Options.parse_fragment && !Options.state_override
+            ? details::ascii_bitmap(base_interesting_characters, '#')
+            : base_interesting_characters;
 
         auto const query_percent_encode_set =
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
@@ -74,7 +75,7 @@ namespace webpp::uri {
         {
             switch (*ctx.pos) {
                 case '#':
-                    if constexpr (Options.parse_fragment) {
+                    if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear<components::fragment>(ctx);
                         set_valid(ctx.status, valid_fragment);
                     } else {
