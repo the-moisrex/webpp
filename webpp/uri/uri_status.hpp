@@ -14,6 +14,8 @@ namespace webpp::uri {
 
     // NOLINTBEGIN(*-magic-numbers)
 
+    static constexpr struct state_override_type {
+    } state_override;
 
     /// URI Parsing Options,
     /// These options are designed to
@@ -104,6 +106,9 @@ namespace webpp::uri {
         /// The length of the domain name, excluding the root label and its dot, is from 1 to 253, but
         /// we don't verify that in WHATWG because it's a DNS limitation, not a URI limitation.
         bool verify_dns_length = false;
+
+        /// This will prevent parsing the next state of the parser
+        bool state_override = false;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -126,6 +131,7 @@ namespace webpp::uri {
       .handle_dots_in_paths                      = true,
       .use_std3_ascii_rules                      = false,
       .verify_dns_length                         = true,
+      .state_override                            = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -148,6 +154,7 @@ namespace webpp::uri {
       .handle_dots_in_paths                      = true, // for security reasons, it's enabled in loose too
       .use_std3_ascii_rules                      = false,
       .verify_dns_length                         = false,
+      .state_override                            = false,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
@@ -209,11 +216,10 @@ namespace webpp::uri {
         missing_scheme_non_relative_url = error_bit | 6U,
 
         // host-specific errors:
-        valid_path_or_authority   = valid_bit | 3U,
-        valid_authority           = valid_bit | 4U,
-        valid_file_host           = valid_bit | 5U,
-        valid_port                = valid_bit | 6U,
-        valid_authority_end       = valid_bit | 7U,
+        valid_authority           = valid_bit | 3U,
+        valid_file_host           = valid_bit | 4U,
+        valid_port                = valid_bit | 5U,
+        valid_authority_end       = valid_bit | 6U,
         subdomain_too_long        = error_bit | 7U,  // the subdomain is too long
         dot_at_end                = error_bit | 8U,  // the domain ended unexpectedly
         begin_with_hyphen         = error_bit | 9U,  // the domain cannot start with hyphens
@@ -248,22 +254,24 @@ namespace webpp::uri {
         port_invalid      = error_bit | 20U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                           = valid_bit | 8U,
-        valid_opaque_path                    = valid_bit | 9U,
+        valid_path                           = valid_bit | 7U,
+        valid_opaque_path                    = valid_bit | 8U,
         reverse_solidus_used                 = warning_bit >> 5U,
         windows_drive_letter_used            = warning_bit >> 6U,
         windows_drive_letter_in_relative_url = warning_bit >> 7U,
         windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
-        valid_queries             = valid_bit | 10U,
+        valid_queries             = valid_bit | 9U,
         invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 11U,
+        valid_fragment = valid_bit | 10U,
 
         // API errors:
         setting_hostname_on_opaque_path = error_bit | 22U,
+        scheme_setter_invalid_input = error_bit | 23U, // This indication of failure is used exclusively by
+                                                       // the Location object’s protocol setter.
 
         // flags:
         special_scheme = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
@@ -296,8 +304,6 @@ namespace webpp::uri {
 
 
                 // authority-specific errors:
-            case valid_path_or_authority:
-                return {"Valid scheme that should be followed by a path or an authority."};
             case valid_authority:
                 return {
                   "Valid scheme that should be followed by an authority "
@@ -455,6 +461,8 @@ namespace webpp::uri {
                 return {
                   "You cannot set the hostname on a URL that has an opaque path; "
                   "more info: https://url.spec.whatwg.org/#dom-url-hostname"};
+            case scheme_setter_invalid_input:
+                return {"Tried to set an scheme that starts by invalid character."};
 
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};
@@ -544,6 +552,11 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr uri_status_type flags_of(uri_status_type const status) noexcept {
         return status & flags_mask;
+    }
+
+    /// Get warnings and flags
+    [[nodiscard]] static constexpr uri_status_type info_of(uri_status_type const status) noexcept {
+        return status & (flags_mask | warnings_mask);
     }
 
     /// Conditionally set an error or set as valid
@@ -694,6 +707,20 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr uri_status_iterator end([[maybe_unused]] uri_status status) noexcept {
         return {};
+    }
+
+    [[nodiscard]] static consteval uri_parsing_options operator|(
+      uri_parsing_options options,
+      [[maybe_unused]] state_override_type) noexcept {
+        options.state_override = true;
+        return options;
+    }
+
+    [[nodiscard]] static consteval uri_parsing_options operator&(
+      uri_parsing_options options,
+      [[maybe_unused]] state_override_type) noexcept {
+        options.state_override = false;
+        return options;
     }
 
     // NOLINTEND(*-magic-numbers)

@@ -82,6 +82,10 @@ namespace webpp::uri::details {
                         continue;
                     } else if constexpr (!Options.parse_credentials) {
                         set_valid(ctx.status, valid_port);
+                    } else if constexpr (!Options.parse_port) {
+                        // it must not be a port or a credential, so it must be invalid?
+                        set_error(ctx.status,
+                                  IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
                     } else {
                         // the first colon is the start of the password section
                         if (colon_pos == ctx.end) {

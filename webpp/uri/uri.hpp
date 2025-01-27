@@ -217,13 +217,15 @@ namespace webpp::uri {
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
         constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status)
           noexcept(is_modifiable) {
+            using enum uri_status;
+
             parsing_structured_uri_context<components_type*, Iter> ctx{};
             ctx.beg    = beg;
             ctx.pos    = beg;
             ctx.end    = end;
             ctx.out    = static_cast<components_type*>(this);
-            ctx.status = stl::to_underlying(status) | flags_of(m_status);
-            details::parse_uri_step<Options>(ctx);
+            ctx.status = stl::to_underlying(status) | info_of(m_status);
+            details::parse_uri_step<Options | state_override>(ctx);
             set_flags(m_status, flags_of(ctx.status));
             return m_status;
         }

@@ -16,8 +16,8 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-        static constexpr void relative_state(CtxT& ctx) noexcept {
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
 
@@ -107,7 +107,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
         static constexpr void file_slash_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
             using enum uri_status;
@@ -141,7 +141,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
         static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
 
@@ -202,7 +202,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
         static constexpr void no_scheme_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
@@ -214,12 +214,16 @@ namespace webpp::uri {
                     for (; ctx.pos != ctx.end; ++ctx.pos) {
                         switch (*ctx.pos) {
                             [[likely]] case '#':
-                                set_value<components::scheme>(ctx, ctx.base.get_scheme());
-                                set_value<components::path>(ctx, ctx.base.get_path());
-                                set_value<components::queries>(ctx, ctx.base.get_queries());
-                                clear<components::fragment>(ctx);
-                                set_valid(ctx.status, valid_fragment);
-                                return;
+                                if constexpr (Options.parse_fragment) {
+                                    set_value<components::scheme>(ctx, ctx.base.get_scheme());
+                                    set_value<components::path>(ctx, ctx.base.get_path());
+                                    set_value<components::queries>(ctx, ctx.base.get_queries());
+                                    clear<components::fragment>(ctx);
+                                    set_valid(ctx.status, valid_fragment);
+                                    return;
+                                } else {
+                                    break;
+                                }
 
                             [[unlikely]] case '\0':
                                 if constexpr (Options.eof_is_valid) {
@@ -427,9 +431,14 @@ namespace webpp::uri {
                 // scheme state, and start over (from the first code point in input).
                 //
                 // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                ctx.pos = ctx.beg;
-                clear<components::scheme>(ctx);
-                details::no_scheme_state<Options>(ctx);
+                if constexpr (!Options.state_override) {
+                    ctx.pos = ctx.beg;
+                    clear<components::scheme>(ctx);
+                    details::no_scheme_state<Options>(ctx);
+                } else {
+                    // otherwise, return failure
+                    set_error(ctx.status, scheme_setter_invalid_input);
+                }
                 return;
             }
             break;
