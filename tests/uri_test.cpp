@@ -88,6 +88,17 @@ TYPED_TEST(URITests, Generation) {
     EXPECT_EQ(url.as_string(), "https://webpp.dev/");
 }
 
+TYPED_TEST(URITests, PortStateOverride) {
+    uri::uri url = "https://example.com:100/";
+    url.port("200WHAT???"); // it's dumb, but it's legal
+    EXPECT_EQ(url.as_string(), "https://example.com:200/");
+}
+
+TYPED_TEST(URITests, EmptyPort) {
+    uri::uri const url = "https://example.com:";
+    EXPECT_EQ(url.as_string(), "https://example.com/");
+}
+
 TYPED_TEST(URITests, SpecialPathRendering) {
     // From WHATWG Spec:
     //   This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and then

@@ -28,13 +28,6 @@ namespace webpp::uri {
 
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
-        if (ctx.pos == ctx.end) {
-            // It's still valid:
-            //   scheme://example.com:
-            set_valid(ctx.status, valid);
-            return;
-        }
-
         auto      beg        = ctx.pos;
         port_type port_value = 0;
 
@@ -80,7 +73,16 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                default: set_error(ctx.status, port_invalid); return;
+                default:
+                    if constexpr (Options.state_override) {
+                        // a = new URL("https://example.com:100/");
+                        // a.port = "200what?";
+                        // a.port === '200'
+                        break;
+                    } else {
+                        set_error(ctx.status, port_invalid);
+                        return;
+                    }
             }
             break;
         }
