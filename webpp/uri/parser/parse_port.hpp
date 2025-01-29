@@ -106,8 +106,10 @@ namespace webpp::uri {
             set_value<components::port>(ctx, beg, ctx.pos);
         }
 
-        // https://url.spec.whatwg.org/#path-start-state
-        set_valid(ctx.status, valid_authority_end);
+        if constexpr (!Options.state_override) {
+            // https://url.spec.whatwg.org/#path-start-state
+            set_valid(ctx.status, valid_authority_end);
+        }
     }
 
 } // namespace webpp::uri

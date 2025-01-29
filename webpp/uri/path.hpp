@@ -83,10 +83,10 @@ namespace webpp::uri {
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             using iterator_type = typename string_view_type::iterator;
             parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
-            ctx.beg    = beg;
-            ctx.end    = end;
-            ctx.pos    = beg;
-            ctx.out    = this;
+            ctx.beg = beg;
+            ctx.end = end;
+            ctx.pos = beg;
+            ctx.out = this;
             // ctx.scheme = scheme_type::special_scheme;
             parse_path<Options>(ctx);
             return ctx.status;
@@ -330,7 +330,7 @@ namespace webpp::uri {
         }
 
         template <typename... Args>
-        decltype(auto) emplace_back(Args&&... args) {
+        constexpr decltype(auto) emplace_back(Args&&... args) {
             return storage.emplace_back(stl::forward<Args>(args)...);
         }
 

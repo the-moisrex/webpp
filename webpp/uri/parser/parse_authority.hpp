@@ -131,7 +131,9 @@ namespace webpp::uri {
             for (;;) {
                 switch (*ctx.pos) {
                     case '?':
-                        if constexpr (Options.parse_queries) {
+                        if constexpr (Options.state_override) {
+                            break;
+                        } else if constexpr (Options.parse_queries) {
                             set_valid(ctx.status, valid_queries);
                             ++ctx.pos;
                             clear<components::queries>(ctx);
@@ -140,7 +142,9 @@ namespace webpp::uri {
                         }
                         return;
                     case '#':
-                        if constexpr (Options.parse_fragment) {
+                        if constexpr (Options.state_override) {
+                            break;
+                        } else if constexpr (Options.parse_fragment) {
                             set_valid(ctx.status, valid_fragment);
                             ++ctx.pos;
                             clear<components::fragment>(ctx);
@@ -160,9 +164,17 @@ namespace webpp::uri {
                     default:
                         set_valid(ctx.status, valid_path);
                         clear<components::path>(ctx);
-                        break;
+                        return;
                 }
                 break;
+            }
+
+            // Otherwise, if state override is given and url’s host is null, append the empty string to
+            // url’s path.
+            if constexpr (Options.state_override) {
+                if (!has_value<components::host>(ctx)) {
+                    get_output<components::path>(ctx).emplace_back();
+                }
             }
         }
     }

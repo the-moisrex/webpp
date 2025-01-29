@@ -122,8 +122,8 @@ namespace webpp {
 
 
         /// Read from ALREADY-CHECKED string
-        /// Attention: don't use this member function if you're not sure the specified string contains
-        ///            valid version; for those cases, use "from_string" member function.
+        /// Attention: don't use this member function if you're not sure if the specified string contains
+        ///            valid version or not; for those cases, use "from_string" member function.
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
         constexpr void from_safe_string(StrT&& inp_str) noexcept {

@@ -286,12 +286,14 @@ namespace webpp::uri {
         webpp_static_constexpr auto encode_set =
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
+        webpp_static_constexpr auto interesting_chars_base =
+          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '%', '\r', '\n', '\t'});
         webpp_static_constexpr auto interesting_chars =
-          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%', '\r', '\n', '\t'});
+          !Options.state_override ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
 
         // attention:
-        // we should not check to see if we're at the end of the string because if the path is empty and we're
-        // in a special scheme, we have to add "/" to it
+        // we should not check to see if we're at the end of the string because if the path is empty, and
+        // we're in a special scheme, we have to add "/" to it
 
         if (!is_special_scheme(ctx.status)) {
             parse_opaque_path<Options>(ctx);
@@ -322,10 +324,18 @@ namespace webpp::uri {
                     encoder.next_segment_of('/');
                     continue;
                 [[likely]] case '?':
-                    set_valid(ctx.status, uri_status::valid_queries);
+                    if constexpr (!Options.state_override) {
+                        set_valid(ctx.status, uri_status::valid_queries);
+                    } else {
+                        stl::unreachable();
+                    }
                     break;
                 case '#':
-                    set_valid(ctx.status, uri_status::valid_fragment);
+                    if constexpr (!Options.state_override) {
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                    } else {
+                        stl::unreachable();
+                    }
                     break;
                 [[likely]] case '%':
                     if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
