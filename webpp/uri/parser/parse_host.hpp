@@ -38,7 +38,7 @@ namespace webpp::uri {
         //     }
         // }
 
-        if constexpr (Options.handle_windows_drive_letters) {
+        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
                 for (;;) {
                     switch (*ctx.pos) {

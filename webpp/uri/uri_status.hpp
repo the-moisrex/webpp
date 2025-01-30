@@ -726,15 +726,15 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static consteval uri_parsing_options operator|(
-      uri_parsing_options options,
-      [[maybe_unused]] state_override_type) noexcept {
+      uri_parsing_options                  options,
+      [[maybe_unused]] state_override_type override) noexcept {
         options.state_override = true;
         return options;
     }
 
     [[nodiscard]] static consteval uri_parsing_options operator&(
-      uri_parsing_options options,
-      [[maybe_unused]] state_override_type) noexcept {
+      uri_parsing_options                  options,
+      [[maybe_unused]] state_override_type override) noexcept {
         options.state_override = false;
         return options;
     }
