@@ -533,8 +533,16 @@ namespace webpp::uri {
         template <uri_parsing_options     Options = uri_parsing_options{},
                   istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         constexpr uri_status_type scheme(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
-            return parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
+            auto const str        = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            auto       status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
+            if (is_valid(status_res) && port() == scheme().known_port()) {
+                // From https://url.spec.whatwg.org/#scheme-state
+                // If url’s port is url’s scheme’s default port, then set url’s port to null.
+                port().clear();
+                unset_flag(status_res, uri_status::has_non_null_port);
+                unset_flag(m_status, uri_status::has_non_null_port);
+            }
+            return status_res;
         }
 
         template <uri_parsing_options     Options = uri_parsing_options{},

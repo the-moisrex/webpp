@@ -58,7 +58,7 @@ namespace webpp::uri {
     /**
      * @return 0 if unknown, otherwise return the port
      */
-    template <istl::StringView StrT, bool CheckSpecialCharacters = true>
+    template <bool CheckSpecialCharacters = true, istl::StringView StrT = stl::string_view>
     [[nodiscard]] static constexpr stl::uint16_t known_port(StrT scheme) noexcept {
         using details::encoded_scheme;
 

@@ -245,11 +245,13 @@ namespace webpp::uri::details {
      */
     template <ParsingURIContext CtxT>
     static constexpr bool parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using enum uri_status;
+
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
         if (has_value<components::host>(ctx)) {
-            set_error(ctx.status, uri_status::invalid_domain_code_point);
+            set_error(ctx.status, invalid_domain_code_point);
             return false;
         }
 
@@ -257,32 +259,35 @@ namespace webpp::uri::details {
 
         // todo: use context's output host for storing ipv6 bytes if the host supports it
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
-            case inet_pton6_status::valid: set_error(ctx.status, uri_status::ipv6_unclosed); return false;
+            case inet_pton6_status::valid: set_error(ctx.status, ipv6_unclosed); return false;
             case inet_pton6_status::valid_special:
                 if (*ctx.pos == ']') {
                     ++ctx.pos;
                     if constexpr (requires { ctx.out.set_hostname(ipv6_bytes); }) {
                         ctx.out.set_hostname(ipv6_bytes);
+                        set_flag(ctx.status, has_non_empty_host);
                     } else if constexpr (requires { ctx.out->set_hostname(ipv6_bytes); }) {
                         ctx.out->set_hostname(ipv6_bytes);
+                        set_flag(ctx.status, has_non_empty_host);
                     } else {
+                        // set value already sets the flag
                         set_value<components::host>(ctx, beg, ctx.pos);
                     }
                     if (ctx.pos == ctx.end) {
-                        set_valid(ctx.status, uri_status::valid);
+                        set_valid(ctx.status, valid);
                         return false;
                     }
                     switch (*ctx.pos) {
-                        case '/': set_valid(ctx.status, uri_status::valid_path); return false;
-                        case ':': set_valid(ctx.status, uri_status::valid_port); break;
-                        case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
-                        case '?': set_valid(ctx.status, uri_status::valid_queries); break;
-                        default: set_error(ctx.status, uri_status::ipv6_char_after_closing); return false;
+                        case '/': set_valid(ctx.status, valid_path); return false;
+                        case ':': set_valid(ctx.status, valid_port); break;
+                        case '#': set_valid(ctx.status, valid_fragment); break;
+                        case '?': set_valid(ctx.status, valid_queries); break;
+                        default: set_error(ctx.status, ipv6_char_after_closing); return false;
                     }
                     ++ctx.pos;
                     return false;
                 }
-                set_error(ctx.status, uri_status::ipv6_unclosed);
+                set_error(ctx.status, ipv6_unclosed);
                 return false;
             default:
                 set_error(ctx.status,

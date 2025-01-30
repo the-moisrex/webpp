@@ -487,7 +487,12 @@ namespace webpp::uri {
             break;
         }
 
-
+        if constexpr (Options.state_override) {
+            // If url’s scheme is "file" and its host is an empty host, then return.
+            if (is_file_scheme(ctx.status) && has_value<components::host>(ctx)) [[unlikely]] {
+                return;
+            }
+        }
 
         switch (scheme_code) {
             [[likely]] case encoded_scheme("http"):
@@ -500,6 +505,19 @@ namespace webpp::uri {
             case encoded_scheme("wss"): details::set_scheme(ctx, details::wss_scheme<char_type>); break;
             case encoded_scheme("ftp"): details::set_scheme(ctx, details::ftp_scheme<char_type>); break;
             case encoded_scheme("file"): {
+                if constexpr (Options.state_override) {
+                    // If url includes credentials or has a non-null port, and buffer is "file", then return
+                    if (has_warning(ctx.status, has_credentials) || has_flag(ctx.status, has_non_null_port))
+                      [[unlikely]]
+                    {
+                        return;
+                    }
+
+                    // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+                    if (!is_special_scheme(ctx.status)) [[unlikely]] {
+                        return;
+                    }
+                }
                 details::set_scheme(ctx, details::file_scheme<char_type>);
                 ++ctx.pos;
                 set_flag(ctx.status, scheme_type::file_scheme);
@@ -512,6 +530,13 @@ namespace webpp::uri {
                 return;
             }
             [[unlikely]] default: {
+                if constexpr (Options.state_override) {
+                    // If url’s scheme is not a special scheme and buffer is a special scheme, then return.
+                    if (!is_special_scheme(ctx.status)) [[unlikely]] {
+                        return;
+                    }
+                }
+
                 details::set_scheme<Options>(ctx);
                 ++ctx.pos;
                 set_flag(ctx.status, scheme_type::not_special);
@@ -531,6 +556,12 @@ namespace webpp::uri {
             }
         }
 
+        if constexpr (Options.state_override) {
+            // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+            if (!is_special_scheme(ctx.status)) [[unlikely]] {
+                return;
+            }
+        }
 
         ++ctx.pos;
         set_flag(ctx.status, scheme_type::special_scheme);

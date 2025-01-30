@@ -93,17 +93,24 @@ namespace webpp::uri {
         }
 
         // it's unsigned, we don't need to check for it being lower than 0
-        if (port_value == known_port(get_output_view<components::scheme>(ctx))) {
+        if (
+          port_value == known_port<Options.ignore_tabs_or_newlines>(get_output_view<components::scheme>(ctx)))
+        {
             clear<components::port>(ctx);
-        } else if constexpr (requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); }) {
-            // store the integer port value
-            ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-        } else if constexpr (requires { ctx.out->set_port(static_cast<stl::uint16_t>(port_value)); }) {
-            // store the integer port value
-            ctx.out->set_port(static_cast<stl::uint16_t>(port_value));
         } else {
-            // store it as a string
-            set_value<components::port>(ctx, beg, ctx.pos);
+            if constexpr (requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); }) {
+                // store the integer port value
+                ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
+                set_flag(ctx.status, has_non_null_port);
+            } else if constexpr (requires { ctx.out->set_port(static_cast<stl::uint16_t>(port_value)); }) {
+                // store the integer port value
+                ctx.out->set_port(static_cast<stl::uint16_t>(port_value));
+                set_flag(ctx.status, has_non_null_port);
+            } else {
+                // store it as a string
+                // set value already sets the flag
+                set_value<components::port>(ctx, beg, ctx.pos);
+            }
         }
 
         if constexpr (!Options.state_override) {

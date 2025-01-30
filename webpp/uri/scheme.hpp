@@ -120,6 +120,17 @@ namespace webpp::uri {
         }
 
         /**
+         * Return the default for the current scheme.
+         *  - http, ws:   80
+         *  - https, wss: 443
+         *  - ftp:        21
+         *  - others:     0
+         */
+        [[nodiscard]] constexpr stl::uint16_t known_port() const noexcept {
+            return uri::known_port(view());
+        }
+
+        /**
          * @brief checks if the URI is a relative reference
          */
         [[nodiscard]] constexpr bool is_relative_reference() const noexcept {

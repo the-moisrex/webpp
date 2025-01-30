@@ -1082,6 +1082,12 @@ namespace webpp::uri {
         } else {
             details::set_value_to<Comp>(details::get_output_ref(ctx), stl::forward<Args>(args)...);
         }
+
+        if constexpr (components::host == Comp) {
+            set_flag(ctx.status, uri_status::has_non_empty_host);
+        } else if constexpr (components::port == Comp) {
+            set_flag(ctx.status, uri_status::has_non_null_port);
+        }
     }
 
     template <components Comp, ParsingURIContext CtxT>
@@ -1100,13 +1106,23 @@ namespace webpp::uri {
         } else {
             details::clear_from<Comp>(details::get_output_ref(ctx));
         }
+
+        if constexpr (components::host == Comp) {
+            unset_flag(ctx.status, uri_status::has_non_empty_host);
+        } else if constexpr (components::port == Comp) {
+            unset_flag(ctx.status, uri_status::has_non_null_port);
+        }
     }
 
     template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr bool has_value(CtxT& ctx) noexcept {
         using ctx_type = CtxT;
 
-        if constexpr (requires { ctx_type::component; }) {
+        if constexpr (components::host == Comp) {
+            return has_flag(ctx.status, uri_status::has_non_empty_host);
+        } else if constexpr (components::port == Comp) {
+            return has_flag(ctx.status, uri_status::has_non_null_port);
+        } else if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
                 if constexpr (requires { ctx.out->has_value(); }) {
                     return ctx.out->has_value();

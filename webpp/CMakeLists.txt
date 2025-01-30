@@ -139,7 +139,6 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/utils/debounce.hpp
-        ${LIB_INCLUDE_DIR}/utils/property.hpp
         ${LIB_INCLUDE_DIR}/utils/version.hpp
         ${LIB_INCLUDE_DIR}/utils/error_handling.hpp
         ${LIB_INCLUDE_DIR}/utils/bits.hpp

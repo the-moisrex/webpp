@@ -274,8 +274,10 @@ namespace webpp::uri {
                                                        // the Location object’s protocol setter.
 
         // flags:
-        special_scheme = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
-        file_scheme    = (flags_bit >> 0U) | (flags_bit >> 1U), // file is also special
+        special_scheme     = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
+        file_scheme        = (flags_bit >> 0U) | (flags_bit >> 1U), // file is also special
+        has_non_null_port  = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
+        has_non_empty_host = flags_bit >> 3U, // the URI has a non-empty host
     };
 
     /**
@@ -467,8 +469,13 @@ namespace webpp::uri {
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};
             case file_scheme: return {"The URI's scheme is special file."};
+            case has_non_null_port:
+                return {
+                  "The URI has a non-null port number; the default port numbers that match the URI's scheme "
+                  "are also considered null."};
+            case has_non_empty_host: return {"The URI has a non-empty host."};
 
-            default: stl::unreachable();
+            default: return {"Clean up the URI status first to get individual errors and warnings."};
         }
     }
 
@@ -540,6 +547,10 @@ namespace webpp::uri {
         status |= stl::to_underlying(value);
     }
 
+    static constexpr void unset_flag(uri_status_type& status, uri_status const flag) noexcept {
+        status &= ~stl::to_underlying(flag);
+    }
+
     static constexpr void set_flags(uri_status_type& status, uri_status_type const value) noexcept {
         status &= ~flags_mask;
         status |= value & flags_mask;
@@ -557,6 +568,11 @@ namespace webpp::uri {
     /// Get warnings and flags
     [[nodiscard]] static constexpr uri_status_type info_of(uri_status_type const status) noexcept {
         return status & (flags_mask | warnings_mask);
+    }
+
+    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status,
+                                                 uri_status const      flag) noexcept {
+        return (status & stl::to_underlying(flag)) != 0;
     }
 
     /// Conditionally set an error or set as valid

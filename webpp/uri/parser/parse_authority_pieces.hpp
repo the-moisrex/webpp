@@ -102,6 +102,7 @@ namespace webpp::uri::details {
                         if (get_value(ctx.status) == port_invalid) {
                             must_contain_credentials = true;
                             clear<components::port>(ctx);
+                            unset_flag(ctx.status, has_non_null_port);
                             // it might be a "password" or it's invalid port
                             ctx.pos = pre_port_pos + 1;
                             continue;
