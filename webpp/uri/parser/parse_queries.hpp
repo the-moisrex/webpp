@@ -9,36 +9,19 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_parsing_options Options, ParsingURIContext CtxT>
         requires(!Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept {
         using enum uri_status;
 
         if (ctx.pos == ctx.end) {
             set_valid(ctx.status, valid);
-        } else if constexpr (Options.allow_invalid_characters) {
-            set_warning(ctx.status, invalid_character);
-            switch (*ctx.pos) {
-                case '#':
-                    if constexpr (Options.parse_fragment) {
-                        set_valid(ctx.status, valid_fragment);
-                        break;
-                    }
-                    [[fallthrough]];
-                default:
-                    // we don't know what else we should do, so let's just return error
-                    // this shouldn't happen much since we if the option is set not to parse the queries, then
-                    // we shouldn't be in this situation that the `?` would be considered as the start of a
-                    // query.
-                    set_error(ctx.status, invalid_queries_character);
-                    break;
-            }
         } else {
             set_error(ctx.status, invalid_queries_character);
         }
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_parsing_options Options, ParsingURIContext CtxT>
         requires(Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state

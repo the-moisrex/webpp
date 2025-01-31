@@ -9,7 +9,21 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_parsing_options Options, ParsingURIContext CtxT>
+        requires(!Options.parse_fragment)
+    static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        // https://url.spec.whatwg.org/#fragment-state
+        using enum uri_status;
+
+        if (ctx.pos == ctx.end) {
+            set_valid(ctx.status, valid);
+        } else {
+            set_error(ctx.status, unexpected_fragment_found);
+        }
+    }
+
+    template <uri_parsing_options Options, ParsingURIContext CtxT>
+        requires(Options.parse_fragment)
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using ctx_type  = CtxT;
@@ -20,31 +34,23 @@ namespace webpp::uri {
             return;
         }
 
-        if constexpr (Options.parse_fragment) {
-            details::component_encoder<components::fragment, ctx_type> encoder{ctx};
-            while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-              details::FRAGMENT_ENCODE_SET,
-              charset<char_type, 1>('%')))
-            {
-                switch (*ctx.pos) {
-                    case '%':
-                        if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
-                            continue;
-                        }
-                        break;
-                    default: break;
-                }
-                set_warning(ctx.status, uri_status::invalid_character);
+        details::component_encoder<components::fragment, ctx_type> encoder{ctx};
+        while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+          details::FRAGMENT_ENCODE_SET,
+          charset<char_type, 1>('%')))
+        {
+            switch (*ctx.pos) {
+                case '%':
+                    if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
+                        continue;
+                    }
+                    break;
+                default: break;
             }
-            encoder.set_value();
-            set_valid(ctx.status, uri_status::valid);
-        } else {
-            if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
-            } else {
-                set_warning(ctx.status, uri_status::invalid_character);
-            }
+            set_warning(ctx.status, uri_status::invalid_character);
         }
+        encoder.set_value();
+        set_valid(ctx.status, uri_status::valid);
     }
 
 } // namespace webpp::uri

@@ -266,11 +266,12 @@ namespace webpp::uri {
         invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 10U,
+        valid_fragment            = valid_bit | 10U,
+        unexpected_fragment_found = error_bit | 22U,
 
         // API errors:
-        setting_hostname_on_opaque_path = error_bit | 22U,
-        scheme_setter_invalid_input = error_bit | 23U, // This indication of failure is used exclusively by
+        setting_hostname_on_opaque_path = error_bit | 23U,
+        scheme_setter_invalid_input = error_bit | 24U, // This indication of failure is used exclusively by
                                                        // the Location object’s protocol setter.
 
         // flags:
@@ -457,6 +458,10 @@ namespace webpp::uri {
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
+            case unexpected_fragment_found:
+                return {
+                  "You asked us not to parse fragments, but the input contains possible "
+                  "fragments or invalid '#' character."};
 
             // API errors:
             case setting_hostname_on_opaque_path:
