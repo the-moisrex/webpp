@@ -29,7 +29,7 @@ namespace webpp::uri {
     /**
      * Get the error message as a string view
      */
-    static constexpr stl::string_view to_string(domain_name_status const status) noexcept {
+    [[nodiscard]] static constexpr stl::string_view to_string(domain_name_status const status) noexcept {
         switch (status) {
             using enum domain_name_status;
             case unparsed: return {"The domain name is not parsed yet"};

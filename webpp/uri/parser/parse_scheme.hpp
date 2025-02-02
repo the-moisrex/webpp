@@ -16,6 +16,8 @@ namespace webpp::uri {
 
     namespace details {
 
+
+        // these exit because the user input may contain newlines and tabs so we can't use them cleanly
         template <typename CharT = char>
         static constexpr stl::array<CharT, 4> file_scheme{'f', 'i', 'l', 'e'};
         template <typename CharT = char>

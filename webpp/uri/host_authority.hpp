@@ -32,6 +32,7 @@ namespace webpp::uri {
      * Host Field RFC:      https://www.rfc-editor.org/rfc/rfc9110#field.host
      * URI-HOST RFC:        https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2
      * WHATWG Host Parsing: https://url.spec.whatwg.org/#host-parsing
+     *                      https://url.spec.whatwg.org/#concept-host-parser
      *
      * RFC 1123 allows the first char to be a digit in a domain name as well:
      *  https://www.rfc-editor.org/rfc/rfc1123#section-2
