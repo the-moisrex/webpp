@@ -36,7 +36,7 @@ namespace webpp::uri {
             }
         }
 
-        // Handle missing host situation, and ipv6:
+        // Handle missing host situation:
         // attention: since we have merged the authority and host parsing, it's possible to
         // have something like "http://username@:8080/" which the host is missing too
         for (;;) {

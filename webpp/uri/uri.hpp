@@ -214,7 +214,7 @@ namespace webpp::uri {
       private:
         status_type m_status = stl::to_underlying(uri_status::unparsed);
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
+        template <uri_parsing_options Options, typename Iter>
         constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status)
           noexcept(is_modifiable) {
             using enum uri_status;
@@ -446,7 +446,7 @@ namespace webpp::uri {
         template <uri_parsing_options     Options = uri_parsing_options{},
                   istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         constexpr uri_status_type href(NStrT&& inp_str) {
-            return parse_step<Options>(stl::forward<NStrT>(inp_str));
+            return parse<Options>(stl::forward<NStrT>(inp_str));
         }
 
         /**
