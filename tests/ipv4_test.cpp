@@ -198,4 +198,17 @@ TEST(IPv4Tests, StartsWith) {
     EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127U, 2U, 3U, 0U));
 }
 
+TEST(IPv4Tests, PureIpv4) {
+    EXPECT_TRUE(pure_ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
+
+    pure_ipv4 const ip_addr{192, 168, 1, 1};
+    stl::string     str{"ip is: "};
+    ip_addr.to_string(str);
+    EXPECT_EQ(str, "ip is: 192.168.1.1");
+    EXPECT_EQ(str.size(), ascii::size("ip is: 192.168.1.1"));
+
+    EXPECT_EQ(sizeof(pure_ipv4), sizeof(stl::uint32_t));
+    EXPECT_NE(sizeof(ipv4), sizeof(stl::uint32_t));
+}
+
 // NOLINTEND(*-magic-numbers)

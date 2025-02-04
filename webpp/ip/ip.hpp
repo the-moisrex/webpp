@@ -120,6 +120,36 @@ namespace webpp {
         return status == valid || status == valid_special;
     }
 
+    namespace details {
+        /**
+         * This type lets ipv4 and ipv6 classes to have a prefix conditionally.
+         * @tparam EnumT the status enum type
+         */
+        template <typename EnumT>
+        struct ip_prefix {
+            constexpr ip_prefix() noexcept                       = default;
+            constexpr ip_prefix(ip_prefix const&)                = default;
+            constexpr ip_prefix(ip_prefix&&) noexcept            = default;
+            constexpr ip_prefix& operator=(ip_prefix const&)     = default;
+            constexpr ip_prefix& operator=(ip_prefix&&) noexcept = default;
+            constexpr ~ip_prefix() noexcept                      = default;
+
+            // NOLINTNEXTLINE(*-explicit-*)
+            explicit(false) constexpr ip_prefix([[maybe_unused]] stl::uint8_t new_prefix) {}
+
+            constexpr ip_prefix& operator=([[maybe_unused]] stl::uint8_t new_prefix) noexcept {
+                return *this;
+            }
+
+            // NOLINTNEXTLINE(*-explicit-*)
+            explicit(false) constexpr operator stl::uint8_t() const noexcept {
+                return prefix_status(EnumT::valid);
+            }
+        };
+
+        template <typename EnumT, bool WithPrefix = true>
+        using ip_prefix_t = stl::conditional_t<WithPrefix, stl::uint8_t, ip_prefix<EnumT>>;
+    } // namespace details
 
 
 } // namespace webpp
