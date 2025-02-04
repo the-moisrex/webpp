@@ -209,6 +209,8 @@ TEST(IPv4Tests, PureIpv4) {
 
     EXPECT_EQ(sizeof(pure_ipv4), sizeof(stl::uint32_t));
     EXPECT_NE(sizeof(ipv4), sizeof(stl::uint32_t));
+    EXPECT_NE(((pure_ipv4{192, 168, 1, 1}).reversed()), (pure_ipv4{192, 168, 1, 1}));
+    EXPECT_EQ((pure_ipv4{192, 168, 1, 1}), (pure_ipv4{192, 168, 1, 1}));
 }
 
 // NOLINTEND(*-magic-numbers)

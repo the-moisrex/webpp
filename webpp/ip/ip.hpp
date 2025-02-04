@@ -141,6 +141,10 @@ namespace webpp {
                 return *this;
             }
 
+            [[nodiscard]] constexpr bool operator==([[maybe_unused]] ip_prefix new_prefix) const noexcept {
+                return true;
+            }
+
             // NOLINTNEXTLINE(*-explicit-*)
             explicit(false) constexpr operator stl::uint8_t() const noexcept {
                 return prefix_status(EnumT::valid);
