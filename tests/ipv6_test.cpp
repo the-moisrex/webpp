@@ -397,4 +397,19 @@ TEST(IPv6Tests, ConversionTest) {
     EXPECT_EQ(ipv6{ip_addr.octets64()}, ip_addr);
 }
 
+TEST(IPv6Tests, PureIpv6) {
+    auto const ip_addr = pure_ipv6::create("10::ffff:127.0.0.1");
+    EXPECT_EQ(pure_ipv6{ip_addr.octets16()}, ip_addr);
+    EXPECT_EQ(pure_ipv6{ip_addr.octets32()}, ip_addr);
+    EXPECT_EQ(pure_ipv6{ip_addr.octets64()}, ip_addr);
+
+    pure_ipv6 const ip_addr2{"::1"};
+    stl::string     str{"ip is: "};
+    ip_addr2.to_string(str);
+    EXPECT_EQ(str, "ip is: ::1");
+    EXPECT_EQ(str.size(), ascii::size("ip is: ::1"));
+
+    EXPECT_NE(sizeof(ipv6), sizeof(pure_ipv6));
+}
+
 // NOLINTEND(*-avoid-c-arrays)

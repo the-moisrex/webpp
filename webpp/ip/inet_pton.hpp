@@ -262,6 +262,7 @@ namespace webpp {
                     case inet_pton4_status::invalid_octet_range: return invalid_octet_range;
                     case inet_pton4_status::invalid_character: return invalid_character;
                     case inet_pton4_status::invalid_prefix: return invalid_prefix;
+                    default: stl::unreachable();
                 }
                 break; // '\0' or special character was seen by inet_pton4.
             }
@@ -302,7 +303,7 @@ namespace webpp {
 
             // another constexpr-friendly way of doing the same thing:
             auto* right_ptr = endp;
-            for (; out != colon_ptr;) {
+            while (out != colon_ptr) {
                 *--right_ptr = *--out;
             }
             for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {
