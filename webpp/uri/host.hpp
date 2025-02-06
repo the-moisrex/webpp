@@ -14,6 +14,17 @@ namespace webpp::uri {
 
     /**
      * @brief Basic Host
+     * A host is
+     *   - a domain,
+     *   - an IP address,
+     *   - an opaque host, or
+     *   - an empty host.
+     * Typically, a host serves as a network address, but it is sometimes used as opaque identifier in URLs
+     * where a network address is not necessary.
+     *
+     * A typical URL whose host is an opaque host is git://github.com/whatwg/url.git.
+     * https://url.spec.whatwg.org/#concept-host
+     *
      * @tparam StringType
      */
     template <istl::StringLike StringType = stl::string_view,

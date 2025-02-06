@@ -97,7 +97,7 @@ namespace webpp::uri {
                     ip_end != ip_addr.rend())
                 {
                     ip_addr.remove_suffix(static_cast<stl::size_t>(ip_end - ip_addr.rbegin()) + 1);
-                    endpoint.emplace<struct ipv6>(ip_addr); // parse and set ipv6
+                    endpoint.emplace<webpp::ipv6>(ip_addr); // parse and set ipv6
                     status_code            = host_status::valid;
                     auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - hostname.data());
                     parse_port(hostname.data() + bracket_pos + 1, hostname.data() + hostname.size());
@@ -119,14 +119,14 @@ namespace webpp::uri {
                     case valid: {
                         // we assumed right, it is an ipv4
                         status_code = host_status::valid;
-                        endpoint.emplace<struct ipv4>(octets);
+                        endpoint.emplace<webpp::ipv4>(octets);
                         return;
                     }
                     case valid_special: {
                         // we might have a port
                         if (':' == *host_ptr) {
                             // doesn't matter if the port was valid or not, we're just going to add it anyway
-                            endpoint.emplace<struct ipv4>(octets);
+                            endpoint.emplace<webpp::ipv4>(octets);
 
                             parse_port(host_ptr, host_end);
                         } else {
@@ -186,9 +186,9 @@ namespace webpp::uri {
                 }
                 case invalid_ipv6: {
                     out += "The string '";
-                    get<struct ipv6>(endpoint).to_string(out);
+                    get<webpp::ipv6>(endpoint).to_string(out);
                     out += "' is not valid: ";
-                    get<struct ipv6>(endpoint).status_to(out);
+                    get<webpp::ipv6>(endpoint).status_to(out);
                     break;
                 }
                 default: stl::unreachable();
@@ -213,11 +213,11 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool is_ipv4() const noexcept {
-            return stl::holds_alternative<struct ipv4>(endpoint);
+            return stl::holds_alternative<webpp::ipv4>(endpoint);
         }
 
         [[nodiscard]] constexpr bool is_ipv6() const noexcept {
-            return stl::holds_alternative<struct ipv6>(endpoint);
+            return stl::holds_alternative<webpp::ipv6>(endpoint);
         }
 
         [[nodiscard]] constexpr bool is_domain() const noexcept {
@@ -225,40 +225,40 @@ namespace webpp::uri {
         }
 
         // returns 0.0.0.0 if not found
-        [[nodiscard]] constexpr struct ipv4 ipv4() const noexcept {
-            if (auto const* ip_ptr = stl::get_if<struct ipv4>(&endpoint); ip_ptr != nullptr) {
+        [[nodiscard]] constexpr webpp::ipv4 ipv4() const noexcept {
+            if (auto const* ip_ptr = stl::get_if<webpp::ipv4>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
             return {};
         }
 
-        [[nodiscard]] constexpr struct ipv4 ipv4_or(struct ipv4 const default_ip) const noexcept {
-            if (auto const* ip_ptr = stl::get_if<struct ipv4>(&endpoint); ip_ptr != nullptr) {
+        [[nodiscard]] constexpr webpp::ipv4 ipv4_or(webpp::ipv4 const default_ip) const noexcept {
+            if (auto const* ip_ptr = stl::get_if<webpp::ipv4>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
             return default_ip;
         }
 
         // returns ::0 if not found
-        [[nodiscard]] constexpr struct ipv6 ipv6() const noexcept {
-            if (auto const* ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
+        [[nodiscard]] constexpr webpp::ipv6 ipv6() const noexcept {
+            if (auto const* ip_ptr = stl::get_if<webpp::ipv6>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
             return {};
         }
 
-        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 const& default_ip) const noexcept {
-            if (auto const* ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
+        [[nodiscard]] constexpr webpp::ipv6 ipv6_or(webpp::ipv6 const& default_ip) const noexcept {
+            if (auto const* ip_ptr = stl::get_if<webpp::ipv6>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
             return default_ip;
         }
 
         [[nodiscard]] constexpr ip_address address() const noexcept {
-            if (auto const* ip4_ptr = stl::get_if<struct ipv4>(&endpoint); ip4_ptr != nullptr) {
+            if (auto const* ip4_ptr = stl::get_if<webpp::ipv4>(&endpoint); ip4_ptr != nullptr) {
                 return ip_address{*ip4_ptr};
             }
-            if (auto const* ip6_ptr = stl::get_if<struct ipv6>(&endpoint); ip6_ptr != nullptr) {
+            if (auto const* ip6_ptr = stl::get_if<webpp::ipv6>(&endpoint); ip6_ptr != nullptr) {
                 return ip_address{*ip6_ptr};
             }
             return ip_address::invalid();
@@ -290,11 +290,11 @@ namespace webpp::uri {
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(
           host_authority const& rhs_host) const = default;
 
-        [[nodiscard]] explicit constexpr operator struct ipv4() const noexcept {
+        [[nodiscard]] explicit constexpr operator webpp::ipv4() const noexcept {
             return this->ipv4();
         }
 
-        [[nodiscard]] explicit constexpr operator struct ipv6() const noexcept {
+        [[nodiscard]] explicit constexpr operator webpp::ipv6() const noexcept {
             return this->ipv6();
         }
 
@@ -356,7 +356,7 @@ namespace webpp::uri {
             }
         }
 
-        using endpoint_variant_type = stl::variant<stl::monostate, struct ipv4, struct ipv6, domain_type>;
+        using endpoint_variant_type = stl::variant<stl::monostate, webpp::ipv4, webpp::ipv6, domain_type>;
         endpoint_variant_type endpoint{stl::monostate{}};
         stl::uint16_t         port_value  = 0;
         host_status           status_code = host_status::invalid_host;
