@@ -4,8 +4,8 @@
 #define WEBPP_SOCKET_ADDRESS_HPP
 
 #include "../ip/ip_address.hpp"
+#include "./host_bytes.hpp"
 #include "./os.hpp"
-#include "./socket_bytes.hpp"
 
 namespace webpp {
     //////////////////////////////////////// To ipv4/ipv6/addresses ////////////////////////////////////////

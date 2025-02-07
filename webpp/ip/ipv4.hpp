@@ -2,6 +2,7 @@
 #define WEBPP_IP_IPV4_HPP
 
 #include "../convert/casts.hpp"
+#include "../socket/host_bytes.hpp"
 #include "../strings/append.hpp"
 #include "../strings/to_case.hpp"
 #include "inet_ntop.hpp"
@@ -381,6 +382,16 @@ namespace webpp {
             });
         }
 
+        // Get the string size
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            auto const oct = octets();
+            return 7U +                                 // 3 (dots) + 4 (base digits)
+                   (oct[0] >= 10U) + (oct[0] >= 100U) + // Octet 1 (LSB)
+                   (oct[1] >= 10U) + (oct[1] >= 100U) + // Octet 2
+                   (oct[2] >= 10U) + (oct[2] >= 100U) + // Octet 3
+                   (oct[3] >= 10U) + (oct[3] >= 100U);  // Octet 4 (MSB)
+        }
+
         /**
          * @brief get the integer representation of the ip address
          * @return
@@ -390,15 +401,21 @@ namespace webpp {
         }
 
         /**
+         * Get the big-endian encoded integer value of the IP
+         */
+        [[nodiscard]] constexpr stl::uint32_t net_integer() const noexcept {
+            return hton<stl::uint32_t>(data);
+        }
+
+        /**
          * @brief get the 4 octets of the ip address
          * @return
          */
         [[nodiscard]] constexpr ipv4_octets octets() const noexcept {
-            stl::uint32_t const _data = integer();
-            return ipv4_octets({static_cast<ipv4_octet>(_data >> 24U),
-                                static_cast<ipv4_octet>(_data >> 16U & 0x0FFU),
-                                static_cast<ipv4_octet>(_data >> 8U & 0x0FFU),
-                                static_cast<ipv4_octet>(_data & 0x0FFU)});
+            auto const  val = net_integer();
+            ipv4_octets out;
+            stl::memcpy(out.data(), &val, sizeof(val));
+            return out;
         }
 
         /**

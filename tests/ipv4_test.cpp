@@ -172,6 +172,11 @@ TEST(IPv4Tests, InetP2NValidation) {
         stl::array<char, sizeof "255.255.255.255"> new_ip{};
         inet_ntop4(ip_octets, new_ip.data());
         EXPECT_EQ(stl::string_view{_ip}, stl::string_view{new_ip.data()}) << new_ip.data();
+
+
+        // test the sizes:
+        pure_ipv4 ip{_ip};
+        EXPECT_EQ(ip.string().size(), ip.size());
     }
 
     for (auto const& _ip : invalid_ipv4s) {

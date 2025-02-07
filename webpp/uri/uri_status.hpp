@@ -273,6 +273,7 @@ namespace webpp::uri {
         setting_hostname_on_opaque_path = error_bit | 23U,
         scheme_setter_invalid_input = error_bit | 24U, // This indication of failure is used exclusively by
                                                        // the Location object’s protocol setter.
+        hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
 
         // flags:
         special_scheme     = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
@@ -470,6 +471,10 @@ namespace webpp::uri {
                   "more info: https://url.spec.whatwg.org/#dom-url-hostname"};
             case scheme_setter_invalid_input:
                 return {"Tried to set an scheme that starts by invalid character."};
+            case hostname_type_mismatch:
+                return {
+                  "Hostname type mismatch; the new hostname is not the same type as the old one; for "
+                  "example, you can't add a new label to the end of an IP address."};
 
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};

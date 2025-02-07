@@ -126,7 +126,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/socket/socket.hpp
         ${LIB_INCLUDE_DIR}/socket/os.hpp
         ${LIB_INCLUDE_DIR}/socket/socket_address.hpp
-        ${LIB_INCLUDE_DIR}/socket/socket_bytes.hpp
+        ${LIB_INCLUDE_DIR}/socket/host_bytes.hpp
 
         ${LIB_INCLUDE_DIR}/time/stopwatch.hpp
         ${LIB_INCLUDE_DIR}/time/convert.hpp
