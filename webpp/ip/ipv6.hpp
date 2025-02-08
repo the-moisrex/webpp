@@ -1103,7 +1103,7 @@ namespace webpp {
                         *pos++ = static_cast<char>('0' + (_prefix % 100 / 10));
                         *pos++ = static_cast<char>('0' + (_prefix % 10));
                     }
-                    *pos++ = '\0';
+                    *pos = '\0';
                 }
             }
             return pos;
@@ -1162,6 +1162,25 @@ namespace webpp {
          */
         [[nodiscard]] constexpr stl::size_t ip_size() const noexcept {
             return inet_ntop6_size(octets().data());
+        }
+
+        /**
+         * Get the string length of the ip address including the prefix if presented
+         */
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            stl::size_t length = ip_size();
+            if constexpr (WithPrefix) {
+                if (has_prefix()) {
+                    if (_prefix < 10) {
+                        length += 1 + 1;
+                    } else if (_prefix < 100) {
+                        length += 2 + 1;
+                    } else {
+                        length += 3 + 1;
+                    }
+                }
+            }
+            return length;
         }
 
         /**

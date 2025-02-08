@@ -419,6 +419,14 @@ TEST(IPv6Tests, IpSize) {
         auto octets = ip6.octets();
         EXPECT_EQ(inet_ntop6_size(octets.data()), ip6.ip_string().size()) << ip6.ip_string();
         EXPECT_EQ(ip6.ip_size(), ip6.ip_string().size()) << ip6.ip_string();
+
+        for (int i = 0; i != 128; ++i) { // NOLINT(*-avoid-magic-*)
+            stl::string ip6str{ip6.ip_string()};
+            ip6str += "/";
+            ip6str += stl::to_string(i);
+            ipv6 const ip62{ip6str};
+            EXPECT_EQ(ip62.size(), ip62.string().size()) << ip62.string();
+        }
     }
 }
 
