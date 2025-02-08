@@ -1158,6 +1158,13 @@ namespace webpp {
         }
 
         /**
+         * Get the string length of the ip address
+         */
+        [[nodiscard]] constexpr stl::size_t ip_size() const noexcept {
+            return inet_ntop6_size(octets().data());
+        }
+
+        /**
          * Get the prefix if exists or 255 otherwise
          */
         [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept

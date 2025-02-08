@@ -384,12 +384,7 @@ namespace webpp {
 
         // Get the string size
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
-            auto const oct = octets();
-            return 7U +                                 // 3 (dots) + 4 (base digits)
-                   (oct[0] >= 10U) + (oct[0] >= 100U) + // Octet 1 (LSB)
-                   (oct[1] >= 10U) + (oct[1] >= 100U) + // Octet 2
-                   (oct[2] >= 10U) + (oct[2] >= 100U) + // Octet 3
-                   (oct[3] >= 10U) + (oct[3] >= 100U);  // Octet 4 (MSB)
+            return inet_ntop4_size(octets().data());
         }
 
         /**

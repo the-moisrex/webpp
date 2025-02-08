@@ -189,6 +189,86 @@ namespace webpp {
         return out;
     }
 
+    // Get the string size
+    [[nodiscard]] static constexpr stl::size_t inet_ntop4_size(stl::uint8_t const* oct) noexcept {
+        // NOLINTBEGIN(*-implicit-bool-conversion)
+        return 7U +                                 // 3 (dots) + 4 (base digits)
+               (oct[0] >= 10U) + (oct[0] >= 100U) + // Octet 1 (LSB)
+               (oct[1] >= 10U) + (oct[1] >= 100U) + // Octet 2
+               (oct[2] >= 10U) + (oct[2] >= 100U) + // Octet 3
+               (oct[3] >= 10U) + (oct[3] >= 100U);  // Octet 4 (MSB)
+        // NOLINTEND(*-implicit-bool-conversion)
+    }
+
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        // Precompute all 16-bit groups to avoid redundant calculations
+        stl::array<stl::uint16_t, 8> group_vals;
+        for (int i = 0; i < 8; ++i) {
+            group_vals[i] = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+        }
+
+        // Step 1: Compute length for each group and prefix sum
+        stl::array<stl::size_t, 8> len;
+        stl::array<stl::size_t, 9> prefix_sum = {0};
+
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t const group_val = group_vals[i];
+            if (group_val == 0) {
+                len[i] = 1;
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const lz                   = stl::countl_zero(static_cast<uint32_t>(group_val) << 16);
+                int const leading_zero_nibbles = lz / 4;
+                len[i]                         = 4 - leading_zero_nibbles;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len[i];
+        }
+
+        // Step 2: Find the longest run of zero groups
+        int longest_count = 0;
+        int longest_index = -1;
+        int current_run   = 0;
+
+        for (int i = 0; i < 8; ++i) {
+            if (group_vals[i] == 0) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                current_run = 0;
+            }
+        }
+
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 && group_vals[5] == 0xFFFF) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Step 3: Calculate total length based on longest run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
+        }
+
+        return total_length;
+    }
+
     // NOLINTEND(*-magic-numbers)
     // NOLINTEND(*-pro-bounds-pointer-arithmetic)
 

@@ -412,4 +412,14 @@ TEST(IPv6Tests, PureIpv6) {
     EXPECT_NE(sizeof(ipv6), sizeof(pure_ipv6));
 }
 
+TEST(IPv6Tests, IpSize) {
+    for (auto _ip : some_valid_ipv6s) {
+        ipv6 const ip6{_ip};
+        EXPECT_TRUE(ip6.is_valid()) << _ip;
+        auto octets = ip6.octets();
+        EXPECT_EQ(inet_ntop6_size(octets.data()), ip6.ip_string().size()) << ip6.ip_string();
+        EXPECT_EQ(ip6.ip_size(), ip6.ip_string().size()) << ip6.ip_string();
+    }
+}
+
 // NOLINTEND(*-avoid-c-arrays)
