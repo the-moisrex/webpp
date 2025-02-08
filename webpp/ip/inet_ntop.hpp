@@ -206,36 +206,19 @@ namespace webpp {
             return 0U;
         }
 
-        // Precompute all 16-bit groups to avoid redundant calculations
-        stl::array<stl::uint16_t, 8> group_vals;
-        for (int i = 0; i < 8; ++i) {
-            group_vals[i] = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
-        }
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
 
         // Step 1: Compute length for each group and prefix sum
-        stl::array<stl::size_t, 8> len;
-        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
-
-        for (int i = 0; i < 8; ++i) {
-            stl::uint16_t const group_val = group_vals[i];
-            if (group_val == 0) {
-                len[i] = 1;
-            } else {
-                // Calculate leading zero nibbles using bit scan operations
-                int const lz                   = stl::countl_zero(static_cast<uint32_t>(group_val) << 16);
-                int const leading_zero_nibbles = lz / 4;
-                len[i]                         = 4 - leading_zero_nibbles;
-            }
-            prefix_sum[i + 1] = prefix_sum[i] + len[i];
-        }
-
         // Step 2: Find the longest run of zero groups
-        int longest_count = 0;
-        int longest_index = -1;
-        int current_run   = 0;
-
         for (int i = 0; i < 8; ++i) {
-            if (group_vals[i] == 0) {
+            stl::uint16_t const group_val =
+              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::size_t len = 1;
+
+            if (group_val == 0) {
                 current_run++;
                 if (current_run > longest_count) {
                     longest_count = current_run;
@@ -244,12 +227,19 @@ namespace webpp {
                     longest_index = i - current_run + 1; // Prefer later runs
                 }
             } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
                 current_run = 0;
             }
+            prefix_sum[i + 1] = prefix_sum[i] + len;
         }
 
+
         // Check for IPv4-mapped case (::ffff:x.x.x.x)
-        if (longest_index == 0 && longest_count == 5 && group_vals[5] == 0xFFFF) {
+        if (longest_index == 0 && longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
             return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
         }
 

@@ -737,115 +737,722 @@ namespace v8 {
 
 } // namespace v8
 
-static void IPV6Size_v1(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v1::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+namespace v9 {
+
+    // Get the string size without converting to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::array<stl::size_t, 8> len{};
+        stl::size_t                total_length      = 0;
+        int                        longest_run_index = -1;
+        int                        longest_run_count = 0;
+
+        // Optimized combined loop
+        for (int i = 0, current_run_count = 0; i < 8; ++i) {
+            stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+
+            if (group_val == 0) {
+                len[i] = 1;
+                current_run_count++;
+                if (current_run_count > longest_run_count) {
+                    longest_run_count = current_run_count;
+                    longest_run_index = i - current_run_count + 1;
+                } else if (current_run_count == longest_run_count) {
+                    longest_run_index = i - current_run_count + 1; // Favor later runs
+                }
+            } else {
+                len[i]             = 4 - (stl::countl_zero(static_cast<uint32_t>(group_val) << 16) / 4);
+                total_length      += len[i]; // Accumulate total length (without colons yet)
+                current_run_count  = 0;
+            }
+        }
+
+        // IPv4-mapped case check (optimized - no group_vals array access)
+        if (longest_run_index == 0 && longest_run_count == 5 &&
+            ((static_cast<stl::uint16_t>(src[10]) << 8) | src[11]) == 0xFFFF)
+        {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        if (longest_run_count > 0) {
+            int         groups_before = longest_run_index;
+            int         groups_after  = 8 - (longest_run_index + longest_run_count);
+            stl::size_t sum_before    = 0;
+            for (int i = 0; i < groups_before; ++i) {
+                sum_before += len[i];
+            }
+            stl::size_t sum_after = 0;
+            for (int i = longest_run_index + longest_run_count; i < 8; ++i) {
+                sum_after += len[i];
+            }
+
+            total_length = sum_before + sum_after + 2; // Sum of lengths + "::"
+            if (groups_before > 0) {
+                total_length += (groups_before - 1);   // Colons before "::"
+            }
+            if (groups_after > 0) {
+                total_length += (groups_after - 1);    // Colons after "::"
+            }
+        } else {
+            total_length += 7;                         // Add 7 colons for the full IPv6 address
+        }
+
+        return total_length;
+    }
+
+
+} // namespace v9
+
+namespace v10 {
+
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::size_t                  total_length = 0;
+        stl::array<stl::size_t, 8>   group_lengths; // Store group lengths for compression adjustment
+        stl::array<stl::uint16_t, 8> group_vals; // Store group values for zero run detection (optional - can
+                                                 // be recalculated)
+
+        int longest_run_index = -1;
+        int longest_run_count = 0;
+        int current_run_count = 0;
+
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+            group_vals[i] = group_val; // Store for later zero-run check (if needed - can optimize out)
+            stl::size_t group_length = 4;
+
+            if (group_val == 0) {
+                group_length = 1;
+                current_run_count++;
+                if (current_run_count > longest_run_count) {
+                    longest_run_count = current_run_count;
+                    longest_run_index = i - current_run_count + 1;
+                } else if (current_run_count == longest_run_count) {
+                    longest_run_index = i - current_run_count + 1; // Favor later runs
+                }
+            } else {
+                if (group_val < 0x1000) {
+                    group_length--;
+                }
+                if (group_val < 0x0100) {
+                    group_length--;
+                }
+                if (group_val < 0x0010) {
+                    group_length--;
+                }
+                current_run_count = 0;        // Reset run count
+            }
+            group_lengths[i]  = group_length;
+            total_length     += group_length; // Accumulate even if we might compress later, we'll adjust
+        }
+
+        // IPv4-mapped case check - moved after main loop for possible integration benefit (group_vals already
+        // computed)
+        if (longest_run_index == 0 && longest_run_count == 5 && group_vals[5] == 0xFFFF) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+
+        if (longest_run_count >= 2) { // Compress only if run is 2 or more (as per IPv6 rules)
+            int         groups_before = longest_run_index;
+            int         groups_after  = 8 - (longest_run_index + longest_run_count);
+            stl::size_t sum_before    = 0;
+            for (int i = 0; i < groups_before; ++i) {
+                sum_before += group_lengths[i];
+            }
+            stl::size_t sum_after = 0;
+            for (int i = longest_run_index + longest_run_count; i < 8; ++i) {
+                sum_after += group_lengths[i];
+            }
+
+            total_length = sum_before + sum_after + 2; // Sum of lengths + "::"
+            if (groups_before > 0) {
+                total_length += (groups_before - 1);   // Colons before "::"
+            }
+            if (groups_after > 0) {
+                total_length += (groups_after - 1);    // Colons after "::"
+            }
+            return total_length;
+        } else {
+            return total_length + 7; // No compression, add 7 colons (as in v2, but now only if no
+                                     // compression)
         }
     }
-}
 
-BENCHMARK(IPV6Size_v1);
 
-static void IPV6Size_v2(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v2::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+} // namespace v10
+
+namespace v11 {
+
+
+    stl::size_t branchless_group_length_v2(stl::uint16_t group_val) noexcept {
+        if (group_val == 0) {
+            return 1; // Still need a branch for zero case
+        }
+
+        stl::size_t length = 4;
+        length -= (group_val < 0x1000); // Subtract 1 if less than 0x1000 (boolean true/false becomes 1/0)
+        length -= (group_val < 0x0100); // Subtract 1 if less than 0x0100
+        length -= (group_val < 0x0010); // Subtract 1 if less than 0x0010
+        return length;
+    }
+
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::size_t                  total_length = 0;
+        stl::array<stl::size_t, 8>   group_lengths;
+        stl::array<stl::uint16_t, 8> group_vals;
+
+        int longest_run_index = -1;
+        int longest_run_count = 0;
+        int current_run_count = 0;
+
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+            group_vals[i]           = group_val;
+
+            stl::size_t group_length  = branchless_group_length_v2(group_val); // Use more branchless version
+            group_lengths[i]          = group_length;
+            total_length             += group_length;
+
+            if (group_val == 0) {
+                current_run_count++;
+                if (current_run_count > longest_run_count) {
+                    longest_run_count = current_run_count;
+                    longest_run_index = i - current_run_count + 1;
+                } else if (current_run_count == longest_run_count) {
+                    longest_run_index = i - current_run_count + 1;
+                }
+            } else {
+                current_run_count = 0;
+            }
+        }
+
+        // IPv4-mapped case check
+        if (longest_run_index == 0 && longest_run_count == 5 && group_vals[5] == 0xFFFF) {
+            return 7 + inet_ntop4_size(src + 12);
+        }
+
+
+        if (longest_run_count >= 2) { // Compression logic
+            int         groups_before = longest_run_index;
+            int         groups_after  = 8 - (longest_run_index + longest_run_count);
+            stl::size_t sum_before    = 0;
+            for (int i = 0; i < groups_before; ++i) {
+                sum_before += group_lengths[i];
+            }
+            stl::size_t sum_after = 0;
+            for (int i = longest_run_index + longest_run_count; i < 8; ++i) {
+                sum_after += group_lengths[i];
+            }
+
+            total_length = sum_before + sum_after + 2;
+            if (groups_before > 0) {
+                total_length += (groups_before - 1);
+            }
+            if (groups_after > 0) {
+                total_length += (groups_after - 1);
+            }
+            return total_length;
+        } else {
+            return total_length + 7;
         }
     }
-}
 
-BENCHMARK(IPV6Size_v2);
 
-static void IPV6Size_v3(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v3::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+
+} // namespace v11
+
+namespace v12 {
+
+    // Branchless group length calculation
+    inline stl::size_t branchless_group_length_v3(stl::uint16_t group_val) noexcept {
+        stl::size_t length  = 4;
+        length             -= (group_val < 0x1000);
+        length             -= (group_val < 0x0100);
+        length             -= (group_val < 0x0010);
+        return length;
+    }
+
+    // Get the string size without converting to string - Branchless Core
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::size_t                  total_length = 0;
+        stl::array<stl::size_t, 8>   group_lengths;
+        stl::array<stl::uint16_t, 8> group_vals;
+
+        int longest_run_index = -1;
+        int longest_run_count = 0;
+        int current_run_count = 0;
+
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+            group_vals[i]           = group_val;
+
+            stl::size_t group_length = branchless_group_length_v3(group_val); // Use truly branchless version!
+            group_lengths[i]         = group_length;
+            total_length += group_length;
+
+            if (group_val == 0) {
+                current_run_count++;
+                if (current_run_count > longest_run_count) {
+                    longest_run_count = current_run_count;
+                    longest_run_index = i - current_run_count + 1;
+                } else if (current_run_count == longest_run_count) {
+                    longest_run_index = i - current_run_count + 1;
+                }
+            } else {
+                current_run_count = 0;
+            }
+        }
+
+        // IPv4-mapped case check
+        if (longest_run_index == 0 && longest_run_count == 5 && group_vals[5] == 0xFFFF) {
+            return 7 + inet_ntop4_size(src + 12);
+        }
+
+        if (longest_run_count >= 2) { // Compression logic
+            int         groups_before = longest_run_index;
+            int         groups_after  = 8 - (longest_run_index + longest_run_count);
+            stl::size_t sum_before    = 0;
+            for (int i = 0; i < groups_before; ++i) {
+                sum_before += group_lengths[i];
+            }
+            stl::size_t sum_after = 0;
+            for (int i = longest_run_index + longest_run_count; i < 8; ++i) {
+                sum_after += group_lengths[i];
+            }
+
+            total_length = sum_before + sum_after + 2;
+            if (groups_before > 0) {
+                total_length += (groups_before - 1);
+            }
+            if (groups_after > 0) {
+                total_length += (groups_after - 1);
+            }
+            return total_length;
+        } else {
+            return total_length + 7;
         }
     }
-}
 
-BENCHMARK(IPV6Size_v3);
 
-static void IPV6Size_v4(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v4::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+} // namespace v12
+
+// v13 = v2 + v9 (combined loops)
+namespace v13 {
+
+
+    // Get the string size without converting to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
         }
-    }
-}
 
-BENCHMARK(IPV6Size_v4);
+        // Step 1: Compute length for each group and prefix sum
+        stl::array<stl::size_t, 8> len;
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
 
-static void IPV6Size_v5(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v5::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t const group_val =
+              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+
+            if (group_val == 0) {
+                len[i] = 1;
+
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const clz                  = stl::countl_zero(static_cast<uint32_t>(group_val) << 16U);
+                int const leading_zero_nibbles = clz / 4;
+                len[i]                         = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len[i];
         }
-    }
-}
 
-BENCHMARK(IPV6Size_v5);
 
-static void IPV6Size_v6(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v6::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 &&
+            ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
+        {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
         }
-    }
-}
 
-BENCHMARK(IPV6Size_v6);
-
-static void IPV6Size_v7(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v7::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+        // Step 3: Calculate total length based on longest run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
         }
+
+        return total_length;
     }
-}
 
-BENCHMARK(IPV6Size_v7);
+} // namespace v13
 
-static void IPV6Size_v8(benchmark::State& state) {
-    for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              octets = ip6.octets();
-            auto              len    = v8::inet_ntop6_size(octets.data());
-            benchmark::DoNotOptimize(len);
+// v14 = v13 + eliminating the "len"
+namespace v14 {
+
+
+    // Get the string size without converting to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
         }
-    }
-}
 
-BENCHMARK(IPV6Size_v8);
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
+
+        // Step 1: Compute length for each group and prefix sum
+        // Step 2: Find the longest run of zero groups
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t const group_val =
+              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::size_t len = 1;
+
+            if (group_val == 0) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len;
+        }
+
+
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 &&
+            ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
+        {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Step 3: Calculate total length based on longest run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
+        }
+
+        return total_length;
+    }
+
+
+} // namespace v14
+
+namespace v15 {
+
+
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
+
+        // Step 1: Compute length for each group and prefix sum
+        // Step 2: Find the longest run of zero groups
+        for (int i = 0; i < 8; ++i) {
+            stl::size_t len = 1;
+
+            if (src[2U * i] == 0U && src[(2U * i) + 1U] == 0U) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                stl::uint32_t const group_val =
+                  (static_cast<stl::uint32_t>(src[2U * i]) << 24U) | (src[(2U * i) + 1U] << 16U);
+                int const clz                  = stl::countl_zero(group_val);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len;
+        }
+
+
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Step 3: Calculate total length based on longest run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
+        }
+
+        return total_length;
+    }
+
+
+} // namespace v15
+
+namespace v16 {
+
+
+    // Get the string size without converting to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
+
+        // Step 1: Compute length for each group and prefix sum
+        // Step 2: Find the longest run of zero groups
+        for (int i = 0; i < 8; ++i) {
+            stl::size_t         len = 1;
+            stl::uint32_t const group_val =
+              (static_cast<stl::uint32_t>(src[2U * i]) << 24U) | (src[(2U * i) + 1U] << 16U);
+
+            if (group_val == 0U) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const clz                  = stl::countl_zero(group_val);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len;
+        }
+
+
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Step 3: Calculate total length based on longest run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
+        }
+
+        return total_length;
+    }
+
+
+} // namespace v16
+
+namespace badV17 {
+
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
+        int                        longest_count = 0;
+        int                        longest_index = -1;
+        int                        current_run   = 0;
+
+        // Process groups in chunks of four where possible to find consecutive zeros faster
+        int i = 0;
+        while (i < 8) {
+            // Check if we can process four groups (64 bits) at once
+            if (i <= 4) { // i+3 <= 7
+                uint64_t four_groups;
+                // Use memcpy to avoid alignment issues and ensure constexpr compatibility
+                stl::memcpy(&four_groups, src + 2 * i, sizeof(four_groups));
+                if (four_groups == 0) {
+                    current_run += 4;
+                    // Update longest_count and longest_index if this run is the longest
+                    if (current_run > longest_count) {
+                        longest_count = current_run;
+                        longest_index = i - current_run + 1;
+                    } else if (current_run == longest_count) {
+                        // Prefer the latter run for tie-breaking
+                        int new_index = i - current_run + 1;
+                        if (new_index > longest_index) {
+                            longest_index = new_index;
+                        }
+                    }
+                    i += 4;
+                    continue;
+                }
+            }
+
+            // Process individual group
+            stl::uint16_t const group_val =
+              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::size_t len = 1;
+
+            if (group_val == 0) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Correctly calculate leading zero nibbles using countl_zero on 16-bit group_val
+                int const clz                  = stl::countl_zero(group_val);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[i + 1] = prefix_sum[i] + len;
+            i++;
+        }
+
+        // Handle IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Calculate total length based on the longest zero run
+        stl::size_t total_length = 0;
+        if (longest_count >= 1) {
+            int const         groups_before = longest_index;
+            int const         groups_after  = 8 - (longest_index + longest_count);
+            stl::size_t const sum_before    = prefix_sum[longest_index];
+            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
+            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length = sum_before + sum_after + colons_before + colons_after + 2; // 2 colons for the ::
+        } else {
+            total_length = prefix_sum[8] + 7; // 7 colons for non-compressed format
+        }
+
+        return total_length;
+    }
+
+} // namespace badV17
+
+static constexpr auto ips = []() consteval {
+    stl::array<webpp::pure_ipv6, sizeof(some_valid_ipv6s) / sizeof(stl::string_view)> ips;
+    int                                                                               i = 0;
+    for (auto _ip : some_valid_ipv6s) {
+        webpp::pure_ipv6 const ip6{_ip};
+        ips[i] = ip6;
+        ++i;
+    }
+    return ips;
+}();
+
+#define benchmark_version(Ver)                                     \
+    static void IPV6Size_##Ver(benchmark::State& state) {          \
+        for (auto _ : state) {                                     \
+            for (auto ip6 : ips) {                                 \
+                auto octets = ip6.octets();                        \
+                auto len    = Ver::inet_ntop6_size(octets.data()); \
+                benchmark::DoNotOptimize(len);                     \
+            }                                                      \
+        }                                                          \
+    }                                                              \
+    BENCHMARK(IPV6Size_##Ver)
+
+
+benchmark_version(v1);
+benchmark_version(v2);
+benchmark_version(v3);
+benchmark_version(v4);
+benchmark_version(v5);
+benchmark_version(v6);
+benchmark_version(v7);
+benchmark_version(v8);
+benchmark_version(v9);
+benchmark_version(v10);
+benchmark_version(v11);
+benchmark_version(v12);
+benchmark_version(v13);
+benchmark_version(v14);
+benchmark_version(v15);
+benchmark_version(v16);
+benchmark_version(badV17);
 
 static void IPV6Size_StringSize(benchmark::State& state) {
     for (auto _ : state) {
-        for (auto _ip : some_valid_ipv6s) {
-            webpp::ipv6 const ip6{_ip};
-            auto              len = ip6.ip_string().size();
+        for (auto ip6 : ips) {
+            auto len = ip6.ip_string().size();
             benchmark::DoNotOptimize(len);
         }
     }
