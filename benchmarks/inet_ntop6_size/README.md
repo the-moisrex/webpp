@@ -3,7 +3,7 @@
 gcc (GCC) 14.2.1 20250128:
 ```
 g++ -std=c++23 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark -flto -Ofast -DNDEBUG -march=native inet_ntop6_size_benchmark.cpp
-2025-02-07T22:20:22-10:00
+2025-02-07T22:27:26-10:00
 Running ./a.out
 Run on (32 X 6000 MHz CPU s)
 CPU Caches:
@@ -11,17 +11,18 @@ CPU Caches:
   L1 Instruction 32 KiB (x16)
   L2 Unified 2048 KiB (x16)
   L3 Unified 36864 KiB (x1)
-Load Average: 1.81, 2.46, 2.24
+Load Average: 4.55, 2.67, 2.33
 ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
-------------------------------------------------------
-Benchmark            Time             CPU   Iterations
-------------------------------------------------------
-IPV6Size_v1       2920 ns         2913 ns       242471
-IPV6Size_v2       2459 ns         2457 ns       287703
-IPV6Size_v3       3355 ns         3353 ns       221919
-IPV6Size_v4       2787 ns         2784 ns       252730
-IPV6Size_v5       2791 ns         2788 ns       251178
-IPV6Size_v6       2838 ns         2834 ns       248369
-IPV6Size_v7       2849 ns         2845 ns       244781
-IPV6Size_v8       2842 ns         2840 ns       248805
+--------------------------------------------------------------
+Benchmark                    Time             CPU   Iterations
+--------------------------------------------------------------
+IPV6Size_v1               2936 ns         2934 ns       236846
+IPV6Size_v2               2442 ns         2440 ns       289943
+IPV6Size_v3               3212 ns         3205 ns       223109
+IPV6Size_v4               2757 ns         2752 ns       251360
+IPV6Size_v5               2886 ns         2883 ns       253253
+IPV6Size_v6               2827 ns         2825 ns       248168
+IPV6Size_v7               2828 ns         2826 ns       247929
+IPV6Size_v8               2826 ns         2824 ns       244691
+IPV6Size_StringSize       4492 ns         4487 ns       156482
 ```

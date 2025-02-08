@@ -840,3 +840,15 @@ static void IPV6Size_v8(benchmark::State& state) {
 }
 
 BENCHMARK(IPV6Size_v8);
+
+static void IPV6Size_StringSize(benchmark::State& state) {
+    for (auto _ : state) {
+        for (auto _ip : some_valid_ipv6s) {
+            webpp::ipv6 const ip6{_ip};
+            auto              len = ip6.ip_string().size();
+            benchmark::DoNotOptimize(len);
+        }
+    }
+}
+
+BENCHMARK(IPV6Size_StringSize);

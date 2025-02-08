@@ -189,7 +189,7 @@ namespace webpp {
         return out;
     }
 
-    // Get the string size
+    // Get the string size without converting it to string
     [[nodiscard]] static constexpr stl::size_t inet_ntop4_size(stl::uint8_t const* oct) noexcept {
         // NOLINTBEGIN(*-implicit-bool-conversion)
         return 7U +                                 // 3 (dots) + 4 (base digits)
@@ -200,6 +200,7 @@ namespace webpp {
         // NOLINTEND(*-implicit-bool-conversion)
     }
 
+    // Get the string size without converting to string
     [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
         if (src == nullptr) {
             return 0U;
@@ -213,7 +214,7 @@ namespace webpp {
 
         // Step 1: Compute length for each group and prefix sum
         stl::array<stl::size_t, 8> len;
-        stl::array<stl::size_t, 9> prefix_sum = {0};
+        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
 
         for (int i = 0; i < 8; ++i) {
             stl::uint16_t const group_val = group_vals[i];
