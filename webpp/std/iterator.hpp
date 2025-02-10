@@ -48,6 +48,12 @@ namespace webpp::istl {
     };
 
     template <typename T>
+        requires stl::is_array_v<stl::remove_cvref_t<T>>
+    struct iterator_type_of<T> {
+        using type = stl::decay_t<T>;
+    };
+
+    template <typename T>
     using iterator_type_of_t = typename iterator_type_of<T>::type;
 
     template <typename T>

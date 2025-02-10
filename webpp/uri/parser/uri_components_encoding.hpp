@@ -18,12 +18,16 @@ namespace webpp::uri::details {
      */
     template <components Comp, typename CtxType>
     struct component_encoder {
-        using ctx_type        = CtxType;
-        using seg_type        = typename ctx_type::seg_type;
-        using iterator        = typename ctx_type::iterator;
-        using iter_traits     = stl::iterator_traits<iterator>;
+        using ctx_type = CtxType;
+        using seg_type = typename ctx_type::seg_type;
+        using iterator = typename ctx_type::iterator;
+
+      private:
+        using iter_traits = stl::iterator_traits<iterator>;
+
+      public:
         using difference_type = typename iter_traits::difference_type;
-        using value_type      = typename stl::iterator_traits<iterator>::value_type;
+        using value_type      = typename iter_traits::value_type;
         using char_type       = typename ctx_type::char_type;
 
 

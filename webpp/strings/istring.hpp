@@ -344,7 +344,7 @@ namespace webpp {
 
         template <strings::Delimiter... DelimT>
         [[nodiscard]] auto splitter(DelimT&&... delims) const noexcept {
-            return strings::basic_splitter<istring_type, DelimT...>{*this, stl::forward<DelimT>(delims)...};
+            return strings::splitter<istring_type, DelimT...>{*this, stl::forward<DelimT>(delims)...};
         }
     };
 

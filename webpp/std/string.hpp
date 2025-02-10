@@ -76,6 +76,7 @@ namespace webpp::istl {
     template <template <typename...> typename StrType, typename T>
     concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
 
+    // Get T if it's a string, or get std::basic_string<...>
     template <typename T, typename AllocType = allocator_type_of<T>>
     using defaulted_string = stl::conditional_t<
       String<T>,

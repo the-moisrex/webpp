@@ -63,7 +63,7 @@ namespace webpp::uri {
         using allocator_type = AllocT;
 
         using scheme_type   = basic_scheme<string_type>;
-        using host_type     = basic_host<string_type, allocator_type>;
+        using host_type     = basic_host<string_type>;
         using username_type = basic_username<string_type>;
         using password_type = basic_password<string_type>;
         using port_type     = basic_port<string_type>;
@@ -204,7 +204,7 @@ namespace webpp::uri {
         using scheme_type   = basic_scheme<string_type>;
         using username_type = basic_username<string_type>;
         using password_type = basic_password<string_type>;
-        using host_type     = basic_host<string_type, allocator_type>;
+        using host_type     = basic_host<string_type>;
         using port_type     = basic_port<string_type>;
         using path_type     = basic_path<string_type, allocator_type>;
         using queries_type  = basic_queries<string_type, allocator_type>;
@@ -391,7 +391,7 @@ namespace webpp::uri {
         [[nodiscard]] constexpr size_type size() const noexcept {
             // todo: queries, host, and path's sizes are not string sizes
             return this->scheme_ref().size() + this->username_ref().size() + this->password_ref().size() +
-                   this->hostname_ref().size() + this->port_ref().size() + this->path_ref().size() +
+                   this->hostname().size() + this->port_ref().size() + this->path_ref().size() +
                    this->queries_ref().size() + this->fragment_ref().size();
         }
 

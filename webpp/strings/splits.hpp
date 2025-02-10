@@ -4,7 +4,7 @@
 
 #include "../common/meta.hpp"
 #include "../std/algorithm.hpp"
-#include "../std/string.hpp"
+#include "../std/string_like.hpp"
 #include "../std/tuple.hpp"
 #include "size.hpp"
 #include "strings_concepts.hpp"
@@ -63,23 +63,22 @@ namespace webpp::strings {
 
         constexpr iterator& operator++() {
             assert(spltr != nullptr);
-            auto const len = spltr->str.size();
-            if (finish_pos == len) {
+            if (finish_pos == spltr->string_size()) {
                 // finished
                 spltr = nullptr;
                 return *this;
             }
-            spltr->on_delimiter(delim_index++, [this, len]<Delimiter DT>(DT delim) {
+            spltr->on_delimiter(delim_index++, [this]<Delimiter DT>(DT delim) {
                 if (finish_pos != 0) {
                     finish_pos += ascii::size(delim);
                 }
                 start_pos = finish_pos;
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
-                    finish_pos = stl::min(len, spltr->str.find(delim, finish_pos));
+                    finish_pos = stl::min(spltr->string_size(), spltr->find(delim, finish_pos));
                 } else if constexpr (istl::StringViewifiable<DT>) {
                     finish_pos =
-                      stl::min(len,
-                               spltr->str.find(istl::string_viewify_of<string_view_type>(delim), finish_pos));
+                      stl::min(spltr->string_size(),
+                               spltr->find(istl::string_viewify_of<string_view_type>(delim), finish_pos));
                     // todo: add array support
                     // todo: add functor support
                 } else {
@@ -110,7 +109,7 @@ namespace webpp::strings {
         [[nodiscard]] constexpr value_type operator*() {
             // can't dereference an iterator that points to nothing
             assert(spltr != nullptr);
-            return spltr->str.substr(start_pos, finish_pos - start_pos);
+            return spltr->substr(start_pos, finish_pos - start_pos);
         }
 
 
@@ -124,31 +123,50 @@ namespace webpp::strings {
     /**
      * String splitter struct.
      *
-     * This class will help to split a string_splits
+     * This class will help to split a string
      */
-    template <typename StrV = stl::string_view, Delimiter... DelimT>
-        requires((istl::StringView<StrV> || istl::String<StrV>) && // it can be a string or string view
-                 sizeof...(DelimT) > 0)                            // we must have at least one delimiter
-    struct basic_splitter {
+    template <stl::random_access_iterator IterT = char const*, Delimiter... DelimT>
+        requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
+    struct splitter {
         static constexpr auto delim_count = sizeof...(DelimT);
 
-        using string_view_type        = StrV;
+        using src_iterator            = IterT;
+        using char_type               = istl::char_type_of_t<src_iterator>;
+        using string_view_type        = stl::basic_string_view<char_type>;
         using delimiter_type          = stl::tuple<DelimT...>;
-        using self_type               = basic_splitter;
+        using self_type               = splitter;
         using iterator_type           = splitter_iterator<self_type>;
         using default_collection_type = stl::vector<string_view_type>;
         using default_array_type      = stl::array<string_view_type, delim_count + 1>;
+        using size_type               = stl::size_t;
 
         friend iterator_type;
 
       private:
-        string_view_type str;
-        delimiter_type   delims; // todo: add whitespaces as default delimiters
+        src_iterator   beg{};
+        src_iterator   endp{};
+        delimiter_type delims; // todo: add whitespaces as default delimiters
 
 
       public:
-        constexpr explicit basic_splitter(string_view_type str_val, DelimT&&... delims_input) noexcept
-          : str{str_val},
+        template <istl::StringLike StrV = string_view_type>
+            requires stl::convertible_to<typename StrV::iterator, src_iterator>
+        constexpr explicit splitter(StrV str_val, DelimT&&... delims_input) noexcept
+          : beg{str_val.begin()},
+            endp{str_val.end()},
+            delims{stl::forward<DelimT>(delims_input)...} {}
+
+        template <istl::StringViewifiable StrV = string_view_type>
+            requires(!istl::StringLike<StrV>)
+        constexpr explicit splitter(StrV str_val, DelimT&&... delims_input) noexcept
+          : splitter{istl::string_viewify(stl::forward<StrV>(str_val)),
+                     stl::forward<DelimT>(delims_input)...} {}
+
+        constexpr explicit splitter(src_iterator inp_beg,
+                                    src_iterator inp_end,
+                                    DelimT&&... delims_input) noexcept
+          : beg{inp_beg},
+            endp{inp_end},
             delims{stl::forward<DelimT>(delims_input)...} {}
 
         [[nodiscard]] constexpr iterator_type begin() const noexcept {
@@ -183,9 +201,9 @@ namespace webpp::strings {
                 auto pos_finder =
                   [this, last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {
                       constexpr auto delim_index  = stl::clamp(Index, 0UL, delim_count - 1UL);
-                      auto const     delim        = stl::get<delim_index>(delims);
-                      auto const     pos          = stl::min(str.size(), str.find(delim, last_pos));
-                      auto const     ret          = str.substr(last_pos, pos - last_pos);
+                      auto const     delim         = get<delim_index>(delims);
+                      auto const     pos           = stl::min(string_size(), this->find(delim, last_pos));
+                      auto const     ret           = substr(last_pos, pos - last_pos);
                       last_pos                    = pos;
                       last_pos                   += ascii::size(delim);
                       return ret;
@@ -225,22 +243,29 @@ namespace webpp::strings {
             istl::for_index(dindex, delims, stl::forward<FuncT>(functor));
         }
 
-        [[nodiscard]] constexpr string_view_type substr(stl::size_t const start_pos,
-                                                        stl::size_t const finish_pos) const noexcept {
-            return str.substr(start_pos, finish_pos);
+        [[nodiscard]] constexpr stl::size_t string_size() const noexcept {
+            return endp - beg;
+        }
+
+        template <istl::StringLike StrT = string_view_type>
+        [[nodiscard]] constexpr StrT substr(stl::size_t const pos, stl::size_t const count = StrT::npos) const
+          noexcept(istl::StringView<StrT>) {
+            return StrT{beg, endp}.substr(pos, count);
+        }
+
+        template <typename... T>
+        [[nodiscard]] constexpr size_type find(T&&... args) const noexcept {
+            return string_view_type{beg, endp}.find(std::forward<T>(args)...);
         }
 
         // todo: add a way to use coroutines here as another way of doing the same thing
     };
 
-    template <Delimiter... DelimT>
-        requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
-    struct splitter : basic_splitter<stl::string_view, DelimT...> {
-        using basic_splitter<stl::string_view, DelimT...>::basic_splitter;
-    };
-
     template <typename T, Delimiter... DelimT>
-    splitter(T&&, DelimT&&...) -> splitter<DelimT...>;
+    splitter(T&&, DelimT&&...) -> splitter<istl::iterator_type_of_t<T>, DelimT...>;
+
+    template <stl::random_access_iterator T, Delimiter... DelimT>
+    splitter(T, T, DelimT&&...) -> splitter<T, DelimT...>;
 
     /*
     // split strings with the specified delimiter

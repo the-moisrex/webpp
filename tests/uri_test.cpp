@@ -1728,3 +1728,12 @@ TYPED_TEST(URITests, StupidSchemes) {
     auto const ctx4 = this->template parse_from_string<TypeParam>("ws:");
     EXPECT_FALSE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
 }
+
+TEST(URITests, HostLabels) {
+    constexpr stl::string_view str = "http://some.nice.example.com/";
+
+    uri::basic_host host{str};
+    EXPECT_EQ(host.tld(), "com");
+    EXPECT_EQ(host.labels().split_into<4>(),
+              (stl::array<stl::string_view, 4>{"some", "nice", "example", "com"}));
+}

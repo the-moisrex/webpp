@@ -394,7 +394,8 @@ namespace webpp::views {
             }
             // process x.y-like name
             auto names = object::make_object<stl::vector<string_view_type>>(*this); // todo: use local alloc
-            strings::basic_splitter<string_view_type, char_type>(name, char_type{'.'}).split(names);
+            strings::splitter<typename string_view_type::iterator, char_type>(name, char_type{'.'})
+              .split(names);
             for (auto const* item : items) {
                 auto* var = item;
                 for (auto const& n : names) {
