@@ -206,17 +206,18 @@ namespace webpp {
             return 0U;
         }
 
-        stl::array<stl::size_t, 9> prefix_sum{}; // fill with zero
-        int                        longest_count = 0;
-        int                        longest_index = -1;
-        int                        current_run   = 0;
+        stl::array<int, 9> prefix_sum{}; // fill with zero
+        int                longest_count = 0;
+        int                longest_index = -1;
+        int                current_run   = 0;
 
         // Step 1: Compute length for each group and prefix sum
         // Step 2: Find the longest run of zero groups
         for (int i = 0; i < 8; ++i) {
             stl::uint16_t const group_val =
-              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
-            stl::size_t len = 1;
+              static_cast<stl::uint16_t>(src[2 * i] << 8U) | // NOLINT(*-implicit-widening-*)
+              static_cast<stl::uint16_t>(src[(2 * i) + 1]);
+            int len = 1;
 
             if (group_val == 0) {
                 current_run++;
@@ -234,7 +235,7 @@ namespace webpp {
 
                 current_run = 0;
             }
-            prefix_sum[i + 1] = prefix_sum[i] + len;
+            prefix_sum[static_cast<stl::size_t>(i + 1)] = prefix_sum[static_cast<stl::size_t>(i)] + len;
         }
 
 
@@ -244,20 +245,21 @@ namespace webpp {
         }
 
         // Step 3: Calculate total length based on longest run
-        stl::size_t total_length = 0;
+        int total_length = 0;
         if (longest_count >= 1) {
-            int const         groups_before = longest_index;
-            int const         groups_after  = 8 - (longest_index + longest_count);
-            stl::size_t const sum_before    = prefix_sum[longest_index];
-            stl::size_t const sum_after     = prefix_sum[8] - prefix_sum[longest_index + longest_count];
-            stl::size_t const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
-            stl::size_t const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
-            total_length                    = sum_before + sum_after + colons_before + colons_after + 2;
+            int const groups_before = longest_index;
+            int const groups_after  = 8 - (longest_index + longest_count);
+            int const sum_before    = prefix_sum[static_cast<stl::size_t>(longest_index)];
+            int const sum_after =
+              prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
+            int const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            int const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length            = sum_before + sum_after + colons_before + colons_after + 2;
         } else {
             total_length = prefix_sum[8] + 7;
         }
 
-        return total_length;
+        return static_cast<stl::size_t>(total_length);
     }
 
     // NOLINTEND(*-magic-numbers)

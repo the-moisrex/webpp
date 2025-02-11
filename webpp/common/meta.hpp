@@ -29,6 +29,10 @@
 #    define CXX23
 #endif
 
+#if __cplusplus >= 202400
+#    define CXX26
+#endif
+
 #ifdef CXX23
 #    define IF_CXX23(val) val
 #    define IF_ELSE_CXX23(val, else_val) val
@@ -121,7 +125,7 @@ namespace webpp {
 /// Use `webpp_assume(expr);` to inform the compiler that the `expr` is true.
 /// Do not rely on side effects of the `expr` being run.
 /// Attention: DO NOT call (specially `extern`) functions with side effects inside this
-#if WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)
+#if (WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)) && defined(CXX23)
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
 #elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \
   defined(_MSC_VER) || defined(__ICC)

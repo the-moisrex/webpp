@@ -1,5 +1,5 @@
 flags = -std=c++23 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark
-optflags = -flto -Ofast -DNDEBUG -march=native
+optflags = -flto -O3 -ffast-math -DNDEBUG -march=native
 files = inet_ntop6_size_benchmark.cpp
 
 all: gcc

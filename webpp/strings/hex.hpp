@@ -371,7 +371,7 @@ namespace webpp::ascii {
         // "%F8\0%F9\0%FA\0%FB\0%FC\0%FD\0%FE\0%FF";
     } // namespace details
 
-    /// convert hex to it's integral value
+    /// convert hex to its integral value
     /// Attention: use this utility where you KNOW the input is valid hex character,
     /// otherwise use hex_digit_value
     template <typename ResType = unsigned, typename CharT = char>
@@ -453,8 +453,8 @@ namespace webpp::ascii {
         //   output += '%';
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
-        webpp_assume(inp_int <= static_cast<IntType>(0xFFU) && inp_int >= static_cast<IntType>(0U));
-        return details::percent_hex_table<CharT> + static_cast<uint8_t>(inp_int) * 4;
+        // webpp_assume(inp_int <= static_cast<IntType>(0xFFU) && inp_int >= static_cast<IntType>(0U));
+        return details::percent_hex_table<CharT> + (static_cast<stl::uint8_t>(inp_int) * 4);
     }
 
     // NOLINTEND(*-avoid-c-arrays)

@@ -82,4 +82,28 @@ IPV6Size_badV17            762 ns          761 ns       919315
 IPV6Size_StringSize       1967 ns         1965 ns       360643
 ```
 
-We're going with `v14` for now.
+## Update 1
+We're going with `v18` for now; we were going with `v14` before.
+
+Clang:
+```
+-------------------------------------------------------
+Benchmark             Time             CPU   Iterations
+-------------------------------------------------------
+IPV6Size_v2         717 ns          709 ns       990094
+IPV6Size_v14        512 ns          512 ns      1370200
+IPV6Size_v16        535 ns          535 ns      1319959
+IPV6Size_v18        506 ns          506 ns      1374950
+```
+
+GCC:
+
+```
+-------------------------------------------------------
+Benchmark             Time             CPU   Iterations
+-------------------------------------------------------
+IPV6Size_v2         476 ns          473 ns      1474152
+IPV6Size_v14        458 ns          457 ns      1531339
+IPV6Size_v16        538 ns          538 ns      1305951
+IPV6Size_v18        462 ns          462 ns      1483324
+```

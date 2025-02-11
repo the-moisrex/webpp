@@ -1,4 +1,5 @@
 #include "../../webpp/ip/ipv6.hpp"
+#include "../../webpp/std/bit.hpp"
 #include "../benchmark.hpp"
 
 #include <cstdint>
@@ -1407,6 +1408,73 @@ namespace badV17 {
 
 } // namespace badV17
 
+// Some Casting
+namespace v18 {
+
+    // Get the string size without converting to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop6_size(stl::uint8_t const* src) noexcept {
+        if (src == nullptr) {
+            return 0U;
+        }
+
+        stl::array<int, 9> prefix_sum{}; // fill with zero
+        int                longest_count = 0;
+        int                longest_index = -1;
+        int                current_run   = 0;
+
+        // Step 1: Compute length for each group and prefix sum
+        // Step 2: Find the longest run of zero groups
+        for (int i = 0; i < 8; ++i) {
+            stl::uint16_t const group_val =
+              static_cast<stl::uint16_t>(src[2 * i] << 8U) | // NOLINT(*-implicit-widening-*)
+              static_cast<stl::uint16_t>(src[(2 * i) + 1]);
+            int len = 1U;
+
+            if (group_val == 0) {
+                current_run++;
+                if (current_run > longest_count) {
+                    longest_count = current_run;
+                    longest_index = i - current_run + 1;
+                } else if (current_run == longest_count) {
+                    longest_index = i - current_run + 1; // Prefer later runs
+                }
+            } else {
+                // Calculate leading zero nibbles using bit scan operations
+                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const leading_zero_nibbles = clz / 4;
+                len                            = 4 - leading_zero_nibbles;
+
+                current_run = 0;
+            }
+            prefix_sum[static_cast<stl::size_t>(i + 1)] = prefix_sum[static_cast<stl::size_t>(i)] + len;
+        }
+
+
+        // Check for IPv4-mapped case (::ffff:x.x.x.x)
+        if (longest_index == 0 && longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
+            return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
+        }
+
+        // Step 3: Calculate total length based on longest run
+        int total_length = 0;
+        if (longest_count >= 1) {
+            int const groups_before = longest_index;
+            int const groups_after  = 8 - (longest_index + longest_count);
+            int const sum_before    = prefix_sum[static_cast<stl::size_t>(longest_index)];
+            int const sum_after =
+              prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
+            int const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
+            int const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
+            total_length            = sum_before + sum_after + colons_before + colons_after + 2;
+        } else {
+            total_length = prefix_sum[8] + 7;
+        }
+
+        return static_cast<stl::size_t>(total_length);
+    }
+
+} // namespace v18
+
 static constexpr auto ips = []() consteval {
     stl::array<webpp::pure_ipv6, sizeof(some_valid_ipv6s) / sizeof(stl::string_view)> ips;
     int                                                                               i = 0;
@@ -1448,6 +1516,7 @@ benchmark_version(v14);
 benchmark_version(v15);
 benchmark_version(v16);
 benchmark_version(badV17);
+benchmark_version(v18);
 
 static void IPV6Size_StringSize(benchmark::State& state) {
     for (auto _ : state) {
