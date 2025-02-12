@@ -92,6 +92,8 @@ namespace webpp {
 
     template <bool WithPrefix = true>
     struct basic_ipv4 {
+        using octets_t = ipv4_octets;
+
       private:
         using ip_prefix_type = details::ip_prefix_t<inet_pton4_status, WithPrefix>;
 

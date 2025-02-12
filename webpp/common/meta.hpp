@@ -210,6 +210,20 @@ namespace webpp {
 #endif
 
 
+////////////////////////////// [[clang::musttail]] //////////////////////////////
+// Note: The `musttail` attribute is new (as of early 2021) and only supported by Clang.
+// Without it, Tails ops will not use tail recursion _in unoptimized builds_, meaning
+// the call stack will grow with every word called and eventually overflow.
+// <https://clang.llvm.org/docs/AttributeReference.html#id398>
+#ifdef __has_attribute
+#    if __has_attribute(musttail)
+#        define WEBPP_MUSTTAIL [[clang::musttail]]
+#    endif
+#endif
+#ifndef WEBPP_MUSTTAIL
+#    define WEBPP_MUSTTAIL
+#endif
+
 // NOLINTEND(*-avoid-do-while, *-macro-usage, *-trailing-return)
 
 #endif // WEBPP_META_HPP

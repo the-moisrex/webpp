@@ -106,10 +106,15 @@ namespace webpp::strings {
             return !this->operator==(other);
         }
 
-        [[nodiscard]] constexpr value_type operator*() {
+        [[nodiscard]] constexpr value_type operator*() noexcept {
+            return value();
+        }
+
+        template <istl::StringView StrV = value_type>
+        [[nodiscard]] constexpr StrV value() noexcept {
             // can't dereference an iterator that points to nothing
             assert(spltr != nullptr);
-            return spltr->substr(start_pos, finish_pos - start_pos);
+            return spltr->template substr<StrV>(start_pos, finish_pos - start_pos);
         }
 
 
@@ -244,7 +249,7 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] constexpr stl::size_t string_size() const noexcept {
-            return endp - beg;
+            return static_cast<stl::size_t>(endp - beg);
         }
 
         template <istl::StringLike StrT = string_view_type>
@@ -266,17 +271,6 @@ namespace webpp::strings {
 
     template <stl::random_access_iterator T, Delimiter... DelimT>
     splitter(T, T, DelimT&&...) -> splitter<T, DelimT...>;
-
-    /*
-    // split strings with the specified delimiter
-    template <typename StringVec = string_vector, istl::StringViewifiable StrV>
-    StringVec split(StrV&& str, istl::CharType auto... delims) {}
-
-    template <typename StringVec = string_vector,
-              istl::StringViewifiable InpStrV,
-              istl::StringViewifiable... StrV>
-    StringVec split(InpStrV&& str, StrV&&... delims) {}
-    */
 
 } // namespace webpp::strings
 

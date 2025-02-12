@@ -257,18 +257,17 @@ namespace webpp::uri::details {
 
         ++ctx.pos; // first char should be '[' now
 
-        // todo: use context's output host for storing ipv6 bytes if the host supports it
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
             case inet_pton6_status::valid: set_error(ctx.status, ipv6_unclosed); return false;
             case inet_pton6_status::valid_special:
                 if (*ctx.pos == ']') {
                     ++ctx.pos;
-                    if constexpr (requires { ctx.out.set_hostname(ipv6_bytes); }) {
-                        ctx.out.set_hostname(ipv6_bytes);
+                    if constexpr (requires { get_output_ref(ctx).set_hostname(ipv6_bytes); }) {
+                        get_output_ref(ctx).set_hostname(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
-                    } else if constexpr (requires { ctx.out->set_hostname(ipv6_bytes); }) {
-                        ctx.out->set_hostname(ipv6_bytes);
-                        set_flag(ctx.status, has_non_empty_host);
+                    } else if constexpr (requires { set_value<components::host>(ctx, ipv6_bytes); }) {
+                        // set value already sets the flag
+                        set_value<components::host>(ctx, ipv6_bytes);
                     } else {
                         // set value already sets the flag
                         set_value<components::host>(ctx, beg, ctx.pos);

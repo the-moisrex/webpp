@@ -11,21 +11,83 @@
 #include "./parser/uri_components.hpp"
 
 #include <variant>
+#include <version>
 
 namespace webpp::uri {
+
+    template <typename StrT>
+    struct domain_labels_splitter {
+        using char_type  = typename StrT::value_type;
+        using delim_type = stl::basic_string_view<char_type>;
+        using type =
+          strings::splitter<typename StrT::iterator, char_type, delim_type, delim_type, delim_type>;
+    };
+
+    /// IDNA Mapping have already changed the Modifiable strings
+    template <istl::String StrT>
+    struct domain_labels_splitter<StrT> {
+        using char_type = typename StrT::value_type;
+        using type      = strings::splitter<typename StrT::iterator, char_type>;
+    };
+
+    template <typename StrT>
+    using domain_labels_splitter_t = typename domain_labels_splitter<StrT>::type;
+
+    template <typename T, typename U, stl::size_t N>
+    [[nodiscard]] consteval stl::array<T, N> to_array(stl::array<U, N> const& src) noexcept {
+        stl::array<T, N> out{};
+        stl::size_t      index = 0;
+        for (auto const val : src) {
+            out[index++] = val;
+        }
+        return out;
+    }
+
+    template <typename T, typename... U>
+    [[nodiscard]] consteval stl::array<T, sizeof...(U)> to_array(U... src) noexcept {
+        return stl::array<T, sizeof...(U)>{static_cast<T>(src)...};
+    }
+
+    template <typename T, typename U, stl::size_t LENGTH>
+    struct string_view_array {
+      private:
+        stl::array<T, LENGTH> data{};
+
+      public:
+        template <typename... RU>
+            requires(stl::same_as<RU, U> && ...)
+        explicit(false) consteval string_view_array(RU... rest) noexcept : data{static_cast<T>(rest)...} {}
+
+        [[nodiscard]] consteval stl::basic_string_view<T> view() const noexcept {
+            return stl::basic_string_view<T>(data.data(), LENGTH);
+        }
+    };
 
     /**
      * Iterator through labels of a valid domain name
      */
     template <istl::StringLike StrT = stl::string_view>
     [[nodiscard]] constexpr auto domain_labels(StrT&& str) noexcept {
+        using splitter_type = domain_labels_splitter_t<stl::remove_cvref_t<StrT>>;
+        using char_type     = typename stl::remove_cvref_t<StrT>::value_type;
         if constexpr (istl::String<StrT>) {
             // IDNA processing should have already done the mapping of the other label separators
-            return strings::splitter{stl::forward<StrT>(str), '.'};
+            return splitter_type{stl::forward<StrT>(str), static_cast<char_type>('.')};
         } else {
             // label separators:
             // https://www.unicode.org/reports/tr46/#Notation
-            return strings::splitter{stl::forward<StrT>(str), '.', u8"\xFF0E", u8"\x3002", u8"\xFF61"};
+            // NOLINTBEGIN(*-magic-numbers)
+            return splitter_type{
+              stl::forward<StrT>(str),
+              static_cast<char_type>('.'),
+              string_view_array<char_type, int, 4>{0xef, 0xbc, 0x8e, 0}
+                .view(), // \uFF0E
+              string_view_array<char_type, int, 4>{0xe3, 0x80, 0x82, 0}
+                .view(), // \u3002
+              string_view_array<char_type, int, 4>{0xef, 0xbd, 0xa1, 0}
+                .view()  // \uFF61
+            };
+            // NOLINTEND(*-magic-numbers)
         }
     }
 
@@ -63,6 +125,12 @@ namespace webpp::uri {
         storage_type storage = stl::monostate{};
 
       public:
+        constexpr basic_host(basic_host const& rhs)                = default;
+        constexpr basic_host(basic_host&& rhs) noexcept            = default;
+        constexpr basic_host& operator=(basic_host const& rhs)     = default;
+        constexpr basic_host& operator=(basic_host&& rhs) noexcept = default;
+        constexpr ~basic_host()                                    = default;
+
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_uri_component_context<components::host, basic_host*, stl::remove_cvref_t<Iter>> ctx{};
@@ -95,6 +163,7 @@ namespace webpp::uri {
         }
 
         template <istl::StringViewifiable InpStr = string_view_type>
+            requires(!is_modifiable)
         explicit constexpr basic_host(InpStr&& inp_str) noexcept(is_nothrow) {
             auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
@@ -104,6 +173,33 @@ namespace webpp::uri {
         constexpr basic_host& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
+        }
+
+        constexpr basic_host& operator=(pure_ipv6 ip6) noexcept(is_nothrow) {
+            storage = ip6;
+            return *this;
+        }
+
+        constexpr basic_host& operator=(pure_ipv6::octets_t ip6) noexcept(is_nothrow) {
+            storage = ip6;
+            return *this;
+        }
+
+        constexpr basic_host& operator=(pure_ipv4::octets_t ip4) noexcept(is_nothrow) {
+            storage = ip4;
+            return *this;
+        }
+
+        constexpr void assign(pure_ipv6 ip6) noexcept(is_nothrow) {
+            storage = ip6;
+        }
+
+        constexpr void assign(pure_ipv6::octets_t ip6) noexcept(is_nothrow) {
+            storage = ip6;
+        }
+
+        constexpr void assign(pure_ipv4::octets_t ip4) noexcept(is_nothrow) {
+            storage = ip4;
         }
 
         // // Append a label to the end of the domain
@@ -199,19 +295,20 @@ namespace webpp::uri {
         /**
          * Top Level Domain; sometimes called the extension
          */
-        [[nodiscard]] constexpr auto tld() const noexcept {
+        template <istl::StringView StrV = string_view_type>
+        [[nodiscard]] constexpr StrV tld() const noexcept {
             if (auto* domain = as_domain()) {
-                return *domain_labels(*domain);
+                return domain_labels(*domain).begin().template value<StrV>();
             }
             return {};
         }
 
         /// Split the domain labels
-        [[nodiscard]] constexpr auto labels() const noexcept {
+        [[nodiscard]] constexpr domain_labels_splitter_t<string_type> labels() const noexcept {
             if (auto* domain = as_domain()) {
                 return domain_labels(*domain);
             }
-            return {};
+            return domain_labels(string_type{});
         }
 
         [[nodiscard]] constexpr auto& storage_ref() noexcept {
@@ -276,6 +373,12 @@ namespace webpp::uri {
         //     return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, other.storage_ref());
         // }
     };
+
+    template <istl::StringView T>
+    basic_host(T&&) -> basic_host<stl::remove_cvref_t<T>>;
+
+    template <istl::String T>
+    basic_host(T&&) -> basic_host<stl::remove_cvref_t<T>>;
 
     /// Check if it's string "localhost"
     template <typename... T>

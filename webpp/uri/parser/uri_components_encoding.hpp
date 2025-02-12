@@ -32,8 +32,7 @@ namespace webpp::uri::details {
 
 
       private:
-        static constexpr bool is_vec =
-          ctx_type::is_segregated && (components::host == Comp || components::path == Comp);
+        static constexpr bool is_vec = ctx_type::is_segregated && components::path == Comp;
         static constexpr bool is_map = ctx_type::is_segregated && components::queries == Comp;
         static constexpr bool is_seg = is_vec || is_map;
 

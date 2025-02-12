@@ -71,7 +71,7 @@ namespace webpp {
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
-        octets_t                             data    = {}; // filled with zeros
+        octets_t                             _data   = {}; // filled with zeros
         [[no_unique_address]] ip_prefix_type _prefix = prefix_status(inet_pton6_status::valid);
 
         /**
@@ -141,10 +141,10 @@ namespace webpp {
                 return _octets;
             } else {
                 // todo: test this, this used to be wrong:
-                octets_t _data = {};
+                octets_t l_data = {};
 
-                auto const each_octet_size = _data.size() / _octets.size();
-                auto       _data_it        = _data.begin(); // NOLINT(*-qualified-auto)
+                auto const each_octet_size = l_data.size() / _octets.size();
+                auto       _data_it        = l_data.begin(); // NOLINT(*-qualified-auto)
                 for (auto _octets_it = _octets.cbegin(); _octets_it != _octets.cend(); ++_octets_it) {
                     auto _octet = *_octets_it;
                     for (stl::size_t index = 0U; index < each_octet_size; index++) {
@@ -154,7 +154,7 @@ namespace webpp {
                         ++_data_it;
                     }
                 }
-                return _data;
+                return l_data;
             }
         }
 
@@ -164,7 +164,7 @@ namespace webpp {
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
             auto  ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
             auto* inp_ptr = ip_str.begin();
-            auto* out_ptr = data.data();
+            auto* out_ptr = _data.data();
 
             if constexpr (WithPrefix) {
                 // set the default value to valid
@@ -238,22 +238,22 @@ namespace webpp {
           stl::uint8_t const (&_octets)[16],
           stl::uint8_t const prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
             requires(WithPrefix)
-          : data{_octets[0],
-                 _octets[1],
-                 _octets[2],
-                 _octets[3],
-                 _octets[4],
-                 _octets[5],
-                 _octets[6],
-                 _octets[7],
-                 _octets[8],
-                 _octets[9],
-                 _octets[10],
-                 _octets[11],
-                 _octets[12],
-                 _octets[13],
-                 _octets[14],
-                 _octets[15]} {
+          : _data{_octets[0],
+                  _octets[1],
+                  _octets[2],
+                  _octets[3],
+                  _octets[4],
+                  _octets[5],
+                  _octets[6],
+                  _octets[7],
+                  _octets[8],
+                  _octets[9],
+                  _octets[10],
+                  _octets[11],
+                  _octets[12],
+                  _octets[13],
+                  _octets[14],
+                  _octets[15]} {
             prefix(prefix_value);
         }
 
@@ -261,7 +261,7 @@ namespace webpp {
           octets8_t const&   _octets,
           stl::uint8_t const prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
             requires(WithPrefix)
-          : data{_octets} {
+          : _data{_octets} {
             prefix(prefix_value);
         }
 
@@ -269,7 +269,7 @@ namespace webpp {
           octets16_t const&  _octets,
           stl::uint8_t const prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
             requires(WithPrefix)
-          : data{to_octets_t(_octets)} {
+          : _data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
@@ -277,7 +277,7 @@ namespace webpp {
           octets32_t const&  _octets,
           stl::uint8_t const prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
             requires(WithPrefix)
-          : data{to_octets_t(_octets)} {
+          : _data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
@@ -285,7 +285,7 @@ namespace webpp {
           octets64_t const&  _octets,
           stl::uint8_t const prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
             requires(WithPrefix)
-          : data{to_octets_t(_octets)} {
+          : _data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
@@ -297,39 +297,39 @@ namespace webpp {
 
         constexpr explicit basic_ipv6(stl::uint8_t const (&_octets)[16]) noexcept
             requires(!WithPrefix)
-          : data{_octets[0],
-                 _octets[1],
-                 _octets[2],
-                 _octets[3],
-                 _octets[4],
-                 _octets[5],
-                 _octets[6],
-                 _octets[7],
-                 _octets[8],
-                 _octets[9],
-                 _octets[10],
-                 _octets[11],
-                 _octets[12],
-                 _octets[13],
-                 _octets[14],
-                 _octets[15]} {}
+          : _data{_octets[0],
+                  _octets[1],
+                  _octets[2],
+                  _octets[3],
+                  _octets[4],
+                  _octets[5],
+                  _octets[6],
+                  _octets[7],
+                  _octets[8],
+                  _octets[9],
+                  _octets[10],
+                  _octets[11],
+                  _octets[12],
+                  _octets[13],
+                  _octets[14],
+                  _octets[15]} {}
 
         // NOLINTEND(*-avoid-c-arrays)
         constexpr explicit basic_ipv6(octets8_t const& _octets) noexcept
             requires(!WithPrefix)
-          : data{_octets} {}
+          : _data{_octets} {}
 
         constexpr explicit basic_ipv6(octets16_t const& _octets) noexcept
             requires(!WithPrefix)
-          : data{to_octets_t(_octets)} {}
+          : _data{to_octets_t(_octets)} {}
 
         constexpr explicit basic_ipv6(octets32_t const& _octets) noexcept
             requires(!WithPrefix)
-          : data{to_octets_t(_octets)} {}
+          : _data{to_octets_t(_octets)} {}
 
         constexpr explicit basic_ipv6(octets64_t const& _octets) noexcept
             requires(!WithPrefix)
-          : data{to_octets_t(_octets)} {}
+          : _data{to_octets_t(_octets)} {}
 
         constexpr basic_ipv6(basic_ipv6 const&) noexcept = default;
         constexpr basic_ipv6(basic_ipv6&&) noexcept      = default;
@@ -347,14 +347,14 @@ namespace webpp {
         }
 
         constexpr basic_ipv6& operator=(octets8_t const& _octets) noexcept {
-            data    = _octets;
+            _data   = _octets;
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         // NOLINTBEGIN(*-avoid-c-arrays)
         constexpr basic_ipv6& operator=(stl::uint8_t const (&_octets)[16]) noexcept {
-            stl::copy_n(stl::begin(_octets), 16U, std::begin(data));
+            stl::copy_n(stl::begin(_octets), 16U, std::begin(_data));
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
@@ -362,19 +362,19 @@ namespace webpp {
         // NOLINTEND(*-avoid-c-arrays)
 
         constexpr basic_ipv6& operator=(octets16_t const& _octets) noexcept {
-            data    = to_octets_t(_octets);
+            _data   = to_octets_t(_octets);
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr basic_ipv6& operator=(octets32_t const& _octets) noexcept {
-            data    = to_octets_t(_octets);
+            _data   = to_octets_t(_octets);
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr basic_ipv6& operator=(octets64_t const& _octets) noexcept {
-            data    = to_octets_t(_octets);
+            _data   = to_octets_t(_octets);
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
@@ -386,16 +386,16 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets and not the prefix
-            return basic_ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr))).data ==
-                   data;
+            return basic_ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr)))._data ==
+                   _data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv6 const ip_addr) const noexcept {
-            return _prefix == ip_addr._prefix && data == ip_addr.data;
+            return _prefix == ip_addr._prefix && _data == ip_addr._data;
         }
 
         [[nodiscard]] constexpr bool operator==(octets8_t const ip_addr) const noexcept {
-            return data == ip_addr;
+            return _data == ip_addr;
         }
 
         [[nodiscard]] constexpr bool operator==(octets16_t const ip_addr) const noexcept {
@@ -431,7 +431,15 @@ namespace webpp {
          * @return the octets in 8bit format
          */
         [[nodiscard]] constexpr octets8_t octets8() const noexcept {
-            return data;
+            return _data;
+        }
+
+        [[nodiscard]] constexpr auto* data() const noexcept {
+            return _data.data();
+        }
+
+        [[nodiscard]] constexpr auto* data() noexcept {
+            return _data.data();
         }
 
         /**
@@ -898,7 +906,7 @@ namespace webpp {
          * @returns A pointer to the Interface Identifier.
          */
         [[nodiscard]] constexpr octets8_t::iterator iid() noexcept {
-            return data.begin() + interface_identifier_offset;
+            return _data.begin() + interface_identifier_offset;
         }
 
         /**
@@ -906,7 +914,7 @@ namespace webpp {
          * @returns A pointer to the Interface Identifier.
          */
         [[nodiscard]] constexpr octets8_t::const_iterator iid() const noexcept {
-            return data.cbegin() + interface_identifier_offset;
+            return _data.cbegin() + interface_identifier_offset;
         }
 
         // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -990,7 +998,7 @@ namespace webpp {
             if (!is_valid() || !is_v4_mapped()) {
                 return {};
             }
-            return {data[12], data[13], data[14], data[15]};
+            return {_data[12], _data[13], _data[14], _data[15]};
         }
 
         /**
@@ -1089,7 +1097,7 @@ namespace webpp {
 
       private:
         [[nodiscard]] constexpr auto* to_data_string(auto* buf) const noexcept {
-            auto pos = inet_ntop6(data.data(), buf);
+            auto pos = inet_ntop6(_data.data(), buf);
             if constexpr (WithPrefix) {
                 if (has_prefix()) {
                     *pos++ = '/';
@@ -1117,7 +1125,7 @@ namespace webpp {
 #ifdef __cpp_lib_string_resize_and_overwrite
             output.resize_and_overwrite(max_ipv6_str_len + 5,
                                         [this](auto* buf, stl::size_t) constexpr noexcept {
-                                            auto const pos = to_data_string(buf);
+                                            auto const pos = this->to_data_string(buf);
                                             return static_cast<stl::size_t>(pos - buf);
                                         });
 #else
@@ -1131,7 +1139,7 @@ namespace webpp {
          */
         constexpr void to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
-                return to_data_string(buf);
+                return this->to_data_string(buf);
             });
         }
 
@@ -1140,7 +1148,7 @@ namespace webpp {
             StrT output{stl::forward<Args>(str_args)...};
 #ifdef __cpp_lib_string_resize_and_overwrite
             output.resize_and_overwrite(max_ipv6_str_len, [this](auto* buf, stl::size_t) constexpr noexcept {
-                return static_cast<stl::size_t>(inet_ntop6(data.data(), buf) - buf);
+                return static_cast<stl::size_t>(inet_ntop6(_data.data(), buf) - buf);
             });
 #else
             ip_to_string(output);
@@ -1153,7 +1161,7 @@ namespace webpp {
          */
         constexpr void ip_to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len, [this](auto* buf) constexpr noexcept {
-                return inet_ntop6(data.data(), buf);
+                return inet_ntop6(_data.data(), buf);
             });
         }
 
@@ -1211,7 +1219,7 @@ namespace webpp {
             if (prefix_value == prefix_status(inet_pton6_status::valid)) {
                 _prefix = prefix_status(inet_pton6_status::valid);
             } else if (prefix_value > ipv6_max_prefix) {
-                data    = {}; // reset the ip if it was not valid
+                _data   = {}; // reset the ip if it was not valid
                 _prefix = prefix_status(inet_pton6_status::invalid_prefix);
             } else {
                 _prefix = prefix_value;
@@ -1231,22 +1239,22 @@ namespace webpp {
          */
         [[nodiscard]] constexpr basic_ipv6 reversed() const noexcept {
             auto const octets_vals = octets_t{
-              data[14],
-              data[15],
-              data[12],
-              data[13],
-              data[10],
-              data[11],
-              data[8],
-              data[9],
-              data[6],
-              data[7],
-              data[4],
-              data[5],
-              data[2],
-              data[3],
-              data[0],
-              data[1]};
+              _data[14],
+              _data[15],
+              _data[12],
+              _data[13],
+              _data[10],
+              _data[11],
+              _data[8],
+              _data[9],
+              _data[6],
+              _data[7],
+              _data[4],
+              _data[5],
+              _data[2],
+              _data[3],
+              _data[0],
+              _data[1]};
             if constexpr (WithPrefix) {
                 return basic_ipv6{octets_vals, _prefix};
             } else {
