@@ -211,10 +211,11 @@ namespace webpp {
 
 
 ////////////////////////////// [[clang::musttail]] //////////////////////////////
-// Note: The `musttail` attribute is new (as of early 2021) and only supported by Clang.
-// Without it, Tails ops will not use tail recursion _in unoptimized builds_, meaning
-// the call stack will grow with every word called and eventually overflow.
-// <https://clang.llvm.org/docs/AttributeReference.html#id398>
+// The `musttail` attribute is new (as of early 2021) and only supported by Clang.
+// If a return statement is marked musttail, this indicates that the compiler must generate a tail call for
+// the program to be correct, even when optimizations are disabled. This guarantees that the call will not
+// cause unbounded stack growth if it is part of a recursive cycle in the call graph.
+// https://clang.llvm.org/docs/AttributeReference.html#musttail
 #ifdef __has_attribute
 #    if __has_attribute(musttail)
 #        define WEBPP_MUSTTAIL [[clang::musttail]]

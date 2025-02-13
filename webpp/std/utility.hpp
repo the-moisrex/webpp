@@ -98,6 +98,17 @@ namespace webpp::istl {
         return stl::forward<Func>(func)(make_index_range<Start, End>());
     }
 
+    /// de-pointer: remove pointer
+    template <typename T>
+    [[nodiscard]] constexpr decltype(auto) deptr(T* obj) noexcept {
+        return *obj;
+    }
+
+    /// de-pointer: remove pointer
+    template <typename T>
+    [[nodiscard]] constexpr decltype(auto) deptr(T& obj) noexcept {
+        return obj;
+    }
 
 } // namespace webpp::istl
 

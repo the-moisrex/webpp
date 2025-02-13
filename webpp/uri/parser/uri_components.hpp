@@ -1073,11 +1073,7 @@ namespace webpp::uri {
         if constexpr (requires { ctx_type::component; }) {
             // works for strings only
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { ctx.out->assign(stl::forward<Args>(args)...); }) {
-                    ctx.out->assign(stl::forward<Args>(args)...);
-                } else {
-                    istl::assign(*ctx.out, stl::forward<Args>(args)...);
-                }
+                istl::deptr(ctx.out).assign(stl::forward<Args>(args)...);
             }
         } else {
             details::set_value_to<Comp>(details::get_output_ref(ctx), stl::forward<Args>(args)...);
@@ -1097,11 +1093,7 @@ namespace webpp::uri {
         if constexpr (requires { ctx_type::component; }) {
             // won't work with the integers
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { ctx.out->clear(); }) {
-                    ctx.out->clear();
-                } else {
-                    istl::clear(*ctx.out);
-                }
+                istl::clear(istl::deptr(ctx.out));
             }
         } else {
             details::clear_from<Comp>(details::get_output_ref(ctx));
@@ -1124,10 +1116,10 @@ namespace webpp::uri {
             return has_flag(ctx.status, uri_status::has_non_null_port);
         } else if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { ctx.out->has_value(); }) {
-                    return ctx.out->has_value();
+                if constexpr (requires { istl::deref(ctx.out).has_value(); }) {
+                    return istl::deref(ctx.out).has_value();
                 } else {
-                    return ctx.out->empty();
+                    return istl::deref(ctx.out).empty();
                 }
             }
             return true;
