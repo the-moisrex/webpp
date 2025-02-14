@@ -12,6 +12,16 @@ namespace webpp::uri::details {
 
     static constexpr ascii_bitmap forbidden_domains{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
+    template <typename CtxT>
+    static constexpr auto& init_string_host(CtxT& ctx) {
+        auto& host = get_component<components::host>(ctx);
+        if constexpr (CtxT::is_modifiable) {
+            return host.init_host();
+        } else {
+            return host;
+        }
+    }
+
     template <uri_parsing_options Options   = uri_parsing_options{},
               bool                IsSpecial = true,
               ParsingURIContext   CtxT>
@@ -42,21 +52,26 @@ namespace webpp::uri::details {
         auto       host_begin      = authority_begin;
         iterator   colon_pos       = ctx.end; // start of password or port
 
-        bool skip_last_char           = false;
-        bool must_contain_credentials = false;
+        bool  skip_last_char           = false;
+        bool  must_contain_credentials = false;
+        auto& out                      = init_string_host(ctx);
+        auto  buffer                   = get_buffer<components::host>(ctx);
+        auto  seg_beg                  = ctx.pos;
 
-        component_encoder<components::host, ctx_type> coder(ctx);
-        coder.start_segment();
+        start_segment(ctx, out, buffer);
         for (;;) {
             bool done; // NOLINT(*-init-variables)
             if constexpr (!IsSpecial) {
                 // for opaque hosts:
-                done = coder.template encode_or_validate<encode_chars>(C0_CONTROL_ENCODE_SET,
-                                                                       interesting_characters);
+                done = encode_or_validate<encode_chars>(
+                  ctx,
+                  buffer,
+                  C0_CONTROL_ENCODE_SET,
+                  interesting_characters);
             } else {
                 // for domain names:
                 // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                done = coder.template decode_or_tolower<encode_chars>(interesting_characters);
+                done = decode_or_tolower<encode_chars>(ctx, buffer, interesting_characters);
             }
             if (done) {
                 if constexpr (Options.empty_host_is_error && !IsSpecial) {
@@ -108,8 +123,8 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        coder.end_segment(coder.segment_begin(), pre_port_pos);
-                        coder.set_value(host_begin, pre_port_pos);
+                        end_segment(ctx, out, seg_beg, pre_port_pos);
+                        set_value(ctx, host_begin, pre_port_pos);
 
                         if (pre_port_pos == host_begin) {
                             if constexpr (Options.empty_host_is_error && IsSpecial) {
@@ -136,7 +151,7 @@ namespace webpp::uri::details {
                     }
                     set_valid(ctx.status, valid_path);
                     break;
-                case '.': coder.next_segment(); continue;
+                case '.': next_segment(ctx, out, seg_beg); continue;
                 case '?':
                     // escape if invalid port found
                     if (must_contain_credentials) {
@@ -147,7 +162,7 @@ namespace webpp::uri::details {
                         set_valid(ctx.status, valid_queries);
                     } else {
                         set_warning(ctx.status, invalid_character);
-                        coder.skip_separator();
+                        skip_separator(ctx, out);
                         continue;
                     }
                     break;
@@ -161,13 +176,13 @@ namespace webpp::uri::details {
                         set_valid(ctx.status, valid_fragment);
                     } else {
                         set_warning(ctx.status, invalid_character);
-                        coder.skip_separator();
+                        skip_separator(ctx, out);
                         continue;
                     }
                     break;
                 case '%':
                     if constexpr (!IsSpecial) {
-                        if (!coder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
+                        if (!validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
                             set_warning(ctx.status, invalid_character);
                         }
                         continue;
@@ -182,7 +197,7 @@ namespace webpp::uri::details {
                 [[unlikely]] case '\r':
                     if constexpr (Options.ignore_tabs_or_newlines) {
                         set_warning(ctx.status, invalid_character);
-                        coder.ignore_character();
+                        ignore_character(ctx);
                         continue;
                     } else {
                         set_error(ctx.status,
@@ -195,8 +210,8 @@ namespace webpp::uri::details {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
                         clear<components::host>(ctx);
-                        coder.reset_begin();
-                        coder.start_segment();
+                        reset_begin(ctx, seg_beg);
+                        start_segment(ctx, out, buffer);
                         host_begin = ctx.pos;
                         continue;
                     } else {
@@ -250,8 +265,8 @@ namespace webpp::uri::details {
             }
             if constexpr (ctx_type::is_modifiable) {
                 clear<components::host>(ctx);
-                coder.start_segment();
-                ipv4{ipv4_octets_data}.to_string(coder.get_buffer());
+                start_segment(ctx, out, buffer);
+                ipv4{ipv4_octets_data}.to_string(buffer);
                 if (skip_last_char) {
                     ++ctx.pos;
                 }
@@ -259,8 +274,8 @@ namespace webpp::uri::details {
             }
         }
 
-        coder.end_segment();
-        coder.set_value();
+        end_segment(ctx, out, seg_beg);
+        set_value(ctx, out, seg_beg);
         if (skip_last_char) {
             ++ctx.pos;
         }

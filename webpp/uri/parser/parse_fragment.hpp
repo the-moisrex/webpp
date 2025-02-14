@@ -34,14 +34,18 @@ namespace webpp::uri {
             return;
         }
 
-        details::component_encoder<components::fragment, ctx_type> encoder{ctx};
-        while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+
+        auto const seg_beg = ctx.pos;
+        auto&      out     = get_output<components::fragment>(ctx);
+
+        while (!encode_or_validate<uri_encoding_policy::encode_chars>(
+          ctx,
           details::FRAGMENT_ENCODE_SET,
           charset<char_type, 1>('%')))
         {
             switch (*ctx.pos) {
                 case '%':
-                    if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
+                    if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, out)) {
                         continue;
                     }
                     break;
@@ -49,7 +53,7 @@ namespace webpp::uri {
             }
             set_warning(ctx.status, uri_status::invalid_character);
         }
-        encoder.set_value();
+        set_value(ctx, seg_beg);
         set_valid(ctx.status, uri_status::valid);
     }
 

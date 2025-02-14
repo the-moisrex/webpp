@@ -23,6 +23,18 @@ namespace webpp::istl {
         return static_cast<stl::remove_reference_t<T>>(inp_type);
     }
 
+    /// de-pointer: remove pointer
+    template <typename T>
+    [[nodiscard]] constexpr decltype(auto) deptr(T* obj) noexcept {
+        return *obj;
+    }
+
+    /// de-pointer: remove pointer
+    template <typename T>
+    [[nodiscard]] constexpr decltype(auto) deptr(T& obj) noexcept {
+        return obj;
+    }
+
     /**
      * The opposite of std::move; it's convert rvalue references into lvalue references.
      */
@@ -96,18 +108,6 @@ namespace webpp::istl {
         static_assert(std::is_invocable_v<Func, make_index_range<Start, End>>,
                       "Function must have an specific signature.");
         return stl::forward<Func>(func)(make_index_range<Start, End>());
-    }
-
-    /// de-pointer: remove pointer
-    template <typename T>
-    [[nodiscard]] constexpr decltype(auto) deptr(T* obj) noexcept {
-        return *obj;
-    }
-
-    /// de-pointer: remove pointer
-    template <typename T>
-    [[nodiscard]] constexpr decltype(auto) deptr(T& obj) noexcept {
-        return obj;
     }
 
 } // namespace webpp::istl

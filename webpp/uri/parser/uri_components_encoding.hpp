@@ -8,33 +8,39 @@
 #include "../../strings/to_case.hpp"
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
+#include "build-release/_deps/fmt-src/include/fmt/base.h"
+
+#include <boost/asio/buffer.hpp>
 
 namespace webpp::uri::details {
 
-    /**
-     * @brief Encode/Decode a piece of URI
-     * @tparam Comp URI Component that's being parsed
-     * @tparam CtxType uri_parsing_context type
-     */
-    template <components Comp, typename CtxType>
-    struct component_encoder {
-        using ctx_type = CtxType;
-        using seg_type = typename ctx_type::seg_type;
-        using iterator = typename ctx_type::iterator;
-
-      private:
-        using iter_traits = stl::iterator_traits<iterator>;
-
-      public:
-        using difference_type = typename iter_traits::difference_type;
-        using value_type      = typename iter_traits::value_type;
-        using char_type       = typename ctx_type::char_type;
+    template <ParsingURIContext CtxT>
+    using diff_type_of = typename stl::iterator_traits<typename CtxT::iterator>::difference_type;
 
 
-      private:
-        static constexpr bool is_vec = ctx_type::is_segregated && components::path == Comp;
-        static constexpr bool is_map = ctx_type::is_segregated && components::queries == Comp;
-        static constexpr bool is_seg = is_vec || is_map;
+    /// if it's segregated:
+    ///   if it's modifiable queries, map::value_type (pair<string, string>),
+    ///   if it's modifiable path/host, vector::iterator
+    /// else if it's not segregated but still modifiable:
+    ///   vec_iterator which is seg_type*
+    /// otherwise, nothing_type
+    template <typename CtxT, typename T>
+    concept CtxBufferOf =
+      ParsingURIContext<CtxT> &&
+      (CtxT::is_segregated ? istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator>
+                           : stl::same_as<T, typename CtxT::iterator>);
+
+    template <typename CtxT, typename T>
+    concept CtxMappedBuffer = CtxBufferOf<CtxT, T> && stl::same_as<T, typename CtxT::map_value_type>;
+
+    template <typename CtxT, typename T>
+    concept CtxVectorBuffer = CtxBufferOf<CtxT, T> && stl::same_as<T, typename CtxT::vec_iterator>;
+
+    template <components Comp, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr decltype(auto) get_buffer(CtxT& ctx) noexcept {
+        webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
+        webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
+        webpp_static_constexpr bool is_seg = is_vec || is_map;
 
         /// if it's segregated:
         ///   if it's modifiable queries, map::value_type (pair<string, string>),
@@ -42,440 +48,417 @@ namespace webpp::uri::details {
         /// else if it's not segregated but still modifiable:
         ///   vec_iterator which is seg_type*
         /// otherwise, nothing_type
-        using output_type =
+        using buffer_type =
           stl::conditional_t<is_map,
-                             typename ctx_type::map_value_type,
-                             stl::conditional_t<is_vec, typename ctx_type::vec_iterator, istl::nothing_type>>;
-
-
-        [[no_unique_address]] output_type buffer{};
-        ctx_type*                         ctx;
-        iterator                          beg = ctx->pos;
-
-      public:
-        [[nodiscard]] constexpr auto const& context() const noexcept {
-            return *ctx;
+                             typename CtxT::map_value_type,
+                             stl::conditional_t<is_vec, typename CtxT::vec_iterator, istl::nothing_type>>;
+        if constexpr (is_seg) {
+            return buffer_type{};
+        } else {
+            return uri::get_output<Comp>(ctx);
         }
+    }
 
-        [[nodiscard]] constexpr auto& context() noexcept {
-            return *ctx;
+    /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
+    /// explicitness
+    template <components Comp, ParsingURIContext CtxT>
+    static constexpr void set_value(CtxT& ctx, typename CtxT::iterator start, typename CtxT::iterator end) {
+        webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
+        webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
+        webpp_static_constexpr bool is_seg = is_vec || is_map;
+        if constexpr (!is_seg && !CtxT::is_modifiable) {
+            uri::set_value<Comp>(*ctx, start, end);
         }
+    }
 
-        [[nodiscard]] constexpr decltype(auto) get_output() const noexcept {
-            return uri::get_output<Comp>(*ctx);
-        }
+    template <components Comp, ParsingURIContext CtxT>
+    static constexpr void set_value(CtxT& ctx, typename CtxT::iterator beg) {
+        set_value<Comp>(ctx, beg, ctx.pos);
+    }
 
-        [[nodiscard]] constexpr decltype(auto) get_buffer() const noexcept {
-            if constexpr (is_seg) {
-                return *buffer;
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool encode_or_validate(
+      [[maybe_unused]] CtxT&   ctx,
+      CtxBufferOf<CtxT> auto&  buffer,
+      typename CtxT::iterator& pos,
+      typename CtxT::iterator  end,
+      CharSet auto const&      policy_chars,
+      CharSet auto const&      invalid_chars) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable) {
+            return encode_uri_component<Policy>(pos, end, buffer, policy_chars, invalid_chars);
+        } else {
+            if constexpr (Policy == uri_encoding_policy::skip_chars) {
+                pos = invalid_chars.find_first_not_in(pos, end);
             } else {
-                return uri::get_output<Comp>(*ctx);
+                pos = invalid_chars.find_first_in(pos, end);
             }
+            return pos == end;
         }
+    }
 
-        /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
-        /// explicitness
-        constexpr void set_value(iterator start, iterator end)
-          noexcept(ctx_type::is_nothrow || is_seg || ctx_type::is_modifiable) {
-            if constexpr (!is_seg && !ctx_type::is_modifiable) {
-                uri::set_value<Comp>(*ctx, start, end);
-            }
-        }
-
-        constexpr void set_value() noexcept(ctx_type::is_nothrow || is_seg) {
-            set_value(beg, ctx->pos);
-        }
-
-        template <ParsingURIContext InpCtxT>
-        explicit constexpr component_encoder(InpCtxT& inp_ctx) noexcept(ctx_type::is_nothrow)
-          : ctx{&inp_ctx},
-            beg{ctx->pos} {}
-
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        constexpr void
-        encode_or_set(iterator pos, iterator end, [[maybe_unused]] CharSet auto const& policy_chars)
-          noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool encode_or_validate(
+      [[maybe_unused]] CtxT&   ctx,
+      CtxBufferOf<CtxT> auto&  buffer,
+      typename CtxT::iterator& pos,
+      typename CtxT::iterator  end,
+      CharSet auto const&      policy_chars) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable) {
+            encode_uri_component<Policy>(pos, end, buffer, policy_chars);
+            return pos == end;
+        } else {
+            if constexpr (Policy == uri_encoding_policy::skip_chars) {
+                pos = policy_chars.find_first_not_in(pos, end);
             } else {
-                set_value(pos, end);
+                pos = policy_chars.find_first_in(pos, end);
             }
+            return pos == end;
         }
+    }
 
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate(
-          iterator&           pos,
-          iterator            end,
-          CharSet auto const& policy_chars,
-          CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                return encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars, invalid_chars);
+    /**
+     * @brief Encode if the context is modifiable, otherwise just validate the invalid characters
+     * @tparam Policy
+     * @param ctx parsing context
+     * @param policy_chars encode these characters if encoding is possible
+     * @param invalid_chars invalid character or allowed characters depending on the policy
+     * @returns successful until the end (== didn't find any invalid chars)
+     */
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool
+    encode_or_validate(CtxT& ctx, CharSet auto const& policy_chars, CharSet auto const& invalid_chars)
+      noexcept(CtxT::is_nothrow) {
+        return encode_or_validate<Policy>(ctx, ctx.pos, ctx.end, policy_chars, invalid_chars);
+    }
+
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool encode_or_validate(CtxT& ctx, CharSet auto const& policy_chars)
+      noexcept(CtxT::is_nothrow) {
+        return encode_or_validate<Policy>(ctx, ctx.pos, ctx.end, policy_chars);
+    }
+
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              ParsingURIContext   CtxT,
+              CtxBufferOf<CtxT>   BufT>
+    [[nodiscard]] static constexpr bool encode_or_validate_map(
+      CtxT&                                ctx,
+      [[maybe_unused]] CharSet auto const& policy_chars,
+      CharSet auto const&                  invalid_chars,
+      [[maybe_unused]] bool const          in_value,
+      BufT&                                buffer) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable && CtxMappedBuffer<CtxT, BufT>) {
+            return encode_uri_component<Policy>(
+              ctx,
+              ctx.pos,
+              ctx.end,
+              !in_value ? buffer.first : buffer.second,
+              policy_chars,
+              invalid_chars);
+        } else {
+            return encode_or_validate<Policy>(ctx, policy_chars, invalid_chars);
+        }
+    }
+
+    /**
+     * @brief Decode if the context is modifiable, otherwise just validate the invalid characters
+     * @tparam Policy
+     * @param ctx context
+     * @param buffer
+     * @param policy_chars invalid character or allowed characters depending on the policy
+     * @returns successful until the end (== didn't find any invalid chars)
+     */
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool
+    decode_or_validate(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable) {
+            return decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars);
+        } else {
+            if constexpr (Policy == uri_encoding_policy::skip_chars) {
+                ctx.pos = policy_chars.find_first_not_in(ctx.pos, ctx.end);
             } else {
-                if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                    pos = invalid_chars.find_first_not_in(pos, end);
-                } else {
-                    pos = invalid_chars.find_first_in(pos, end);
+                ctx.pos = policy_chars.find_first_in(ctx.pos, ctx.end);
+            }
+            return ctx.pos == ctx.end;
+        }
+    }
+
+    /// Convert to lowercase and also decode
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool
+    decode_or_tolower(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
+      noexcept(CtxT::is_nothrow) {
+        using char_type = typename CtxT::char_type;
+        if constexpr (CtxT::is_modifiable) {
+            while (ctx.pos != ctx.end) {
+                if (decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars)) {
+                    return true;
                 }
-                return pos == end;
-            }
-        }
-
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool
-        encode_or_validate(iterator& pos, iterator end, CharSet auto const& policy_chars)
-          noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
-                return pos == end;
-            } else {
-                if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                    pos = policy_chars.find_first_not_in(pos, end);
-                } else {
-                    pos = policy_chars.find_first_in(pos, end);
+                webpp_static_constexpr char_type diff = 'a' - 'A';
+                if (*ctx.pos >= 'A' && *ctx.pos <= 'Z') {
+                    buffer += *ctx.pos + diff;
+                    ++ctx.pos;
+                    continue;
                 }
-                return pos == end;
+                return false;
             }
+            return true;
+        } else {
+            return decode_or_validate<Policy>(ctx, policy_chars);
         }
+    }
 
-        /**
-         * @brief Encode if the context is modifiable, otherwise just validate the invalid characters
-         * @tparam Policy
-         * @param policy_chars encode these characters if encoding is possible
-         * @param invalid_chars invalid character or allowed characters depending on the policy
-         * @returns successful until the end (== didn't find any invalid chars)
-         */
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate(
-          CharSet auto const& policy_chars,
-          CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
-            return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars, invalid_chars);
+    /// Set the beginning to current position
+    template <ParsingURIContext CtxT>
+    static constexpr void reset_begin(CtxT& ctx, typename CtxT::iterator& beg) noexcept {
+        beg = ctx->pos;
+    }
+
+    template <ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr bool is_segment_empty(CtxT& ctx, CtxBufferOf<CtxT> auto beg) noexcept {
+        return beg == ctx.pos;
+    }
+
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+    static constexpr void reset_segment_start(CtxT ctx, BufT& beg) noexcept {
+        if constexpr (CtxVectorBuffer<CtxT, BufT> || CtxT::is_modifiable) {
+            reset_begin(ctx, beg);
         }
+    }
 
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate(CharSet auto const& policy_chars)
-          noexcept(ctx_type::is_nothrow) {
-            return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars);
-        }
-
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate_map(
-          [[maybe_unused]] CharSet auto const& policy_chars,
-          CharSet auto const&                  invalid_chars,
-          [[maybe_unused]] bool const          in_value) noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable && is_map) {
-                return encode_uri_component<Policy>(
-                  ctx->pos,
-                  ctx->end,
-                  !in_value ? buffer.first : buffer.second,
-                  policy_chars,
-                  invalid_chars);
-            } else {
-                return encode_or_validate<Policy>(policy_chars, invalid_chars);
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void skip_separator(CtxT& ctx, OutT& out, diff_type_of<CtxT> count) noexcept {
+        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+            for (; count != 0; --count) {
+                append_to(out, *ctx.pos++);
             }
+        } else {
+            ctx.pos += count;
         }
+    }
 
-        /**
-         * @brief Decode if the context is modifiable, otherwise just validate the invalid characters
-         * @tparam Policy
-         * @param policy_chars invalid character or allowed characters depending on the policy
-         * @returns successful until the end (== didn't find any invalid chars)
-         */
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars)
-          noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                return decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars);
-            } else {
-                if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                    ctx->pos = policy_chars.find_first_not_in(ctx->pos, ctx->end);
-                } else {
-                    ctx->pos = policy_chars.find_first_in(ctx->pos, ctx->end);
-                }
-                return ctx->pos == ctx->end;
+    /// Parsing path requires this so we can make sure the modifiable strings' separator is always '/' and
+    /// not '\\' if the input contains that separator
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void
+    skip_separator(CtxT& ctx, OutT& out, typename CtxT::char_type separator, diff_type_of<CtxT> count = 1)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+            append_to(out, separator);
+            ctx.pos += count;
+        } else {
+            return skip_separator(ctx, out, count);
+        }
+    }
+
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void skip_separator(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+            append_to(out, *ctx.pos++);
+        } else {
+            ++ctx.pos;
+        }
+    }
+
+    template <ParsingURIContext CtxT>
+    static constexpr void ignore_character(CtxT& ctx, diff_type_of<CtxT> count = 1) noexcept {
+        ctx.pos += count;
+    }
+
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+    static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+            for (; count != 0; --count) {
+                append_to(buffer, *ctx.pos++);
             }
+        } else {
+            ctx.pos += count;
         }
+    }
 
-        /// Convert to lowercase and also decode
-        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool decode_or_tolower(CharSet auto const& policy_chars)
-          noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                while (ctx->pos != ctx->end) {
-                    if (decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars)) {
-                        return true;
-                    }
-                    webpp_static_constexpr char_type diff = 'a' - 'A';
-                    if (*ctx->pos >= 'A' && *ctx->pos <= 'Z') {
-                        get_buffer() += *ctx->pos + diff;
-                        ++ctx->pos;
-                        continue;
-                    }
-                    return false;
-                }
-                return true;
-            } else {
-                return decode_or_validate<Policy>(policy_chars);
-            }
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+    static constexpr void
+    append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+            append_to(buffer, inp_char);
         }
+    }
 
-        /// Set the beginning to current position
-        constexpr void reset_begin() noexcept {
-            beg = ctx->pos;
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+    constexpr void append_inplace_of(
+      CtxT&                    ctx,
+      BufT&                    buffer,
+      typename CtxT::char_type inp_char,
+      diff_type_of<CtxT>       count = 1) noexcept {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+            append_to(buffer, inp_char);
         }
+        ctx.pos += count;
+    }
 
-        [[nodiscard]] constexpr bool is_segment_empty() const noexcept {
-            return beg == ctx->pos;
-        }
+    /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
+    template <bool CheckNewlinesAndTabs = false, ParsingURIContext CtxT>
+    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, ParsingOutput auto& out) noexcept {
+        using ascii::is_hex_digit;
 
-        constexpr void reset_segment_start() noexcept {
-            if constexpr (is_vec || ctx_type::is_modifiable) {
-                reset_begin();
-            }
-        }
-
-        [[nodiscard]] constexpr iterator segment_begin() const noexcept {
-            return beg;
-        }
-
-        constexpr void skip_separator(difference_type count) noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_seg) {
-                for (; count != 0; --count) {
-                    append_to(get_output(), *ctx->pos++);
-                }
-            } else {
-                ctx->pos += count;
-            }
-        }
-
-        /// Parsing path requires this so we can make sure the modifiable strings' separator is always '/' and
-        /// not '\\' if the input contains that separator
-        constexpr void skip_separator(char_type separator, difference_type count = 1) noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_seg) {
-                append_to(get_output(), separator);
-                ctx->pos += count;
-            } else {
-                return skip_separator(count);
-            }
-        }
-
-        constexpr void skip_separator() noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_seg) {
-                append_to(get_output(), *ctx->pos++);
-            } else {
-                ++ctx->pos;
-            }
-        }
-
-        constexpr void ignore_character(difference_type count = 1) noexcept {
-            ctx->pos += count;
-        }
-
-        constexpr void append_n(difference_type count) noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_map) {
-                for (; count != 0; --count) {
-                    append_to(get_buffer(), *ctx->pos++);
-                }
-            } else {
-                ctx->pos += count;
-            }
-        }
-
-        constexpr void append(char_type inp_char) noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_map) {
-                append_to(get_buffer(), inp_char);
-            }
-        }
-
-        constexpr void append_inplace_of(char_type inp_char, difference_type count = 1) noexcept {
-            if constexpr (ctx_type::is_modifiable && !is_map) {
-                append_to(get_buffer(), inp_char);
-            }
-            ctx->pos += count;
-        }
-
-        /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-        template <bool CheckNewlinesAndTabs = false>
-        [[nodiscard]] constexpr bool validate_percent_encode() noexcept {
-            using ascii::is_hex_digit;
-
-            // NOLINTBEGIN(*-inc-dec-in-conditions)
-            if constexpr (!CheckNewlinesAndTabs) {
-                auto       cur      = ctx->pos;
-                bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur);
-                append_n(cur - ctx->pos);
-                return is_valid;
-            } else {
-                append_n(1);
-                switch (ctx->pos - ctx->end) {
-                    case 0:
-                    case 1: return false;
-                    case 2: return is_hex_digit(*ctx->pos++) && is_hex_digit(*ctx->pos);
-                    default: {
-                        int count = 0;
-                        for (;;) {
-                            switch (*ctx->pos) {
-                                case '\t':
-                                case '\r':
-                                case '\n':
-                                    ++ctx->pos;
-                                    if (ctx->pos == ctx->end) {
-                                        return false;
-                                    }
-                                    continue;
-                                default: {
-                                    bool const is_valid_char = is_hex_digit(*ctx->pos);
-                                    append_inplace_of(*ctx->pos, 1);
-                                    if (!is_valid_char) {
-                                        return false;
-                                    }
-                                    ++count;
-                                    if (count == 2 || ctx->pos == ctx->end) {
-                                        break;
-                                    }
-                                    continue;
+        // NOLINTBEGIN(*-inc-dec-in-conditions)
+        if constexpr (!CheckNewlinesAndTabs) {
+            auto       cur      = ctx.pos;
+            bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur++) && is_hex_digit(*cur);
+            append_n(ctx, cur - ctx.pos);
+            return is_valid;
+        } else {
+            append_n(ctx, 1);
+            switch (ctx.pos - ctx.end) {
+                case 0:
+                case 1: return false;
+                case 2: return is_hex_digit(*ctx.pos++) && is_hex_digit(*ctx.pos);
+                default: {
+                    int count = 0;
+                    for (;;) {
+                        switch (*ctx.pos) {
+                            case '\t':
+                            case '\r':
+                            case '\n':
+                                ++ctx.pos;
+                                if (ctx.pos == ctx.end) {
+                                    return false;
                                 }
+                                continue;
+                            default: {
+                                bool const is_valid_char = is_hex_digit(*ctx.pos);
+                                append_inplace_of(ctx, out, *ctx.pos, 1);
+                                if (!is_valid_char) {
+                                    return false;
+                                }
+                                ++count;
+                                if (count == 2 || ctx.pos == ctx.end) {
+                                    break;
+                                }
+                                continue;
                             }
-                            break;
                         }
-                        return count == 2;
+                        break;
                     }
-                }
-            }
-            // NOLINTEND(*-inc-dec-in-conditions)
-        }
-
-        constexpr void pop_back([[maybe_unused]] difference_type hint = 0) noexcept {
-            if constexpr (is_vec && ctx_type::is_modifiable) {
-                if (get_output().size() > 2) {
-                    get_output().pop_back();
-                    buffer = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
-                } else if (get_output().size() == 1) {
-                    buffer->clear();
-                }
-            } else if constexpr (is_vec) {
-                if (get_output().size() > 1) {
-                    get_output().pop_back();
-                } else {
-                    istl::clear(get_output().back());
-                }
-                reset_segment_start();
-            } else if constexpr (ctx_type::is_modifiable) {
-                using output_t  = stl::remove_cvref_t<decltype(get_output())>;
-                using size_type = typename output_t::size_type;
-                if (!get_output().empty()) {
-                    get_output().erase(get_output().size() - static_cast<size_type>(hint));
+                    return count == 2;
                 }
             }
         }
+        // NOLINTEND(*-inc-dec-in-conditions)
+    }
 
-        constexpr void start_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
-            if constexpr (is_vec && ctx_type::is_modifiable) {
-                // the non-modifiable version is the one that needs to be set, the modified versions already
-                // contain the right value at this point in time
-                istl::emplace_one(get_output(), get_output().get_allocator());
-                buffer = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void pop_back(
+      CtxT&                               ctx,
+      OutT&                               out,
+      CtxBufferOf<CtxT> auto&             buffer,
+      typename CtxT::iterator&            beg,
+      [[maybe_unused]] diff_type_of<CtxT> hint = 0) noexcept {
+        using difference_type = diff_type_of<CtxT>;
+        if constexpr (CtxT::is_modifiable && VectorOutput<OutT>) {
+            if (out.size() > 2) {
+                out.pop_back();
+                buffer = out.begin() + static_cast<difference_type>(out.size() - 1);
+            } else if (out.size() == 1) {
+                buffer->clear();
             }
-        }
-
-        /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
-        /// for path)
-        constexpr void end_segment(iterator inp_beg, iterator end) noexcept(ctx_type::is_nothrow || !is_vec) {
-            if constexpr (is_vec && !ctx_type::is_modifiable) {
-                // the non-modifiable version is the one that needs to be set, the modified versions already
-                // contain the right value at this point in time
-                istl::emplace_one(get_output(), inp_beg, end);
-                reset_begin();
-            }
-        }
-
-        constexpr void end_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
-            end_segment(beg, ctx->pos);
-        }
-
-        /// 1. Skip the separator, and
-        /// 2. Set the segment start
-        constexpr void next_segment(difference_type sep_count = 1) noexcept(ctx_type::is_nothrow) {
-            if constexpr (is_seg) {
-                if constexpr (ctx_type::is_modifiable) {
-                    skip_separator(sep_count);
-                    reset_segment_start();
-                    start_segment();
-                } else {
-                    end_segment();
-                    skip_separator(sep_count);
-                    reset_segment_start();
-                }
+        } else if constexpr (VectorOutput<OutT>) {
+            if (out.size() > 1) {
+                out.pop_back();
             } else {
-                skip_separator(sep_count);
-                end_segment();
-                reset_segment_start();
+                istl::clear(out.back());
+            }
+            reset_segment_start(ctx, beg);
+        } else if constexpr (CtxT::is_modifiable) {
+            using output_t  = stl::remove_cvref_t<decltype(out)>;
+            using size_type = typename output_t::size_type;
+            if (!out.empty()) {
+                out.erase(out.size() - static_cast<size_type>(hint));
             }
         }
+    }
 
-        constexpr void next_segment_of(char_type separator, difference_type sep_count = 1)
-          noexcept(ctx_type::is_nothrow) {
-            if constexpr (is_seg) {
-                if constexpr (ctx_type::is_modifiable) {
-                    skip_separator(sep_count);
-                    reset_segment_start();
-                    start_segment();
-                } else {
-                    end_segment();
-                    skip_separator(sep_count);
-                    reset_segment_start();
-                }
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    constexpr void start_segment([[maybe_unused]] CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        if constexpr (VectorOutput<OutT> && CtxT::is_modifiable) {
+            // the non-modifiable version is the one that needs to be set, the modified versions already
+            // contain the right value at this point in time
+            istl::emplace_one(out, out.get_allocator());
+            buffer = out.begin() + static_cast<diff_type_of<CtxT>>(out.size() - 1);
+        }
+    }
+
+    /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
+    /// for path)
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void
+    end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator inp_beg, typename CtxT::iterator end)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        if constexpr (VectorOutput<OutT> && !CtxT::is_modifiable) {
+            // the non-modifiable version is the one that needs to be set, the modified versions already
+            // contain the right value at this point in time
+            istl::emplace_one(out, inp_beg, end);
+            reset_begin(ctx);
+        }
+    }
+
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void end_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        end_segment(ctx, out, beg, ctx.pos);
+    }
+
+    /// 1. Skip the separator, and
+    /// 2. Set the segment start
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void
+    next_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg, diff_type_of<CtxT> sep_count = 1)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (SegregatedOutput<OutT>) {
+            if constexpr (CtxT::is_modifiable) {
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
+                start_segment(ctx);
             } else {
-                if constexpr (ctx_type::is_modifiable) {
-                    skip_separator(separator, sep_count);
-                } else {
-                    skip_separator(sep_count);
-                }
-                end_segment();
-                reset_segment_start();
+                end_segment(ctx);
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
             }
+        } else {
+            skip_separatoe(ctx, out, sep_count);
+            end_segment(ctx);
+            reset_segment_start(ctx, beg);
         }
+    }
 
-        constexpr void set_query_name() noexcept(ctx_type::is_nothrow)
-            requires(is_map)
-        {
-            if constexpr (!ctx_type::is_modifiable) {
-                istl::assign(buffer.first, beg, ctx->pos);
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void next_segment_of(
+      CtxT&                    ctx,
+      OutT&                    out,
+      CtxBufferOf<CtxT> auto&  beg,
+      typename CtxT::char_type separator,
+      diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
+        if constexpr (SegregatedOutput<OutT>) {
+            if constexpr (CtxT::is_modifiable) {
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
+                start_segment(ctx);
+            } else {
+                end_segment(ctx);
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
             }
-        }
-
-        constexpr void set_query_value() noexcept(ctx_type::is_nothrow)
-            requires(is_map)
-        {
-            if constexpr (!ctx_type::is_modifiable) {
-                istl::assign(buffer.second, beg, ctx->pos);
-                beg = ctx->pos + 1;
+        } else {
+            if constexpr (CtxT::is_modifiable) {
+                skip_separator(ctx, out, separator, sep_count);
+            } else {
+                skip_separator(ctx, out, sep_count);
             }
+            end_segment(ctx);
+            reset_segment_start(ctx, beg);
         }
-
-        constexpr void append_query_value(difference_type count) noexcept(ctx_type::is_nothrow) {
-            if constexpr (is_map) {
-                if constexpr (!ctx_type::is_modifiable) {
-                    ctx->pos += count;
-                    istl::assign(buffer.second, beg, ctx->pos);
-                } else {
-                    buffer.second += *ctx->pos;
-                    ctx->pos      += count;
-                }
-            }
-        }
-
-        constexpr void next_query() noexcept(ctx_type::is_nothrow) {
-            if constexpr (is_map) {
-                if (!buffer.first.empty() || !buffer.second.empty()) {
-                    get_output().emplace(buffer);
-                }
-                istl::clear(buffer.first);
-                istl::clear(buffer.second);
-            }
-            reset_begin();
-        }
-    };
-
+    }
 
 } // namespace webpp::uri::details
 

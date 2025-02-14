@@ -10,6 +10,20 @@ namespace webpp::uri {
 
     namespace details {
 
+        template <components Comp, ParsingURIContext CtxT>
+        static constexpr void encode_or_set(
+          CtxT&                                ctx,
+          typename CtxT::iterator              pos,
+          typename CtxT::iterator              end,
+          [[maybe_unused]] CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
+            if constexpr (CtxT::is_modifiable) {
+                auto& out = get_out<Comp>(ctx);
+                encode_uri_component<uri_encoding_policy::encode_chars>(pos, end, out, policy_chars);
+            } else {
+                set_value(ctx, pos, end);
+            }
+        }
+
         template <ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
         static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos)
           noexcept(CtxT::is_nothrow) {
@@ -18,7 +32,6 @@ namespace webpp::uri {
             // todo: use already parsed host
 
             using details::ascii_bitmap;
-            using details::component_encoder;
             using details::USER_INFO_ENCODE_SET;
 
             using ctx_type = CtxT;
@@ -36,11 +49,7 @@ namespace webpp::uri {
                 iterator const username_end = stl::min(password_token_pos, atsign_pos);
 
                 clear<components::username>(ctx); // todo: it's optimizable
-                component_encoder<components::username, ctx_type> user_encoder{ctx};
-                user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
-                  username_beg,
-                  username_end,
-                  USER_INFO_ENCODE_SET);
+                encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
 
                 // parse password
                 if (password_token_pos != ctx.end) {
@@ -48,8 +57,8 @@ namespace webpp::uri {
                     iterator const password_end = atsign_pos;
 
                     clear<components::password>(ctx); // todo: it's optimizable
-                    component_encoder<components::password, ctx_type> pass_encoder{ctx};
-                    pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
+                    encode_or_set<components::password>(
+                      ctx,
                       password_beg,
                       password_end,
                       USER_INFO_ENCODE_SET);
@@ -65,10 +74,7 @@ namespace webpp::uri {
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
-        using details::component_encoder;
         using details::USER_INFO_ENCODE_SET;
-
-        using ctx_type = CtxT;
 
         if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
@@ -79,11 +85,7 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear<components::username>(ctx);
-            component_encoder<components::username, ctx_type> user_encoder{ctx};
-            user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
-              ctx.pos,
-              ctx.end,
-              USER_INFO_ENCODE_SET);
+            encode_or_set<components::username>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
         }
     }
 
@@ -93,10 +95,7 @@ namespace webpp::uri {
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
-        using details::component_encoder;
         using details::USER_INFO_ENCODE_SET;
-
-        using ctx_type = CtxT;
 
         if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
@@ -107,11 +106,7 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear<components::password>(ctx);
-            component_encoder<components::password, ctx_type> pass_encoder{ctx};
-            pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
-              ctx.pos,
-              ctx.end,
-              USER_INFO_ENCODE_SET);
+            encode_or_set<components::password>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
         }
     }
 

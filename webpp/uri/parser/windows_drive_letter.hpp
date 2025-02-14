@@ -75,10 +75,12 @@ namespace webpp::uri::details {
         return false;
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_parsing_options Options, ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void handle_windows_driver_letter(
-      CtxT&                                      ctx,
-      component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
+      CtxT&                    ctx,
+      OutT&                    out,
+      CtxBufferOf<CtxT> auto&  buffer,
+      typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
         if constexpr (Options.handle_windows_drive_letters) {
@@ -145,19 +147,19 @@ namespace webpp::uri::details {
             }
 
             set_warning(ctx.status, uri_status::windows_drive_letter_used);
-            encoder.next_segment();
-            encoder.append_inplace_of(letters[0]);
-            encoder.append_inplace_of(letters[1]);
-            encoder.ignore_character(pos - ctx.pos - 1);
+            next_segment(ctx, out, seg_beg);
+            append_inplace_of(ctx, buffer, letters[0]);
+            append_inplace_of(ctx, buffer, letters[1]);
+            ignore_character(ctx, pos - ctx.pos - 1);
             if (letters[2] == '/') {
                 if constexpr (!ctx_type::is_segregated) {
-                    encoder.append_inplace_of('/');
-                    encoder.next_segment(0);
+                    append_inplace_of(ctx, buffer, '/');
+                    next_segment(ctx, buffer, seg_beg, 0);
                 } else {
-                    encoder.next_segment();
+                    next_segment(ctx, out, seg_beg);
                 }
             } else {
-                encoder.end_segment();
+                end_segment(ctx, out, seg_beg);
             }
         }
     }

@@ -16,9 +16,9 @@
 
 namespace webpp::uri {
 
-    template <typename T>
-    concept SegregatedContainer = istl::LinearContainer<T> || requires { requires T::is_segregated; };
-
+    /**
+     * This is the concept that validates the URI contexts for parsing
+     */
     template <typename T>
     concept ParsingURIContext = requires(T ctx) {
         typename T::iterator;
@@ -41,6 +41,25 @@ namespace webpp::uri {
         ctx.base;
         ctx.status;
     };
+
+    /**
+     * An output type that is like a vector or a map
+     */
+    template <typename T>
+    concept SegregatedOutput = istl::LinearContainer<T> || requires { requires T::is_segregated; };
+
+    template <typename T>
+    concept VectorOutput = istl::LinearContainer<T> && !istl::MapContainer<T>;
+
+    template <typename T>
+    concept MapOutput = istl::LinearContainer<T> && !istl::MapContainer<T>;
+
+    /**
+     * This is the output type that the URI parser will be able to put the results of components into.
+     */
+    template <typename T>
+    concept ParsingOutput = istl::StringLike<T> || SegregatedOutput<T>;
+
 
     template <typename SegType = stl::uint32_t, typename Iter = char const*>
     struct uri_components;
@@ -847,7 +866,7 @@ namespace webpp::uri {
         static constexpr components component     = Comp;
         static constexpr bool       is_nothrow    = stl::is_nothrow_copy_assignable_v<out_container_type>;
         static constexpr bool       has_base_uri  = !stl::is_void_v<BaseSegType>;
-        static constexpr bool       is_segregated = SegregatedContainer<out_container_type>;
+        static constexpr bool       is_segregated = SegregatedOutput<out_container_type>;
         static constexpr bool       is_modifiable = istl::ModifiableString<out_container_type> ||
                                               details::ModifiableVectorOfStrings<out_container_type>;
 
@@ -876,19 +895,8 @@ namespace webpp::uri {
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
 
     namespace details {
-        template <ParsingURIContext CtxT>
-        [[nodiscard]] constexpr auto& get_output_ref(CtxT& ctx) noexcept {
-            using ctx_type = CtxT;
-
-            if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
-                return *ctx.out;
-            } else {
-                return ctx.out;
-            }
-        }
-
         template <components Comp>
-        [[nodiscard]] constexpr decltype(auto) get_output_from(auto& out) noexcept {
+        [[nodiscard]] constexpr decltype(auto) get_output_ref(auto& out) noexcept {
             if constexpr (components::scheme == Comp) {
                 return out.scheme_ref();
             } else if constexpr (components::username == Comp) {
@@ -1019,6 +1027,18 @@ namespace webpp::uri {
     } // namespace details
 
     template <components Comp, ParsingURIContext CtxT>
+    [[nodiscard]] constexpr decltype(auto) get_component(CtxT& ctx) noexcept {
+        if constexpr (requires { CtxT::component; }) {
+            if constexpr (Comp == CtxT::component) {
+                return istl::deptr(ctx.out);
+            }
+            // else return void to get a compile time error
+        } else {
+            return details::get_output_value_from<Comp>(istl::deptr(ctx.out));
+        }
+    }
+
+    template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr decltype(auto) get_output(CtxT& ctx) noexcept {
         using ctx_type = CtxT;
 
@@ -1032,21 +1052,7 @@ namespace webpp::uri {
             }
             // else return void to get a compile time error
         } else {
-            return details::get_output_from<Comp>(details::get_output_ref(ctx));
-        }
-    }
-
-    template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr decltype(auto) get_output_value(CtxT& ctx) noexcept {
-        using ctx_type = CtxT;
-        if constexpr (requires { ctx_type::component; }) {
-            if constexpr (Comp == ctx_type::component) {
-                return istl::unmove(*ctx.out); // todo: C++32 auto()
-            } else {
-                return typename ctx_type::out_seg_type{};
-            }
-        } else {
-            return details::get_output_value_from<Comp>(details::get_output_ref(ctx));
+            return details::get_output_ref<Comp>(istl::deptr(ctx.out));
         }
     }
 
@@ -1062,12 +1068,12 @@ namespace webpp::uri {
                 return string_view_type{};
             }
         } else {
-            return details::get_output_view_from<Comp, string_view_type>(details::get_output_ref(ctx));
+            return details::get_output_view_from<Comp, string_view_type>(istl::deptr(ctx.out));
         }
     }
 
     template <components Comp, ParsingURIContext CtxT, typename... Args>
-    constexpr void set_value(CtxT& ctx, Args&&... args) {
+    constexpr void set_value(CtxT& ctx, Args&&... args) noexcept(CtxT::is_nothrow) {
         using ctx_type = CtxT;
 
         if constexpr (requires { ctx_type::component; }) {
@@ -1076,7 +1082,7 @@ namespace webpp::uri {
                 istl::deptr(ctx.out).assign(stl::forward<Args>(args)...);
             }
         } else {
-            details::set_value_to<Comp>(details::get_output_ref(ctx), stl::forward<Args>(args)...);
+            details::set_value_to<Comp>(istl::deptr(ctx.out), stl::forward<Args>(args)...);
         }
 
         if constexpr (components::host == Comp) {
@@ -1096,7 +1102,7 @@ namespace webpp::uri {
                 istl::clear(istl::deptr(ctx.out));
             }
         } else {
-            details::clear_from<Comp>(details::get_output_ref(ctx));
+            details::clear_from<Comp>(istl::deptr(ctx.out));
         }
 
         if constexpr (components::host == Comp) {
@@ -1116,21 +1122,21 @@ namespace webpp::uri {
             return has_flag(ctx.status, uri_status::has_non_null_port);
         } else if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { istl::deref(ctx.out).has_value(); }) {
-                    return istl::deref(ctx.out).has_value();
+                if constexpr (requires { istl::deptr(ctx.out).has_value(); }) {
+                    return istl::deptr(ctx.out).has_value();
                 } else {
-                    return istl::deref(ctx.out).empty();
+                    return istl::deptr(ctx.out).empty();
                 }
             }
             return true;
             // else return true, just to get rid of the warnings
         } else {
-            return details::has_value_from<Comp>(details::get_output_ref(ctx));
+            return details::has_value_from<Comp>(istl::deptr(ctx.out));
         }
     }
 
     template <ParsingURIContext CtxT>
-    constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) {
+    constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
         using ctx_type = CtxT;
 
         if constexpr (requires {
@@ -1140,8 +1146,8 @@ namespace webpp::uri {
         {
             // works for strings only
             ctx.out->set_opaque(is_opaque_path);
-        } else if constexpr (requires { details::get_output_ref(ctx).path().set_opaque(true); }) {
-            details::get_output_ref(ctx).path().set_opaque(is_opaque_path);
+        } else if constexpr (requires { istl::deptr(ctx.out).path().set_opaque(true); }) {
+            istl::deptr(ctx).path().set_opaque(is_opaque_path);
         }
     }
 

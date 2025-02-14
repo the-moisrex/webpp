@@ -202,6 +202,30 @@ namespace webpp::uri {
             storage = ip4;
         }
 
+        /**
+         * @brief Replace the values with the specified raw data, without parsing
+         * @param beg start of the value
+         * @param end the end of the value
+         */
+        template <typename Iter>
+        constexpr void assign(Iter beg, Iter end) noexcept(is_nothrow) {
+            storage = string_type{beg, end};
+        }
+
+        template <Allocator AllocT>
+            requires is_modifiable
+        constexpr string_type* inti_domain(AllocT const& alloc) noexcept(is_nothrow) {
+            storage = string_type{alloc};
+            return as_domain();
+        }
+
+        constexpr string_type* inti_domain() noexcept
+            requires(!is_modifiable)
+        {
+            storage = string_type{};
+            return as_domain();
+        }
+
         // // Append a label to the end of the domain
         // template <istl::StringViewifiable StrT>
         //     requires is_modifiable
@@ -248,16 +272,6 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr pure_ipv6* as_ipv6() noexcept {
             return get_if<pure_ipv6>(&storage);
-        }
-
-        /**
-         * @brief Replace the values with the specified raw data, without parsing
-         * @param beg start of the value
-         * @param end the end of the value
-         */
-        template <typename Iter>
-        constexpr void assign(Iter beg, Iter end) {
-            storage = string_type{beg, end};
         }
 
         template <istl::String NStrT = modifiable_string>

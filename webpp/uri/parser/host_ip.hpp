@@ -262,8 +262,10 @@ namespace webpp::uri::details {
             case inet_pton6_status::valid_special:
                 if (*ctx.pos == ']') {
                     ++ctx.pos;
-                    if constexpr (requires { get_output_ref(ctx).set_hostname(ipv6_bytes); }) {
-                        get_output_ref(ctx).set_hostname(ipv6_bytes);
+
+                    // todo: fix this:
+                    if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
+                        istl::deptr(ctx.out).set_hostname(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
                     } else if constexpr (requires { set_value<components::host>(ctx, ipv6_bytes); }) {
                         // set value already sets the flag
