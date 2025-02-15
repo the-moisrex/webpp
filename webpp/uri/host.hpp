@@ -121,15 +121,11 @@ namespace webpp::uri {
         static constexpr bool is_nothrow    = !is_modifiable;
         static constexpr bool is_segregated = false;
 
-      private:
-        storage_type storage = stl::monostate{};
+        using allocator_type = istl::allocator_type_of<string_type, istl::nothing_type>;
 
-      public:
-        constexpr basic_host(basic_host const& rhs)                = default;
-        constexpr basic_host(basic_host&& rhs) noexcept            = default;
-        constexpr basic_host& operator=(basic_host const& rhs)     = default;
-        constexpr basic_host& operator=(basic_host&& rhs) noexcept = default;
-        constexpr ~basic_host()                                    = default;
+      private:
+        storage_type                         storage = stl::monostate{};
+        [[no_unique_address]] allocator_type alloc{};
 
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
@@ -143,34 +139,53 @@ namespace webpp::uri {
             return ctx.status;
         }
 
+      public:
+        constexpr basic_host(basic_host const& rhs)                = default;
+        constexpr basic_host(basic_host&& rhs) noexcept            = default;
+        constexpr basic_host& operator=(basic_host const& rhs)     = default;
+        constexpr basic_host& operator=(basic_host&& rhs) noexcept = default;
+        constexpr ~basic_host()                                    = default;
+
+        constexpr basic_host() noexcept
+            requires(!is_modifiable)
+        = default;
+
         template <Allocator AllocT = stl::allocator<char_type>>
-        explicit constexpr basic_host(AllocT const& alloc = {}) noexcept : storage{string_type{alloc}} {}
+            requires is_modifiable
+        explicit constexpr basic_host(AllocT const& inp_alloc = {}) noexcept : alloc{inp_alloc} {}
+
+        template <Allocator AllocT = stl::allocator<char_type>>
+            requires(!is_modifiable)
+        explicit constexpr basic_host([[maybe_unused]] AllocT const& inp_alloc) noexcept {}
 
         template <istl::String InpStr = modifiable_string>
             requires is_modifiable
         explicit constexpr basic_host(InpStr const& str) noexcept(is_nothrow)
-          : storage{string_type{str.get_allocator()}} {
+          : storage{string_type{str.get_allocator()}},
+            alloc{str.get_allocator()} {
             parse(str.begin(), str.end());
         }
 
         template <istl::StringViewifiable InpStr = string_view_type,
                   Allocator               AllocT = stl::allocator<char_type>>
             requires(is_modifiable && !istl::String<InpStr>)
-        explicit constexpr basic_host(InpStr&& inp_str, AllocT alloc = {}) noexcept(is_nothrow)
-          : storage{string_type{alloc}} {
+        explicit constexpr basic_host(InpStr&& inp_str, AllocT inp_alloc = {}) noexcept(is_nothrow)
+          : storage{string_type{inp_alloc}},
+            alloc{inp_alloc} {
             auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
         }
 
         template <istl::StringViewifiable InpStr = string_view_type>
             requires(!is_modifiable)
-        explicit constexpr basic_host(InpStr&& inp_str) noexcept(is_nothrow) {
+        explicit constexpr basic_host(InpStr&& inp_str) noexcept(is_nothrow) : storage{string_type{}} {
             auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
         }
 
         template <istl::StringLike InpStr>
         constexpr basic_host& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            init_domain();
             parse(inp_str.begin(), inp_str.end());
             return *this;
         }
@@ -212,18 +227,18 @@ namespace webpp::uri {
             storage = string_type{beg, end};
         }
 
-        template <Allocator AllocT>
-            requires is_modifiable
-        constexpr string_type* inti_domain(AllocT const& alloc) noexcept(is_nothrow) {
-            storage = string_type{alloc};
-            return as_domain();
+        constexpr void init_domain() noexcept {
+            if constexpr (is_modifiable) {
+                storage = string_type{this->get_allocator()};
+            } else {
+                storage = string_type{};
+            }
         }
 
-        constexpr string_type* inti_domain() noexcept
-            requires(!is_modifiable)
+        [[nodiscard]] constexpr auto const& get_allocator() const noexcept
+            requires(is_modifiable)
         {
-            storage = string_type{};
-            return as_domain();
+            return alloc;
         }
 
         // // Append a label to the end of the domain

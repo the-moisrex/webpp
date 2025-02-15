@@ -1027,14 +1027,14 @@ namespace webpp::uri {
     } // namespace details
 
     template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr decltype(auto) get_component(CtxT& ctx) noexcept {
+    [[nodiscard]] constexpr auto& get_component(CtxT& ctx) noexcept {
         if constexpr (requires { CtxT::component; }) {
             if constexpr (Comp == CtxT::component) {
                 return istl::deptr(ctx.out);
             }
             // else return void to get a compile time error
         } else {
-            return details::get_output_value_from<Comp>(istl::deptr(ctx.out));
+            return details::get_output_ref<Comp>(istl::deptr(ctx.out));
         }
     }
 
