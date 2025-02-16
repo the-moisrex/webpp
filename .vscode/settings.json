@@ -34,7 +34,8 @@
     "sstream": "cpp",
     "__node_handle": "cpp",
     "regex": "cpp",
-    "future": "cpp"
+    "future": "cpp",
+    "cstdint": "cpp"
   },
   "cSpell.words": [
     "addr",
