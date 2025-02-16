@@ -93,7 +93,7 @@ namespace webpp::uri {
         clear_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator seg_beg) noexcept {
             using ctx_type = CtxT;
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                get_buffer<components::path>(ctx).clear();
+                buffer.clear();
             } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 if constexpr (!Options.ignore_tabs_or_newlines) {
                     auto const length = static_cast<stl::size_t>(ctx.pos - seg_beg);
@@ -228,7 +228,7 @@ namespace webpp::uri {
           details::ascii_bitmap('\0', '%', '#', '?', '\r', '\t', '\n');
 
         set_opaque(ctx, true);
-        auto     buffer  = get_buffer<components::path>(ctx);
+        auto     buffer  = get_buffer(get_component<components::path>(ctx));
         auto&    out     = get_storage<components::path>(ctx);
         iterator seg_beg = ctx.pos;
 
