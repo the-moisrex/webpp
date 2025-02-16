@@ -53,7 +53,7 @@ namespace webpp::uri {
           typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_segregated) {
                 if (!buffer.first.empty() || !buffer.second.empty()) {
-                    get_output<components::queries>(ctx).emplace(buffer);
+                    get_storage<components::queries>(ctx).emplace(buffer);
                 }
                 istl::clear(buffer.first);
                 istl::clear(buffer.second);
@@ -104,7 +104,7 @@ namespace webpp::uri {
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
         bool        in_value = false;
         buffer_type buffer;
-        auto&       out     = get_output<components::queries>(ctx);
+        auto&       out     = get_storage<components::queries>(ctx);
         auto        seg_beg = ctx.pos;
 
         // find the end of the queries

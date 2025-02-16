@@ -72,7 +72,7 @@ TYPED_TEST_SUITE(URITests, Types);
 
 TYPED_TEST(URITests, Generation) {
     uri::uri url;
-    EXPECT_EQ(url.scheme_ref().size(), 0);
+    EXPECT_EQ(url.scheme().storage_ref().size(), 0);
 
     auto const alloc = url.get_allocator();
 

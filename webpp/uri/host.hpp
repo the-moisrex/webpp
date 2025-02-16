@@ -401,6 +401,14 @@ namespace webpp::uri {
         // [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
         //     return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, other.storage_ref());
         // }
+
+        friend constexpr string_type get_buffer(basic_host const& host) noexcept {
+            if constexpr (is_modifiable) {
+                return string_type{host.get_allocator()};
+            } else {
+                return string_type{};
+            }
+        }
     };
 
     template <istl::StringView T>

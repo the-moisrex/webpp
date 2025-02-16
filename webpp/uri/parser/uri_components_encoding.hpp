@@ -36,29 +36,6 @@ namespace webpp::uri::details {
     template <typename CtxT, typename T>
     concept CtxVectorBuffer = CtxBufferOf<CtxT, T> && stl::same_as<T, typename CtxT::vec_iterator>;
 
-    template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] static constexpr decltype(auto) get_buffer(CtxT& ctx) noexcept {
-        webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
-        webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
-        webpp_static_constexpr bool is_seg = is_vec || is_map;
-
-        /// if it's segregated:
-        ///   if it's modifiable queries, map::value_type (pair<string, string>),
-        ///   if it's modifiable path/host, vector::iterator
-        /// else if it's not segregated but still modifiable:
-        ///   vec_iterator which is seg_type*
-        /// otherwise, nothing_type
-        using buffer_type =
-          stl::conditional_t<is_map,
-                             typename CtxT::map_value_type,
-                             stl::conditional_t<is_vec, typename CtxT::vec_iterator, istl::nothing_type>>;
-        if constexpr (is_seg) {
-            return buffer_type{};
-        } else {
-            return uri::get_output<Comp>(ctx);
-        }
-    }
-
     /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
     /// explicitness
     template <components Comp, ParsingURIContext CtxT>

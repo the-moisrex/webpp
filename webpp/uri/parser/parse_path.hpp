@@ -65,7 +65,7 @@ namespace webpp::uri {
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
-            auto& out = get_output<components::path>(ctx);
+            auto& out = get_storage<components::path>(ctx);
 
             // remove the last segment as well
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
@@ -229,7 +229,7 @@ namespace webpp::uri {
 
         set_opaque(ctx, true);
         auto     buffer  = get_buffer<components::path>(ctx);
-        auto&    out     = get_output<components::path>(ctx);
+        auto&    out     = get_storage<components::path>(ctx);
         iterator seg_beg = ctx.pos;
 
         start_segment(ctx, out, buffer);
@@ -310,8 +310,8 @@ namespace webpp::uri {
 
         set_opaque(ctx, false);
 
-        auto     buffer  = get_buffer<components::path>(ctx);
-        auto&    out     = get_output<components::path>(ctx);
+        auto     buffer  = get_buffer(get_component<components::path>(ctx));
+        auto&    out     = get_storage<components::path>(ctx);
         iterator seg_beg = ctx.pos;
 
         start_segment(ctx, out, buffer);

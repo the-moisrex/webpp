@@ -128,7 +128,6 @@ namespace webpp::uri {
         return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                    \
     }                                                                                               \
                                                                                                     \
-                                                                                                    \
     constexpr void clear_##field() noexcept {                                                       \
         m_##field.clear();                                                                          \
     }                                                                                               \
@@ -152,14 +151,6 @@ namespace webpp::uri {
                                                                                                     \
     [[nodiscard]] constexpr auto& field() noexcept {                                                \
         return m_##field;                                                                           \
-    }                                                                                               \
-                                                                                                    \
-    [[nodiscard]] constexpr auto& field##_ref() noexcept {                                          \
-        return m_##field.storage_ref();                                                             \
-    }                                                                                               \
-                                                                                                    \
-    [[nodiscard]] constexpr auto const& field##_ref() const noexcept {                              \
-        return m_##field.storage_ref();                                                             \
     }
 
 

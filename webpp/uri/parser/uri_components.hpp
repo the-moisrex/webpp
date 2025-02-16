@@ -895,24 +895,25 @@ namespace webpp::uri {
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
 
     namespace details {
+
         template <components Comp>
-        [[nodiscard]] constexpr decltype(auto) get_output_ref(auto& out) noexcept {
+        [[nodiscard]] constexpr decltype(auto) get_component(auto& out) noexcept {
             if constexpr (components::scheme == Comp) {
-                return out.scheme_ref();
+                return out.scheme();
             } else if constexpr (components::username == Comp) {
-                return out.username_ref();
+                return out.username();
             } else if constexpr (components::password == Comp) {
-                return out.password_ref();
+                return out.password();
             } else if constexpr (components::port == Comp) {
-                return out.port_ref();
+                return out.port();
             } else if constexpr (components::host == Comp) {
-                return out.hostname_ref();
+                return out.hostname();
             } else if constexpr (components::path == Comp) {
-                return out.path_ref();
+                return out.path();
             } else if constexpr (components::queries == Comp) {
-                return out.queries_ref();
+                return out.queries();
             } else if constexpr (components::fragment == Comp) {
-                return out.fragment_ref();
+                return out.fragment();
             }
         }
 
@@ -1034,26 +1035,38 @@ namespace webpp::uri {
             }
             // else return void to get a compile time error
         } else {
-            return details::get_output_ref<Comp>(istl::deptr(ctx.out));
+            return details::get_component<Comp>(istl::deptr(ctx.out));
+        }
+    }
+
+    template <ParsingOutput OutT>
+    [[nodiscard]] constexpr decltype(auto) get_storage(OutT& out) noexcept {
+        if constexpr (requires { out.storage_ref(); }) {
+            return out.storage_ref();
+        } else {
+            return out;
         }
     }
 
     template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr decltype(auto) get_output(CtxT& ctx) noexcept {
+    [[nodiscard]] constexpr decltype(auto) get_storage(CtxT& ctx) noexcept {
         using ctx_type = CtxT;
 
         if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { ctx.out->storage_ref(); }) {
-                    return ctx.out->storage_ref();
-                } else {
-                    return *ctx.out;
-                }
+                return get_storage<Comp>(istl::deptr(ctx.out));
             }
             // else return void to get a compile time error
         } else {
-            return details::get_output_ref<Comp>(istl::deptr(ctx.out));
+            return get_storage(details::get_component<Comp>(istl::deptr(ctx.out)));
         }
+    }
+
+    /// Default buffer which is nothing
+    /// Specialize it for those you need.
+    template <typename OutT>
+    [[nodiscard]] static constexpr istl::nothing_type get_buffer([[maybe_unused]] OutT& out) noexcept {
+        return {};
     }
 
     template <components Comp, ParsingURIContext CtxT>

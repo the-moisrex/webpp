@@ -173,7 +173,7 @@ namespace webpp::uri {
             // url’s path.
             if constexpr (Options.state_override) {
                 if (!has_value<components::host>(ctx)) {
-                    get_output<components::path>(ctx).emplace_back();
+                    get_storage<components::path>(ctx).emplace_back();
                 }
             }
         }

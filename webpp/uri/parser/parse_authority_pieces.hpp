@@ -56,7 +56,7 @@ namespace webpp::uri::details {
         bool  skip_last_char           = false;
         bool  must_contain_credentials = false;
         auto& out                      = init_string_host(ctx);
-        auto  buffer                   = get_buffer<components::host>(ctx);
+        auto  buffer                   = get_buffer(get_component<components::host>(ctx));
         auto  seg_beg                  = ctx.pos;
 
         start_segment(ctx, out, buffer);
