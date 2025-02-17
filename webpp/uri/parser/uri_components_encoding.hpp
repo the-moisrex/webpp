@@ -27,9 +27,8 @@ namespace webpp::uri::details {
     template <typename T, typename CtxT>
     concept CtxBufferOf =
       ParsingURIContext<CtxT> &&
-      (CtxT::is_segregated
-         ? istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator, istl::nothing_type>
-         : stl::same_as<T, istl::nothing_type>);
+      (istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator, istl::nothing_type> ||
+       istl::String<T>);
 
     template <typename T, typename CtxT>
     concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::map_value_type>;
@@ -98,15 +97,18 @@ namespace webpp::uri::details {
      * @brief Encode if the context is modifiable, otherwise just validate the invalid characters
      * @tparam Policy
      * @param ctx parsing context
+     * @param buffer
      * @param policy_chars encode these characters if encoding is possible
      * @param invalid_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
-    [[nodiscard]] static constexpr bool
-    encode_or_validate(CtxT& ctx, CharSet auto const& policy_chars, CharSet auto const& invalid_chars)
-      noexcept(CtxT::is_nothrow) {
-        return encode_or_validate<Policy>(ctx, ctx.pos, ctx.end, policy_chars, invalid_chars);
+    [[nodiscard]] static constexpr bool encode_or_validate(
+      CtxT&                   ctx,
+      CtxBufferOf<CtxT> auto& buffer,
+      CharSet auto const&     policy_chars,
+      CharSet auto const&     invalid_chars) noexcept(CtxT::is_nothrow) {
+        return encode_or_validate<Policy>(ctx, buffer, ctx.pos, ctx.end, policy_chars, invalid_chars);
     }
 
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>

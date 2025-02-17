@@ -1064,10 +1064,10 @@ namespace webpp::uri {
 
     /// Default buffer which is nothing
     /// Specialize it for those you need.
-    template <typename OutT>
-    [[nodiscard]] static constexpr istl::nothing_type get_buffer([[maybe_unused]] OutT& out) noexcept {
-        return {};
-    }
+    // template <typename OutT>
+    // [[nodiscard]] static constexpr istl::nothing_type get_buffer([[maybe_unused]] OutT& out) noexcept {
+    //     return {};
+    // }
 
     template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr auto get_output_view(CtxT& ctx) noexcept {
