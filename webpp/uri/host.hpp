@@ -209,12 +209,12 @@ namespace webpp::uri {
             storage = ip6;
         }
 
-        constexpr void assign(pure_ipv6::octets_t ip6) noexcept(is_nothrow) {
-            storage = ip6;
+        constexpr void assign(pure_ipv6::octets_t const ip6) noexcept(is_nothrow) {
+            storage = pure_ipv6{ip6};
         }
 
         constexpr void assign(pure_ipv4::octets_t ip4) noexcept(is_nothrow) {
-            storage = ip4;
+            storage = pure_ipv4{ip4};
         }
 
         /**

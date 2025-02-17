@@ -263,13 +263,14 @@ namespace webpp::uri::details {
                 if (*ctx.pos == ']') {
                     ++ctx.pos;
 
-                    // todo: fix this:
                     if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
                         istl::deptr(ctx.out).set_hostname(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
-                    } else if constexpr (requires { set_value<components::host>(ctx, ipv6_bytes); }) {
+                    } else if constexpr (
+                      requires { get_component<components::host>(ctx).assign(ipv6_bytes); })
+                    {
                         // set value already sets the flag
-                        set_value<components::host>(ctx, ipv6_bytes);
+                        get_component<components::host>(ctx).assign(ipv6_bytes);
                     } else {
                         // set value already sets the flag
                         set_value<components::host>(ctx, beg, ctx.pos);
