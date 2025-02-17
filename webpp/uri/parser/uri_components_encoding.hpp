@@ -27,7 +27,11 @@ namespace webpp::uri::details {
     template <typename T, typename CtxT>
     concept CtxBufferOf =
       ParsingURIContext<CtxT> &&
-      (istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator, istl::nothing_type> ||
+      (istl::part_of<T,
+                     typename CtxT::map_value_type,
+                     typename CtxT::vec_iterator,
+                     typename CtxT::iterator,
+                     istl::nothing_type> ||
        istl::String<T>);
 
     template <typename T, typename CtxT>
@@ -191,7 +195,7 @@ namespace webpp::uri::details {
     /// Set the beginning to current position
     template <ParsingURIContext CtxT>
     static constexpr void reset_begin(CtxT& ctx, typename CtxT::iterator& beg) noexcept {
-        beg = ctx->pos;
+        beg = ctx.pos;
     }
 
     template <ParsingURIContext CtxT>
@@ -285,10 +289,10 @@ namespace webpp::uri::details {
         if constexpr (!CheckNewlinesAndTabs) {
             auto       cur      = ctx.pos;
             bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur++) && is_hex_digit(*cur);
-            append_n(ctx, cur - ctx.pos);
+            append_n(ctx, out, cur - ctx.pos);
             return is_valid;
         } else {
-            append_n(ctx, 1);
+            append_n(ctx, out, 1);
             switch (ctx.pos - ctx.end) {
                 case 0:
                 case 1: return false;
@@ -401,13 +405,13 @@ namespace webpp::uri::details {
                 reset_segment_start(ctx, beg);
                 start_segment(ctx);
             } else {
-                end_segment(ctx);
+                end_segment(ctx, out, beg);
                 skip_separator(ctx, out, sep_count);
                 reset_segment_start(ctx, beg);
             }
         } else {
-            skip_separatoe(ctx, out, sep_count);
-            end_segment(ctx);
+            skip_separator(ctx, out, sep_count);
+            end_segment(ctx, out, beg);
             reset_segment_start(ctx, beg);
         }
     }
@@ -425,7 +429,7 @@ namespace webpp::uri::details {
                 reset_segment_start(ctx, beg);
                 start_segment(ctx);
             } else {
-                end_segment(ctx);
+                end_segment(ctx, out, beg);
                 skip_separator(ctx, out, sep_count);
                 reset_segment_start(ctx, beg);
             }
@@ -435,7 +439,7 @@ namespace webpp::uri::details {
             } else {
                 skip_separator(ctx, out, sep_count);
             }
-            end_segment(ctx);
+            end_segment(ctx, out, beg);
             reset_segment_start(ctx, beg);
         }
     }

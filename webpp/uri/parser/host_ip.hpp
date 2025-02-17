@@ -269,8 +269,8 @@ namespace webpp::uri::details {
                     } else if constexpr (
                       requires { get_component<components::host>(ctx).assign(ipv6_bytes); })
                     {
-                        // set value already sets the flag
                         get_component<components::host>(ctx).assign(ipv6_bytes);
+                        set_flag(ctx.status, has_non_empty_host);
                     } else {
                         // set value already sets the flag
                         set_value<components::host>(ctx, beg, ctx.pos);

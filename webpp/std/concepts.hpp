@@ -186,7 +186,7 @@ namespace webpp::istl {
     /**
      * Same as "same_as" but check against multiple types.
      * The last type that you specify will be the one that gets checked against the other type not the first
-     * type and the reason is that this way you can use this concept in the requires clauses.
+     * type and the reason is that this way you can use this concept in the 'requires' clauses.
      *
      * @code
      *   requires (T val) {
