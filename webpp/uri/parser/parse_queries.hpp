@@ -35,7 +35,7 @@ namespace webpp::uri {
         static constexpr void
         append_query_value(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxMappedBuffer<CtxT, BufT>) {
+            if constexpr (CtxMappedBuffer<BufT, CtxT>) {
                 if constexpr (!CtxT::is_modifiable) {
                     ctx.pos += count;
                     istl::assign(buffer.second, seg_beg, ctx.pos);

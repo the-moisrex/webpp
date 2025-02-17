@@ -24,17 +24,18 @@ namespace webpp::uri::details {
     /// else if it's not segregated but still modifiable:
     ///   vec_iterator which is seg_type*
     /// otherwise, nothing_type
-    template <typename CtxT, typename T>
+    template <typename T, typename CtxT>
     concept CtxBufferOf =
       ParsingURIContext<CtxT> &&
-      (CtxT::is_segregated ? istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator>
-                           : stl::same_as<T, typename CtxT::iterator>);
+      (CtxT::is_segregated
+         ? istl::one_of<T, typename CtxT::map_value_type, typename CtxT::vec_iterator, istl::nothing_type>
+         : stl::same_as<T, istl::nothing_type>);
 
-    template <typename CtxT, typename T>
-    concept CtxMappedBuffer = CtxBufferOf<CtxT, T> && stl::same_as<T, typename CtxT::map_value_type>;
+    template <typename T, typename CtxT>
+    concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::map_value_type>;
 
-    template <typename CtxT, typename T>
-    concept CtxVectorBuffer = CtxBufferOf<CtxT, T> && stl::same_as<T, typename CtxT::vec_iterator>;
+    template <typename T, typename CtxT>
+    concept CtxVectorBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::vec_iterator>;
 
     /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
     /// explicitness
@@ -123,7 +124,7 @@ namespace webpp::uri::details {
       CharSet auto const&                  invalid_chars,
       [[maybe_unused]] bool const          in_value,
       BufT&                                buffer) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable && CtxMappedBuffer<CtxT, BufT>) {
+        if constexpr (CtxT::is_modifiable && CtxMappedBuffer<BufT, CtxT>) {
             return encode_uri_component<Policy>(
               ctx,
               ctx.pos,
@@ -198,7 +199,7 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     static constexpr void reset_segment_start(CtxT ctx, BufT& beg) noexcept {
-        if constexpr (CtxVectorBuffer<CtxT, BufT> || CtxT::is_modifiable) {
+        if constexpr (CtxVectorBuffer<BufT, CtxT> || CtxT::is_modifiable) {
             reset_begin(ctx, beg);
         }
     }
@@ -244,7 +245,7 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
             for (; count != 0; --count) {
                 append_to(buffer, *ctx.pos++);
             }
@@ -256,7 +257,7 @@ namespace webpp::uri::details {
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     static constexpr void
     append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }
     }
@@ -267,7 +268,7 @@ namespace webpp::uri::details {
       BufT&                    buffer,
       typename CtxT::char_type inp_char,
       diff_type_of<CtxT>       count = 1) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<CtxT, BufT>) {
+        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }
         ctx.pos += count;
