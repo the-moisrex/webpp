@@ -287,6 +287,7 @@ namespace webpp::uri {
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
+        using enum uri_status;
         using details::ascii_bitmap;
         using ctx_type = CtxT;
         using iterator = typename ctx_type::iterator;
@@ -324,7 +325,7 @@ namespace webpp::uri {
         {
             switch (*ctx.pos) {
                 case '\\':
-                    set_warning(ctx.status, uri_status::reverse_solidus_used);
+                    set_warning(ctx.status, reverse_solidus_used);
                     [[fallthrough]];
                 [[likely]] case '/':
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg)) {
@@ -336,14 +337,14 @@ namespace webpp::uri {
                     continue;
                 [[likely]] case '?':
                     if constexpr (!Options.state_override) {
-                        set_valid(ctx.status, uri_status::valid_queries);
+                        set_valid(ctx.status, valid_queries);
                     } else {
                         stl::unreachable();
                     }
                     break;
                 case '#':
                     if constexpr (!Options.state_override) {
-                        set_valid(ctx.status, uri_status::valid_fragment);
+                        set_valid(ctx.status, valid_fragment);
                     } else {
                         stl::unreachable();
                     }
@@ -352,12 +353,12 @@ namespace webpp::uri {
                     if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
                         continue;
                     }
-                    set_warning(ctx.status, uri_status::invalid_character);
+                    set_warning(ctx.status, invalid_character);
                     continue;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':
                 [[unlikely]] case '\t': {
-                    set_warning(ctx.status, uri_status::invalid_character);
+                    set_warning(ctx.status, invalid_character);
                     if constexpr (Options.ignore_tabs_or_newlines) {
                         ignore_character(ctx);
                         continue;
@@ -370,7 +371,7 @@ namespace webpp::uri {
                         break;
                     }
                     [[fallthrough]];
-                default: set_warning(ctx.status, uri_status::invalid_character); break;
+                default: set_warning(ctx.status, invalid_character); break;
             }
             break;
         }
@@ -389,7 +390,7 @@ namespace webpp::uri {
                 }
             }
 
-            set_valid(ctx.status, uri_status::valid);
+            set_valid(ctx.status, valid);
         }
     }
 

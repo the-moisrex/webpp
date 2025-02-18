@@ -73,7 +73,7 @@ namespace webpp::uri {
         details::parse_authority_pieces<parsing_options>(ctx);
 
         if (has_value<components::host>(ctx)) {
-            if (is_localhost_string(get_output_value<components::host>(ctx))) {
+            if (is_localhost_string(get_component<components::host>(ctx))) {
                 clear<components::host>(ctx);
             }
         }
