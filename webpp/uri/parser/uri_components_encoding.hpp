@@ -34,6 +34,11 @@ namespace webpp::uri::details {
                      istl::nothing_type> ||
        istl::String<T>);
 
+
+    template <typename T, typename CtxT>
+    concept CtxModifiableBuffer =
+      CtxBufferOf<T, CtxT> && CtxT::is_modifiable && !stl::same_as<T, istl::nothing_type>;
+
     template <typename T, typename CtxT>
     concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::map_value_type>;
 
@@ -59,15 +64,17 @@ namespace webpp::uri::details {
         set_component_value<Comp>(ctx, beg, ctx.pos);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              ParsingURIContext   CtxT,
+              CtxBufferOf<CtxT>   BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
-      CtxBufferOf<CtxT> auto&  buffer,
+      BufT&                    buffer,
       typename CtxT::iterator& pos,
       typename CtxT::iterator  end,
       CharSet auto const&      policy_chars,
       CharSet auto const&      invalid_chars) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable) {
+        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             return encode_uri_component<Policy>(pos, end, buffer, policy_chars, invalid_chars);
         } else {
             if constexpr (Policy == uri_encoding_policy::skip_chars) {
@@ -79,14 +86,16 @@ namespace webpp::uri::details {
         }
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              ParsingURIContext   CtxT,
+              CtxBufferOf<CtxT>   BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
-      CtxBufferOf<CtxT> auto&  buffer,
+      BufT&                    buffer,
       typename CtxT::iterator& pos,
       typename CtxT::iterator  end,
       CharSet auto const&      policy_chars) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable) {
+        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             encode_uri_component<Policy>(pos, end, buffer, policy_chars);
             return pos == end;
         } else {
@@ -153,11 +162,12 @@ namespace webpp::uri::details {
      * @param policy_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              ParsingURIContext   CtxT,
+              CtxBufferOf<CtxT>   BufT>
     [[nodiscard]] static constexpr bool
-    decode_or_validate(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
-      noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable) {
+    decode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             return decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars);
         } else {
             if constexpr (Policy == uri_encoding_policy::skip_chars) {
@@ -170,12 +180,13 @@ namespace webpp::uri::details {
     }
 
     /// Convert to lowercase and also decode
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              ParsingURIContext   CtxT,
+              CtxBufferOf<CtxT>   BufT>
     [[nodiscard]] static constexpr bool
-    decode_or_tolower(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
-      noexcept(CtxT::is_nothrow) {
+    decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
         using char_type = typename CtxT::char_type;
-        if constexpr (CtxT::is_modifiable) {
+        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             while (ctx.pos != ctx.end) {
                 if (decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars)) {
                     return true;
