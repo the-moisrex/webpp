@@ -40,6 +40,9 @@ namespace webpp::uri::details {
       CtxBufferOf<T, CtxT> && CtxT::is_modifiable && !stl::same_as<T, istl::nothing_type>;
 
     template <typename T, typename CtxT>
+    concept CtxModifiableStringOutput = ParsingURIContext<CtxT> && CtxT::is_modifiable && istl::String<T>;
+
+    template <typename T, typename CtxT>
     concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::map_value_type>;
 
     template <typename T, typename CtxT>
@@ -225,7 +228,7 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out, diff_type_of<CtxT> count) noexcept {
-        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
             for (; count != 0; --count) {
                 append_to(out, *ctx.pos++);
             }
@@ -240,7 +243,7 @@ namespace webpp::uri::details {
     static constexpr void
     skip_separator(CtxT& ctx, OutT& out, typename CtxT::char_type separator, diff_type_of<CtxT> count = 1)
       noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
             append_to(out, separator);
             ctx.pos += count;
         } else {
@@ -250,7 +253,7 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable && !SegregatedOutput<OutT>) {
+        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
             append_to(out, *ctx.pos++);
         } else {
             ++ctx.pos;
@@ -264,7 +267,7 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
+        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             for (; count != 0; --count) {
                 append_to(buffer, *ctx.pos++);
             }
@@ -276,7 +279,7 @@ namespace webpp::uri::details {
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     static constexpr void
     append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
+        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }
     }
@@ -287,15 +290,16 @@ namespace webpp::uri::details {
       BufT&                    buffer,
       typename CtxT::char_type inp_char,
       diff_type_of<CtxT>       count = 1) noexcept {
-        if constexpr (CtxT::is_modifiable && !CtxMappedBuffer<BufT, CtxT>) {
+        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }
         ctx.pos += count;
     }
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-    template <bool CheckNewlinesAndTabs = false, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, ParsingOutput auto& out) noexcept {
+    template <bool CheckNewlinesAndTabs = false, ParsingURIContext CtxT, typename OutT>
+        requires(ParsingOutput<OutT> || CtxBufferOf<OutT, CtxT>)
+    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, OutT& out) noexcept {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)
