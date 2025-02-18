@@ -130,7 +130,7 @@ namespace webpp::uri {
             return *this;
         }
 
-        [[nodiscard]] constexpr allocator_type const& get_allocator() const noexcept {
+        [[nodiscard]] constexpr allocator_type get_allocator() const noexcept {
             return storage.get_allocator();
         }
 
@@ -360,12 +360,10 @@ namespace webpp::uri {
             return storage == other.storage_ref();
         }
 
-        friend constexpr slug_type get_buffer(basic_path const& path) noexcept {
-            if constexpr (is_modifiable) {
-                return slug_type{path.get_allocator()};
-            } else {
-                return slug_type{};
-            }
+        friend constexpr slug_type get_buffer(basic_path const& path) noexcept
+            requires(is_modifiable)
+        {
+            return slug_type{path.get_allocator()};
         }
     };
 

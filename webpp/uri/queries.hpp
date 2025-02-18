@@ -193,12 +193,10 @@ namespace webpp::uri {
             return storage_ref() == other.storage_ref();
         }
 
-        friend constexpr string_type get_buffer(basic_queries const& queries) noexcept {
-            if constexpr (is_modifiable) {
-                return string_type{queries.get_allocator()};
-            } else {
-                return string_type{};
-            }
+        friend constexpr string_type get_buffer(basic_queries const& queries) noexcept
+            requires(is_modifiable)
+        {
+            return string_type{queries.get_allocator()};
         }
     };
 

@@ -402,12 +402,10 @@ namespace webpp::uri {
         //     return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, other.storage_ref());
         // }
 
-        friend constexpr string_type get_buffer(basic_host const& host) noexcept {
-            if constexpr (is_modifiable) {
-                return string_type{host.get_allocator()};
-            } else {
-                return string_type{};
-            }
+        friend constexpr string_type get_buffer(basic_host const& host) noexcept
+            requires(is_modifiable)
+        {
+            return string_type{host.get_allocator()};
         }
     };
 
