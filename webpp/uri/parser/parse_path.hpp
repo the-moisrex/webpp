@@ -242,7 +242,7 @@ namespace webpp::uri {
             {
                 set_valid(ctx.status, valid);
                 end_segment(ctx, out, seg_beg);
-                set_value(ctx, seg_beg);
+                set_component_value<components::path>(ctx, seg_beg);
                 break;
             }
             switch (*ctx.pos) {
@@ -277,7 +277,7 @@ namespace webpp::uri {
                     continue;
             }
             end_segment(ctx, out, seg_beg);
-            set_value(ctx, seg_beg);
+            set_component_value<components::path>(ctx, seg_beg);
             ++ctx.pos; // it's okay, we're not at the end
             break;
         }
@@ -376,7 +376,7 @@ namespace webpp::uri {
         }
         stl::ignore = details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg);
         end_segment(ctx, out, seg_beg);
-        set_value<components::path>(ctx, seg_beg);
+        set_component_value<components::path>(ctx, seg_beg);
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end && (Options.eof_is_valid && *ctx.pos != '\0')) {

@@ -53,7 +53,7 @@ namespace webpp::uri {
             }
             set_warning(ctx.status, uri_status::invalid_character);
         }
-        set_value(ctx, seg_beg);
+        set_component_value<components::fragment>(ctx, seg_beg);
         set_valid(ctx.status, uri_status::valid);
     }
 

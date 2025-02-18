@@ -40,21 +40,23 @@ namespace webpp::uri::details {
     template <typename T, typename CtxT>
     concept CtxVectorBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::vec_iterator>;
 
-    /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
-    /// explicitness
+    /// call this when encoding/decoding is done
     template <components Comp, ParsingURIContext CtxT>
-    static constexpr void set_value(CtxT& ctx, typename CtxT::iterator start, typename CtxT::iterator end) {
+    static constexpr void
+    set_component_value(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end)
+      noexcept(CtxT::is_nothrow) {
         webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
         webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
         webpp_static_constexpr bool is_seg = is_vec || is_map;
         if constexpr (!is_seg && !CtxT::is_modifiable) {
-            uri::set_value<Comp>(*ctx, start, end);
+            uri::set_value<Comp>(ctx, beg, end);
         }
     }
 
     template <components Comp, ParsingURIContext CtxT>
-    static constexpr void set_value(CtxT& ctx, typename CtxT::iterator beg) {
-        set_value<Comp>(ctx, beg, ctx.pos);
+    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg)
+      noexcept(CtxT::is_nothrow) {
+        set_component_value<Comp>(ctx, beg, ctx.pos);
     }
 
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>

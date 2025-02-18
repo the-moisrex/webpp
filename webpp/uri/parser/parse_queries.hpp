@@ -189,7 +189,7 @@ namespace webpp::uri {
                 set_query_name(ctx);
             }
         }
-        set_value(ctx);
+        set_component_value<components::queries>(ctx, seg_beg);
 
         if (ctx.pos == ctx.end) {
             set_valid(ctx.status, valid);

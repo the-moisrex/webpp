@@ -125,7 +125,7 @@ namespace webpp::uri::details {
                         }
 
                         end_segment(ctx, out, seg_beg, pre_port_pos);
-                        set_value<components::host>(ctx, host_begin, pre_port_pos);
+                        set_component_value<components::host>(ctx, host_begin, pre_port_pos);
 
                         if (pre_port_pos == host_begin) {
                             if constexpr (Options.empty_host_is_error && IsSpecial) {
@@ -276,7 +276,7 @@ namespace webpp::uri::details {
         }
 
         end_segment(ctx, out, seg_beg);
-        set_value<components::host>(ctx, out, seg_beg);
+        set_component_value<components::host>(ctx, seg_beg);
         if (skip_last_char) {
             ++ctx.pos;
         }
