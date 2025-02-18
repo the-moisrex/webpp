@@ -276,7 +276,7 @@ namespace webpp::uri::details {
         }
 
         end_segment(ctx, out, seg_beg);
-        set_value(ctx, out, seg_beg);
+        set_value<components::host>(ctx, out, seg_beg);
         if (skip_last_char) {
             ++ctx.pos;
         }

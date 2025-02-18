@@ -1039,7 +1039,7 @@ namespace webpp::uri {
         }
     }
 
-    template <ParsingOutput OutT>
+    template <typename OutT>
     [[nodiscard]] constexpr decltype(auto) get_storage(OutT& out) noexcept {
         if constexpr (requires { out.storage_ref(); }) {
             return out.storage_ref();

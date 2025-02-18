@@ -17,10 +17,10 @@ namespace webpp::uri {
           typename CtxT::iterator              end,
           [[maybe_unused]] CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_modifiable) {
-                auto& out = get_out<Comp>(ctx);
+                auto& out = get_storage<Comp>(ctx);
                 encode_uri_component<uri_encoding_policy::encode_chars>(pos, end, out, policy_chars);
             } else {
-                set_value(ctx, pos, end);
+                set_value<Comp>(ctx, pos, end);
             }
         }
 
