@@ -1054,7 +1054,7 @@ namespace webpp::uri {
 
         if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                return get_storage<Comp>(istl::deptr(ctx.out));
+                return get_storage(istl::deptr(ctx.out));
             }
             // else return void to get a compile time error
         } else {
