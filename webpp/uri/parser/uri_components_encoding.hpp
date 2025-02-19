@@ -204,7 +204,7 @@ namespace webpp::uri::details {
             }
             return true;
         } else {
-            return decode_or_validate<Policy>(ctx, policy_chars);
+            return decode_or_validate<Policy>(ctx, buffer, policy_chars);
         }
     }
 

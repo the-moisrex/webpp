@@ -1108,11 +1108,12 @@ namespace webpp::uri {
     template <components Comp, ParsingURIContext CtxT>
     constexpr void clear(CtxT& ctx) noexcept {
         using ctx_type = CtxT;
+        using istl::clear;
 
         if constexpr (requires { ctx_type::component; }) {
             // won't work with the integers
             if constexpr (Comp == ctx_type::component) {
-                istl::clear(istl::deptr(ctx.out));
+                clear(istl::deptr(ctx.out));
             }
         } else {
             details::clear_from<Comp>(istl::deptr(ctx.out));

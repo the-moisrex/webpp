@@ -264,10 +264,10 @@ namespace webpp::uri::details {
             if (!should_continue) {
                 return;
             }
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (CtxModifiableStringOutput<decltype(buffer), CtxT>) {
                 clear<components::host>(ctx);
                 start_segment(ctx, out, buffer);
-                ipv4{ipv4_octets_data}.to_string(buffer);
+                pure_ipv4{ipv4_octets_data}.to_string(buffer);
                 if (skip_last_char) {
                     ++ctx.pos;
                 }

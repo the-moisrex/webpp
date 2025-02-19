@@ -429,6 +429,10 @@ namespace webpp::uri {
         return false;
     }
 
+    template <typename... T>
+    static constexpr void clear(basic_host<T...> const& host) noexcept {
+        host.clear();
+    }
 
 } // namespace webpp::uri
 

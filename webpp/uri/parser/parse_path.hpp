@@ -8,7 +8,6 @@
 #include "./special_schemes.hpp"
 #include "./uri_components_encoding.hpp"
 #include "./windows_drive_letter.hpp"
-#include "io/buffer.hpp"
 
 namespace webpp::uri {
 
