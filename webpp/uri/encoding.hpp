@@ -16,12 +16,11 @@ namespace webpp::uri {
         encode_chars // allow all the chars except these
     };
 
-    template <typename Iter, typename CIter>
-    static constexpr void encode_uri_component_set_capacity(Iter pos, CIter end, istl::String auto& output) {
-        // todo: see if this is necessary/performant
-        auto const input_size = end - pos;
-
+    template <istl::String OutT>
+    static constexpr void encode_uri_component_set_capacity(typename OutT::size_type const input_size,
+                                                            OutT&                          output) {
         // 1.5 is a somewhat educated guess, if you have better guess, let us know.
+        // todo: see if this is necessary/performant
         auto const new_capacity =
           output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5);
         if (output.capacity() < new_capacity) {
@@ -29,16 +28,14 @@ namespace webpp::uri {
         }
     }
 
+    template <typename Iter, typename CIter>
+    static constexpr void encode_uri_component_set_capacity(Iter pos, CIter end, istl::String auto& output) {
+        encode_uri_component_set_capacity(end - pos, output);
+    }
+
     static constexpr void encode_uri_component_set_capacity(istl::StringView auto str,
                                                             istl::String auto&    output) {
-        // todo: see if this is necessary/performant
-        auto const input_size = str.size();
-        auto const new_capacity =
-          output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
-                                                                                           // chance
-        if (output.capacity() < new_capacity) {
-            output.reserve(new_capacity);
-        }
+        encode_uri_component_set_capacity(str.size(), output);
     }
 
     /**
