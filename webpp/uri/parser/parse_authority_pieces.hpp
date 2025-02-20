@@ -28,7 +28,6 @@ namespace webpp::uri::details {
               ParsingURIContext   CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
-        using enum uri_encoding_policy;
         using details::ascii_bitmap;
         using details::FORBIDDEN_DOMAIN_CODE_POINTS;
         using details::FORBIDDEN_HOST_CODE_POINTS;
@@ -64,15 +63,11 @@ namespace webpp::uri::details {
             bool done; // NOLINT(*-init-variables)
             if constexpr (!IsSpecial) {
                 // for opaque hosts:
-                done = encode_or_validate<encode_chars>(
-                  ctx,
-                  buffer,
-                  C0_CONTROL_ENCODE_SET,
-                  interesting_characters);
+                done = encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, interesting_characters);
             } else {
                 // for domain names:
                 // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                done = decode_or_tolower<encode_chars>(ctx, buffer, interesting_characters);
+                done = decode_or_tolower(ctx, buffer, interesting_characters);
             }
             if (done) {
                 if constexpr (Options.empty_host_is_error && !IsSpecial) {

@@ -38,11 +38,7 @@ namespace webpp::uri {
         auto const seg_beg = ctx.pos;
         auto&      out     = get_storage<components::fragment>(ctx);
 
-        while (!encode_or_validate<uri_encoding_policy::encode_chars>(
-          ctx,
-          details::FRAGMENT_ENCODE_SET,
-          charset<char_type, 1>('%')))
-        {
+        while (!encode_or_validate(ctx, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
             switch (*ctx.pos) {
                 case '%':
                     if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, out)) {

@@ -233,12 +233,7 @@ namespace webpp::uri {
 
         start_segment(ctx, out, buffer);
         for (;;) {
-            if (encode_or_validate<uri_encoding_policy::encode_chars>(
-                  ctx,
-                  buffer,
-                  details::C0_CONTROL_ENCODE_SET,
-                  interesting_characters))
-            {
+            if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
                 set_valid(ctx.status, valid);
                 end_segment(ctx, out, seg_beg);
                 set_component_value<components::path>(ctx, seg_beg);
@@ -317,11 +312,7 @@ namespace webpp::uri {
         start_segment(ctx, out, buffer);
         details::handle_windows_driver_letter<Options>(ctx, out, buffer, seg_beg);
 
-        while (!encode_or_validate<uri_encoding_policy::encode_chars>(
-          ctx,
-          details::PATH_ENCODE_SET,
-          interesting_chars))
-        {
+        while (!encode_or_validate(ctx, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\':
                     set_warning(ctx.status, reverse_solidus_used);

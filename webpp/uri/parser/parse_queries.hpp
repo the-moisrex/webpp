@@ -108,12 +108,8 @@ namespace webpp::uri {
         auto        seg_beg = ctx.pos;
 
         // find the end of the queries
-        while (!encode_or_validate_map<uri_encoding_policy::encode_chars>(
-          ctx,
-          query_percent_encode_set,
-          interesting_characters,
-          in_value,
-          buffer))
+        while (
+          !encode_or_validate_map(ctx, query_percent_encode_set, interesting_characters, in_value, buffer))
         {
             switch (*ctx.pos) {
                 case '#':

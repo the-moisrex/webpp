@@ -67,9 +67,7 @@ namespace webpp::uri::details {
         set_component_value<Comp>(ctx, beg, ctx.pos);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              ParsingURIContext   CtxT,
-              CtxBufferOf<CtxT>   BufT>
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
       BufT&                    buffer,
@@ -78,20 +76,19 @@ namespace webpp::uri::details {
       CharSet auto const&      policy_chars,
       CharSet auto const&      invalid_chars) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
-            return encode_uri_component<Policy>(pos, end, buffer, policy_chars, invalid_chars);
+            return encode_uri_component<uri_encoding_policy::encode_chars>(
+              pos,
+              end,
+              buffer,
+              policy_chars,
+              invalid_chars);
         } else {
-            if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                pos = invalid_chars.find_first_not_in(pos, end);
-            } else {
-                pos = invalid_chars.find_first_in(pos, end);
-            }
+            pos = invalid_chars.find_first_in(pos, end);
             return pos == end;
         }
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              ParsingURIContext   CtxT,
-              CtxBufferOf<CtxT>   BufT>
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
       BufT&                    buffer,
@@ -99,45 +96,38 @@ namespace webpp::uri::details {
       typename CtxT::iterator  end,
       CharSet auto const&      policy_chars) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
-            encode_uri_component<Policy>(pos, end, buffer, policy_chars);
+            encode_uri_component<uri_encoding_policy::encode_chars>(pos, end, buffer, policy_chars);
             return pos == end;
         } else {
-            if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                pos = policy_chars.find_first_not_in(pos, end);
-            } else {
-                pos = policy_chars.find_first_in(pos, end);
-            }
+            pos = policy_chars.find_first_in(pos, end);
             return pos == end;
         }
     }
 
     /**
      * @brief Encode if the context is modifiable, otherwise just validate the invalid characters
-     * @tparam Policy
      * @param ctx parsing context
      * @param buffer
      * @param policy_chars encode these characters if encoding is possible
      * @param invalid_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <ParsingURIContext CtxT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       CtxT&                   ctx,
       CtxBufferOf<CtxT> auto& buffer,
       CharSet auto const&     policy_chars,
       CharSet auto const&     invalid_chars) noexcept(CtxT::is_nothrow) {
-        return encode_or_validate<Policy>(ctx, buffer, ctx.pos, ctx.end, policy_chars, invalid_chars);
+        return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars, invalid_chars);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, ParsingURIContext CtxT>
+    template <ParsingURIContext CtxT>
     [[nodiscard]] static constexpr bool encode_or_validate(CtxT& ctx, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
-        return encode_or_validate<Policy>(ctx, ctx.pos, ctx.end, policy_chars);
+        return encode_or_validate(ctx, ctx.pos, ctx.end, policy_chars);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              ParsingURIContext   CtxT,
-              CtxBufferOf<CtxT>   BufT>
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool encode_or_validate_map(
       CtxT&                                ctx,
       [[maybe_unused]] CharSet auto const& policy_chars,
@@ -145,7 +135,7 @@ namespace webpp::uri::details {
       [[maybe_unused]] bool const          in_value,
       BufT&                                buffer) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable && CtxMappedBuffer<BufT, CtxT>) {
-            return encode_uri_component<Policy>(
+            return encode_uri_component<uri_encoding_policy::encode_chars>(
               ctx,
               ctx.pos,
               ctx.end,
@@ -153,45 +143,45 @@ namespace webpp::uri::details {
               policy_chars,
               invalid_chars);
         } else {
-            return encode_or_validate<Policy>(ctx, policy_chars, invalid_chars);
+            return encode_or_validate(ctx, policy_chars, invalid_chars);
         }
     }
 
     /**
      * @brief Decode if the context is modifiable, otherwise just validate the invalid characters
-     * @tparam Policy
      * @param ctx context
      * @param buffer
      * @param policy_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              ParsingURIContext   CtxT,
-              CtxBufferOf<CtxT>   BufT>
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool
     decode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
-            return decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars);
+            return decode_uri_component<uri_encoding_policy::encode_chars>(
+              ctx.pos,
+              ctx.end,
+              buffer,
+              policy_chars);
         } else {
-            if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                ctx.pos = policy_chars.find_first_not_in(ctx.pos, ctx.end);
-            } else {
-                ctx.pos = policy_chars.find_first_in(ctx.pos, ctx.end);
-            }
+            ctx.pos = policy_chars.find_first_in(ctx.pos, ctx.end);
             return ctx.pos == ctx.end;
         }
     }
 
     /// Convert to lowercase and also decode
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              ParsingURIContext   CtxT,
-              CtxBufferOf<CtxT>   BufT>
+    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool
     decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
         using char_type = typename CtxT::char_type;
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             while (ctx.pos != ctx.end) {
-                if (decode_uri_component<Policy>(ctx.pos, ctx.end, buffer, policy_chars)) {
+                if (decode_uri_component<uri_encoding_policy::encode_chars>(
+                      ctx.pos,
+                      ctx.end,
+                      buffer,
+                      policy_chars))
+                {
                     return true;
                 }
                 webpp_static_constexpr char_type diff = 'a' - 'A';
@@ -204,7 +194,7 @@ namespace webpp::uri::details {
             }
             return true;
         } else {
-            return decode_or_validate<Policy>(ctx, buffer, policy_chars);
+            return decode_or_validate(ctx, buffer, policy_chars);
         }
     }
 
