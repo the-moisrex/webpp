@@ -430,7 +430,7 @@ namespace webpp::uri {
     }
 
     template <typename... T>
-    static constexpr void clear(basic_host<T...> const& host) noexcept {
+    static constexpr void clear(basic_host<T...>& host) noexcept {
         host.clear();
     }
 

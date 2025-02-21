@@ -312,7 +312,7 @@ namespace webpp::uri {
         start_segment(ctx, out, buffer);
         details::handle_windows_driver_letter<Options>(ctx, out, buffer, seg_beg);
 
-        while (!encode_or_validate(ctx, details::PATH_ENCODE_SET, interesting_chars)) {
+        while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\':
                     set_warning(ctx.status, reverse_solidus_used);
