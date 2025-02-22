@@ -116,6 +116,60 @@ namespace webpp::uri {
             return false;
         }
 
+        template <bool IgnoreWhitespace = true, typename IterT>
+        [[nodiscard]] static constexpr stl::uint8_t dots_count(IterT pos, IterT end) noexcept {
+            using char_type = typename std::iterator_traits<IterT>::value_type;
+
+            stl::uint8_t dots = 0;
+            char_type    prev = 0;
+
+            for (;; ++pos) {
+                if (pos == end) {
+                    break;
+                }
+
+                switch (*pos) {
+                    case '%':
+                        if (prev != 0) {
+                            return 0;
+                        }
+                        prev = '%';
+                        continue;
+                    case '2':
+                        if (prev != '%') {
+                            return 0;
+                        }
+                        prev = '2';
+                        continue;
+                    case 'e':
+                    case 'E':
+                        if (prev != '2') {
+                            return 0;
+                        }
+                        prev = 0;
+                        ++dots;
+                        continue;
+                    case '.':
+                        ++dots;
+                        continue;
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\t':
+                        if constexpr (IgnoreWhitespace) {
+                            continue;
+                        }
+                        [[fallthrough]];
+
+                    // a normal path:
+                    [[likely]] default:
+                        return 0;
+                }
+                break;
+            }
+
+            return dots;
+        }
+
         /// Handle special cases:
         ///   /.
         ///   /..
@@ -133,60 +187,14 @@ namespace webpp::uri {
         [[nodiscard]] static constexpr bool
         handle_dots_in_paths(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
-            using ctx_type  = CtxT;
-            using char_type = typename ctx_type::char_type;
-
-            auto       pos = seg_beg;
-            auto const end = ctx.pos;
-
-            stl::uint8_t dots = 0;
-            char_type    prev = 0;
-
-            for (;; ++pos) {
-                if (pos == end) {
-                    break;
-                }
-
-                switch (*pos) {
-                    case '%':
-                        if (prev != 0) {
-                            return false;
-                        }
-                        prev = '%';
-                        continue;
-                    case '2':
-                        if (prev != '%') {
-                            return false;
-                        }
-                        prev = '2';
-                        continue;
-                    case 'e':
-                    case 'E':
-                        if (prev != '2') {
-                            return false;
-                        }
-                        prev = 0;
-                        ++dots;
-                        continue;
-                    case '.':
-                        ++dots;
-                        continue;
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            continue;
-                        }
-                        [[fallthrough]];
-
-                    // a normal path:
-                    [[likely]] default:
-                        return false;
-                }
-                break;
-            }
+            auto       pos  = seg_beg;
+            auto const end  = ctx.pos;
+            auto const dots = dots_count<Options.ignore_tabs_or_newlines>(pos, end);
 
             switch (dots) {
+                // no dots found:
+                case 0: return false;
+
                 // single dot found:
                 case 1: // .
                     clear_segment<Options>(ctx, buffer, seg_beg);

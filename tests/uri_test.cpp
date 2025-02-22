@@ -1746,3 +1746,79 @@ TEST(URITests, HostLabelsUnicode) {
     EXPECT_EQ(host.labels().template split_into<4>(),
               (stl::array<stl::string_view, 4>{"some", "nice", "xample", "com"}));
 }
+
+TEST(URITests, HandleDotsTest) {
+    using uri::details::dots_count;
+    using uri::details::handle_dots_in_paths;
+
+    auto const dots = [](std::string_view const input) {
+        return dots_count<true>(input.begin(), input.end());
+    };
+
+
+    // --- Valid Dot Sequences ---
+    EXPECT_EQ(dots("."), 1);       // Test 1: Valid_SingleDot
+    EXPECT_EQ(dots(".."), 2);      // Test 2: Valid_DoubleDot
+    EXPECT_EQ(dots("%2e"), 1);     // Test 3: Valid_Percent2e
+    EXPECT_EQ(dots("%2E"), 1);     // Test 4: Valid_Percent2E
+    EXPECT_EQ(dots("%2e%2e"), 2);  // Test 5: Valid_Percent2ePercent2e
+    EXPECT_EQ(dots(".%2e"), 2);    // Test 6: Valid_DotPercent2e
+    EXPECT_EQ(dots("%2e."), 2);    // Test 7: Valid_Percent2eDot
+    EXPECT_EQ(dots("\n.\n"), 1);   // Test 8: Valid_DotWithWhitespace
+    EXPECT_EQ(dots("\t..\t"), 2);  // Test 9: Valid_DoubleDotWithWhitespace
+    EXPECT_EQ(dots("\r%2e\r"), 1); // Test 10: Valid_Percent2eWithWhitespace
+    EXPECT_EQ(dots(".%2E"), 2);    // Test 11: Valid_MixedDotsAndPercent2e
+    EXPECT_EQ(dots("%2E."), 2);    // Test 12: Valid_Percent2EDot
+
+
+    // --- Invalid Dot Sequences ---
+    EXPECT_EQ(dots("..."), 0);         // Test 13: Invalid_TripleDot
+    EXPECT_EQ(dots("%2e%2e%2e"), 0);   // Test 14: Invalid_Percent2ePercent2ePercent2e
+    EXPECT_EQ(dots(".%2e."), 0);       // Test 15: Invalid_DotPercent2eDot
+    EXPECT_EQ(dots("%"), 0);           // Test 16: Invalid_PartialPercent
+    EXPECT_EQ(dots("%2"), 0);          // Test 17: Invalid_PartialPercent2
+    EXPECT_EQ(dots("%2f"), 0);         // Test 18: Invalid_Percent2f
+    EXPECT_EQ(dots("2e"), 0);          // Test 19: Invalid_2e
+    EXPECT_EQ(dots("e2"), 0);          // Test 20: Invalid_e2
+    EXPECT_EQ(dots(".a"), 0);          // Test 21: Invalid_DotFollowedByChar
+    EXPECT_EQ(dots("..b"), 0);         // Test 22: Invalid_DoubleDotFollowedByChar
+    EXPECT_EQ(dots("%2ec"), 0);        // Test 23: Invalid_Percent2eFollowedByChar
+    EXPECT_EQ(dots("a."), 0);          // Test 24: Invalid_CharBeforeDot
+    EXPECT_EQ(dots("b.."), 0);         // Test 25: Invalid_CharBeforeDoubleDot
+    EXPECT_EQ(dots("c%2e"), 0);        // Test 26: Invalid_CharBeforePercent2e
+    EXPECT_EQ(dots(".%"), 0);          // Test 27: Invalid_DotPercent
+    EXPECT_EQ(dots("..%"), 0);         // Test 28: Invalid_DoubleDotPercent
+    EXPECT_EQ(dots("%2e%"), 0);        // Test 29: Invalid_Percent2ePercent
+    EXPECT_EQ(dots("%2e.."), 0);       // Test 30: Invalid_Percent2eDoubleDot
+    EXPECT_EQ(dots(".%2e.."), 0);      // Test 31: Invalid_DotPercent2eDoubleDot
+    EXPECT_EQ(dots("..%2e."), 0);      // Test 32: Invalid_DoubleDotPercent2eDot
+    EXPECT_EQ(dots("%2e\n.\t%2e"), 0); // Test 33: Invalid_WhitespaceInSequence
+    EXPECT_EQ(dots(" ."), 0);          // Test 34: Invalid_LeadingSpace
+    EXPECT_EQ(dots("  .."), 0);        // Test 35: Invalid_LeadingSpacesDoubleDot
+    EXPECT_EQ(dots("   %2e"), 0);      // Test 36: Invalid_LeadingSpacesPercent2e
+    EXPECT_EQ(dots(" \t\n\r"), 0);     // Test 37: Invalid_OnlyWhitespace
+    EXPECT_EQ(dots(""), 0);            // Test 38: Invalid_EmptyInput
+    EXPECT_EQ(dots("...."), 0);        // Test 39: Invalid_QuadrupleDot
+    EXPECT_EQ(dots("%2e%2e."), 0);     // Test 40: Invalid_Percent2ePercent2eDot
+    EXPECT_EQ(dots(".%2e%2e"), 0);     // Test 41: Invalid_DotPercent2ePercent2e
+    EXPECT_EQ(dots("abc."), 0);        // Test 42: Invalid_CharsBeforeDot
+    EXPECT_EQ(dots("abc.."), 0);       // Test 43: Invalid_CharsBeforeDoubleDot
+    EXPECT_EQ(dots("abc%2e"), 0);      // Test 44: Invalid_CharsBeforePercent2e
+    EXPECT_EQ(dots("...%2e"), 0);      // Test 45: Invalid_TripleDotPercent2e
+    EXPECT_EQ(dots("%2..."), 0);       // Test 46: Invalid_Percent2TripleDot
+    EXPECT_EQ(dots("%2e.a"), 0);       // Test 47: Invalid_Percent2eDotChar
+    EXPECT_EQ(dots("..a"), 0);         // Test 48: Invalid_DoubleDotChar
+    EXPECT_EQ(dots(".a"), 0);          // Test 49: Invalid_SingleDotChar
+    EXPECT_EQ(dots("   ."), 0);        // Test 50: Invalid_WhitespaceBeforeDot
+
+
+    // --- Whitespace Handling Tests (NoWhitespace Options) ---
+    EXPECT_EQ(dots("."), 1);       // Re-test valid dot without whitespace
+    EXPECT_EQ(dots(".."), 2);      // Re-test valid double dot without whitespace
+    EXPECT_EQ(dots("%2e"), 1);     // Re-test valid percent 2e without whitespace
+    EXPECT_EQ(dots("\n.\n"), 0);   // Test 51: NoWhitespace_Invalid_DotWithNewline
+    EXPECT_EQ(dots("\t..\t"), 0);  // Test 52: NoWhitespace_Invalid_DoubleDotWithTab
+    EXPECT_EQ(dots("\r%2e\r"), 0); // Test 53: NoWhitespace_Invalid_Percent2eWithReturn
+    EXPECT_EQ(dots(" ."), 0);      // Test 54: NoWhitespace_Invalid_LeadingSpaceDot
+    EXPECT_EQ(dots(" "), 0);       // Test 55: NoWhitespace_Invalid_OnlySpace
+}
