@@ -119,7 +119,7 @@ namespace webpp::uri {
         // Character Category Lookup Table
         template <bool IgnoreWhitespaces = true>
         static constexpr auto dots_category = ([]() consteval {
-            // NOLINTBEGIN(*-magic-numbers, *-pro-type-member-init)
+            // NOLINTBEGIN(*-magic-numbers, *-member-init)
             stl::array<stl::uint8_t, 256U> category;
             category.fill(5U);      // Default category is 5 (other characters)
             category['%'] = 1U;     // Start of percent-encoding
@@ -132,7 +132,7 @@ namespace webpp::uri {
                 category['\r'] = 0; // Whitespace (ignored)
                 category['\t'] = 0; // Whitespace (ignored)
             }
-            // NOLINTEND(*-magic-numbers)
+            // NOLINTEND(*-magic-numbers, *-member-init)
             return category;
         })();
 
