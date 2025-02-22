@@ -8,9 +8,6 @@
 #include "../../strings/to_case.hpp"
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
-#include "build-release/_deps/fmt-src/include/fmt/base.h"
-
-#include <boost/asio/buffer.hpp>
 
 namespace webpp::uri::details {
 

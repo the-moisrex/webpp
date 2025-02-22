@@ -38,7 +38,9 @@ set(FILE_SOURCES
         charset/charset_benchmark.cpp
         interleave_bits/interleave_benchmark.cpp
         utf_convertion/utf_conversion_benchmark.cpp
-        )
+        inet_ntop6_size/inet_ntop6_size_benchmark.cpp
+        path_dots/path_dots_benchmark.cpp
+)
 file(GLOB FILE_PCH *_pch.hpp)
 
 
@@ -69,20 +71,20 @@ endif ()
 
 add_executable(${exec_name}
         ${FILE_SOURCES}
-        )
+)
 target_link_libraries(${exec_name}
         PRIVATE Boost::boost
         PRIVATE benchmark
         PRIVATE benchmark_main
         PRIVATE Threads::Threads
         PRIVATE webpp::webpp
-        )
+)
 
 set_target_properties(${exec_name} PROPERTIES
         VERSION ${LIB_VERSION}
         SOVERSION ${LIB_SOVERSION}
         LINKER_LANGUAGE CXX
-        )
+)
 
 target_compile_features(${exec_name} PUBLIC
         cxx_std_23
@@ -100,7 +102,7 @@ target_compile_features(${exec_name} PUBLIC
         cxx_range_for
         cxx_raw_string_literals
         cxx_static_assert
-        )
+)
 
 
 # optimize the file size
