@@ -350,13 +350,13 @@ namespace webpp::uri::details {
     /// for path)
     template <ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void
-    end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator inp_beg, typename CtxT::iterator end)
+    end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator& inp_beg, typename CtxT::iterator end)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
         if constexpr (VectorOutput<OutT> && !CtxT::is_modifiable) {
             // the non-modifiable version is the one that needs to be set, the modified versions already
             // contain the right value at this point in time
             istl::emplace_one(out, inp_beg, end);
-            reset_begin(ctx);
+            reset_begin(ctx, inp_beg);
         }
     }
 
