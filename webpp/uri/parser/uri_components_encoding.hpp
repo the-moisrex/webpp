@@ -336,37 +336,6 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void pop_back(
-      CtxT&                               ctx,
-      OutT&                               out,
-      CtxBufferOf<CtxT> auto&             buffer,
-      typename CtxT::iterator&            beg,
-      [[maybe_unused]] diff_type_of<CtxT> hint = 0) noexcept {
-        using difference_type = diff_type_of<CtxT>;
-        if constexpr (CtxT::is_modifiable && VectorOutput<OutT>) {
-            if (out.size() > 2) {
-                out.pop_back();
-                buffer = out.begin() + static_cast<difference_type>(out.size() - 1);
-            } else if (out.size() == 1) {
-                buffer->clear();
-            }
-        } else if constexpr (VectorOutput<OutT>) {
-            if (out.size() > 1) {
-                out.pop_back();
-            } else {
-                istl::clear(out.back());
-            }
-            reset_segment_start(ctx, beg);
-        } else if constexpr (CtxT::is_modifiable) {
-            using output_t  = stl::remove_cvref_t<decltype(out)>;
-            using size_type = typename output_t::size_type;
-            if (!out.empty()) {
-                out.erase(out.size() - static_cast<size_type>(hint));
-            }
-        }
-    }
-
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
     constexpr void start_segment([[maybe_unused]] CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
         if constexpr (VectorOutput<OutT> && CtxT::is_modifiable) {
@@ -415,34 +384,6 @@ namespace webpp::uri::details {
             }
         } else {
             skip_separator(ctx, out, sep_count);
-            end_segment(ctx, out, beg);
-            reset_segment_start(ctx, beg);
-        }
-    }
-
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void next_segment_of(
-      CtxT&                    ctx,
-      OutT&                    out,
-      CtxBufferOf<CtxT> auto&  beg,
-      typename CtxT::char_type separator,
-      diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
-        if constexpr (SegregatedOutput<OutT>) {
-            if constexpr (CtxT::is_modifiable) {
-                skip_separator(ctx, out, sep_count);
-                reset_segment_start(ctx, beg);
-                start_segment(ctx);
-            } else {
-                end_segment(ctx, out, beg);
-                skip_separator(ctx, out, sep_count);
-                reset_segment_start(ctx, beg);
-            }
-        } else {
-            if constexpr (CtxT::is_modifiable) {
-                skip_separator(ctx, out, separator, sep_count);
-            } else {
-                skip_separator(ctx, out, sep_count);
-            }
             end_segment(ctx, out, beg);
             reset_segment_start(ctx, beg);
         }

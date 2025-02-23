@@ -13,53 +13,70 @@ namespace webpp::uri {
 
     namespace details {
 
+        template <ParsingURIContext CtxT, ParsingOutput OutT>
+        static constexpr void next_segment_of(
+          CtxT&                    ctx,
+          OutT&                    out,
+          CtxBufferOf<CtxT> auto&  beg,
+          typename CtxT::char_type separator,
+          diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
+            if constexpr (SegregatedOutput<OutT>) {
+                if constexpr (CtxT::is_modifiable) {
+                    skip_separator(ctx, out, sep_count);
+                    reset_segment_start(ctx, beg);
+                    start_segment(ctx);
+                } else {
+                    end_segment(ctx, out, beg);
+                    skip_separator(ctx, out, sep_count);
+                    reset_segment_start(ctx, beg);
+                }
+            } else {
+                if constexpr (CtxT::is_modifiable) {
+                    skip_separator(ctx, out, separator, sep_count);
+                } else {
+                    skip_separator(ctx, out, sep_count);
+                }
+                end_segment(ctx, out, beg);
+                reset_segment_start(ctx, beg);
+            }
+        }
 
-        // /// A leading surrogate is a code point that is in the range U+D800 to U+DBFF, inclusive.
-        // /// https://infra.spec.whatwg.org/#leading-surrogate
-        // template <typename CharT = char>
-        // static constexpr auto leading_surrogate = charset_range<CharT, 0xD800, 0xDBFF>();
-
-        // /// A trailing surrogate is a code point that is in the range U+DC00 to U+DFFF, inclusive.
-        // /// https://infra.spec.whatwg.org/#trailing-surrogate
-        // template <typename CharT = char>
-        // static constexpr auto trailing_surrogate = charset_range<CharT, 0xDC00, 0xDFFF>();
-
-        // /// A surrogate is a leading surrogate or a trailing surrogate.
-        // /// https://infra.spec.whatwg.org/#surrogate
-        // template <typename CharT = char>
-        // static constexpr auto surrogate = charset(leading_surrogate<CharT>, trailing_surrogate<CharT>);
-
-
-        // template <typename CharT = char>
-        // static constexpr auto url_code_points =
-        //   charset(ALPHA_DIGIT<CharT>,
-        //           charset<CharT, 19>('!',
-        //                              '$',
-        //                              '&',
-        //                              '(',
-        //                              ')',
-        //                              '\'',
-        //                              '*',
-        //                              '+',
-        //                              ',',
-        //                              '-',
-        //                              '.',
-        //                              '/',
-        //                              ':',
-        //                              ';',
-        //                              '=',
-        //                              '?',
-        //                              '@',
-        //                              '_',
-        //                              '~'),
-        //           // and code points in the range U+00A0 to U+10FFFD,
-        //           // inclusive, excluding surrogates and noncharacters.
-        //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
-
+        template <ParsingURIContext CtxT, ParsingOutput OutT>
+        static constexpr void pop_back(
+          CtxT&                               ctx,
+          OutT&                               out,
+          CtxBufferOf<CtxT> auto&             buffer,
+          typename CtxT::iterator&            beg,
+          [[maybe_unused]] diff_type_of<CtxT> hint = 0) noexcept {
+            using difference_type = diff_type_of<CtxT>;
+            if constexpr (CtxT::is_modifiable && VectorOutput<OutT>) {
+                if (out.size() > 2) {
+                    out.pop_back();
+                    buffer = out.begin() + static_cast<difference_type>(out.size() - 1);
+                } else if (out.size() == 1) {
+                    buffer->clear();
+                }
+            } else if constexpr (VectorOutput<OutT>) {
+                if (out.size() > 1) {
+                    out.pop_back();
+                } else {
+                    istl::clear(out.back());
+                }
+                reset_segment_start(ctx, beg);
+            } else if constexpr (CtxT::is_modifiable) {
+                using output_t  = stl::remove_cvref_t<decltype(out)>;
+                using size_type = typename output_t::size_type;
+                if (!out.empty()) {
+                    out.erase(out.size() - static_cast<size_type>(hint));
+                }
+            }
+        }
 
         /// Remove the last segment of a path
         template <ParsingURIContext CtxT>
-        static constexpr void pop_back_segment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        static constexpr void
+        pop_back_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
+          noexcept(CtxT::is_nothrow) {
             using ctx_type        = CtxT;
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;
@@ -80,9 +97,9 @@ namespace webpp::uri {
                 for (; cur != beg && *cur != '/'; --cur) {
                     ++slash_loc;
                 }
-                pop_back(ctx, out, slash_loc);
+                pop_back(ctx, out, buffer, slash_loc);
             } else {
-                pop_back(ctx, out);
+                pop_back(ctx, out, buffer, seg_beg);
             }
         }
 
@@ -217,7 +234,7 @@ namespace webpp::uri {
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_segment(ctx);
+                    pop_back_segment(ctx, buffer, seg_beg);
                     clear_segment<Options>(ctx, buffer, seg_beg);
                     break;
 
@@ -306,6 +323,7 @@ namespace webpp::uri {
 
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::next_segment_of;
         using ctx_type = CtxT;
         using iterator = typename ctx_type::iterator;
 
