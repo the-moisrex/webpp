@@ -468,11 +468,11 @@ namespace webpp::uri {
         m_##field = stl::move(str);                                                              \
     }                                                                                            \
                                                                                                  \
-    constexpr string_type& field##_ref() noexcept {                                              \
+    [[nodiscard]] constexpr string_type& field() noexcept {                                      \
         return m_##field;                                                                        \
     }                                                                                            \
                                                                                                  \
-    constexpr string_type const& field##_ref() const noexcept {                                  \
+    [[nodiscard]] constexpr string_type const& field() const noexcept {                          \
         return m_##field;                                                                        \
     }
 
@@ -582,11 +582,11 @@ namespace webpp::uri {
         m_##field = stl::move(str);                                                                 \
     }                                                                                               \
                                                                                                     \
-    constexpr auto& field##_ref() noexcept {                                                        \
+    [[nodiscard]] constexpr auto& field() noexcept {                                                \
         return m_##field;                                                                           \
     }                                                                                               \
                                                                                                     \
-    constexpr auto const& field##_ref() const noexcept {                                            \
+    [[nodiscard]] constexpr auto const& field() const noexcept {                                    \
         return m_##field;                                                                           \
     }
 

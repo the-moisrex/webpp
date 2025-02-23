@@ -381,9 +381,9 @@ namespace webpp::uri {
         ///            types won't be able to hold decoded/encoded values.
         [[nodiscard]] constexpr size_type size() const noexcept {
             // todo: queries, host, and path's sizes are not string sizes
-            return this->scheme_ref().size() + this->username_ref().size() + this->password_ref().size() +
-                   this->hostname().size() + this->port_ref().size() + this->path_ref().size() +
-                   this->queries_ref().size() + this->fragment_ref().size();
+            return this->scheme().size() + this->username().size() + this->password().size() +
+                   this->hostname().size() + this->port().size() + this->path().size() +
+                   this->queries().size() + this->fragment().size();
         }
 
         template <istl::String NStrT = modifiable_string_type>

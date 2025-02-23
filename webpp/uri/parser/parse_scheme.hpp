@@ -52,12 +52,12 @@ namespace webpp::uri {
             if constexpr (!ctx_type::is_modifiable) {
                 set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
             } else if constexpr (!Options.ignore_tabs_or_newlines) {
-                auto& out_str = get_output_from<components::scheme>(get_storage_ref(ctx));
+                auto& out_str = get_component<components::scheme>(ctx);
                 ascii::lower_to(out_str, ctx.beg, ctx.pos);
             } else {
                 // this algorithm is the same as "lower_to" except it ignores newlines and tabs
 
-                auto& out_str         = get_output_from<components::scheme>(get_storage_ref(ctx));
+                auto& out_str         = get_component<components::scheme>(ctx);
                 using string_type     = stl::remove_cvref_t<decltype(out_str)>;
                 using iter_traits     = stl::iterator_traits<typename string_type::iterator>;
                 using difference_type = typename iter_traits::difference_type;
