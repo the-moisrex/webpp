@@ -259,6 +259,11 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
         using enum uri_status;
+        using details::encode_or_validate;
+        using details::end_segment;
+        using details::set_component_value;
+        using details::start_segment;
+        using details::validate_percent_encode;
         using ctx_type = CtxT;
         using iterator = typename ctx_type::iterator;
 
@@ -323,7 +328,14 @@ namespace webpp::uri {
 
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::encode_or_validate;
+        using details::end_segment;
+        using details::ignore_character;
         using details::next_segment_of;
+        using details::reset_segment_start;
+        using details::set_component_value;
+        using details::start_segment;
+        using details::validate_percent_encode;
         using ctx_type = CtxT;
         using iterator = typename ctx_type::iterator;
 

@@ -6,7 +6,6 @@
 #include "../../std/collection.hpp"
 #include "../../std/map.hpp"
 #include "../../std/string_like.hpp"
-#include "../../std/vector.hpp"
 #include "../../strings/to_case.hpp"
 #include "../uri_status.hpp"
 #include "./special_schemes.hpp"
@@ -531,7 +530,7 @@ namespace webpp::uri {
         string_type m_scheme{};
         string_type m_username{};
         string_type m_password{};
-        vec_type    m_hostname{};
+        string_type m_hostname{};
         string_type m_port{};
         vec_type    m_path{};
         map_type    m_queries{};
@@ -603,15 +602,6 @@ namespace webpp::uri {
 #undef webpp_def
 
         // NOLINTEND(*-macro-usage)
-
-        constexpr void set_hostname(iterator beg, iterator end) {
-            istl::clear(m_hostname);
-            if constexpr (is_modifiable) {
-                istl::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
-            } else {
-                istl::emplace_one(m_hostname, beg, end);
-            }
-        }
 
         constexpr void set_path(iterator beg, iterator end) {
             istl::clear(m_path);
@@ -725,9 +715,10 @@ namespace webpp::uri {
         using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
                                                   BaseSegType,
                                                   uri_components<base_seg_type, BaseIter>>;
-        using seg_type       = typename clean_out_type::seg_type; // this might be different than
-                                                                  // OutSegType
-        using iterator       = typename clean_out_type::iterator;
+
+        // this might be different from OutSegType
+        using seg_type        = typename clean_out_type::seg_type;
+        using iterator        = typename clean_out_type::iterator;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = uri_status_type;

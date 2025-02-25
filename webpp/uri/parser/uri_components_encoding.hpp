@@ -119,9 +119,10 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT>
-    [[nodiscard]] static constexpr bool encode_or_validate(CtxT& ctx, CharSet auto const& policy_chars)
+    [[nodiscard]] static constexpr bool
+    encode_or_validate(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
-        return encode_or_validate(ctx, ctx.pos, ctx.end, policy_chars);
+        return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars);
     }
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>

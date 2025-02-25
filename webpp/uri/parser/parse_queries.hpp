@@ -82,7 +82,15 @@ namespace webpp::uri {
         using enum uri_status;
         using details::append_query_value;
         using details::ascii_bitmap;
+        using details::encode_or_validate_map;
+        using details::ignore_character;
         using details::next_query;
+        using details::reset_begin;
+        using details::set_component_value;
+        using details::set_query_name;
+        using details::set_query_value;
+        using details::skip_separator;
+        using details::validate_percent_encode;
 
         using ctx_type    = CtxT;
         using buffer_type = typename CtxT::map_value_type;
@@ -133,18 +141,18 @@ namespace webpp::uri {
                 case '=':
                     if (!in_value) {
                         if constexpr (ctx_type::is_segregated) {
-                            set_query_name(ctx);
+                            set_query_name(ctx, buffer, seg_beg);
                         }
                         skip_separator(ctx, out);
                         reset_begin(ctx, seg_beg);
                     } else {
-                        append_query_value(ctx, buffer, 1);
+                        append_query_value(ctx, buffer, 1, seg_beg);
                     }
                     in_value = true;
                     continue;
                 case '&':
                     if constexpr (ctx_type::is_segregated) {
-                        set_query_value(ctx);
+                        set_query_value(ctx, buffer, seg_beg);
                         in_value = false;
                     }
                     skip_separator(ctx, out);
@@ -180,9 +188,9 @@ namespace webpp::uri {
         }
         if constexpr (ctx_type::is_segregated) {
             if (in_value) {
-                set_query_value(ctx);
+                set_query_value(ctx, buffer, seg_beg);
             } else {
-                set_query_name(ctx);
+                set_query_name(ctx, buffer, seg_beg);
             }
         }
         set_component_value<components::queries>(ctx, seg_beg);

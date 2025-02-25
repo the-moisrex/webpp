@@ -26,6 +26,9 @@ namespace webpp::uri {
         requires(Options.parse_fragment)
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
+        using details::encode_or_validate;
+        using details::set_component_value;
+        using details::validate_percent_encode;
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
 
@@ -38,7 +41,7 @@ namespace webpp::uri {
         auto const seg_beg = ctx.pos;
         auto&      out     = get_storage<components::fragment>(ctx);
 
-        while (!encode_or_validate(ctx, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
+        while (!encode_or_validate(ctx, out, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
             switch (*ctx.pos) {
                 case '%':
                     if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, out)) {
