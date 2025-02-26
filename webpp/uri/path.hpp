@@ -359,12 +359,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool operator==(basic_path const& other) const noexcept {
             return storage == other.storage_ref();
         }
-
-        friend constexpr slug_type get_buffer(basic_path const& path) noexcept
-            requires(is_modifiable)
-        {
-            return slug_type{path.get_allocator()};
-        }
     };
 
     template <istl::Stringifiable S>

@@ -116,10 +116,10 @@ namespace webpp::sql {
         inline constexpr stl::array<stl::string_view, 5>
           unary_op_expr_op_strs{" + ", " - ", " ++", " --", " !"};
 
-        define_expression(
-          unary_op_expr, enum struct operation
-          : stl::uint_fast8_t{plus, minus, incr, decr, negate, and_op, or_op, and_not, or_not} op;
-          expr_func expr;) {
+        define_expression(unary_op_expr,
+                          enum struct operation : stl::
+                            uint_fast8_t{plus, minus, incr, decr, negate, and_op, or_op, and_not, or_not} op;
+                          expr_func expr;) {
             switch (data().op) {
                 case expr_data::operation::and_op: {
                     out.push_back(' ');
@@ -170,9 +170,10 @@ namespace webpp::sql {
           " >= ",
           " <= "};
 
-        define_expression(expr_op_expr, enum struct operation
-                          : stl::uint_fast8_t{add, sub, mul, div, modulo, eq, neq, gt, lt, ge, le} op;
-                          expr_func left_expr, right_expr;) {
+        define_expression(
+          expr_op_expr,
+          enum struct operation : stl::uint_fast8_t{add, sub, mul, div, modulo, eq, neq, gt, lt, ge, le} op;
+          expr_func left_expr, right_expr;) {
             data().left_expr(out, db_ref);
             out.append(expr_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data().op)]);
             data().right_expr(out, db_ref);
@@ -194,9 +195,8 @@ namespace webpp::sql {
             out.push_back(')');
         }
 
-        define_expression(expr_is_null, enum struct operation
-                          : stl::uint8_t{is_null, not_null} op;
-                          expr_func expr;) {
+        define_expression(
+          expr_is_null, enum struct operation : stl::uint8_t{is_null, not_null} op; expr_func expr;) {
             data().expr(out, db_ref);
             out.push_back(' ');
             switch (data().op) {
@@ -216,9 +216,9 @@ namespace webpp::sql {
             }
         }
 
-        define_expression(expr_is_expr, enum struct operation
-                          : stl::uint8_t{is, is_not, is_distinct, is_not_distinct} op;
-                          expr_func left_expr, right_expr;) {
+        define_expression(
+          expr_is_expr, enum struct operation : stl::uint8_t{is, is_not, is_distinct, is_not_distinct} op;
+          expr_func left_expr, right_expr;) {
             data().left_expr(out, db_ref);
             out.push_back(' ');
             switch (data().op) {
@@ -259,9 +259,7 @@ namespace webpp::sql {
         // left_expr not in (expr, expr, expr, ...)
         // left_expr in (select-stmt)
         define_expression(
-          expr_in_expr, enum struct operation
-          : stl::uint8_t{in, not_in} op;
-          expr_func    left_expr;
+          expr_in_expr, enum struct operation : stl::uint8_t{in, not_in} op; expr_func left_expr;
           expr_vec     exprs;
           subquery_ptr select_stmt;) {
             data().left_expr(out, db_ref);
@@ -935,6 +933,7 @@ namespace webpp::sql {
 
         // insert a single row
         template <istl::ReadOnlyCollection VecOfColVal = stl::initializer_list<col_expr_pair>>
+            requires(!istl::String<VecOfColVal>)
         constexpr query_builder& insert(VecOfColVal const& input_cols_vals) {
             method = query_method::insert;
             // Steps:
@@ -964,8 +963,7 @@ namespace webpp::sql {
                         auto const col_size = static_cast<diff_type>(columns.size());
                         columns.push_back(col);
 
-                        // 2. Adding new and null variables into the values to adjust the values
-                        // matrix
+                        // 2. Adding new and null variables into the values to adjust the values matrix
                         for (
                           auto val_it = values.begin() + col_size; val_it != values_last; val_it += col_size)
                         {

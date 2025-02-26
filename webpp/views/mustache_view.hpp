@@ -732,7 +732,9 @@ namespace webpp::views {
                       out += stl::forward<ContentT>(content);
                   },
                   context);
-            } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
+            } else if constexpr (
+              stl::same_as<DT, data_type> || (istl::Collection<DT> && !istl::String<data_type>) )
+            {
                 auto data_vec = object::make_object<data_type>(*this);
                 data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),

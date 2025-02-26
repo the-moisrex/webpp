@@ -45,13 +45,14 @@ namespace webpp::uri {
      * An output type that is like a vector or a map
      */
     template <typename T>
-    concept SegregatedOutput = istl::LinearContainer<T> || requires { requires T::is_segregated; };
+    concept SegregatedOutput =
+      (istl::LinearContainer<T> && !istl::String<T>) || requires { requires T::is_segregated; };
 
     template <typename T>
-    concept VectorOutput = istl::LinearContainer<T> && !istl::MapContainer<T>;
+    concept VectorOutput = istl::LinearContainer<T> && !istl::MapContainer<T> && !istl::String<T>;
 
     template <typename T>
-    concept MapOutput = istl::LinearContainer<T> && !istl::MapContainer<T>;
+    concept MapOutput = istl::LinearContainer<T> && !istl::MapContainer<T> && !istl::String<T>;
 
     /**
      * This is the output type that the URI parser will be able to put the results of components into.
@@ -1031,7 +1032,7 @@ namespace webpp::uri {
     }
 
     template <typename OutT>
-    [[nodiscard]] constexpr decltype(auto) get_storage(OutT& out) noexcept {
+    [[nodiscard]] constexpr auto& get_storage(OutT& out) noexcept {
         if constexpr (requires { out.storage_ref(); }) {
             return out.storage_ref();
         } else {
@@ -1040,7 +1041,7 @@ namespace webpp::uri {
     }
 
     template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr decltype(auto) get_storage(CtxT& ctx) noexcept {
+    [[nodiscard]] constexpr auto& get_storage(CtxT& ctx) noexcept {
         using ctx_type = CtxT;
 
         if constexpr (requires { ctx_type::component; }) {
@@ -1058,6 +1059,12 @@ namespace webpp::uri {
     template <typename OutT>
     [[nodiscard]] static constexpr istl::nothing_type get_buffer([[maybe_unused]] OutT& out) noexcept {
         return {};
+    }
+
+    /// returns end(), start_segment will set it to the right iterator
+    template <VectorOutput OutT>
+    [[nodiscard]] static constexpr auto get_buffer(OutT& out) noexcept {
+        return out.end();
     }
 
     template <components Comp, ParsingURIContext CtxT>

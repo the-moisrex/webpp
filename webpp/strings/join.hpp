@@ -113,7 +113,7 @@ namespace webpp::strings {
     template <istl::String StringType = stl::string, typename C, istl::Tuple DelimTuple>
     constexpr void join_with(StringType& output, C const& vec, DelimTuple const& delims) {
         constexpr stl::size_t delim_count = stl::tuple_size_v<DelimTuple>;
-        if constexpr (istl::Collection<C>) {
+        if constexpr (istl::Collection<C> && !istl::String<C>) {
             // reserve storage beforehand:
             stl::size_t necessary_storage_size = output.size();
             for (auto const& item : vec) {
@@ -194,7 +194,7 @@ namespace webpp::strings {
 
     template <istl::String StringType = stl::string, typename C, istl::Tuple DelimTuple>
     constexpr auto join_with(C const& vec, DelimTuple&& separators) {
-        if constexpr (istl::Collection<C>) {
+        if constexpr (istl::Collection<C> && !istl::String<C>) {
             using value_type          = typename C::value_type;
             using default_string_type = stl::remove_cvref_t<StringType>;
             using string_type = stl::conditional_t<istl::String<value_type>, value_type, default_string_type>;

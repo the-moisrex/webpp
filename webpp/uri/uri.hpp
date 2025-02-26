@@ -71,6 +71,10 @@ namespace webpp::uri {
         using fragment_type = basic_fragment<string_type>;
         using queries_type  = basic_queries<string_type, allocator_type>;
 
+        static_assert(VectorOutput<path_type>,
+                      "The path must almost look and feel like a vector, "
+                      "so we don't have to specialize it for get_buffer and what not.");
+
         using vec_type     = typename path_type::vector_type;
         using map_type     = typename queries_type::map_type;
         using seg_type     = string_type;
@@ -201,6 +205,10 @@ namespace webpp::uri {
         using queries_type  = basic_queries<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
         using status_type   = uri_status_type;
+
+        static_assert(VectorOutput<path_type>,
+                      "The path must almost look and feel like a vector, "
+                      "so we don't have to specialize it for get_buffer and what not.");
 
       private:
         status_type m_status = stl::to_underlying(uri_status::unparsed);

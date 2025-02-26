@@ -40,7 +40,7 @@ namespace webpp::view {
             }
             // todo: add tuple support
             // todo: add map support
-        } else if constexpr (istl::Collection<to_type>) {
+        } else if constexpr (istl::Collection<to_type> && !istl::String<to_type>) {
             // standard collections like vector, ...
             using value_type = typename to_type::value_type;
             to_type to{get_alloc_for<to_type>(et)};
@@ -61,7 +61,7 @@ namespace webpp::view {
         requires(sizeof...(From) >= 2)
     [[nodiscard]] constexpr To data_view_caster([[maybe_unused]] ET&& et, From&&... from) {
         using to_type = stl::remove_cvref_t<To>;
-        if constexpr (istl::Collection<to_type>) {
+        if constexpr (istl::Collection<to_type> && !istl::String<to_type>) {
             // standard collections like vector, ...
             using value_type = typename to_type::value_type;
             to_type to{get_alloc_for<to_type>(et)};
