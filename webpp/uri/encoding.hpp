@@ -64,22 +64,22 @@ namespace webpp::uri {
                 int decoded_char  = ascii::hex_digit_safe<int>(*pos++, ones) << 4U;
                 decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
 
-                if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
+                if (decoded_char != ones) {
                     *out++ = static_cast<char_type>(decoded_char);
-                } else {
+                } else [[unlikely]] {
                     pos  = out;
                     *pos = zero_char;
                     return false;
                 }
             } else {
                 if constexpr (uri_encoding_policy::skip_chars == Policy) {
-                    if (!chars.contains(*pos)) {
+                    if (!chars.contains(*pos)) [[unlikely]] {
                         pos  = out;
                         *pos = zero_char;
                         return false; // bad chars
                     }
                 } else {
-                    if (chars.contains(*pos)) {
+                    if (chars.contains(*pos)) [[unlikely]] {
                         pos  = out;
                         *pos = zero_char;
                         return false; // bad chars
@@ -114,9 +114,9 @@ namespace webpp::uri {
                 int decoded_char  = ascii::hex_digit_safe<int>(*pos++, ones) << 4U;
                 decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
 
-                if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
+                if (decoded_char != ones) {
                     output += static_cast<char_type>(decoded_char);
-                } else {
+                } else [[unlikely]] {
                     return false;
                 }
             } else {
@@ -172,18 +172,18 @@ namespace webpp::uri {
         output += ascii::to_percent_hex<char_type>(inp_char);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
+              istl::CharType      CharT,
+              istl::String        OutStrT>
     static constexpr bool encode_uri_component(
       CharT               inp_char,
-      istl::String auto&  output,
+      OutStrT&            output,
       CharSet auto const& policy_chars,
       CharSet auto const& invalid_chars) {
-        using char_type   = CharT;
-        using string_type = stl::remove_cvref_t<decltype(output)>;
-        static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
+        static_assert(stl::is_same_v<CharT, typename OutStrT::value_type>,
                       "The specified string do not have the same char type.");
 
-        if (invalid_chars.contains(inp_char)) {
+        if (invalid_chars.contains(inp_char)) [[unlikely]] {
             return false;
         }
         if constexpr (uri_encoding_policy::skip_chars == Policy) {
@@ -197,7 +197,7 @@ namespace webpp::uri {
                 return true;
             }
         }
-        output += ascii::to_percent_hex<char_type>(inp_char);
+        output += ascii::to_percent_hex<CharT>(inp_char);
         return true;
     }
 
@@ -252,7 +252,7 @@ namespace webpp::uri {
       CharSet auto const& policy_chars,
       CharSet auto const& invalid_chars) {
         for (; pos != end; ++pos) {
-            if (!encode_uri_component<Policy>(*pos, output, policy_chars, invalid_chars)) {
+            if (!encode_uri_component<Policy>(*pos, output, policy_chars, invalid_chars)) [[unlikely]] {
                 return false;
             }
         }

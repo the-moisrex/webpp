@@ -82,8 +82,8 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator!() const {
             if constexpr (istl::remove_template_of_v<not_valve, routes_type>) {
                 // This only checks against the default traits'-type's return type
-                if constexpr (stl::same_as<bool, typename valve_traits<routes_type>::return_type>) { // !!C ==
-                                                                                                     // C
+                if constexpr (stl::same_as<bool, typename valve_traits<routes_type>::return_type>) {
+                    // !!C == C
                     return routes().unwrap();
                 } else { // !!C = +C
                     return rebind_self<positive_valve>(routes().unwrap());

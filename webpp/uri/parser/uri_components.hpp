@@ -389,27 +389,6 @@ namespace webpp::uri {
             }
             return view<StrT>(fragment_start, uri_end - fragment_start);
         }
-
-        // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                     \
-    constexpr auto& field() const noexcept { \
-        return *this;                        \
-    }
-
-
-
-        // they're not used
-        webpp_def(scheme)
-        webpp_def(username)
-        webpp_def(password)
-        webpp_def(hostname)
-        webpp_def(port)
-        webpp_def(path)
-        webpp_def(queries)
-        webpp_def(fragment)
-
-        // NOLINTEND(*-macro-usage)
-#undef webpp_def
     };
 
     template <istl::StringLike StrT, typename Iter>
@@ -848,6 +827,13 @@ namespace webpp::uri {
     template <typename Allocator = stl::allocator<char>>
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
 
+    template <typename CtxT>
+    concept single_component = ParsingURIContext<CtxT> && requires { CtxT::component; };
+
+    template <components Comp, typename CtxT>
+    concept has_component =
+      ParsingURIContext<CtxT> && (requires { requires CtxT::component == Comp; } || !single_component<CtxT>);
+
     namespace details {
 
         template <components Comp>
@@ -989,7 +975,7 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr auto& get_component(CtxT& ctx) noexcept {
-        if constexpr (requires { CtxT::component; }) {
+        if constexpr (single_component<CtxT>) {
             if constexpr (Comp == CtxT::component) {
                 return istl::deptr(ctx.out);
             }
@@ -1010,13 +996,12 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr auto& get_storage(CtxT& ctx) noexcept {
-        using ctx_type = CtxT;
-
-        if constexpr (requires { ctx_type::component; }) {
-            if constexpr (Comp == ctx_type::component) {
+        if constexpr (single_component<CtxT>) {
+            if constexpr (Comp == CtxT::component) {
                 return get_storage(istl::deptr(ctx.out));
+            } else {
+                return istl::nothing;
             }
-            // else return void to get a compile time error
         } else {
             return get_storage(details::get_component<Comp>(istl::deptr(ctx.out)));
         }
@@ -1036,12 +1021,20 @@ namespace webpp::uri {
     }
 
     template <components Comp, ParsingURIContext CtxT>
+    [[nodiscard]] static constexpr auto get_buffer(CtxT& ctx) noexcept {
+        if constexpr (CtxT::is_modifiable) {
+            return get_buffer(get_component<Comp>(ctx));
+        } else {
+            return istl::nothing_type{};
+        }
+    }
+
+    template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr auto get_output_view(CtxT& ctx) noexcept {
-        using ctx_type         = CtxT;
-        using char_type        = typename ctx_type::char_type;
+        using char_type        = typename CtxT::char_type;
         using string_view_type = stl::basic_string_view<char_type>;
-        if constexpr (requires { ctx_type::component; }) {
-            if constexpr (Comp == ctx_type::component) {
+        if constexpr (single_component<CtxT>) {
+            if constexpr (Comp == CtxT::component) {
                 return string_view_type{ctx.out->data(), ctx.out->data() + ctx.out->size()};
             } else {
                 return string_view_type{};
@@ -1053,11 +1046,9 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT, typename... Args>
     constexpr void set_value(CtxT& ctx, Args&&... args) noexcept(CtxT::is_nothrow) {
-        using ctx_type = CtxT;
-
-        if constexpr (requires { ctx_type::component; }) {
+        if constexpr (single_component<CtxT>) {
             // works for strings only
-            if constexpr (Comp == ctx_type::component) {
+            if constexpr (Comp == CtxT::component) {
                 istl::deptr(ctx.out).assign(stl::forward<Args>(args)...);
             }
         } else {
@@ -1073,12 +1064,11 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT>
     constexpr void clear(CtxT& ctx) noexcept {
-        using ctx_type = CtxT;
         using istl::clear;
 
-        if constexpr (requires { ctx_type::component; }) {
+        if constexpr (single_component<CtxT>) {
             // won't work with the integers
-            if constexpr (Comp == ctx_type::component) {
+            if constexpr (Comp == CtxT::component) {
                 clear(istl::deptr(ctx.out));
             }
         } else {
@@ -1094,14 +1084,12 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT>
     [[nodiscard]] constexpr bool has_value(CtxT& ctx) noexcept {
-        using ctx_type = CtxT;
-
         if constexpr (components::host == Comp) {
             return has_flag(ctx.status, uri_status::has_non_empty_host);
         } else if constexpr (components::port == Comp) {
             return has_flag(ctx.status, uri_status::has_non_null_port);
-        } else if constexpr (requires { ctx_type::component; }) {
-            if constexpr (Comp == ctx_type::component) {
+        } else if constexpr (single_component<CtxT>) {
+            if constexpr (Comp == CtxT::component) {
                 if constexpr (requires { istl::deptr(ctx.out).has_value(); }) {
                     return istl::deptr(ctx.out).has_value();
                 } else {

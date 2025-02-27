@@ -33,7 +33,9 @@ namespace webpp::istl {
         return impl;             \
     }())
 
-    struct nothing_type {};
+    static constexpr struct nothing_type {
+        // nothing
+    } nothing;
 
     template <typename T>
     using void_holder = stl::conditional_t<stl::is_void_v<T>, nothing_type, T>;

@@ -58,7 +58,6 @@ namespace webpp::uri::details {
         auto  buffer                   = get_buffer(get_component<components::host>(ctx));
         auto  seg_beg                  = ctx.pos;
 
-        start_segment(ctx, out, buffer);
         for (;;) {
             bool done; // NOLINT(*-init-variables)
             if constexpr (!IsSpecial) {
@@ -147,7 +146,10 @@ namespace webpp::uri::details {
                     }
                     set_valid(ctx.status, valid_path);
                     break;
-                case '.': next_segment(ctx, out, seg_beg); continue;
+                case '.':
+                    skip_separator(ctx, out);
+                    reset_segment_start(ctx, seg_beg);
+                    continue;
                 case '?':
                     // escape if invalid port found
                     if (must_contain_credentials) {
@@ -207,7 +209,6 @@ namespace webpp::uri::details {
                         ++ctx.pos;
                         clear<components::host>(ctx);
                         reset_begin(ctx, seg_beg);
-                        start_segment(ctx, out, buffer);
                         host_begin = ctx.pos;
                         continue;
                     } else {
@@ -261,7 +262,6 @@ namespace webpp::uri::details {
             }
             if constexpr (CtxModifiableStringOutput<decltype(buffer), CtxT>) {
                 clear<components::host>(ctx);
-                start_segment(ctx, out, buffer);
                 pure_ipv4{ipv4_octets_data}.to_string(buffer);
                 if (skip_last_char) {
                     ++ctx.pos;

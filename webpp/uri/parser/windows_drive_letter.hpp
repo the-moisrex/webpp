@@ -10,6 +10,60 @@
 
 namespace webpp::uri::details {
 
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    constexpr void start_segment([[maybe_unused]] CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        if constexpr (VectorOutput<OutT> && CtxT::is_modifiable) {
+            // the non-modifiable version is the one that needs to be set, the modified versions already
+            // contain the right value at this point in time
+            istl::emplace_one(out, out.get_allocator());
+            buffer = out.begin() + static_cast<diff_type_of<CtxT>>(out.size() - 1);
+        }
+    }
+
+    /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
+    /// for path)
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void
+    end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator& inp_beg, typename CtxT::iterator end)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        if constexpr (VectorOutput<OutT> && !CtxT::is_modifiable) {
+            // the non-modifiable version is the one that needs to be set, the modified versions already
+            // contain the right value at this point in time
+            istl::emplace_one(out, inp_beg, end);
+            reset_begin(ctx, inp_beg);
+        }
+    }
+
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void end_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg)
+      noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
+        end_segment(ctx, out, beg, ctx.pos);
+    }
+
+    /// 1. Skip the separator, and
+    /// 2. Set the segment start
+    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    static constexpr void
+    next_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg, diff_type_of<CtxT> sep_count = 1)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (SegregatedOutput<OutT>) {
+            if constexpr (CtxT::is_modifiable) {
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
+                start_segment(ctx);
+            } else {
+                end_segment(ctx, out, beg);
+                skip_separator(ctx, out, sep_count);
+                reset_segment_start(ctx, beg);
+            }
+        } else {
+            skip_separator(ctx, out, sep_count);
+            end_segment(ctx, out, beg);
+            reset_segment_start(ctx, beg);
+        }
+    }
+
     template <typename Iter>
     [[nodiscard]] static constexpr bool has_windows_driver_letter(Iter pos) noexcept {
         // https://url.spec.whatwg.org/#windows-drive-letter
