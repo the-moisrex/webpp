@@ -120,7 +120,6 @@ namespace webpp::unicode {
         return code_point < 0x80;
     }
 
-
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
         return static_cast<u8>(0xff & oct);
@@ -254,7 +253,7 @@ namespace webpp::unicode {
         if (code_point < 0x80U) [[likely]] {
             return 1U;
         }
-        if (code_point < 0x800U) [[likely]] {
+        if (code_point < 0x800U) {
             return 2U;
         }
         if (code_point < 0x1'0000U) {

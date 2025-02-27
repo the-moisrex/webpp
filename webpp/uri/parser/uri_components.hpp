@@ -391,9 +391,9 @@ namespace webpp::uri {
         }
 
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                           \
-    constexpr auto& field##_ref() const noexcept { \
-        return *this;                              \
+#define webpp_def(field)                     \
+    constexpr auto& field() const noexcept { \
+        return *this;                        \
     }
 
 
@@ -742,44 +742,6 @@ namespace webpp::uri {
         state_type                      status = stl::to_underlying(uri_status::unparsed);
     };
 
-    // template <typename OutSegType, istl::StringLike OutIter, typename BaseSegType, typename BaseIter>
-    //     requires(!stl::integral<OutSegType>)
-    // struct parsing_uri_context<OutSegType, OutIter, BaseSegType, BaseIter> {
-    //     using out_seg_type    = OutSegType;
-    //     using base_seg_type   = BaseSegType;
-    //     using out_type        = uri_components<out_seg_type, OutIter>;
-    //     using base_type       = uri_components<base_seg_type, BaseIter>;
-    //     using iterator        = typename out_type::iterator;
-    //     using iterator_traits = stl::iterator_traits<iterator>;
-    //     using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-    //     using state_type      = uri_status_type;
-    //
-    //     using map_iterator   = typename out_type::map_iterator;
-    //     using vec_iterator   = typename out_type::vec_iterator;
-    //     using map_value_type = typename out_type::map_value_type;
-    //
-    //     static constexpr bool is_nothrow    = out_type::is_nothrow;
-    //     static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
-    //     static constexpr bool is_modifiable = out_type::is_modifiable;
-    //     static constexpr bool is_segregated = out_type::is_segregated;
-    //
-    //     // static_assert(has_base_uri && !is_modifiable,
-    //     //               "If you have Base URI, then you need to make sure the output is overridable "
-    //     //               "(because output's URI's components may come from different places, "
-    //     //               "for example the scheme and domain may come from the base URI while the path "
-    //     //               "is coming from the new string.)");
-    //
-    //
-    //     // we don't need to know the beginning of the string("beg" field), because the output uri components
-    //     // ("out") are required to know each segment themselves.
-    //     iterator beg{}; // the beginning of the string, not going to change during parsing
-    //     iterator pos{};
-    //     iterator end{};
-    //     out_type out{};
-    //     [[no_unique_address]] base_type base{};
-    //     state_type                      status = stl::to_underlying(uri_status::unparsed);
-    // };
-
     enum struct components : stl::uint8_t {
         scheme,
         host,
@@ -890,127 +852,133 @@ namespace webpp::uri {
 
         template <components Comp>
         [[nodiscard]] constexpr decltype(auto) get_component(auto& out) noexcept {
-            if constexpr (components::scheme == Comp) {
+            using enum components;
+            if constexpr (scheme == Comp) {
                 return out.scheme();
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 return out.username();
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 return out.password();
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 return out.port();
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 return out.hostname();
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 return out.path();
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 return out.queries();
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 return out.fragment();
             }
         }
 
         template <components Comp>
         [[nodiscard]] constexpr decltype(auto) get_output_value_from(auto& out) noexcept {
-            if constexpr (components::scheme == Comp) {
+            using enum components;
+            if constexpr (scheme == Comp) {
                 return out.get_scheme();
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 return out.get_username();
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 return out.get_password();
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 return out.get_port();
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 return out.get_hostname();
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 return out.get_path();
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 return out.get_queries();
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 return out.get_fragment();
             }
         }
 
         template <components Comp, typename StrVT>
         [[nodiscard]] constexpr auto get_output_view_from(auto& out) noexcept {
+            using enum components;
             using string_view_type = StrVT;
-            if constexpr (components::scheme == Comp) {
+            if constexpr (scheme == Comp) {
                 return out.template get_scheme<string_view_type>();
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 return out.template get_username<string_view_type>();
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 return out.template get_password<string_view_type>();
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 return out.template get_port<string_view_type>();
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 return out.template get_hostname<string_view_type>();
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 return out.template get_path<string_view_type>();
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 return out.template get_queries<string_view_type>();
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 return out.template get_fragment<string_view_type>();
             }
         }
 
         template <components Comp, typename... Args>
         constexpr void set_value_to(auto& out, Args&&... args) {
-            if constexpr (components::scheme == Comp) {
+            using enum components;
+            if constexpr (scheme == Comp) {
                 out.set_scheme(stl::forward<Args>(args)...);
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 out.set_username(stl::forward<Args>(args)...);
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 out.set_password(stl::forward<Args>(args)...);
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 out.set_port(stl::forward<Args>(args)...);
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 out.set_hostname(stl::forward<Args>(args)...);
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 out.set_path(stl::forward<Args>(args)...);
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 out.set_queries(stl::forward<Args>(args)...);
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 out.set_fragment(stl::forward<Args>(args)...);
             }
         }
 
         template <components Comp>
         constexpr void clear_from(auto& out) noexcept {
-            if constexpr (components::scheme == Comp) {
+            using enum components;
+            if constexpr (scheme == Comp) {
                 out.clear_scheme();
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 out.clear_username();
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 out.clear_password();
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 out.clear_port();
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 out.clear_hostname();
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 out.clear_path();
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 out.clear_queries();
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 out.clear_fragment();
             }
         }
 
         template <components Comp>
         [[nodiscard]] constexpr bool has_value_from(auto& out) noexcept {
-            if constexpr (components::scheme == Comp) {
+            using enum components;
+            if constexpr (scheme == Comp) {
                 return out.has_scheme();
-            } else if constexpr (components::username == Comp) {
+            } else if constexpr (username == Comp) {
                 return out.has_username();
-            } else if constexpr (components::password == Comp) {
+            } else if constexpr (password == Comp) {
                 return out.has_password();
-            } else if constexpr (components::port == Comp) {
+            } else if constexpr (port == Comp) {
                 return out.has_port();
-            } else if constexpr (components::host == Comp) {
+            } else if constexpr (host == Comp) {
                 return out.has_hostname();
-            } else if constexpr (components::path == Comp) {
+            } else if constexpr (path == Comp) {
                 return out.has_path();
-            } else if constexpr (components::queries == Comp) {
+            } else if constexpr (queries == Comp) {
                 return out.has_queries();
-            } else if constexpr (components::fragment == Comp) {
+            } else if constexpr (fragment == Comp) {
                 return out.has_fragment();
             } else {
                 return true;

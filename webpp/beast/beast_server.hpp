@@ -244,7 +244,7 @@ namespace webpp::beast_proto {
               [this](boost::beast::error_code err, [[maybe_unused]] std::size_t bytes_transferred) {
                   if (!err) [[likely]] {
                       async_write_response();
-                  } else [[unlikely]] {
+                  } else {
                       // This means they closed the connection
                       if (err == boost::beast::http::error::end_of_stream) {
                           // try sending shutdown signal
