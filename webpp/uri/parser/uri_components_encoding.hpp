@@ -17,7 +17,7 @@ namespace webpp::uri::details {
 
     /// if it's segregated:
     ///   if it's modifiable queries, map::value_type (pair<string, string>),
-    ///   if it's modifiable path/host, vector::iterator
+    ///   if it's modifiable path, vector::iterator
     /// else if it's not segregated but still modifiable:
     ///   vec_iterator which is seg_type*
     /// otherwise, nothing_type
@@ -33,8 +33,7 @@ namespace webpp::uri::details {
 
 
     template <typename T, typename CtxT>
-    concept CtxModifiableBuffer =
-      CtxBufferOf<T, CtxT> && CtxT::is_modifiable && !stl::same_as<T, istl::nothing_type>;
+    concept CtxModifiableBuffer = CtxBufferOf<T, CtxT> && CtxT::is_modifiable && istl::String<T>;
 
     template <typename T, typename CtxT>
     concept CtxModifiableStringOutput = ParsingURIContext<CtxT> && CtxT::is_modifiable && istl::String<T>;
@@ -134,7 +133,6 @@ namespace webpp::uri::details {
       BufT&                                buffer) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable && CtxMappedBuffer<BufT, CtxT>) {
             return encode_uri_component<uri_encoding_policy::encode_chars>(
-              ctx,
               ctx.pos,
               ctx.end,
               !in_value ? buffer.first : buffer.second,

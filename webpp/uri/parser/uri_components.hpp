@@ -58,7 +58,8 @@ namespace webpp::uri {
      * This is the output type that the URI parser will be able to put the results of components into.
      */
     template <typename T>
-    concept ParsingOutput = istl::StringLike<T> || SegregatedOutput<T>;
+    concept ParsingOutput =
+      istl::StringLike<T> || SegregatedOutput<T> || istl::cvref_as<T, istl::nothing_type>;
 
 
     template <typename SegType = stl::uint32_t, typename Iter = char const*>
@@ -1002,6 +1003,8 @@ namespace webpp::uri {
             } else {
                 return istl::nothing;
             }
+        } else if constexpr (!CtxT::is_segregated && !CtxT::is_modifiable) {
+            return istl::nothing;
         } else {
             return get_storage(details::get_component<Comp>(istl::deptr(ctx.out)));
         }
@@ -1021,7 +1024,7 @@ namespace webpp::uri {
     }
 
     template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] static constexpr auto get_buffer(CtxT& ctx) noexcept {
+    [[nodiscard]] static constexpr decltype(auto) get_buffer(CtxT& ctx) noexcept {
         if constexpr (CtxT::is_modifiable) {
             return get_buffer(get_component<Comp>(ctx));
         } else {
@@ -1105,8 +1108,10 @@ namespace webpp::uri {
 
     template <ParsingURIContext CtxT>
     constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
-        auto& path_comp = get_component<components::path>(ctx);
-        path_comp.set_opaque(is_opaque_path);
+        if constexpr () {
+            auto& path_comp = get_component<components::path>(ctx);
+            path_comp.set_opaque(is_opaque_path);
+        }
     }
 
 } // namespace webpp::uri

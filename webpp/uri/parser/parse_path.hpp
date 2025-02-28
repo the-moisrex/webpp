@@ -17,6 +17,7 @@ namespace webpp::uri {
         static constexpr void next_segment_of(
           CtxT&                    ctx,
           OutT&                    out,
+          CtxBufferOf<CtxT> auto&  buffer,
           CtxBufferOf<CtxT> auto&  beg,
           typename CtxT::char_type separator,
           diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
@@ -24,7 +25,7 @@ namespace webpp::uri {
                 if constexpr (CtxT::is_modifiable) {
                     skip_separator(ctx, out, sep_count);
                     reset_segment_start(ctx, beg);
-                    start_segment(ctx);
+                    start_segment(ctx, out, buffer);
                 } else {
                     end_segment(ctx, out, beg);
                     skip_separator(ctx, out, sep_count);
@@ -109,7 +110,7 @@ namespace webpp::uri {
         clear_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator seg_beg) noexcept {
             using ctx_type = CtxT;
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                buffer.clear();
+                buffer->clear();
             } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 if constexpr (!Options.ignore_tabs_or_newlines) {
                     auto const length = static_cast<stl::size_t>(ctx.pos - seg_beg);
@@ -276,6 +277,7 @@ namespace webpp::uri {
         ParsingOutput auto&             out     = get_storage<components::path>(ctx);
         iterator                        seg_beg = ctx.pos;
 
+        start_segment(ctx, out, buffer);
         for (;;) {
             if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
                 set_valid(ctx.status, valid);
@@ -375,7 +377,7 @@ namespace webpp::uri {
                         reset_segment_start(ctx, seg_beg);
                         continue;
                     }
-                    next_segment_of(ctx, out, seg_beg, '/');
+                    next_segment_of(ctx, out, buffer, seg_beg, '/');
                     continue;
                 [[likely]] case '?':
                     if constexpr (!Options.state_override) {
@@ -428,7 +430,7 @@ namespace webpp::uri {
             // handling empty paths
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 if (is_special_scheme(ctx.status) && !has_value<components::path>(ctx)) {
-                    next_segment_of(ctx, out, seg_beg, '/', 0);
+                    next_segment_of(ctx, out, buffer, seg_beg, '/', 0);
                 }
             }
 

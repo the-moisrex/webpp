@@ -44,14 +44,17 @@ namespace webpp::uri::details {
     /// 1. Skip the separator, and
     /// 2. Set the segment start
     template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void
-    next_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg, diff_type_of<CtxT> sep_count = 1)
-      noexcept(CtxT::is_nothrow) {
+    static constexpr void next_segment(
+      CtxT&                   ctx,
+      OutT&                   out,
+      CtxBufferOf<CtxT> auto& buffer,
+      CtxBufferOf<CtxT> auto& beg,
+      diff_type_of<CtxT>      sep_count = 1) noexcept(CtxT::is_nothrow) {
         if constexpr (SegregatedOutput<OutT>) {
             if constexpr (CtxT::is_modifiable) {
                 skip_separator(ctx, out, sep_count);
                 reset_segment_start(ctx, beg);
-                start_segment(ctx);
+                start_segment(ctx, out, buffer);
             } else {
                 end_segment(ctx, out, beg);
                 skip_separator(ctx, out, sep_count);
@@ -201,16 +204,16 @@ namespace webpp::uri::details {
             }
 
             set_warning(ctx.status, uri_status::windows_drive_letter_used);
-            next_segment(ctx, out, seg_beg);
+            next_segment(ctx, out, buffer, seg_beg);
             append_inplace_of(ctx, buffer, letters[0]);
             append_inplace_of(ctx, buffer, letters[1]);
             ignore_character(ctx, pos - ctx.pos - 1);
             if (letters[2] == '/') {
                 if constexpr (!ctx_type::is_segregated) {
                     append_inplace_of(ctx, buffer, '/');
-                    next_segment(ctx, buffer, seg_beg, 0);
+                    next_segment(ctx, buffer, buffer, seg_beg, 0);
                 } else {
-                    next_segment(ctx, out, seg_beg);
+                    next_segment(ctx, out, buffer, seg_beg);
                 }
             } else {
                 end_segment(ctx, out, seg_beg);

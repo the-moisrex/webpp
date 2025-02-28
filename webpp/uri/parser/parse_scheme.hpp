@@ -57,7 +57,7 @@ namespace webpp::uri {
             } else {
                 // this algorithm is the same as "lower_to" except it ignores newlines and tabs
 
-                auto& out_str         = get_component<components::scheme>(ctx);
+                auto& out_str         = get_storage<components::scheme>(ctx);
                 using string_type     = stl::remove_cvref_t<decltype(out_str)>;
                 using iter_traits     = stl::iterator_traits<typename string_type::iterator>;
                 using difference_type = typename iter_traits::difference_type;
@@ -114,6 +114,7 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#relative-slash-state
 
             using enum uri_status;
+            using enum components;
 
             using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
@@ -125,7 +126,7 @@ namespace webpp::uri {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(ctx.base.get_scheme()));
 
-                set_value<components::scheme>(ctx, ctx.base.get_scheme());
+                set_value<scheme>(ctx, ctx.base.get_scheme());
             }
             switch (*ctx.pos) {
                 case '/': break;
@@ -159,23 +160,22 @@ namespace webpp::uri {
             // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
             if constexpr (ctx_type::has_base_uri) {
-                set_value<components::username>(ctx, ctx.base.get_username());
-                set_value<components::password>(ctx, ctx.base.get_password());
-                set_value<components::host>(ctx, ctx.base.get_hostname());
-                set_value<components::port>(ctx, ctx.base.get_port());
-                set_value<components::path>(
-                  ctx,
-                  ctx.base.get_path()); // todo: https://infra.spec.whatwg.org/#list-clone
-                set_value<components::queries>(ctx, ctx.base.get_queries());
+                set_value<username>(ctx, ctx.base.get_username());
+                set_value<password>(ctx, ctx.base.get_password());
+                set_value<host>(ctx, ctx.base.get_hostname());
+                set_value<port>(ctx, ctx.base.get_port());
+                set_value<path>(ctx,
+                                ctx.base.get_path()); // todo: https://infra.spec.whatwg.org/#list-clone
+                set_value<queries>(ctx, ctx.base.get_queries());
             }
             switch (*ctx.pos) {
                 case '?':
-                    clear<components::queries>(ctx);
+                    clear<queries>(ctx);
                     set_valid(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
                 case '#':
-                    clear<components::fragment>(ctx);
+                    clear<fragment>(ctx);
                     set_valid(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
@@ -194,7 +194,7 @@ namespace webpp::uri {
                     [[fallthrough]];
                 default: break;
             }
-            clear<components::queries>(ctx);
+            clear<queries>(ctx);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
             set_valid(ctx.status, valid_path);
         }
@@ -313,7 +313,7 @@ namespace webpp::uri {
                 if (ctx.base.has_path()) { // todo: specs say opaque path
                     for (; ctx.pos != ctx.end; ++ctx.pos) {
                         switch (*ctx.pos) {
-                            [[likely]] case '#':
+                            case '#':
                                 if constexpr (Options.parse_fragment) {
                                     set_value<components::scheme>(ctx, ctx.base.get_scheme());
                                     set_value<components::path>(ctx, ctx.base.get_path());
