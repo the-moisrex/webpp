@@ -34,9 +34,9 @@ namespace webpp::async {
             async::set_value(*next(), stl::forward<Args>(args)...);
         }
 
-        constexpr task_type* next() const noexcept {
-            // todo
-        }
+        // constexpr task_type* next() const noexcept {
+        // todo
+        // }
 
 
       private:

@@ -14,7 +14,7 @@
 #include "../strings/to_case.hpp"
 #include "../traits/traits.hpp"
 #include "../validators/validators.hpp"
-#include "details/constants.hpp"
+#include "./parser/constants.hpp"
 #include "encoding.hpp"
 #include "path.hpp"
 #include "queries.hpp"
