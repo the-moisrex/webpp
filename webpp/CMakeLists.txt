@@ -1,358 +1,351 @@
-set(ALL_SOURCES
-        ${LIB_INCLUDE_DIR}/webpp.hpp
-        ${LIB_INCLUDE_DIR}/version.hpp
+set(ALL_SOURCES_SHORT
+        common/meta.hpp
+        common/os.hpp
 
-        ${LIB_INCLUDE_DIR}/views/view_concepts.hpp
-        ${LIB_INCLUDE_DIR}/views/html.hpp
-        ${LIB_INCLUDE_DIR}/views/view_manager.hpp
-        ${LIB_INCLUDE_DIR}/views/data_view_caster.hpp
-        ${LIB_INCLUDE_DIR}/views/mustache_view.hpp
-        ${LIB_INCLUDE_DIR}/views/file_view.hpp
-        ${LIB_INCLUDE_DIR}/views/json_view.hpp
+        webpp.hpp
+        version.hpp
 
-        ${LIB_INCLUDE_DIR}/configs/config_concepts.hpp
-        ${LIB_INCLUDE_DIR}/configs/constants.hpp
+        views/view_concepts.hpp
+        views/html.hpp
+        views/view_manager.hpp
+        views/data_view_caster.hpp
+        views/mustache_view.hpp
+        views/file_view.hpp
+        views/json_view.hpp
 
-        ${LIB_INCLUDE_DIR}/libs/asio.hpp
-        ${LIB_INCLUDE_DIR}/libs/ioring.hpp
-        ${LIB_INCLUDE_DIR}/libs/brotli.hpp
-        ${LIB_INCLUDE_DIR}/libs/eve.hpp
-        ${LIB_INCLUDE_DIR}/libs/cryptopp.hpp
-        ${LIB_INCLUDE_DIR}/libs/zlib.hpp
-        ${LIB_INCLUDE_DIR}/libs/fmt.hpp
-        ${LIB_INCLUDE_DIR}/libs/sqlite.hpp
-        ${LIB_INCLUDE_DIR}/libs/modp_b64/modp_b64.hpp
-        ${LIB_INCLUDE_DIR}/libs/modp_b64/modp_b64_data.hpp
+        configs/config_concepts.hpp
+        configs/constants.hpp
 
-        ${LIB_INCLUDE_DIR}/extensions/extension.hpp
+        libs/asio.hpp
+        libs/ioring.hpp
+        libs/brotli.hpp
+        libs/eve.hpp
+        libs/cryptopp.hpp
+        libs/zlib.hpp
+        libs/fmt.hpp
+        libs/sqlite.hpp
+        libs/modp_b64/modp_b64.hpp
+        libs/modp_b64/modp_b64_data.hpp
 
-        ${LIB_INCLUDE_DIR}/strings/istring.hpp
-        ${LIB_INCLUDE_DIR}/strings/fixed_string.hpp
-        ${LIB_INCLUDE_DIR}/strings/to_case.hpp
-        ${LIB_INCLUDE_DIR}/strings/iequals.hpp
-        ${LIB_INCLUDE_DIR}/strings/trim.hpp
-        ${LIB_INCLUDE_DIR}/strings/string_tokenizer.hpp
-        ${LIB_INCLUDE_DIR}/strings/validators.hpp
-        ${LIB_INCLUDE_DIR}/strings/charset.hpp
-        ${LIB_INCLUDE_DIR}/strings/parser_utils.hpp
-        ${LIB_INCLUDE_DIR}/strings/splits.hpp
-        ${LIB_INCLUDE_DIR}/strings/strings_concepts.hpp
-        ${LIB_INCLUDE_DIR}/strings/append.hpp
-        ${LIB_INCLUDE_DIR}/strings/size.hpp
-        ${LIB_INCLUDE_DIR}/strings/join.hpp
-        ${LIB_INCLUDE_DIR}/strings/hex.hpp
-        ${LIB_INCLUDE_DIR}/strings/peek.hpp
+        extensions/extension.hpp
+        extensions/extension_wrapper.hpp
 
-        ${LIB_INCLUDE_DIR}/unicode/unicode_concepts.hpp
-        ${LIB_INCLUDE_DIR}/unicode/unicode.hpp
-        ${LIB_INCLUDE_DIR}/unicode/unicode_ptr.hpp
-        ${LIB_INCLUDE_DIR}/unicode/utf_reducer.hpp
-        ${LIB_INCLUDE_DIR}/unicode/unicode_char_traits.hpp
-        ${LIB_INCLUDE_DIR}/unicode/ustring.hpp
-        ${LIB_INCLUDE_DIR}/unicode/ustring_view.hpp
-        ${LIB_INCLUDE_DIR}/unicode/ustring_iterator.hpp
-        ${LIB_INCLUDE_DIR}/unicode/normalization.hpp
-        ${LIB_INCLUDE_DIR}/unicode/hangul.hpp
-        ${LIB_INCLUDE_DIR}/unicode/details/ccc_tables.hpp
-        ${LIB_INCLUDE_DIR}/unicode/details/composition_tables.hpp
-        ${LIB_INCLUDE_DIR}/unicode/details/decomposition_tables.hpp
+        strings/istring.hpp
+        strings/fixed_string.hpp
+        strings/to_case.hpp
+        strings/iequals.hpp
+        strings/trim.hpp
+        strings/string_tokenizer.hpp
+        strings/validators.hpp
+        strings/charset.hpp
+        strings/parser_utils.hpp
+        strings/splits.hpp
+        strings/strings_concepts.hpp
+        strings/append.hpp
+        strings/size.hpp
+        strings/join.hpp
+        strings/hex.hpp
+        strings/peek.hpp
 
-        ${LIB_INCLUDE_DIR}/traits/traits.hpp
-        ${LIB_INCLUDE_DIR}/traits/enable_traits.hpp
-        ${LIB_INCLUDE_DIR}/traits/std_traits.hpp
-        ${LIB_INCLUDE_DIR}/traits/std_pmr_traits.hpp
+        unicode/unicode_concepts.hpp
+        unicode/unicode.hpp
+        unicode/unicode_ptr.hpp
+        unicode/utf_reducer.hpp
+        unicode/unicode_char_traits.hpp
+        unicode/ustring.hpp
+        unicode/ustring_view.hpp
+        unicode/ustring_iterator.hpp
+        unicode/normalization.hpp
+        unicode/hangul.hpp
+        unicode/details/ccc_tables.hpp
+        unicode/details/composition_tables.hpp
+        unicode/details/decomposition_tables.hpp
 
-        ${LIB_INCLUDE_DIR}/std/types.hpp
-        ${LIB_INCLUDE_DIR}/std/function_ref.hpp
-        ${LIB_INCLUDE_DIR}/std/filesystem.hpp
-        ${LIB_INCLUDE_DIR}/std/coroutine.hpp
-        ${LIB_INCLUDE_DIR}/std/functional.hpp
-        ${LIB_INCLUDE_DIR}/std/enum.hpp
-        ${LIB_INCLUDE_DIR}/std/algorithm.hpp
-        ${LIB_INCLUDE_DIR}/std/array.hpp
-        ${LIB_INCLUDE_DIR}/std/executor.hpp
-        ${LIB_INCLUDE_DIR}/std/format.hpp
-        ${LIB_INCLUDE_DIR}/std/internet.hpp
-        ${LIB_INCLUDE_DIR}/std/io_context.hpp
-        ${LIB_INCLUDE_DIR}/std/map.hpp
-        ${LIB_INCLUDE_DIR}/std/net.hpp
-        ${LIB_INCLUDE_DIR}/std/netfwd.hpp
-        ${LIB_INCLUDE_DIR}/std/set.hpp
-        ${LIB_INCLUDE_DIR}/std/std.hpp
-        ${LIB_INCLUDE_DIR}/std/string.hpp
-        ${LIB_INCLUDE_DIR}/std/string_view.hpp
-        ${LIB_INCLUDE_DIR}/std/string_like.hpp
-        ${LIB_INCLUDE_DIR}/std/string_concepts.hpp
-        ${LIB_INCLUDE_DIR}/std/timer.hpp
-        ${LIB_INCLUDE_DIR}/std/tuple.hpp
-        ${LIB_INCLUDE_DIR}/std/unordered_map.hpp
-        ${LIB_INCLUDE_DIR}/std/unordered_set.hpp
-        ${LIB_INCLUDE_DIR}/std/vector.hpp
-        ${LIB_INCLUDE_DIR}/std/optional.hpp
-        ${LIB_INCLUDE_DIR}/std/chrono.hpp
-        ${LIB_INCLUDE_DIR}/std/iterator.hpp
-        ${LIB_INCLUDE_DIR}/std/iterator_impl.hpp
-        ${LIB_INCLUDE_DIR}/std/concepts_impl.hpp
-        ${LIB_INCLUDE_DIR}/std/type_traits.hpp
-        ${LIB_INCLUDE_DIR}/std/string_concepts.hpp
-        ${LIB_INCLUDE_DIR}/std/collection.hpp
-        ${LIB_INCLUDE_DIR}/std/expected.hpp
-        ${LIB_INCLUDE_DIR}/std/expected_impl.hpp
-        ${LIB_INCLUDE_DIR}/std/memory.hpp
-        ${LIB_INCLUDE_DIR}/std/memory_resource.hpp
-        ${LIB_INCLUDE_DIR}/std/span.hpp
-        ${LIB_INCLUDE_DIR}/std/ranges.hpp
-        ${LIB_INCLUDE_DIR}/std/tag_invoke.hpp
-        ${LIB_INCLUDE_DIR}/std/utility.hpp
-        ${LIB_INCLUDE_DIR}/std/concepts.hpp
-        ${LIB_INCLUDE_DIR}/std/bit.hpp
-        ${LIB_INCLUDE_DIR}/std/cassert.hpp
+        traits/traits.hpp
+        traits/enable_traits.hpp
+        traits/std_traits.hpp
+        traits/std_pmr_traits.hpp
 
-        ${LIB_INCLUDE_DIR}/io/io_concepts.hpp
-        ${LIB_INCLUDE_DIR}/io/io_task.hpp
-        ${LIB_INCLUDE_DIR}/io/open.hpp
-        ${LIB_INCLUDE_DIR}/io/read.hpp
-        ${LIB_INCLUDE_DIR}/io/file_handle.hpp
-        ${LIB_INCLUDE_DIR}/io/io_result.hpp
-        ${LIB_INCLUDE_DIR}/io/file_options.hpp
-        ${LIB_INCLUDE_DIR}/io/buffer.hpp
-        ${LIB_INCLUDE_DIR}/io/syscalls.hpp
-        ${LIB_INCLUDE_DIR}/io/io_uring/io_uring.hpp
+        std/types.hpp
+        std/function_ref.hpp
+        std/filesystem.hpp
+        std/coroutine.hpp
+        std/functional.hpp
+        std/enum.hpp
+        std/algorithm.hpp
+        std/array.hpp
+        std/executor.hpp
+        std/format.hpp
+        std/internet.hpp
+        std/io_context.hpp
+        std/map.hpp
+        std/net.hpp
+        std/netfwd.hpp
+        std/set.hpp
+        std/std.hpp
+        std/string.hpp
+        std/string_view.hpp
+        std/string_like.hpp
+        std/string_concepts.hpp
+        std/timer.hpp
+        std/tuple.hpp
+        std/unordered_map.hpp
+        std/unordered_set.hpp
+        std/vector.hpp
+        std/optional.hpp
+        std/chrono.hpp
+        std/iterator.hpp
+        std/iterator_impl.hpp
+        std/concepts_impl.hpp
+        std/type_traits.hpp
+        std/string_concepts.hpp
+        std/collection.hpp
+        std/expected.hpp
+        std/expected_impl.hpp
+        std/memory.hpp
+        std/memory_resource.hpp
+        std/span.hpp
+        std/ranges.hpp
+        std/tag_invoke.hpp
+        std/utility.hpp
+        std/concepts.hpp
+        std/bit.hpp
+        std/cassert.hpp
 
-        ${LIB_INCLUDE_DIR}/async/async.hpp
-        ${LIB_INCLUDE_DIR}/async/run_loop.hpp
-        ${LIB_INCLUDE_DIR}/async/task_chain.hpp
+        io/io_concepts.hpp
+        io/io_task.hpp
+        io/open.hpp
+        io/read.hpp
+        io/file_handle.hpp
+        io/io_result.hpp
+        io/file_options.hpp
+        io/buffer.hpp
+        io/syscalls.hpp
+        io/io_uring/io_uring.hpp
 
-        ${LIB_INCLUDE_DIR}/socket/socket.hpp
-        ${LIB_INCLUDE_DIR}/socket/os.hpp
-        ${LIB_INCLUDE_DIR}/socket/socket_address.hpp
-        ${LIB_INCLUDE_DIR}/socket/host_bytes.hpp
+        async/async.hpp
+        async/run_loop.hpp
+        async/task_chain.hpp
 
-        ${LIB_INCLUDE_DIR}/time/stopwatch.hpp
-        ${LIB_INCLUDE_DIR}/time/convert.hpp
+        socket/socket.hpp
+        socket/os.hpp
+        socket/socket_address.hpp
+        socket/host_bytes.hpp
 
-        ${LIB_INCLUDE_DIR}/validators/validators.hpp
-        ${LIB_INCLUDE_DIR}/validators/email.hpp
+        time/stopwatch.hpp
+        time/convert.hpp
 
-        ${LIB_INCLUDE_DIR}/convert/casts.hpp
-        ${LIB_INCLUDE_DIR}/convert/lexical_cast.hpp
+        validators/validators.hpp
+        validators/email.hpp
 
-        ${LIB_INCLUDE_DIR}/utils/const_list.hpp
-        ${LIB_INCLUDE_DIR}/utils/debounce.hpp
-        ${LIB_INCLUDE_DIR}/utils/version.hpp
-        ${LIB_INCLUDE_DIR}/utils/error_handling.hpp
-        ${LIB_INCLUDE_DIR}/utils/bits.hpp
+        convert/casts.hpp
+        convert/lexical_cast.hpp
 
-        ${LIB_INCLUDE_DIR}/memory/allocator_concepts.hpp
-        ${LIB_INCLUDE_DIR}/memory/allocators.hpp
-        ${LIB_INCLUDE_DIR}/memory/available_memory.hpp
-        ${LIB_INCLUDE_DIR}/memory/object.hpp
-        ${LIB_INCLUDE_DIR}/memory/stack.hpp
-        ${LIB_INCLUDE_DIR}/memory/memory_pages.hpp
+        utils/const_list.hpp
+        utils/debounce.hpp
+        utils/version.hpp
+        utils/error_handling.hpp
+        utils/bits.hpp
 
-        ${LIB_INCLUDE_DIR}/ip/inet_ntop.hpp
-        ${LIB_INCLUDE_DIR}/ip/inet_pton.hpp
-        ${LIB_INCLUDE_DIR}/ip/ipv4.hpp
-        ${LIB_INCLUDE_DIR}/ip/ipv6.hpp
-        ${LIB_INCLUDE_DIR}/ip/ip.hpp
-        ${LIB_INCLUDE_DIR}/ip/ip_address.hpp
-        ${LIB_INCLUDE_DIR}/ip/endpoint.hpp
-        ${LIB_INCLUDE_DIR}/ip/ip_validators.hpp
-        ${LIB_INCLUDE_DIR}/ip/default_endpoints.hpp
+        memory/allocator_concepts.hpp
+        memory/allocators.hpp
+        memory/available_memory.hpp
+        memory/object.hpp
+        memory/stack.hpp
+        memory/memory_pages.hpp
 
-        ${LIB_INCLUDE_DIR}/uri/parser/constants.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_uri.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_scheme.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_authority.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_authority_pieces.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_credentials.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_host.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_domain.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_port.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_path.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/parse_fragment.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/iiequals.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/uri_helpers.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/windows_drive_letter.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/uri_components.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/uri_components_encoding.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/special_schemes.hpp
-        ${LIB_INCLUDE_DIR}/uri/parser/host_ip.hpp
-        ${LIB_INCLUDE_DIR}/uri/uri_status.hpp
-        ${LIB_INCLUDE_DIR}/uri/encoding.hpp
-        ${LIB_INCLUDE_DIR}/uri/credentials.hpp
-        ${LIB_INCLUDE_DIR}/uri/fragment.hpp
-        ${LIB_INCLUDE_DIR}/uri/host.hpp
-        ${LIB_INCLUDE_DIR}/uri/host_authority.hpp
-        ${LIB_INCLUDE_DIR}/uri/path.hpp
-        ${LIB_INCLUDE_DIR}/uri/path_traverser.hpp
-        ${LIB_INCLUDE_DIR}/uri/port.hpp
-        ${LIB_INCLUDE_DIR}/uri/queries.hpp
-        ${LIB_INCLUDE_DIR}/uri/scheme.hpp
-        ${LIB_INCLUDE_DIR}/uri/uri.hpp
-        ${LIB_INCLUDE_DIR}/uri/uri_string.hpp
-        ${LIB_INCLUDE_DIR}/uri/domain.hpp
-        ${LIB_INCLUDE_DIR}/uri/idna/idna_mappings.hpp
-        ${LIB_INCLUDE_DIR}/uri/idna/idna_to_ascii.hpp
-        ${LIB_INCLUDE_DIR}/uri/idna/punycodes.hpp
-        ${LIB_INCLUDE_DIR}/uri/idna/details/idna_mapping_table.hpp
+        ip/inet_ntop.hpp
+        ip/inet_pton.hpp
+        ip/ipv4.hpp
+        ip/ipv6.hpp
+        ip/ip.hpp
+        ip/ip_address.hpp
+        ip/endpoint.hpp
+        ip/ip_validators.hpp
+        ip/default_endpoints.hpp
 
-        ${LIB_INCLUDE_DIR}/crypto/base64.hpp
-        ${LIB_INCLUDE_DIR}/crypto/base64_url.hpp
-        ${LIB_INCLUDE_DIR}/crypto/brotli.hpp
-        ${LIB_INCLUDE_DIR}/crypto/gzip.hpp
-        ${LIB_INCLUDE_DIR}/crypto/encoded_word.hpp
+        uri/parser/constants.hpp
+        uri/parser/parse_uri.hpp
+        uri/parser/parse_scheme.hpp
+        uri/parser/parse_authority.hpp
+        uri/parser/parse_authority_pieces.hpp
+        uri/parser/parse_credentials.hpp
+        uri/parser/parse_host.hpp
+        uri/parser/parse_domain.hpp
+        uri/parser/parse_port.hpp
+        uri/parser/parse_path.hpp
+        uri/parser/parse_fragment.hpp
+        uri/parser/iiequals.hpp
+        uri/parser/uri_helpers.hpp
+        uri/parser/windows_drive_letter.hpp
+        uri/parser/uri_components.hpp
+        uri/parser/uri_components_encoding.hpp
+        uri/parser/special_schemes.hpp
+        uri/parser/host_ip.hpp
+        uri/uri_status.hpp
+        uri/encoding.hpp
+        uri/credentials.hpp
+        uri/fragment.hpp
+        uri/host.hpp
+        uri/host_authority.hpp
+        uri/path.hpp
+        uri/path_traverser.hpp
+        uri/port.hpp
+        uri/queries.hpp
+        uri/scheme.hpp
+        uri/uri.hpp
+        uri/uri_string.hpp
+        uri/domain.hpp
+        uri/idna/idna_mappings.hpp
+        uri/idna/idna_to_ascii.hpp
+        uri/idna/punycodes.hpp
+        uri/idna/details/idna_mapping_table.hpp
 
-        ${LIB_INCLUDE_DIR}/http/routes/dynamic_router.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/dynamic_route.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/static_router.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/router_concepts.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/valve_traits.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/logical_valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/grouping_valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/member_function_valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/path_valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/methods.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/path.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/tpath.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/context.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/number.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/disabler.hpp
+        crypto/base64.hpp
+        crypto/base64_url.hpp
+        crypto/brotli.hpp
+        crypto/gzip.hpp
+        crypto/encoded_word.hpp
 
-        ${LIB_INCLUDE_DIR}/http/bodies/json.hpp
-        ${LIB_INCLUDE_DIR}/http/bodies/string.hpp
-        ${LIB_INCLUDE_DIR}/http/bodies/file.hpp
+        http/routes/dynamic_router.hpp
+        http/routes/dynamic_route.hpp
+        http/routes/static_router.hpp
+        http/routes/router_concepts.hpp
+        http/routes/valves.hpp
+        http/routes/valve_traits.hpp
+        http/routes/logical_valves.hpp
+        http/routes/grouping_valves.hpp
+        http/routes/member_function_valves.hpp
+        http/routes/path_valves.hpp
+        http/routes/methods.hpp
+        http/routes/path.hpp
+        http/routes/tpath.hpp
+        http/routes/context.hpp
+        http/routes/number.hpp
+        http/routes/disabler.hpp
 
-        ${LIB_INCLUDE_DIR}/cgi/cgi.hpp
-        ${LIB_INCLUDE_DIR}/cgi/cgi_request.hpp
-        ${LIB_INCLUDE_DIR}/cgi/cgi_request_body_communicator.hpp
+        http/bodies/json.hpp
+        http/bodies/string.hpp
+        http/bodies/file.hpp
 
-        ${LIB_INCLUDE_DIR}/hub/limits.hpp
-        ${LIB_INCLUDE_DIR}/hub/self_hosted.hpp
-        ${LIB_INCLUDE_DIR}/hub/self_hosted_request.hpp
-        ${LIB_INCLUDE_DIR}/hub/self_hosted_session_manager.hpp
+        cgi/cgi.hpp
+        cgi/cgi_request.hpp
+        cgi/cgi_request_body_communicator.hpp
 
-        ${LIB_INCLUDE_DIR}/fcgi/fcgi.hpp
-        ${LIB_INCLUDE_DIR}/fcgi/fcgi_request.hpp
-        ${LIB_INCLUDE_DIR}/fcgi/fcgi_protocols.hpp
-        ${LIB_INCLUDE_DIR}/fcgi/fcgi_manager.hpp
+        hub/limits.hpp
+        hub/self_hosted.hpp
+        hub/self_hosted_request.hpp
+        hub/self_hosted_session_manager.hpp
 
-        ${LIB_INCLUDE_DIR}/beast/beast.hpp
-        ${LIB_INCLUDE_DIR}/beast/beast_request.hpp
-        ${LIB_INCLUDE_DIR}/beast/beast_server.hpp
-        ${LIB_INCLUDE_DIR}/beast/beast_body_communicator.hpp
-        ${LIB_INCLUDE_DIR}/beast/beast_string_body.hpp
+        fcgi/fcgi.hpp
+        fcgi/fcgi_request.hpp
+        fcgi/fcgi_protocols.hpp
+        fcgi/fcgi_manager.hpp
 
-        ${LIB_INCLUDE_DIR}/http/protocol/common_http_protocol.hpp
+        beast/beast.hpp
+        beast/beast_request.hpp
+        beast/beast_server.hpp
+        beast/beast_body_communicator.hpp
+        beast/beast_string_body.hpp
 
-        ${LIB_INCLUDE_DIR}/http/response_body.hpp
-        ${LIB_INCLUDE_DIR}/http/body.hpp
-        ${LIB_INCLUDE_DIR}/http/server.hpp
-        ${LIB_INCLUDE_DIR}/http/request_view.hpp
-        ${LIB_INCLUDE_DIR}/http/request_body.hpp
-        ${LIB_INCLUDE_DIR}/http/header_fields.hpp
-        ${LIB_INCLUDE_DIR}/http/headers.hpp
-        ${LIB_INCLUDE_DIR}/http/request_headers.hpp
-        ${LIB_INCLUDE_DIR}/http/response_headers.hpp
-        ${LIB_INCLUDE_DIR}/http/http_concepts.hpp
-        ${LIB_INCLUDE_DIR}/http/body_concepts.hpp
-        ${LIB_INCLUDE_DIR}/http/response.hpp
-        ${LIB_INCLUDE_DIR}/http/app_wrapper.hpp
-        ${LIB_INCLUDE_DIR}/http/http.hpp
-        ${LIB_INCLUDE_DIR}/http/mime_types.hpp
-        ${LIB_INCLUDE_DIR}/http/status_code.hpp
-        ${LIB_INCLUDE_DIR}/http/http_version.hpp
-        ${LIB_INCLUDE_DIR}/http/verbs.hpp
-        ${LIB_INCLUDE_DIR}/http/request.hpp
+        http/protocol/common_http_protocol.hpp
 
-        ${LIB_INCLUDE_DIR}/application/application_concepts.hpp
+        http/response_body.hpp
+        http/body.hpp
+        http/server.hpp
+        http/request_view.hpp
+        http/request_body.hpp
+        http/header_fields.hpp
+        http/headers.hpp
+        http/request_headers.hpp
+        http/response_headers.hpp
+        http/http_concepts.hpp
+        http/body_concepts.hpp
+        http/response.hpp
+        http/app_wrapper.hpp
+        http/http.hpp
+        http/mime_types.hpp
+        http/status_code.hpp
+        http/http_version.hpp
+        http/verbs.hpp
+        http/request.hpp
 
-        ${LIB_INCLUDE_DIR}/http/codec/common.hpp
-        ${LIB_INCLUDE_DIR}/http/codec/request_parser.hpp
-        ${LIB_INCLUDE_DIR}/http/codec/http_lexer.hpp
-        ${LIB_INCLUDE_DIR}/http/codec/tokens.hpp
+        application/application_concepts.hpp
 
-        ${LIB_INCLUDE_DIR}/http/headers/header_concepts.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/accept_encoding.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/content_encoding.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/content_type.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/keep_alive.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/accept.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/allow.hpp
+        http/codec/common.hpp
+        http/codec/request_parser.hpp
+        http/codec/http_lexer.hpp
+        http/codec/tokens.hpp
 
-        ${LIB_INCLUDE_DIR}/http/cookies/cookie.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/request_cookie.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/response_cookie.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/cookie_jar.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/request_cookie_jar.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/response_cookie_jar.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/cookies_concepts.hpp
-        ${LIB_INCLUDE_DIR}/http/cookies/cookie_extensions.hpp
+        http/headers/header_concepts.hpp
+        http/headers/accept_encoding.hpp
+        http/headers/content_encoding.hpp
+        http/headers/content_type.hpp
+        http/headers/keep_alive.hpp
+        http/headers/accept.hpp
+        http/headers/allow.hpp
 
-        ${LIB_INCLUDE_DIR}/logs/log_concepts.hpp
-        ${LIB_INCLUDE_DIR}/logs/spdlog_logger.hpp
-        ${LIB_INCLUDE_DIR}/logs/std_logger.hpp
-        ${LIB_INCLUDE_DIR}/logs/default_logger.hpp
-        ${LIB_INCLUDE_DIR}/logs/dynamic_logger.hpp
-        ${LIB_INCLUDE_DIR}/logs/void_logger.hpp
+        http/cookies/cookie.hpp
+        http/cookies/request_cookie.hpp
+        http/cookies/response_cookie.hpp
+        http/cookies/cookie_jar.hpp
+        http/cookies/request_cookie_jar.hpp
+        http/cookies/response_cookie_jar.hpp
+        http/cookies/cookies_concepts.hpp
+        http/cookies/cookie_extensions.hpp
 
-        ${LIB_INCLUDE_DIR}/concurrency/atomic_counter.hpp
-        ${LIB_INCLUDE_DIR}/concurrency/task_manager.hpp
-        ${LIB_INCLUDE_DIR}/concurrency/thread_pool.hpp
+        logs/log_concepts.hpp
+        logs/spdlog_logger.hpp
+        logs/std_logger.hpp
+        logs/default_logger.hpp
+        logs/dynamic_logger.hpp
+        logs/void_logger.hpp
 
-        ${LIB_INCLUDE_DIR}/json/json_concepts.hpp
-        ${LIB_INCLUDE_DIR}/json/defaultjson.hpp
-        ${LIB_INCLUDE_DIR}/json/json_common.hpp
-        ${LIB_INCLUDE_DIR}/json/rapidjson.hpp
+        concurrency/atomic_counter.hpp
+        concurrency/task_manager.hpp
+        concurrency/thread_pool.hpp
 
-        ${LIB_INCLUDE_DIR}/db/sql_concepts.hpp
-        ${LIB_INCLUDE_DIR}/db/sql_database.hpp
-        ${LIB_INCLUDE_DIR}/db/sql_statement.hpp
-        ${LIB_INCLUDE_DIR}/db/sql_row.hpp
-        ${LIB_INCLUDE_DIR}/db/sql_cell.hpp
-        ${LIB_INCLUDE_DIR}/db/sql_column.hpp
-        ${LIB_INCLUDE_DIR}/db/query_builder.hpp
-        ${LIB_INCLUDE_DIR}/db/sqlite/sqlite.hpp
-        ${LIB_INCLUDE_DIR}/db/sqlite/sqlite_connection.hpp
-        ${LIB_INCLUDE_DIR}/db/sqlite/sqlite_statement.hpp
-        ${LIB_INCLUDE_DIR}/db/sqlite/sqlite_grammar.hpp
+        json/json_concepts.hpp
+        json/defaultjson.hpp
+        json/json_common.hpp
+        json/rapidjson.hpp
 
-        ${LIB_INCLUDE_DIR}/storage/file.hpp
-        ${LIB_INCLUDE_DIR}/storage/embedded_file.hpp
-        ${LIB_INCLUDE_DIR}/storage/cache.hpp
-        ${LIB_INCLUDE_DIR}/storage/cache_concepts.hpp
-        ${LIB_INCLUDE_DIR}/storage/lru_cache.hpp
-        ${LIB_INCLUDE_DIR}/storage/null_gate.hpp
-        ${LIB_INCLUDE_DIR}/storage/file_gate.hpp
-        ${LIB_INCLUDE_DIR}/storage/directory_gate.hpp
-        ${LIB_INCLUDE_DIR}/storage/memory_gate.hpp
-        ${LIB_INCLUDE_DIR}/storage/non_evicting_cache.hpp
-        ${LIB_INCLUDE_DIR}/storage/unified_caches.hpp
+        db/sql_concepts.hpp
+        db/sql_database.hpp
+        db/sql_statement.hpp
+        db/sql_row.hpp
+        db/sql_cell.hpp
+        db/sql_column.hpp
+        db/query_builder.hpp
+        db/sqlite/sqlite.hpp
+        db/sqlite/sqlite_connection.hpp
+        db/sqlite/sqlite_statement.hpp
+        db/sqlite/sqlite_grammar.hpp
 
-        ${LIB_INCLUDE_DIR}/common/meta.hpp
-        ${LIB_INCLUDE_DIR}/common/os.hpp
-
-        ${LIB_INCLUDE_DIR}/main.hpp
-        ${LIB_INCLUDE_DIR}/webpp.hpp
+        storage/file.hpp
+        storage/embedded_file.hpp
+        storage/cache.hpp
+        storage/cache_concepts.hpp
+        storage/lru_cache.hpp
+        storage/null_gate.hpp
+        storage/file_gate.hpp
+        storage/directory_gate.hpp
+        storage/memory_gate.hpp
+        storage/non_evicting_cache.hpp
+        storage/unified_caches.hpp
         )
+
+set(ALL_SOURCES "")
+foreach (source ${ALL_SOURCES_SHORT})
+    list(APPEND ALL_SOURCES "${LIB_INCLUDE_DIR}/${source}")
+endforeach ()
 
 include(../cmake/common.cmake)
 
 if (VERBOSE)
-    set(ALL_SOURCES_SHORT "")
-    foreach (source ${ALL_SOURCES})
-        string(REPLACE "${PROJECT_SOURCE_DIR}/" "" SOURCE_SHORT ${source})
-        list(APPEND ALL_SOURCES_SHORT ${SOURCE_SHORT})
-    endforeach ()
     string(REPLACE ";" "\n                                    " ALL_SOURCES_SHORT_P "${ALL_SOURCES_SHORT}")
     message(STATUS "Source Files                   : ${ALL_SOURCES_SHORT_P}")
 endif () # verbose
-
-if (SHARED_LIBRARY_EXECUTABLE)
-    include(../cmake/dyn_lib_entry_point.cmake)
-    set_interp_path()
-endif ()
 
 
 add_library(${LIB_NAME} STATIC)
@@ -364,11 +357,6 @@ target_sources(${LIB_NAME} PUBLIC
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::asio
         PUBLIC fmt::fmt
-        # PUBLIC Boost::container
-        # PUBLIC magic_enum::magic_enum
-        # PUBLIC fixed_string::fixed_string
-        # PUBLIC date::date
-        # PUBLIC date::date-tz
         PUBLIC ${PROJECT_NAME}::json
         ${BROTLI_SHARED_LIBS}
         INTERFACE ZLIB::ZLIB
@@ -405,10 +393,8 @@ set_target_properties(${LIB_NAME} PROPERTIES
 target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
         $<INSTALL_INTERFACE:include/${LIB_NAME}>
-
-        # $<BUILD_INTERFACE:${magic_enum_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+        # $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
+        # $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         ${RAPIDJSON_INCLUDE_DIR}
         )
 
@@ -417,28 +403,24 @@ install(TARGETS ${LIB_NAME}
         EXPORT "${LIB_NAME}Config"
         FILE_SET HEADERS
         DESTINATION include/webpp
-        # LIBRARY DESTINATION ${INSTALL_LIBDIR}
-        # ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-        # RUNTIME DESTINATION ${INSTALL_BINDIR}
-        # INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
         )
-export(TARGETS ${LIB_NAME}
-        NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"
-        )
-install(EXPORT "${LIB_NAME}Config"
-        FILE "${LIB_NAME}Config.cmake"
-        NAMESPACE ${PROJECT_NAME}::
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/${LIB_NAME}"
-        )
+#export(TARGETS ${LIB_NAME}
+#        NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
+#        FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"
+#        )
+#install(EXPORT "${LIB_NAME}Config"
+#        FILE "${LIB_NAME}Config.cmake"
+#        NAMESPACE ${PROJECT_NAME}::
+#        DESTINATION "${CMAKE_INSTALL_DATADIR}/${LIB_NAME}"
+#        )
 
 
 ############################## install the include files ##############################
 # we do this, so the files would be only copied only on install command not every time.
-set(ALL_EXTENSIONS ";.h")
-get_filename_component(HEADER_FUNCTIONS_FILE ../cmake/header_functions.cmake REALPATH)
-install(CODE "include(${HEADER_FUNCTIONS_FILE})")
-install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/include\" \"${ALL_EXTENSIONS}\")")
+#set(ALL_EXTENSIONS ";.h")
+#get_filename_component(HEADER_FUNCTIONS_FILE ../cmake/header_functions.cmake REALPATH)
+#install(CODE "include(${HEADER_FUNCTIONS_FILE})")
+#install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/include\" \"${ALL_EXTENSIONS}\")")
 #install(
 #  DIRECTORY ${PROJECT_BINARY_DIR}/
 #  DESTINATION include

@@ -4,11 +4,14 @@
 
 inline constexpr auto log_cat = "main";
 
-auto main(int argc, char const** argv) -> int {
-    using namespace webpp::sdk;
+int main(int const argc, char const** argv) {
+    using webpp::dynamic_logger;
+    using webpp::sdk::command_manager;
+    using webpp::sdk::output_port;
+    using webpp::sdk::stdout_output_port;
 
-    webpp::dynamic_logger const               logger;
-    webpp::stl::shared_ptr<output_port> const output = webpp::stl::make_shared<stdout_output_port>();
+    dynamic_logger const logger;
+    auto const           output = std::make_shared<stdout_output_port>();
     try {
         command_manager manager{output, logger};
         auto const      cmd_res = manager.run_command(argc, argv);

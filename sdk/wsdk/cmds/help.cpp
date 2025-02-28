@@ -8,24 +8,16 @@
 #include <webpp/std/utility.hpp>
 
 inline constexpr auto log_cat = "helps";
-
-using namespace webpp::sdk;
-
-std::string_view help_command::name() const noexcept {
-    return "help";
-}
-
-std::string_view help_command::desc() const noexcept {
-    return "Get the help you need.";
-}
+using webpp::sdk::command_options;
+using webpp::sdk::command_status;
 
 enum struct available_helps : std::uint16_t {
     none          = 0x0,
-    all           = 0xffffu, // print all help commands
-    root_commands = 0x0001u
+    all           = 0xFFFFU, // print all help commands
+    root_commands = 0x0001U
 };
 
-command_status help_command::start(command_options options) {
+command_status webpp::sdk::help_cmd(command_options options) {
     using enum available_helps;
 
     using helps_integer = stl::underlying_type_t<available_helps>;
@@ -53,18 +45,18 @@ command_status help_command::start(command_options options) {
         };
         while (helps != 0x0) {
             // print all of them
-            if (helps & stl::to_underlying(all)) {
+            if ((helps & stl::to_underlying(all)) != 0) {
                 return help_all(stl::move(options));
-            } else {
-                // check each one of them and print their helps
-                for (auto&& [help_cmd, action] : actions) {
-                    if (helps & stl::to_underlying(help_cmd)) {
-                        // run the help action
-                        if (auto const res = stl::invoke(action, options); res != command_status::success) {
-                            return res;
-                        }
-                        helps &= stl::to_underlying(help_cmd); // remove it
+            }
+
+            // check each one of them and print their helps
+            for (auto&& [help_cmd, action] : actions) {
+                if ((helps & stl::to_underlying(help_cmd)) != 0) {
+                    // run the help action
+                    if (auto const res = stl::invoke(action, options); res != command_status::success) {
+                        return res;
                     }
+                    helps &= stl::to_underlying(help_cmd); // remove it
                 }
             }
         }
@@ -77,25 +69,26 @@ command_status help_command::start(command_options options) {
     return command_status::success;
 }
 
-command_status help_command::help_all(command_options options) {
+command_status webpp::sdk::help_all(command_options options) {
     using enum command_status;
-    for (auto cmd_ptr : {&help_command::help_root_commands}) {
-        if (auto res = stl::invoke(cmd_ptr, options); res != success) {
+    for (auto cmd_ptr : {&webpp::sdk::help_root_commands}) {
+        if (auto const res = std::invoke(cmd_ptr, options); res != success) {
             return res;
         }
     }
     return success;
 }
 
-command_status help_command::help_root_commands(command_options& options) {
+command_status webpp::sdk::help_root_commands(command_options& options) {
+    using std::string_view;
     using enum command_status;
     using namespace std::string_view_literals;
 
-    static constexpr stl::array<stl::pair<stl::string_view, stl::string_view>, 2> root_commands_table{
-      stl::pair{"new / create [something]"sv, "create a new [something]"sv}, // row 1
+    static constexpr std::array<std::pair<string_view, string_view>, 2> root_commands_table{
+      std::pair{"new / create [something]"sv, "create a new [something]"sv}, // row 1
       {          "help [something]",               "Get the help"}  // row 2
     };
 
-    options.output().send_table("Root Commands", row_view{root_commands_table});
+    options.output().send_table("Root Commands", webpp::sdk::row_view{root_commands_table});
     return success;
 }

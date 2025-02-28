@@ -6,30 +6,28 @@
 
 #include <algorithm>
 #include <iostream>
-using namespace webpp::sdk;
+using webpp::sdk::stdout_output_port;
 
-void stdout_output_port::notify(stl::string_view str) {
-    std::cout << str << stl::flush;
+void stdout_output_port::notify(std::string_view str) {
+    std::cout << str << std::flush;
 }
 
 void stdout_output_port::send_table(std::string_view name, row_view rows) {
-    using namespace std;
-
     int const sub_col_width =
-      static_cast<int>(max_element(rows.begin(), rows.end(), [](auto const& row1, auto const& row2) {
+      static_cast<int>(std::max_element(rows.begin(), rows.end(), [](auto const& row1, auto const& row2) {
                            return row1.first.size() < row2.first.size();
                        })->first.size());
 
     int const desc_col_width = console::width() - sub_col_width - 2;
 
     // Print the title
-    cout << "[" << name << "]:" << endl;
+    std::cout << "[" << name << "]:" << '\n';
 
     for (auto&& [subject, desc] : rows) {
-        cout << right << setw(sub_col_width) << subject << ": " // subject
-             << left << setw(desc_col_width) << desc            // description
-             << "\n";
+        std::cout << std::right << std::setw(sub_col_width) << subject << ": " // subject
+                  << std::left << std::setw(desc_col_width) << desc            // description
+                  << '\n';
     }
 
-    cout << endl;
+    std::cout << '\n';
 }

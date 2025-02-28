@@ -6,16 +6,19 @@
 #include <iterator>
 #include <webpp/strings/join.hpp>
 
-inline constexpr auto log_cat = "command";
+using std::string;
+using std::string_view;
+using webpp::dynamic_logger;
+using webpp::sdk::command_manager;
+using webpp::sdk::command_status;
 
-using namespace webpp::sdk;
-using namespace webpp;
+inline constexpr auto log_cat = "cmd";
 
-command_manager::command_manager(stl::shared_ptr<output_port> inp_output, dynamic_logger inp_logger)
-  : output{stl::move(inp_output)},
-    logger{stl::move(inp_logger)} {}
+command_manager::command_manager(std::shared_ptr<output_port> inp_output, dynamic_logger inp_logger)
+  : output{std::move(inp_output)},
+    logger{std::move(inp_logger)} {}
 
-stl::string_view webpp::sdk::to_string(command_status status) noexcept {
+string_view webpp::sdk::to_string(command_status status) noexcept {
     using enum command_status;
     switch (status) {
         // success status:
@@ -26,12 +29,14 @@ stl::string_view webpp::sdk::to_string(command_status status) noexcept {
             // failures:
         case unknown_error: return "Failed: Unknown error happened while trying to run a command.";
         case invalid_command: return "Failed: the specified command is invalid.";
+        default: break;
     }
-    stl::unreachable();
+    return "<unknown command status>";
 }
 
-command_status command_manager::run_command(stl::string_view cmd_str) {
+command_status command_manager::run_command(string_view cmd_str) {
     using enum command_status;
+    using std::array;
 
     command_options cmd{cmd_str, output, logger};
 
@@ -39,24 +44,21 @@ command_status command_manager::run_command(stl::string_view cmd_str) {
     if (cmd.tokenizer().next(WHITESPACES)) {
         auto const root_cmd_str = cmd.tokenizer().token();
         if (root_cmd_str == "create" || root_cmd_str == "new") {
-            create_command crt_cmd;
-            return crt_cmd.start(stl::move(cmd));
-        } else if (root_cmd_str == "help") {
-            help_command help_cmd;
-            return help_cmd.start(stl::move(cmd));
-        } else {
-            this->logger.error(
-              log_cat,
-              stl::format("The string '{}' in the specified command '{}' is not a valid root command.",
-                          root_cmd_str,
-                          cmd_str));
-            return invalid_command;
+            return create_cmd(std::move(cmd));
         }
-
-    } else {
-        this->logger.warning(log_cat, "You've tried to run an empty command that does nothing.");
-        return empty_command;
+        if (root_cmd_str == "help" || root_cmd_str == "--help") {
+            return help_cmd(std::move(cmd));
+        }
+        this->logger.error(
+          log_cat,
+          format("The string '{}' in the specified command '{}' is not a valid root command.",
+                 root_cmd_str,
+                 cmd_str));
+        return invalid_command;
     }
+
+    this->logger.warning(log_cat, "You've tried to run an empty command that does nothing.");
+    return empty_command;
 }
 
 command_status command_manager::run_command(int argc, char const** argv) {
@@ -65,22 +67,20 @@ command_status command_manager::run_command(int argc, char const** argv) {
         return empty_command;
     }
 
-    stl::advance(argv, 1); // skip the first one
+    std::advance(argv, 1); // skip the first one
     --argc;
     try {
-        stl::string command{};
-
-        command += *argv;
-        stl::advance(argv, 1); // next argument
+        string command = *argv;
+        std::advance(argv, 1); // next argument
         --argc;
 
         for (; argc != 0 && *argv; --argc) {
             command += ' ';
             command += *argv;
-            stl::advance(argv, 1); // next argument
+            std::advance(argv, 1); // next argument
         }
 
-        return run_command(stl::string_view{command.data(), command.size()});
+        return run_command(string_view{command.data(), command.size()});
     } catch (...) {
         this->logger.error(log_cat, "Unknown Error while handling the command line arguments.");
         return unknown_error;

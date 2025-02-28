@@ -20,7 +20,7 @@ namespace webpp::sdk {
     };
 
     /// Get the string message of the command status
-    stl::string_view to_string(command_status status) noexcept;
+    std::string_view to_string(command_status status) noexcept;
     int              to_exit_status(command_status) noexcept;
 
     struct command {
@@ -32,10 +32,10 @@ namespace webpp::sdk {
         virtual ~command()                          = default;
 
         /// Get the command's name
-        [[nodiscard]] virtual stl::string_view name() const noexcept = 0;
+        [[nodiscard]] virtual std::string_view name() const noexcept = 0;
 
         /// Get the command's description
-        [[nodiscard]] virtual stl::string_view desc() const noexcept = 0;
+        [[nodiscard]] virtual std::string_view desc() const noexcept = 0;
 
 
         virtual command_status start(command_options) = 0;
@@ -47,7 +47,7 @@ namespace webpp::sdk {
      * to run your commands
      */
     struct command_manager {
-        command_manager(stl::shared_ptr<output_port> inp_output = stl::make_shared<stdout_output_port>(),
+        command_manager(std::shared_ptr<output_port> inp_output = std::make_shared<stdout_output_port>(),
                         dynamic_logger               logger     = {});
         command_manager(command_manager&&) noexcept            = default;
         command_manager(command_manager const&)                = delete;
@@ -59,10 +59,10 @@ namespace webpp::sdk {
         command_status run_command(int argc, char const** argv);
 
         // run a command from a string view
-        command_status run_command(stl::string_view);
+        command_status run_command(std::string_view);
 
       private:
-        stl::shared_ptr<output_port> output;
+        std::shared_ptr<output_port> output;
         dynamic_logger               logger;
     };
 
