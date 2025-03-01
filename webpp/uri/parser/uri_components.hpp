@@ -1108,8 +1108,10 @@ namespace webpp::uri {
 
     template <ParsingURIContext CtxT>
     constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
-        auto& path_comp = get_component<components::path>(ctx);
-        path_comp.set_opaque(is_opaque_path);
+        if constexpr (!CtxT::is_modifiable && !CtxT::is_segregated) {
+            auto& path_comp = get_component<components::path>(ctx);
+            path_comp.set_opaque(is_opaque_path);
+        }
     }
 
 } // namespace webpp::uri
