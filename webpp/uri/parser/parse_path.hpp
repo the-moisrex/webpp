@@ -359,7 +359,7 @@ namespace webpp::uri {
 
         set_opaque(ctx, false);
 
-        auto     buffer  = get_buffer(get_component<components::path>(ctx));
+        auto     buffer  = get_buffer<components::path>(ctx);
         auto&    out     = get_storage<components::path>(ctx);
         iterator seg_beg = ctx.pos;
 

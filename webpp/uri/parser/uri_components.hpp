@@ -48,9 +48,11 @@ namespace webpp::uri {
     concept SegregatedOutput =
       (istl::LinearContainer<T> && !istl::String<T>) || requires { requires T::is_segregated; };
 
+    /// Path can be a vector
     template <typename T>
     concept VectorOutput = istl::LinearContainer<T> && !istl::MapContainer<T> && !istl::String<T>;
 
+    /// Queries can be a map
     template <typename T>
     concept MapOutput = istl::LinearContainer<T> && !istl::MapContainer<T> && !istl::String<T>;
 
@@ -389,6 +391,11 @@ namespace webpp::uri {
                 return {};
             }
             return view<StrT>(fragment_start, uri_end - fragment_start);
+        }
+
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT hostname() const noexcept(!istl::ModifiableString<StrT>) {
+            return get_hostname<StrT>();
         }
     };
 
@@ -975,7 +982,7 @@ namespace webpp::uri {
     } // namespace details
 
     template <components Comp, ParsingURIContext CtxT>
-    [[nodiscard]] constexpr auto& get_component(CtxT& ctx) noexcept {
+    [[nodiscard]] constexpr decltype(auto) get_component(CtxT& ctx) noexcept {
         if constexpr (single_component<CtxT>) {
             if constexpr (Comp == CtxT::component) {
                 return istl::deptr(ctx.out);

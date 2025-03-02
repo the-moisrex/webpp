@@ -29,14 +29,15 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::set_component_value;
         using details::validate_percent_encode;
+        using enum uri_status;
+
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
 
         if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, uri_status::valid);
+            set_valid(ctx.status, valid);
             return;
         }
-
 
         auto const seg_beg = ctx.pos;
         auto&      out     = get_storage<components::fragment>(ctx);
@@ -50,10 +51,10 @@ namespace webpp::uri {
                     break;
                 default: break;
             }
-            set_warning(ctx.status, uri_status::invalid_character);
+            set_warning(ctx.status, invalid_character);
         }
         set_component_value<components::fragment>(ctx, seg_beg);
-        set_valid(ctx.status, uri_status::valid);
+        set_valid(ctx.status, valid);
     }
 
 } // namespace webpp::uri

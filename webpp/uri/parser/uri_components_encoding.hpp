@@ -24,7 +24,7 @@ namespace webpp::uri::details {
     template <typename T, typename CtxT>
     concept CtxBufferOf =
       ParsingURIContext<CtxT> &&
-      (istl::part_of<T,
+      (istl::part_of<stl::remove_cvref_t<T>,
                      typename CtxT::map_value_type,
                      typename CtxT::vec_iterator,
                      typename CtxT::iterator,
