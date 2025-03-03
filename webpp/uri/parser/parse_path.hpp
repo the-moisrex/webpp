@@ -98,7 +98,7 @@ namespace webpp::uri {
                 for (; cur != beg && *cur != '/'; --cur) {
                     ++slash_loc;
                 }
-                pop_back(ctx, out, buffer, slash_loc);
+                pop_back(ctx, out, buffer, seg_beg, slash_loc);
             } else {
                 pop_back(ctx, out, buffer, seg_beg);
             }
