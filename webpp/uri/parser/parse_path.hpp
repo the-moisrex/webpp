@@ -18,7 +18,7 @@ namespace webpp::uri {
           CtxT&                    ctx,
           OutT&                    out,
           CtxBufferOf<CtxT> auto&  buffer,
-          CtxBufferOf<CtxT> auto&  beg,
+          typename CtxT::iterator& beg,
           typename CtxT::char_type separator,
           diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
             if constexpr (SegregatedOutput<OutT>) {

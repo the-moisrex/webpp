@@ -26,9 +26,7 @@ namespace webpp::uri {
         typename T::base_seg_type;
         typename T::base_type;
         typename T::char_type;
-        typename T::map_value_type;
         typename T::vec_iterator;
-        typename T::map_iterator;
 
         T::is_nothrow;
         T::is_modifiable;
@@ -99,8 +97,6 @@ namespace webpp::uri {
     struct uri_components<SegType, Iter> {
         using seg_type       = SegType;
         using iterator       = Iter;
-        using map_iterator   = seg_type*;
-        using map_value_type = seg_type;
         using vec_iterator   = seg_type*;
 
         /// maximum number that this url component class supports
@@ -406,8 +402,6 @@ namespace webpp::uri {
         using seg_type       = string_type;
         using char_type      = typename string_type::value_type;
         using size_type      = typename string_type::size_type;
-        using map_iterator   = seg_type*;
-        using map_value_type = seg_type;
         using vec_iterator   = seg_type*;
 
         /// maximum number that this url component class supports
@@ -497,12 +491,7 @@ namespace webpp::uri {
         using iterator     = typename string_type::const_iterator;
         using char_type    = typename string_type::value_type;
         using size_type    = typename string_type::size_type;
-        using map_iterator = typename map_type::iterator;
         using vec_iterator = typename vec_type::iterator;
-
-        // map_type::value_type is const, we need a modifiable name
-        using map_value_type = stl::pair<typename map_type::key_type, typename map_type::mapped_type>;
-
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
@@ -710,11 +699,7 @@ namespace webpp::uri {
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = uri_status_type;
-
-        using map_iterator   = typename clean_out_type::map_iterator;
-        using vec_iterator   = typename clean_out_type::vec_iterator;
-        using map_value_type = typename clean_out_type::map_value_type;
-
+        using vec_iterator    = typename clean_out_type::vec_iterator;
 
         static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -757,27 +742,19 @@ namespace webpp::uri {
 
         template <typename T>
         struct extract_types_from_out_type {
-            using map_iterator   = T*;
-            using vec_iterator   = T*;
-            using map_value_type = T;
+            using vec_iterator = T*;
         };
 
         template <typename T>
             requires istl::LinearContainer<T>
         struct extract_types_from_out_type<T> {
-            using map_iterator   = T*;
-            using vec_iterator   = typename T::iterator;
-            using map_value_type = T;
+            using vec_iterator = typename T::iterator;
         };
 
         template <typename T>
             requires istl::MapContainer<T>
         struct extract_types_from_out_type<T> {
-            using map_iterator = typename T::iterator;
             using vec_iterator = T*;
-
-            // map_type::value_type is const, we need a modifiable name
-            using map_value_type = stl::pair<typename T::key_type, typename T::mapped_type>;
         };
     } // namespace details
 

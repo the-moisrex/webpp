@@ -32,11 +32,7 @@ namespace webpp::uri {
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = uri_status_type;
-
-        using map_iterator   = typename clean_out_type::map_iterator;
-        using vec_iterator   = typename clean_out_type::vec_iterator;
-        using map_value_type = typename clean_out_type::map_value_type;
-
+        using vec_iterator    = typename clean_out_type::vec_iterator;
 
         static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -81,17 +77,11 @@ namespace webpp::uri {
         using iterator     = typename string_type::const_iterator;
         using char_type    = typename string_type::value_type;
         using size_type    = typename string_type::size_type;
-        using map_iterator = typename map_type::iterator;
         using vec_iterator = typename vec_type::iterator;
 
-        // map_type::value_type is const, we need a modifiable name
-        using map_value_type = stl::pair<typename map_type::key_type, typename map_type::mapped_type>;
-
         /// is resetting the values are noexcept or not
-        static constexpr bool is_nothrow = false;
-
+        static constexpr bool is_nothrow    = false;
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-
         static constexpr bool is_segregated = true;
 
       private:

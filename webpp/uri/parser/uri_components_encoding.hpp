@@ -16,21 +16,16 @@ namespace webpp::uri::details {
 
 
     /// if it's segregated:
-    ///   if it's modifiable queries, map::value_type (pair<string, string>),
     ///   if it's modifiable path, vector::iterator
-    /// else if it's not segregated but still modifiable:
-    ///   vec_iterator which is seg_type*
+    /// else if modifiable, a simple string:
     /// otherwise, nothing_type
     template <typename T, typename CtxT>
-    concept CtxBufferOf =
-      ParsingURIContext<CtxT> &&
-      (istl::part_of<stl::remove_cvref_t<T>,
-                     typename CtxT::map_value_type,
-                     typename CtxT::vec_iterator,
-                     typename CtxT::iterator,
-                     istl::nothing_type> ||
-       istl::String<T>);
-
+    concept CtxBufferOf = ParsingURIContext<CtxT> && (requires {
+                              requires requires {
+                                  typename CtxT::vec_iterator;
+                                  requires istl::cvref_as<T, typename CtxT::vec_iterator>;
+                              } || istl::cvref_as<T, istl::nothing_type>;
+                          } || istl::String<T>);
 
     template <typename T, typename CtxT>
     concept CtxModifiableBuffer = CtxBufferOf<T, CtxT> && CtxT::is_modifiable && istl::String<T>;
@@ -39,7 +34,7 @@ namespace webpp::uri::details {
     concept CtxModifiableStringOutput = ParsingURIContext<CtxT> && CtxT::is_modifiable && istl::String<T>;
 
     template <typename T, typename CtxT>
-    concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::map_value_type>;
+    concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && istl::cvref_as<T, typename CtxT::map_value_type>;
 
     template <typename T, typename CtxT>
     concept CtxVectorBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::vec_iterator>;
@@ -129,17 +124,16 @@ namespace webpp::uri::details {
       CtxT&                                ctx,
       [[maybe_unused]] CharSet auto const& policy_chars,
       CharSet auto const&                  invalid_chars,
-      [[maybe_unused]] bool const          in_value,
       BufT&                                buffer) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxT::is_modifiable && CtxMappedBuffer<BufT, CtxT>) {
+        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             return encode_uri_component<uri_encoding_policy::encode_chars>(
               ctx.pos,
               ctx.end,
-              !in_value ? buffer.first : buffer.second,
+              buffer,
               policy_chars,
               invalid_chars);
         } else {
-            return encode_or_validate(ctx, policy_chars, invalid_chars);
+            return encode_or_validate(ctx, buffer, policy_chars, invalid_chars);
         }
     }
 
@@ -202,13 +196,13 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT>
-    [[nodiscard]] static constexpr bool is_segment_empty(CtxT& ctx, CtxBufferOf<CtxT> auto beg) noexcept {
+    [[nodiscard]] static constexpr bool is_segment_empty(CtxT& ctx, typename CtxT::iterator beg) noexcept {
         return beg == ctx.pos;
     }
 
-    template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-    static constexpr void reset_segment_start(CtxT ctx, BufT& beg) noexcept {
-        if constexpr (CtxVectorBuffer<BufT, CtxT> || CtxT::is_modifiable) {
+    template <ParsingURIContext CtxT>
+    static constexpr void reset_segment_start(CtxT ctx, typename CtxT::iterator& beg) noexcept {
+        if constexpr (CtxT::is_modifiable) {
             reset_begin(ctx, beg);
         }
     }

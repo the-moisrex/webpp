@@ -17,7 +17,7 @@ namespace webpp::uri {
         set_query_name(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
-                istl::assign(buffer.first, seg_beg, ctx.pos);
+                istl::assign(buffer, seg_beg, ctx.pos);
             }
         }
 
@@ -26,7 +26,7 @@ namespace webpp::uri {
         set_query_value(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
-                istl::assign(buffer.second, seg_beg, ctx->pos);
+                istl::assign(buffer, seg_beg, ctx->pos);
                 seg_beg = ctx->pos + 1;
             }
         }
@@ -38,25 +38,26 @@ namespace webpp::uri {
             if constexpr (CtxMappedBuffer<BufT, CtxT>) {
                 if constexpr (!CtxT::is_modifiable) {
                     ctx.pos += count;
-                    istl::assign(buffer.second, seg_beg, ctx.pos);
+                    istl::assign(buffer, seg_beg, ctx.pos);
                 } else {
-                    buffer.second += *ctx.pos;
-                    ctx.pos       += count;
+                    buffer  += *ctx.pos;
+                    ctx.pos += count;
                 }
             }
         }
 
-        template <ParsingURIContext CtxT>
+        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void next_query(
           [[maybe_unused]] CtxT&   ctx,
-          CtxBufferOf<CtxT> auto&  buffer,
+          BufT&                    key_buffer,
+          BufT&                    value_buffer,
           typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxT::is_segregated) {
-                if (!buffer.first.empty() || !buffer.second.empty()) {
-                    get_storage<components::queries>(ctx).emplace(buffer);
+            if constexpr (CtxT::is_segregated && istl::StringLike<BufT>) {
+                if (!key_buffer.empty() || !value_buffer.empty()) {
+                    get_storage<components::queries>(ctx).emplace(key_buffer, value_buffer);
                 }
-                istl::clear(buffer.first);
-                istl::clear(buffer.second);
+                istl::clear(key_buffer);
+                istl::clear(value_buffer);
             }
             reset_begin(ctx, seg_beg);
         }
@@ -92,8 +93,7 @@ namespace webpp::uri {
         using details::skip_separator;
         using details::validate_percent_encode;
 
-        using ctx_type    = CtxT;
-        using buffer_type = typename CtxT::map_value_type;
+        using ctx_type = CtxT;
 
         if (ctx.pos == ctx.end) {
             set_valid(ctx.status, valid);
@@ -110,14 +110,18 @@ namespace webpp::uri {
 
         auto const query_percent_encode_set =
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
-        bool        in_value = false;
-        buffer_type buffer;
-        auto&       out     = get_storage<components::queries>(ctx);
-        auto        seg_beg = ctx.pos;
+        bool  in_value     = false;
+        auto  key_buffer   = get_buffer<components::queries>(ctx);
+        auto  value_buffer = get_buffer<components::queries>(ctx);
+        auto& out          = get_storage<components::queries>(ctx);
+        auto  seg_beg      = ctx.pos;
 
         // find the end of the queries
-        while (
-          !encode_or_validate_map(ctx, query_percent_encode_set, interesting_characters, in_value, buffer))
+        while (!encode_or_validate_map(
+          ctx,
+          query_percent_encode_set,
+          interesting_characters,
+          !in_value ? key_buffer : value_buffer))
         {
             switch (*ctx.pos) {
                 case '#':
@@ -129,7 +133,10 @@ namespace webpp::uri {
                     }
                     break;
                 case '%':
-                    if (!validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
+                    if (!validate_percent_encode<Options.ignore_tabs_or_newlines>(
+                          ctx,
+                          !in_value ? key_buffer : value_buffer))
+                    {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
@@ -141,22 +148,22 @@ namespace webpp::uri {
                 case '=':
                     if (!in_value) {
                         if constexpr (ctx_type::is_segregated) {
-                            set_query_name(ctx, buffer, seg_beg);
+                            set_query_name(ctx, key_buffer, seg_beg);
                         }
                         skip_separator(ctx, out);
                         reset_begin(ctx, seg_beg);
                     } else {
-                        append_query_value(ctx, buffer, 1, seg_beg);
+                        append_query_value(ctx, value_buffer, 1, seg_beg);
                     }
                     in_value = true;
                     continue;
                 case '&':
                     if constexpr (ctx_type::is_segregated) {
-                        set_query_value(ctx, buffer, seg_beg);
+                        set_query_value(ctx, value_buffer, seg_beg);
                         in_value = false;
                     }
                     skip_separator(ctx, out);
-                    next_query(ctx, buffer, seg_beg);
+                    next_query(ctx, key_buffer, value_buffer, seg_beg);
                     continue;
                 [[unlikely]] case '\0':
                     if constexpr (Options.eof_is_valid) {
@@ -188,9 +195,9 @@ namespace webpp::uri {
         }
         if constexpr (ctx_type::is_segregated) {
             if (in_value) {
-                set_query_value(ctx, buffer, seg_beg);
+                set_query_value(ctx, value_buffer, seg_beg);
             } else {
-                set_query_name(ctx, buffer, seg_beg);
+                set_query_name(ctx, key_buffer, seg_beg);
             }
         }
         set_component_value<components::queries>(ctx, seg_beg);
@@ -200,7 +207,7 @@ namespace webpp::uri {
         } else {
             ++ctx.pos;
         }
-        next_query(ctx, buffer, seg_beg);
+        next_query(ctx, key_buffer, value_buffer, seg_beg);
     }
 
 } // namespace webpp::uri

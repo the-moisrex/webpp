@@ -36,7 +36,7 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void end_segment(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& beg)
+    static constexpr void end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator& beg)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
         end_segment(ctx, out, beg, ctx.pos);
     }
@@ -45,11 +45,11 @@ namespace webpp::uri::details {
     /// 2. Set the segment start
     template <ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void next_segment(
-      CtxT&                   ctx,
-      OutT&                   out,
-      CtxBufferOf<CtxT> auto& buffer,
-      CtxBufferOf<CtxT> auto& beg,
-      diff_type_of<CtxT>      sep_count = 1) noexcept(CtxT::is_nothrow) {
+      CtxT&                    ctx,
+      OutT&                    out,
+      CtxBufferOf<CtxT> auto&  buffer,
+      typename CtxT::iterator& beg,
+      diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
         if constexpr (SegregatedOutput<OutT>) {
             if constexpr (CtxT::is_modifiable) {
                 skip_separator(ctx, out, sep_count);
