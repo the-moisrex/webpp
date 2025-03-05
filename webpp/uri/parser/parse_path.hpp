@@ -253,6 +253,23 @@ namespace webpp::uri {
             return true;
         }
 
+        template <ParsingOutput OutT>
+            requires requires(OutT out) { out.set_opaque(true); }
+        constexpr void set_opaque(OutT& path_comp, bool const is_opaque_path) noexcept {
+            path_comp.set_opaque(is_opaque_path);
+        }
+
+        template <typename OutT>
+        constexpr void set_opaque([[maybe_unused]] OutT&      path_comp,
+                                  [[maybe_unused]] bool const is_opaque_path) noexcept {}
+
+        template <ParsingURIContext CtxT>
+        constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
+            if constexpr (!CtxT::is_modifiable && !CtxT::is_segregated) {
+                set_opaque(get_component<components::path>(ctx), is_opaque_path);
+            }
+        }
+
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
@@ -263,6 +280,7 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::end_segment;
         using details::set_component_value;
+        using details::set_opaque;
         using details::start_segment;
         using details::validate_percent_encode;
         using ctx_type = CtxT;
@@ -335,6 +353,7 @@ namespace webpp::uri {
         using details::next_segment_of;
         using details::reset_segment_start;
         using details::set_component_value;
+        using details::set_opaque;
         using details::start_segment;
         using details::validate_percent_encode;
         using ctx_type = CtxT;
