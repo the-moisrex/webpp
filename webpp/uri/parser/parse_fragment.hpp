@@ -39,8 +39,8 @@ namespace webpp::uri {
             return;
         }
 
-        auto const seg_beg = ctx.pos;
-        auto&      out     = get_storage<components::fragment>(ctx);
+        auto const          seg_beg = ctx.pos;
+        ParsingOutput auto& out     = get_storage<components::fragment>(ctx);
 
         while (!encode_or_validate(ctx, out, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
             switch (*ctx.pos) {

@@ -21,11 +21,9 @@ namespace webpp::uri::details {
     /// otherwise, nothing_type
     template <typename T, typename CtxT>
     concept CtxBufferOf = ParsingURIContext<CtxT> && (requires {
-                              requires requires {
-                                  typename CtxT::vec_iterator;
-                                  requires istl::cvref_as<T, typename CtxT::vec_iterator>;
-                              } || istl::cvref_as<T, istl::nothing_type>;
-                          } || istl::String<T>);
+                              typename CtxT::vec_iterator;
+                              requires istl::cvref_as<T, typename CtxT::vec_iterator>;
+                          } || istl::cvref_as<T, istl::nothing_type> || istl::StringLike<T>);
 
     template <typename T, typename CtxT>
     concept CtxModifiableBuffer = CtxBufferOf<T, CtxT> && CtxT::is_modifiable && istl::String<T>;
@@ -35,9 +33,6 @@ namespace webpp::uri::details {
 
     template <typename T, typename CtxT>
     concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && istl::cvref_as<T, typename CtxT::map_value_type>;
-
-    template <typename T, typename CtxT>
-    concept CtxVectorBuffer = CtxBufferOf<T, CtxT> && stl::same_as<T, typename CtxT::vec_iterator>;
 
     /// call this when encoding/decoding is done
     template <components Comp, ParsingURIContext CtxT>
