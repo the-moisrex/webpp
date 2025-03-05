@@ -14,12 +14,16 @@ namespace webpp::uri::details {
 
     template <typename CtxT>
     static constexpr auto& init_string_host(CtxT& ctx) {
-        auto& host = get_component<components::host>(ctx);
-        if constexpr (requires { host.init_domain(); }) {
-            host.init_domain();
-            return *host.as_domain();
+        if constexpr (CtxT::is_modifiable) {
+            auto& host = get_component<components::host>(ctx);
+            if constexpr (requires { host.init_domain(); }) {
+                host.init_domain();
+                return *host.as_domain();
+            } else {
+                return host;
+            }
         } else {
-            return host;
+            return istl::nothing;
         }
     }
 
