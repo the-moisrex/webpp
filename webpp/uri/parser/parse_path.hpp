@@ -105,13 +105,13 @@ namespace webpp::uri {
         }
 
         /// Remove the current segment in a path
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_parsing_options Options, ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void
-        clear_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator seg_beg) noexcept {
+        clear_segment(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg) noexcept {
             using ctx_type = CtxT;
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                 buffer->clear();
-            } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+            } else if constexpr (CtxModifiableBuffer<BufT, CtxT> && !ctx_type::is_segregated) {
                 if constexpr (!Options.ignore_tabs_or_newlines) {
                     auto const length = static_cast<stl::size_t>(ctx.pos - seg_beg);
                     buffer.erase(buffer.size() - length);
@@ -253,21 +253,13 @@ namespace webpp::uri {
             return true;
         }
 
-        template <ParsingOutput OutT>
-            requires requires(OutT out) { out.set_opaque(true); }
-        constexpr void set_opaque(OutT& path_comp, bool const is_opaque_path) noexcept {
-            path_comp.set_opaque(is_opaque_path);
-        }
-
         template <typename OutT>
         constexpr void set_opaque([[maybe_unused]] OutT&      path_comp,
                                   [[maybe_unused]] bool const is_opaque_path) noexcept {}
 
         template <ParsingURIContext CtxT>
         constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
-            if constexpr (!CtxT::is_modifiable && !CtxT::is_segregated) {
-                set_opaque(get_component<components::path>(ctx), is_opaque_path);
-            }
+            set_opaque(get_component<components::path>(ctx), is_opaque_path);
         }
 
     } // namespace details

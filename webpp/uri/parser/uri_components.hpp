@@ -91,9 +91,9 @@ namespace webpp::uri {
      */
     template <stl::integral SegType, typename Iter>
     struct uri_components<SegType, Iter> {
-        using seg_type       = SegType;
-        using iterator       = Iter;
-        using vec_iterator   = seg_type*;
+        using seg_type     = SegType;
+        using iterator     = Iter;
+        using vec_iterator = seg_type*;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -393,12 +393,12 @@ namespace webpp::uri {
 
     template <istl::StringLike StrT, typename Iter>
     struct uri_components<StrT, Iter> {
-        using string_type    = StrT;
-        using iterator       = Iter;
-        using seg_type       = string_type;
-        using char_type      = typename string_type::value_type;
-        using size_type      = typename string_type::size_type;
-        using vec_iterator   = seg_type*;
+        using string_type  = StrT;
+        using iterator     = Iter;
+        using seg_type     = string_type;
+        using char_type    = typename string_type::value_type;
+        using size_type    = typename string_type::size_type;
+        using vec_iterator = seg_type*;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
@@ -830,12 +830,14 @@ namespace webpp::uri {
                 return out.port();
             } else if constexpr (host == Comp) {
                 return out.hostname();
-            } else if constexpr (path == Comp) {
+            } else if constexpr (path == Comp && requires { out.path(); }) {
                 return out.path();
             } else if constexpr (queries == Comp) {
                 return out.queries();
             } else if constexpr (fragment == Comp) {
                 return out.fragment();
+            } else {
+                return istl::unmove(out);
             }
         }
 
@@ -864,23 +866,22 @@ namespace webpp::uri {
         template <components Comp, typename StrVT>
         [[nodiscard]] constexpr auto get_output_view_from(auto& out) noexcept {
             using enum components;
-            using string_view_type = StrVT;
             if constexpr (scheme == Comp) {
-                return out.template get_scheme<string_view_type>();
+                return out.template get_scheme<StrVT>();
             } else if constexpr (username == Comp) {
-                return out.template get_username<string_view_type>();
+                return out.template get_username<StrVT>();
             } else if constexpr (password == Comp) {
-                return out.template get_password<string_view_type>();
+                return out.template get_password<StrVT>();
             } else if constexpr (port == Comp) {
-                return out.template get_port<string_view_type>();
+                return out.template get_port<StrVT>();
             } else if constexpr (host == Comp) {
-                return out.template get_hostname<string_view_type>();
+                return out.template get_hostname<StrVT>();
             } else if constexpr (path == Comp) {
-                return out.template get_path<string_view_type>();
+                return out.template get_path<StrVT>();
             } else if constexpr (queries == Comp) {
-                return out.template get_queries<string_view_type>();
+                return out.template get_queries<StrVT>();
             } else if constexpr (fragment == Comp) {
-                return out.template get_fragment<string_view_type>();
+                return out.template get_fragment<StrVT>();
             }
         }
 
@@ -959,8 +960,9 @@ namespace webpp::uri {
         if constexpr (single_component<CtxT>) {
             if constexpr (Comp == CtxT::component) {
                 return istl::deptr(ctx.out);
+            } else {
+                return istl::nothing;
             }
-            // else return void to get a compile time error
         } else {
             return details::get_component<Comp>(istl::deptr(ctx.out));
         }

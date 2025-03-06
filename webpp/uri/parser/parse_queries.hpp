@@ -12,22 +12,20 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <ParsingURIContext CtxT>
-        static constexpr void
-        set_query_name(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator seg_beg)
+        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        static constexpr void set_query_name(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
-            if constexpr (!CtxT::is_modifiable) {
+            if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
                 istl::assign(buffer, seg_beg, ctx.pos);
             }
         }
 
-        template <ParsingURIContext CtxT>
-        static constexpr void
-        set_query_value(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
+        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        static constexpr void set_query_value(CtxT& ctx, BufT& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
-            if constexpr (!CtxT::is_modifiable) {
-                istl::assign(buffer, seg_beg, ctx->pos);
-                seg_beg = ctx->pos + 1;
+            if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
+                istl::assign(buffer, seg_beg, ctx.pos);
+                seg_beg = ctx.pos + 1;
             }
         }
 
@@ -36,7 +34,7 @@ namespace webpp::uri {
         append_query_value(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxMappedBuffer<BufT, CtxT>) {
-                if constexpr (!CtxT::is_modifiable) {
+                if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
                     ctx.pos += count;
                     istl::assign(buffer, seg_beg, ctx.pos);
                 } else {

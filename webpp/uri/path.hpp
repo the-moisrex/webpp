@@ -361,6 +361,11 @@ namespace webpp::uri {
         }
     };
 
+    template <typename... T>
+    constexpr void set_opaque(basic_path<T...>& path_comp, bool const is_opaque_path) noexcept {
+        path_comp.set_opaque(is_opaque_path);
+    }
+
     template <istl::Stringifiable S>
     basic_path(S&& str) -> basic_path<stl::remove_cvref_t<decltype(istl::stringify(stl::forward<S>(str)))>>;
 

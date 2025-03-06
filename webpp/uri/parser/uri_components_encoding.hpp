@@ -34,6 +34,10 @@ namespace webpp::uri::details {
     template <typename T, typename CtxT>
     concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && istl::cvref_as<T, typename CtxT::map_value_type>;
 
+    template <typename T, typename CtxT>
+    concept CtxNonModifiableBuffer =
+      CtxBufferOf<T, CtxT> && !istl::cvref_as<T, istl::nothing_type> && !CtxT::is_modifiable;
+
     /// call this when encoding/decoding is done
     template <components Comp, ParsingURIContext CtxT>
     static constexpr void
