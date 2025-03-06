@@ -33,35 +33,46 @@ namespace webpp::uri {
     template <typename StrT>
     using domain_labels_splitter_t = typename domain_labels_splitter<StrT>::type;
 
-    template <typename T, typename U, stl::size_t N>
-    [[nodiscard]] consteval stl::array<T, N> to_array(stl::array<U, N> const& src) noexcept {
-        stl::array<T, N> out{};
-        stl::size_t      index = 0;
-        for (auto const val : src) {
-            out[index++] = val;
-        }
-        return out;
-    }
+    namespace details {
 
-    template <typename T, typename... U>
-    [[nodiscard]] consteval stl::array<T, sizeof...(U)> to_array(U... src) noexcept {
-        return stl::array<T, sizeof...(U)>{static_cast<T>(src)...};
-    }
+        // template <typename T, typename U, stl::size_t N>
+        // [[nodiscard]] consteval stl::array<T, N> to_array(stl::array<U, N> const& src) noexcept {
+        //     stl::array<T, N> out{};
+        //     stl::size_t      index = 0;
+        //     for (auto const val : src) {
+        //         out[index++] = val;
+        //     }
+        //     return out;
+        // }
 
-    template <typename T, typename U, stl::size_t LENGTH>
-    struct string_view_array {
-      private:
-        stl::array<T, LENGTH> data{};
+        // template <typename T, typename... U>
+        // [[nodiscard]] consteval stl::array<T, sizeof...(U)> to_array(U... src) noexcept {
+        //     return stl::array<T, sizeof...(U)>{static_cast<T>(src)...};
+        // }
 
-      public:
-        template <typename... RU>
-            requires(stl::same_as<RU, U> && ...)
-        explicit(false) consteval string_view_array(RU... rest) noexcept : data{static_cast<T>(rest)...} {}
+        template <typename T, typename U, stl::size_t LENGTH>
+        struct string_view_array {
+          private:
+            stl::array<T, LENGTH> data{};
 
-        [[nodiscard]] consteval stl::basic_string_view<T> view() const noexcept {
-            return stl::basic_string_view<T>(data.data(), LENGTH);
-        }
-    };
+          public:
+            template <typename... RU>
+                requires(stl::same_as<RU, U> && ...)
+            explicit(false) consteval string_view_array(RU... rest) noexcept
+              : data{static_cast<T>(rest)...} {}
+
+            [[nodiscard]] consteval stl::basic_string_view<T> view() const noexcept {
+                return stl::basic_string_view<T>(data.data(), LENGTH);
+            }
+        };
+
+        template <typename CharT>
+        static constexpr string_view_array<CharT, int, 4> ch_FF0E{0xEF, 0xBC, 0x8E, 0}; // \uFF0E
+        template <typename CharT>
+        static constexpr string_view_array<CharT, int, 4> ch_3002{0xE3, 0x80, 0x82, 0}; // \u3002
+        template <typename CharT>
+        static constexpr string_view_array<CharT, int, 4> ch_FF61{0xEF, 0xBD, 0xA1, 0}; // \uFF61
+    } // namespace details
 
     /**
      * Iterator through labels of a valid domain name
@@ -80,12 +91,9 @@ namespace webpp::uri {
             return splitter_type{
               stl::forward<StrT>(str),
               static_cast<char_type>('.'),
-              string_view_array<char_type, int, 4>{0xef, 0xbc, 0x8e, 0}
-                .view(), // \uFF0E
-              string_view_array<char_type, int, 4>{0xe3, 0x80, 0x82, 0}
-                .view(), // \u3002
-              string_view_array<char_type, int, 4>{0xef, 0xbd, 0xa1, 0}
-                .view()  // \uFF61
+              details::ch_FF0E<char_type>.view(), // \uFF0E
+              details::ch_3002<char_type>.view(), // \u3002
+              details::ch_FF61<char_type>.view()  // \uFF61
             };
             // NOLINTEND(*-magic-numbers)
         }
