@@ -41,6 +41,8 @@ namespace webpp::uri {
                     buffer  += *ctx.pos;
                     ctx.pos += count;
                 }
+            } else {
+                ctx.pos += count;
             }
         }
 
