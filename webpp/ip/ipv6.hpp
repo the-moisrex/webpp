@@ -2,6 +2,7 @@
 #define WEBPP_IPV6_HPP
 
 #include "../std/format.hpp"
+#include "../std/utility.hpp"
 #include "../strings/append.hpp"
 #include "inet_ntop.hpp"
 #include "inet_pton.hpp"
