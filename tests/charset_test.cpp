@@ -57,6 +57,16 @@ TEST(CharsetTest, CharMapCreation) {
     EXPECT_FALSE(chars3.contains('\0')) << "shouldn't contain '\\0'";
 }
 
+TEST(CharsetTest, CategorizationTest) {
+    auto const mappings = categorize( // categorize characters:
+      stl::pair{DIGIT<char>, 100},    // numbers
+      stl::pair{ALPHA<char>, 200}     // A-Z
+    );
+    EXPECT_EQ(mappings['1'], 100);
+    EXPECT_EQ(mappings['a'], 200);
+    EXPECT_EQ(mappings['%'], 0);
+}
+
 /**
  * This is the "Token" specified in the HTTP Semantics RFC (https://httpwg.org/specs/rfc9110.html#tokens)
  *   token          = 1*tchar

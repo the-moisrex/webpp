@@ -11,6 +11,8 @@
 #    include <bitset>
 #endif
 #include <algorithm> // std::max
+#include <boost/range/detail/implementation_help.hpp>
+#include <climits>
 #include <limits>
 #include <utility>
 
@@ -106,15 +108,13 @@ namespace webpp {
         }
 
         /**
-         * This method checks to see if the given character
-         * is in the character set.
+         * This method checks to see if the given character is in the character set.
          *
          * @param[in] character
          *     This is the character to check.
          *
          * @return
-         *     An indication of whether or not the given character
-         *     is in the character set is returned.
+         *     An indication of whether the given character is in the character set is returned.
          */
         [[nodiscard]] constexpr bool contains(value_type character) const noexcept {
             // this is just an optimization to let the compiler optimize more
@@ -328,9 +328,8 @@ namespace webpp {
     charset(CharT const (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
 
     template <istl::CharType CharT = char, stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charset(charset<CharT, N1> const&,
-            charset<CharT, N2> const&,
-            charset<CharT, N> const&...) -> charset<CharT, N1 + N2 + (0 + ... + N)>;
+    charset(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
+      -> charset<CharT, N1 + N2 + (0 + ... + N)>;
 
     // todo: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
@@ -476,15 +475,13 @@ namespace webpp {
         }
 
         /**
-         * This method checks to see if the given character
-         * is in the character map.
+         * This method checks to see if the given character is in the character map.
          *
          * @param[in] character
          *     This is the character to check.
          *
          * @return
-         *     An indication of whether or not the given character
-         *     is in the character map is returned.
+         *     An indication of whether the given character is in the character map is returned.
          */
         template <typename CharT>
         [[nodiscard]] constexpr bool unsafe_contains(CharT character) const noexcept {
@@ -594,14 +591,15 @@ namespace webpp {
     charmap(CharT const (&... str)[N]) -> charmap<stl::max({N...}) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charmap(charmap<N1> const&,
-            charmap<N2> const&,
-            charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
+    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...)
+      -> charmap<stl::max({N1, N2, N...})>;
 
 
-    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative
-                                                                        // chars)
-    using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
+    // Half Table (excluding negative chars)
+    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>;
+
+    // Full Table
+    using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>;
 
 
 
@@ -747,6 +745,68 @@ namespace webpp {
             data.set(it);
         }
         return data;
+    }
+
+    template <typename>
+    struct char_size {};
+
+    // for std::bitset and bitmap
+    template <stl::size_t N>
+    struct char_size<bitmap<N>> {
+        static constexpr auto value = N;
+    };
+
+    // for std::array and charmap
+    template <template <typename, stl::size_t> typename TT, typename CharT, stl::size_t N>
+    struct char_size<TT<CharT, N>> {
+        static constexpr auto value = 0b1 << (sizeof(CharT) * CHAR_BIT) - 1;
+    };
+
+    /**
+     * Map the specified sets of characters into the specified values.
+     * Usage:
+     *    constexpr auto mappings = categorize(
+     *      pair{DIGITS<char>, 1},
+     *      pair{"abc", 2}
+     *    );
+     *
+     * @tparam T Value Type
+     * @tparam N Length of the array
+     * @tparam CharSetsT Character Sets
+     * @return an array
+     */
+    template <typename T, stl::size_t N, typename... CharSetsT>
+    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+        stl::array<T, N> data{};
+        (([&]<typename CharSetT>(CharSetT const& set, auto value) {
+             using value_type = typename CharSetT::value_type;
+             if constexpr (stl::same_as<value_type, bool>) {
+                 // things like std::bitset
+                 auto const len = set.size();
+                 for (stl::size_t i = 0; i < len; ++i) {
+                     if (set[i]) {
+                         data[i] = static_cast<T>(value);
+                     }
+                 }
+             } else {
+                 for (auto const character : set) {
+                     data[character] = static_cast<T>(value);
+                 }
+             }
+         })(sets.first, sets.second),
+         ...);
+        return data;
+    }
+
+    template <stl::size_t N, typename T, typename... CharSetsT>
+    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+        return categorize<T, N>(sets...);
+    }
+
+    template <typename T, typename... CharSetsT>
+    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+        webpp_static_constexpr auto len = stl::max({char_size<CharSetsT>::value...});
+        return categorize<T, len>(sets...);
     }
 
     // NOLINTEND(*-avoid-c-arrays)
