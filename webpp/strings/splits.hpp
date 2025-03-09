@@ -207,9 +207,9 @@ namespace webpp::strings {
                   [this, last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {
                       constexpr auto delim_index  = stl::clamp(Index, 0UL, delim_count - 1UL);
                       auto const     delim         = get<delim_index>(delims);
-                      auto const     pos           = stl::min(string_size(), this->find(delim, last_pos));
-                      auto const     ret           = substr(last_pos, pos - last_pos);
-                      last_pos                    = pos;
+                      auto const     pos            = this->find(delim, last_pos) - last_pos;
+                      auto const     ret            = substr(last_pos, pos);
+                      last_pos                     += pos;
                       last_pos                   += ascii::size(delim);
                       return ret;
                   };
