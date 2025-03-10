@@ -59,8 +59,8 @@ TEST(CharsetTest, CharMapCreation) {
 
 TEST(CharsetTest, CategorizationTest) {
     auto const mappings = categorize( // categorize characters:
-      stl::pair{DIGIT<char>, 100},    // numbers
-      stl::pair{ALPHA<char>, 200}     // A-Z
+      cat{DIGIT<char>, 100},          // numbers
+      cat{ALPHA<char>, 200}           // A-Z
     );
     EXPECT_EQ(mappings['1'], 100);
     EXPECT_EQ(mappings['a'], 200);

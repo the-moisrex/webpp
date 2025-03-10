@@ -16,6 +16,18 @@ namespace webpp::uri::idna {
         domain_to_ascii_error     = stl::to_underlying(uri_status::domain_to_ascii_error),
     };
 
+    [[nodiscard]] static constexpr bool is_valid(domain_to_ascii_status const status) noexcept {
+        using enum domain_to_ascii_status;
+        switch (status) {
+            case valid: return true;
+            default: return false;
+        }
+    }
+
+    static constexpr void set_error(uri_status_type& status, domain_to_ascii_status const value) noexcept {
+        set_error(status, static_cast<uri_status>(stl::to_underlying(value)));
+    }
+
     /**
      * The ToASCII operation takes a sequence of Unicode code points that
      * make up one label and transforms it into a sequence of code points in
@@ -28,15 +40,15 @@ namespace webpp::uri::idna {
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
-    template <uri_parsing_options Options, istl::String StrT = stl::string>
-    static constexpr domain_to_ascii_status domain_to_ascii(istl::string_view_type_of<StrT> src, StrT& out) {
+    template <uri_parsing_options Options, istl::String StrT = stl::string, typename Iter>
+    static constexpr domain_to_ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
         using enum domain_to_ascii_status;
         using unicode::normalization_form;
 
         auto const beg_index = out.size();
 
         // 1. Map
-        if (!idna::map(src.begin(), src.end(), out)) {
+        if (!idna::map(spos, send, out)) {
             // todo: is this error code the correct error?
             return invalid_domain_code_point;
         }

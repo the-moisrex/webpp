@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
+#include "../idna/idna_to_ascii.hpp"
 #include "../uri_status.hpp"
 #include "./parse_authority_pieces.hpp"
 #include "./uri_components.hpp"
@@ -84,37 +85,231 @@ namespace webpp::uri {
         }
     }
 
+    namespace details {
+
+        template <bool IgnoreWhitespaces = true, typename Iter>
+        static constexpr auto head(Iter& pos, [[maybe_unused]] Iter end) noexcept {
+            using char_type = typename std::iterator_traits<Iter>::value_type;
+            if constexpr (IgnoreWhitespaces) {
+                for (;; ++pos) {
+                    if (pos == end) {
+                        return static_cast<char_type>('\0');
+                    }
+                    switch (*pos) {
+                        [[unlikely]] case '\r':
+                        [[unlikely]] case '\n':
+                        [[unlikely]] case '\t':
+                            continue;
+                        default: break;
+                    }
+                    break;
+                }
+                return *pos;
+            } else {
+                if (pos == end) [[unlikely]] {
+                    return static_cast<char_type>('\0');
+                }
+                return *pos;
+            }
+        }
+
+        template <bool IgnoreWhitespaces = true, typename Iter>
+        static constexpr auto tail(Iter& pos, [[maybe_unused]] Iter beg) noexcept {
+            using char_type = typename std::iterator_traits<Iter>::value_type;
+            if constexpr (IgnoreWhitespaces) {
+                for (;; --pos) {
+                    if (pos == beg) [[unlikely]] {
+                        return static_cast<char_type>('\0');
+                    }
+                    switch (*pos) {
+                        [[unlikely]] case '\r':
+                        [[unlikely]] case '\n':
+                        [[unlikely]] case '\t':
+                            continue;
+                        default: break;
+                    }
+                    break;
+                }
+                return *pos;
+            } else {
+                if (pos == beg) [[unlikely]] {
+                    return static_cast<char_type>('\0');
+                }
+                return *pos;
+            }
+        }
+
+        template <bool IgnoreWhitespaces = true, typename Iter>
+        [[nodiscard]] static constexpr bool starts_with(Iter& pos, Iter end, auto str) noexcept {
+            auto spos = stl::begin(str);
+            auto send = stl::end(str);
+            if (send < end) {
+                return false;
+            }
+            for (; pos != end && spos != send; ++pos, ++spos) {
+                if (head<IgnoreWhitespaces>(pos, end) != *pos) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// @returns should continue parsing or not
+        /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
+        template <bool IgnoreWhitespaces = true, typename Iter, ParsingURIContext CtxT>
+        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end)
+          noexcept(CtxT::is_nothrow) {
+            using enum uri_status;
+
+            if (head<IgnoreWhitespaces>(pos, end) == '[') {
+                if (tail<IgnoreWhitespaces>(stl::prev(end), pos) != ']') [[unlikely]] {
+                    set_error(ctx.status, ipv6_unclosed);
+                    return false;
+                }
+                stl::ignore = details::parse_host_ipv6(ctx);
+                return false;
+            }
+
+            [[likely]] { return true; }
+        }
+    } // namespace details
+
+    template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
+    static constexpr void opaque_host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
+        // https://url.spec.whatwg.org/#concept-opaque-host-parser
+        using enum uri_status;
+
+        // in opaque hosts, IPv6 should work also; in specs, it's being checked in `host parsing` before
+        // we get into opaque parsing.
+        if (!details::handle_ipv6<Options.ignore_tabs_or_newlines>(ctx, pos, end)) {
+            // either found a valid ipv6, an error occurred, or it's an empty string.
+            return;
+        }
+
+        // todo
+    }
+
+    /**
+     * Parse hostname
+     * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
+     * calling this function; we don't provide `isOpaque` that the specs say because of that feature.
+     */
     template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
     static constexpr void host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
+        using details::ascii_bitmap;
+        using char_type = typename CtxT::char_type;
 
+        // note: we don't need to check for IPv6 as the first step, we can check later.
 
-        // handle the leading characters:
-        for (;; ++pos) {
-            if (pos == end) {
-                // todo
+        // If isOpaque is true, then return the result of opaque-host parsing input.
+        if (!is_special_scheme(ctx.status)) {
+            opaque_host_parser(ctx, pos, end);
+            return;
+        }
+
+        // Assert: input is not the empty string.
+        assert(pos != end);
+
+        // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
+
+        webpp_static_constexpr stl::uint8_t upper_val   = 0b1U;         // upper case ascii chars
+        webpp_static_constexpr stl::uint8_t no_ipv4_val = 0b10U;        // invalid IPv4 Characters
+        webpp_static_constexpr stl::uint8_t no_ipv6_val = 0b100U;       // invalid IPv6 Characters
+        webpp_static_constexpr stl::uint8_t ipv6_val    = 0b1000U;      // valid IPv6 Characters
+        webpp_static_constexpr stl::uint8_t x_val       = 0b1'0000U;    // character x
+        webpp_static_constexpr stl::uint8_t n_val       = 0b10'0000U;   // character n
+        webpp_static_constexpr stl::uint8_t dash_val    = 0b100'0000U;  // character -
+        webpp_static_constexpr stl::uint8_t nt_val      = 0b1000'0000U; // newlines and tabs
+        webpp_static_constexpr stl::uint8_t xnd_val     = x_val | dash_val | dash_val | no_ipv4_val;
+        webpp_static_constexpr stl::uint8_t no_ip_val   = no_ipv4_val | no_ipv6_val;
+        webpp_static_constexpr stl::uint8_t forb_val =
+          0b1111'1111U & ~ipv6_val & ~nt_val; // Forbidden/Unicode
+
+        webpp_static_constexpr auto interesting_characters = categorize<stl::uint8_t, 256>(
+          cat{details::NON_ASCII_CODE_UNITS, forb_val},
+          cat{details::FORBIDDEN_HOST_CODE_POINTS, forb_val},
+          cat{details::INVALID_IPV4<char_type>, no_ipv4_val},
+          cat{details::INVALID_IPV6<char_type>, no_ipv6_val},
+          cat{details::VALID_IPV6<char_type>, ipv6_val},
+          cat{details::TABS_OR_NEWLINES<char_type>, nt_val},
+          cat{UPPER_ALPHA<char_type>, upper_val},
+          cat{"x", x_val},
+          cat{"n", n_val},
+          cat{"-", dash_val});
+
+        // check all the characters and see what's there and what's not in order to avoid going into the slow
+        // path portion of the code which checks for everything and properly converts things to things.
+        auto const status = or_all(interesting_characters, pos, end);
+        switch (status) {
+            case upper_val:
+                // todo: does a simple to_lower would suffice?
+                break;
+                [[fallthrough]];
+            case 0: // possible IPv4
+                if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+                    details::parse_host_ipv4(pos, end, ctx);
+                    return;
+                }
+                set_value<components::host>(ctx, pos, end);
                 return;
-            }
-            switch (*pos) {
-                case '[':
-                    // If input starts with U+005B '[', then
-                    if (*stl::prev(end) != ']') {
-                        set_error(ctx.status, ipv6_unclosed);
+            case no_ip_val | nt_val:
+                if constexpr (CtxT::is_modifiable) {
+                    break;
+                }
+                // todo: strip the newlines or trim if it's non-modifiable
+                [[fallthrough]];
+            [[likely]] case no_ip_val:
+                // fast path:
+                // the host is fully in valid ascii characters already, and also we don't need to check for
+                // ipv4 either, it includes invalid ipv4 characters.
+                set_value<components::host>(ctx, pos, end);
+                return;
+            [[unlikely]] case forb_val:
+                break; // forbidden code points:
+            [[unlikely]] default:
+                // 'x', 'n' and '-' were found
+                if ((status | ipv6_val) == status) {
+                    if (!details::handle_ipv6<Options.ignore_tabs_or_newlines>(ctx, pos, end)) {
+                        // either found a valid ipv6, an error occurred, or it's an empty string.
                         return;
                     }
-                    stl::ignore = details::parse_host_ipv6(ctx);
-                    return;
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        continue;
+                }
+
+                if ((status | xnd_val) == status) {
+                    // if it starts with `xn-`, then we go the slow path
+                    if (starts_with<Options.ignore_tabs_or_newlines>(pos, end, "xn-")) {
+                        // todo: we already know if newlines and tabs exist or not
+                        break;
                     }
-                    [[fallthrough]];
-                default: break;
+                }
+                break;
+        }
+
+        // slow path:
+
+        // todo
+
+        // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
+        if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+            details::parse_host_ipv4(pos, end, ctx);
+            return;
+        }
+
+        // Return asciiDomain.
+        if constexpr (CtxT::is_modifiable) {
+            auto out = get_buffer<components::host>(ctx);
+
+            // Let asciiDomain be the result of running domain to ASCII with domain and false.
+            auto const to_ascii_res = idna::domain_to_ascii<Options>(pos, end, out);
+            if (!is_valid(to_ascii_res)) {
+                set_error<components::host>(ctx, to_ascii_res);
+                return;
             }
-            break;
+            set_value<components::host>(ctx, out);
+        } else {
+            // todo
         }
     }
 

@@ -9,6 +9,18 @@
 
 namespace webpp::uri::details {
 
+    template <typename CharT>
+    static constexpr charset VALID_IPV4{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
+                                        'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F'};
+    template <typename CharT>
+    static constexpr auto INVALID_IPV4 = inverse(VALID_IPV4<CharT>);
+
+    template <typename CharT>
+    static constexpr charset VALID_IPV6{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
+                                        'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F', '[', ']', ':'};
+    template <typename CharT>
+    static constexpr auto INVALID_IPV6 = inverse(VALID_IPV6<CharT>);
+
     /// Checks the last octet of a possible ipv4 address to see if we should parse the host as an ipv4, or
     /// we should parse it normally.
     /// If the last host segment is
@@ -250,7 +262,7 @@ namespace webpp::uri::details {
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
-        if (has_value<components::host>(ctx)) {
+        if (has_value<components::host>(ctx)) [[unlikely]] {
             set_error(ctx.status, invalid_domain_code_point);
             return false;
         }
@@ -258,11 +270,11 @@ namespace webpp::uri::details {
         ++ctx.pos; // first char should be '[' now
 
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
-            case inet_pton6_status::valid: set_error(ctx.status, ipv6_unclosed); return false;
-            case inet_pton6_status::valid_special:
-                if (*ctx.pos == ']') {
-                    ++ctx.pos;
-
+            case inet_pton6_status::valid:
+                set_error(ctx.status, ipv6_unclosed);
+                return false;
+            [[likely]] case inet_pton6_status::valid_special:
+                if (*ctx.pos == ']') [[likely]] {
                     if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
                         istl::deptr(ctx.out).set_hostname(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
@@ -275,16 +287,26 @@ namespace webpp::uri::details {
                         // set value already sets the flag
                         set_value<components::host>(ctx, beg, ctx.pos);
                     }
-                    if (ctx.pos == ctx.end) {
-                        set_valid(ctx.status, valid);
-                        return false;
-                    }
-                    switch (*ctx.pos) {
-                        case '/': set_valid(ctx.status, valid_path); return false;
-                        case ':': set_valid(ctx.status, valid_port); break;
-                        case '#': set_valid(ctx.status, valid_fragment); break;
-                        case '?': set_valid(ctx.status, valid_queries); break;
-                        default: set_error(ctx.status, ipv6_char_after_closing); return false;
+                    for (;; ++ctx.pos) {
+                        if (ctx.pos == ctx.end) {
+                            set_valid(ctx.status, valid);
+                            return false;
+                        }
+                        switch (*ctx.pos) {
+                            case '/': set_valid(ctx.status, valid_path); return false;
+                            case ':': set_valid(ctx.status, valid_port); break;
+                            case '#': set_valid(ctx.status, valid_fragment); break;
+                            case '?':
+                                set_valid(ctx.status, valid_queries);
+                                break;
+                            [[unlikely]] case '\r':
+                            [[unlikely]] case '\t':
+                            [[unlikely]] case '\n':
+                                continue;
+                            [[unlikely]] default:
+                                set_error(ctx.status, ipv6_char_after_closing);
+                                return false;
+                        }
                     }
                     ++ctx.pos;
                     return false;

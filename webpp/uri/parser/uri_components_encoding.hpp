@@ -159,6 +159,7 @@ namespace webpp::uri::details {
     }
 
     /// Convert to lowercase and also decode
+    /// @returns true when we reach the end
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool
     decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {

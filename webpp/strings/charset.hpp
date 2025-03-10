@@ -10,6 +10,8 @@
 #ifdef __cpp_lib_constexpr_bitset
 #    include <bitset>
 #endif
+#include "build-release/_deps/fmt-src/include/fmt/base.h"
+
 #include <algorithm> // std::max
 #include <boost/range/detail/implementation_help.hpp>
 #include <climits>
@@ -759,15 +761,26 @@ namespace webpp {
     // for std::array and charmap
     template <template <typename, stl::size_t> typename TT, typename CharT, stl::size_t N>
     struct char_size<TT<CharT, N>> {
-        static constexpr auto value = 0b1 << (sizeof(CharT) * CHAR_BIT) - 1;
+        static constexpr auto value = stl::numeric_limits<CharT>::max();
+    };
+
+    /**
+     * Specified a category that then can be passed to categorize
+     * @tparam CharSetT Character Set
+     * @tparam T Value Type
+     */
+    template <typename CharSetT, typename T>
+    struct cat {
+        CharSetT set;
+        T        value;
     };
 
     /**
      * Map the specified sets of characters into the specified values.
      * Usage:
      *    constexpr auto mappings = categorize(
-     *      pair{DIGITS<char>, 1},
-     *      pair{"abc", 2}
+     *      cat{DIGITS<char>, 1},
+     *      cat{"abc", 2}
      *    );
      *
      * @tparam T Value Type
@@ -776,7 +789,7 @@ namespace webpp {
      * @return an array
      */
     template <typename T, stl::size_t N, typename... CharSetsT>
-    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+    [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
         stl::array<T, N> data{};
         (([&]<typename CharSetT>(CharSetT const& set, auto value) {
              using value_type = typename CharSetT::value_type;
@@ -785,28 +798,71 @@ namespace webpp {
                  auto const len = set.size();
                  for (stl::size_t i = 0; i < len; ++i) {
                      if (set[i]) {
-                         data[i] = static_cast<T>(value);
+                         data[i] |= static_cast<T>(value);
                      }
                  }
              } else {
                  for (auto const character : set) {
-                     data[character] = static_cast<T>(value);
+                     data[character] |= static_cast<T>(value);
                  }
              }
-         })(sets.first, sets.second),
+         })(sets.set, sets.value),
          ...);
         return data;
     }
 
     template <stl::size_t N, typename T, typename... CharSetsT>
-    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+    [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
         return categorize<T, N>(sets...);
     }
 
     template <typename T, typename... CharSetsT>
-    [[nodiscard]] static consteval auto categorize(stl::pair<CharSetsT, T> const&... sets) noexcept {
+    [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
         webpp_static_constexpr auto len = stl::max({char_size<CharSetsT>::value...});
         return categorize<T, len>(sets...);
+    }
+
+    /**
+     * Usage:
+     *   auto mapping = categorize(...);
+     *   switch (xor_all(mapping, start, end)) {
+     *     case ...: ...;
+     *     case ...: ...;
+     *   }
+     */
+    template <stl::integral T, stl::size_t N, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
+        T res{};
+        while (stl::next(pos, 4) <= end) {
+            res |= arr[static_cast<stl::uint8_t>(*pos++)];
+            res |= arr[static_cast<stl::uint8_t>(*pos++)];
+            res |= arr[static_cast<stl::uint8_t>(*pos++)];
+            res |= arr[static_cast<stl::uint8_t>(*pos++)];
+        }
+        for (; pos != end; ++pos) {
+            res |= arr[*pos];
+        }
+        return res;
+    }
+
+    template <stl::size_t NewLen, istl::CharType CharT, stl::size_t N>
+    [[nodiscard]] static consteval charset<CharT, NewLen> inverse(charset<CharT, N> const& set) noexcept {
+        charset<CharT, NewLen> res{};
+        stl::size_t            index = 0;
+        for (CharT cur = 0; cur < N; ++cur) {
+            if (!set.contains(cur)) {
+                res[index++] = cur;
+            }
+        }
+        return res;
+    }
+
+    template <istl::CharType CharT, stl::size_t N>
+    [[nodiscard]] static consteval auto inverse(charset<CharT, N> const& set) noexcept {
+        static_assert(
+          sizeof(CharT) <= sizeof(stl::uint8_t),
+          "Too big of a size, you're probably didn't want this; try specifying the length manually.");
+        return inverse<stl::numeric_limits<CharT>::max()>(set);
     }
 
     // NOLINTEND(*-avoid-c-arrays)

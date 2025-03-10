@@ -182,6 +182,9 @@ namespace webpp::uri::details {
       '^',
       '|'};
 
+    /// Non-ASCII characters (if matched, it would mean Unicode code points are present)
+    static constexpr ascii_bitmap NON_ASCII_CODE_UNITS{bitmap_range<127U, 255U, 256U>()};
+
     /// https://url.spec.whatwg.org/#forbidden-domain-code-point
     /// A forbidden domain code point is a forbidden host code point, a C0 control, U+0025 (%), or U+007F
     /// DELETE.
