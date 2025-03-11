@@ -199,6 +199,7 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::is_possible_ends_with_ipv4;
         using char_type = typename CtxT::char_type;
 
         // note: we don't need to check for IPv6 as the first step, we can check later.
@@ -214,30 +215,29 @@ namespace webpp::uri {
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
 
-        webpp_static_constexpr stl::uint8_t upper_val   = 0b1U;         // upper case ascii chars
-        webpp_static_constexpr stl::uint8_t no_ipv4_val = 0b10U;        // invalid IPv4 Characters
-        webpp_static_constexpr stl::uint8_t no_ipv6_val = 0b100U;       // invalid IPv6 Characters
-        webpp_static_constexpr stl::uint8_t ipv6_val    = 0b1000U;      // valid IPv6 Characters
-        webpp_static_constexpr stl::uint8_t x_val       = 0b1'0000U;    // character x
-        webpp_static_constexpr stl::uint8_t n_val       = 0b10'0000U;   // character n
-        webpp_static_constexpr stl::uint8_t dash_val    = 0b100'0000U;  // character -
-        webpp_static_constexpr stl::uint8_t nt_val      = 0b1000'0000U; // newlines and tabs
-        webpp_static_constexpr stl::uint8_t xnd_val     = x_val | dash_val | dash_val | no_ipv4_val;
-        webpp_static_constexpr stl::uint8_t no_ip_val   = no_ipv4_val | no_ipv6_val;
-        webpp_static_constexpr stl::uint8_t forb_val =
-          0b1111'1111U & ~ipv6_val & ~nt_val; // Forbidden/Unicode
+        using id_type = stl::uint8_t;
 
-        webpp_static_constexpr auto interesting_characters = categorize<stl::uint8_t, 256>(
-          cat{details::NON_ASCII_CODE_UNITS, forb_val},
-          cat{details::FORBIDDEN_HOST_CODE_POINTS, forb_val},
-          cat{details::INVALID_IPV4<char_type>, no_ipv4_val},
-          cat{details::INVALID_IPV6<char_type>, no_ipv6_val},
-          cat{details::VALID_IPV6<char_type>, ipv6_val},
-          cat{details::TABS_OR_NEWLINES<char_type>, nt_val},
-          cat{UPPER_ALPHA<char_type>, upper_val},
-          cat{"x", x_val},
-          cat{"n", n_val},
-          cat{"-", dash_val});
+        webpp_static_constexpr id_type upper_val   = 0b1U;        // upper case ascii chars
+        webpp_static_constexpr id_type no_ipv4_val = 0b10U;       // invalid IPv4 Characters
+        webpp_static_constexpr id_type no_ipv6_val = 0b100U;      // invalid IPv6 Characters
+        webpp_static_constexpr id_type x_val       = 0b1000U;     // character x
+        webpp_static_constexpr id_type n_val       = 0b1'0000U;   // character n
+        webpp_static_constexpr id_type dash_val    = 0b10'0000U;  // character -
+        webpp_static_constexpr id_type nt_val      = 0b100'0000U; // newlines and tabs
+        webpp_static_constexpr id_type forb_val    = static_cast<id_type>(~0 & ~nt_val); // Forbidden/Unicode
+        webpp_static_constexpr id_type xnd_val     = x_val | dash_val | dash_val | no_ipv4_val;
+        webpp_static_constexpr id_type no_ip_val   = no_ipv4_val | no_ipv6_val;
+
+        webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
+          cat{.set = details::NON_ASCII_CODE_UNITS, .value = forb_val},
+          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = forb_val},
+          cat{.set = details::INVALID_IPV4<char_type>, .value = no_ipv4_val},
+          cat{.set = details::INVALID_IPV6<char_type>, .value = no_ipv6_val},
+          cat{.set = details::TABS_OR_NEWLINES<char_type>, .value = nt_val},
+          cat{.set = UPPER_ALPHA<char_type>, .value = upper_val},
+          cat{.set = "x", .value = x_val},
+          cat{.set = "n", .value = n_val},
+          cat{.set = "-", .value = dash_val});
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
@@ -248,7 +248,7 @@ namespace webpp::uri {
                 break;
                 [[fallthrough]];
             case 0: // possible IPv4
-                if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+                if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
                     details::parse_host_ipv4(pos, end, ctx);
                     return;
                 }
@@ -270,7 +270,7 @@ namespace webpp::uri {
                 break; // forbidden code points:
             [[unlikely]] default:
                 // 'x', 'n' and '-' were found
-                if ((status | ipv6_val) == status) {
+                if ((status & no_ipv6_val) == 0) {
                     if (!details::handle_ipv6<Options.ignore_tabs_or_newlines>(ctx, pos, end)) {
                         // either found a valid ipv6, an error occurred, or it's an empty string.
                         return;
@@ -289,20 +289,19 @@ namespace webpp::uri {
 
         // slow path:
 
-        // todo
-
         // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-        if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+        if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
             details::parse_host_ipv4(pos, end, ctx);
             return;
         }
 
         // Return asciiDomain.
         if constexpr (CtxT::is_modifiable) {
-            auto out = get_buffer<components::host>(ctx);
+            auto  out       = get_buffer<components::host>(ctx);
+            auto& prev_host = get_storage<components::host>(ctx);
 
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
-            auto const to_ascii_res = idna::domain_to_ascii<Options>(pos, end, out);
+            auto const to_ascii_res = idna::domain_to_ascii<Options>(prev_host, pos, end, out);
             if (!is_valid(to_ascii_res)) {
                 set_error<components::host>(ctx, to_ascii_res);
                 return;

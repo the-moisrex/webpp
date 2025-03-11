@@ -4,7 +4,7 @@
  *
  *   Auto generated from:          generate_idna_mapping_table2.mjs
  *   IDNA Creation Date:           2024-07-03, 21:52:28 GMT
- *   This file's generation date:  Sat, 18 Jan 2025 01:00:58 GMT
+ *   This file's generation date:  Tue, 11 Mar 2025 15:15:00 GMT
  *   IDNA Mapping Table Version:   16.0.0
  *   Size:                         46110 B
  *                                 45.03 KiB
@@ -14,14 +14,14 @@
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  */
 
-#ifndef WEBPP_URI_IDNA_MAPPING_TABLE_HPP
-#define WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+#ifndef WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
+#define WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
 
 #include <array>
 #include <cstdint>
 #include <string_view>
 
-namespace webpp::uri::idna::details {
+namespace webpp::unicode::idna::details {
 
     static constexpr std::uint16_t magic_rem       = 1U;
     static constexpr auto          last_disallowed = static_cast<char32_t>(0xE01F0);
@@ -6120,6 +6120,6 @@ namespace webpp::uri::idna::details {
 
 
 
-} // namespace webpp::uri::idna::details
+} // namespace webpp::unicode::idna::details
 
-#endif // WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+#endif // WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP

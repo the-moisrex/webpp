@@ -57,6 +57,7 @@ set(ALL_SOURCES_SHORT
         unicode/ustring_iterator.hpp
         unicode/normalization.hpp
         unicode/hangul.hpp
+        unicode/idna.hpp
         unicode/details/ccc_tables.hpp
         unicode/details/composition_tables.hpp
         unicode/details/decomposition_tables.hpp
@@ -196,10 +197,8 @@ set(ALL_SOURCES_SHORT
         uri/uri.hpp
         uri/uri_string.hpp
         uri/domain.hpp
-        uri/idna/idna_mappings.hpp
         uri/idna/idna_to_ascii.hpp
         uri/idna/punycodes.hpp
-        uri/idna/details/idna_mapping_table.hpp
 
         crypto/base64.hpp
         crypto/base64_url.hpp

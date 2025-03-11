@@ -25,13 +25,13 @@ import {
     findSimilarSubRange,
     findSimilarRange,
     packBoolsIntoInts, smashOverlappedBlocks, overlapInserts, removeOverlaps
-} from "../../../unicode/details/utils.mjs";
+} from "./utils.mjs";
 
 import * as path from "node:path";
 
 const fileUrl = 'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
 const cacheFilePath = 'IdnaMappingTable.txt';
-const outFilePath = `idna_mapping_table.hpp`;
+const outFilePath = `idna_mapping_tables.hpp`;
 
 
 const start = async () => {
@@ -441,14 +441,14 @@ class MappingTable {
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  */
  
-#ifndef WEBPP_URI_IDNA_MAPPING_TABLE_HPP
-#define WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+#ifndef WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
+#define WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
 
 #include <array>
 #include <cstdint>
 #include <string_view>
 
-namespace webpp::uri::idna::details {
+namespace webpp::unicode::idna::details {
 
     static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
     static constexpr auto last_disallowed = static_cast<char32_t>(0x${this.#lastDisallowed.toString(16).toUpperCase()});
@@ -534,9 +534,9 @@ namespace webpp::uri::idna::details {
         })}
     
     
-} // webpp::uri::idna::details
+} // webpp::unicode::idna::details
 
-#endif // WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+#endif // WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
   `;
     }
 }

@@ -1,6 +1,7 @@
 // Created by moisrex on Fri 2024/02/09
 
-#include "../webpp/uri/idna/idna_mappings.hpp"
+#include "../webpp/unicode/idna.hpp"
+
 #include "../webpp/uri/uri.hpp"
 #include "common/tests_common_pch.hpp"
 

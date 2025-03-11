@@ -46,7 +46,7 @@ CPM_modules/
 _deps/
 cpm-package-lock.cmake
 /.PVS-Studio/
-
+.buildconfig
 
 ###################################### CLION #####################################
 # CLion's configs are a mess;

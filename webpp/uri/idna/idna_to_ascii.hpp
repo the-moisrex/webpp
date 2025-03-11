@@ -4,27 +4,27 @@
 #define WEBPP_URI_IDNA_ASCII_HPP
 
 #include "../../std/string.hpp"
+#include "../../unicode/idna.hpp"
 #include "../../unicode/normalization.hpp"
 #include "../uri_status.hpp"
-#include "./idna_mappings.hpp"
 
 namespace webpp::uri::idna {
 
-    enum struct domain_to_ascii_status {
+    enum struct domain2ascii_status {
         valid                     = stl::to_underlying(uri_status::valid),
         invalid_domain_code_point = stl::to_underlying(uri_status::invalid_domain_code_point),
         domain_to_ascii_error     = stl::to_underlying(uri_status::domain_to_ascii_error),
     };
 
-    [[nodiscard]] static constexpr bool is_valid(domain_to_ascii_status const status) noexcept {
-        using enum domain_to_ascii_status;
+    [[nodiscard]] static constexpr bool is_valid(domain2ascii_status const status) noexcept {
+        using enum domain2ascii_status;
         switch (status) {
             case valid: return true;
             default: return false;
         }
     }
 
-    static constexpr void set_error(uri_status_type& status, domain_to_ascii_status const value) noexcept {
+    static constexpr void set_error(uri_status_type& status, domain2ascii_status const value) noexcept {
         set_error(status, static_cast<uri_status>(stl::to_underlying(value)));
     }
 
@@ -41,34 +41,16 @@ namespace webpp::uri::idna {
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
     template <uri_parsing_options Options, istl::String StrT = stl::string, typename Iter>
-    static constexpr domain_to_ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
-        using enum domain_to_ascii_status;
+    static constexpr domain2ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
+        using enum domain2ascii_status;
         using unicode::normalization_form;
 
-        auto const beg_index = out.size();
-
-        // 1. Map
-        if (!idna::map(spos, send, out)) {
-            // todo: is this error code the correct error?
-            return invalid_domain_code_point;
-        }
-
-        // 2. Normalize
-        unicode::normalize<normalization_form::NFC>(out);
-
-        // 3. Break: Break the string into labels at U+002E (.) FULL STOP
-
-        // 4. Convert/Validate
-        if constexpr (Options.parse_punycodes) {
-            // todo
-            if constexpr (Options.ignore_invalid_punycode) {
-            }
-        }
+        auto const status = unicode::idna::to_ascii(spos, send, out);
 
         if constexpr (Options.verify_dns_length) {
         }
 
-        return valid;
+        return status;
     }
 
 
