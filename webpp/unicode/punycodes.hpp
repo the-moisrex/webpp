@@ -1,20 +1,19 @@
 #ifndef WEBPP_URL_PUNY_CODES_HPP
 #define WEBPP_URL_PUNY_CODES_HPP
 
-#include "../../std/iterator.hpp"
-#include "../../std/string.hpp"
-#include "../../std/string_view.hpp"
-#include "unicode/unicode.hpp"
+#include "../std/iterator.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
+#include "./unicode.hpp"
 
 #include <cstdint>
 #include <cstring>
 
-namespace webpp::uri::idna {
+namespace webpp::unicode::idna {
 
     // NOLINTBEGIN(*-magic-numbers)
 
     using punycode_uint = stl::uint32_t;
-
 
     enum struct punycode_status : stl::uint8_t {
         success = 0,
@@ -95,7 +94,7 @@ namespace webpp::uri::idna {
     /**
      * Converts a UTF-8 input into punycode.
      *
-     * We don't need to use unicode::unchecked::append(...) to append the code in the implementation,
+     * We don't need to use unchecked::append(...) to append the code in the implementation,
      * since anything that we append, must be in ASCII range.
      *
      * https://www.rfc-editor.org/info/rfc3492
@@ -108,10 +107,14 @@ namespace webpp::uri::idna {
       stl::basic_string_view<CharT> src,
       Iter                         &out) noexcept(istl::NothrowAppendable<Iter>) {
         using enum punycode_status;
-        using enum unicode::checked::error_handling;
+        using enum checked::error_handling;
         using istl::iter_append;
 
-        out.reserve(src.size() + out.size());
+        // out can be an iterator
+        if constexpr (istl::String<Iter>) {
+            out.reserve(src.size() + out.size());
+        }
+
         punycode_uint n_val       = Options.initial_n;
         punycode_uint delta       = 0;
         punycode_uint bias        = Options.initial_bias;
@@ -120,8 +123,8 @@ namespace webpp::uri::idna {
 
         // ASCII characters are put in order they appear:
         while (ptr != src.end()) {
-            auto const code_point = unicode::checked::next_code_point<return_negated_char>(ptr, src.end());
-            if (unicode::is_ascii(code_point)) {
+            auto const code_point = checked::next_code_point<return_negated_char>(ptr, src.end());
+            if (is_ascii(code_point)) {
                 ++handled_len;
                 iter_append(out, code_point);
             } else if (code_point < 0) [[unlikely]] {
@@ -135,17 +138,17 @@ namespace webpp::uri::idna {
         }
         while (handled_len < src.size()) {
             // Find the next larger non-ascii code point:
-            punycode_uint max_m = unicode::max_legal_utf32<punycode_uint>;
+            punycode_uint max_m = max_legal_utf32<punycode_uint>;
             ptr                 = src.begin();
             while (ptr != src.end()) {
-                auto const code_point = unicode::checked::next_code_point<return_unchanged>(ptr, src.end());
+                auto const code_point = checked::next_code_point<return_unchanged>(ptr, src.end());
                 if (code_point >= n_val && code_point < max_m) {
                     max_m = code_point;
                 }
             }
 
             auto const diff = max_m - n_val;
-            if (diff > (unicode::max_utf32<punycode_uint> - delta) / (handled_len + 1)) [[unlikely]] {
+            if (diff > (max_utf32<punycode_uint> - delta) / (handled_len + 1)) [[unlikely]] {
                 return overflow;
             }
             delta += static_cast<punycode_uint>(diff * (handled_len + 1));
@@ -153,10 +156,10 @@ namespace webpp::uri::idna {
 
             ptr = src.begin();
             while (ptr != src.end()) {
-                auto const code_point = unicode::checked::next_code_point<return_unchanged>(ptr, src.end());
+                auto const code_point = checked::next_code_point<return_unchanged>(ptr, src.end());
 
                 if (code_point < n_val) {
-                    if (delta == unicode::max_utf32<punycode_uint>) [[unlikely]] {
+                    if (delta == max_utf32<punycode_uint>) [[unlikely]] {
                         return overflow;
                     }
                     ++delta;
@@ -199,6 +202,8 @@ namespace webpp::uri::idna {
         return punycode_encode<punycode_options{}, CharT, Iter>(src, out);
     }
 
+    /// Same as punycode_to, but it returns the resulting string; this function ignores the status of the
+    /// conversions, so you may not use this function for serious work.
     template <istl::String            OutStrT = std::string,
               istl::StringViewifiable StrVT   = stl::string_view,
               typename... Args>
@@ -211,7 +216,7 @@ namespace webpp::uri::idna {
     }
 
     // NOLINTEND(*-magic-numbers)
-} // namespace webpp::uri::idna
+} // namespace webpp::unicode::idna
 
 
 #endif // WEBPP_URL_PUNY_CODES_HPP

@@ -1,4 +1,4 @@
-#include "../webpp/uri/idna/punycodes.hpp"
+#include "../webpp/unicode/punycodes.hpp"
 #include "common/tests_common_pch.hpp"
 
 TEST(PunycodeTests, BasicEncoding) {

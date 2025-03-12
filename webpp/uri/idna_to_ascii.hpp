@@ -3,10 +3,10 @@
 #ifndef WEBPP_URI_IDNA_ASCII_HPP
 #define WEBPP_URI_IDNA_ASCII_HPP
 
-#include "../../std/string.hpp"
-#include "../../unicode/idna.hpp"
-#include "../../unicode/normalization.hpp"
-#include "../uri_status.hpp"
+#include "../std/string.hpp"
+#include "../unicode/idna.hpp"
+#include "../unicode/normalization.hpp"
+#include "uri_status.hpp"
 
 namespace webpp::uri::idna {
 

@@ -3,7 +3,7 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
-#include "../idna/idna_to_ascii.hpp"
+#include "../idna_to_ascii.hpp"
 #include "../uri_status.hpp"
 #include "./parse_authority_pieces.hpp"
 #include "./uri_components.hpp"
