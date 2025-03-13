@@ -5,6 +5,7 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "../strings/charset.hpp"
 #include "./details/idna_mapping_tables.hpp"
 #include "./normalization.hpp"
 #include "./unicode.hpp"
@@ -68,8 +69,9 @@ namespace webpp::unicode::idna {
      * Perform the mapping for a single character
      * @returns false if the code point is not allowed to be in a URL
      */
-    template <UTF32 CharT = char32_t, istl::String OutStrT = stl::u8string>
-    static constexpr bool map(CharT const code_point, OutStrT& out) {
+    template <UTF32 CharT = char32_t, istl::Appendable OutStrT = stl::u8string>
+    static constexpr bool map(CharT const code_point, OutStrT& out)
+      noexcept(istl::NothrowAppendable<OutStrT>) {
         using details::disallowed;
         using details::idna_mappings;
         using details::valid;
@@ -129,8 +131,9 @@ namespace webpp::unicode::idna {
      * Mapping Step of the IDNA Processing
      * UTS #46: https://www.unicode.org/reports/tr46/#ProcessingStepMap
      */
-    template <istl::String OutStrT, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out) {
+    template <istl::Appendable OutStrT, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out)
+      noexcept(istl::NothrowAppendable<OutStrT>) {
         using enum checked::error_handling;
         using checked::next_code_point;
 
@@ -148,8 +151,9 @@ namespace webpp::unicode::idna {
         return true;
     }
 
-    template <istl::String OutStrT, istl::StringViewifiable InpStrT>
-    [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out) {
+    template <istl::Appendable OutStrT, istl::StringViewifiable InpStrT>
+    [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out)
+      noexcept(istl::NothrowAppendable<OutStrT>) {
         auto const src_view = istl::string_viewify(stl::forward<InpStrT>(src));
         using iterator      = typename decltype(src_view)::iterator;
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
@@ -159,6 +163,17 @@ namespace webpp::unicode::idna {
     enum struct to_ascii_status : stl::uint32_t {
         valid              = 0,
         invalid_code_point = 1,
+        empty_domain_label = 2,
+    };
+
+    struct idna_options { // NOLINT(*-struct-pack-align)
+        bool CheckHyphens            = false;
+        bool CheckBidi               = true;
+        bool CheckJoiners            = true;
+        bool UseSTD3ASCIIRules       = false;
+        bool Transitional_Processing = false;
+        bool VerifyDnsLength         = false;
+        bool IgnoreInvalidPunycode   = false;
     };
 
     /**
@@ -171,20 +186,13 @@ namespace webpp::unicode::idna {
      *         RFC: https://www.rfc-editor.org/rfc/rfc3490.html#section-4.1
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
-     *
-     * We do not implement the whole thing yet, these are the parameters that URL parsing requires:
-     *  - CheckHyphens set to false,
-     *  - CheckBidi set to true,
-     *  - CheckJoiners set to true,
-     *  - UseSTD3ASCIIRules set to false,
-     *  - Transitional_Processing set to false,
-     *  - VerifyDnsLength set to false,
-     *  - IgnoreInvalidPunycode set to false.
      */
-    template <istl::String StrT = stl::string, typename Iter>
-    static constexpr to_ascii_status to_ascii(Iter spos, Iter send, StrT& out) {
+    template <idna_options Options = {}, istl::Appendable StrT = stl::string, typename Iter>
+    static constexpr to_ascii_status to_ascii(Iter spos, Iter send, StrT& out)
+      noexcept(istl::NothrowAppendable<StrT>) {
         using enum to_ascii_status;
         using unicode::normalization_form;
+        using char_type = typename std::iterator_traits<Iter>::value_type;
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
@@ -199,6 +207,61 @@ namespace webpp::unicode::idna {
         normalize<normalization_form::NFC>(out);
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
+        using flag_type                                         = stl::uint8_t;
+        webpp_static_constexpr flag_type dot_flag               = 0b100'0000U;
+        webpp_static_constexpr flag_type x_flag                 = 0b1U;
+        webpp_static_constexpr flag_type n_flag                 = 0b10U;
+        webpp_static_constexpr flag_type dash_flag              = 0b100U;
+        webpp_static_constexpr flag_type ascii_flag             = 0b1000U;
+        webpp_static_constexpr flag_type xnd_flag               = x_flag | n_flag | dash_flag | ascii_flag;
+        webpp_static_constexpr flag_type clean_flag             = ~static_cast<flag_type>(dot_flag);
+        webpp_static_constexpr auto      interesting_characters = categorize<flag_type, 256U>(
+          cat{.set = ".", .value = dot_flag},
+          cat{.set = "xX", .value = x_flag},
+          cat{.set = "nN", .value = n_flag},
+          cat{.set = "-", .value = dash_flag},
+          cat{.set = ALL_ASCII<char8_t>, .value = ascii_flag});
+
+        auto status = valid;
+        for (; spos != send; ++spos) {
+            auto const lpos = spos; // start of label
+
+            // find the label:
+            flag_type const flag = or_all_if<flag_type>(
+              interesting_characters,
+              spos,
+              send,
+              [](flag_type const res) constexpr noexcept -> bool {
+                  return res >= dot_flag; // we found a dot
+              });
+
+            switch (flag & clean_flag) {
+                [[unlikely]] case 0:
+                    // If the label is empty, or ..., record that there was an error.
+                    return empty_domain_label;
+                case xnd_flag:
+                    if (
+                      lpos - lpos > 4 && lpos[0] == 'x' && lpos[1] == 'n' && lpos[2] == '-' && lpos[3] == '-')
+                    {
+                        // found xn--
+                        // If the label contains any non-ASCII code point (i.e., a code point greater than
+                        // U+007F), record that there was an error, and continue with the next label.
+                        if ((flag & ascii_flag) != ascii_flag) [[unlikely]] {
+                            status = invalid_code_point;
+                            continue;
+                        }
+                    }
+                    [[fallthrough]];
+                [[likely]] default:
+                    break;
+            }
+
+            if ((flag & dot_flag) == dot_flag) {
+            }
+        }
+        if (status != valid) [[unlikely]] {
+            return status;
+        }
 
         // 1.4. Convert/Validate
 

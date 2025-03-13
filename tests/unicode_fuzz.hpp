@@ -17,7 +17,6 @@ namespace webpp::tests {
         return oss.str();
     }
 
-
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
         using webpp::unicode::toNFC;
@@ -53,6 +52,29 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
+
+
+        std::string resStringStyle;
+        webpp::unicode::normalize<webpp::unicode::normalization_form::NFC>(
+          str.begin(),
+          str.end(),
+          resStringStyle);
+        ASSERT_EQ(resStringStyle, res) << to_hex(str);
+
+
+        std::string resPtrStyle;
+        auto const  overwrite =
+          [&]<typename T>(T* cur_ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
+              auto const beg = cur_ptr;
+              webpp::unicode::normalize<webpp::unicode::normalization_form::NFC>(
+                str.data(),
+                str.data() + str.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
+                cur_ptr);
+              return static_cast<std::size_t>(cur_ptr - beg);
+          };
+        resPtrStyle.resize(res.size());
+        resPtrStyle.resize(overwrite(resPtrStyle.data(), res.size()));
+        ASSERT_EQ(resPtrStyle, res) << to_hex(str);
     }
 } // namespace webpp::tests
 

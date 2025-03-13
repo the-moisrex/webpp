@@ -494,6 +494,53 @@ namespace webpp::unicode {
         return details::canon_decomp_details<Iter, EIter, SizeT>(pos, end).max_length;
     }
 
+    template <istl::Appendable StrT = stl::u32string, stl::random_access_iterator Iter>
+    static constexpr void canonical_decompose(Iter spos, Iter send, StrT& out)
+      noexcept(istl::NothrowAppendable<StrT>) {
+        using size_type = stl::size_t;
+        using enum checked::error_handling;
+
+        auto const [max_length, requires_mapping] = details::canon_decomp_details(spos, send);
+        auto const cur_len                        = static_cast<size_type>(send - spos);
+
+        if (!requires_mapping) [[likely]] {
+            if constexpr (istl::String<StrT>) {
+                out.append(spos, send);
+            } else {
+                stl::copy(spos, send, out);
+                out += cur_len;
+            }
+            return;
+        }
+
+        assert(cur_len <= max_length);
+        auto const overwrite =
+          [spos, send]<typename T>(T ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
+              auto              pos = spos;
+              auto const* const beg = ptr;
+
+              while (pos != send) {
+                  auto const cur_cp = checked::next_code_point<return_negated_char>(pos, send);
+                  if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                      istl::iter_append(ptr, -cur_cp);
+                      continue;
+                  }
+                  canonical_decompose_to(ptr, cur_cp);
+              }
+              return static_cast<size_type>(ptr - beg);
+          };
+        if constexpr (istl::String<StrT>) {
+            if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {
+                out.resize_and_overwrite(max_length, overwrite);
+            } else {
+                out.resize(max_length);
+                out.resize(overwrite(out.data(), max_length));
+            }
+        } else {
+            out += overwrite(out, max_length);
+        }
+    }
+
     /**
      * Decompose inplace
      */
@@ -702,6 +749,51 @@ namespace webpp::unicode {
             canonical_decompose(out);
             canonical_reorder(out);
             canonical_compose(out);
+        } else {
+            // todo: NFKC and NFKD
+            throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");
+        }
+    }
+
+    template <normalization_form          Form = normalization_form::NFC,
+              istl::Appendable            StrT = stl::u32string,
+              stl::random_access_iterator Iter>
+    static constexpr void normalize(Iter spos, Iter send, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
+        if constexpr (istl::String<StrT>) {
+            // There is also a Unicode Consortium stability policy that canonical mappings are always limited
+            // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3×
+            // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
+            // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
+            // determining buffer sizes.
+            out.reserve((send - spos) * 3);
+        }
+
+        if constexpr (normalization_form::gibberish == Form) {
+            throw std::invalid_argument(
+              "We don't know what your intentions are, but calling this function and ask to normalize it to "
+              "gibberish is not it.");
+        } else if constexpr (normalization_form::NFD == Form) {
+            if constexpr (istl::String<StrT>) {
+                canonical_decompose(spos, send, out);
+                canonical_reorder(out);
+            } else {
+                stl::random_access_iterator auto const obeg = out;
+                canonical_decompose(spos, send, out);
+                stl::random_access_iterator auto const oend = out;
+                out                                         = obeg + canonical_compose(obeg, oend);
+            }
+        } else if constexpr (normalization_form::NFC == Form) {
+            if constexpr (istl::String<StrT>) {
+                canonical_decompose(spos, send, out);
+                canonical_reorder(out);
+                canonical_compose(out);
+            } else {
+                stl::random_access_iterator auto obeg = out;
+                canonical_decompose(spos, send, out);
+                stl::random_access_iterator auto const oend = out;
+                canonical_reorder(obeg, oend);
+                out = obeg + canonical_compose(obeg, oend);
+            }
         } else {
             // todo: NFKC and NFKD
             throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");

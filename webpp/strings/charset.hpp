@@ -351,6 +351,9 @@ namespace webpp {
     template <istl::CharType CharT = char>
     static constexpr auto ALPHA = charset(LOWER_ALPHA<CharT>, UPPER_ALPHA<CharT>);
 
+    template <istl::CharType CharT = char>
+    static constexpr auto ALL_ASCII = charset_range<CharT, 0U, 0x7FU>();
+
     /**
      * This is the character set containing just numbers.
      */
@@ -825,22 +828,35 @@ namespace webpp {
     /**
      * Usage:
      *   auto mapping = categorize(...);
-     *   switch (xor_all(mapping, start, end)) {
+     *   switch (or_all(mapping, start, end)) {
      *     case ...: ...;
      *     case ...: ...;
      *   }
      */
-    template <stl::integral T, stl::size_t N, stl::random_access_iterator Iter>
+    template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
         T res{};
         while (stl::next(pos, 4) <= end) {
-            res |= arr[static_cast<stl::uint8_t>(*pos++)];
-            res |= arr[static_cast<stl::uint8_t>(*pos++)];
-            res |= arr[static_cast<stl::uint8_t>(*pos++)];
-            res |= arr[static_cast<stl::uint8_t>(*pos++)];
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
         }
         for (; pos != end; ++pos) {
-            res |= arr[*pos];
+            res |= static_cast<T>(arr[*pos]);
+        }
+        return res;
+    }
+
+    template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr T
+    or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
+        T res{};
+        for (;; ++pos) {
+            if (pos == end || func(res)) {
+                break;
+            }
+            res |= static_cast<T>(arr[*pos]);
         }
         return res;
     }

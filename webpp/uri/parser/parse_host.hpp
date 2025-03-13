@@ -225,23 +225,25 @@ namespace webpp::uri {
         webpp_static_constexpr id_type dash_val    = 0b10'0000U;  // character -
         webpp_static_constexpr id_type nt_val      = 0b100'0000U; // newlines and tabs
         webpp_static_constexpr id_type forb_val    = static_cast<id_type>(~0 & ~nt_val); // Forbidden/Unicode
-        webpp_static_constexpr id_type xnd_val     = x_val | dash_val | dash_val | no_ipv4_val;
+        webpp_static_constexpr id_type xnd_val     = x_val | n_val | dash_val | no_ipv4_val;
         webpp_static_constexpr id_type no_ip_val   = no_ipv4_val | no_ipv6_val;
 
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS, .value = forb_val},
           cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = forb_val},
-          cat{.set = details::INVALID_IPV4<char_type>, .value = no_ipv4_val},
-          cat{.set = details::INVALID_IPV6<char_type>, .value = no_ipv6_val},
-          cat{.set = details::TABS_OR_NEWLINES<char_type>, .value = nt_val},
-          cat{.set = UPPER_ALPHA<char_type>, .value = upper_val},
-          cat{.set = "x", .value = x_val},
-          cat{.set = "n", .value = n_val},
-          cat{.set = "-", .value = dash_val});
+          cat{.set = details::INVALID_IPV4<char8_t>, .value = no_ipv4_val},
+          cat{.set = details::INVALID_IPV6<char8_t>, .value = no_ipv6_val},
+          cat{.set = details::TABS_OR_NEWLINES<char8_t>, .value = nt_val},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = upper_val},
+          cat{.set = u8"xX", .value = x_val},
+          cat{.set = u8"nN", .value = n_val},
+          cat{.set = u8"-", .value = dash_val});
+
+        // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
-        auto const status = or_all(interesting_characters, pos, end);
+        auto const status = or_all<id_type>(interesting_characters, pos, end);
         switch (status) {
             case upper_val:
                 // todo: does a simple to_lower would suffice?
