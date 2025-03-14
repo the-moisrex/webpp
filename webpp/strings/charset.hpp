@@ -11,8 +11,10 @@
 #    include <bitset>
 #endif
 #include "build-release/_deps/fmt-src/include/fmt/base.h"
+#include "std/iterator.hpp"
 
 #include <algorithm> // std::max
+#include <bits/fs_fwd.h>
 #include <boost/range/detail/implementation_help.hpp>
 #include <climits>
 #include <limits>
@@ -795,7 +797,7 @@ namespace webpp {
     [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
         stl::array<T, N> data{};
         (([&]<typename CharSetT>(CharSetT const& set, auto value) {
-             using value_type = typename CharSetT::value_type;
+             using value_type = istl::char_type_of_t<CharSetT>;
              if constexpr (stl::same_as<value_type, bool>) {
                  // things like std::bitset
                  auto const len = set.size();
@@ -804,9 +806,13 @@ namespace webpp {
                          data[i] |= static_cast<T>(value);
                      }
                  }
-             } else {
+             } else if constexpr (istl::Iterable<CharSetT>) {
                  for (auto const character : set) {
-                     data[character] |= static_cast<T>(value);
+                     data[static_cast<stl::size_t>(character)] |= static_cast<T>(value);
+                 }
+             } else { // for strings (char const*)
+                 for (auto cur = set; *cur != '\0'; ++cur) {
+                     data[static_cast<stl::size_t>(*cur)] |= static_cast<T>(value);
                  }
              }
          })(sets.set, sets.value),
@@ -865,7 +871,7 @@ namespace webpp {
     [[nodiscard]] static consteval charset<CharT, NewLen> inverse(charset<CharT, N> const& set) noexcept {
         charset<CharT, NewLen> res{};
         stl::size_t            index = 0;
-        for (CharT cur = 0; cur < N; ++cur) {
+        for (CharT cur = 0; cur < static_cast<CharT>(N); ++cur) {
             if (!set.contains(cur)) {
                 res[index++] = cur;
             }

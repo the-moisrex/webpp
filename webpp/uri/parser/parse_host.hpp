@@ -200,7 +200,6 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::is_possible_ends_with_ipv4;
-        using char_type = typename CtxT::char_type;
 
         // note: we don't need to check for IPv6 as the first step, we can check later.
 

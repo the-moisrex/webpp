@@ -192,7 +192,6 @@ namespace webpp::unicode::idna {
       noexcept(istl::NothrowAppendable<StrT>) {
         using enum to_ascii_status;
         using unicode::normalization_form;
-        using char_type = typename std::iterator_traits<Iter>::value_type;
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
@@ -214,7 +213,7 @@ namespace webpp::unicode::idna {
         webpp_static_constexpr flag_type dash_flag              = 0b100U;
         webpp_static_constexpr flag_type ascii_flag             = 0b1000U;
         webpp_static_constexpr flag_type xnd_flag               = x_flag | n_flag | dash_flag | ascii_flag;
-        webpp_static_constexpr flag_type clean_flag             = ~static_cast<flag_type>(dot_flag);
+        webpp_static_constexpr flag_type clean_flag             = static_cast<flag_type>(~dot_flag);
         webpp_static_constexpr auto      interesting_characters = categorize<flag_type, 256U>(
           cat{.set = ".", .value = dot_flag},
           cat{.set = "xX", .value = x_flag},
