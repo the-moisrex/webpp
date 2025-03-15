@@ -22,9 +22,37 @@ export const cacheFilePath = "UnicodeData.txt";
 export const properties = {
     codePoints: Symbol("Explicitly Mentioned Code Points"),
     ccc: Symbol("Canonical Combining Class"),
+    bidi: Symbol("Bidirectional Class"),
     decompositionType: Symbol("Decomposition Tables"),
     canonicalDecompositionType: Symbol("Canonical-only Decomposition Tables"),
 };
+
+export const bidiDirections = {
+    NONE: 0,
+    BN: 1,
+    CS: 2,
+    ES: 3,
+    ON: 4,
+    EN: 5,
+    L: 6,
+    R: 7,
+    NSM: 8,
+    AL: 9,
+    AN: 10,
+    ET: 11,
+    WS: 12,
+    RLO: 13,
+    LRO: 14,
+    PDF: 15,
+    RLE: 16,
+    RLI: 17,
+    FSI: 18,
+    PDI: 19,
+    LRI: 20,
+    B: 21,
+    S: 22,
+    LRE: 23
+}
 
 let content = "";
 export const download = async (callback = noop) => {
@@ -110,6 +138,25 @@ export const parse = async (table, property, onlyValid = false, fileContent = un
                     const curCCC = curCodePoint === codePoint ? ccc : 0n;
 
                     table.add(curCodePoint, curCCC);
+                }
+                lastCodePoint = codePoint + 1n;
+            };
+            break;
+        }
+
+        /// Bidirectional Class:
+        case properties.bidi: {
+            let lastCodePoint = 0n;
+            action = ({codePointStr, BidiClass}) => {
+                const codePoint = parseCodePoints(codePointStr);
+                for (
+                    let curCodePoint = lastCodePoint;
+                    curCodePoint <= codePoint;
+                    ++curCodePoint
+                ) {
+                    const curBidi = bidiDirections[curCodePoint === codePoint ? BidiClass : 'NONE'];
+
+                    table.add(curCodePoint, curBidi);
                 }
                 lastCodePoint = codePoint + 1n;
             };
@@ -261,6 +308,25 @@ export const getCCCs = async () => {
 
     const table = new GetTable();
     await parse(table, properties.ccc);
+
+    return table.data;
+};
+
+export const getBidiClasses = async () => {
+    class GetTable {
+        #data = {};
+
+        add(codePoint, BidiClass) {
+            this.#data[codePoint] = BidiClass;
+        }
+
+        get data() {
+            return this.#data;
+        }
+    }
+
+    const table = new GetTable();
+    await parse(table, properties.bidi);
 
     return table.data;
 };

@@ -16,7 +16,6 @@
 #include <iterator>
 
 namespace webpp::unicode::idna {
-
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
         using details::batch_bit_count;
@@ -159,7 +158,6 @@ namespace webpp::unicode::idna {
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
     }
 
-
     enum struct to_ascii_status : stl::uint32_t {
         valid              = 0,
         invalid_code_point = 1,
@@ -175,6 +173,46 @@ namespace webpp::unicode::idna {
         bool VerifyDnsLength         = false;
         bool IgnoreInvalidPunycode   = false;
     };
+
+    /**
+     * Is Domain Label Valid.
+     * Valid Criteria: https://www.unicode.org/reports/tr46/#Validity_Criteria
+     *
+     * Preconditions:
+     *  - The label must be in Unicode Normalization Form C.
+     *  - The label must not contain a U+002E (.) FULL STOP.
+     *  - Each code point in the label must only have certain Status values according to
+     *    Section 5, IDNA Mapping Table
+     */
+    template <idna_options Options = {}, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool is_label_valid(Iter spos, Iter send) noexcept {
+        // 1. SKIPPED: The label must be in Unicode Normalization Form NFC.
+        // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
+        //    and fourth positions.
+        // 3. If CheckHyphens, the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
+        // 4. If not CheckHyphens, the label must not begin with “xn--”.
+        // 5. SKIPPED: The label must not contain a U+002E (.) FULL STOP.
+        // 6. The label must not begin with a combining mark, that is: General_Category=Mark.
+        // 7. SKIPPED: ...
+        // 8. If CheckJoiners, the label must satisfy the ContextJ rules from Appendix A, in
+        //    The Unicode Code Points and Internationalized Domain Names for Applications (IDNA) [IDNA2008].
+        // 9. If CheckBidi, and if the domain name is a Bidi domain name,
+        //    then the label must satisfy all six of the numbered conditions
+        //    in [IDNA2008] RFC 5893, Section 2.
+        //    https://www.rfc-editor.org/rfc/rfc5893#section-2
+
+
+
+        auto const length = send - spos;
+        if (length == 0) {
+            return true;
+        }
+
+
+
+        // todo
+        return false;
+    }
 
     /**
      * The ToASCII operation takes a sequence of Unicode code points that
@@ -255,7 +293,8 @@ namespace webpp::unicode::idna {
                     break;
             }
 
-            if ((flag & dot_flag) == dot_flag) {
+            if ((flag & dot_flag) == dot_flag) { // every label except the last label
+                istl::iter_append(out, '.');
             }
         }
         if (status != valid) [[unlikely]] {
