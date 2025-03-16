@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 15 Mar 2025 10:15:25 GMT
+ *   This file's generation date:        Sat, 15 Mar 2025 16:48:11 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       429080
@@ -14,13 +14,14 @@
  *       - in KibiBytes:  53 KiB
  *   Some other implementations' total table size was 16.98 KiB;
  *   So I saved -35 KiB.
+ *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
  *   UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  *
- *   UCD Database Code Points (used the get the CCC values and what not):
+ *   UCD Database Code Points:
  *       https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
  *   UCD README file (used to check the version and creation date):
  *       https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt
@@ -36,7 +37,7 @@ namespace webpp::unicode::details {
 
 
     /**
-     * In "bidi_index" table, any code point bigger than this number will have "zero" as its CCC value;
+     * In "bidi_index" table, any code point bigger than this number will have "None" as its Bidi value;
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_zero_bidis = 0x110000UL;

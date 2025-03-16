@@ -113,7 +113,7 @@ class BidiTables {
     processRendered(renderedTables) {
         return `
     /**
-     * In "bidi_index" table, any code point bigger than this number will have "zero" as its CCC value;
+     * In "bidi_index" table, any code point bigger than this number will have "None" as its Bidi value;
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_zero_bidis = 0x${this.lastZero.toString(16).toUpperCase()}UL;
@@ -145,13 +145,14 @@ const createTableFile = async (tables) => {
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
  *   Some other implementations' total table size was 16.98 KiB;
  *   So I saved ${Math.ceil(16.98 - totalBits / 8 / 1024)} KiB.
+ *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
  *   UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  *
- *   UCD Database Code Points (used the get the CCC values and what not):
+ *   UCD Database Code Points:
  *       ${UnicodeData.fileUrl}
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
