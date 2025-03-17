@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 15 Mar 2025 16:48:11 GMT
+ *   This file's generation date:        Sun, 16 Mar 2025 20:32:58 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       429080
- *       - in bytes:      53635 B
- *       - in KibiBytes:  53 KiB
+ *       - in bits:       359448
+ *       - in bytes:      44931 B
+ *       - in KibiBytes:  44 KiB
  *   Some other implementations' total table size was 16.98 KiB;
- *   So I saved -35 KiB.
+ *   So I saved -26 KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
@@ -94,9 +94,9 @@ namespace webpp::unicode::details {
      *     [16bits = pos]
      *
      * Table size:
-     *   - in bits:       139264
-     *   - in bytes:      17408 B
-     *   - in KibiBytes:  17 KiB
+     *   - in bits:       69632
+     *   - in bytes:      8704 B
+     *   - in KibiBytes:  9 KiB
      */
     static constexpr std::array<bidi_index, 4352ULL> bidi_indices{
       0,     248,   319,   575,   822,   1030,  1286,  1536,  1790,  2043,  2298,  2554,  2810,  3066,  3321,

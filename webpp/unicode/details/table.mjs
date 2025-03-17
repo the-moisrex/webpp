@@ -578,7 +578,7 @@ export class TablePairs {
     }
 
     indicesTableSizeInBits() {
-        return BigInt(this.indices.length) * realSizeOf(this.indices.type);
+        return BigInt(this.indices.length) * this.#indexAddenda.realSize;
     }
 
     valuesTableSizeInBits() {
@@ -600,8 +600,6 @@ export class TablePairs {
         }
 
         const indices = this.indices.result;
-        const indicesBits = Number(this.indicesTableSizeInBits());
-        const valuesBits = Number(this.valuesTableSizeInBits());
 
         let printableValues = [];
 
@@ -658,6 +656,10 @@ export class TablePairs {
 
         const renderFunc =
             this.#props?.processRendered || ((content) => content);
+        
+        const indicesBits = Number(this.indicesTableSizeInBits());
+        const valuesBits = Number(this.valuesTableSizeInBits());
+
         return renderFunc(`
 
 ${this.#indexAddenda.render()}

@@ -373,6 +373,10 @@ export class Addenda {
             }, NaN) || 16n);
     }
 
+    get realSize() {
+        return realSizeOf(this.sizeof);
+    }
+
     get chunkSize() {
         return this.#chunkSize;
     }

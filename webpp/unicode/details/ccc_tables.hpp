@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 03 Jan 2025 18:21:41 GMT
+ *   This file's generation date:        Sun, 16 Mar 2025 20:30:58 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       98488
- *       - in bytes:      12311 B
- *       - in KibiBytes:  13 KiB
+ *       - in bits:       82824
+ *       - in bytes:      10353 B
+ *       - in KibiBytes:  11 KiB
  *   Some other implementations' total table size was 21 KiB;
- *   So I saved 9 KiB.
+ *   So I saved 11 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -95,9 +95,9 @@ namespace webpp::unicode::details {
      *     [16bits = pos]
      *
      * Table size:
-     *   - in bits:       31328
-     *   - in bytes:      3916 B
-     *   - in KibiBytes:  4 KiB
+     *   - in bits:       15664
+     *   - in bytes:      1958 B
+     *   - in KibiBytes:  2 KiB
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
       0,    0,    0,    0,    0,    0,    128,  0,    0,    253,  0,    364,  476,  589,  700,  775,  901,
