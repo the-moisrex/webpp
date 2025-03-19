@@ -7,10 +7,12 @@ import {
 } from "./modifiers.mjs";
 import {
     cppValueOf,
+    getSplitPoints,
     overlapInserts,
     realSizeOf,
     renderTableValues,
     Span,
+    splitOn,
     TableTraits,
     uint32,
     uint8,
@@ -22,6 +24,7 @@ export class TablePairs {
     #description = "";
     data = []; // raw, unprocessed data
     #props = {};
+    #indicesTables = [];
 
     init(meta) {
         this.#props = meta;
@@ -413,6 +416,13 @@ export class TablePairs {
         return possibilities.at(0);
     }
 
+    #splitTables() {
+        const splitCount = this.#props?.indices?.splitInto ?? 1;
+        const table = this.indices.result;
+
+        this.#indicesTables = splitInto(table, splitCount);
+    }
+
     /// Post-Processing
     process() {
         console.time("Process");
@@ -556,6 +566,8 @@ export class TablePairs {
             }
         }
 
+        this.#splitTables();
+
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
         // console.log("Successful masks:", reusedMaskedCount);
         console.log("Indices Table Length:", this.indices.length);
@@ -590,6 +602,65 @@ export class TablePairs {
 
     totalTablesSizeInBits() {
         return this.indicesTableSizeInBits() + this.valuesTableSizeInBits();
+    }
+
+    #renderIndicesTables() {
+        let result = "";
+        let index = 0;
+        const commons = this.#indicesTables.filter(item => item?.commonValue !== undefined);
+        for (const info of this.#indicesTables) {
+            const {start, length, table} = info;
+            if (info?.commonValue !== undefined) {
+                continue;
+            }
+            const indicesBits = Number(table.length * this.#indexAddenda.realSize);
+            const startTable = start == 0;
+            const tableIndex = startTable ? "" : `_${index}`;
+            const table_name = `${this.#name.toLowerCase()}_indices${!startTable ? "_extra" : ""}${tableIndex}`;
+            result += `
+
+    /**
+     * ${this.#name.toUpperCase()} Index Table (${start} - ${start + length})
+     *
+     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
+     *
+     * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
+     *     ${this.#indexAddenda.renderPlacements()}
+     *
+     * Table size:
+     *   - in bits:       ${indicesBits}
+     *   - in bytes:      ${indicesBits / 8} B
+     *   - in KibiBytes:  ${Math.ceil(indicesBits / 8 / 1024)} KiB
+     */
+    static constexpr std::array<${this.#indexAddenda.name}, ${length}ULL> ${table_name}{
+        ${table.join(", ")}
+    };
+    `;
+            ++index;
+        }
+
+
+        return `
+        ${this.#indexAddenda.render()}
+        
+        ${commons.length <= 1 ? "" : commons.length == 1 ? `
+            // you can choose between the indices' table using these breakpoints:
+            static constexpr std::size_t breakpoint_start = ${commons[0].start}U;
+            static constexpr std::size_t breakpoint_end = ${commons[0].start + commons[0].length}U;
+
+            // the removed part of the table has this value in them:
+            static constexpr ${this.#indexAddenda.name} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
+            ` : `
+            struct breakpoint_type {
+                std::size_t start;
+                std::size_t end;
+            };
+
+            // you can choose between the indices' table using these breakpoints:
+            static constexpr std::array<breakpoint_type, ${this.#indicesTables.length}> breakpoints = {${commons.map(item => `{${item.start}, ${item.start + item.length}}`).join(", ")}};
+        `}
+
+        ${result}`;
     }
 
     render() {
@@ -657,30 +728,11 @@ export class TablePairs {
         const renderFunc =
             this.#props?.processRendered || ((content) => content);
         
-        const indicesBits = Number(this.indicesTableSizeInBits());
         const valuesBits = Number(this.valuesTableSizeInBits());
 
         return renderFunc(`
+    ${this.#renderIndicesTables()}
 
-${this.#indexAddenda.render()}
-
-
-    /**
-     * ${this.#name.toUpperCase()} Index Table
-     *
-     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
-     *
-     * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
-     *     ${this.#indexAddenda.renderPlacements()}
-     *
-     * Table size:
-     *   - in bits:       ${indicesBits}
-     *   - in bytes:      ${indicesBits / 8} B
-     *   - in KibiBytes:  ${Math.ceil(indicesBits / 8 / 1024)} KiB
-     */
-    static constexpr std::array<${this.#indexAddenda.name}, ${indices.length}ULL> ${this.#name.toLowerCase()}_indices{
-        ${indices.join(", ")}
-    };
     ${
         this.values === null
             ? ""

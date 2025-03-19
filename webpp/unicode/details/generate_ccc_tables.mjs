@@ -35,6 +35,7 @@ class CCCTables {
     indices = {
         max: 4353 * 10,
         sizeof: uint32,
+        splitInto: 2, // split the table this many tables
         description: `CCC: Canonical Combining Class
 These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`,
     };

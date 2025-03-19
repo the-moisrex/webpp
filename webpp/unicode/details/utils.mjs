@@ -1128,3 +1128,107 @@ export function packBoolsIntoInts(boolArray, blockSize = 8n) {
 
     return result;
 }
+
+
+export function findBreakPoint(table, tolerance = 3, getValue = (val) => val) {
+    let last = NaN;
+    let i = table.length - 1;
+    let length = 0;
+    let lastLength = 0;
+    for (; i >= 0 && tolerance !== 0; --i) {
+        const cur = table.at(i);
+        const curVal = getValue(cur);
+        if (last !== curVal) {
+            --tolerance;
+            lastLength = length;
+            length = 0;
+        }
+        last = curVal;
+        ++length;
+    }
+    return {start: i, length: lastLength};
+}
+
+
+export function getSplitPoints(table, getValue = (val) => val, min_length = 1) {
+    let last = NaN;
+    let start = 0;
+    let tables = [];
+    let i = 0;
+    for (; i < (table.length + 1); ++i) {
+        const cur = table?.at(i);
+        const curVal = getValue?.(cur);
+        if (last !== curVal) {
+            const length = i - start;
+            if (length >= min_length) {
+                tables.push({ start, length, commonValue: last });
+            }
+            start = i;
+        }
+        last = curVal;
+    }
+    // const length = i - start;
+    // if (length >= min_length) {
+    //     tables.push({ start, length, commonValue: last });
+    // }
+    // return tables.toSorted(({ length: lhs }, { length: rhs }) => lhs >= rhs);
+    return tables;
+}
+
+export function splitOn(table, splits = getSplitPoints(table)) {
+    let tables = [];
+    let lastEnd = 0;
+    for (const { start, length, commonValue } of splits) {
+        if (start > lastEnd) {
+            tables.push({
+               start: lastEnd,
+               length: start - lastEnd,
+               table: table.slice(lastEnd, start)
+               // no common value here
+            });
+        }
+        tables.push({
+            start,
+            length,
+            commonValue,
+            table: table.slice(start, start + length)
+        });
+        lastEnd = start + length;
+    }
+    if (lastEnd != table.length) {
+        tables.push({
+            start: lastEnd,
+            length: table.length - lastEnd,
+            table: table.slice(lastEnd, table.length)
+        });
+    }
+    return tables;
+}
+
+/**
+ * Finds the topCount packs of continious values from the input table and splits
+ * the table from those found breakpoints.
+ * @param {Array} table 
+ * @param {Number} topCount 
+ * @param {Function} getValue 
+ * @returns {Array}
+ */
+export function splitInto(table, topCount = 3, getValue = (val) => val) {
+    if (topCount <= 1) {
+        return [{
+            start: 0,
+            length: table.length,
+            table
+        }];
+    }
+    const splits = getSplitPoints(table, getValue);
+    const lengths = splits
+            .filter(item => item?.commonValue !== undefined)
+            .map(({length}) => length)
+            .toSorted((lhs, rhs) => rhs - lhs)
+            .slice(0, splits.length < topCount ? splits.length : topCount);
+    const min_length = lengths[lengths.length - 1];
+    
+    return splitOn(table, getSplitPoints(table, getValue, min_length));
+}
+
