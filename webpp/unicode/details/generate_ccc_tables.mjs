@@ -35,7 +35,7 @@ class CCCTables {
     indices = {
         max: 4353 * 10,
         sizeof: uint32,
-        splitInto: 2, // split the table this many tables
+        splitInto: 1, // split the table this many tables
         description: `CCC: Canonical Combining Class
 These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`,
     };
@@ -73,6 +73,7 @@ the "ccc_indices" table.
             `(${this.lastZero} >> ${this.tables.chunkShift})`,
         );
         this.tables.indices.trimAt(lastZeroBucket);
+        this.tables.splitTables();
     }
 
     add(codePoint, value) {
@@ -148,9 +149,9 @@ const createTableFile = async (tables) => {
  *   Total Table sizes in this file:
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
- *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
+ *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
  *   Some other implementations' total table size was 21 KiB;
- *   So I saved ${Math.ceil(21 - totalBits / 8 / 1024)} KiB.
+ *   So I saved ${(21 - totalBits / 8 / 1024).toFixed(2)} KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/

@@ -7,12 +7,11 @@ import {
 } from "./modifiers.mjs";
 import {
     cppValueOf,
-    getSplitPoints,
     overlapInserts,
     realSizeOf,
     renderTableValues,
     Span,
-    splitOn,
+    splitInto,
     TableTraits,
     uint32,
     uint8,
@@ -416,7 +415,7 @@ export class TablePairs {
         return possibilities.at(0);
     }
 
-    #splitTables() {
+    splitTables() {
         const splitCount = this.#props?.indices?.splitInto ?? 1;
         const table = this.indices.result;
 
@@ -566,7 +565,7 @@ export class TablePairs {
             }
         }
 
-        this.#splitTables();
+        this.splitTables();
 
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
         // console.log("Successful masks:", reusedMaskedCount);
@@ -589,8 +588,16 @@ export class TablePairs {
         console.timeEnd("Process");
     }
 
+    get #commonIndices() {
+        return this.#indicesTables.filter(item => item?.commonValue !== undefined);
+    }
+
+    get #uncommonIndices() {
+        return this.#indicesTables.filter(item => item?.commonValue === undefined);
+    }
+
     indicesTableSizeInBits() {
-        return BigInt(this.indices.length) * this.#indexAddenda.realSize;
+        return BigInt(this.#commonIndices.length) * this.#indexAddenda.realSize;
     }
 
     valuesTableSizeInBits() {
@@ -606,16 +613,17 @@ export class TablePairs {
 
     #renderIndicesTables() {
         let result = "";
-        let index = 0;
-        const commons = this.#indicesTables.filter(item => item?.commonValue !== undefined);
-        for (const info of this.#indicesTables) {
+        let index = 1;
+        const commons = this.#commonIndices;
+        const uncommons = this.#uncommonIndices;
+        for (const info of uncommons) {
             const {start, length, table} = info;
             if (info?.commonValue !== undefined) {
                 continue;
             }
-            const indicesBits = Number(table.length * this.#indexAddenda.realSize);
+            const indicesBits = table.length * Number(this.#indexAddenda.realSize);
             const startTable = start == 0;
-            const tableIndex = startTable ? "" : `_${index}`;
+            const tableIndex = startTable || uncommons.length == 2 ? "" : `_${index}`;
             const table_name = `${this.#name.toLowerCase()}_indices${!startTable ? "_extra" : ""}${tableIndex}`;
             result += `
 
@@ -630,7 +638,7 @@ export class TablePairs {
      * Table size:
      *   - in bits:       ${indicesBits}
      *   - in bytes:      ${indicesBits / 8} B
-     *   - in KibiBytes:  ${Math.ceil(indicesBits / 8 / 1024)} KiB
+     *   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#indexAddenda.name}, ${length}ULL> ${table_name}{
         ${table.join(", ")}
@@ -643,13 +651,13 @@ export class TablePairs {
         return `
         ${this.#indexAddenda.render()}
         
-        ${commons.length <= 1 ? "" : commons.length == 1 ? `
+        ${commons.length <= 1 ? "" : commons.length == 2 ? `
             // you can choose between the indices' table using these breakpoints:
             static constexpr std::size_t breakpoint_start = ${commons[0].start}U;
             static constexpr std::size_t breakpoint_end = ${commons[0].start + commons[0].length}U;
 
             // the removed part of the table has this value in them:
-            static constexpr ${this.#indexAddenda.name} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
+            static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
             struct breakpoint_type {
                 std::size_t start;
@@ -657,7 +665,7 @@ export class TablePairs {
             };
 
             // you can choose between the indices' table using these breakpoints:
-            static constexpr std::array<breakpoint_type, ${this.#indicesTables.length}> breakpoints = {${commons.map(item => `{${item.start}, ${item.start + item.length}}`).join(", ")}};
+            static constexpr std::array<breakpoint_type, ${commons.length}> breakpoints{{${commons.map(item => `{${item.start}, ${item.start + item.length}}`).join(", ")}}};
         `}
 
         ${result}`;
@@ -745,7 +753,7 @@ export class TablePairs {
      * Table size:
      *   - in bits:       ${valuesBits}
      *   - in bytes:      ${valuesBits / 8} B
-     *   - in KibiBytes:  ${Math.ceil(valuesBits / 8 / 1024)} KiB
+     *   - in KibiBytes:  ${(valuesBits / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
         name: `${this.#name}_values`,

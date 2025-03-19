@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 16 Mar 2025 20:30:58 GMT
+ *   This file's generation date:        Wed, 19 Mar 2025 00:40:44 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       82824
- *       - in bytes:      10353 B
- *       - in KibiBytes:  11 KiB
+ *       - in bits:       67160
+ *       - in bytes:      8395 B
+ *       - in KibiBytes:  8.20 KiB
  *   Some other implementations' total table size was 21 KiB;
- *   So I saved 11 KiB.
+ *   So I saved 12.80 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -85,7 +85,7 @@ namespace webpp::unicode::details {
     };
 
     /**
-     * CCC Index Table
+     * CCC Index Table (0 - 979)
      *
      * CCC: Canonical Combining Class
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
@@ -97,7 +97,7 @@ namespace webpp::unicode::details {
      * Table size:
      *   - in bits:       15664
      *   - in bytes:      1958 B
-     *   - in KibiBytes:  2 KiB
+     *   - in KibiBytes:  1.91 KiB
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
       0,    0,    0,    0,    0,    0,    128,  0,    0,    253,  0,    364,  476,  589,  700,  775,  901,
@@ -159,6 +159,8 @@ namespace webpp::unicode::details {
       0,    0,    0,    0,    0,    0,    0,    0,    7649, 7762, 7134, 0,    0,    7844, 0,    0,    0,
       7956, 0,    8068, 0,    0,    0,    0,    0,    8180, 8267};
 
+
+
     /**
      * CCC Values Table
      *
@@ -169,7 +171,7 @@ namespace webpp::unicode::details {
      * Table size:
      *   - in bits:       67160
      *   - in bytes:      8395 B
-     *   - in KibiBytes:  9 KiB
+     *   - in KibiBytes:  8.20 KiB
      */
     static constexpr std::array<std::uint8_t, 8395ULL> ccc_values{
 
