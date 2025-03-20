@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 20 Mar 2025 19:21:35 GMT
+ *   This file's generation date:        Thu, 20 Mar 2025 20:53:05 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       97512
@@ -86,24 +86,222 @@ namespace webpp::unicode::details {
     };
 
     struct breakpoint_type {
-        std::size_t starting;
-        std::size_t ending;
+        std::uint16_t starting;
+        std::uint16_t ending;
+        std::uint16_t offset;
     };
 
     // you can choose between the indices' table using these breakpoints:
-    static constexpr std::array<breakpoint_type, 4U> breakpoints{
-      {// Section 0
-       {0, 625},
-       // Section Invalid
-       {0, 0},
-       // Section 1
-       {1279, 1377},
-       // Section 2
-       {1725, 3177}}
+    static constexpr std::array<breakpoint_type, 68U> breakpoints{
+      {
+
+       // Section 1:
+        {.starting = 0, .ending = 625, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 2:
+        {.starting = 1279, .ending = 1377, .offset = 654},
+
+       // Section 3:
+        {.starting = 1725, .ending = 3177, .offset = 1002},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 4:
+        {.starting = 3455, .ending = 4097, .offset = 1280},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 5:
+        {.starting = 5430, .ending = 6430, .offset = 2613},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 6:
+        {.starting = 28672, .ending = 28688, .offset = 24855},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 7:
+        {.starting = 30720, .ending = 30721, .offset = 26887},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 8:
+        {.starting = 32767, .ending = 32769, .offset = 28933},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section Invalid:
+        {.starting = 0, .ending = 0, .offset = 0},
+
+       // Section 9:
+        {.starting = 34815, .ending = 34816, .offset = 30979}}
     };
 
-    static constexpr std::uint16_t common_position  = 2275U;
-    static constexpr std::uint16_t breakpoint_shift = 9U;
+    static constexpr bidi_index    common_position{2275U};
+    static constexpr std::uint16_t breakpoint_shift{9U};
 
 
     /**
@@ -121,7 +319,7 @@ namespace webpp::unicode::details {
      */
     static constexpr std::array<bidi_index, 3837ULL> bidi_indices{
 
-      // Section 0 - 625 size containing 625 values:
+      // Section [0, 625) size containing 625 values:
       //   - in bits:       10000
       //   - in bytes:      1250 B
       //   - in KibiBytes:  1.22 KiB
@@ -751,7 +949,7 @@ namespace webpp::unicode::details {
       3493,
       2274,
 
-      // Section 1279 - 1377 size containing 98 values:
+      // Section [1279, 1377) size containing 98 values:
       //   - in bits:       1568
       //   - in bytes:      196 B
       //   - in KibiBytes:  0.19 KiB
@@ -854,7 +1052,7 @@ namespace webpp::unicode::details {
       6041,
       2274,
 
-      // Section 1725 - 3177 size containing 1452 values:
+      // Section [1725, 3177) size containing 1452 values:
       //   - in bits:       23232
       //   - in bytes:      2904 B
       //   - in KibiBytes:  2.84 KiB
@@ -2311,7 +2509,7 @@ namespace webpp::unicode::details {
       2276,
       10076,
 
-      // Section 3455 - 4097 size containing 642 values:
+      // Section [3455, 4097) size containing 642 values:
       //   - in bits:       10272
       //   - in bytes:      1284 B
       //   - in KibiBytes:  1.25 KiB
@@ -2958,7 +3156,7 @@ namespace webpp::unicode::details {
       2275,
       2274,
 
-      // Section 5430 - 6430 size containing 1000 values:
+      // Section [5430, 6430) size containing 1000 values:
       //   - in bits:       16000
       //   - in bytes:      2000 B
       //   - in KibiBytes:  1.95 KiB
@@ -3963,7 +4161,7 @@ namespace webpp::unicode::details {
       2275,
       10127,
 
-      // Section 28672 - 28688 size containing 16 values:
+      // Section [28672, 28688) size containing 16 values:
       //   - in bits:       256
       //   - in bytes:      32 B
       //   - in KibiBytes:  0.03 KiB
@@ -3984,20 +4182,20 @@ namespace webpp::unicode::details {
       314,
       3667,
 
-      // Section 30720 - 30721 size containing 1 values:
+      // Section [30720, 30721) size containing 1 values:
       //   - in bits:       16
       //   - in bytes:      2 B
       //   - in KibiBytes:  0.00 KiB
       2274,
 
-      // Section 32767 - 32769 size containing 2 values:
+      // Section [32767, 32769) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       12028,
       2274,
 
-      // Section 34815 - 34816 size containing 1 values:
+      // Section [34815, 34816) size containing 1 values:
       //   - in bits:       16
       //   - in bytes:      2 B
       //   - in KibiBytes:  0.00 KiB

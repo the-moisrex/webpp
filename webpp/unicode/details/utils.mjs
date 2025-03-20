@@ -1178,12 +1178,14 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1) {
 export function splitOn(table, splits = getSplitPoints(table)) {
     let tables = [];
     let lastEnd = 0;
+    let offset = 0;
     for (const { start, length, commonValue } of splits) {
         if (start > lastEnd) {
             tables.push({
                start: lastEnd,
                length: start - lastEnd,
-               table: table.slice(lastEnd, start)
+               table: table.slice(lastEnd, start),
+               offset
                // no common value here
             });
         }
@@ -1191,15 +1193,18 @@ export function splitOn(table, splits = getSplitPoints(table)) {
             start,
             length,
             commonValue,
-            table: table.slice(start, start + length)
+            table: table.slice(start, start + length),
+            offset
         });
         lastEnd = start + length;
+        offset += length;
     }
     if (lastEnd != table.length) {
         tables.push({
             start: lastEnd,
             length: table.length - lastEnd,
-            table: table.slice(lastEnd, table.length)
+            table: table.slice(lastEnd, table.length),
+            offset
         });
     }
     return tables;

@@ -64,7 +64,8 @@ namespace webpp::tests {
 
         std::string resPtrStyle;
         auto const  overwrite =
-          [&]<typename T>(T* cur_ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
+          [&]<typename T>(T*                                 cur_ptr,
+                          [[maybe_unused]] stl::size_t const length /* = max_length */) constexpr noexcept {
               auto const beg = cur_ptr;
               webpp::unicode::normalize<webpp::unicode::normalization_form::NFC>(
                 str.data(),

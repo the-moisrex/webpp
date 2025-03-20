@@ -9,7 +9,7 @@ import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import * as UnicodeData from "./UnicodeData.mjs";
+import * as DerivedBidiClass from "./DerivedBidiClass.mjs";
 import {runClangFormat, uint32, uint5, uint8, writePieces} from "./utils.mjs";
 
 const bidiOutFile = `bidi_tables.hpp`;
@@ -19,7 +19,7 @@ const start = async () => {
 
     // database file
     const bidisTables = new BidiTables();
-    await UnicodeData.parse(bidisTables, UnicodeData.properties.bidi);
+    await DerivedBidiClass.parse(bidisTables);
     bidisTables?.process?.();
     await createTableFile([bidisTables]);
     console.log("File processing completed.");
@@ -38,7 +38,7 @@ class BidiTables {
 
         // split the indices table
         splitInto: 8,
-        breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
+        // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
 
         description: `Bidi: Bidirectional Class`,
     };

@@ -622,13 +622,13 @@ export class TablePairs {
         const limit = this.breakpointsTableLimit;
         let tableSize = 0;
 
-        nextShift: for (;breakpointsTableShift !== 0;--breakpointsTableShift) {
+        nextShift: for (; breakpointsTableShift !== 0; --breakpointsTableShift) {
             tableSize = 0;
             for (let i = 1; i < limit; ++i) {
                 const cur = Number(table[i].starting) >> breakpointsTableShift;
                 const prev = Number(table[i - 1].starting) >> breakpointsTableShift;
                 tableSize = Math.max(cur, tableSize);
-                if (cur === prev) {
+                if (cur === prev || table[i] === undefined) {
                     continue nextShift;
                 }
             }
@@ -639,13 +639,14 @@ export class TablePairs {
         }
 
         let breakpointsTable = new Array(tableSize);
-        breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Invalid'});
-        for (let i = 0; i < tableSize; ++i) {
+        breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Invalid', offset: 0});
+        for (let i = 0; i < table.length; ++i) {
+            // console.log(tableSize, breakpointsTableShift, i, table[i])
             const curIndex = table[i].starting >> breakpointsTableShift;
             breakpointsTable[curIndex] = {
                 ...table[i],
                 curIndex,
-                section: i
+                section: i + 1,
             };
         }
 
@@ -660,7 +661,7 @@ export class TablePairs {
         let index = 1;
         const commons = this.#commonIndices;
         const uncommons = this.#uncommonIndices;
-        const {breakpointsTable, breakpointsTableShift} = this.getBreakpointsTable(uncommons.map(item => ({starting: item.start, ending: item.start + item.length})));
+        const {breakpointsTable, breakpointsTableShift} = this.getBreakpointsTable(uncommons.map(item => ({starting: item.start, ending: item.start + item.length, offset: item.offset})));
         const commonValues = commons.map(item => item.commonValue);
         const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
         if (!isSingleCommonValue) {
@@ -679,7 +680,7 @@ export class TablePairs {
             allLength += table.length;
 
             result += `
-     // Section ${start} - ${start + length} size containing ${length} values:
+     // Section [${start}, ${start + length}) size containing ${length} values:
      //   - in bits:       ${indicesBits}
      //   - in bytes:      ${indicesBits / 8} B
      //   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
@@ -701,17 +702,19 @@ export class TablePairs {
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
             struct breakpoint_type {
-                std::size_t starting;
-                std::size_t ending;
+                ${this.#indexAddenda.STLTypeString} starting;
+                ${this.#indexAddenda.STLTypeString} ending;
+                ${this.#indexAddenda.STLTypeString} offset;
             };
 
             // you can choose between the indices' table using these breakpoints:
             static constexpr std::array<breakpoint_type, ${breakpointsTable.length}U> breakpoints{{${breakpointsTable.map(item => `
-               // Section ${item.section}
-               {${item.starting}, ${item.ending}}`).join(", ")}}};
 
-            static constexpr ${this.#indexAddenda.STLTypeString} common_position = ${commonValues[0]}U;
-            static constexpr ${this.#indexAddenda.STLTypeString} breakpoint_shift = ${breakpointsTableShift}U;
+               // Section ${item.section}:
+               {.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}`).join(", ")}}};
+
+            static constexpr ${this.#indexAddenda.name} common_position{${commonValues[0]}U};
+            static constexpr ${this.#indexAddenda.STLTypeString} breakpoint_shift{${breakpointsTableShift}U};
         `}
 
     /**

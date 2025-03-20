@@ -7,3 +7,4 @@ DerivedNormalizationProps.txt
 isolate-*.log
 processed*
 IdnaMappingTable.txt
+DerivedBidiClass.txt

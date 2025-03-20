@@ -58,8 +58,10 @@ set(ALL_SOURCES_SHORT
         unicode/normalization.hpp
         unicode/hangul.hpp
         unicode/idna.hpp
+        unicode/bidi.hpp
         unicode/punycodes.hpp
         unicode/details/ccc_tables.hpp
+        unicode/details/bidi_tables.hpp
         unicode/details/composition_tables.hpp
         unicode/details/decomposition_tables.hpp
 
