@@ -765,7 +765,7 @@ namespace webpp::unicode {
             // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
             // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
             // determining buffer sizes.
-            out.reserve((send - spos) * 3);
+            out.reserve(static_cast<stl::size_t>((send - spos) * 3));
         }
 
         if constexpr (normalization_form::gibberish == Form) {

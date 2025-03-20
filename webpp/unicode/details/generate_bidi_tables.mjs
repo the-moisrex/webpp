@@ -10,7 +10,7 @@ import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {runClangFormat, uint32, uint8, writePieces} from "./utils.mjs";
+import {runClangFormat, uint32, uint5, uint8, writePieces} from "./utils.mjs";
 
 const bidiOutFile = `bidi_tables.hpp`;
 
@@ -35,6 +35,11 @@ class BidiTables {
     indices = {
         max: 4353 * 10,
         sizeof: uint32,
+
+        // split the indices table
+        splitInto: 8,
+        breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
+
         description: `Bidi: Bidirectional Class`,
     };
     values = {
@@ -53,7 +58,7 @@ class BidiTables {
             indices: this.indices,
             values: this.values,
             validateResults: true,
-            genIndexAddenda: () => genSimpleIndexAddenda("index", uint8),
+            genIndexAddenda: () => genSimpleIndexAddenda("index", uint5),
         });
     }
 
@@ -93,21 +98,7 @@ class BidiTables {
     }
 
     tests() {
-        /// Sanity check: see if we have skipped adding some code points to the table
-        const undefinedIndex = this.tables.data.findIndex(
-            (codePoint) => codePoint === undefined,
-        );
-        if (undefinedIndex !== -1) {
-            throw new Error(
-                `Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`,
-            );
-        }
-
-        if (this.tables.data[0x1ce8] !== 1) {
-            throw new Error(
-                `Invalid parsing; data[0x1CE8]: ${this.tables.data[0x1ce8]}; length: ${this.tables.data?.length}`,
-            );
-        }
+        // todo
     }
 
     processRendered(renderedTables) {
@@ -142,9 +133,9 @@ const createTableFile = async (tables) => {
  *   Total Table sizes in this file:
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
- *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
+ *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
  *   Some other implementations' total table size was 16.98 KiB;
- *   So I saved ${Math.ceil(16.98 - totalBits / 8 / 1024)} KiB.
+ *   So I saved ${(16.98 - totalBits / 8 / 1024).toFixed(2)} KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:

@@ -611,38 +611,79 @@ export class TablePairs {
         return this.indicesTableSizeInBits() + this.valuesTableSizeInBits();
     }
 
+    get breakpointsTableLimit() {
+        return this.#props?.indices?.breakpointsTableLimit || this.#uncommonIndices.length;
+    }
+
+    // table is a table of starting positions
+    getBreakpointsTable(table) {
+        table = table.toSorted();
+        let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof));
+        const limit = this.breakpointsTableLimit;
+        let tableSize = 0;
+
+        nextShift: for (;breakpointsTableShift !== 0;--breakpointsTableShift) {
+            tableSize = 0;
+            for (let i = 1; i < limit; ++i) {
+                const cur = Number(table[i].starting) >> breakpointsTableShift;
+                const prev = Number(table[i - 1].starting) >> breakpointsTableShift;
+                tableSize = Math.max(cur, tableSize);
+                if (cur === prev) {
+                    continue nextShift;
+                }
+            }
+            break;
+        }
+        if (breakpointsTableShift === 0) {
+            throw new Error("Was not able to find a breakpoint shift between the starting positions.");
+        }
+
+        let breakpointsTable = new Array(tableSize);
+        breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Invalid'});
+        for (let i = 0; i < tableSize; ++i) {
+            const curIndex = table[i].starting >> breakpointsTableShift;
+            breakpointsTable[curIndex] = {
+                ...table[i],
+                curIndex,
+                section: i
+            };
+        }
+
+        return {
+            breakpointsTableShift,
+            breakpointsTable
+        }
+    }
+
     #renderIndicesTables() {
         let result = "";
         let index = 1;
         const commons = this.#commonIndices;
         const uncommons = this.#uncommonIndices;
+        const {breakpointsTable, breakpointsTableShift} = this.getBreakpointsTable(uncommons.map(item => ({starting: item.start, ending: item.start + item.length})));
+        const commonValues = commons.map(item => item.commonValue);
+        const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
+        if (!isSingleCommonValue) {
+            throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
+        }
+        let allIndicesBits = 0
+        let allLength = 0;
+
         for (const info of uncommons) {
             const {start, length, table} = info;
             if (info?.commonValue !== undefined) {
                 continue;
             }
             const indicesBits = table.length * Number(this.#indexAddenda.realSize);
-            const startTable = start == 0;
-            const tableIndex = startTable || uncommons.length == 2 ? "" : `_${index}`;
-            const table_name = `${this.#name.toLowerCase()}_indices${!startTable ? "_extra" : ""}${tableIndex}`;
-            result += `
+            allIndicesBits += indicesBits;
+            allLength += table.length;
 
-    /**
-     * ${this.#name.toUpperCase()} Index Table (${start} - ${start + length})
-     *
-     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
-     *
-     * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
-     *     ${this.#indexAddenda.renderPlacements()}
-     *
-     * Table size:
-     *   - in bits:       ${indicesBits}
-     *   - in bytes:      ${indicesBits / 8} B
-     *   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
-     */
-    static constexpr std::array<${this.#indexAddenda.name}, ${length}ULL> ${table_name}{
-        ${table.join(", ")}
-    };
+            result += `
+     // Section ${start} - ${start + length} size containing ${length} values:
+     //   - in bits:       ${indicesBits}
+     //   - in bytes:      ${indicesBits / 8} B
+     //   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
+    ${table.join(", ")},
     `;
             ++index;
         }
@@ -660,15 +701,37 @@ export class TablePairs {
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
             struct breakpoint_type {
-                std::size_t start;
-                std::size_t end;
+                std::size_t starting;
+                std::size_t ending;
             };
 
             // you can choose between the indices' table using these breakpoints:
-            static constexpr std::array<breakpoint_type, ${commons.length}> breakpoints{{${commons.map(item => `{${item.start}, ${item.start + item.length}}`).join(", ")}}};
+            static constexpr std::array<breakpoint_type, ${breakpointsTable.length}U> breakpoints{{${breakpointsTable.map(item => `
+               // Section ${item.section}
+               {${item.starting}, ${item.ending}}`).join(", ")}}};
+
+            static constexpr ${this.#indexAddenda.STLTypeString} common_position = ${commonValues[0]}U;
+            static constexpr ${this.#indexAddenda.STLTypeString} breakpoint_shift = ${breakpointsTableShift}U;
         `}
 
-        ${result}`;
+    /**
+     * ${this.#name.toUpperCase()} Index Table (combined ${uncommons.length} sections)
+     *
+     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
+     *
+     * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
+     *     ${this.#indexAddenda.renderPlacements()}
+     *
+     * Table size:
+     *   - in bits:       ${allIndicesBits}
+     *   - in bytes:      ${allIndicesBits / 8} B
+     *   - in KibiBytes:  ${(allIndicesBits / 8 / 1024).toFixed(2)} KiB
+     */
+    static constexpr std::array<${this.#indexAddenda.name}, ${allLength}ULL> ${this.#name.toLowerCase()}_indices{
+        ${result}
+    };
+
+        `;
     }
 
     render() {
