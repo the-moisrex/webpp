@@ -597,7 +597,7 @@ export class TablePairs {
     }
 
     indicesTableSizeInBits() {
-        return BigInt(this.#commonIndices.length) * this.#indexAddenda.realSize;
+        return BigInt(this.#uncommonIndices.reduce((sum, cur) => sum + cur.length, 0)) * this.#indexAddenda.realSize;
     }
 
     valuesTableSizeInBits() {
@@ -665,6 +665,7 @@ export class TablePairs {
         const commonValues = commons.map(item => item.commonValue);
         const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
         if (!isSingleCommonValue) {
+            console.error(commonValues);
             throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
         }
         let allIndicesBits = 0

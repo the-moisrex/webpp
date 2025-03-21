@@ -1,4 +1,4 @@
-import { splitLine, cleanComments, downloadFile, updateProgressBar, parseCodePointRangeExclusive } from "./utils.mjs";
+import { splitLine, cleanComments, downloadFile, updateProgressBar, parseCodePointRangeExclusive, noop } from "./utils.mjs";
 
 export const fileUrl =
     "https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedBidiClass.txt";
@@ -57,6 +57,7 @@ export const parse = async (table, fileContent = undefined) => {
     }
 
     const lines = fileContent.split("\n");
+    const data = [];
 
     lines.forEach((line, index) => {
         line = cleanComments(line);
@@ -77,13 +78,23 @@ export const parse = async (table, fileContent = undefined) => {
             throw new Error(`Invalid property name found (${property}); is there a new update to Unicode?`);
         }
 
-        property = props[property];
-
         const [codePointStart, codePointEnd] = parseCodePointRangeExclusive(codePointStr);
-        for (let curCodePoint = codePointStart; curCodePoint <= codePointEnd; ++curCodePoint) {
-            table.add(curCodePoint, {codePoint: curCodePoint, codePointStr, BidiClass});
-        }
+        data.push({codePointStart, codePointEnd, codePointStr, BidiClass: bidiDirections[BidiClass]});
     });
+
+    data.sort((lhs, rhs) => Number(lhs.codePointStart) - Number(rhs.codePointStart));
+
+    let lastCodePoint = 0n;
+    for (const info of data) {
+        for (let cur = lastCodePoint; cur < info.codePointStart; ++cur) {
+            table.add(cur, bidiDirections["NONE"]);
+        }
+        for (let cur = info.codePointStart; cur <= info.codePointEnd; ++cur) {
+            table.add(cur, info.BidiClass);
+        }
+        lastCodePoint = info.codePointEnd + 1n;
+    }
+
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
 };
 

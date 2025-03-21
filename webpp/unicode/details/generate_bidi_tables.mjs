@@ -143,8 +143,8 @@ const createTableFile = async (tables) => {
  *   UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  *
- *   UCD Database Code Points:
- *       ${UnicodeData.fileUrl}
+ *   Derived Bidi Classes from UCD Database Code Points:
+ *       ${DerivedBidiClass.fileUrl}
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
  */
