@@ -1,4 +1,4 @@
-import { splitLine, cleanComments, downloadFile, updateProgressBar, parseCodePointRangeExclusive, noop } from "./utils.mjs";
+import { splitLine, cleanComments, downloadFile, updateProgressBar, parseCodePointRangeExclusive, noop, getMostSpecializedIn } from "./utils.mjs";
 
 export const fileUrl =
     "https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedBidiClass.txt";
@@ -39,6 +39,12 @@ export const bidiDirections = {
     RLI: 21, // Right-to-Left Isolate
     FSI: 22, // First Strong Isolate
     PDI: 23, // Pop Directional Isolate
+
+    // -----------------------------------------------------------------
+    Left_To_Right: 1, // L
+    Right_To_Left: 2, // R
+    Arabic_Letter: 3, // AL
+    European_Terminator: 6, // ET
 }
 
 export const download = async (callback = noop) => {
@@ -58,6 +64,21 @@ export const parse = async (table, fileContent = undefined) => {
 
     const lines = fileContent.split("\n");
     const data = [];
+    const missings = [];
+
+    lines.forEach((line) => {
+        if (line.startsWith("# @missing:")) {
+            const [codePointStr, bidiClassStr] = line.split(':')[1].split(';');
+            const bidiClass = bidiDirections[bidiClassStr.trim()];
+            const [starting, ending] = parseCodePointRangeExclusive(codePointStr);
+            missings.push({
+                starting,
+                ending,
+                bidiClass,
+                bidiClassStr: bidiClassStr.trim()
+            });
+        }
+    });
 
     lines.forEach((line, index) => {
         line = cleanComments(line);
@@ -87,7 +108,10 @@ export const parse = async (table, fileContent = undefined) => {
     let lastCodePoint = 0n;
     for (const info of data) {
         for (let cur = lastCodePoint; cur < info.codePointStart; ++cur) {
-            table.add(cur, bidiDirections["NONE"]);
+            const curMissing = getMostSpecializedIn(cur, missings);
+            // table.add(cur, bidiDirections["NONE"]);
+            // console.log(cur, curMissing);
+            table.add(cur, curMissing?.bidiClass);
         }
         for (let cur = info.codePointStart; cur <= info.codePointEnd; ++cur) {
             table.add(cur, info.BidiClass);

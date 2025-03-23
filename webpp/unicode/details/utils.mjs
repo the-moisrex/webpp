@@ -1150,7 +1150,7 @@ export function findBreakPoint(table, tolerance = 3, getValue = (val) => val) {
 }
 
 
-export function getSplitPoints(table, getValue = (val) => val, min_length = 1) {
+export function getSplitPoints(table, getValue = (val) => val, min_length = 1, splittingValues = undefined) {
     let last = NaN;
     let start = 0;
     let tables = [];
@@ -1158,7 +1158,7 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1) {
     for (; i < (table.length + 1); ++i) {
         const cur = table?.at(i);
         const curVal = getValue?.(cur);
-        if (last !== curVal || curVal === undefined) {
+        if (last !== curVal && (splittingValues === undefined || curVal in splittingValues || last in splittingValues)) {
             const length = i - start;
             if (length >= min_length) {
                 tables.push({ start, length, commonValue: last });
@@ -1228,11 +1228,13 @@ export function splitInto(table, topCount = 3, getValue = (val) => val, singleVa
         }];
     }
     const splits = getSplitPoints(table, getValue);
+    topCount = splits.length < topCount ? splits.length : topCount;
+
     const commons = splits
             .filter(item => item?.commonValue !== undefined);
     const lengths = commons.map(({length}) => length)
             .toSorted((lhs, rhs) => rhs - lhs)
-            .slice(0, splits.length < topCount ? splits.length : topCount);
+            .slice(0, topCount);
     const min_length = lengths[lengths.length - 1];
     
     if (singleValue) {
@@ -1243,14 +1245,27 @@ export function splitInto(table, topCount = 3, getValue = (val) => val, singleVa
                 bestValue = commonValue;
             }
         }
-        return splitOn(table, getSplitPoints(table, (val) => {
-            if (val !== bestValue) {
-                return undefined;
-            }
-            return getValue(val);
-        }, min_length));
+        // console.log(`Best value: ${bestValue}, ${min_length}, ${lengths} ${JSON.stringify(commons
+        //     .toSorted((lhs, rhs) => rhs.length - lhs.length))}`);
+        return splitOn(table, getSplitPoints(table, getValue, min_length, [bestValue]));
     } else {
         return splitOn(table, getSplitPoints(table, getValue, min_length));
     }
+}
+
+
+/// Get the most specific range of values that matches best for the input value
+export function getMostSpecializedIn(value, list) {
+    let selected = undefined;
+    for (const cur of list) {
+        if (value >= cur.starting && value <= cur.ending) {
+            const selRange = (selected?.ending || BigInt(Number.MAX_VALUE)) - (selected?.starting || 0n);
+            const curRange = BigInt(cur.ending - cur.starting);
+            if (curRange < selRange) {
+                selected = cur;
+            }
+        }
+    }
+    return selected;
 }
 
