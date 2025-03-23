@@ -419,7 +419,7 @@ export class TablePairs {
         const splitCount = this.#props?.indices?.splitInto ?? 1;
         const table = this.indices.result;
 
-        this.#indicesTables = splitInto(table, splitCount);
+        this.#indicesTables = splitInto(table, splitCount, (val) => val, true);
     }
 
     /// Post-Processing

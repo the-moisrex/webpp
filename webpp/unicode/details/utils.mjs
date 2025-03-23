@@ -1158,7 +1158,7 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1) {
     for (; i < (table.length + 1); ++i) {
         const cur = table?.at(i);
         const curVal = getValue?.(cur);
-        if (last !== curVal) {
+        if (last !== curVal || curVal === undefined) {
             const length = i - start;
             if (length >= min_length) {
                 tables.push({ start, length, commonValue: last });
@@ -1216,9 +1216,10 @@ export function splitOn(table, splits = getSplitPoints(table)) {
  * @param {Array} table 
  * @param {Number} topCount 
  * @param {Function} getValue 
+ * @param {boolean} singleValue 
  * @returns {Array}
  */
-export function splitInto(table, topCount = 3, getValue = (val) => val) {
+export function splitInto(table, topCount = 3, getValue = (val) => val, singleValue = false) {
     if (topCount <= 1) {
         return [{
             start: 0,
@@ -1227,13 +1228,29 @@ export function splitInto(table, topCount = 3, getValue = (val) => val) {
         }];
     }
     const splits = getSplitPoints(table, getValue);
-    const lengths = splits
-            .filter(item => item?.commonValue !== undefined)
-            .map(({length}) => length)
+    const commons = splits
+            .filter(item => item?.commonValue !== undefined);
+    const lengths = commons.map(({length}) => length)
             .toSorted((lhs, rhs) => rhs - lhs)
             .slice(0, splits.length < topCount ? splits.length : topCount);
     const min_length = lengths[lengths.length - 1];
     
-    return splitOn(table, getSplitPoints(table, getValue, min_length));
+    if (singleValue) {
+        const values = Object.groupBy(commons, ({commonValue}) => commonValue);
+        let bestValue = 0;
+        for (const commonValue in values) {
+            if (values[commonValue].length > values[bestValue].length) {
+                bestValue = commonValue;
+            }
+        }
+        return splitOn(table, getSplitPoints(table, (val) => {
+            if (val !== bestValue) {
+                return undefined;
+            }
+            return getValue(val);
+        }, min_length));
+    } else {
+        return splitOn(table, getSplitPoints(table, getValue, min_length));
+    }
 }
 
