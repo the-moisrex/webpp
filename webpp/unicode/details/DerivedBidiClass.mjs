@@ -113,10 +113,10 @@ export const parse = async (table, fileContent = undefined) => {
             // console.log(cur, curMissing);
             table.add(cur, curMissing?.bidiClass);
         }
-        for (let cur = info.codePointStart; cur <= info.codePointEnd; ++cur) {
+        for (let cur = info.codePointStart; cur < info.codePointEnd; ++cur) {
             table.add(cur, info.BidiClass);
         }
-        lastCodePoint = info.codePointEnd + 1n;
+        lastCodePoint = info.codePointEnd;
     }
 
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
