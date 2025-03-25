@@ -1158,15 +1158,20 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1, s
     for (; i < (table.length + 1); ++i) {
         const cur = table?.at(i);
         const curVal = getValue?.(cur);
-        if (last !== curVal && (splittingValues === undefined || curVal in splittingValues || last in splittingValues)) {
-            const length = i - start;
+        if (last !== curVal && (splittingValues === undefined || splittingValues.includes(curVal) || splittingValues.includes(last))) {
+            const length = (i - 1) - start;
             if (length >= min_length) {
-                tables.push({ start, length, commonValue: last });
+                tables.push({ 
+                    start,
+                    length, // Exclusive (the last value is not included)
+                    commonValue: last
+                });
             }
             start = i;
         }
         last = curVal;
     }
+    // console.log(min_length, tables, splittingValues);
     // const length = i - start;
     // if (length >= min_length) {
     //     tables.push({ start, length, commonValue: last });
@@ -1241,11 +1246,11 @@ export function splitInto(table, topCount = 3, getValue = (val) => val, singleVa
         const values = Object.groupBy(commons, ({commonValue}) => commonValue);
         let bestValue = 0;
         for (const commonValue in values) {
-            if (values[commonValue].length > values[bestValue].length) {
-                bestValue = commonValue;
+            if (values[commonValue].length >= (values[bestValue]?.length || 0)) {
+                bestValue = values[commonValue][0].commonValue;
             }
         }
-        // console.log(`Best value: ${bestValue}, ${min_length}, ${lengths} ${JSON.stringify(commons
+        // console.log(`Best value: ${bestValue}, ${min_length}, ${topCount}, ${lengths} ${JSON.stringify(commons
         //     .toSorted((lhs, rhs) => rhs.length - lhs.length))}`);
         return splitOn(table, getSplitPoints(table, getValue, min_length, [bestValue]));
     } else {
