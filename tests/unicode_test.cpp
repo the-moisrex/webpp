@@ -7055,8 +7055,11 @@ TEST(Unicode, BidiMost) {
     EXPECT_EQ(direction_of(U'\x1F4A9'), direction::ON);
 
     for (char32_t cp = 0; cp < 0x10'fffdU + 10; cp += 3) {
-        EXPECT_EQ(direction_of(cp), webpp::unicode::tests::find_direction(cp))
-          << "Code Point: " << static_cast<int>(cp);
+        auto const lhs = direction_of(cp);
+        auto const rhs = webpp::unicode::tests::find_direction(cp);
+        EXPECT_EQ(lhs, rhs)
+          << "Code Point: " << static_cast<int>(cp)
+          << "\n    " << to_abbr(lhs) << " (" << to_string(lhs) << ")  !==  "  << to_abbr(rhs) << " (" << to_string(rhs) << ")";
         // EXPECT_EQ(webpp::unicode::tests::find_direction_map(cp), webpp::unicode::tests::find_direction(cp))
         // << static_cast<int>(cp); EXPECT_EQ(webpp::unicode::tests::find_direction_map(cp), direction_of(cp))
         // << static_cast<int>(cp);
