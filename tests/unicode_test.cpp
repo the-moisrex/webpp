@@ -7111,4 +7111,55 @@ TEST(Unicode, BidiMost) {
     }
 }
 
+TEST(Unicode, BidiRules) {
+    using webpp::stl::u32string_view;
+    using webpp::unicode::validate_bidi_rule;
+
+    // https://www.rfc-editor.org/rfc/rfc5893#section-4.1
+    u32string_view const computer_word =
+      U"\u0786"  // THAANA LETTER KAAFU (AL)
+      U"\u07AE"  // THAANA OBOFILI (NSM)
+      U"\u0782"  // THAANA LETTER NOONU (AL)
+      U"\u07B0"  // THAANA SUKUN (NSM)
+      U"\u0795"  // THAANA LETTER PAVIYANI (AL)
+      U"\u07A9"  // THAANA LETTER EEBEEFILI (AL)
+      U"\u0793"  // THAANA LETTER TAVIYANI (AL)
+      U"\u07A6"  // THAANA ABAFILI (NSM)
+      U"\u0783"  // THAANA LETTER RAA (AL)
+      U"\u07AA"; // THAANA UBUFILI (NSM)
+
+    // https://www.rfc-editor.org/rfc/rfc5893#section-4.2
+    u32string_view const yivo_acronym =
+      U"\u05D9"  // HEBREW LETTER YOD (R)
+      U"\u05B4"  // HEBREW POINT HIRIQ (NSM)
+      U"\u05D5"  // HEBREW LETTER VAV (R)
+      U"\u05D0"  // HEBREW LETTER ALEF (R)
+      U"\u05B8"; // HEBREW POINT QAMATS (NSM)
+
+
+    EXPECT_TRUE(validate_bidi_rule(computer_word.begin(), computer_word.end()));
+    EXPECT_TRUE(validate_bidi_rule(yivo_acronym.begin(), yivo_acronym.end()));
+
+
+    // 3.  In an RTL label, the end of the label must be a character with
+    //     Bidi property R, AL, EN, or AN, followed by zero or more
+    //     characters with Bidi property NSM.
+    u32string_view const invalid_computer_word =
+      U"\u0786" // THAANA LETTER KAAFU (AL)
+      U"\u07AE" // THAANA OBOFILI (NSM)
+      U"\u0782" // THAANA LETTER NOONU (AL)
+      U"\u07B0" // THAANA SUKUN (NSM)
+      U"\u0795" // THAANA LETTER PAVIYANI (AL)
+      U"\u07A9" // THAANA LETTER EEBEEFILI (AL)
+      U"\u0793" // THAANA LETTER TAVIYANI (AL)
+      U"\u07A6" // THAANA ABAFILI (NSM)
+      U"\u0783" // THAANA LETTER RAA (AL)
+      U"\u07AA" // THAANA UBUFILI (NSM)
+      U"\u0294" // 0294          ; L # Lo       LATIN LETTER GLOTTAL STOP
+      U"\u07AA" // THAANA UBUFILI (NSM)
+      ;
+
+    EXPECT_FALSE(validate_bidi_rule(invalid_computer_word.begin(), invalid_computer_word.end()));
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

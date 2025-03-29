@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 29 Mar 2025 03:01:54 GMT
+ *   This file's generation date:        Sat, 29 Mar 2025 22:06:08 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       79904

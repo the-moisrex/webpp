@@ -1,4 +1,3 @@
-
 // These values need to be the exact values in the C++ code base (in bidi.hpp file)
 export const bidiDirections = {
     NONE: 0,
@@ -14,7 +13,7 @@ export const bidiDirections = {
     ET: 6,  // European Number Terminator (currency symbols, the hash sign, the percent sign and so on)
     AN: 7,  // Arabic Number; this encompasses the Arabic-Indic numbers, but not the Extended Arabic-Indics
     CS: 8,  // Common Number Separator (. , / : et al)
-    NSM: 9, // Nonspacing Mark - most combining accents
+    NSM: 9, // NonSpacing Mark - most combining accents
     BN: 10,  // Boundary Neutral - control characters (ZWNJ, ZWJ, and others)
 
     // ---------- Neutral -----------------------------------------------
