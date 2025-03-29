@@ -7058,6 +7058,24 @@ TEST(Unicode, BidiMost) {
     // 10101;AEGEAN WORD SEPARATOR DOT;Po;0;ON;;;;;N;;;;;
     EXPECT_EQ(direction_of(U'\x10101'), direction::ON);
 
+    // 1171E;AHOM CONSONANT SIGN MEDIAL RA;Mc;0;L;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1171E'), direction::L);
+
+    // 1D6C1;MATHEMATICAL BOLD NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D6C1'), direction::ON);
+
+    // 1D6FB;MATHEMATICAL ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D6FB'), direction::ON);
+
+    // 1D735;MATHEMATICAL BOLD ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D735'), direction::ON);
+
+    // 1D76F;MATHEMATICAL SANS-SERIF BOLD NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D76F'), direction::ON);
+
+    // 1D7A9;MATHEMATICAL SANS-SERIF BOLD ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D7A9'), direction::ON);
+
     // 1F4A9;PILE OF POO;So;0;ON;;;;;N;;;;;
     EXPECT_EQ(direction_of(U'\x1F4A9'), direction::ON);
 
@@ -7070,16 +7088,26 @@ TEST(Unicode, BidiMost) {
     for (char32_t cp = 0; cp < 0x10'fffdU + 10; cp += 1) {
         auto const lhs = direction_of(cp);
         auto const rhs = webpp::unicode::tests::find_direction(cp);
-        if (lhs != rhs && rhs != direction::NONE) {
-            EXPECT_EQ(lhs, rhs) << "Code Point: " << static_cast<int>(cp) << "\n    " << to_abbr(lhs) << " ("
-                                << to_string(lhs) << ")  !==  " << to_abbr(rhs) << " (" << to_string(rhs)
-                                << ")";
-            // EXPECT_EQ(webpp::unicode::tests::find_direction_map(cp),
-            // webpp::unicode::tests::find_direction(cp))
-            // << static_cast<int>(cp); EXPECT_EQ(webpp::unicode::tests::find_direction_map(cp),
-            // direction_of(cp))
-            // << static_cast<int>(cp);
+
+        // if these fail, that might be because the test table might be a few versions behind;
+        // that's why we're ignoring some of the tests here:
+        if (lhs != rhs && rhs == direction::NONE) {
+            continue;
         }
+
+        switch (cp) {
+            case 0x1734:
+            case 0x1'171E:
+            case 0x1'D6C1:
+            case 0x1'D6FB:
+            case 0x1'D735:
+            case 0x1'D76F:
+            case 0x1'D7A9: continue;
+            default: break;
+        }
+
+        EXPECT_EQ(lhs, rhs) << "Code Point: " << static_cast<int>(cp) << "\n    " << to_abbr(lhs) << " ("
+                            << to_string(lhs) << ")  !==  " << to_abbr(rhs) << " (" << to_string(rhs) << ")";
     }
 }
 
