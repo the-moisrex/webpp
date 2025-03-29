@@ -38,7 +38,7 @@ class BidiTables {
         sizeof: uint32,
 
         // split the indices table
-        splitInto: 8,
+        splitInto: 20,
         // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
 
         description: `Bidi: Bidirectional Class`,
@@ -124,6 +124,7 @@ const createTableFile = async (tables) => {
         0,
     );
     const readmeData = await getReadme();
+    const saved = 16.98 - totalBits / 8 / 1024;
     const begContent = `
 /**
  * Attention:
@@ -139,7 +140,7 @@ const createTableFile = async (tables) => {
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
  *   Some other implementations' total table size was 16.98 KiB;
- *   So I saved ${(16.98 - totalBits / 8 / 1024).toFixed(2)} KiB.
+ *   So I have ${saved > 0 ? `saved` : `wasted`} ${Math.abs(saved).toFixed(2)} KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:

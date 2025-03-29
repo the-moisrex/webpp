@@ -13,9 +13,11 @@ import {
     Span,
     splitInto,
     TableTraits,
-    uint32,
+    uint32, uint64,
     uint8,
 } from "./utils.mjs";
+
+const verbose = process.argv.includes("--verbose");
 
 export class TablePairs {
     #indexAddenda;
@@ -24,6 +26,7 @@ export class TablePairs {
     data = []; // raw, unprocessed data
     #props = {};
     #indicesTables = [];
+    #breakpointsTableSize = 0n;
 
     init(meta) {
         this.#props = meta;
@@ -86,7 +89,7 @@ export class TablePairs {
 
         // validating inserts:
         if (
-            !this.#indexAddenda.verifyInserts({ inserts, dataView, modifier })
+            !this.#indexAddenda.verifyInserts({inserts, dataView, modifier})
         ) {
             return {
                 valid: false,
@@ -102,13 +105,13 @@ export class TablePairs {
         }
 
         if (inserts.length !== 0) {
-            let { valid, start, end } = this.#indexAddenda.optimizeInserts({
+            let {valid, start, end} = this.#indexAddenda.optimizeInserts({
                 inserts,
                 dataView,
                 modifier,
             });
             if (valid === false) {
-                return { valid: false };
+                return {valid: false};
             }
 
             if (this.values.length === 0 && end === 0) {
@@ -237,7 +240,7 @@ export class TablePairs {
         })) {
             // set the position
             if (!this.#indexAddenda.has("pos")) {
-                indexModifier.set({ ...additionalAddendumValues });
+                indexModifier.set({...additionalAddendumValues});
             } else {
                 indexModifier.set({
                     pos: BigInt(this.values?.index || 0),
@@ -450,20 +453,22 @@ export class TablePairs {
             );
             const valueStart = this.values?.index || 0;
 
-            console.log(
-                `Batch: #${batchNo++}`,
-                "CodePoint:",
-                codeRange.toString(16),
-                "Values-Table-Length:",
-                this.values?.length || 0,
-                "range:",
-                range,
-                "length:",
-                length,
-                `Progress: ${Math.floor((Number(range) / this.data.length) * 100)}%`,
-            );
+            if (verbose) {
+                console.log(
+                    `Batch: #${batchNo++}`,
+                    "CodePoint:",
+                    codeRange.toString(16),
+                    "Values-Table-Length:",
+                    this.values?.length || 0,
+                    "range:",
+                    range,
+                    "length:",
+                    length,
+                    `Progress: ${Math.floor((Number(range) / this.data.length) * 100)}%`,
+                );
+            }
 
-            let { modifier, inserts, rtrimmed, overlapped } =
+            let {modifier, inserts, rtrimmed, overlapped} =
                 this.#findSimilarMaskedRange(range);
             // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
@@ -498,21 +503,23 @@ export class TablePairs {
                 ++reusedCount;
                 saves += length;
             }
-            console.log(
-                `  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                codeRange,
-                "rtrimmed:",
-                rtrimmed,
-                "overlapped:",
-                overlapped,
-                "last-pos",
-                valueStart,
-                "modifier.pos:",
-                modifier.pos,
-                modifier.necessaries(),
-                "samples:",
-                inserts.filter((item) => item).slice(0, 5),
-            );
+            if (verbose) {
+                console.log(
+                    `  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
+                    codeRange,
+                    "rtrimmed:",
+                    rtrimmed,
+                    "overlapped:",
+                    overlapped,
+                    "last-pos",
+                    valueStart,
+                    "modifier.pos:",
+                    modifier.pos,
+                    modifier.necessaries(),
+                    "samples:",
+                    inserts.filter((item) => item).slice(0, 5),
+                );
+            }
             uniqueModifiers.add(modifier.categorizableModifier);
 
             // if (mask !== modifier.resetMask && mask !== modifier.minMask) {
@@ -558,9 +565,9 @@ export class TablePairs {
                 debugger;
                 throw new Error(
                     "Table size limit reached; the limit is because " +
-                        `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` +
-                        `indices length: ${this.indices.length}, max possible length: ${maxPossibleLength}, ` +
-                        `values length: ${this.values?.length || 0}`,
+                    `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` +
+                    `indices length: ${this.indices.length}, max possible length: ${maxPossibleLength}, ` +
+                    `values length: ${this.values?.length || 0}`,
                 );
             }
         }
@@ -607,8 +614,12 @@ export class TablePairs {
         return BigInt(this.values.length) * realSizeOf(this.values.type);
     }
 
+    breakpointsTableSizeInBits() {
+        return BigInt(this.#breakpointsTableSize)
+    }
+
     totalTablesSizeInBits() {
-        return this.indicesTableSizeInBits() + this.valuesTableSizeInBits();
+        return this.indicesTableSizeInBits() + this.valuesTableSizeInBits() + this.breakpointsTableSizeInBits();
     }
 
     get breakpointsTableLimit() {
@@ -672,12 +683,22 @@ export class TablePairs {
         let index = 1;
         const commons = this.#commonIndices;
         const uncommons = this.#uncommonIndices;
-        const {breakpointsTable, breakpointsTableShift} = this.getBreakpointsTable(uncommons.map(item => ({starting: item.start, ending: item.start + item.length, offset: item.offset})));
+        const {
+            breakpointsTable,
+            breakpointsTableShift
+        } = this.getBreakpointsTable(uncommons.map(item => ({
+            starting: item.start,
+            ending: item.start + item.length,
+            offset: item.offset
+        })));
         const commonValues = commons.map(item => item.commonValue);
         const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
         if (!isSingleCommonValue) {
             console.error(commonValues);
             throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
+        }
+        if (commons.length > 2) {
+            this.#breakpointsTableSize = BigInt(breakpointsTable.length) * realSizeOf(uint64);
         }
         let allIndicesBits = 0
         let allLength = 0;
@@ -713,13 +734,17 @@ export class TablePairs {
             // The removed part of the table has this value in them:
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
-            struct breakpoint_type {
+            struct alignas(std::uint64_t) breakpoint_type {
                 ${this.#indexAddenda.STLTypeString} starting;
                 ${this.#indexAddenda.STLTypeString} ending;
                 ${this.#indexAddenda.STLTypeString} offset;
             };
 
-            // You can choose between the indices' table using these breakpoints:
+            /**
+             * You can choose between the indices' table using these breakpoints:
+             * 
+             * Table size in KibiBytes:  ${(Number(this.#breakpointsTableSize) / 8 / 1024).toFixed(2)} KiB
+             */
             static constexpr std::array<breakpoint_type, ${breakpointsTable.length}U> breakpoints{{${breakpointsTable.map(item => `
 
                // Section ${item.section}:
@@ -785,7 +810,7 @@ export class TablePairs {
                     if (
                         rangeStart ===
                         posesMeta[curPos].lastRangeStart +
-                            Number(this.#indexAddenda.chunkSize)
+                        Number(this.#indexAddenda.chunkSize)
                     ) {
                         poses[curPos][poses[curPos].length - 1] =
                             `${posesMeta[curPos].rangeStart}-${codeStr}`;
@@ -813,16 +838,16 @@ export class TablePairs {
 
         const renderFunc =
             this.#props?.processRendered || ((content) => content);
-        
+
         const valuesBits = Number(this.valuesTableSizeInBits());
 
         return renderFunc(`
     ${this.#renderIndicesTables()}
 
     ${
-        this.values === null
-            ? ""
-            : `
+            this.values === null
+                ? ""
+                : `
     /**
      * ${this.#name.toUpperCase()} Values Table
      *
@@ -834,13 +859,13 @@ export class TablePairs {
      *   - in KibiBytes:  ${(valuesBits / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
-        name: `${this.#name}_values`,
-        type: this.values.type,
-        printableValues,
-        len: this.values.length,
-    })}
+                    name: `${this.#name}_values`,
+                    type: this.values.type,
+                    printableValues,
+                    len: this.values.length,
+                })}
     `
-    }
+        }
         `);
     }
 }
