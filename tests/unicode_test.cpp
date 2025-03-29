@@ -7160,6 +7160,17 @@ TEST(Unicode, BidiRules) {
       ;
 
     EXPECT_FALSE(validate_bidi_rule(invalid_computer_word.begin(), invalid_computer_word.end()));
+
+
+    u32string_view const invalid_yivo_acronym =
+      U"\u05D9"  // HEBREW LETTER YOD (R)
+      U"\u05B4"  // HEBREW POINT HIRIQ (NSM)
+      U"\u05D5"  // HEBREW LETTER VAV (R)
+      U"\u05D0"  // HEBREW LETTER ALEF (R)
+      U"\u0378"  // Should be (L), but this makes it invalid
+      U"\u05B8"; // HEBREW POINT QAMATS (NSM)
+
+    EXPECT_FALSE(validate_bidi_rule(invalid_yivo_acronym.begin(), invalid_yivo_acronym.end()));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

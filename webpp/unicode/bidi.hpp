@@ -240,13 +240,12 @@ namespace webpp::unicode {
         // 1. First character must be L, R, or AL:
         valid &= (first & bidi_mask(L, R, AL)) != 0;
 
-        if (!is_rtl) [[likely]] {
+        if (!is_rtl) {
             // 5. Checking LTR allowed characters
             valid &= (accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 6. It ends with (semi-regex): (L|EN)NSM*
             if ((last & bidi_mask(L, EN)) != 0) [[unlikely]] {
-                // For Example, Every Dhivehi word ends with a combining mark (NSM)
                 for (;;) {
                     last_cp = checked::prev_code_point<return_zero_char>(pos, endp);
                     if (last_cp == 0) [[unlikely]] {
