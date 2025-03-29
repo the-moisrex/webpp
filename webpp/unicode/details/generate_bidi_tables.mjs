@@ -82,9 +82,12 @@ class BidiTables {
         if (value !== 0) {
             // this.lastZero = codePoint + 1;
             // find the end of the batch, not just the last item
-            this.lastZero =
+            const lastZero =
                 (((codePoint + 1n) >> this.tables.chunkShift) + 1n) <<
                 this.tables.chunkShift;
+            if (lastZero > this.lastZero) {
+                this.lastZero = lastZero;
+            }
         }
         return this.tables.add(codePoint, value);
     }
