@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 29 Mar 2025 00:20:00 GMT
+ *   This file's generation date:        Sat, 29 Mar 2025 02:10:05 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       150496
@@ -23,6 +23,7 @@
  *
  *   Derived Bidi Classes from UCD Database Code Points:
  *       https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedBidiClass.txt
+ *       https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
  *   UCD README file (used to check the version and creation date):
  *       https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt
  */
@@ -91,59 +92,59 @@ namespace webpp::unicode::details {
         std::uint16_t offset;
     };
 
-    // you can choose between the indices' table using these breakpoints:
+    // You can choose between the indices' table using these breakpoints:
     static constexpr std::array<breakpoint_type, 17U> breakpoints{
       {
 
        // Section 1:
         {.starting = 0, .ending = 4096, .offset = 0},
 
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
        // Section 2:
-        {.starting = 6142, .ending = 6144, .offset = 2046},
+        {.starting = 0, .ending = 4096, .offset = 0},
 
        // Section 3:
-        {.starting = 8190, .ending = 8192, .offset = 4092},
+        {.starting = 6142, .ending = 6144, .offset = 2046},
 
        // Section 4:
-        {.starting = 10238, .ending = 10240, .offset = 6138},
+        {.starting = 8190, .ending = 8192, .offset = 4092},
 
        // Section 5:
-        {.starting = 12286, .ending = 12288, .offset = 8184},
+        {.starting = 10238, .ending = 10240, .offset = 6138},
 
        // Section 6:
-        {.starting = 14334, .ending = 14336, .offset = 10230},
+        {.starting = 12286, .ending = 12288, .offset = 8184},
 
        // Section 7:
-        {.starting = 16382, .ending = 16384, .offset = 12276},
+        {.starting = 14334, .ending = 14336, .offset = 10230},
 
        // Section 8:
-        {.starting = 18430, .ending = 18432, .offset = 14322},
+        {.starting = 16382, .ending = 16384, .offset = 12276},
 
        // Section 9:
-        {.starting = 20478, .ending = 20480, .offset = 16368},
+        {.starting = 18430, .ending = 18432, .offset = 14322},
 
        // Section 10:
-        {.starting = 22526, .ending = 22528, .offset = 18414},
+        {.starting = 20478, .ending = 20480, .offset = 16368},
 
        // Section 11:
-        {.starting = 24574, .ending = 24576, .offset = 20460},
+        {.starting = 22526, .ending = 22528, .offset = 18414},
 
        // Section 12:
-        {.starting = 26622, .ending = 26624, .offset = 22506},
+        {.starting = 24574, .ending = 24576, .offset = 20460},
 
        // Section 13:
-        {.starting = 28670, .ending = 30720, .offset = 24552},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
+        {.starting = 26622, .ending = 26624, .offset = 22506},
 
        // Section 14:
-        {.starting = 32766, .ending = 32768, .offset = 26598},
+        {.starting = 28670, .ending = 30720, .offset = 24552},
 
        // Section 15:
+        {.starting = 28670, .ending = 30720, .offset = 24552},
+
+       // Section 16:
+        {.starting = 32766, .ending = 32768, .offset = 26598},
+
+       // Section 17:
         {.starting = 34814, .ending = 34816, .offset = 28644}}
     };
 

@@ -7052,12 +7052,20 @@ TEST(Unicode, BidiMost) {
     EXPECT_EQ(direction_of(U'\x0600'), direction::AN);
     EXPECT_EQ(direction_of(U'\x0610'), direction::NSM);
 
+    // 1734;HANUNOO SIGN PAMUDPOD;Mc;9;L;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1734'), direction::L);
+
+    // 10101;AEGEAN WORD SEPARATOR DOT;Po;0;ON;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x10101'), direction::ON);
+
     // 1F4A9;PILE OF POO;So;0;ON;;;;;N;;;;;
     EXPECT_EQ(direction_of(U'\x1F4A9'), direction::ON);
 
     // 061D;ARABIC END OF TEXT MARK;Po;0;AL;;;;;N;;;;;
     EXPECT_EQ(direction_of(U'\x61D'), direction::AL);
 
+    // E01EF;VARIATION SELECTOR-256;Mn;0;NSM;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\xE01EF'), direction::NSM);
 
     for (char32_t cp = 0; cp < 0x10'fffdU + 10; cp += 1) {
         auto const lhs = direction_of(cp);

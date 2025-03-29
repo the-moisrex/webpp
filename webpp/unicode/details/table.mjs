@@ -618,6 +618,7 @@ export class TablePairs {
     // table is a table of starting positions
     getBreakpointsTable(table) {
         table = table.toSorted();
+        // console.log(table)
         let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof));
         const limit = this.breakpointsTableLimit;
         let tableSize = 0;
@@ -626,8 +627,10 @@ export class TablePairs {
             tableSize = 0;
             for (let i = 1; i < limit; ++i) {
                 const cur = Number(table[i].starting) >> breakpointsTableShift;
+                const curE = Number(table[i].ending - 1) >> breakpointsTableShift;
                 const prev = Number(table[i - 1].starting) >> breakpointsTableShift;
-                tableSize = Math.max(cur, tableSize);
+                const additionalLength = curE - cur;
+                tableSize = Math.max(cur + additionalLength, tableSize);
                 if (cur === prev || table[i] === undefined) {
                     continue nextShift;
                 }
@@ -640,15 +643,23 @@ export class TablePairs {
 
         let breakpointsTable = new Array(tableSize);
         breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Invalid', offset: 0});
-        for (let i = 0; i < table.length; ++i) {
+        let index = 1;
+        for (let i = 0; i < table.length; ++i, ++index) {
             // console.log(tableSize, breakpointsTableShift, i, table[i])
-            const curIndex = table[i].starting >> breakpointsTableShift;
-            breakpointsTable[curIndex] = {
-                ...table[i],
-                curIndex,
-                section: i + 1,
-            };
+            let curIndex = table[i].starting >> breakpointsTableShift;
+            const curEIndex = (table[i].ending - 1) >> breakpointsTableShift;
+            for (; ; curIndex++, ++index) {
+                breakpointsTable[curIndex] = {
+                    ...table[i],
+                    curIndex,
+                    section: index,
+                };
+                if (curIndex === curEIndex) {
+                    break;
+                }
+            }
         }
+        // console.log(breakpointsTable);
 
         return {
             breakpointsTableShift,
@@ -694,12 +705,12 @@ export class TablePairs {
         return `
         ${this.#indexAddenda.render()}
         
-        ${commons.length <= 1 ? "" : commons.length == 2 ? `
-            // you can choose between the indices' table using these breakpoints:
+        ${commons.length <= 1 ? "" : commons.length === 2 ? `
+            // You can choose between the indices' table using these breakpoints:
             static constexpr std::size_t breakpoint_start = ${commons[0].start}U;
             static constexpr std::size_t breakpoint_end = ${commons[0].start + commons[0].length}U;
 
-            // the removed part of the table has this value in them:
+            // The removed part of the table has this value in them:
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
             struct breakpoint_type {
@@ -708,7 +719,7 @@ export class TablePairs {
                 ${this.#indexAddenda.STLTypeString} offset;
             };
 
-            // you can choose between the indices' table using these breakpoints:
+            // You can choose between the indices' table using these breakpoints:
             static constexpr std::array<breakpoint_type, ${breakpointsTable.length}U> breakpoints{{${breakpointsTable.map(item => `
 
                // Section ${item.section}:

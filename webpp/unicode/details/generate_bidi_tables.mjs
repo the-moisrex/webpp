@@ -11,6 +11,7 @@ import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import * as DerivedBidiClass from "./DerivedBidiClass.mjs";
 import {runClangFormat, uint32, uint5, uint8, writePieces} from "./utils.mjs";
+import * as UnicodeData from "./UnicodeData.mjs";
 
 const bidiOutFile = `bidi_tables.hpp`;
 
@@ -148,6 +149,7 @@ const createTableFile = async (tables) => {
  *
  *   Derived Bidi Classes from UCD Database Code Points:
  *       ${DerivedBidiClass.fileUrl}
+ *       ${UnicodeData.fileUrl}
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
  */

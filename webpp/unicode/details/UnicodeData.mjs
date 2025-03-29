@@ -16,8 +16,8 @@ import {
 import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import {bidiDirections} from "./bidi.mjs";
 
-export const fileUrl =
-    "https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt";
+export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt";
+// export const fileUrl = "https://www.unicode.org/Public/13.0.0/ucd/UnicodeData.txt";
 export const cacheFilePath = "UnicodeData.txt";
 
 export const properties = {

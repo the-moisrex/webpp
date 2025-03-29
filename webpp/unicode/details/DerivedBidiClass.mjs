@@ -1,13 +1,14 @@
 import {
     splitLine, cleanComments, downloadFile,
     updateProgressBar, parseCodePointRangeExclusive,
-    noop, getMostSpecializedIn
+    noop, getLastSpecializedIn
 } from "./utils.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {properties} from "./UnicodeData.mjs";
 import {bidiDirections} from "./bidi.mjs";
 
 export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedBidiClass.txt";
+// export const fileUrl = "https://www.unicode.org/Public/13.0.0/ucd/extracted/DerivedBidiClass.txt";
 export const cacheFilePath = "DerivedBidiClass.txt";
 
 export const download = async (callback = noop) => {
@@ -75,7 +76,7 @@ export const parse = async (table, DerivedBidiClassFileContent = undefined) => {
     let lastCodePoint = 0n;
     for (const info of data) {
         for (let cur = lastCodePoint; cur < info.codePointStart; ++cur) {
-            const curMissing = getMostSpecializedIn(cur, missings);
+            const curMissing = getLastSpecializedIn(cur, missings);
             // table.add(cur, bidiDirections["NONE"]);
             // console.log(cur, curMissing);
             table.add(cur, curMissing?.bidiClass);

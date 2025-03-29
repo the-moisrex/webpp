@@ -1274,3 +1274,13 @@ export function getMostSpecializedIn(value, list) {
     return selected;
 }
 
+export function getLastSpecializedIn(value, list) {
+    for (let i = list.length - 1; i >= 0; --i) {
+        const cur = list[i];
+        if (value >= cur.starting && value <= cur.ending) {
+            return cur;
+        }
+    }
+    return undefined;
+}
+
