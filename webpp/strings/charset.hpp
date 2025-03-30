@@ -2,20 +2,17 @@
 #define WEBPP_CHARSET_HPP
 
 #include "../std/concepts.hpp"
+#include "../std/iterator.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 
-#include <array>
 #ifdef __cpp_lib_constexpr_bitset
 #    include <bitset>
 #endif
-#include "build-release/_deps/fmt-src/include/fmt/base.h"
-#include "std/iterator.hpp"
 
 #include <algorithm> // std::max
-#include <bits/fs_fwd.h>
-#include <boost/range/detail/implementation_help.hpp>
+#include <array>
 #include <climits>
 #include <limits>
 #include <utility>

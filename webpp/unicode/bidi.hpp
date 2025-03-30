@@ -185,6 +185,7 @@ namespace webpp::unicode {
         using stl::to_underlying;
         using enum direction;
         using enum checked::error_handling;
+        using char_type = typename stl::iterator_traits<IterT>::value_type;
 
         // The following rule, consisting of six conditions, applies to labels in Bidi domain names.
         // All the conditions must be satisfied for the rule to be satisfied.
@@ -218,12 +219,21 @@ namespace webpp::unicode {
         if (first_cp == 0) {
             return true;
         }
-        for (;;) {
-            last_cp = checked::next_code_point<return_zero_char>(pos, endp);
-            if (last_cp == 0) {
-                break;
+
+        if constexpr (UTF32<char_type>) {
+            // Will enable auto vectorization since it's more simple
+            for (; pos != endp; ++pos) {
+                accum |= 0b1U << to_underlying(direction_of(*pos));
             }
-            accum |= 0b1U << to_underlying(direction_of(last_cp));
+            last_cp = *--pos;
+        } else {
+            for (;;) {
+                last_cp = checked::next_code_point<return_zero_char>(pos, endp);
+                if (last_cp == 0) {
+                    break;
+                }
+                accum |= 0b1U << to_underlying(direction_of(last_cp));
+            }
         }
 
         // A "Bidi domain name" is a domain name that contains at least one RTL label.
