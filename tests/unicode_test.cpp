@@ -7171,6 +7171,9 @@ TEST(Unicode, BidiRules) {
       U"\u05B8"; // HEBREW POINT QAMATS (NSM)
 
     EXPECT_FALSE(validate_bidi_rule(invalid_yivo_acronym.begin(), invalid_yivo_acronym.end()));
+
+    u32string_view const empty = U"";
+    EXPECT_TRUE(validate_bidi_rule(empty.begin(), empty.end()));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

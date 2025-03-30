@@ -9,6 +9,7 @@
 #include "./details/idna_mapping_tables.hpp"
 #include "./normalization.hpp"
 #include "./unicode.hpp"
+#include "bidi.hpp"
 
 #include <cassert>
 #include <climits>
@@ -172,6 +173,10 @@ namespace webpp::unicode::idna {
         bool Transitional_Processing = false;
         bool VerifyDnsLength         = false;
         bool IgnoreInvalidPunycode   = false;
+
+        // Skipped Steps:
+        bool CheckNFC           = false;
+        bool CheckDotInclusions = false;
     };
 
     /**
@@ -208,10 +213,38 @@ namespace webpp::unicode::idna {
             return true;
         }
 
+        bool valid = true;
 
+        // 1. check if it's in NFC form (SKIPPED by default)
+        if constexpr (Options.CheckNFC) {
+            valid &= isNFC(spos, send);
+        }
 
-        // todo
-        return false;
+        // 2. check hyphens (SKIPPED by default)
+        if constexpr (Options.CheckHyphens) {
+            // todo
+        }
+
+        // 5. check if includes any dots (SKIPPED by default)
+        if constexpr (Options.CheckDotInclusions) {
+            // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
+            // be optimizing for the failure path as opposed to optimizing for the happy path
+            for (auto pos = spos; pos != send; ++pos) {
+                valid &= *pos == '.';
+            }
+        }
+
+        // 8. check joiners
+        if constexpr (Options.CheckJoiners) {
+            // todo
+        }
+
+        // 9. check bidi rule
+        if constexpr (Options.CheckBidi) {
+            valid &= validate_bidi_rule(spos, send);
+        }
+
+        return valid;
     }
 
     /**

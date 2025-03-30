@@ -815,14 +815,13 @@ namespace webpp::unicode {
     }
 
     /// Check the Normalization Form
-    // template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    // [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept
-    // {
-    //     using enum normalization_form;
-    //     // todo
-    //     static_assert_false(Iter, "Not yet implemented.");
-    //     return gibberish;
-    // }
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept {
+        using enum normalization_form;
+        // todo
+        static_assert_false(Iter, "Not yet implemented.");
+        return gibberish;
+    }
 
     template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
     [[nodiscard]] static constexpr bool isNFC(Iter start, EIter end) noexcept {
