@@ -138,7 +138,7 @@ namespace webpp::unicode {
     }
 
     /// Get the direction of the specified code point
-    template <UTF32 CPType>
+    template <UTF CPType>
     [[nodiscard]] static constexpr direction direction_of(CPType const code_point) noexcept {
         using enum direction;
         using details::bidi_index;
