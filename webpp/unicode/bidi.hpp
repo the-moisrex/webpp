@@ -57,7 +57,7 @@ namespace webpp::unicode {
         return ((0b1U << to_underlying(dirs)) | ... | 0b0U);
     }
 
-    [[nodiscard]] constexpr stl::string_view to_string(direction const dir) noexcept {
+    [[nodiscard]] static constexpr stl::string_view to_string(direction const dir) noexcept {
         using enum direction;
         switch (dir) {
             case NONE: return "None";

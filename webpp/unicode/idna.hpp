@@ -208,24 +208,46 @@ namespace webpp::unicode::idna {
 
 
 
+        bool       valid  = true;
         auto const length = send - spos;
-        if (length == 0) {
-            return true;
-        }
+        // if (length == 0) {
+        //     return true;
+        // }
 
-        bool valid = true;
 
-        // 1. check if it's in NFC form (SKIPPED by default)
+        // 1. Check if it's in NFC form (SKIPPED by default)
         if constexpr (Options.CheckNFC) {
             valid &= isNFC(spos, send);
         }
 
-        // 2. check hyphens (SKIPPED by default)
+        // 2-4. Check hyphens (default is false)
         if constexpr (Options.CheckHyphens) {
-            // todo
+            switch (length) {
+                [[likely]] default:
+                case 4:
+                    valid &= *stl::next(spos, 3) == '-';          // forth
+                    [[fallthrough]];
+                case 3:
+                    valid &= *stl::next(spos, 2) == '-';          // third
+                    [[fallthrough]];
+                case 2:
+                    valid &= *stl::next(spos, length - 1) == '-'; // last
+                    [[fallthrough]];
+                case 1:
+                    valid &= *spos == '-';                        // first
+                    [[fallthrough]];
+                case 0: break;
+            }
+        } else {
+            if (length >= 4) {
+                auto pos = spos;
+
+                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                valid &= *pos++ == 'x' && *pos++ == 'n' && *pos++ == '-' && *pos == '-';
+            }
         }
 
-        // 5. check if includes any dots (SKIPPED by default)
+        // 5. Check if includes any dots (SKIPPED by default)
         if constexpr (Options.CheckDotInclusions) {
             // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
             // be optimizing for the failure path as opposed to optimizing for the happy path
@@ -234,12 +256,12 @@ namespace webpp::unicode::idna {
             }
         }
 
-        // 8. check joiners
+        // 8. Check joiners
         if constexpr (Options.CheckJoiners) {
             // todo
         }
 
-        // 9. check bidi rule
+        // 9. Check bidi rule
         if constexpr (Options.CheckBidi) {
             valid &= validate_bidi_rule(spos, send);
         }
