@@ -225,26 +225,24 @@ namespace webpp::unicode::idna {
             switch (length) {
                 [[likely]] default:
                 case 4:
-                    valid &= *stl::next(spos, 3) == '-';          // forth
+                    valid &= *stl::next(spos, 3) != '-';          // forth
                     [[fallthrough]];
                 case 3:
-                    valid &= *stl::next(spos, 2) == '-';          // third
+                    valid &= *stl::next(spos, 2) != '-';          // third
                     [[fallthrough]];
                 case 2:
-                    valid &= *stl::next(spos, length - 1) == '-'; // last
+                    valid &= *stl::next(spos, length - 1) != '-'; // last
                     [[fallthrough]];
                 case 1:
-                    valid &= *spos == '-';                        // first
+                    valid &= *spos != '-';                        // first
                     [[fallthrough]];
                 case 0: break;
             }
         } else {
-            if (length >= 4) {
-                auto pos = spos;
+            auto pos = spos;
 
-                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                valid &= *pos++ == 'x' && *pos++ == 'n' && *pos++ == '-' && *pos == '-';
-            }
+            // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+            valid &= length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-';
         }
 
         // 5. Check if includes any dots (SKIPPED by default)
@@ -252,7 +250,7 @@ namespace webpp::unicode::idna {
             // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
             // be optimizing for the failure path as opposed to optimizing for the happy path
             for (auto pos = spos; pos != send; ++pos) {
-                valid &= *pos == '.';
+                valid &= *pos != '.';
             }
         }
 

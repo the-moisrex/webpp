@@ -7,6 +7,7 @@
 #include "./common/bidi.hpp"
 #include "./common/tests_common_pch.hpp"
 #include "./unicode_fuzz.hpp"
+#include "unicode/idna.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -36,7 +37,7 @@ using webpp::unicode::unchecked::swap_code_points;
 
 static constexpr bool enable_utf8_composition_tests = true;
 
-// NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
+// NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
 
 TEST(UnicodeAlgos, UnitStart) {
     using webpp::unicode::is_code_unit_start;
@@ -7176,4 +7177,59 @@ TEST(Unicode, BidiRules) {
     EXPECT_TRUE(validate_bidi_rule(empty.begin(), empty.end()));
 }
 
-// NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
+TEST(Unicode, CheckValidiyCriteria) {
+    using webpp::stl::array;
+    using webpp::stl::string_view;
+    using webpp::unicode::idna::idna_options;
+    using webpp::unicode::idna::is_label_valid;
+
+    struct opts {
+        string_view str;
+        bool        is_valid  = true;
+        int         opt_index = 0;
+    };
+
+    static constexpr array<idna_options, 2> idna_opts{
+      {
+       idna_options{},
+       idna_options{
+          .CheckHyphens            = true,
+          .CheckBidi               = true,
+          .CheckJoiners            = true,
+          .UseSTD3ASCIIRules       = true,
+          .Transitional_Processing = true,
+          .VerifyDnsLength         = true,
+          .IgnoreInvalidPunycode   = true,
+          .CheckNFC                = false, // todo
+          .CheckDotInclusions      = true,
+        }, }
+    };
+
+    static constexpr array<opts, 11> tests{
+      opts{"", true, -1},
+      {"a", true, -1},
+      {"-"},
+      {"--"},
+      {"---"},
+      {"xn---", false},
+      {"nn---"},
+      {"nn---", false, 1},
+      {"---", false, 1},
+      {"--", false, 1},
+      {"-", false, 1},
+    };
+
+    for (auto const [str, is_valid, opts_index] : tests) {
+        switch (opts_index) {
+            case -1:
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str;
+                break;
+            case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str; break;
+            case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str; break;
+            default: break;
+        }
+    }
+}
+
+// NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
