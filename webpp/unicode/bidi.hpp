@@ -151,11 +151,13 @@ namespace webpp::unicode {
             return NONE;
         }
 
-        auto const chunk                      = code_point >> bidi_index::chunk_shift;
-        auto const section_index              = chunk >> details::breakpoint_shift;
+        auto const chunk         = code_point >> bidi_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::breakpoint_shift);
         auto const [starting, ending, offset] = details::breakpoints[section_index];
         bidi_index const pos =
-          chunk < starting || chunk >= ending ? common_position : bidi_indices[chunk - offset];
+          chunk < starting || chunk >= ending
+            ? common_position
+            : bidi_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         return static_cast<direction>(bidi_values[pos.get_position(code_point)]);
         // NOLINTEND(*-pro-bounds-constant-array-index)

@@ -29,14 +29,14 @@ namespace webpp::unicode::idna {
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         stl::uint16_t ref; // NOLINT(*-init-variables)
         if (code_point <= static_cast<CharT>(details::breakpoint_start)) [[likely]] {
-            ref = details::idna_refs[code_point >> batch_bit_count];
+            ref = details::idna_refs[static_cast<stl::uint16_t>(code_point >> batch_bit_count)];
         } else [[unlikely]] {
             if (code_point >= static_cast<CharT>(details::last_disallowed)) {
                 return disallowed;
             }
             if (code_point >= static_cast<CharT>(details::breakpoint_end)) {
-                auto const pos =
-                  (code_point - static_cast<CharT>(details::breakpoint_end)) >> batch_bit_count;
+                auto const pos = static_cast<stl::uint16_t>(
+                  (code_point - static_cast<CharT>(details::breakpoint_end)) >> batch_bit_count);
                 ref = details::idna_refs_extra[pos];
             } else {
                 return disallowed;
@@ -44,7 +44,7 @@ namespace webpp::unicode::idna {
         }
 
         stl::uint16_t const clean_ref = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
-        auto const          ref_ptr   = clean_ref + (code_point & batch_mask);
+        auto const          ref_ptr   = static_cast<stl::uint16_t>(clean_ref + (code_point & batch_mask));
         if (clean_ref != ref) {
             // looking at the idna_ref_bools table
 
