@@ -147,7 +147,7 @@ namespace webpp::unicode {
         using details::common_position;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        if (code_point >= details::trailing_zero_bidis) [[unlikely]] {
+        if (code_point >= static_cast<CPType>(details::trailing_zero_bidis)) [[unlikely]] {
             return NONE;
         }
 

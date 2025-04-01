@@ -2,10 +2,12 @@
 
 #include "../webpp/unicode/idna.hpp"
 
+#include "../webpp/unicode/bidi.hpp"
 #include "../webpp/uri/uri.hpp"
-#include "common/tests_common_pch.hpp"
+#include "./common/bidi.hpp"
+#include "./common/tests_common_pch.hpp"
 
-// NOLINTBEGIN(*-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
 using namespace webpp;
 
 using Types =
@@ -87,18 +89,18 @@ TEST(BasicIDNATests, TestingAllTheTable) {
 
     stl::uint32_t           last_one = 0;
     std::set<stl::uint32_t> faileds;
-    for (stl::uint32_t index = 0; index != uri::idna::details::idna_mapping_table.size(); ++index) {
-        auto const cur = uri::idna::details::idna_mapping_table[index];
-        if ((cur & uri::idna::details::mapped_mask) == 0) {
+    for (stl::uint32_t index = 0; index != unicode::idna::details::idna_mapping_table.size(); ++index) {
+        auto const cur = unicode::idna::details::idna_mapping_table[index];
+        if ((cur & unicode::idna::details::mapped_mask) == 0) {
             continue;
         }
-        auto length = (cur & ~uri::idna::details::mapped_mask) >> 24U;
+        auto length = (cur & ~unicode::idna::details::mapped_mask) >> 24U;
 
-        auto             range_start = cur & ~uri::idna::details::disallowed_mask;
-        auto             range_end   = uri::idna::details::idna_mapping_table[index + 1];
+        auto             range_start = cur & ~unicode::idna::details::disallowed_mask;
+        auto             range_end   = unicode::idna::details::idna_mapping_table[index + 1];
         std::string_view action      = "disallowed";
         if ([[maybe_unused]] bool const is_mapped =
-              (cur & uri::idna::details::disallowed_mask) != uri::idna::details::disallowed_mask)
+              (cur & unicode::idna::details::disallowed_mask) != unicode::idna::details::disallowed_mask)
         {
             range_end = range_start + length;
             action    = "mapped/ignored";
@@ -107,21 +109,21 @@ TEST(BasicIDNATests, TestingAllTheTable) {
         length = range_end - range_start;
 
         for (stl::uint32_t sub_index = range_start; sub_index <= range_end;) {
-            auto             sub_pos = uri::idna::find_mapping_code_point(sub_index);
+            auto             sub_pos = unicode::idna::find_mapping_code_point(sub_index);
             std::string_view state   = "";
             if (*sub_pos != cur) {
                 ++errors;
-                sub_pos = uri::idna::find_mapping_code_point(sub_index);
-                faileds.insert(cur & ~uri::idna::details::disallowed_mask);
+                sub_pos = unicode::idna::find_mapping_code_point(sub_index);
+                faileds.insert(cur & ~unicode::idna::details::disallowed_mask);
                 if (*sub_pos == last_one) {
                     state = " (last one) ";
                     ++picking_last_one;
                 } else {
                     auto next_index = index + 1;
-                    auto next       = uri::idna::details::idna_mapping_table[next_index];
-                    while ((next & uri::idna::details::mapped_mask) == 0) {
+                    auto next       = unicode::idna::details::idna_mapping_table[next_index];
+                    while ((next & unicode::idna::details::mapped_mask) == 0) {
                         ++next_index;
-                        next = uri::idna::details::idna_mapping_table[next_index];
+                        next = unicode::idna::details::idna_mapping_table[next_index];
                     }
                     if (*sub_pos == next) {
                         ++picking_next_one;
@@ -132,16 +134,16 @@ TEST(BasicIDNATests, TestingAllTheTable) {
                   << "Index: " << index << "\n"
                   << "Sub Index: " << sub_index << " HexChar: " << std::hex << sub_index << std::dec
                   << " diff: " << (sub_index - range_start) << "\n"
-                  << "Current: " << stl::hex << cur << " " << (cur & ~uri::idna::details::disallowed_mask)
+                  << "Current: " << stl::hex << cur << " " << (cur & ~unicode::idna::details::disallowed_mask)
                   << stl::dec << "\n"
                   << "Range start: " << range_start << "\n"
                   << "Range end: " << range_end << "\n"
                   << "length: " << length << "\n"
                   << "Position of the iterator: "
-                  << stl::distance(uri::idna::details::idna_mapping_table.begin(), sub_pos)
-                  << "\nCurrent: " << std::hex << (*sub_pos & ~uri::idna::details::disallowed_mask)
+                  << stl::distance(unicode::idna::details::idna_mapping_table.begin(), sub_pos)
+                  << "\nCurrent: " << std::hex << (*sub_pos & ~unicode::idna::details::disallowed_mask)
                   << std::dec << state << "\nExpected: " << std::hex
-                  << (cur & ~uri::idna::details::disallowed_mask) << std::dec << "\naction: " << action;
+                  << (cur & ~unicode::idna::details::disallowed_mask) << std::dec << "\naction: " << action;
             }
 
             auto const half  = length / 2;
@@ -167,40 +169,40 @@ TEST(BasicIDNATests, TestingAllTheTable) {
 TEST(BasicIDNATests, PerformMappingTest) {
     // 'A' should be mapped to 'a'
     std::string out;
-    EXPECT_TRUE(uri::idna::map(U'A', out));
+    EXPECT_TRUE(unicode::idna::map(U'A', out));
     EXPECT_EQ(out, "a");
     out.clear();
 
     std::u32string out32;
-    EXPECT_TRUE(uri::idna::map(U'\x1F244', out32));
+    EXPECT_TRUE(unicode::idna::map(U'\x1F244', out32));
     EXPECT_EQ(out32, U"\x3014\x70B9\x3015");
 
     std::u8string out8;
-    EXPECT_TRUE(uri::idna::map(U'\x1F244', out8));
+    EXPECT_TRUE(unicode::idna::map(U'\x1F244', out8));
     EXPECT_EQ(out8, u8"\xE3\x80\x94\xE7\x82\xB9\xE3\x80\x95");
 }
 
 TEST(BasicIDNATests, UnicodeMapping) {
     // 'A' should be mapped to 'a'
     std::string out;
-    EXPECT_TRUE(uri::idna::map(U"A", out));
+    EXPECT_TRUE(unicode::idna::map(U"A", out));
     EXPECT_EQ(out, "a");
     out.clear();
 
     std::u32string out32;
-    EXPECT_TRUE(uri::idna::map(U"\x1F244", out32));
+    EXPECT_TRUE(unicode::idna::map(U"\x1F244", out32));
     EXPECT_EQ(out32, U"\x3014\x70B9\x3015");
 
     std::u8string out8;
-    EXPECT_TRUE(uri::idna::map(U"\x1F244", out8));
+    EXPECT_TRUE(unicode::idna::map(U"\x1F244", out8));
     EXPECT_EQ(out8, u8"\xE3\x80\x94\xE7\x82\xB9\xE3\x80\x95");
 }
 
 TEST(BasicIDNATests, MostMappings) {
-    using uri::idna::mapped;
-    using uri::idna::status_of;
-    using uri::idna::details::disallowed;
-    using uri::idna::details::valid;
+    using unicode::idna::mapped;
+    using unicode::idna::status_of;
+    using unicode::idna::details::disallowed;
+    using unicode::idna::details::valid;
 
     // awk -f gen-idna-tests.awk IdnaMappingTable.txt
     // awk -f gen-idna-tests.awk IdnaMappingTable.txt | sort --random-sort | head
@@ -395,4 +397,192 @@ TEST(BasicIDNATests, MostMappings) {
     EXPECT_EQ(status_of(481), valid);
 }
 
-// NOLINTEND(*-magic-numbers)
+TEST(BasicIDNATests, BidiMost) {
+    using webpp::unicode::direction;
+    using webpp::unicode::direction_of;
+
+    EXPECT_EQ(direction_of(U'\x0041'), direction::L);
+    EXPECT_EQ(direction_of(U'\x0600'), direction::AN);
+    EXPECT_EQ(direction_of(U'\x0610'), direction::NSM);
+
+    // 1734;HANUNOO SIGN PAMUDPOD;Mc;9;L;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1734'), direction::L);
+
+    // 10101;AEGEAN WORD SEPARATOR DOT;Po;0;ON;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x10101'), direction::ON);
+
+    // 1171E;AHOM CONSONANT SIGN MEDIAL RA;Mc;0;L;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1171E'), direction::L);
+
+    // 1D6C1;MATHEMATICAL BOLD NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D6C1'), direction::ON);
+
+    // 1D6FB;MATHEMATICAL ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D6FB'), direction::ON);
+
+    // 1D735;MATHEMATICAL BOLD ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D735'), direction::ON);
+
+    // 1D76F;MATHEMATICAL SANS-SERIF BOLD NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D76F'), direction::ON);
+
+    // 1D7A9;MATHEMATICAL SANS-SERIF BOLD ITALIC NABLA;Sm;0;ON;<font> 2207;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1D7A9'), direction::ON);
+
+    // 1F4A9;PILE OF POO;So;0;ON;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x1F4A9'), direction::ON);
+
+    // 061D;ARABIC END OF TEXT MARK;Po;0;AL;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\x61D'), direction::AL);
+
+    // E01EF;VARIATION SELECTOR-256;Mn;0;NSM;;;;;N;;;;;
+    EXPECT_EQ(direction_of(U'\xE01EF'), direction::NSM);
+
+    for (char32_t cp = 0; cp < 0x10'fffdU + 10; cp += 1) {
+        auto const lhs = direction_of(cp);
+        auto const rhs = webpp::unicode::tests::find_direction(cp);
+
+        // if these fail, that might be because the test table might be a few versions behind;
+        // that's why we're ignoring some of the tests here:
+        if (lhs != rhs && rhs == direction::NONE) {
+            continue;
+        }
+
+        switch (cp) {
+            case 0x1734:
+            case 0x1'171E:
+            case 0x1'D6C1:
+            case 0x1'D6FB:
+            case 0x1'D735:
+            case 0x1'D76F:
+            case 0x1'D7A9: continue;
+            default: break;
+        }
+
+        EXPECT_EQ(lhs, rhs) << "Code Point: " << static_cast<int>(cp) << "\n    " << to_abbr(lhs) << " ("
+                            << to_string(lhs) << ")  !==  " << to_abbr(rhs) << " (" << to_string(rhs) << ")";
+    }
+}
+
+TEST(BasicIDNATests, BidiRules) {
+    using webpp::stl::u32string_view;
+    using webpp::unicode::validate_bidi_rule;
+
+    // https://www.rfc-editor.org/rfc/rfc5893#section-4.1
+    u32string_view const computer_word =
+      U"\u0786"  // THAANA LETTER KAAFU (AL)
+      U"\u07AE"  // THAANA OBOFILI (NSM)
+      U"\u0782"  // THAANA LETTER NOONU (AL)
+      U"\u07B0"  // THAANA SUKUN (NSM)
+      U"\u0795"  // THAANA LETTER PAVIYANI (AL)
+      U"\u07A9"  // THAANA LETTER EEBEEFILI (AL)
+      U"\u0793"  // THAANA LETTER TAVIYANI (AL)
+      U"\u07A6"  // THAANA ABAFILI (NSM)
+      U"\u0783"  // THAANA LETTER RAA (AL)
+      U"\u07AA"; // THAANA UBUFILI (NSM)
+
+    // https://www.rfc-editor.org/rfc/rfc5893#section-4.2
+    u32string_view const yivo_acronym =
+      U"\u05D9"  // HEBREW LETTER YOD (R)
+      U"\u05B4"  // HEBREW POINT HIRIQ (NSM)
+      U"\u05D5"  // HEBREW LETTER VAV (R)
+      U"\u05D0"  // HEBREW LETTER ALEF (R)
+      U"\u05B8"; // HEBREW POINT QAMATS (NSM)
+
+
+    EXPECT_TRUE(validate_bidi_rule(computer_word.begin(), computer_word.end()));
+    EXPECT_TRUE(validate_bidi_rule(yivo_acronym.begin(), yivo_acronym.end()));
+
+
+    // 3.  In an RTL label, the end of the label must be a character with
+    //     Bidi property R, AL, EN, or AN, followed by zero or more
+    //     characters with Bidi property NSM.
+    u32string_view const invalid_computer_word =
+      U"\u0786" // THAANA LETTER KAAFU (AL)
+      U"\u07AE" // THAANA OBOFILI (NSM)
+      U"\u0782" // THAANA LETTER NOONU (AL)
+      U"\u07B0" // THAANA SUKUN (NSM)
+      U"\u0795" // THAANA LETTER PAVIYANI (AL)
+      U"\u07A9" // THAANA LETTER EEBEEFILI (AL)
+      U"\u0793" // THAANA LETTER TAVIYANI (AL)
+      U"\u07A6" // THAANA ABAFILI (NSM)
+      U"\u0783" // THAANA LETTER RAA (AL)
+      U"\u07AA" // THAANA UBUFILI (NSM)
+      U"\u0294" // 0294          ; L # Lo       LATIN LETTER GLOTTAL STOP
+      U"\u07AA" // THAANA UBUFILI (NSM)
+      ;
+
+    EXPECT_FALSE(validate_bidi_rule(invalid_computer_word.begin(), invalid_computer_word.end()));
+
+
+    u32string_view const invalid_yivo_acronym =
+      U"\u05D9"  // HEBREW LETTER YOD (R)
+      U"\u05B4"  // HEBREW POINT HIRIQ (NSM)
+      U"\u05D5"  // HEBREW LETTER VAV (R)
+      U"\u05D0"  // HEBREW LETTER ALEF (R)
+      U"\u0378"  // Should be (L), but this makes it invalid
+      U"\u05B8"; // HEBREW POINT QAMATS (NSM)
+
+    EXPECT_FALSE(validate_bidi_rule(invalid_yivo_acronym.begin(), invalid_yivo_acronym.end()));
+
+    u32string_view const empty = U"";
+    EXPECT_TRUE(validate_bidi_rule(empty.begin(), empty.end()));
+}
+
+TEST(BasicIDNATests, CheckValidiyCriteria) {
+    using webpp::stl::array;
+    using webpp::stl::string_view;
+    using webpp::unicode::idna::idna_options;
+    using webpp::unicode::idna::is_label_valid;
+
+    struct opts {
+        string_view str;
+        bool        is_valid  = true;
+        int         opt_index = 0;
+    };
+
+    static constexpr array<idna_options, 2> idna_opts{
+      {
+       idna_options{},
+       idna_options{
+          .CheckHyphens            = true,
+          .CheckBidi               = true,
+          .CheckJoiners            = true,
+          .UseSTD3ASCIIRules       = true,
+          .Transitional_Processing = true,
+          .VerifyDnsLength         = true,
+          .IgnoreInvalidPunycode   = true,
+          .CheckNFC                = false, // todo
+          .CheckDotInclusions      = true,
+        }, }
+    };
+
+    static constexpr array<opts, 12> tests{
+      opts{"", true, -1},
+      {"a", true, -1},
+      {"-"},
+      {"--"},
+      {"---"},
+      {"xn---", false},
+      {"nn---"},
+      {"nn---", false, 1},
+      {"---", false, 1},
+      {"--", false, 1},
+      {"-", false, 1},
+      {"correct", true, -1},
+    };
+
+    for (auto const [str, is_valid, opts_index] : tests) {
+        switch (opts_index) {
+            case -1:
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str;
+                break;
+            case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str; break;
+            case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str; break;
+            default: break;
+        }
+    }
+}
+
+// NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
