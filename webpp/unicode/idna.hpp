@@ -180,6 +180,41 @@ namespace webpp::unicode::idna {
     };
 
     /**
+     * Check if joiner code points are correct.
+     * Attention: this function does only the lookup part of the appendix, and not the full check.
+     * RFC: https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A
+     */
+    template <stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool validate_context_joiners(Iter spos, Iter send) noexcept {
+        using enum checked::error_handling;
+        for (;;) {
+            auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
+            if (code_point == 0) {
+                break;
+            }
+            switch (code_point) {
+                    // This may occur in a formally cursive script (such as Arabic) in a context where it
+                    // breaks a cursive connection as required for orthographic rules, as in the Persian
+                    // language, for example. It also may occur in Indic scripts in a consonant-conjunct
+                    // context (immediately following a virama), to control required display of such
+                    // conjuncts.
+                case U'\x200C': // ZERO WIDTH NON-JOINER
+                    break;
+
+                    // This may occur in Indic scripts in a consonant-conjunct context (immediately following
+                    // a virama), to control required display of such conjuncts.
+                case U'\x200D': // ZERO WIDTH JOINER
+                    break;
+
+                // Other Appendix rules don't apply since their "Lookup" is false which means we don't need to
+                // check those rules during DNS lookup.
+                default: break;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Is Domain Label Valid.
      * Valid Criteria: https://www.unicode.org/reports/tr46/#Validity_Criteria
      *
@@ -256,7 +291,7 @@ namespace webpp::unicode::idna {
 
         // 8. Check joiners
         if constexpr (Options.CheckJoiners) {
-            // todo
+            valid &= validate_context_joiners(spos, send);
         }
 
         // 9. Check bidi rule

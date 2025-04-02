@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 02 Apr 2025 00:48:14 GMT
+ *   This file's generation date:        Wed, 02 Apr 2025 02:17:39 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       84256
@@ -86,7 +86,7 @@ namespace webpp::unicode::details {
         }
     };
 
-    struct alignas(std::uint64_t) breakpoint_type {
+    struct alignas(std::uint64_t) bidi_breakpoint_type {
         std::uint16_t starting;
         std::uint16_t ending;
         std::uint16_t offset;
@@ -97,216 +97,79 @@ namespace webpp::unicode::details {
      *
      * Table size in KibiBytes:  0.53 KiB
      */
-    static constexpr std::array<breakpoint_type, 68U> breakpoints{
-      {
-
-       // Section 1:
-        {.starting = 0, .ending = 416, .offset = 0},
-
-       // Section 2:
-        {.starting = 621, .ending = 624, .offset = 205},
-
-       // Section 3:
-        {.starting = 1315, .ending = 1376, .offset = 896},
-
-       // Section 4:
-        {.starting = 2007, .ending = 2467, .offset = 1527},
-
-       // Section 5:
-        {.starting = 2007, .ending = 2467, .offset = 1527},
-
-       // Section 6:
-        {.starting = 2823, .ending = 2944, .offset = 1883},
-
-       // Section 7:
-        {.starting = 3555, .ending = 4096, .offset = 2494},
-
-       // Section 8:
-        {.starting = 3555, .ending = 4096, .offset = 2494},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 9:
-        {.starting = 6142, .ending = 6144, .offset = 4540},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 10:
-        {.starting = 8190, .ending = 8192, .offset = 6586},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 11:
-        {.starting = 10238, .ending = 10240, .offset = 8632},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 12:
-        {.starting = 12286, .ending = 12288, .offset = 10678},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 13:
-        {.starting = 14334, .ending = 14336, .offset = 12724},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 14:
-        {.starting = 16382, .ending = 16384, .offset = 14770},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 15:
-        {.starting = 18430, .ending = 18432, .offset = 16816},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 16:
-        {.starting = 20478, .ending = 20480, .offset = 18862},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 17:
-        {.starting = 22526, .ending = 22528, .offset = 20908},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 18:
-        {.starting = 24574, .ending = 24576, .offset = 22954},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 19:
-        {.starting = 26622, .ending = 26624, .offset = 25000},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 20:
-        {.starting = 28670, .ending = 28800, .offset = 27046},
-
-       // Section 21:
-        {.starting = 28670, .ending = 28800, .offset = 27046},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 22:
-        {.starting = 30718, .ending = 30720, .offset = 28964},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 23:
-        {.starting = 32766, .ending = 32768, .offset = 31010},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section Invalid:
-        {.starting = 0, .ending = 0, .offset = 0},
-
-       // Section 24:
-        {.starting = 34814, .ending = 34816, .offset = 33056}}
+    static constexpr std::array<bidi_breakpoint_type, 68U> bidi_breakpoints{
+      bidi_breakpoint_type{    .starting = 0,   .ending = 416,     .offset = 0}, // Section 1
+      {  .starting = 621,   .ending = 624,   .offset = 205}, // Section 2
+      { .starting = 1315,  .ending = 1376,   .offset = 896}, // Section 3
+      { .starting = 2007,  .ending = 2467,  .offset = 1527}, // Section 4
+      { .starting = 2007,  .ending = 2467,  .offset = 1527}, // Section 5
+      { .starting = 2823,  .ending = 2944,  .offset = 1883}, // Section 6
+      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 7
+      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 8
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      { .starting = 6142,  .ending = 6144,  .offset = 4540}, // Section 9
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      { .starting = 8190,  .ending = 8192,  .offset = 6586}, // Section 10
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 10238, .ending = 10240,  .offset = 8632}, // Section 11
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 12286, .ending = 12288, .offset = 10678}, // Section 12
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 14334, .ending = 14336, .offset = 12724}, // Section 13
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 16382, .ending = 16384, .offset = 14770}, // Section 14
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 18430, .ending = 18432, .offset = 16816}, // Section 15
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 20478, .ending = 20480, .offset = 18862}, // Section 16
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 22526, .ending = 22528, .offset = 20908}, // Section 17
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 24574, .ending = 24576, .offset = 22954}, // Section 18
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 26622, .ending = 26624, .offset = 25000}, // Section 19
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 20
+      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 21
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 30718, .ending = 30720, .offset = 28964}, // Section 22
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 32766, .ending = 32768, .offset = 31010}, // Section 23
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
+      {.starting = 34814, .ending = 34816, .offset = 33056}, // Section 24
     };
 
-    static constexpr bidi_index    common_position{213U};
-    static constexpr std::uint16_t breakpoint_shift{9U};
+    static constexpr bidi_index    bidi_common_position{213U};
+    static constexpr std::uint16_t bidi_breakpoint_shift{9U};
 
 
     /**

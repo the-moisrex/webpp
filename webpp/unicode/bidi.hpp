@@ -2,8 +2,8 @@
 #define WEBPP_UNICODE_BIDI_HPP
 
 #include "./details/bidi_tables.hpp"
+#include "./details/idna_mapping_tables.hpp"
 #include "./unicode.hpp"
-#include "details/idna_mapping_tables.hpp"
 
 #include <climits>
 
@@ -141,10 +141,10 @@ namespace webpp::unicode {
     template <UTF CPType>
     [[nodiscard]] static constexpr direction direction_of(CPType const code_point) noexcept {
         using enum direction;
+        using details::bidi_common_position;
         using details::bidi_index;
         using details::bidi_indices;
         using details::bidi_values;
-        using details::common_position;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         if (code_point >= static_cast<CPType>(details::trailing_zero_bidis)) [[unlikely]] {
@@ -152,11 +152,11 @@ namespace webpp::unicode {
         }
 
         auto const chunk         = code_point >> bidi_index::chunk_shift;
-        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::breakpoint_shift);
-        auto const [starting, ending, offset] = details::breakpoints[section_index];
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::bidi_breakpoint_shift);
+        auto const [starting, ending, offset] = details::bidi_breakpoints[section_index];
         bidi_index const pos =
           chunk < starting || chunk >= ending
-            ? common_position
+            ? bidi_common_position
             : bidi_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         return static_cast<direction>(bidi_values[pos.get_position(code_point)]);

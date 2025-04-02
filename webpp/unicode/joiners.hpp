@@ -1,0 +1,46 @@
+// Created by moisrex on 4/1/25.
+
+#ifndef WEBPP_UNICODE_JOINERS_HPP
+#define WEBPP_UNICODE_JOINERS_HPP
+
+#include "./details/joiners_tables.hpp"
+#include "./unicode.hpp"
+
+namespace webpp::unicode {
+
+    enum struct joiner_type : stl::uint8_t {
+        non_joining   = 0, // U
+        right_joining = 1, // R
+        left_joining  = 2, // L
+        dual_joining  = 3, // D
+        join_causing  = 4, // C
+        transparent   = 5, // T
+    };
+
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr joiner_type joiner_type_of(CharT const code_point) noexcept {
+        using enum joiner_type;
+        using details::joiners_index;
+        using details::joiners_indices;
+        using details::joiners_values;
+
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
+        if (code_point >= static_cast<CharT>(details::trailing_zero_joiners)) [[unlikely]] {
+            return non_joining;
+        }
+
+        auto const chunk         = code_point >> joiners_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::joiners_breakpoint_shift);
+        auto const [starting, ending, offset] = details::joiners_breakpoints[section_index];
+        joiners_index const pos =
+          chunk < starting || chunk >= ending
+            ? details::joiners_common_position
+            : joiners_indices[static_cast<stl::uint16_t>(chunk - offset)];
+
+        return static_cast<joiner_type>(joiners_values[pos.get_position(code_point)]);
+        // NOLINTEND(*-pro-bounds-constant-array-index)
+    }
+
+} // namespace webpp::unicode
+
+#endif // WEBPP_UNICODE_JOINERS_HPP

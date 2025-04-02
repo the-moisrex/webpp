@@ -734,7 +734,7 @@ export class TablePairs {
             // The removed part of the table has this value in them:
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
-            struct alignas(std::uint64_t) breakpoint_type {
+            struct alignas(std::uint64_t) ${this.#name}_breakpoint_type {
                 ${this.#indexAddenda.STLTypeString} starting;
                 ${this.#indexAddenda.STLTypeString} ending;
                 ${this.#indexAddenda.STLTypeString} offset;
@@ -745,13 +745,12 @@ export class TablePairs {
              * 
              * Table size in KibiBytes:  ${(Number(this.#breakpointsTableSize) / 8 / 1024).toFixed(2)} KiB
              */
-            static constexpr std::array<breakpoint_type, ${breakpointsTable.length}U> breakpoints{{${breakpointsTable.map(item => `
+            static constexpr std::array<${this.#name}_breakpoint_type, ${breakpointsTable.length}U> ${this.#name}_breakpoints{${breakpointsTable.map((item, index) => `
+               ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}, // Section ${item.section}`).join("")}
+            };
 
-               // Section ${item.section}:
-               {.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}`).join(", ")}}};
-
-            static constexpr ${this.#indexAddenda.name} common_position{${commonValues[0]}U};
-            static constexpr ${this.#indexAddenda.STLTypeString} breakpoint_shift{${breakpointsTableShift}U};
+            static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};
+            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
         `}
 
     /**

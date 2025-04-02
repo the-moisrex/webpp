@@ -3,6 +3,7 @@
 #include "../webpp/unicode/idna.hpp"
 
 #include "../webpp/unicode/bidi.hpp"
+#include "../webpp/unicode/joiners.hpp"
 #include "../webpp/uri/uri.hpp"
 #include "./common/bidi.hpp"
 #include "./common/tests_common_pch.hpp"
@@ -527,6 +528,65 @@ TEST(BasicIDNATests, BidiRules) {
 
     u32string_view const empty = U"";
     EXPECT_TRUE(validate_bidi_rule(empty.begin(), empty.end()));
+}
+
+TEST(BasicIDNATests, JoinerTypesTest) {
+    using webpp::unicode::joiner_type;
+    using webpp::unicode::joiner_type_of;
+
+    // Generated using:
+    // ./gen-joiners-tests.awk DerivedJoiningType.txt | grep -v transparent | grep -v join_causing | sort
+    //     --random-sort | head -n 50
+    EXPECT_EQ(joiner_type_of(U'\x84E'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x8A8'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x6BD'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x10AD9'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x1E92F'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x67C'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x8BC'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x10F33'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x634'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x1E921'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x0627'), joiner_type::right_joining);  // R
+    EXPECT_EQ(joiner_type_of(U'\x67D'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x1E905'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x10F76'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\xA858'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x188A'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x758'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x62A'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\xA85A'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x06C0'), joiner_type::right_joining);  // R
+    EXPECT_EQ(joiner_type_of(U'\x872'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x696'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x693'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x877'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\xA84A'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x699'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x76E'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\xA84F'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x10FBB'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x10F73'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x841'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x871'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x768'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x87B'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x10EC3'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x7D8'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x842'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\xA856'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x10BAB'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x7CE'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x6B8'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x720'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x63C'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x10FB5'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x1E927'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x775'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x7DA'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x8A9'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x184A'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x183F'), joiner_type::dual_joining);   // D
 }
 
 TEST(BasicIDNATests, CheckValidiyCriteria) {
