@@ -22,7 +22,7 @@ const start = async () => {
     const bidisTables = new BidiTables();
     await DerivedBidiClass.parse(bidisTables);
     bidisTables?.process?.();
-    await createTableFile([bidisTables]);
+    await createTableFile(bidisTables);
     console.log("File processing completed.");
 };
 
@@ -118,14 +118,13 @@ ${renderedTables}
     }
 }
 
-const createTableFile = async (tables) => {
-    const totalBits = tables.reduce(
-        (acc, cur) => acc + Number(cur.totalTablesSizeInBits()),
-        0,
-    );
-    const readmeData = await getReadme();
-    const saved = 16.98 - totalBits / 8 / 1024;
-    const begContent = `
+const createTableFile = async (table) => {
+    const tableContent = table.render();
+    const totalBits = Number(table.totalTablesSizeInBits());
+    const readmeData = await readme.getReadme();
+    const competition = 16.98;
+    const saved = competition - totalBits / 8 / 1024;
+    const content = `
 /**
  * Attention:
  *   Auto-generated file, don't modify this file; use the mentioned file below
@@ -139,7 +138,7 @@ const createTableFile = async (tables) => {
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
- *   Some other implementations' total table size was 16.98 KiB;
+ *   Some other implementations' total table size was ${competition.toFixed(2)} KiB;
  *   So I have ${saved > 0 ? `saved` : `wasted`} ${Math.abs(saved).toFixed(2)} KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
@@ -163,20 +162,13 @@ const createTableFile = async (tables) => {
 
 namespace webpp::unicode::details {
 
-`;
+${tableContent}
 
-    const endContent = `
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_BIDI_TABLES_HPP
     `;
-
-    let pieces = [begContent];
-    for (const table of tables) {
-        pieces.push(table.render());
-    }
-    pieces.push(endContent);
-    await writePieces(bidiOutFile, pieces);
+    await writePieces(bidiOutFile, [content]);
     await runClangFormat(bidiOutFile);
 };
 

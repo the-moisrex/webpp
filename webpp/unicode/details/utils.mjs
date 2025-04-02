@@ -19,6 +19,7 @@ export const char8_5 = Symbol("char8_t");
 export const char8_6 = Symbol("char8_t");
 export const char8_7 = Symbol("char8_t");
 export const char8_8 = Symbol("char8_t");
+export const uint3 = Symbol("std::uint8_t");
 export const uint4 = Symbol("std::uint8_t");
 export const uint5 = Symbol("std::uint8_t");
 export const uint6 = Symbol("std::uint8_t");
@@ -49,6 +50,7 @@ export const realSizeOf = (symbol) => {
         case char4:
         case char5:
         case char6:
+        case uint3:
         case uint4:
         case uint5:
         case uint6:
@@ -159,6 +161,7 @@ export const cppValueOf = (value, symbol) => {
         case char4:
         case char5:
         case char6:
+        case uint3:
         case uint4:
         case uint5:
         case uint6:
@@ -191,6 +194,7 @@ export const sizeOf = (symbol) => {
             return 2n;
         case char8_3:
         case char3:
+        case uint3:
             return 3n;
         case char8_4:
         case char4:
@@ -271,7 +275,7 @@ export const symbolOf = (size, symbolType = uint8.description) => {
         case 2:
             return char2;
         case 3:
-            return char3;
+            return symbolType === uint3.description ? uint3 : char3;
         case 4:
             return symbolType === uint4.description ? uint4 : char4;
         case 5:
@@ -512,6 +516,7 @@ export class TableTraits {
             case char6:
             case char7:
             case char8:
+            case uint3:
             case uint4:
             case uint5:
             case uint6:
@@ -561,6 +566,7 @@ export class TableTraits {
             case char7:
             case char8:
                 return "";
+            case uint3:
             case uint4:
             case uint5:
             case uint6:

@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 29 Mar 2025 22:06:08 GMT
+ *   This file's generation date:        Wed, 02 Apr 2025 00:48:14 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       79904
- *       - in bytes:      9988 B
- *       - in KibiBytes:  9.75 KiB
+ *       - in bits:       84256
+ *       - in bytes:      10532 B
+ *       - in KibiBytes:  10.29 KiB
  *   Some other implementations' total table size was 16.98 KiB;
- *   So I have saved 7.23 KiB.
+ *   So I have saved 6.69 KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
@@ -3183,6 +3183,7 @@ namespace webpp::unicode::details {
       // Start of 0xe01e0:
       9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
       10, 10};
+
 
 
 

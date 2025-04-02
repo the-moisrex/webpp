@@ -8,3 +8,4 @@ isolate-*.log
 processed*
 IdnaMappingTable.txt
 DerivedBidiClass.txt
+ArabicShaping.txt

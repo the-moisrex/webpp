@@ -532,7 +532,7 @@ export class TablePairs {
                 if (null === this.#findSubsetRange(dataView, modifier)) {
                     debugger;
                     this.#findSubsetRange(dataView, modifier);
-                    throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)}`);
+                    throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)} ${this.data.length}`);
                 }
                 // for (let ith = 0; ith !== length; ++ith) {
                 //     const expected = dataView.at(ith);
