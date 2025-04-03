@@ -4,6 +4,10 @@ import {
 
 export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedJoiningType.txt";
 export const cacheFilePath = "DerivedJoiningType.txt";
+
+// Types are from: https://www.unicode.org/reports/tr44/#ArabicShaping.txt
+// If you ever wanted to change the values of these types, make sure to
+// change them in the joiners.hpp file as well.
 export const JoiningTypes = {
     U: 0,
     R: 1,

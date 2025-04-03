@@ -8,6 +8,11 @@
 
 namespace webpp::unicode {
 
+    /**
+     * Values are extracted from:
+     *   https://www.unicode.org/reports/tr44/#ArabicShaping.txt
+     *   https://www.unicode.org/reports/tr44/#Joining_Type
+     */
     enum struct joiner_type : stl::uint8_t {
         non_joining   = 0, // U
         right_joining = 1, // R
@@ -17,6 +22,10 @@ namespace webpp::unicode {
         transparent   = 5, // T
     };
 
+    /**
+     * This function returns the Joining_Type of the input code point.
+     * They are extracted from DerivedJoiningType.txt
+     */
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr joiner_type joiner_type_of(CharT const code_point) noexcept {
         using enum joiner_type;
