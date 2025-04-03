@@ -14,8 +14,8 @@ const joinersOutFile = `joiners_tables.hpp`;
 const config = {
     // exclude these join types from the generated tables (will be replaced by non-joiner)
     excludeJoinTypes: [
-        JoiningTypes["Transparent"],
-        JoiningTypes["Join_Causing"],
+        // JoiningTypes["Transparent"],
+        // JoiningTypes["Join_Causing"],
     ]
 }
 
@@ -42,7 +42,7 @@ class JoinersTables {
         sizeof: uint32,
 
         // split the indices table
-        splitInto: 6,
+        splitInto: 7,
         // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
 
         description: `Joiners: Joining_Type`,

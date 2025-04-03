@@ -10,6 +10,7 @@
 #include "./normalization.hpp"
 #include "./unicode.hpp"
 #include "bidi.hpp"
+#include "joiners.hpp"
 
 #include <cassert>
 #include <climits>
@@ -185,10 +186,14 @@ namespace webpp::unicode::idna {
      * RFC: https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A
      */
     template <stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool validate_context_joiners(Iter spos, Iter send) noexcept {
+    [[nodiscard]] static constexpr bool validate_context_joiners(Iter sbeg, Iter send) noexcept {
         using enum checked::error_handling;
+        using enum joiner_type;
+
+        auto     spos       = sbeg;
+        char32_t code_point = 0;
         for (;;) {
-            auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
+            code_point = checked::next_code_point<return_unchanged>(spos, send);
             if (code_point == 0) {
                 break;
             }
@@ -198,13 +203,66 @@ namespace webpp::unicode::idna {
                     // language, for example. It also may occur in Indic scripts in a consonant-conjunct
                     // context (immediately following a virama), to control required display of such
                     // conjuncts.
-                case U'\x200C': // ZERO WIDTH NON-JOINER
+                case U'\x200C': {
+                    // ZERO WIDTH NON-JOINER
+                    bool       is_valid  = false;
+                    auto       pos       = spos;
+                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, send);
+
+                    // ccc_of(0) is not gonna be Virama, so we don't need to check for it
+                    if (is_ccc_of(before_cp, ccc_props::Virama)) {
+                        continue;
+                    }
+
+                    for (;;) {
+                        auto const cur_cp = checked::prev_code_point<return_unchanged>(pos, sbeg);
+                        if (cur_cp == 0) {
+                            break;
+                        }
+                        auto const joining_type = joiner_type_of(cur_cp);
+                        if (joining_type == transparent) {
+                            continue;
+                        }
+                        if (joining_type == left_joining || joining_type == dual_joining) {
+                            is_valid &= true;
+                            break;
+                        }
+                    }
+
+                    // let's not early bailout on the failure path:
+                    // if (!is_ok) [[unlikely]] {
+                    //     return false;
+                    // }
+
+                    pos         = spos;
+                    auto cur_cp = checked::next_code_point<return_unchanged>(pos, send);
+                    for (; cur_cp != 0; cur_cp = checked::next_code_point<return_unchanged>(pos, send)) {
+                        auto const joining_type = joiner_type_of(cur_cp);
+                        if (joining_type == transparent) {
+                            continue;
+                        }
+                        if (joining_type == right_joining || joining_type == dual_joining) {
+                            is_valid &= true;
+                            break;
+                        }
+                    }
+                    if (!is_valid) [[unlikely]] {
+                        return false;
+                    }
                     break;
+                }
 
                     // This may occur in Indic scripts in a consonant-conjunct context (immediately following
                     // a virama), to control required display of such conjuncts.
-                case U'\x200D': // ZERO WIDTH JOINER
+                case U'\x200D': { // ZERO WIDTH JOINER
+                    auto       pos       = spos;
+                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, send);
+                    // ccc_of(0) is not gonna be Virama, so we don't need to check
+                    if (!is_ccc_of(before_cp, ccc_props::Virama)) {
+                        return false;
+                    }
                     break;
+                }
 
                 // Other Appendix rules don't apply since their "Lookup" is false which means we don't need to
                 // check those rules during DNS lookup.

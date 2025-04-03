@@ -48,12 +48,12 @@ namespace webpp::unicode {
         using details::joiners_values;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        if (code_point >= static_cast<CharT>(details::trailing_zero_joiners)) [[unlikely]] {
-            return non_joining;
-        }
 
         auto const chunk         = code_point >> joiners_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::joiners_breakpoint_shift);
+        if (chunk >= static_cast<CharT>(details::joiners_last_breakpoint)) [[unlikely]] {
+            return non_joining;
+        }
         auto const [starting, ending, offset] = details::joiners_breakpoints[section_index];
         joiners_index const pos =
           chunk < starting || chunk >= ending

@@ -526,13 +526,16 @@ TEST(BasicIDNATests, BidiRules) {
 
     EXPECT_FALSE(validate_bidi_rule(invalid_yivo_acronym.begin(), invalid_yivo_acronym.end()));
 
-    u32string_view const empty = U"";
+    u32string_view const empty{};
     EXPECT_TRUE(validate_bidi_rule(empty.begin(), empty.end()));
 }
 
 TEST(BasicIDNATests, JoinerTypesTest) {
     using webpp::unicode::joiner_type;
     using webpp::unicode::joiner_type_of;
+
+    EXPECT_EQ(joiner_type_of(U'\x0'), joiner_type::non_joining);
+    EXPECT_EQ(joiner_type_of(U'\x1'), joiner_type::non_joining);
 
     // Generated using:
     // ./gen-joiners-tests.awk DerivedJoiningType.txt | grep -v transparent | grep -v join_causing | sort
@@ -587,6 +590,85 @@ TEST(BasicIDNATests, JoinerTypesTest) {
     EXPECT_EQ(joiner_type_of(U'\x8A9'), joiner_type::dual_joining);    // D
     EXPECT_EQ(joiner_type_of(U'\x184A'), joiner_type::dual_joining);   // D
     EXPECT_EQ(joiner_type_of(U'\x183F'), joiner_type::dual_joining);   // D
+
+    EXPECT_EQ(joiner_type_of(U'\x11180'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1CF1A'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x10FB2'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x1E016'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x2DE1'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\x10F4D'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x76B'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x81C'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\xF9C'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\x186D'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x13452'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x113BC'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xFAF'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\x1928'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\xE017F'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xE011E'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xE0137'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xE4E'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\xE01C9'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1BC9E'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xE01D5'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xE0026'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1DA05'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x719'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x11C38'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x885'), joiner_type::join_causing);    // C
+    EXPECT_EQ(joiner_type_of(U'\x10B80'), joiner_type::dual_joining);  // D
+    EXPECT_EQ(joiner_type_of(U'\x1DA51'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xA948'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\xEBA'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\x1DA54'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x8AF'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x77D'), joiner_type::dual_joining);    // D
+    EXPECT_EQ(joiner_type_of(U'\x1DA0C'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1E026'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1A77'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\x1AC7'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\x07FA'), joiner_type::join_causing);   // C
+    EXPECT_EQ(joiner_type_of(U'\x1103F'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1920'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\x331'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\x11102'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x11C94'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x1852'), joiner_type::dual_joining);   // D
+    EXPECT_EQ(joiner_type_of(U'\x0DD6'), joiner_type::transparent);    // T
+    EXPECT_EQ(joiner_type_of(U'\x1DA55'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\x81D'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\xAE3'), joiner_type::transparent);     // T
+    EXPECT_EQ(joiner_type_of(U'\xE0174'), joiner_type::transparent);   // T
+    EXPECT_EQ(joiner_type_of(U'\xA85F'), joiner_type::dual_joining);   // D
+
+    EXPECT_EQ(joiner_type_of(U'\x10ACD'), joiner_type::left_joining);  // L
+    EXPECT_EQ(joiner_type_of(U'\x10D00'), joiner_type::left_joining);  // L
+    EXPECT_EQ(joiner_type_of(U'\xA872'), joiner_type::left_joining);   // L
+    EXPECT_EQ(joiner_type_of(U'\x10FCB'), joiner_type::left_joining);  // L
+    EXPECT_EQ(joiner_type_of(U'\x10AD7'), joiner_type::left_joining);  // L
+
+    EXPECT_EQ(joiner_type_of(U'\x874'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x0854'), joiner_type::right_joining);  // R
+    EXPECT_EQ(joiner_type_of(U'\x10ADD'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x87A'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x0771'), joiner_type::right_joining);  // R
+    EXPECT_EQ(joiner_type_of(U'\x672'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x10B89'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x8B2'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x10BAB'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x10FC3'), joiner_type::right_joining); // R
+    EXPECT_EQ(joiner_type_of(U'\x632'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x676'), joiner_type::right_joining);   // R
+    EXPECT_EQ(joiner_type_of(U'\x072F'), joiner_type::right_joining);  // R
+
+    EXPECT_EQ(joiner_type_of(U'\x200D'), joiner_type::join_causing);   // C
+    EXPECT_EQ(joiner_type_of(U'\x885'), joiner_type::join_causing);    // C
+    EXPECT_EQ(joiner_type_of(U'\x883'), joiner_type::join_causing);    // C
+    EXPECT_EQ(joiner_type_of(U'\x884'), joiner_type::join_causing);    // C
+    EXPECT_EQ(joiner_type_of(U'\x07FA'), joiner_type::join_causing);   // C
+    EXPECT_EQ(joiner_type_of(U'\x180A'), joiner_type::join_causing);   // C
+    EXPECT_EQ(joiner_type_of(U'\x0640'), joiner_type::join_causing);   // C
 }
 
 TEST(BasicIDNATests, CheckValidiyCriteria) {

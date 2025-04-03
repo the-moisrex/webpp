@@ -1,20 +1,9 @@
 import * as assert from "node:assert";
 import {
-    genIndexAddenda,
-    ModifiedSpan,
-    Modifier,
-    rangeLength,
+    genIndexAddenda, ModifiedSpan, Modifier, rangeLength,
 } from "./modifiers.mjs";
 import {
-    cppValueOf,
-    overlapInserts,
-    realSizeOf,
-    renderTableValues,
-    Span,
-    splitInto,
-    TableTraits,
-    uint32, uint64,
-    uint8,
+    cppValueOf, overlapInserts, realSizeOf, renderTableValues, Span, splitInto, TableTraits, uint32, uint64, uint8,
 } from "./utils.mjs";
 
 const verbose = process.argv.includes("--verbose");
@@ -39,15 +28,9 @@ export class TablePairs {
         this.#indexAddenda.description = `${this.#name[0].toUpperCase()}${this.#name.substring(1)} (Index Table)\n${this.#description}`;
 
         // the tables
-        this.indices = new TableTraits(
-            this.#props?.indices?.max || 43530,
-            this.#props?.indices?.sizeof || uint32,
-        );
+        this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32,);
         if (this.#props?.values !== null) {
-            this.values = new TableTraits(
-                this.#props?.values?.max || 65535,
-                this.#props?.values?.sizeof || uint8,
-            );
+            this.values = new TableTraits(this.#props?.values?.max || 65535, this.#props?.values?.sizeof || uint8,);
         } else {
             this.values = null;
         }
@@ -68,18 +51,14 @@ export class TablePairs {
     #optimizeInserts(inserts, dataView, modifier) {
         if (this.values === null) {
             return {
-                valid: true,
-                pos: 0n,
-                inserts: [],
+                valid: true, pos: 0n, inserts: [],
             };
         }
         let pos = modifier.pos;
 
         if (inserts.length === 0) {
             return {
-                valid: true,
-                pos: BigInt(pos),
-                inserts,
+                valid: true, pos: BigInt(pos), inserts,
             };
         }
 
@@ -88,13 +67,9 @@ export class TablePairs {
         const modifiedInserts = new ModifiedSpan(inserts, insertsModifier);
 
         // validating inserts:
-        if (
-            !this.#indexAddenda.verifyInserts({inserts, dataView, modifier})
-        ) {
+        if (!this.#indexAddenda.verifyInserts({inserts, dataView, modifier})) {
             return {
-                valid: false,
-                ...modifier,
-                data: [...modifiedInserts],
+                valid: false, ...modifier, data: [...modifiedInserts],
             };
         }
 
@@ -106,9 +81,7 @@ export class TablePairs {
 
         if (inserts.length !== 0) {
             let {valid, start, end} = this.#indexAddenda.optimizeInserts({
-                inserts,
-                dataView,
-                modifier,
+                inserts, dataView, modifier,
             });
             if (valid === false) {
                 return {valid: false};
@@ -123,10 +96,7 @@ export class TablePairs {
         }
 
         return {
-            valid: true,
-            pos: BigInt(pos),
-            inserts,
-            overlapped,
+            valid: true, pos: BigInt(pos), inserts, overlapped,
         };
     }
 
@@ -146,26 +116,16 @@ export class TablePairs {
         return rangeLength(codePointStart, this.data.length, this.chunkSize);
     }
 
-    dataView(
-        codePointStart,
-        length = this.rangeLengthStarting(codePointStart),
-    ) {
+    dataView(codePointStart, length = this.rangeLengthStarting(codePointStart),) {
         if (this.#props?.dataView) {
             return this.#props.dataView.call(this, codePointStart, length);
         }
         return new Span(this.data, codePointStart, length);
     }
 
-    insertsDataView(
-        codePointStart,
-        length = this.rangeLengthStarting(codePointStart),
-    ) {
+    insertsDataView(codePointStart, length = this.rangeLengthStarting(codePointStart),) {
         if (this.#props?.insertsDataView) {
-            return this.#props.insertsDataView.call(
-                this,
-                codePointStart,
-                length,
-            );
+            return this.#props.insertsDataView.call(this, codePointStart, length,);
         }
         return this.dataView(codePointStart, length);
     }
@@ -226,25 +186,19 @@ export class TablePairs {
         let invalidModifiers = [];
         const dataView = this.dataView(codePointStart);
         const insertsDataView = this.insertsDataView(codePointStart);
-        const additionalAddendumValues =
-            this.#props?.getModifierAddenda?.call(this, {
-                codePointStart,
-                length,
-                data: this.data,
-                dataView,
-            }) || {};
+        const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {
+            codePointStart, length, data: this.data, dataView,
+        }) || {};
 
         for (const indexModifier of this.#indexAddenda.generate({
-            dataView,
-            length,
+            dataView, length,
         })) {
             // set the position
             if (!this.#indexAddenda.has("pos")) {
                 indexModifier.set({...additionalAddendumValues});
             } else {
                 indexModifier.set({
-                    pos: BigInt(this.values?.index || 0),
-                    ...additionalAddendumValues,
+                    pos: BigInt(this.values?.index || 0), ...additionalAddendumValues,
                 });
             }
 
@@ -254,16 +208,10 @@ export class TablePairs {
             // try {
             const startPos = this.#findSubsetRange(dataView, indexModifier);
             if (startPos === null) {
-                info = this.#optimizeInserts(
-                    insertsDataView,
-                    dataView,
-                    indexModifier,
-                );
+                info = this.#optimizeInserts(insertsDataView, dataView, indexModifier,);
             } else {
                 info = {
-                    valid: true,
-                    pos: startPos,
-                    inserts: new Span(),
+                    valid: true, pos: startPos, inserts: new Span(),
                 };
             }
             if (!info.valid) {
@@ -278,19 +226,12 @@ export class TablePairs {
                 }
 
                 // assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
-                if (
-                    "mask" in indexModifier &&
-                    BigInt(indexModifier.pos) !== 0n &&
-                    BigInt(indexModifier.mask) === 0n
-                ) {
+                if ("mask" in indexModifier && BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                     debugger;
-                    throw new Error(
-                        `Invalid calculations. If mask is zero, the position must come out zero too; pos: ${indexModifier.pos}, mask: ${indexModifier.mask}`,
-                    );
+                    throw new Error(`Invalid calculations. If mask is zero, the position must come out zero too; pos: ${indexModifier.pos}, mask: ${indexModifier.mask}`,);
                 }
                 possibilities.push({
-                    ...info,
-                    modifier: indexModifier.clone(),
+                    ...info, modifier: indexModifier.clone(),
                 });
 
                 // performance trick
@@ -313,11 +254,7 @@ export class TablePairs {
             if (indexModifier.unshiftAll) {
                 // try {
                 // now, try the shifted inserts as well see if they're any good:
-                info = this.#optimizeInserts(
-                    indexModifier.unshiftAll(insertsDataView),
-                    dataView,
-                    indexModifier,
-                );
+                info = this.#optimizeInserts(indexModifier.unshiftAll(insertsDataView), dataView, indexModifier,);
                 if (!info.valid) {
                     invalidModifiers.push({
                         ...info,
@@ -327,23 +264,13 @@ export class TablePairs {
                         pos: info.pos,
                     });
                     if (info.inserts.length < lastInfoLength) {
-                        assert.ok(
-                            Number.isSafeInteger(indexModifier.pos),
-                            "Position should not be null",
-                        );
-                        if (
-                            BigInt(indexModifier.pos) !== 0n &&
-                            BigInt(indexModifier.mask) === 0n
-                        ) {
+                        assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null",);
+                        if (BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                             debugger;
-                            throw new Error(
-                                "Invalid calculations. If mask is zero, the position must come out zero too.",
-                            );
+                            throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.",);
                         }
                         possibilities.push({
-                            ...info,
-                            modifier: indexModifier.clone(),
-                            shifted: indexModifier.shift,
+                            ...info, modifier: indexModifier.clone(), shifted: indexModifier.shift,
                         });
 
                         if (info.inserts.length === 0) {
@@ -363,55 +290,26 @@ export class TablePairs {
             }
         }
 
-        const leastInsertLength = possibilities.reduce(
-            (acc, curr) =>
-                acc >= Number(curr.inserts.length)
-                    ? acc
-                    : Number(curr.inserts.length),
-            Number(this.#indexAddenda.chunkSize),
-        );
+        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= Number(curr.inserts.length) ? acc : Number(curr.inserts.length), Number(this.#indexAddenda.chunkSize),);
         possibilities = possibilities.filter((item) => {
-            return (
-                item !== undefined && item.inserts.length <= leastInsertLength
-            );
+            return (item !== undefined && item.inserts.length <= leastInsertLength);
         });
 
         // sort them
         if (this.#props?.toSortedPossibilities) {
             possibilities = this.#props.toSortedPossibilities(possibilities);
         } else if (this.#indexAddenda.has("mask")) {
-            possibilities = possibilities.toSorted(
-                (a, b) => Number(a.modifier.mask) - Number(b.modifier.mask),
-            );
+            possibilities = possibilities.toSorted((a, b) => Number(a.modifier.mask) - Number(b.modifier.mask),);
         }
 
         const codePointStartHex = codePointStart.toString(16);
-        const codePointEndHex =
-            (codePointStart + length).toString(16) || "infinite";
-        console.log(
-            `  0x${codePointStartHex}-0x${codePointEndHex}`,
-            "invalid-modifiers:",
-            invalidModifiers.length,
-            "Possibilities:",
-            possibilities.length,
-            possibilities.slice(0, 5).map((item) => ({
-                ...item,
-                ...item.modifier.necessaries(),
-                inserts: item.inserts.length,
-            })),
-        );
+        const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
+        console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length, possibilities.slice(0, 5).map((item) => ({
+            ...item, ...item.modifier.necessaries(), inserts: item.inserts.length,
+        })),);
         if (possibilities.length === 0) {
-            console.error(
-                `  Empty possibilities:`,
-                possibilities,
-                this.values?.length || 0,
-                this.data.length,
-            );
-            console.error(
-                `  Invalid Modifiers:`,
-                invalidModifiers.length,
-                invalidModifiers,
-            );
+            console.error(`  Empty possibilities:`, possibilities, this.values?.length || 0, this.data.length,);
+            console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers,);
             debugger;
             process.exit(1);
         }
@@ -441,53 +339,27 @@ export class TablePairs {
         // let reusedMaskedCount = 0;
         let saves = 0;
         let uniqueModifiers = new Set();
-        for (
-            let range = 0n;
-            range < this.data.length;
-            range += this.#indexAddenda.chunkSize
-        ) {
+        for (let range = 0n; range < this.data.length; range += this.#indexAddenda.chunkSize) {
             const codeRange = range >> this.#indexAddenda.chunkShift;
-            const length = Math.min(
-                this.data.length - Number(range),
-                Number(this.#indexAddenda.chunkSize),
-            );
+            const length = Math.min(this.data.length - Number(range), Number(this.#indexAddenda.chunkSize),);
             const valueStart = this.values?.index || 0;
 
             if (verbose) {
-                console.log(
-                    `Batch: #${batchNo++}`,
-                    "CodePoint:",
-                    codeRange.toString(16),
-                    "Values-Table-Length:",
-                    this.values?.length || 0,
-                    "range:",
-                    range,
-                    "length:",
-                    length,
-                    `Progress: ${Math.floor((Number(range) / this.data.length) * 100)}%`,
-                );
+                console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16), "Values-Table-Length:", this.values?.length || 0, "range:", range, "length:", length, `Progress: ${Math.floor((Number(range) / this.data.length) * 100)}%`,);
             }
 
-            let {modifier, inserts, rtrimmed, overlapped} =
-                this.#findSimilarMaskedRange(range);
+            let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
             // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
             const modifiedValues = this.#props?.modify?.({
-                codeRange,
-                modifier,
-                inserts,
-                rtrimmed,
-                overlapped,
+                codeRange, modifier, inserts, rtrimmed, overlapped,
             });
             modifier = modifiedValues?.modifier || modifier;
             inserts = modifiedValues?.inserts || inserts;
             rtrimmed = modifiedValues?.rtrimmed || rtrimmed;
             overlapped = modifiedValues?.overlapped || overlapped;
 
-            assert.ok(
-                modifier instanceof Modifier,
-                "The modifier should be an instance of Modifier.",
-            );
+            assert.ok(modifier instanceof Modifier, "The modifier should be an instance of Modifier.",);
             // assert.ok(Array.isArray(inserts), "Inserts should be an array.");
 
             const code = modifier.modifier;
@@ -504,21 +376,7 @@ export class TablePairs {
                 saves += length;
             }
             if (verbose) {
-                console.log(
-                    `  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                    codeRange,
-                    "rtrimmed:",
-                    rtrimmed,
-                    "overlapped:",
-                    overlapped,
-                    "last-pos",
-                    valueStart,
-                    "modifier.pos:",
-                    modifier.pos,
-                    modifier.necessaries(),
-                    "samples:",
-                    inserts.filter((item) => item).slice(0, 5),
-                );
+                console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`, codeRange, "rtrimmed:", rtrimmed, "overlapped:", overlapped, "last-pos", valueStart, "modifier.pos:", modifier.pos, modifier.necessaries(), "samples:", inserts.filter((item) => item).slice(0, 5),);
             }
             uniqueModifiers.add(modifier.categorizableModifier);
 
@@ -559,16 +417,10 @@ export class TablePairs {
         }
 
         if (this.#indexAddenda.has("pos")) {
-            const maxPossibleLength =
-                (0b1n << BigInt(this.#indexAddenda.pos.size)) - 1n;
+            const maxPossibleLength = (0b1n << BigInt(this.#indexAddenda.pos.size)) - 1n;
             if (BigInt(this.indices.length) > maxPossibleLength) {
                 debugger;
-                throw new Error(
-                    "Table size limit reached; the limit is because " +
-                    `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` +
-                    `indices length: ${this.indices.length}, max possible length: ${maxPossibleLength}, ` +
-                    `values length: ${this.values?.length || 0}`,
-                );
+                throw new Error("Table size limit reached; the limit is because " + `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` + `indices length: ${this.indices.length}, max possible length: ${maxPossibleLength}, ` + `values length: ${this.values?.length || 0}`,);
             }
         }
 
@@ -579,15 +431,11 @@ export class TablePairs {
         console.log("Indices Table Length:", this.indices.length);
         console.log("Values Table Length:", this.values?.length || 0);
         console.log("Insert saves:", saves);
-        console.log(
-            "Modifiers Used:",
-            uniqueModifiers.size,
-            [...uniqueModifiers].map((mod) => {
-                let res = this.#indexAddenda.valuesOf(mod);
-                delete res.pos;
-                return res;
-            }),
-        );
+        console.log("Modifiers Used:", uniqueModifiers.size, [...uniqueModifiers].map((mod) => {
+            let res = this.#indexAddenda.valuesOf(mod);
+            delete res.pos;
+            return res;
+        }),);
         console.log("Chunk Size:", this.chunkSize);
         console.log("Chunk Mask:", this.chunkMask);
         console.log("Chunk Shift:", this.chunkShift);
@@ -633,17 +481,43 @@ export class TablePairs {
         let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof));
         const limit = this.breakpointsTableLimit;
         let tableSize = 0;
+        let breakpointsTable = [];
 
-        nextShift: for (; breakpointsTableShift !== 0; --breakpointsTableShift) {
+        nextShift: for (; breakpointsTableShift > 0; --breakpointsTableShift) {
             tableSize = 0;
             for (let i = 1; i < limit; ++i) {
                 const cur = Number(table[i].starting) >> breakpointsTableShift;
                 const curE = Number(table[i].ending - 1) >> breakpointsTableShift;
                 const prev = Number(table[i - 1].starting) >> breakpointsTableShift;
-                const additionalLength = curE - cur;
-                tableSize = Math.max(cur + additionalLength, tableSize);
-                if (cur === prev || table[i] === undefined) {
+                const prevE = Number(table[i - 1].ending - 1) >> breakpointsTableShift;
+                tableSize = Math.max(curE + 1, tableSize);
+                if (cur === prev || cur <= prevE || table[i] === undefined) {
                     continue nextShift;
+                }
+            }
+
+            if (breakpointsTableShift === 0) {
+                throw new Error("Was not able to find a breakpoint shift between the starting positions.");
+            }
+
+            breakpointsTable = new Array(tableSize);
+            breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Optimized Away', offset: 0});
+            let index = 1;
+            for (let i = 0; i < table.length; ++i, ++index) {
+                // console.log(tableSize, breakpointsTableShift, i, table[i])
+                let curIndex = table[i].starting >> breakpointsTableShift;
+                const curEIndex = (table[i].ending - 1) >> breakpointsTableShift;
+                for (; ; ++curIndex /*, ++index*/) {
+                    if (breakpointsTable[curIndex]?.starting !== 0) {
+                        // continue nextShift;
+                        throw new Error(`Replacing breakpoint section: ${tableSize}, ${JSON.stringify(breakpointsTable[curIndex])}; ${JSON.stringify(table[i])}, ${curIndex}, ${index}`);
+                    }
+                    breakpointsTable[curIndex] = {
+                        ...table[i], curIndex, section: index,
+                    };
+                    if (curIndex === curEIndex) {
+                        break;
+                    }
                 }
             }
             break;
@@ -651,30 +525,10 @@ export class TablePairs {
         if (breakpointsTableShift === 0) {
             throw new Error("Was not able to find a breakpoint shift between the starting positions.");
         }
-
-        let breakpointsTable = new Array(tableSize);
-        breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Invalid', offset: 0});
-        let index = 1;
-        for (let i = 0; i < table.length; ++i, ++index) {
-            // console.log(tableSize, breakpointsTableShift, i, table[i])
-            let curIndex = table[i].starting >> breakpointsTableShift;
-            const curEIndex = (table[i].ending - 1) >> breakpointsTableShift;
-            for (; ; curIndex++, ++index) {
-                breakpointsTable[curIndex] = {
-                    ...table[i],
-                    curIndex,
-                    section: index,
-                };
-                if (curIndex === curEIndex) {
-                    break;
-                }
-            }
-        }
         // console.log(breakpointsTable);
 
         return {
-            breakpointsTableShift,
-            breakpointsTable
+            breakpointsTableShift, breakpointsTable
         }
     }
 
@@ -684,8 +538,7 @@ export class TablePairs {
         const commons = this.#commonIndices;
         const uncommons = this.#uncommonIndices;
         const {
-            breakpointsTable,
-            breakpointsTableShift
+            breakpointsTable, breakpointsTableShift
         } = this.getBreakpointsTable(uncommons.map(item => ({
             starting: item.start,
             ending: item.start + item.length,
@@ -702,7 +555,6 @@ export class TablePairs {
         }
         let allIndicesBits = 0
         let allLength = 0;
-
         for (const info of uncommons) {
             const {start, length, table} = info;
             if (info?.commonValue !== undefined) {
@@ -713,7 +565,7 @@ export class TablePairs {
             allLength += table.length;
 
             result += `
-     // Section [${start}, ${start + length}) size containing ${length} values:
+     // Section #${index} [${start}, ${start + length}) size containing ${length} values:
      //   - in bits:       ${indicesBits}
      //   - in bytes:      ${indicesBits / 8} B
      //   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
@@ -739,6 +591,7 @@ export class TablePairs {
                 ${this.#indexAddenda.STLTypeString} ending;
                 ${this.#indexAddenda.STLTypeString} offset;
             };
+            
 
             /**
              * You can choose between the indices' table using these breakpoints:
@@ -749,6 +602,7 @@ export class TablePairs {
                ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}, // Section ${item.section}`).join("")}
             };
 
+            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{${breakpointsTable[breakpointsTable.length - 1].ending}U};
             static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
         `}
@@ -775,9 +629,7 @@ export class TablePairs {
 
     render() {
         if (this.indices.length === 0 || this.values?.length === 0) {
-            throw new Error(
-                `Index or values table is empty: (index: ${this.indices.length}) (values: ${this.values?.length})`,
-            );
+            throw new Error(`Index or values table is empty: (index: ${this.indices.length}) (values: ${this.values?.length})`,);
         }
 
         const indices = this.indices.result;
@@ -793,26 +645,17 @@ export class TablePairs {
                 const poses = {};
                 const posesMeta = {};
                 indices.forEach((code, index) => {
-                    const curPos = Number(
-                        this.#indexAddenda.addendumValueOf("pos", code),
-                    );
+                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code),);
                     if (poses[curPos] === undefined) {
                         poses[curPos] = [];
                         posesMeta[curPos] = {
-                            lastRangeStart: NaN,
-                            rangeStart: 0,
+                            lastRangeStart: NaN, rangeStart: 0,
                         };
                     }
-                    const rangeStart =
-                        index << Number(this.#indexAddenda.chunkShift);
+                    const rangeStart = index << Number(this.#indexAddenda.chunkShift);
                     const codeStr = `0x${rangeStart.toString(16)}`;
-                    if (
-                        rangeStart ===
-                        posesMeta[curPos].lastRangeStart +
-                        Number(this.#indexAddenda.chunkSize)
-                    ) {
-                        poses[curPos][poses[curPos].length - 1] =
-                            `${posesMeta[curPos].rangeStart}-${codeStr}`;
+                    if (rangeStart === posesMeta[curPos].lastRangeStart + Number(this.#indexAddenda.chunkSize)) {
+                        poses[curPos][poses[curPos].length - 1] = `${posesMeta[curPos].rangeStart}-${codeStr}`;
                     } else {
                         poses[curPos].push(codeStr);
                         posesMeta[curPos].rangeStart = codeStr;
@@ -829,24 +672,19 @@ export class TablePairs {
                     }
                     printableValues.push([]);
                     printableValues.at(-1).push(value);
-                    printableValues.at(-1).comment =
-                        `Start of ${poses[pos].join(", ")}:`;
+                    printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`;
                 });
             }
         }
 
-        const renderFunc =
-            this.#props?.processRendered || ((content) => content);
+        const renderFunc = this.#props?.processRendered || ((content) => content);
 
         const valuesBits = Number(this.valuesTableSizeInBits());
 
         return renderFunc(`
     ${this.#renderIndicesTables()}
 
-    ${
-            this.values === null
-                ? ""
-                : `
+    ${this.values === null ? "" : `
     /**
      * ${this.#name.toUpperCase()} Values Table
      *
@@ -858,13 +696,9 @@ export class TablePairs {
      *   - in KibiBytes:  ${(valuesBits / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
-                    name: `${this.#name}_values`,
-                    type: this.values.type,
-                    printableValues,
-                    len: this.values.length,
-                })}
-    `
-        }
+            name: `${this.#name}_values`, type: this.values.type, printableValues, len: this.values.length,
+        })}
+    `}
         `);
     }
 }
