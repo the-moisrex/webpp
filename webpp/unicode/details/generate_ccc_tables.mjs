@@ -10,7 +10,8 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import { TablePairs } from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import { runClangFormat, uint32, uint7, uint8, writePieces } from "./utils.mjs";
+import {runClangFormat, runCmd, uint32, uint7, uint8, writePieces} from "./utils.mjs";
+import child_process from "node:child_process";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -162,6 +163,8 @@ const createTableFile = async (tables) => {
  *       ${UnicodeData.fileUrl}
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
+ *   Known Properties' Values are taken from:
+ *       https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
  */
 
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP
@@ -169,6 +172,15 @@ const createTableFile = async (tables) => {
 
 #include <array>
 #include <cstdint>
+
+namespace webpp::unicode {
+
+    struct ccc_props {
+        // Giving aliases to known values:
+        ${runCmd("curl --silent https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt | grep -oE '[^#]+' | awk 'BEGIN{FS=\";\"} {if ($1 == \"ccc\") print \"static constexpr std::uint8_t\" $4 \" =\" $2 \"U; // \" $3}'")}
+    };
+
+}
 
 namespace webpp::unicode::details {
 

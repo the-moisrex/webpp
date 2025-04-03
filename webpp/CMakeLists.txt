@@ -56,6 +56,7 @@ set(ALL_SOURCES_SHORT
         unicode/ustring_view.hpp
         unicode/ustring_iterator.hpp
         unicode/normalization.hpp
+        unicode/ccc.hpp
         unicode/hangul.hpp
         unicode/idna.hpp
         unicode/bidi.hpp

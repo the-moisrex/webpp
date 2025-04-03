@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_JOINERS_HPP
 #define WEBPP_UNICODE_JOINERS_HPP
 
+#include "../std/string_view.hpp"
 #include "./details/joiners_tables.hpp"
 #include "./unicode.hpp"
 
@@ -21,6 +22,19 @@ namespace webpp::unicode {
         join_causing  = 4, // C
         transparent   = 5, // T
     };
+
+    [[nodiscard]] static constexpr stl::string_view to_string(joiner_type const type) noexcept {
+        using enum joiner_type;
+        switch (type) {
+            case non_joining: return {"Non_Joining"};
+            case right_joining: return {"Right_Joining"};
+            case left_joining: return {"Left_Joining"};
+            case dual_joining: return {"Dual_Joining"};
+            case join_causing: return {"Join_Causing"};
+            case transparent: return {"Transparent"};
+        }
+        return {"<unknown joiner>"};
+    }
 
     /**
      * This function returns the Joining_Type of the input code point.

@@ -867,6 +867,15 @@ export const runClangFormat = async (filePath) => {
     }
 };
 
+export const runCmd = (cmd) => {
+    try {
+        console.log(`Running:`, cmd);
+        return child_process.execSync(cmd).toString();
+    } catch (err) {
+        console.error("Error running the command:", err);
+    }
+}
+
 const encoder = new TextEncoder();
 export const utf32To8 = (codePoint) => {
     return encoder.encode(String.fromCodePoint(Number(codePoint)));

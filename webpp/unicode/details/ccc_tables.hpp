@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 19 Mar 2025 00:40:44 GMT
+ *   This file's generation date:        Thu, 03 Apr 2025 13:30:09 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       67160
- *       - in bytes:      8395 B
- *       - in KibiBytes:  8.20 KiB
+ *       - in bits:       82824
+ *       - in bytes:      10353 B
+ *       - in KibiBytes:  10.11 KiB
  *   Some other implementations' total table size was 21 KiB;
- *   So I saved 12.80 KiB.
+ *   So I saved 10.89 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -24,6 +24,8 @@
  *       https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt
  *   UCD README file (used to check the version and creation date):
  *       https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt
+ *   Known Properties' Values are taken from:
+ *       https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
  */
 
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP
@@ -31,6 +33,72 @@
 
 #include <array>
 #include <cstdint>
+
+namespace webpp::unicode {
+
+    struct ccc_props {
+        // Giving aliases to known values:
+        static constexpr std::uint8_t Not_Reordered        = 0U;   //  NR
+        static constexpr std::uint8_t Overlay              = 1U;   //  OV
+        static constexpr std::uint8_t Han_Reading          = 6U;   //  HANR
+        static constexpr std::uint8_t Nukta                = 7U;   //  NK
+        static constexpr std::uint8_t Kana_Voicing         = 8U;   //  KV
+        static constexpr std::uint8_t Virama               = 9U;   //  VR
+        static constexpr std::uint8_t CCC10                = 10U;  //  CCC10
+        static constexpr std::uint8_t CCC11                = 11U;  //  CCC11
+        static constexpr std::uint8_t CCC12                = 12U;  //  CCC12
+        static constexpr std::uint8_t CCC13                = 13U;  //  CCC13
+        static constexpr std::uint8_t CCC14                = 14U;  //  CCC14
+        static constexpr std::uint8_t CCC15                = 15U;  //  CCC15
+        static constexpr std::uint8_t CCC16                = 16U;  //  CCC16
+        static constexpr std::uint8_t CCC17                = 17U;  //  CCC17
+        static constexpr std::uint8_t CCC18                = 18U;  //  CCC18
+        static constexpr std::uint8_t CCC19                = 19U;  //  CCC19
+        static constexpr std::uint8_t CCC20                = 20U;  //  CCC20
+        static constexpr std::uint8_t CCC21                = 21U;  //  CCC21
+        static constexpr std::uint8_t CCC22                = 22U;  //  CCC22
+        static constexpr std::uint8_t CCC23                = 23U;  //  CCC23
+        static constexpr std::uint8_t CCC24                = 24U;  //  CCC24
+        static constexpr std::uint8_t CCC25                = 25U;  //  CCC25
+        static constexpr std::uint8_t CCC26                = 26U;  //  CCC26
+        static constexpr std::uint8_t CCC27                = 27U;  //  CCC27
+        static constexpr std::uint8_t CCC28                = 28U;  //  CCC28
+        static constexpr std::uint8_t CCC29                = 29U;  //  CCC29
+        static constexpr std::uint8_t CCC30                = 30U;  //  CCC30
+        static constexpr std::uint8_t CCC31                = 31U;  //  CCC31
+        static constexpr std::uint8_t CCC32                = 32U;  //  CCC32
+        static constexpr std::uint8_t CCC33                = 33U;  //  CCC33
+        static constexpr std::uint8_t CCC34                = 34U;  //  CCC34
+        static constexpr std::uint8_t CCC35                = 35U;  //  CCC35
+        static constexpr std::uint8_t CCC36                = 36U;  //  CCC36
+        static constexpr std::uint8_t CCC84                = 84U;  //  CCC84
+        static constexpr std::uint8_t CCC91                = 91U;  //  CCC91
+        static constexpr std::uint8_t CCC103               = 103U; //  CCC103
+        static constexpr std::uint8_t CCC107               = 107U; //  CCC107
+        static constexpr std::uint8_t CCC118               = 118U; //  CCC118
+        static constexpr std::uint8_t CCC122               = 122U; //  CCC122
+        static constexpr std::uint8_t CCC129               = 129U; //  CCC129
+        static constexpr std::uint8_t CCC130               = 130U; //  CCC130
+        static constexpr std::uint8_t CCC132               = 132U; //  CCC132
+        static constexpr std::uint8_t CCC133               = 133U; //  CCC133
+        static constexpr std::uint8_t Attached_Below_Left  = 200U; //  ATBL
+        static constexpr std::uint8_t Attached_Below       = 202U; //  ATB
+        static constexpr std::uint8_t Attached_Above       = 214U; //  ATA
+        static constexpr std::uint8_t Attached_Above_Right = 216U; //  ATAR
+        static constexpr std::uint8_t Below_Left           = 218U; //  BL
+        static constexpr std::uint8_t Below                = 220U; //  B
+        static constexpr std::uint8_t Below_Right          = 222U; //  BR
+        static constexpr std::uint8_t Left                 = 224U; //  L
+        static constexpr std::uint8_t Right                = 226U; //  R
+        static constexpr std::uint8_t Above_Left           = 228U; //  AL
+        static constexpr std::uint8_t Above                = 230U; //  A
+        static constexpr std::uint8_t Above_Right          = 232U; //  AR
+        static constexpr std::uint8_t Double_Below         = 233U; //  DB
+        static constexpr std::uint8_t Double_Above         = 234U; //  DA
+        static constexpr std::uint8_t Iota_Subscript       = 240U; //  IS
+    };
+
+} // namespace webpp::unicode
 
 namespace webpp::unicode::details {
 
@@ -85,7 +153,7 @@ namespace webpp::unicode::details {
     };
 
     /**
-     * CCC Index Table (0 - 979)
+     * CCC Index Table (combined 1 sections)
      *
      * CCC: Canonical Combining Class
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
@@ -100,6 +168,11 @@ namespace webpp::unicode::details {
      *   - in KibiBytes:  1.91 KiB
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
+
+      // Section [0, 979) size containing 979 values:
+      //   - in bits:       15664
+      //   - in bytes:      1958 B
+      //   - in KibiBytes:  1.91 KiB
       0,    0,    0,    0,    0,    0,    128,  0,    0,    253,  0,    364,  476,  589,  700,  775,  901,
       1006, 1134, 1219, 1346, 1346, 1346, 1424, 1502, 1346, 1589, 1427, 1667, 1743, 1847, 1975, 2048, 2163,
       0,    0,    0,    0,    2198, 0,    0,    0,    0,    0,    0,    0,    2306, 2359, 0,    2453, 2524,
@@ -157,7 +230,10 @@ namespace webpp::unicode::details {
       0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    7334, 7459, 7521, 0,    0,
       0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
       0,    0,    0,    0,    0,    0,    0,    0,    7649, 7762, 7134, 0,    0,    7844, 0,    0,    0,
-      7956, 0,    8068, 0,    0,    0,    0,    0,    8180, 8267};
+      7956, 0,    8068, 0,    0,    0,    0,    0,    8180, 8267,
+
+    };
+
 
 
 
