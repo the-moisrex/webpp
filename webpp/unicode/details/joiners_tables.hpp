@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_joiners_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 03 Apr 2025 15:35:54 GMT
+ *   This file's generation date:        Fri, 04 Apr 2025 03:31:18 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       55544
- *       - in bytes:      6943 B
- *       - in KibiBytes:  6.78 KiB
+ *       - in bits:       57768
+ *       - in bytes:      7221 B
+ *       - in KibiBytes:  7.05 KiB
  *   Some other implementations' total table size was 1.55 KiB;
- *   So I have wasted 5.23 KiB.
+ *   So I have wasted 5.50 KiB.
  *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
@@ -95,9 +95,9 @@ namespace webpp::unicode::details {
     /**
      * You can choose between the indices' table using these breakpoints:
      *
-     * Table size in KibiBytes:  0.67 KiB
+     * Table size in KibiBytes:  0.88 KiB
      */
-    static constexpr std::array<joiners_breakpoint_type, 86U> joiners_breakpoints{
+    static constexpr std::array<joiners_breakpoint_type, 113U> joiners_breakpoints{
       joiners_breakpoint_type{    .starting = 0,   .ending = 778,     .offset = 0}, // Section 1
       {    .starting = 0,   .ending = 778,     .offset = 0}, // Section 1
       {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
@@ -183,10 +183,37 @@ namespace webpp::unicode::details {
       {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
       {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
       {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
-      {.starting = 43529, .ending = 43530, .offset = 41411}, // Section 8
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 57343, .ending = 57375, .offset = 55225}, // Section 8
+      {.starting = 57343, .ending = 57375, .offset = 55225}, // Section 8
     };
 
-    static constexpr std::uint16_t joiners_last_breakpoint{43530U};
+    static constexpr std::uint16_t joiners_last_breakpoint{0xE01FU};
     static constexpr joiners_index joiners_common_position{0U};
     static constexpr std::uint16_t joiners_breakpoint_shift{9U};
 
@@ -200,11 +227,11 @@ namespace webpp::unicode::details {
      *     [16bits = pos]
      *
      * Table size:
-     *   - in bits:       33904
-     *   - in bytes:      4238 B
-     *   - in KibiBytes:  4.14 KiB
+     *   - in bits:       34400
+     *   - in bytes:      4300 B
+     *   - in KibiBytes:  4.20 KiB
      */
-    static constexpr std::array<joiners_index, 2119ULL> joiners_indices{
+    static constexpr std::array<joiners_index, 2150ULL> joiners_indices{
 
       // Section #1 [0, 778) size containing 778 values:
       //   - in bits:       12448
@@ -2359,11 +2386,42 @@ namespace webpp::unicode::details {
       186,
       2001,
 
-      // Section #8 [43529, 43530) size containing 1 values:
-      //   - in bits:       16
-      //   - in bytes:      2 B
-      //   - in KibiBytes:  0.00 KiB
+      // Section #8 [57343, 57375) size containing 32 values:
+      //   - in bits:       512
+      //   - in bytes:      64 B
+      //   - in KibiBytes:  0.06 KiB
       0,
+      603,
+      0,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
+      19,
 
     };
 
@@ -2404,7 +2462,8 @@ namespace webpp::unicode::details {
       // 0x11f10-0x11f20, 0x11f60-0x13420, 0x13460-0x16100, 0x16130-0x16ae0, 0x16b00-0x16b20, 0x16b40-0x16f30,
       // 0x16f50-0x16f70, 0x16fa0-0x16fd0, 0x16ff0-0x1bc80, 0x1bcb0-0x1cef0, 0x1cf50-0x1d150, 0x1d190,
       // 0x1d1b0-0x1d230, 0x1d250-0x1d9f0, 0x1dab0-0x1dff0, 0x1e030-0x1e070, 0x1e090-0x1e120, 0x1e140-0x1e290,
-      // 0x1e2b0-0x1e2d0, 0x1e2f0-0x1e4d0, 0x1e4f0-0x1e5d0, 0x1e5f0-0x1e8c0, 0x1e8e0-0x1e8f0, 0x1e950-0xaa090:
+      // 0x1e2b0-0x1e2d0, 0x1e2f0-0x1e4d0, 0x1e4f0-0x1e5d0, 0x1e5f0-0x1e8c0, 0x1e8e0-0x1e8f0, 0x1e950-0xdfff0,
+      // 0xe0010, 0xe0080-0xe00f0, 0xe01f0:
       0,
 
       // Start of 0x700, 0x2ce0, 0x2d70, 0xa660, 0xfef0, 0x11220, 0x112d0, 0x11820, 0x16f40, 0x16f80, 0x1e080:
@@ -2430,7 +2489,7 @@ namespace webpp::unicode::details {
 
       // Start of 0x300-0x360, 0x5a0, 0x650, 0x730, 0x8d0, 0x8f0, 0xfa0, 0x1ab0, 0x1dc0-0x1df0, 0x20d0-0x20e0,
       // 0x2de0-0x2df0, 0xa8e0, 0xfe00, 0xfe20, 0x13430, 0x1cf00-0x1cf10, 0x1cf30, 0x1da00-0x1da20,
-      // 0x1da40-0x1da50:
+      // 0x1da40-0x1da50, 0xe0020-0xe0070, 0xe0100-0xe01e0:
       5,
 
       // Start of 0x1ac0:
@@ -2649,7 +2708,7 @@ namespace webpp::unicode::details {
       // Start of 0xb80, 0x1b40, 0x110c0:
       0,
 
-      // Start of 0x980, 0xa50, 0xb00, 0xc80, 0xd80, 0xaac0, 0x11000, 0x11240:
+      // Start of 0x980, 0xa50, 0xb00, 0xc80, 0xd80, 0xaac0, 0x11000, 0x11240, 0xe0000:
       0, 5,
 
       // Start of 0xa690, 0x16110, 0x1e5e0:

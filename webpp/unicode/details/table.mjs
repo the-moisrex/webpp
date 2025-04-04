@@ -28,9 +28,9 @@ export class TablePairs {
         this.#indexAddenda.description = `${this.#name[0].toUpperCase()}${this.#name.substring(1)} (Index Table)\n${this.#description}`;
 
         // the tables
-        this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32,);
+        this.indices = new TableTraits(this.#props?.indices?.max || 435300, this.#props?.indices?.sizeof || uint32,);
         if (this.#props?.values !== null) {
-            this.values = new TableTraits(this.#props?.values?.max || 65535, this.#props?.values?.sizeof || uint8,);
+            this.values = new TableTraits(this.#props?.values?.max || 655350, this.#props?.values?.sizeof || uint8,);
         } else {
             this.values = null;
         }
@@ -602,7 +602,7 @@ export class TablePairs {
                ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}, // Section ${item.section}`).join("")}
             };
 
-            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{${breakpointsTable[breakpointsTable.length - 1].ending}U};
+            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{0x${breakpointsTable[breakpointsTable.length - 1].ending.toString(16).toUpperCase()}U};
             static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
         `}
@@ -645,7 +645,7 @@ export class TablePairs {
                 const poses = {};
                 const posesMeta = {};
                 indices.forEach((code, index) => {
-                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code),);
+                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
                     if (poses[curPos] === undefined) {
                         poses[curPos] = [];
                         posesMeta[curPos] = {

@@ -1213,13 +1213,13 @@ export function splitOn(table, splits = getSplitPoints(table)) {
             start,
             length,
             commonValue,
-            table: table.slice(start, start + length),
+            // table: table.slice(start, start + length),
             offset
         });
         lastEnd = start + length;
         offset += length;
     }
-    if (lastEnd != table.length) {
+    if (lastEnd !== table.length) {
         tables.push({
             start: lastEnd,
             length: table.length - lastEnd,
@@ -1231,7 +1231,7 @@ export function splitOn(table, splits = getSplitPoints(table)) {
 }
 
 /**
- * Finds the topCount packs of continious values from the input table and splits
+ * Finds the topCount packs of continuous values from the input table and splits
  * the table from those found breakpoints.
  * @param {Array} table 
  * @param {Number} topCount 

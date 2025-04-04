@@ -38,7 +38,7 @@ class JoinersTables {
 
     // these numbers are educated guesses from other projects, they're not that important!
     indices = {
-        max: 4353 * 10,
+        max: 4353 * 1000,
         sizeof: uint32,
 
         // split the indices table
@@ -48,7 +48,7 @@ class JoinersTables {
         description: `Joiners: Joining_Type`,
     };
     values = {
-        max: 65535,
+        max: 65535 * 100,
         sizeof: uint8,
         description: `Joiners: Joining_Type Values`,
     };
