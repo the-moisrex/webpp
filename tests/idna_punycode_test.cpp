@@ -2,7 +2,7 @@
 #include "common/tests_common_pch.hpp"
 
 TEST(PunycodeTests, BasicEncoding) {
-    using webpp::uri::idna::punycode_of;
+    using webpp::unicode::idna::punycode_of;
     EXPECT_EQ(punycode_of("ドメイン名例"), "eckwd4c7cu47r2wf");
     EXPECT_EQ(punycode_of("موبايلي"), "mgbb9fbpob");
     EXPECT_EQ(punycode_of("-> $1.00 <-"), "-> $1.00 <--");

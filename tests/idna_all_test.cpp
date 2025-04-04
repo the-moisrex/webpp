@@ -8,10 +8,10 @@
 using namespace webpp;
 
 TEST(BasicIDNATestsAll, MostMappings) {
-    using uri::idna::mapped;
-    using uri::idna::status_of;
-    using uri::idna::details::disallowed;
-    using uri::idna::details::valid;
+    using unicode::idna::mapped;
+    using unicode::idna::status_of;
+    using unicode::idna::details::disallowed;
+    using unicode::idna::details::valid;
 
     // awk -f gen-idna-tests.awk IdnaMappingTable.txt
     EXPECT_EQ(status_of(0), valid);

@@ -13,6 +13,8 @@ node generate_decomposition_teblaes.mjs
 
 # Generate Composition tables:
 node generate_composition_teblaes.mjs
+
+# ...
 ```
 
 To update them all, run:
