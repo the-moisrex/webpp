@@ -848,6 +848,86 @@ jobs:
         run: cmake --build --preset test-http-parser
       - name: Run test-http-parser
         run: ./build/test-http-parser
+  build-test-idna-all:
+    name: Build test-idna-all
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-idna-all
+        run: cmake --build --preset test-idna-all
+  run-test-idna-all:
+    name: Run test-idna-all
+    needs: build-test-idna-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-idna-all
+        run: cmake --build --preset test-idna-all
+      - name: Run test-idna-all
+        run: ./build/test-idna-all
+  build-test-idna-punycode:
+    name: Build test-idna-punycode
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-idna-punycode
+        run: cmake --build --preset test-idna-punycode
+  run-test-idna-punycode:
+    name: Run test-idna-punycode
+    needs: build-test-idna-punycode
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-idna-punycode
+        run: cmake --build --preset test-idna-punycode
+      - name: Run test-idna-punycode
+        run: ./build/test-idna-punycode
   build-test-idna:
     name: Build test-idna
     needs: install
@@ -1248,46 +1328,6 @@ jobs:
         run: cmake --build --preset test-meta
       - name: Run test-meta
         run: ./build/test-meta
-  build-test-properties:
-    name: Build test-properties
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Build test-properties
-        run: cmake --build --preset test-properties
-  run-test-properties:
-    name: Run test-properties
-    needs: build-test-properties
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Run test-properties
-        run: cmake --build --preset test-properties
-      - name: Run test-properties
-        run: ./build/test-properties
   build-test-request:
     name: Build test-request
     needs: install
@@ -1888,6 +1928,46 @@ jobs:
         run: cmake --build --preset test-type-traits
       - name: Run test-type-traits
         run: ./build/test-type-traits
+  build-test-unicode-algos:
+    name: Build test-unicode-algos
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-unicode-algos
+        run: cmake --build --preset test-unicode-algos
+  run-test-unicode-algos:
+    name: Run test-unicode-algos
+    needs: build-test-unicode-algos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-unicode-algos
+        run: cmake --build --preset test-unicode-algos
+      - name: Run test-unicode-algos
+        run: ./build/test-unicode-algos
   build-test-unicode:
     name: Build test-unicode
     needs: install

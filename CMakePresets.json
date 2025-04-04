@@ -165,6 +165,8 @@
         "test-header-accept-encoding",
         "test-headers",
         "test-http-parser",
+        "test-idna-all",
+        "test-idna-punycode",
         "test-idna",
         "test-io",
         "test-ip-address",
@@ -175,7 +177,6 @@
         "test-logger",
         "test-memory",
         "test-meta",
-        "test-properties",
         "test-request",
         "test-response",
         "test-router",
@@ -191,6 +192,7 @@
         "test-traits",
         "test-tuple",
         "test-type-traits",
+        "test-unicode-algos",
         "test-unicode",
         "test-uri-host-authority",
         "test-uri-string",
@@ -302,6 +304,16 @@
       "inherits": "default-build"
     },
     {
+      "name": "test-idna-all",
+      "targets": "test-idna-all",
+      "inherits": "default-build"
+    },
+    {
+      "name": "test-idna-punycode",
+      "targets": "test-idna-punycode",
+      "inherits": "default-build"
+    },
+    {
       "name": "test-idna",
       "targets": "test-idna",
       "inherits": "default-build"
@@ -349,11 +361,6 @@
     {
       "name": "test-meta",
       "targets": "test-meta",
-      "inherits": "default-build"
-    },
-    {
-      "name": "test-properties",
-      "targets": "test-properties",
       "inherits": "default-build"
     },
     {
@@ -429,6 +436,11 @@
     {
       "name": "test-type-traits",
       "targets": "test-type-traits",
+      "inherits": "default-build"
+    },
+    {
+      "name": "test-unicode-algos",
+      "targets": "test-unicode-algos",
       "inherits": "default-build"
     },
     {
@@ -623,6 +635,14 @@
       "inherits": "test-default"
     },
     {
+      "name": "test-idna-all",
+      "inherits": "test-default"
+    },
+    {
+      "name": "test-idna-punycode",
+      "inherits": "test-default"
+    },
+    {
       "name": "test-idna",
       "inherits": "test-default"
     },
@@ -660,10 +680,6 @@
     },
     {
       "name": "test-meta",
-      "inherits": "test-default"
-    },
-    {
-      "name": "test-properties",
       "inherits": "test-default"
     },
     {
@@ -724,6 +740,10 @@
     },
     {
       "name": "test-type-traits",
+      "inherits": "test-default"
+    },
+    {
+      "name": "test-unicode-algos",
       "inherits": "test-default"
     },
     {
