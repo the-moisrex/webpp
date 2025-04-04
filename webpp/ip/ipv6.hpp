@@ -2,7 +2,6 @@
 #define WEBPP_IPV6_HPP
 
 #include "../std/format.hpp"
-#include "../std/utility.hpp"
 #include "../strings/append.hpp"
 #include "inet_ntop.hpp"
 #include "inet_pton.hpp"
@@ -176,7 +175,7 @@ namespace webpp {
                     _prefix = prefix_status(status);
                 }
             } else {
-                stl::ignore = inet_pton6(inp_ptr, ip_str.end(), out_ptr);
+                static_cast<void>(inet_pton6(inp_ptr, ip_str.end(), out_ptr));
             }
         }
 
