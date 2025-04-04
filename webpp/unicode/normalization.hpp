@@ -167,8 +167,8 @@ namespace webpp::unicode {
             return;
         }
 
-        auto pos    = start;
-        stl::ignore = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+        auto pos = start;
+        static_cast<void>(checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
             auto       cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);

@@ -99,7 +99,7 @@ namespace webpp::http {
 
     /**
      * Even though these algorithms are capable of handling other char types than "char" itself, they
-     * don't need to. Other string types cannot be used in a HTTP header since HTTP header is using ASCII
+     * don't need to. Other string types cannot be used in an HTTP header since HTTP header is using ASCII
      */
     namespace details {
 
@@ -217,7 +217,8 @@ namespace webpp::http {
          *   - whitespace and control characters
          */
         static constexpr void cookie_value_escape_to(istl::StringView auto value, auto& to) noexcept {
-            encode_uri_component<uri_encoding_policy::encode_chars>(value, to, COOKIE_VALUE_ILLEGAL_CHARS);
+            using enum uri::uri_encoding_policy;
+            encode_uri_component<encode_chars>(value, to, COOKIE_VALUE_ILLEGAL_CHARS);
         }
 
         /*
@@ -226,10 +227,8 @@ namespace webpp::http {
          * respective characters.
          */
         static constexpr bool cookie_value_unescape_to(istl::StringView auto value, auto& to) noexcept {
-            return decode_uri_component<uri_encoding_policy::encode_chars>(
-              value,
-              to,
-              COOKIE_VALUE_ILLEGAL_CHARS);
+            using enum uri::uri_encoding_policy;
+            return decode_uri_component<encode_chars>(value, to, COOKIE_VALUE_ILLEGAL_CHARS);
         }
 
     } // namespace details

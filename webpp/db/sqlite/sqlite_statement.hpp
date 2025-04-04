@@ -86,7 +86,7 @@ namespace webpp::sql {
 
         void destroy() noexcept {
             if (stmt != nullptr) {
-                stl::ignore = sqlite3_finalize(stmt);
+                static_cast<void>(sqlite3_finalize(stmt));
             }
         }
 

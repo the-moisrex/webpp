@@ -166,7 +166,7 @@ namespace webpp::uri {
                     set_error(ctx.status, ipv6_unclosed);
                     return false;
                 }
-                stl::ignore = details::parse_host_ipv6(ctx);
+                static_cast<void>(details::parse_host_ipv6(ctx));
                 return false;
             }
 

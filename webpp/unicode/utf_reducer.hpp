@@ -518,7 +518,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 ++iter();
             } else {
-                stl::ignore = checked::next_char(iter(), reducer->end());
+                static_cast<void>(checked::next_char(iter(), reducer->end()));
 
                 // bounds check:
                 auto& cur = iter();
@@ -737,8 +737,8 @@ namespace webpp::unicode {
                     if (hole.begin() > iter()) {
                         hole.move_mark(static_cast<difference_type>(-old_diff));
                     }
-                    (stl::ignore.operator=(holes.begin() > iter() &&
-                                           (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
+                    (static_cast<void>(holes.begin() > iter() &&
+                                       (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
                      ...);
                 }
             }

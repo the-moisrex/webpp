@@ -325,7 +325,7 @@ namespace webpp::uri {
         constexpr void trim() {
             // remove the last empty string
             if (!storage.empty() && storage.back().empty()) {
-                stl::ignore(storage.pop_back());
+                static_cast<void>(storage.pop_back());
             }
         }
 

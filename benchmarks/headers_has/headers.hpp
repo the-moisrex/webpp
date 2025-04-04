@@ -30,7 +30,7 @@ struct S : std::vector<std::string> { // I know, I know
         if constexpr (sizeof...(NameType) == 1) {
             return stl::find(this->begin(), this->end(), name...) != this->end();
         } else if constexpr (sizeof...(NameType) > 1) {
-            stl::tuple tup{(stl::ignore.operator=(name), false)...}; // fill with "false" values
+            stl::tuple tup{(static_cast<void>(name), false)...}; // fill with "false" values
             auto const names = stl::forward_as_tuple<NameType...>(name...);
             auto const filler =
               [&]<stl::size_t... I>(auto const& field, stl::index_sequence<I...>) constexpr noexcept {

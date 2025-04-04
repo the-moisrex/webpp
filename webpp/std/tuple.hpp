@@ -60,8 +60,7 @@ namespace webpp::istl {
 
     template <template <typename> typename Concept,
               typename... Types,
-              template <typename...>
-              typename TupleType>
+              template <typename...> typename TupleType>
     struct is_tuple_of<Concept, TupleType<Types...>> {
         static constexpr bool value = (Concept<Types>::value && ...);
     };
@@ -166,9 +165,9 @@ namespace webpp::istl {
                          T2&                                              inp_tup2,
                          Func                                             inp_func,
                          [[maybe_unused]] stl::index_sequence<indices...> indeces) {
-        stl::ignore = stl::initializer_list<int>{
+        static_cast<void>(stl::initializer_list<int>{
           (stl::get<indices + From>(inp_tup2) = inp_func(stl::forward_like<T1>(get<indices>(inp_tup1))),
-           0)...};
+           0)...});
     }
 
     template <stl::size_t From, stl::size_t To, typename T1, typename T2, typename Func>
@@ -560,8 +559,7 @@ namespace webpp::istl {
 
     template <stl::size_t Start = 0,
               stl::size_t End   = Start,
-              template <typename...>
-              typename TupTempl,
+              template <typename...> typename TupTempl,
               typename... T>
     [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...> const& tup) noexcept(
       noexcept(sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
@@ -570,8 +568,7 @@ namespace webpp::istl {
 
     template <stl::size_t Start = 0,
               stl::size_t End   = Start,
-              template <typename...>
-              typename TupTempl,
+              template <typename...> typename TupTempl,
               typename... T>
     [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(noexcept(
       sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
@@ -629,9 +626,9 @@ namespace webpp::istl {
         static constexpr void
         for_each_impl(F&& inp_func, TupleT&& tup, [[maybe_unused]] stl::index_sequence<Indices...> indeces) {
             using swallow = int[]; // NOLINT(*-avoid-c-arrays)
-            stl::ignore   = swallow{
+            static_cast<void>(swallow{
               1,
-              (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...};
+              (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...});
         }
     } // namespace details
 

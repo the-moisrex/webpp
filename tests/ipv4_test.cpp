@@ -90,7 +90,7 @@ TEST(IPv4Tests, Validation) {
         EXPECT_FALSE(is::ipv4(_ip));
         EXPECT_FALSE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         ipv4 const ip_addr{_ip};
-        stl::ignore = ip_addr.integer(); // just to make sure it's parsed
+        static_cast<void>(ip_addr.integer()); // just to make sure it's parsed
         EXPECT_FALSE(ip_addr.is_valid());
     }
 }

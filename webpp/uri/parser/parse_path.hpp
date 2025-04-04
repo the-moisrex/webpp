@@ -430,7 +430,7 @@ namespace webpp::uri {
             }
             break;
         }
-        stl::ignore = details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg);
+        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg));
         end_segment(ctx, out, seg_beg);
         set_component_value<components::path>(ctx, seg_beg);
 

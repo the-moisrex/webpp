@@ -211,7 +211,7 @@ namespace webpp::unicode::idna {
         auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
         using char_type     = istl::char_type_of_t<decltype(src_view)>;
         OutStrT out{stl::forward<Args>(args)...};
-        stl::ignore = to_punycode<char_type, OutStrT>(src_view, out);
+        static_cast<void>(to_punycode<char_type, OutStrT>(src_view, out));
         return out;
     }
 

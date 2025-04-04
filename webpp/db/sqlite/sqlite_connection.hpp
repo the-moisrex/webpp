@@ -70,8 +70,8 @@ namespace webpp::sql {
                   conf.vfs.empty() ? nullptr : conf.vfs.data());
                 res_rc != SQLITE_OK)
             {
-                errmsg      += sqlite3_errmsg(handle);
-                stl::ignore  = sqlite3_close_v2(handle);
+                errmsg += sqlite3_errmsg(handle);
+                static_cast<void>(sqlite3_close_v2(handle));
                 return;
             }
             assert(handle != nullptr);

@@ -106,7 +106,7 @@ namespace webpp::sql {
         }
 
         sql_statement& execute() noexcept {
-            stl::ignore = step();
+            static_cast<void>(step());
             return *this;
         }
 
