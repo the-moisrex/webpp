@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_joiners_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 04 Apr 2025 03:31:18 GMT
+ *   This file's generation date:        Fri, 04 Apr 2025 03:35:17 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       57768

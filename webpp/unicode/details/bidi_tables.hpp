@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 02 Apr 2025 02:17:39 GMT
+ *   This file's generation date:        Fri, 04 Apr 2025 03:35:43 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       84256
@@ -102,72 +102,73 @@ namespace webpp::unicode::details {
       {  .starting = 621,   .ending = 624,   .offset = 205}, // Section 2
       { .starting = 1315,  .ending = 1376,   .offset = 896}, // Section 3
       { .starting = 2007,  .ending = 2467,  .offset = 1527}, // Section 4
-      { .starting = 2007,  .ending = 2467,  .offset = 1527}, // Section 5
-      { .starting = 2823,  .ending = 2944,  .offset = 1883}, // Section 6
-      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 7
-      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 8
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      { .starting = 6142,  .ending = 6144,  .offset = 4540}, // Section 9
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      { .starting = 8190,  .ending = 8192,  .offset = 6586}, // Section 10
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 10238, .ending = 10240,  .offset = 8632}, // Section 11
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 12286, .ending = 12288, .offset = 10678}, // Section 12
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 14334, .ending = 14336, .offset = 12724}, // Section 13
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 16382, .ending = 16384, .offset = 14770}, // Section 14
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 18430, .ending = 18432, .offset = 16816}, // Section 15
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 20478, .ending = 20480, .offset = 18862}, // Section 16
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 22526, .ending = 22528, .offset = 20908}, // Section 17
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 24574, .ending = 24576, .offset = 22954}, // Section 18
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 26622, .ending = 26624, .offset = 25000}, // Section 19
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 20
-      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 21
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 30718, .ending = 30720, .offset = 28964}, // Section 22
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 32766, .ending = 32768, .offset = 31010}, // Section 23
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Invalid
-      {.starting = 34814, .ending = 34816, .offset = 33056}, // Section 24
+      { .starting = 2007,  .ending = 2467,  .offset = 1527}, // Section 4
+      { .starting = 2823,  .ending = 2944,  .offset = 1883}, // Section 5
+      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 6
+      { .starting = 3555,  .ending = 4096,  .offset = 2494}, // Section 6
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      { .starting = 6142,  .ending = 6144,  .offset = 4540}, // Section 7
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      { .starting = 8190,  .ending = 8192,  .offset = 6586}, // Section 8
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 10238, .ending = 10240,  .offset = 8632}, // Section 9
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 12286, .ending = 12288, .offset = 10678}, // Section 10
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 14334, .ending = 14336, .offset = 12724}, // Section 11
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 16382, .ending = 16384, .offset = 14770}, // Section 12
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 18430, .ending = 18432, .offset = 16816}, // Section 13
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 20478, .ending = 20480, .offset = 18862}, // Section 14
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 22526, .ending = 22528, .offset = 20908}, // Section 15
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 24574, .ending = 24576, .offset = 22954}, // Section 16
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 26622, .ending = 26624, .offset = 25000}, // Section 17
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 18
+      {.starting = 28670, .ending = 28800, .offset = 27046}, // Section 18
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 30718, .ending = 30720, .offset = 28964}, // Section 19
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 32766, .ending = 32768, .offset = 31010}, // Section 20
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {    .starting = 0,     .ending = 0,     .offset = 0}, // Section Optimized Away
+      {.starting = 34814, .ending = 34816, .offset = 33056}, // Section 21
     };
 
+    static constexpr std::uint16_t bidi_last_breakpoint{0x8800U};
     static constexpr bidi_index    bidi_common_position{213U};
     static constexpr std::uint16_t bidi_breakpoint_shift{9U};
 
@@ -187,7 +188,7 @@ namespace webpp::unicode::details {
      */
     static constexpr std::array<bidi_index, 1760ULL> bidi_indices{
 
-      // Section [0, 416) size containing 416 values:
+      // Section #1 [0, 416) size containing 416 values:
       //   - in bits:       6656
       //   - in bytes:      832 B
       //   - in KibiBytes:  0.81 KiB
@@ -608,7 +609,7 @@ namespace webpp::unicode::details {
       215,
       214,
 
-      // Section [621, 624) size containing 3 values:
+      // Section #2 [621, 624) size containing 3 values:
       //   - in bits:       48
       //   - in bytes:      6 B
       //   - in KibiBytes:  0.01 KiB
@@ -616,7 +617,7 @@ namespace webpp::unicode::details {
       1999,
       1999,
 
-      // Section [1315, 1376) size containing 61 values:
+      // Section #3 [1315, 1376) size containing 61 values:
       //   - in bits:       976
       //   - in bytes:      122 B
       //   - in KibiBytes:  0.12 KiB
@@ -682,7 +683,7 @@ namespace webpp::unicode::details {
       213,
       3549,
 
-      // Section [2007, 2467) size containing 460 values:
+      // Section #4 [2007, 2467) size containing 460 values:
       //   - in bits:       7360
       //   - in bytes:      920 B
       //   - in KibiBytes:  0.90 KiB
@@ -1147,7 +1148,7 @@ namespace webpp::unicode::details {
       213,
       5234,
 
-      // Section [2823, 2944) size containing 121 values:
+      // Section #5 [2823, 2944) size containing 121 values:
       //   - in bits:       1936
       //   - in bytes:      242 B
       //   - in KibiBytes:  0.24 KiB
@@ -1273,7 +1274,7 @@ namespace webpp::unicode::details {
       213,
       5333,
 
-      // Section [3555, 4096) size containing 541 values:
+      // Section #6 [3555, 4096) size containing 541 values:
       //   - in bits:       8656
       //   - in bytes:      1082 B
       //   - in KibiBytes:  1.06 KiB
@@ -1819,84 +1820,84 @@ namespace webpp::unicode::details {
       213,
       6311,
 
-      // Section [6142, 6144) size containing 2 values:
+      // Section #7 [6142, 6144) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [8190, 8192) size containing 2 values:
+      // Section #8 [8190, 8192) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [10238, 10240) size containing 2 values:
+      // Section #9 [10238, 10240) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [12286, 12288) size containing 2 values:
+      // Section #10 [12286, 12288) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [14334, 14336) size containing 2 values:
+      // Section #11 [14334, 14336) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [16382, 16384) size containing 2 values:
+      // Section #12 [16382, 16384) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [18430, 18432) size containing 2 values:
+      // Section #13 [18430, 18432) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [20478, 20480) size containing 2 values:
+      // Section #14 [20478, 20480) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [22526, 22528) size containing 2 values:
+      // Section #15 [22526, 22528) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [24574, 24576) size containing 2 values:
+      // Section #16 [24574, 24576) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [26622, 26624) size containing 2 values:
+      // Section #17 [26622, 26624) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [28670, 28800) size containing 130 values:
+      // Section #18 [28670, 28800) size containing 130 values:
       //   - in bits:       2080
       //   - in bytes:      260 B
       //   - in KibiBytes:  0.25 KiB
@@ -2031,21 +2032,21 @@ namespace webpp::unicode::details {
       6403,
       6404,
 
-      // Section [30718, 30720) size containing 2 values:
+      // Section #19 [30718, 30720) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [32766, 32768) size containing 2 values:
+      // Section #20 [32766, 32768) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB
       213,
       6311,
 
-      // Section [34814, 34816) size containing 2 values:
+      // Section #21 [34814, 34816) size containing 2 values:
       //   - in bits:       32
       //   - in bytes:      4 B
       //   - in KibiBytes:  0.00 KiB

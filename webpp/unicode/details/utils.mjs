@@ -661,6 +661,9 @@ export class TableTraits {
     }
 
     append(value) {
+        if (this.length >= this.bytes.length) {
+            throw new Error(`Maximum limit has reached; max length: ${this.bytes.length}`);
+        }
         this.bytes[this.index++] = Number(value);
     }
 
