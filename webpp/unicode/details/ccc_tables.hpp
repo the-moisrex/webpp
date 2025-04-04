@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 03 Apr 2025 13:30:09 GMT
+ *   This file's generation date:        Fri, 04 Apr 2025 10:22:06 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       82824
@@ -169,7 +169,7 @@ namespace webpp::unicode::details {
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
 
-      // Section [0, 979) size containing 979 values:
+      // Section #1 [0, 979) size containing 979 values:
       //   - in bits:       15664
       //   - in bytes:      1958 B
       //   - in KibiBytes:  1.91 KiB

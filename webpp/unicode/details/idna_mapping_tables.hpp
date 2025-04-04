@@ -2,9 +2,9 @@
 /**
  * Attention: Auto-generated file, don't modify.
  *
- *   Auto generated from:          generate_idna_mapping_table2.mjs
+ *   Auto generated from:          generate_idna_mapping_tables2.mjs
  *   IDNA Creation Date:           2024-07-03, 21:52:28 GMT
- *   This file's generation date:  Tue, 11 Mar 2025 15:15:00 GMT
+ *   This file's generation date:  Fri, 04 Apr 2025 10:22:13 GMT
  *   IDNA Mapping Table Version:   16.0.0
  *   Size:                         46110 B
  *                                 45.03 KiB

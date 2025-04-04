@@ -673,6 +673,7 @@ TEST(BasicIDNATests, JoinerTypesTest) {
 
 TEST(BasicIDNATests, CheckValidiyCriteria) {
     using webpp::stl::array;
+    using webpp::stl::string;
     using webpp::stl::string_view;
     using webpp::unicode::idna::idna_options;
     using webpp::unicode::idna::is_label_valid;
@@ -699,7 +700,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
         }, }
     };
 
-    static constexpr array<opts, 12> tests{
+    static constexpr array<opts, 134> tests{
       opts{"", true, -1},
       {"a", true, -1},
       {"-"},
@@ -712,6 +713,14 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"--", false, 1},
       {"-", false, 1},
       {"correct", true, -1},
+      {"a--b", false, 1},
+      {"a--b", true, 0},
+
+      // Basic ASCII & LDH (Letter-Digit-Hyphen)
+      {"1", true, -1}, // Single digit
+      {"a1", true, -1}, // Letter followed by digit
+      {"1a", true, -1}, // Digit followed by letter
+      {"a-b", true, -1}, // Hyphen in middle
     };
 
     for (auto const [str, is_valid, opts_index] : tests) {

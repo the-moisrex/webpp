@@ -8,4 +8,8 @@ isolate-*.log
 processed*
 IdnaMappingTable.txt
 DerivedBidiClass.txt
+DerivedJoiningType.txt
 ArabicShaping.txt
+
+# update.sh will create logs
+*.log

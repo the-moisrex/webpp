@@ -500,6 +500,10 @@ export class TablePairs {
                 throw new Error("Was not able to find a breakpoint shift between the starting positions.");
             }
 
+            if (tableSize === 0) {
+                break;
+            }
+
             breakpointsTable = new Array(tableSize);
             breakpointsTable.fill({starting: 0, ending: 0, curIndex: 0, section: 'Optimized Away', offset: 0});
             let index = 1;
@@ -520,6 +524,7 @@ export class TablePairs {
                     }
                 }
             }
+
             break;
         }
         if (breakpointsTableShift === 0) {

@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 03 Jan 2025 18:22:34 GMT
+ *   This file's generation date:        Fri, 04 Apr 2025 10:22:11 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       331544
@@ -123,7 +123,7 @@ namespace webpp::unicode::details {
     };
 
     /**
-     * DECOMP Index Table
+     * DECOMP Index Table (combined 1 sections)
      *
      * Decomposition Index
      *
@@ -133,9 +133,14 @@ namespace webpp::unicode::details {
      * Table size:
      *   - in bits:       97568
      *   - in bytes:      12196 B
-     *   - in KibiBytes:  12 KiB
+     *   - in KibiBytes:  11.91 KiB
      */
     static constexpr std::array<decomp_index, 3049ULL> decomp_indices{
+
+      // Section #1 [0, 3049) size containing 3049 values:
+      //   - in bits:       97568
+      //   - in bytes:      12196 B
+      //   - in KibiBytes:  11.91 KiB
       0,       0,       0,       3,       49155,   97539,   145923,  191749,  273669,  0,       0,
       0,       0,       355588,  419846,  515588,  581124,  642564,  0,       707844,  0,       0,
       0,       0,       767236,  0,       0,       832772,  0,       0,       0,       0,       0,
@@ -413,7 +418,12 @@ namespace webpp::unicode::details {
       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
       0,       0,       0,       0,       6932228, 6997764, 7063300, 7128836, 7194372, 7259908, 7325444,
-      7390980, 7456516};
+      7390980, 7456516,
+
+    };
+
+
+
 
     /**
      * DECOMP Values Table
@@ -423,7 +433,7 @@ namespace webpp::unicode::details {
      * Table size:
      *   - in bits:       233976
      *   - in bytes:      29247 B
-     *   - in KibiBytes:  29 KiB
+     *   - in KibiBytes:  28.56 KiB
      */
     static constexpr std::basic_string_view<char8_t> decomp_values{
 
@@ -1387,7 +1397,6 @@ namespace webpp::unicode::details {
       u8"\xe4\xb3\xad\0\xe9\xb5\xa7\0\xf0\xaa\x83\x8e\xe4\xb3\xb8\0\xf0\xaa\x84\x85\xf0\xaa\x88\x8e\xf0\xaa"
       u8"\x8a\x91\xe9\xba\xbb\0\xe4\xb5\x96\0\xe9\xbb\xb9\0\xe9\xbb\xbe\0\xe9\xbc\x85\0\xe9\xbc\x8f\0\xe9\xbc"
       u8"\x96\0\xe9\xbc\xbb\0\xf0\xaa\x98\x80",
-      // done.
       29247UL // String Length
     };
 

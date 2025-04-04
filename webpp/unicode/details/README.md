@@ -15,3 +15,8 @@ node generate_decomposition_teblaes.mjs
 node generate_composition_teblaes.mjs
 ```
 
+To update them all, run:
+
+```bash
+./update.sh
+```

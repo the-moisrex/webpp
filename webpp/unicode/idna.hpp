@@ -347,6 +347,9 @@ namespace webpp::unicode::idna {
             }
         }
 
+        // 6. The label must not start with combining mark
+        // todo
+
         // 8. Check joiners
         if constexpr (Options.CheckJoiners) {
             valid &= validate_context_joiners(spos, send);
