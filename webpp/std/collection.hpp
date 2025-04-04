@@ -94,7 +94,7 @@ namespace webpp::istl {
 
     template <Collection T, typename... Args>
     static constexpr void emplace(T& vec, Args&&... args) {
-        stl::ignore = (emplace_once(vec, stl::forward<Args>(args)), ...);
+        stl::ignore = (emplace_one(vec, stl::forward<Args>(args)), ...);
     }
 
     template <Collection T>
