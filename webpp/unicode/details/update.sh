@@ -61,6 +61,7 @@ run "$curdir/generate_composition_tables2.mjs"
 run "$curdir/generate_decomposition_tables.mjs"
 run "$curdir/generate_idna_mapping_tables2.mjs"
 run "$curdir/generate_joiners_tables.mjs"
+run "$curdir/generate_general_categories_tables.mjs"
 
 echo
 echo "Done."

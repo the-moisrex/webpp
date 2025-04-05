@@ -9,14 +9,14 @@ import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {runClangFormat, uint32, uint4, uint5, uint7, uint8, writePieces} from "./utils.mjs";
+import {runClangFormat, uint32, uint4, uint5, uint6, uint7, uint8, writePieces} from "./utils.mjs";
 import {getGeneralCategories, makeEnum, renderEnum} from "./PropertyValueAliases.mjs";
 
 const gcOutFile = `gc_tables.hpp`;
 
 const generalCategories = makeEnum(await getGeneralCategories());
-const excludeCategories =[
-    // "Other",
+const excludeCategories = [
+    "Other",
     "Control",
     "Format",
     // "Unassigned",
@@ -56,6 +56,12 @@ const excludeCategories =[
     "Space_Separator",
 ];
 
+const replaceCategories = {
+    "Spacing_Mark": "Mark",
+    "Enclosing_Mark": "Mark",
+    "Nonspacing_Mark": "Mark",
+};
+
 const start = async () => {
     await readme.download();
 
@@ -77,7 +83,8 @@ class GCTables {
     indices = {
         max: 4353 * 1000,
         sizeof: uint32,
-        splitInto: 6, // split the table this many tables
+        // splitInto: 6,
+        splitInto: 5, // split the table this many tables
         description: `GC: General Category
 These are the indices that are used to find which values from "gc_values" table correspond to a Unicode Code Point.`,
     };
@@ -124,6 +131,10 @@ the "gc_indices" table.
 
         if (excludeCategories.includes(generalCategories[value])) {
             value = generalCategories['Unassigned'];
+        }
+
+        if (generalCategories[value] in replaceCategories) {
+            value = generalCategories[replaceCategories[generalCategories[value]]];
         }
 
         // calculating the last item that it's value is zero
@@ -209,8 +220,16 @@ const createTableFile = async (table) => {
  *${excludeCategories.length === 0 ? '' : `
  * 
  * Attention:
- *   These General Categories have been excluded from this file:
- *    ${excludeCategories.join(", ")}
+ *   These General Categories have been excluded from this file because we've decided
+ *   these we don't need them for now:
+ *       ${excludeCategories.join(",\n *       ")}
+ *`}
+ *${Object.keys(replaceCategories).length === 0 ? '' : `
+ * 
+ * Attention:
+ *   These General Categories are being replaced because we've decided we only need them
+ *   this way mostly due to performance and table size reasons:
+ *       ${Object.keys(replaceCategories).map((lhs) => `${lhs} => ${replaceCategories[lhs]}`).join(",\n *       ")}
  *`}
  */
 

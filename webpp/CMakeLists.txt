@@ -63,6 +63,7 @@ set(ALL_SOURCES_SHORT
         unicode/joiners.hpp
         unicode/punycodes.hpp
         unicode/details/ccc_tables.hpp
+        unicode/details/gc_tables.hpp
         unicode/details/bidi_tables.hpp
         unicode/details/joiners_tables.hpp
         unicode/details/composition_tables.hpp
