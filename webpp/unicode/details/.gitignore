@@ -10,6 +10,7 @@ IdnaMappingTable.txt
 DerivedBidiClass.txt
 DerivedJoiningType.txt
 ArabicShaping.txt
+PropertyValueAliases.txt
 
 # update.sh will create logs
 *.log

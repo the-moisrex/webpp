@@ -15,6 +15,7 @@ import {
 } from "./utils.mjs";
 import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import {bidiDirections} from "./bidi.mjs";
+import {getGeneralCategories, makeEnum} from "./PropertyValueAliases.mjs";
 
 export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt";
 // export const fileUrl = "https://www.unicode.org/Public/13.0.0/ucd/UnicodeData.txt";
@@ -23,6 +24,7 @@ export const cacheFilePath = "UnicodeData.txt";
 export const properties = {
     codePoints: Symbol("Explicitly Mentioned Code Points"),
     ccc: Symbol("Canonical Combining Class"),
+    gc: Symbol("General Category"),
     bidi: Symbol("Bidirectional Class"),
     decompositionType: Symbol("Decomposition Tables"),
     canonicalDecompositionType: Symbol("Canonical-only Decomposition Tables"),
@@ -113,6 +115,25 @@ export const parse = async (table, property, onlyValid = false, fileContent = un
 
                     table.add(curCodePoint, curCCC);
                 }
+                lastCodePoint = codePoint + 1n;
+            };
+            break;
+        }
+
+        /// General Category:
+        case properties.gc: {
+            let lastCodePoint = 0n;
+            const generalCategories = makeEnum(await getGeneralCategories());
+            action = ({codePointStr, GeneralCategory}) => {
+                const codePoint = parseCodePoints(codePointStr);
+                for (
+                    let curCodePoint = lastCodePoint;
+                    curCodePoint < codePoint;
+                    ++curCodePoint
+                ) {
+                    table.add(curCodePoint, generalCategories['Unassigned']);
+                }
+                table.add(codePoint, generalCategories[GeneralCategory]);
                 lastCodePoint = codePoint + 1n;
             };
             break;
@@ -227,7 +248,7 @@ export const parse = async (table, property, onlyValid = false, fileContent = un
         const [
             codePointStr, // #0
             codePointName, // #1
-            GeneralCategory, // #2
+            GeneralCategory, // #2 GC
             CanonicalCombiningClass, // #3 CCC
             BidiClass, // #4
             DecompositionStr, // #5 Decomp: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
