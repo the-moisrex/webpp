@@ -15,7 +15,7 @@ import {
 } from "./utils.mjs";
 import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import {bidiDirections} from "./bidi.mjs";
-import {getGeneralCategories, makeEnum} from "./PropertyValueAliases.mjs";
+import {getGeneralCategories, makeGCEnum} from "./PropertyValueAliases.mjs";
 
 export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt";
 // export const fileUrl = "https://www.unicode.org/Public/13.0.0/ucd/UnicodeData.txt";
@@ -123,7 +123,7 @@ export const parse = async (table, property, onlyValid = false, fileContent = un
         /// General Category:
         case properties.gc: {
             let lastCodePoint = 0n;
-            const generalCategories = makeEnum(await getGeneralCategories());
+            const generalCategories = makeGCEnum(await getGeneralCategories());
             action = ({codePointStr, GeneralCategory}) => {
                 const codePoint = parseCodePoints(codePointStr);
                 for (

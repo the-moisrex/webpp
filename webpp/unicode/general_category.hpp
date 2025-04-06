@@ -31,16 +31,24 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
+    /**
+     * Check if the specified code point is in the specified category or not;
+     * Attention: this is not an exact match; if you give a single-letter category, and the code point
+     *            belongs to a 2-letter sub-category, it'll match.
+     */
     template <UTF CharT = char32_t>
     [[nodiscard]] static constexpr bool is_general_category_of(CharT const            code_point,
                                                                general_category const cat) noexcept {
         using enum general_category;
-        auto const gc_val = general_category_of(code_point);
-        switch (cat) {
-            case Mark:
-                return gc_val == Enclosing_Mark || gc_val == Nonspacing_Mark || gc_val == Spacing_Mark ||
-                       gc_val == Mark;
-            default: break;
+        constexpr stl::uint8_t mask   = 31U; // 32 - 1
+        auto const             gc_val = general_category_of(code_point);
+
+        // If you specify the "single-letter" category, we'd make sure the subsequence 2-letter ones are a
+        // match as well.
+        //   "Mark" can be "Spacing_Mark", "Enclosing_Mark", or "Enclosing_Mark"
+        if ((static_cast<stl::uint8_t>(cat) & mask) == 0) {
+            return (static_cast<stl::uint8_t>(gc_val) & static_cast<stl::uint8_t>(~mask)) ==
+                   static_cast<stl::uint8_t>(cat);
         }
         return gc_val == cat;
     }

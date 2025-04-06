@@ -89,11 +89,30 @@ export const makeEnum = (vals) => {
     return obj;
 }
 
+export const makeGCEnum = (vals) => {
+    let obj = {};
+    let index = 0;
+    let cat = 0;
+    for (const {long, short} of vals) {
+        if (short.length === 1) {
+            ++cat;
+            index = 0;
+        }
+        const val = (cat * 32) + index;
+        obj[long] = val;
+        obj[short] = val;
+        obj[val] = `${long}`;
+        obj[`--${short}`] = `${cat}U * 32U + ${index}U`;
+        ++index;
+    }
+    return obj;
+}
+
 export const renderEnum = (name, enumObj, type = "std::uint8_t") => {
-    const keys = Object.keys(enumObj).filter((key) => isNaN(parseInt(key)));
+    const keys = Object.keys(enumObj).filter((key) => isNaN(parseInt(key)) && !key.startsWith('--'));
     return `
         enum struct ${name} : ${type} {
-            ${keys.map((key) => `${key} = ${enumObj[key]}U,`).join("\n")}
+            ${keys.map((key) => `${key} = ${enumObj?.[`--${key}`] || `${enumObj[key]}U`},`).join("\n")}
         };
     `;
 }

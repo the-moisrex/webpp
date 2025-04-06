@@ -10,11 +10,11 @@ import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {runClangFormat, uint32, uint4, uint5, uint6, uint7, uint8, writePieces} from "./utils.mjs";
-import {getGeneralCategories, makeEnum, renderEnum} from "./PropertyValueAliases.mjs";
+import {getGeneralCategories, makeGCEnum, renderEnum} from "./PropertyValueAliases.mjs";
 
 const gcOutFile = `gc_tables.hpp`;
 
-const generalCategories = makeEnum(await getGeneralCategories());
+const generalCategories = makeGCEnum(await getGeneralCategories());
 const excludeCategories = [
     "Other",
     "Control",
@@ -245,7 +245,7 @@ namespace webpp::unicode {
     /// Giving aliases to known values:
     /// Can be re-generating using:
     /// curl --silent https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt | grep -oE '[^#]+' | awk 'BEGIN{FS=";"; i=0; print "enum struct general_category : std::uint8_t {"; } {gsub(/ */, "", $1); gsub(/ */, "", $3); gsub(/ */, "", $2); if ($1 == "gc") {print "  " $3 " = " i ",\\n  " $2 " = " i ",\\n"; i=i+1; }} END { print "};"; }'
-    ${renderEnum("general_category", makeEnum(await getGeneralCategories()), "std::uint8_t")}
+    ${renderEnum("general_category", makeGCEnum(await getGeneralCategories()), "std::uint8_t")}
 
 }
 
