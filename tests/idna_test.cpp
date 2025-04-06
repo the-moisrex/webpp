@@ -671,6 +671,61 @@ TEST(BasicIDNATests, JoinerTypesTest) {
     EXPECT_EQ(joiner_type_of(U'\x0640'), joiner_type::join_causing);   // C
 }
 
+TEST(BasicIDNATests, GeneralCategoryTest) {
+    using webpp::unicode::general_category;
+    using webpp::unicode::general_category_of;
+    using webpp::unicode::is_general_category_of;
+
+
+    EXPECT_TRUE(is_general_category_of(U'\x112E6', general_category::M));
+    EXPECT_TRUE(is_general_category_of(U'\x300', general_category::M));
+
+    // cat UnicodeData.txt | awk 'BEGIN{FS=";"} { if ($3 == "Mn" || $3 == "Me" || $3 == "Mc") print
+    // "EXPECT_EQ(general_category_of(U\'\\\x" $1 "\'), general_category::" $3 "); // " $2; }' | sort
+    // --random-sort | head -n 20
+    EXPECT_EQ(general_category_of(U'\x05AC'), general_category::Mn);  // HEBREW ACCENT ILUY
+    EXPECT_EQ(general_category_of(U'\x05A8'), general_category::Mn);  // HEBREW ACCENT QADMA
+    EXPECT_EQ(general_category_of(U'\x1A5A'), general_category::Mn);  // TAI THAM CONSONANT SIGN LOW PA
+    EXPECT_EQ(general_category_of(U'\x17D1'), general_category::Mn);  // KHMER SIGN VIRIAM
+    EXPECT_EQ(general_category_of(U'\x1DA5B'), general_category::Mn); // SIGNWRITING TONGUE TIP BETWEEN LIPS
+    EXPECT_EQ(general_category_of(U'\x1DFC'), general_category::Mn);  // COMBINING DOUBLE INVERTED BREVE BELOW
+    EXPECT_EQ(general_category_of(U'\xA8E6'), general_category::Mn);  // COMBINING DEVANAGARI DIGIT SIX
+    EXPECT_EQ(general_category_of(U'\xE0178'), general_category::Mn); // VARIATION SELECTOR-137
+    EXPECT_EQ(general_category_of(U'\x16F51'), general_category::Mc); // MIAO SIGN ASPIRATION
+    EXPECT_EQ(general_category_of(U'\x0B41'), general_category::Mn);  // ORIYA VOWEL SIGN U
+    EXPECT_EQ(general_category_of(U'\xE01BA'), general_category::Mn); // VARIATION SELECTOR-203
+    EXPECT_EQ(general_category_of(U'\x05B2'), general_category::Mn);  // HEBREW POINT HATAF PATAH
+    EXPECT_EQ(general_category_of(U'\x031D'), general_category::Mn);  // COMBINING UP TACK BELOW
+    EXPECT_EQ(general_category_of(U'\x1A58'), general_category::Mn);  // TAI THAM SIGN MAI KANG LAI
+    EXPECT_EQ(general_category_of(U'\xE017B'), general_category::Mn); // VARIATION SELECTOR-140
+    EXPECT_EQ(general_category_of(U'\x112E6'), general_category::Mn); // KHUDAWADI VOWEL SIGN AI
+    EXPECT_EQ(general_category_of(U'\x036F'), general_category::Mn);  // COMBINING LATIN SMALL LETTER X
+    EXPECT_EQ(general_category_of(U'\x1182F'), general_category::Mn); // DOGRA VOWEL SIGN U
+    EXPECT_EQ(general_category_of(U'\xE0114'), general_category::Mn); // VARIATION SELECTOR-37
+    EXPECT_EQ(general_category_of(U'\x11233'), general_category::Mc); // KHOJKI VOWEL SIGN AU
+
+    EXPECT_EQ(general_category_of(U'\x0300'), general_category::Mn);  // COMBINING GRAVE ACCENT
+    EXPECT_EQ(general_category_of(U'\x0301'), general_category::Mn);  // COMBINING ACUTE ACCENT
+    EXPECT_EQ(general_category_of(U'\x0302'), general_category::Mn);  // COMBINING CIRCUMFLEX ACCENT
+    EXPECT_EQ(general_category_of(U'\x0303'), general_category::Mn);  // COMBINING TILDE
+    EXPECT_EQ(general_category_of(U'\x0304'), general_category::Mn);  // COMBINING MACRON
+    EXPECT_EQ(general_category_of(U'\x0305'), general_category::Mn);  // COMBINING OVERLINE
+    EXPECT_EQ(general_category_of(U'\x0306'), general_category::Mn);  // COMBINING BREVE
+    EXPECT_EQ(general_category_of(U'\x0307'), general_category::Mn);  // COMBINING DOT ABOVE
+    EXPECT_EQ(general_category_of(U'\x0308'), general_category::Mn);  // COMBINING DIAERESIS
+    EXPECT_EQ(general_category_of(U'\x0309'), general_category::Mn);  // COMBINING HOOK ABOVE
+    EXPECT_EQ(general_category_of(U'\x030A'), general_category::Mn);  // COMBINING RING ABOVE
+    EXPECT_EQ(general_category_of(U'\x030B'), general_category::Mn);  // COMBINING DOUBLE ACUTE ACCENT
+    EXPECT_EQ(general_category_of(U'\x030C'), general_category::Mn);  // COMBINING CARON
+    EXPECT_EQ(general_category_of(U'\x030D'), general_category::Mn);  // COMBINING VERTICAL LINE ABOVE
+    EXPECT_EQ(general_category_of(U'\x030E'), general_category::Mn);  // COMBINING DOUBLE VERTICAL LINE ABOVE
+    EXPECT_EQ(general_category_of(U'\x030F'), general_category::Mn);  // COMBINING DOUBLE GRAVE ACCENT
+    EXPECT_EQ(general_category_of(U'\x0310'), general_category::Mn);  // COMBINING CANDRABINDU
+    EXPECT_EQ(general_category_of(U'\x0311'), general_category::Mn);  // COMBINING INVERTED BREVE
+    EXPECT_EQ(general_category_of(U'\x0312'), general_category::Mn);  // COMBINING TURNED COMMA ABOVE
+    EXPECT_EQ(general_category_of(U'\x0313'), general_category::Mn);  // COMBINING COMMA ABOVE
+}
+
 TEST(BasicIDNATests, CheckValidiyCriteria) {
     using webpp::stl::array;
     using webpp::stl::string;

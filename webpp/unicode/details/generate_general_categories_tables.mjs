@@ -57,9 +57,9 @@ const excludeCategories = [
 ];
 
 const replaceCategories = {
-    "Spacing_Mark": "Mark",
-    "Enclosing_Mark": "Mark",
-    "Nonspacing_Mark": "Mark",
+    // "Spacing_Mark": "Mark",
+    // "Enclosing_Mark": "Mark",
+    // "Nonspacing_Mark": "Mark",
 };
 
 const start = async () => {
@@ -89,7 +89,7 @@ class GCTables {
 These are the indices that are used to find which values from "gc_values" table correspond to a Unicode Code Point.`,
     };
     values = {
-        max: 65535 * 100,
+        max: 65535 * 1000,
         sizeof: uint8,
         description: `GC: General Category
 These values are calculated and individually represent actual GC values, but they have no
@@ -134,6 +134,7 @@ the "gc_indices" table.
         }
 
         if (generalCategories[value] in replaceCategories) {
+            // console.log(codePoint.toString(16), value, generalCategories[replaceCategories[generalCategories[value]]]);
             value = generalCategories[replaceCategories[generalCategories[value]]];
         }
 
