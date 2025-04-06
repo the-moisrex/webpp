@@ -61,11 +61,13 @@ set(ALL_SOURCES_SHORT
         unicode/idna.hpp
         unicode/bidi.hpp
         unicode/joiners.hpp
+        unicode/general_category.hpp
         unicode/punycodes.hpp
         unicode/details/ccc_tables.hpp
         unicode/details/gc_tables.hpp
         unicode/details/bidi_tables.hpp
         unicode/details/joiners_tables.hpp
+        unicode/details/idna_mapping_tables.hpp
         unicode/details/composition_tables.hpp
         unicode/details/decomposition_tables.hpp
 

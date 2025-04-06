@@ -10,6 +10,7 @@
 #include "./normalization.hpp"
 #include "./unicode.hpp"
 #include "bidi.hpp"
+#include "general_category.hpp"
 #include "joiners.hpp"
 
 #include <cassert>
@@ -348,7 +349,11 @@ namespace webpp::unicode::idna {
         }
 
         // 6. The label must not start with combining mark
-        // todo
+        {
+            using enum checked::error_handling;
+            auto const cur_cp  = checked::next_code_point_copy<return_unchanged>(spos, send);
+            valid             &= !is_general_category_of(cur_cp, general_category::Mark);
+        }
 
         // 8. Check joiners
         if constexpr (Options.CheckJoiners) {
