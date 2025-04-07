@@ -497,11 +497,11 @@ namespace webpp {
             if constexpr (
               stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
             {
-                if (character < 0 || static_cast<stl::size_t>(character) > N) {
+                if (character < 0 || static_cast<stl::uint16_t>(character) > N) {
                     return false;
                 }
             }
-            return this->operator[](static_cast<stl::size_t>(character));
+            return this->operator[](static_cast<stl::uint16_t>(character));
         }
 
         /**

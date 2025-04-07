@@ -61,11 +61,46 @@ static std::u8string str8_generator(std::size_t size = 10'000) {
     return str;
 }
 
+static std::u32string str32_generator(std::size_t size = 10'000) {
+    std::u32string str;
+    str.reserve(size);
+
+    std::mt19937 generator(std::random_device{}());
+
+    for (std::size_t i = 0; i < size; ++i) {
+        // Generate a random code point
+        std::uniform_int_distribution<char32_t> distribution(0, 0x10'FFFF); // Unicode range
+
+        char32_t const code_point = distribution(generator);
+
+        // Skip invalid or non-characters
+        if (
+          (code_point >= 0xD800 && code_point <= 0xDFFF) || (code_point == 0xFFFE) || (code_point == 0xFFFF))
+        {
+            --i; // Decrement i to try again
+            continue;
+        }
+
+        str.push_back(code_point);
+    }
+
+    return str;
+}
+
 template <std::size_t count>
-static std::array<std::string, count> str8_array_generator(std::size_t size = 10'000) {
+static std::array<std::string, count> str8_array_generator(std::size_t const size = 10'000) {
     std::array<std::string, count> strs;
     for (auto& str : strs) {
         str = str8_generator(size);
+    }
+    return strs;
+}
+
+template <std::size_t count>
+static std::array<std::u32string, count> str32_array_generator(std::size_t const size = 10'000) {
+    std::array<std::u32string, count> strs;
+    for (auto& str : strs) {
+        str = str32_generator(size);
     }
     return strs;
 }
