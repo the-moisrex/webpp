@@ -8,6 +8,12 @@
 
 namespace webpp::unicode {
 
+    /**
+     * Get the General_Category property of the specified code point.
+     * Attention: this may not return the correct result of our code point tables exclude the
+     *            full GC values in order to reduce table size.
+     *            Checkout ./details/gc_tables.hpp file's comments for the list of excluded categories if any.
+     */
     template <UTF CharT = char32_t>
     [[nodiscard]] static constexpr general_category general_category_of(CharT const code_point) noexcept {
         using enum general_category;

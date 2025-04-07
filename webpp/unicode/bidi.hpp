@@ -11,10 +11,14 @@ namespace webpp::unicode {
 
     using direction_type = stl::uint8_t;
 
-    /// Note: if you ever needed to change these values, you need to change it in the bidi.mjs file as well
-    ///       and regenerate the bidi tables.
-    /// https://www.unicode.org/reports/tr9/#Table_Bidirectional_Character_Types
-    /// https://www.rfc-editor.org/rfc/rfc5893.html#section-1.4
+    /// Note:
+    ///   if you ever needed to change these values, you need to change it in the bidi.mjs file as well
+    ///   and regenerate the bidi tables.
+    /// You can get some of these values using this command:
+    ///   cat PropertyValueAliases.txt | awk 'BEGIN{FS=";"} { if ($1 ~ /^\s*bc\s*$/) print $0 }'
+    /// More info:
+    ///   https://www.unicode.org/reports/tr9/#Table_Bidirectional_Character_Types
+    ///   https://www.rfc-editor.org/rfc/rfc5893.html#section-1.4
     enum struct direction : direction_type {
         NONE = 0,
 
