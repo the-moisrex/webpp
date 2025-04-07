@@ -450,7 +450,7 @@ BENCHMARK(AdaDecompose);
 static void WebppDecomposeUTF32(benchmark::State& state) {
     for (auto _ : state) {
         auto inp = decompsableStr;
-        webpp::unicode::decompose(inp);
+        webpp::unicode::canonical_decompose(inp);
         benchmark::DoNotOptimize(inp);
     }
 }
@@ -460,7 +460,7 @@ BENCHMARK(WebppDecomposeUTF32);
 static void WebppDecomposeUTF8(benchmark::State& state) {
     for (auto _ : state) {
         auto inp = decompsableStr8;
-        webpp::unicode::decompose(inp);
+        webpp::unicode::canonical_decompose(inp);
         benchmark::DoNotOptimize(inp);
     }
 }
@@ -473,7 +473,7 @@ static void WebppDecomposeToUTF32Iterator(benchmark::State& state) {
         str.resize(decompsableStr.size() * 2);
         auto const beg = str.begin();
         auto       pos = str.begin();
-        webpp::unicode::decompose_to(pos, decompsableStr);
+        webpp::unicode::canonical_decompose_to(pos, decompsableStr);
         str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
     }
@@ -485,7 +485,7 @@ static void WebppDecomposeToUTF32(benchmark::State& state) {
     for (auto _ : state) {
         std::u32string str;
         str.reserve(decompsableStr.size() * 2);
-        webpp::unicode::decompose_to(str, decompsableStr);
+        webpp::unicode::canonical_decompose_to(str, decompsableStr);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -496,7 +496,7 @@ static void WebppDecomposeToUTF8(benchmark::State& state) {
     for (auto _ : state) {
         std::u8string str;
         str.reserve(decompsableStr8.size() * 2);
-        webpp::unicode::decompose_to(str, decompsableStr8);
+        webpp::unicode::canonical_decompose_to(str, decompsableStr8);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -509,7 +509,7 @@ static void WebppDecomposeToUTF8Iterator(benchmark::State& state) {
         str.resize(decompsableStr8.size() * 2);
         auto       pos = str.begin();
         auto const beg = str.begin();
-        webpp::unicode::decompose_to(pos, decompsableStr8);
+        webpp::unicode::canonical_decompose_to(pos, decompsableStr8);
         str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
     }
@@ -521,7 +521,7 @@ static void WebppDecomposeToUTF8FromUTF32(benchmark::State& state) {
     for (auto _ : state) {
         std::u8string str;
         str.reserve(decompsableStr8.size() * 2);
-        webpp::unicode::decompose_to(str, decompsableStr);
+        webpp::unicode::canonical_decompose_to(str, decompsableStr);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -534,7 +534,7 @@ static void WebppDecomposeToUTF8FromUTF32Iterator(benchmark::State& state) {
         str.resize(decompsableStr8.size() * 2);
         auto       pos = str.begin();
         auto const beg = str.begin();
-        webpp::unicode::decompose_to(pos, decompsableStr);
+        webpp::unicode::canonical_decompose_to(pos, decompsableStr);
         str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
     }
@@ -555,7 +555,7 @@ BENCHMARK(AdaDecomposeTo1CodePiont);
 static void WebppDecomposeTo1CodePiont(benchmark::State& state) {
     for (auto _ : state) {
         std::u32string str;
-        webpp::unicode::decompose_to(str, decompsableStr[0]);
+        webpp::unicode::canonical_decompose_to(str, decompsableStr[0]);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -576,7 +576,7 @@ BENCHMARK(AdaDecomposeLength);
 static void WebppDecomposeLength(benchmark::State& state) {
     for (auto _ : state) {
         auto [max_len, decomposition_needed] =
-          webpp::unicode::details::decomp_details(decompsableStr.begin(), decompsableStr.end());
+          webpp::unicode::details::canon_decomp_details(decompsableStr.begin(), decompsableStr.end());
         benchmark::DoNotOptimize(decomposition_needed);
         benchmark::DoNotOptimize(max_len);
     }
