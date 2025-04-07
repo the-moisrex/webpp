@@ -19,6 +19,10 @@
 #include <iterator>
 
 namespace webpp::unicode::idna {
+
+    /// https://www.unicode.org/reports/tr46/#Validity_Criteria
+    static constexpr charmap<256U> ASCII_STD3_RULES{LOWER_ALPHA<char>, DIGIT<char>, charset('-')};
+
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
         using details::batch_bit_count;
@@ -161,7 +165,7 @@ namespace webpp::unicode::idna {
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
     }
 
-    enum struct to_ascii_status : stl::uint32_t {
+    enum struct to_ascii_status : stl::uint8_t {
         valid              = 0,
         invalid_code_point = 1,
         empty_domain_label = 2,
@@ -179,6 +183,7 @@ namespace webpp::unicode::idna {
         // Skipped Steps:
         bool CheckNFC           = false;
         bool CheckDotInclusions = false;
+        bool CheckStatusValues  = false; // rule 7 of the Validity Criteria
     };
 
     /**
@@ -282,6 +287,8 @@ namespace webpp::unicode::idna {
      *  - The label must not contain a U+002E (.) FULL STOP.
      *  - Each code point in the label must only have certain Status values according to
      *    Section 5, IDNA Mapping Table
+     *
+     * Starting with Unicode 16.0, UseSTD3ASCIIRules=true is handled only in the Validity Criteria
      */
     template <idna_options Options = {}, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_label_valid(Iter spos, Iter send) noexcept {
@@ -301,6 +308,7 @@ namespace webpp::unicode::idna {
         //    https://www.rfc-editor.org/rfc/rfc5893#section-2
 
 
+        using enum checked::error_handling;
 
         bool       valid  = true;
         auto const length = send - spos;
@@ -350,9 +358,36 @@ namespace webpp::unicode::idna {
 
         // 6. The label must not start with combining mark
         {
-            using enum checked::error_handling;
-            auto const cur_cp  = checked::next_code_point_copy<return_unchanged>(spos, send);
-            valid             &= !is_general_category_of(cur_cp, general_category::Mark);
+            auto const cur_cp = checked::next_code_point_copy<return_unchanged>(spos, send);
+
+            // no need to check the length, it'll return 0, which is not GC, so it's fine.
+            valid &= !is_general_category_of(cur_cp, general_category::Mark);
+        }
+
+        // 7. Checking Status values (SKIPPED by default)
+        if constexpr (Options.CheckStatusValues) {
+            // - For Transitional Processing (deprecated)
+            // - For Nontransitional Processing, each value must be either valid or deviation.
+            // - In addition, if UseSTD3ASCIIRules=true and the code point is an ASCII code point
+            //   (U+0000..U+007F), then it must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus
+            //   (U+002D). (Note: This excludes uppercase ASCII A-Z which are mapped in UTS #46 and disallowed
+            //   in IDNA2008.)
+            auto pos = spos;
+            for (;;) {
+                auto const cur_cp = checked::next_code_point<return_unchanged>(pos, send);
+                if (cur_cp == 0) {
+                    break;
+                }
+                auto const status = status_of(cur_cp);
+
+                // https://www.unicode.org/reports/tr46/#Deviations
+                // Deviations are considered valid in IDNA2008 and UTS #46.
+                valid &= status == details::valid;
+
+                if constexpr (Options.UseSTD3ASCIIRules) {
+                    valid &= !is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp);
+                }
+            }
         }
 
         // 8. Check joiners

@@ -117,17 +117,21 @@ namespace webpp::unicode {
 
     template <typename CharT = char8_t>
     [[nodiscard]] static constexpr bool is_ascii(CharT const code_point) noexcept {
-        return code_point < 0x80;
+        if constexpr (stl::is_unsigned_v<CharT>) {
+            return code_point < 0x80;
+        } else {
+            return code_point >= 0 && code_point < 0x80;
+        }
     }
 
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
-        return static_cast<u8>(0xff & oct);
+        return static_cast<u8>(0xFF & oct);
     }
 
     template <typename u16 = char16_t, typename u16_type>
     [[nodiscard]] static constexpr u16 mask16(u16_type oct) noexcept {
-        return static_cast<u16>(0xffff & oct);
+        return static_cast<u16>(0xFFFF & oct);
     }
 
     template <typename octet_type>

@@ -752,6 +752,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
           .IgnoreInvalidPunycode   = true,
           .CheckNFC                = false, // todo
           .CheckDotInclusions      = true,
+          .CheckStatusValues       = true,
         }, }
     };
 
@@ -776,6 +777,9 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"a1", true, -1}, // Letter followed by digit
       {"1a", true, -1}, // Digit followed by letter
       {"a-b", true, -1}, // Hyphen in middle
+
+      {"ABC", true, 0}, // STD3 Rule
+      {"ABC", false, 1}, // STD3 Rule
     };
 
     for (auto const [str, is_valid, opts_index] : tests) {
