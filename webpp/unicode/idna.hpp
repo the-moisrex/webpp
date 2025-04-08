@@ -6,12 +6,12 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "./bidi.hpp"
 #include "./details/idna_mapping_tables.hpp"
+#include "./general_category.hpp"
+#include "./joiners.hpp"
 #include "./normalization.hpp"
 #include "./unicode.hpp"
-#include "bidi.hpp"
-#include "general_category.hpp"
-#include "joiners.hpp"
 
 #include <cassert>
 #include <climits>
@@ -461,6 +461,7 @@ namespace webpp::unicode::idna {
                   return res >= dot_flag; // we found a dot
               });
 
+            // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & clean_flag) {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
@@ -490,7 +491,6 @@ namespace webpp::unicode::idna {
             return status;
         }
 
-        // 1.4. Convert/Validate
 
         // 2. Punycode
         // Convert each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
