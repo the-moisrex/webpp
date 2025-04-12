@@ -4,10 +4,10 @@
  *
  *   Auto generated from:          generate_idna_mapping_tables2.mjs
  *   IDNA Creation Date:           2024-07-03, 21:52:28 GMT
- *   This file's generation date:  Fri, 04 Apr 2025 10:22:13 GMT
+ *   This file's generation date:  Sat, 12 Apr 2025 04:33:38 GMT
  *   IDNA Mapping Table Version:   16.0.0
- *   Size:                         46110 B
- *                                 45.03 KiB
+ *   Size:                         46118 B
+ *                                 45.04 KiB
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
@@ -23,10 +23,9 @@
 
 namespace webpp::unicode::idna::details {
 
-    static constexpr std::uint16_t magic_rem       = 1U;
-    static constexpr auto          last_disallowed = static_cast<char32_t>(0xE01F0);
-    static constexpr std::uint8_t  batch_bit_count = 6U;
-    static constexpr std::uint8_t  batch_mask      = 0x3FU;
+    static constexpr auto         last_disallowed = static_cast<char32_t>(0xE01F0);
+    static constexpr std::uint8_t batch_bit_count = 6U;
+    static constexpr std::uint8_t batch_mask      = 0x3FU;
 
     [[maybe_unused]] static constexpr std::uint16_t not_mapped = 0b1000'0000'0000'0000U;
     static constexpr std::uint16_t                  valid      = 0b1000'0000'0000'0011U;
@@ -511,7 +510,7 @@ namespace webpp::unicode::idna::details {
     /**
      * IDNA Reference Table part 2 (Extra).
      *
-     * Table size: 0 B or 0.00 KiB
+     * Table size: 8 B or 0.01 KiB
      */
     static constexpr std::array<std::uint16_t, 4ULL> idna_refs_extra{0x2915U, 0x2915U, 0x2915U, 0x2915U};
 

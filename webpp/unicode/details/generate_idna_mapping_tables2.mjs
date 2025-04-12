@@ -88,9 +88,6 @@ class MappingTable {
 
     #rawMaps = [];
 
-    // the modulus value
-    #magicRem = 1n;
-
     #batchBitCount;
     #batchSize;
 
@@ -116,7 +113,7 @@ class MappingTable {
         this.#maps.type = char8_8;
 
         this.#refs.sizeof = sizeOf(this.#refs.type);
-        this.#refsExtra.sizeof = this.#refs.length;
+        this.#refsExtra.sizeof = this.#refs.sizeof;
         this.#refBlocks.sizeof = sizeOf(this.#refBlocks.type);
         this.#refBools.sizeof = sizeOf(this.#refBools.type);
         this.#maps.sizeof = sizeOf(this.#maps.type);
@@ -177,6 +174,9 @@ class MappingTable {
         if (ref.pos < this.#refBreakPointStart) {
             this.#refs.push(ref);
         } else if (ref.pos >= this.#refBreakPointEnd) {
+            // if (917944 >= ref.pos && 917944 < (ref.pos + this.#batchSize)) {
+            //     console.log(ref);
+            // }
             this.#refsExtra.push(ref);
         } else {
             console.log(`Omitted inserting ref:`, ref);
@@ -221,7 +221,7 @@ class MappingTable {
         let targetIndex;
         if (found !== null) {
             targetIndex = found;
-            console.log(`Bool Block Found: `, found, this.#refBools.length, block.map(val => val ? '1' : '0').join(""));
+            // console.log(`Bool Block Found: `, found, this.#refBools.length, block.map(val => val ? '1' : '0').join(""));
         } else {
             const bools = packBoolsIntoInts(block, this.#refBools.sizeof).map(intVal => intVal.toString(2).padStart(Number(this.#refBools.sizeof), '0')).join("|");
 
@@ -235,8 +235,8 @@ class MappingTable {
     }
 
     /// Find the specified range from source table in target table
-    #findOrInsertBlock(start, length) {
-        length = length <= (this.#rawMaps.length - start) ? length : (this.#rawMaps.length - start);
+    #findOrInsertBlock(start, origLength) {
+        const length = origLength <= (this.#rawMaps.length - start) ? origLength : (this.#rawMaps.length - start);
         const end = start + length;
         let targetIndex = 0;
         let pos = start;
@@ -290,20 +290,21 @@ class MappingTable {
                 }
                 statuses.push(curStatus);
             }
-            if (statuses.length !== this.#batchSize) {
+            if (statuses.length !== origLength) {
 
                 // at the end of the IDNA table, we get to this situation:
-                if (statuses.length < this.#batchSize) {
-                    for (let i = statuses.length; i !== this.#batchSize; ++i) {
+                if (statuses.length < origLength) {
+                    for (let i = statuses.length; i !== origLength; ++i) {
                         statuses.push(DISALLOWED);
                     }
+                    console.log("Fixing end of the table:", start, end, statuses.length, length, origLength, statuses);
                 } else {
                     throw new Error(`#${start}-${end} Invalid size: ${statuses.length}/${this.#batchSize}`);
                 }
             }
             this.#refBlocks[targetIndex] = {
                 rawStart: start,
-                rawEnd: end,
+                rawEnd: start + origLength,
                 statuses,
                 length: statuses.length
             };
@@ -323,9 +324,7 @@ class MappingTable {
         this.#refBreakPointStart = splitStart;
         this.#refBreakPointEnd = splitStart + splitLength;
 
-
-        let curBlock = 0;
-        for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize, ++curBlock) {
+        for (let batchIndex = 0; batchIndex < this.#rawMaps.length; batchIndex += this.#batchSize) {
             let ref = {
                 index: batchIndex >>> Number(this.#batchBitCount),
                 pos: batchIndex
@@ -353,6 +352,7 @@ class MappingTable {
     }
 
     optimizeBlocks(ref) {
+        ref = {...ref};
         if (this.#refBlocks.length > 1) {
             const curBlock = this.#refBlocks.length - 1;
             const {
@@ -361,6 +361,8 @@ class MappingTable {
             } = removeOverlaps(this.#refBlocks[curBlock - 1].statuses, this.#refBlocks[curBlock].statuses);
             if (overlapLen !== 0) {
                 this.#refBlocks[curBlock].statuses = rhs;
+                // this.#refBlocks[curBlock].rawStart -= overlapLen;
+                // this.#refBlocks[curBlock].rawEnd -= overlapLen;
                 this.#refBlocks[curBlock].length = rhs.length;
                 ref.blockPtr -= overlapLen;
                 console.log("Smashed blocks:", overlapLen, ref, this.#refBlocks[curBlock - 1].statuses.slice(this.#refBlocks[curBlock - 1].statuses.length - overlapLen - 2), this.#refBlocks[curBlock].statuses.slice(0, overlapLen + 2)/*, rhs*/);
@@ -411,7 +413,17 @@ class MappingTable {
         console.log(`Total Table size:`);
         console.log(`  in bytes    : ${Math.ceil(sumBitLength / 8)},`);
         console.log(`  in KibiBytes: ${(sumBitLength / 8 / 1024).toFixed(2)} KiB\n`);
-        console.log(`Last Disallowed Code Point: ${this.#lastDisallowed}\n`);
+        console.log("Last Disallowed Code Point:", this.#lastDisallowed);
+        console.log("Batch Size:", this.#batchSize);
+        console.log("Batch Bit Count:", this.#batchBitCount);
+        console.log("Ref Sizeof:", this.#refs.sizeof);
+        console.log("Ref Extra Sizeof:", this.#refsExtra.sizeof);
+        console.log("Blocks Sizeof:", this.#refBlocks.sizeof);
+        console.log("Maps Sizeof:", this.#maps.sizeof);
+        console.log("Ref Max:", this.#refMax);
+        console.log("Ref Block Max:", this.#refBlocksMax);
+        console.log("Table Pick Mask:", this.#tablePickMask);
+        console.log();
 
 
         const refPrinter = ({blockPtr}) => {
@@ -450,7 +462,6 @@ class MappingTable {
 
 namespace webpp::unicode::idna::details {
 
-    static constexpr std::uint16_t magic_rem = ${this.#magicRem}U;
     static constexpr auto last_disallowed = static_cast<char32_t>(0x${this.#lastDisallowed.toString(16).toUpperCase()});
     static constexpr std::uint8_t batch_bit_count = ${this.#batchBitCount}U;
     static constexpr std::uint8_t batch_mask = 0x${((0b1 << Number(this.#batchBitCount)) - 1).toString(16).toUpperCase()}U;
@@ -564,7 +575,7 @@ const processCachedFile = async fileContent => {
 
         const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
         const [rangeStart, rangeEnd] = parseCodePointRangeExclusive(codePoints);
-        const mappedValues = mapping ? parseMappedCodePoints(mapping) : undefined;
+        let mappedValues = mapping ? parseMappedCodePoints(mapping) : undefined;
 
         let flags = 0;
         switch (status) {
@@ -573,10 +584,11 @@ const processCachedFile = async fileContent => {
             case 'valid':
                 flags |= VALID;
                 break;
-            case 'mapped':
-                flags |= MAPPED;
-                break;
             case 'ignored':
+                flags |= MAPPED;
+                mappedValues = [];
+                break;
+            case 'mapped':
                 flags |= MAPPED;
                 break;
             case 'disallowed':
@@ -593,7 +605,7 @@ const processCachedFile = async fileContent => {
         }
         cpSum += rangeEnd - rangeStart + 1n;
 
-        console.log(`${index}/${cpSum}:`, rangeStart, rangeEnd, status, mappedValues || "", IDNA2008Status || "");
+        // console.log(`${index}/${cpSum}:`, rangeStart, rangeEnd, status, mappedValues || "", IDNA2008Status || "");
     });
 
 

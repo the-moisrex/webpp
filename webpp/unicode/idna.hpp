@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_IDNA_MAPPINGS_HPP
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
+#include "../std/expected.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
@@ -11,6 +12,7 @@
 #include "./general_category.hpp"
 #include "./joiners.hpp"
 #include "./normalization.hpp"
+#include "./punycodes.hpp"
 #include "./unicode.hpp"
 
 #include <cassert>
@@ -22,6 +24,7 @@ namespace webpp::unicode::idna {
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria
     static constexpr charmap<256U> ASCII_STD3_RULES{LOWER_ALPHA<char>, DIGIT<char>, charset('-')};
+    static constexpr auto          NON_ASCII_CODE_UNITS = bitmap_range<0x80U, 0xFFU, 256>();
 
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
@@ -34,7 +37,7 @@ namespace webpp::unicode::idna {
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         stl::uint16_t ref; // NOLINT(*-init-variables)
-        if (code_point <= static_cast<CharT>(details::breakpoint_start)) [[likely]] {
+        if (code_point <= static_cast<CharT>(details::breakpoint_start) && code_point > 0) [[likely]] {
             ref = details::idna_refs[static_cast<stl::uint16_t>(code_point >> batch_bit_count)];
         } else [[unlikely]] {
             if (code_point >= static_cast<CharT>(details::last_disallowed)) {
@@ -45,6 +48,7 @@ namespace webpp::unicode::idna {
                   (code_point - static_cast<CharT>(details::breakpoint_end)) >> batch_bit_count);
                 ref = details::idna_refs_extra[pos];
             } else {
+                // negative code points and what not
                 return disallowed;
             }
         }
@@ -85,13 +89,17 @@ namespace webpp::unicode::idna {
 
         // ignored code points are mapped to nothing, so no special code is needed
         switch (pos) {
-            case disallowed: return false; // it's not allowed
-            case valid:
+            case disallowed:
+                // disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step
+                // below checks for disallowed characters, after mapping and normalization.
+                unchecked::append(out, code_point);
+                return false; // it's not allowed
+            case valid:       // or deviation
                 // todo: you can optimize this, we don't have to re-convert the code point
                 unchecked::append(out, code_point);
                 return true;
 
-            default: { // mapped
+            default: { // mapped, or ignored
                 auto ptr = idna_mappings.begin() + pos;
                 if constexpr (UTF8String<OutStrT>) {
                     for (; *ptr != u8'\0'; ++ptr) {
@@ -143,18 +151,18 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using checked::next_code_point;
 
-        for (auto pos = beg; pos != end;) {
+        auto is_valid = true;
+        for (auto pos = beg;;) {
             auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
-            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                unchecked::append(out, -code_point);
-                continue;
+            if (code_point == 0) {
+                break;
             }
 
-            if (!map(code_point, out)) {
-                return false;
-            }
+            // disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step below
+            // checks for disallowed characters, after mapping and normalization.
+            is_valid &= map(code_point, out);
         }
-        return true;
+        return is_valid;
     }
 
     template <istl::Appendable OutStrT, istl::StringViewifiable InpStrT>
@@ -165,13 +173,25 @@ namespace webpp::unicode::idna {
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
     }
 
-    enum struct to_ascii_status : stl::uint8_t {
-        valid              = 0,
-        invalid_code_point = 1,
-        empty_domain_label = 2,
+    using to_ascii_status_type = stl::underlying_type_t<punycode_status>;
+    /**
+     * ToASCII status values.
+     * Attention: ToASCII function may return a combination of these errors
+     */
+    enum struct to_ascii_status : to_ascii_status_type {
+        valid = 0,
+
+        // Punycode errors:
+        invalid_code_point = stl::to_underlying(punycode_status::bad_input),
+        punycode_overflow  = stl::to_underlying(punycode_status::overflow),
+
+        // More errors:
+        empty_domain_label = 0b1U << 3U,
+        too_long_label     = 0b1U << 4U, // the subdomain is more than 63
+        too_long_domain    = 0b1U << 5U, // the whole domain is more than 255
     };
 
-    struct idna_options { // NOLINT(*-struct-pack-align)
+    struct idna_options {                // NOLINT(*-struct-pack-align)
         bool CheckHyphens            = false;
         bool CheckBidi               = true;
         bool CheckJoiners            = true;
@@ -414,41 +434,60 @@ namespace webpp::unicode::idna {
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
-    template <idna_options Options = {}, istl::Appendable StrT = stl::string, typename Iter>
-    static constexpr to_ascii_status to_ascii(Iter spos, Iter send, StrT& out)
-      noexcept(istl::NothrowAppendable<StrT>) {
+    template <idna_options Options = {}, stl::random_access_iterator Iter, istl::Appendable OIter = char*>
+    [[nodiscard]] static constexpr to_ascii_status_type
+    unsafe_to_ascii(Iter spos, Iter const send, OIter& out) noexcept(istl::NothrowAppendable<OIter>) {
         using enum to_ascii_status;
+        using istl::iter_append;
+        using stl::to_underlying;
         using unicode::normalization_form;
+
+        // NOLINTBEGIN(*-signed-bitwise)
+
+        // Normalization is guaranteed to not require more space than 3 times the input.
+        // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
+        // Otherwise, the max size is essentially unlimited or limited by integer overflows.
+        auto const src_length = send - spos;
+        auto       status     = to_underlying(valid);
+        auto const obeg       = istl::appendable_size(out);
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
 
-        // 1.1 Map
-        if (!idna::map(spos, send, out)) {
-            // todo: is this error code the correct error?
-            return invalid_code_point;
+        // 1.1 Map (and/or copy to output)
+        if (!idna::map(spos, send, out)) [[unlikely]] {
+            // Disallowed code point was found
+            status |= to_underlying(invalid_code_point);
         }
 
         // 1.2. Normalize
-        normalize<normalization_form::NFC>(out);
+        {
+            auto       pos  = istl::appendable_next(out, obeg);
+            auto const oend = istl::appendable_end(out);
+            normalize<normalization_form::NFC>(pos, oend, out);
+        }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
-        using flag_type                                         = stl::uint8_t;
-        webpp_static_constexpr flag_type dot_flag               = 0b100'0000U;
-        webpp_static_constexpr flag_type x_flag                 = 0b1U;
-        webpp_static_constexpr flag_type n_flag                 = 0b10U;
-        webpp_static_constexpr flag_type dash_flag              = 0b100U;
-        webpp_static_constexpr flag_type ascii_flag             = 0b1000U;
-        webpp_static_constexpr flag_type xnd_flag               = x_flag | n_flag | dash_flag | ascii_flag;
-        webpp_static_constexpr flag_type clean_flag             = static_cast<flag_type>(~dot_flag);
+        using flag_type                                 = stl::uint_fast8_t;
+        webpp_static_constexpr flag_type x_flag         = 0b1U;
+        webpp_static_constexpr flag_type n_flag         = 0b10U;
+        webpp_static_constexpr flag_type dash_flag      = 0b100U;
+        webpp_static_constexpr flag_type non_ascii_flag = 0b1000U;
+        webpp_static_constexpr flag_type ascii_flag     = 0b1'0000U;
+        webpp_static_constexpr flag_type dot_flag       = 0b100'0000U | ascii_flag;
+        webpp_static_constexpr flag_type ace_flag   = x_flag | n_flag | dash_flag | ascii_flag; // ACE prefix
+        webpp_static_constexpr auto      clean_flag = static_cast<flag_type>(~dot_flag);
         webpp_static_constexpr auto      interesting_characters = categorize<flag_type, 256U>(
           cat{.set = ".", .value = dot_flag},
           cat{.set = "xX", .value = x_flag},
           cat{.set = "nN", .value = n_flag},
           cat{.set = "-", .value = dash_flag},
+          cat{.set = NON_ASCII_CODE_UNITS, .value = non_ascii_flag},
           cat{.set = ALL_ASCII<char8_t>, .value = ascii_flag});
 
-        auto status = valid;
+        stl::size_t accum_length = 0;
+        auto        pos          = istl::appendable_next(out, obeg);
+        auto const  oend         = istl::appendable_end(out);
         for (; spos != send; ++spos) {
             auto const lpos = spos; // start of label
 
@@ -461,44 +500,71 @@ namespace webpp::unicode::idna {
                   return res >= dot_flag; // we found a dot
               });
 
+            auto const label_length = spos - lpos;
+
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & clean_flag) {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
-                    return empty_domain_label;
-                case xnd_flag:
-                    if (
-                      lpos - lpos > 4 && lpos[0] == 'x' && lpos[1] == 'n' && lpos[2] == '-' && lpos[3] == '-')
+                    status |= to_underlying(empty_domain_label);
+                case ace_flag:
+                    if (label_length >= 4 && lpos[0] == 'x' && lpos[1] == 'n' && lpos[2] == '-' &&
+                        lpos[3] == '-')
                     {
                         // found xn--
                         // If the label contains any non-ASCII code point (i.e., a code point greater than
                         // U+007F), record that there was an error, and continue with the next label.
-                        if ((flag & ascii_flag) != ascii_flag) [[unlikely]] {
-                            status = invalid_code_point;
+                        if ((flag & non_ascii_flag) != 0) [[unlikely]] {
+                            status |= to_underlying(invalid_code_point);
                             continue;
                         }
+
+                        // Attempt to convert the rest of the label to Unicode according to Punycode
+                        // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
+                        // there was an error, and continue with the next label. Otherwise, replace the
+                        // original label in the string by the results of the conversion.
+                        // todo
                     }
                     [[fallthrough]];
                 [[likely]] default:
                     break;
             }
 
-            if ((flag & dot_flag) == dot_flag) { // every label except the last label
-                istl::iter_append(out, '.');
+            accum_length |= label_length;
+
+            // 3. Punycode
+            // Convert each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
+            // This may record an error.
+            if ((flag & non_ascii_flag) != 0) {
+                iter_append(out, 'x', 'n', '-', '-'); // prepend ACE prefix
+                [[maybe_unused]] auto const p_status = punycode_encode(lpos, spos, out);
+                if constexpr (!Options.IgnoreInvalidPunycode) {
+                    status |= to_underlying(p_status);
+                }
+
+                // If the label is empty, or if the label contains only ASCII code points, record that there
+                // was an error.
+            }
+
+
+            // 6. Join the labels using U+002E FULL STOP as a separator, and return the result
+            if ((flag & dot_flag) == dot_flag && flag != dot_flag) { // every label except the last label
+                iter_append(out, '.');
             }
         }
-        if (status != valid) [[unlikely]] {
-            return status;
+
+
+
+        // 4. VerifyDnsLength
+        if constexpr (Options.VerifyDnsLength) {
+            // no need to bailout early
+            constexpr auto max_label   = 63U;
+            constexpr auto max_domain  = 253U;
+            status                    |= accum_length > max_label ? too_long_label : status;
+            if (out.size() > max_domain && (out.size() != max_domain + 1 || out.back() != '.')) [[unlikely]] {
+                status |= to_underlying(too_long_domain);
+            }
         }
-
-
-        // 2. Punycode
-        // Convert each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
-        // This may record an error.
-
-
-        // 4. VerifyDnsLength (not implemented)
-        // todo: implement it
 
 
         // Implementations are advised to apply additional tests to these labels, such as those described in
@@ -507,7 +573,84 @@ namespace webpp::unicode::idna {
         // label with mixed scripts or confusables may be called out in the UI. Note that the use of Punycode
         // to signal problems may be counter-productive, as described in [UTR36].
 
-        return valid;
+        // NOLINTEND(*-signed-bitwise)
+
+        // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
+        // returned. No DNS lookup should be done.
+        return status;
+    }
+
+    template <idna_options Options = {}, stl::random_access_iterator Iter, istl::String StrT = stl::u8string>
+    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
+        if constexpr (Options.VerifyDnsLength) {
+            constexpr auto max_domain_length = 254U;
+#ifdef __cpp_lib_string_resize_and_overwrite
+            to_ascii_status_type status = 0;
+            out.resize_and_overwrite(max_domain_length,
+                                     [&](auto* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+                                         auto const beg = buf;
+                                         status         = unsafe_to_ascii<Options>(spos, send, buf);
+                                         return static_cast<stl::size_t>(buf - beg);
+                                     });
+            return status;
+#else
+            out.reserve(out.size() + max_domain_length);
+            return unsafe_to_ascii<Options>(spos, send, out);
+#endif
+        } else {
+            return unsafe_to_ascii<Options>(spos, send, out);
+        }
+    }
+
+    template <idna_options Options = {}, istl::StringViewifiable StrVT, istl::String StrT = stl::u8string>
+    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT&& src, StrT& out) {
+        auto const src_v = istl::string_viewify(stl::forward<StrVT>(src));
+        return to_ascii<Options>(src_v.begin(), src_v.end(), out);
+    }
+
+    template <idna_options   Options = {},
+              istl::CharType CharT   = char,
+              istl::String   OutStrT = stl::basic_string<CharT>,
+              typename... Args>
+    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
+      stl::basic_string_view<CharT> src,
+      Args&&... args) {
+        OutStrT    out{stl::forward<Args>(args)...};
+        auto const status = to_ascii<Options>(src.begin(), src.end(), out);
+        if (status == to_ascii_status::valid) {
+            return out;
+        }
+        return status;
+    }
+
+    [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs,
+                                                   to_ascii_status const      rhs) noexcept {
+        return lhs == static_cast<to_ascii_status_type>(rhs);
+    }
+
+    template <istl::String OutStrT>
+    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+                                                   to_ascii_status const rhs) noexcept {
+        to_ascii_status_type const status =
+          lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
+        return status == static_cast<to_ascii_status_type>(rhs);
+    }
+
+    [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs,
+                                                   to_ascii_status const      rhs) noexcept {
+        return lhs != static_cast<to_ascii_status_type>(rhs);
+    }
+
+    [[nodiscard]] static constexpr to_ascii_status_type operator&(
+      to_ascii_status_type const lhs,
+      to_ascii_status const      rhs) noexcept {
+        return lhs & static_cast<to_ascii_status_type>(rhs);
+    }
+
+    [[nodiscard]] static constexpr to_ascii_status_type operator&(
+      to_ascii_status const      lhs,
+      to_ascii_status_type const rhs) noexcept {
+        return static_cast<to_ascii_status_type>(lhs) & rhs;
     }
 
 

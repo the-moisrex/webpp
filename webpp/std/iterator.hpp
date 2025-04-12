@@ -140,7 +140,6 @@ namespace webpp::istl {
 
     /**
      * Get an appendable object out of the specified argument
-     *
      */
     template <AppendableStorage IterOrStorage>
     [[nodiscard]] constexpr decltype(auto) appendable_iter_of(IterOrStorage& obj) noexcept {
@@ -150,6 +149,49 @@ namespace webpp::istl {
         } else {
             // It's iterable
             return stl::begin(obj);
+        }
+    }
+
+    template <Appendable T>
+    [[nodiscard]] constexpr decltype(auto) appendable_begin(T& obj) noexcept {
+        if constexpr (AppendableString<T>) {
+            return stl::begin(obj);
+        } else {
+            return obj;
+        }
+    }
+
+    /// str.end() or iter itself
+    template <Appendable T>
+    [[nodiscard]] constexpr decltype(auto) appendable_end(T& obj) noexcept {
+        if constexpr (AppendableString<T>) {
+            return stl::end(obj);
+        } else {
+            return obj;
+        }
+    }
+
+    /// str.size() or iterator itself.
+    template <Appendable T>
+    [[nodiscard]] constexpr decltype(auto) appendable_size(T& obj) noexcept {
+        if constexpr (AppendableString<T>) {
+            return obj.size();
+        } else {
+            return obj;
+        }
+    }
+
+    /// str.size() or iterator itself.
+    template <Appendable T, typename LenOrIter>
+        requires(stl::random_access_iterator<LenOrIter> || stl::integral<LenOrIter>)
+    [[nodiscard]] constexpr auto appendable_next(T& obj, LenOrIter const len) noexcept {
+        if constexpr (AppendableString<T>) {
+            return stl::next(obj.begin(), len);
+        } else if constexpr (stl::random_access_iterator<LenOrIter>) {
+            return len; // it's an iterator
+        } else {
+            // obj is an iterator, and len is an integer
+            return stl::next(obj, len);
         }
     }
 

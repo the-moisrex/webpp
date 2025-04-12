@@ -328,6 +328,10 @@ TEST(BasicIDNATests, MostMappings) {
     EXPECT_EQ(mapped<std::u32string>(917'967), U""); // ignored
     EXPECT_EQ(mapped<std::u32string>(917'990), U""); // ignored
 
+    EXPECT_EQ(mapped<std::u32string>(917'925), U""); // ignored
+    EXPECT_EQ(mapped<std::u32string>(917'926), U""); // ignored
+    EXPECT_EQ(mapped<std::u32string>(917'925 + 48), U""); // ignored
+
     EXPECT_EQ(status_of(223), valid);                // deviation
     EXPECT_EQ(status_of(962), valid);                // deviation
     EXPECT_EQ(status_of(8204), valid);               // deviation
@@ -793,6 +797,13 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
             default: break;
         }
     }
+}
+
+TEST(BasicIDNATests, ToASCIITest) {
+    using webpp::unicode::idna::to_ascii;
+    using enum webpp::unicode::idna::to_ascii_status;
+
+    // EXPECT_EQ(to_ascii("one"), valid);
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
