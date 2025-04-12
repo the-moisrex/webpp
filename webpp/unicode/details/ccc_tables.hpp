@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 04 Apr 2025 10:22:06 GMT
+ *   This file's generation date:        Sat, 12 Apr 2025 07:42:00 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       82824
@@ -153,14 +153,13 @@ namespace webpp::unicode::details {
     };
 
     /**
-     * CCC Index Table (combined 1 sections)
+     * ccc Index Table (combined 1 sections)
      *
      * CCC: Canonical Combining Class
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
      * Unicode Code Point.
      *
-     * Each value contains 1 numbers hidden inside:
-     *     [16bits = pos]
+     * Each value is a [16bits = pos]
      *
      * Table size:
      *   - in bits:       15664
@@ -237,12 +236,14 @@ namespace webpp::unicode::details {
 
 
 
+
     /**
      * CCC Values Table
      *
      * CCC: Canonical Combining Class
-     * These are the indices that are used to find which values from "ccc_values" table correspond to a
-     * Unicode Code Point.
+     * These values are calculated and individually represent actual CCC values, but they have no
+     * valid order by themselves, and they only make sense if they're being used in conjunction with
+     * the "ccc_indices" table.
      *
      * Table size:
      *   - in bits:       67160

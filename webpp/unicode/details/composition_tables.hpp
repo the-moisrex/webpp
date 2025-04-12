@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_composition_tables2.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 04 Apr 2025 10:22:10 GMT
+ *   This file's generation date:        Sat, 12 Apr 2025 07:42:05 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bytes:      14044 B

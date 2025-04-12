@@ -52,6 +52,7 @@ remove "$curdir/DerivedBidiClass.txt"
 remove "$curdir/ReadMe.txt"
 remove "$curdir/UnicodeData.txt"
 remove "$curdir/DerivedJoiningType.txt"
+remove "$curdir/IDNAMappingTable.txt"
 
 echo
 
@@ -59,7 +60,7 @@ run "$curdir/generate_bidi_tables.mjs"
 run "$curdir/generate_ccc_tables.mjs"
 run "$curdir/generate_composition_tables2.mjs"
 run "$curdir/generate_decomposition_tables.mjs"
-run "$curdir/generate_idna_mapping_tables2.mjs"
+run "$curdir/generate_idna_mapping_tables3.mjs"
 run "$curdir/generate_joiners_tables.mjs"
 run "$curdir/generate_general_categories_tables.mjs"
 

@@ -560,7 +560,7 @@ namespace webpp::unicode::idna {
             // no need to bailout early
             constexpr auto max_label   = 63U;
             constexpr auto max_domain  = 253U;
-            status                    |= accum_length > max_label ? too_long_label : status;
+            status                     |= accum_length > max_label ? to_underlying(too_long_label) : status;
             if (out.size() > max_domain && (out.size() != max_domain + 1 || out.back() != '.')) [[unlikely]] {
                 status |= to_underlying(too_long_domain);
             }

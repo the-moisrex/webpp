@@ -188,7 +188,7 @@ namespace webpp::unicode {
     template <UTF32 u32>
     [[nodiscard]] static constexpr bool is_code_point_valid(u32 code_point) noexcept {
         using uu32 = stl::make_unsigned_t<u32>;
-        return code_point > 0 && code_point <= max_legal_utf32<u32> &&
+        return code_point >= 0 && code_point <= max_legal_utf32<u32> &&
                ((static_cast<uu32>(code_point) & 0xFFFF'F800U) != lead_surrogate_min<uu32>);
         // alternative implementation:
         // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));

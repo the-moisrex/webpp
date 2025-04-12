@@ -39,7 +39,7 @@ const start = async () => {
     await UnicodeData.parse(decompTables, UnicodeData.properties.canonicalDecompositionType);
     await decompTables.load();
     decompTables?.process?.();
-    await createTableFile([decompTables]);
+    await createTableFile(decompTables);
     console.log("File processing completed.");
 };
 
@@ -117,18 +117,28 @@ class DecompTable {
             this.#canonicalCompositions = new CanonicalComposition();
         }
         this.tables.init({
-            disableComments: false, name: "decomp", description: "Decomposition Code Points", ignoreErrors: false,
+            name: "decomp",
+            description: "Decomposition Code Points",
+            ignoreErrors: false,
+            disableComments: false,
+            validateResults: false,
 
             // first table
             indices: {
-                max: 4353 * 100, sizeof: uint32, description: `Decomposition Index`,
+                max: 4353 * 100,
+                sizeof: uint32,
+                description: `Decomposition Index`,
+                splitInto: 4
             },
 
             // second table that holds the utf-8 encoded values
             values: {
                 max: 65535 * 100, // 46452
                 sizeof: char8_8, description: `UTF-8 Encoded Decomposition Code Points`,
-            }, validateResults: false, genIndexAddenda: () => this.genAddenda(), getModifierAddenda: (meta) => {
+            },
+
+            genIndexAddenda: () => this.genAddenda(),
+            getModifierAddenda: (meta) => {
                 return {
                     ...self.findMaxLengths(meta), ...self.getCompositionCodePoint(meta),
                 };
@@ -231,20 +241,20 @@ class DecompTable {
 
             // this gets run just before we add the modifier to the indices table
             // modify: ({modifier, inserts}) => {
-                // flattening the inserts to include only the utf-8 bytes:
-                // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
+            // flattening the inserts to include only the utf-8 bytes:
+            // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
 
-                // add length to the modifier:
-                // modifier.set({length: inserts.length});
+            // add length to the modifier:
+            // modifier.set({length: inserts.length});
 
-                // Add empty fields to the values table:
-                // let newInserts = [];
-                // for (const item of inserts) {
-                //     newInserts.push(item);
-                //     for (let index = 1; index < modifier.max_length; index++) {
-                //         newInserts.push(0);
-                //     }
-                // }
+            // Add empty fields to the values table:
+            // let newInserts = [];
+            // for (const item of inserts) {
+            //     newInserts.push(item);
+            //     for (let index = 1; index < modifier.max_length; index++) {
+            //         newInserts.push(0);
+            //     }
+            // }
 
             //     return {
             //         modifier, inserts,
@@ -370,7 +380,7 @@ class DecompTable {
                 continue;
             }
             let changed = false;
-            for (;;) {
+            for (; ;) {
                 const codePoint1 = mappedTo[0];
                 if (!(codePoint1 in this.tables.data)) {
                     break; // not mapped
@@ -517,10 +527,11 @@ ${renderedTables}
     }
 }
 
-const createTableFile = async (tables) => {
-    const totalBits = tables.reduce((acc, cur) => acc + Number(cur.totalTablesSizeInBits()), 0,);
+const createTableFile = async (table) => {
+    const tableContents = table.render();
+    const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await getReadme();
-    const begContent = `
+    const content = `
 /**
  * Attention:
  *   Auto-generated file, don't modify this file; use the mentioned file below
@@ -559,9 +570,7 @@ const createTableFile = async (tables) => {
 
 namespace webpp::unicode::details {
 
-`;
-
-    const endContent = `
+${tableContents}
 
     template <typename CharT = char8_t, typename CPType>
         requires (sizeof(CharT) == sizeof(char8_t))
@@ -582,12 +591,7 @@ namespace webpp::unicode::details {
 #endif // WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
     `;
 
-    let pieces = [begContent];
-    for (const table of tables) {
-        pieces.push(table.render());
-    }
-    pieces.push(endContent);
-    await writePieces(outFile, pieces);
+    await writePieces(outFile, [content]);
     await runClangFormat(outFile);
 };
 

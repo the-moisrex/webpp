@@ -363,7 +363,7 @@ export const updateProgressBar = (percent, done = undefined) => {
     process.stdout.write(`[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`,); // Update the progress bar
 };
 
-export const downloadFile = async (url, file, process) => {
+export const downloadFile = async (url, file, process = noop) => {
     try {
         // Check if the file already exists in the cache
         await fs.access(file);
@@ -899,13 +899,15 @@ export const utf32To8All = (u32Array) => {
     return arr;
 };
 
-export const renderTableValues = ({name, printableValues, type, len}) => {
+export const renderTableValues = (info) => {
+    let {name, printableValues, type, len} = info;
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()} {
         ${printableValues
             .map((val) => {
+                val = info?.map?.(val, info) || val;
                 let res = "";
                 if (val.comment) {
                     res += `
@@ -926,6 +928,7 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
         valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()} {
         ${printableValues
             .map((val) => {
+                val = info?.map?.(val, info) || val;
                 let res = "";
                 if (val.comment) {
                     res += `
@@ -1179,7 +1182,7 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1, s
         if (last !== curVal && (splittingValues === undefined || splittingValues.includes(curVal) || splittingValues.includes(last))) {
             const length = (i - 1) - start;
             if (length >= min_length) {
-                tables.push({ 
+                tables.push({
                     start,
                     length, // Exclusive (the last value is not included)
                     commonValue: last
@@ -1202,14 +1205,14 @@ export function splitOn(table, splits = getSplitPoints(table)) {
     let tables = [];
     let lastEnd = 0;
     let offset = 0;
-    for (const { start, length, commonValue } of splits) {
+    for (const {start, length, commonValue} of splits) {
         if (start > lastEnd) {
             tables.push({
-               start: lastEnd,
-               length: start - lastEnd,
-               table: table.slice(lastEnd, start),
-               offset
-               // no common value here
+                start: lastEnd,
+                length: start - lastEnd,
+                table: table.slice(lastEnd, start),
+                offset
+                // no common value here
             });
         }
         tables.push({
@@ -1236,10 +1239,10 @@ export function splitOn(table, splits = getSplitPoints(table)) {
 /**
  * Finds the topCount packs of continuous values from the input table and splits
  * the table from those found breakpoints.
- * @param {Array} table 
- * @param {Number} topCount 
- * @param {Function} getValue 
- * @param {boolean} singleValue 
+ * @param {Array} table
+ * @param {Number} topCount
+ * @param {Function} getValue
+ * @param {boolean} singleValue
  * @returns {Array}
  */
 export function splitInto(table, topCount = 3, getValue = (val) => val, singleValue = false) {
@@ -1254,12 +1257,12 @@ export function splitInto(table, topCount = 3, getValue = (val) => val, singleVa
     topCount = splits.length < topCount ? splits.length : topCount;
 
     const commons = splits
-            .filter(item => item?.commonValue !== undefined);
+        .filter(item => item?.commonValue !== undefined);
     const lengths = commons.map(({length}) => length)
-            .toSorted((lhs, rhs) => rhs - lhs)
-            .slice(0, topCount);
+        .toSorted((lhs, rhs) => rhs - lhs)
+        .slice(0, topCount);
     const min_length = lengths[lengths.length - 1];
-    
+
     if (singleValue) {
         const values = Object.groupBy(commons, ({commonValue}) => commonValue);
         let bestValue = 0;
@@ -1302,3 +1305,37 @@ export function getLastSpecializedIn(value, list) {
     return undefined;
 }
 
+
+export function commentify(desc) {
+    return desc?.trim()?.replace(/[\n\r]/gim, "\n     * ") || "";
+}
+
+export function minRequireStorage(val) {
+    val = Number(val);
+    for (const bit of [1, 8, 16, 32, 64]) {
+        if (val < (0b1 << bit)) {
+            return bit;
+        }
+    }
+    throw new Error(`Value it too big: ${val}`);
+}
+
+export function findBestTypeFrom(arr, field) {
+    try {
+        const maxVal = arr.reduce((pick, fields) => Math.max(fields?.[field] || 0, pick), 1);
+        return symbolOf(minRequireStorage(maxVal));
+    } catch (err) {
+        console.error("field:", field, "Arr:", arr);
+        throw err;
+    }
+}
+
+export function alignmentOf(sizes) {
+    let max = sizes[0]; // Start with the first element
+    for (let i = 1; i < sizes.length; i++) {
+        if (Number(sizes[i]) > max) {
+            max = Number(sizes[i]);
+        }
+    }
+    return max;
+}

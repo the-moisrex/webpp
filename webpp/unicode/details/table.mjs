@@ -3,7 +3,20 @@ import {
     genIndexAddenda, ModifiedSpan, Modifier, rangeLength,
 } from "./modifiers.mjs";
 import {
-    cppValueOf, overlapInserts, realSizeOf, renderTableValues, Span, splitInto, TableTraits, uint32, uint64, uint8,
+    alignmentOf,
+    commentify,
+    cppValueOf, findBestTypeFrom, minRequireStorage,
+    noop,
+    overlapInserts,
+    realSizeOf,
+    renderTableValues,
+    Span,
+    splitInto, symbolOf,
+    TableTraits,
+    uint16,
+    uint32,
+    uint64,
+    uint8,
 } from "./utils.mjs";
 
 const verbose = process.argv.includes("--verbose");
@@ -27,10 +40,22 @@ export class TablePairs {
         this.#indexAddenda.name = `${this.#name}_index`;
         this.#indexAddenda.description = `${this.#name[0].toUpperCase()}${this.#name.substring(1)} (Index Table)\n${this.#description}`;
 
-        // the tables
-        this.indices = new TableTraits(this.#props?.indices?.max || 435300, this.#props?.indices?.sizeof || uint32,);
+        // the table that points to the values or blocks table
+        this.indices = new TableTraits(this.#props?.indices?.max || 435300, this.#props?.indices?.sizeof || uint32);
+        this.indices.tableName = this.#props.indices?.tableName || `${this.#name.toLowerCase()}_indices`;
+
+        // the table the points to the value table
+        if (this.#props?.blocks) {
+            this.blocks = new TableTraits(this.#props?.blocks?.max || 435300, this.#props?.blocks?.sizeof || uint16);
+            this.blocks.tableName = this.#props.blocks?.tableName || `${this.#name.toLowerCase()}_blocks`;
+        } else {
+            this.blocks = null;
+        }
+
+        // the table that contains the results
         if (this.#props?.values !== null) {
-            this.values = new TableTraits(this.#props?.values?.max || 655350, this.#props?.values?.sizeof || uint8,);
+            this.values = new TableTraits(this.#props?.values?.max || 655350, this.#props?.values?.sizeof || uint8);
+            this.values.tableName = this.#props.values?.tableName || `${this.#name.toLowerCase()}_values`;
         } else {
             this.values = null;
         }
@@ -39,13 +64,6 @@ export class TablePairs {
     add(codePoint, value) {
         // fill the data
         this.data[Number(codePoint)] = value;
-
-        // if (codePoint === 0xFFC4n || codePoint === 0x1F133n) {
-        //     debugger;
-        //     console.log("-------------------------------------");
-        //     console.log(codePoint.toString(16), codePoint, value, utf8To32(value.mappedTo), utf8To32(value.mappedTo)?.codePointAt(0)?.toString(16));
-        //     process.exit(0);
-        // }
     }
 
     #optimizeInserts(inserts, dataView, modifier) {
@@ -309,7 +327,7 @@ export class TablePairs {
         })),);
         if (possibilities.length === 0) {
             console.error(`  Empty possibilities:`, possibilities, this.values?.length || 0, this.data.length,);
-            console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers,);
+            console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers);
             debugger;
             process.exit(1);
         }
@@ -479,7 +497,7 @@ export class TablePairs {
     getBreakpointsTable(table) {
         table = table.toSorted();
         // console.log(table)
-        let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof));
+        let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof)) - 1;
         const limit = this.breakpointsTableLimit;
         let tableSize = 0;
         let breakpointsTable = [];
@@ -546,9 +564,7 @@ export class TablePairs {
         const {
             breakpointsTable, breakpointsTableShift
         } = this.getBreakpointsTable(uncommons.map(item => ({
-            starting: item.start,
-            ending: item.start + item.length,
-            offset: item.offset
+            starting: item.start, ending: item.start + item.length, offset: item.offset
         })));
         const commonValues = commons.map(item => item.commonValue);
         const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
@@ -556,9 +572,12 @@ export class TablePairs {
             console.error(commonValues);
             throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
         }
-        if (commons.length > 2) {
-            this.#breakpointsTableSize = BigInt(breakpointsTable.length) * realSizeOf(uint64);
-        }
+        const startingType = findBestTypeFrom(breakpointsTable, 'starting');
+        const endingType = findBestTypeFrom(breakpointsTable, 'ending');
+        const offsetType = findBestTypeFrom(breakpointsTable, 'offset');
+        const align = `std::uint${alignmentOf([realSizeOf(startingType), realSizeOf(endingType), realSizeOf(offsetType)])}_t`
+        const sumSize = BigInt(realSizeOf(startingType) + realSizeOf(endingType) + realSizeOf(offsetType));
+        this.#breakpointsTableSize = BigInt(breakpointsTable.length) * sumSize * 8n;
         let allIndicesBits = 0
         let allLength = 0;
         for (const info of uncommons) {
@@ -570,16 +589,12 @@ export class TablePairs {
             allIndicesBits += indicesBits;
             allLength += table.length;
 
-            result += `
-     // Section #${index} [${start}, ${start + length}) size containing ${length} values:
-     //   - in bits:       ${indicesBits}
-     //   - in bytes:      ${indicesBits / 8} B
-     //   - in KibiBytes:  ${(indicesBits / 8 / 1024).toFixed(2)} KiB
-    ${table.join(", ")},
+            result += `${table.join(", ")},
+    // End of Section #${index} [${start}, ${start + length}) containing ${length} values (${(indicesBits / 8 / 1024).toFixed(2)} KiB).
+    
     `;
             ++index;
         }
-
 
         return `
         ${this.#indexAddenda.render()}
@@ -592,10 +607,10 @@ export class TablePairs {
             // The removed part of the table has this value in them:
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
             ` : `
-            struct alignas(std::uint64_t) ${this.#name}_breakpoint_type {
-                ${this.#indexAddenda.STLTypeString} starting;
-                ${this.#indexAddenda.STLTypeString} ending;
-                ${this.#indexAddenda.STLTypeString} offset;
+            struct ${this.#name}_breakpoint_type {
+                ${startingType.description} starting;
+                ${endingType.description} ending;
+                ${offsetType.description} offset;
             };
             
 
@@ -614,87 +629,89 @@ export class TablePairs {
         `}
 
     /**
-     * ${this.#name.toUpperCase()} Index Table (combined ${uncommons.length} sections)
+     * ${this.#name} Index Table (combined ${uncommons.length} sections)
      *
-     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
-     *
+     * ${commentify(this.#props?.indices?.description)}
+     * ${this.#indexAddenda.addenda.length === 1 ? `
+     * Each value is a ${this.#indexAddenda.renderPlacements()}
+     * ` : `
      * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
      *     ${this.#indexAddenda.renderPlacements()}
-     *
+     * `}
      * Table size:
      *   - in bits:       ${allIndicesBits}
      *   - in bytes:      ${allIndicesBits / 8} B
      *   - in KibiBytes:  ${(allIndicesBits / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<${this.#indexAddenda.name}, ${allLength}ULL> ${this.#name.toLowerCase()}_indices{
+    static constexpr std::array<${this.#indexAddenda.name}, ${allLength}ULL> ${this.indices.tableName} {
         ${result}
     };
 
         `;
     }
 
-    render() {
-        if (this.indices.length === 0 || this.values?.length === 0) {
-            throw new Error(`Index or values table is empty: (index: ${this.indices.length}) (values: ${this.values?.length})`,);
+    #renderBlocksTables() {
+        if (!this.blocks) {
+            return "";
+        }
+
+        return `
+        
+        `;
+    }
+
+    #renderValuesTables() {
+        if (!this.values) {
+            return "";
         }
 
         const indices = this.indices.result;
-
+        const valuesBits = Number(this.valuesTableSizeInBits());
         let printableValues = [];
 
-        if (this.values !== null) {
-            if (this.#props?.disableComments) {
-                printableValues = [[...this.values.result]];
-            } else {
-                printableValues = [];
+        if (this.#props?.disableComments) {
+            printableValues = [[...this.values.result]];
+        } else {
+            printableValues = [];
 
-                const poses = {};
-                const posesMeta = {};
-                indices.forEach((code, index) => {
-                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
-                    if (poses[curPos] === undefined) {
-                        poses[curPos] = [];
-                        posesMeta[curPos] = {
-                            lastRangeStart: NaN, rangeStart: 0,
-                        };
-                    }
-                    const rangeStart = index << Number(this.#indexAddenda.chunkShift);
-                    const codeStr = `0x${rangeStart.toString(16)}`;
-                    if (rangeStart === posesMeta[curPos].lastRangeStart + Number(this.#indexAddenda.chunkSize)) {
-                        poses[curPos][poses[curPos].length - 1] = `${posesMeta[curPos].rangeStart}-${codeStr}`;
-                    } else {
-                        poses[curPos].push(codeStr);
-                        posesMeta[curPos].rangeStart = codeStr;
-                    }
-                    posesMeta[curPos].lastRangeStart = rangeStart;
-                });
+            const poses = {};
+            const posesMeta = {};
+            indices.forEach((code, index) => {
+                const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
+                if (poses[curPos] === undefined) {
+                    poses[curPos] = [];
+                    posesMeta[curPos] = {
+                        lastRangeStart: NaN, rangeStart: 0,
+                    };
+                }
+                const rangeStart = index << Number(this.#indexAddenda.chunkShift);
+                const codeStr = `0x${rangeStart.toString(16)}`;
+                if (rangeStart === posesMeta[curPos].lastRangeStart + Number(this.#indexAddenda.chunkSize)) {
+                    poses[curPos][poses[curPos].length - 1] = `${posesMeta[curPos].rangeStart}-${codeStr}`;
+                } else {
+                    poses[curPos].push(codeStr);
+                    posesMeta[curPos].rangeStart = codeStr;
+                }
+                posesMeta[curPos].lastRangeStart = rangeStart;
+            });
 
-                // add comments in the middle of the data
-                this.values.result.forEach((value, pos) => {
-                    value = cppValueOf(value, this.values.type);
-                    if ((poses?.[pos]?.length || 0) === 0) {
-                        printableValues.at(-1).push(value);
-                        return;
-                    }
-                    printableValues.push([]);
+            // add comments in the middle of the data
+            this.values.result.forEach((value, pos) => {
+                value = cppValueOf(value, this.values.type);
+                if ((poses?.[pos]?.length || 0) === 0) {
                     printableValues.at(-1).push(value);
-                    printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`;
-                });
-            }
+                    return;
+                }
+                printableValues.push([]);
+                printableValues.at(-1).push(value);
+                printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`;
+            });
         }
-
-        const renderFunc = this.#props?.processRendered || ((content) => content);
-
-        const valuesBits = Number(this.valuesTableSizeInBits());
-
-        return renderFunc(`
-    ${this.#renderIndicesTables()}
-
-    ${this.values === null ? "" : `
+        return `
     /**
      * ${this.#name.toUpperCase()} Values Table
      *
-     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
+     * ${commentify(this.#props?.values?.description)}
      *
      * Table size:
      *   - in bits:       ${valuesBits}
@@ -702,9 +719,27 @@ export class TablePairs {
      *   - in KibiBytes:  ${(valuesBits / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
-            name: `${this.#name}_values`, type: this.values.type, printableValues, len: this.values.length,
+            name: this.values.tableName,
+            type: this.values.type,
+            printableValues,
+            len: this.values.length,
+            map: this.#props?.values?.map
         })}
-    `}
+    `;
+    }
+
+    render() {
+        if (this.indices.length === 0 || this.values?.length === 0) {
+            throw new Error(`Index or values table is empty: (index: ${this.indices.length}) (values: ${this.values?.length})`);
+        }
+        const renderFunc = this.#props?.processRendered || ((content) => content);
+
+        return renderFunc(`
+    ${this.#renderIndicesTables()}
+
+    ${this.#renderBlocksTables()}
+    
+    ${this.#renderValuesTables()}
         `);
     }
 }

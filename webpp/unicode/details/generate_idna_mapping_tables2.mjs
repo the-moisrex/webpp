@@ -6,11 +6,8 @@
  */
 
 import {
-    downloadFile,
-    splitLine,
     findVersion,
     findDate,
-    cleanComments,
     uint16,
     char8_8,
     uint32,
@@ -18,58 +15,49 @@ import {
     runClangFormat,
     writePieces,
     renderTableValues,
-    parseCodePointRangeExclusive,
     sizeOf,
     toHexString,
     recursiveLength,
     findSimilarSubRange,
     findSimilarRange,
-    packBoolsIntoInts, smashOverlappedBlocks, overlapInserts, removeOverlaps
+    packBoolsIntoInts, removeOverlaps, downloadFile
 } from "./utils.mjs";
+
+import {
+    fileUrl,
+    isMapped,
+    cacheFilePath,
+    DISALLOWED,
+    isDisallowed,
+    MAPPED,
+    outFilePath,
+    flagsStatus,
+    isNotMapped,
+    flagsOr,
+    VALID,
+    NOT_MAPPED,
+    isValid, parseIDNAMappingTable
+} from "./IdnaMappingTable.mjs"
 
 import * as path from "node:path";
 
-const fileUrl = 'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
-const cacheFilePath = 'IdnaMappingTable.txt';
-const outFilePath = `idna_mapping_tables.hpp`;
-
-
 const start = async () => {
-    await downloadFile(fileUrl, cacheFilePath, processCachedFile);
-};
-
-const parseMappedCodePoints = codePoints => codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
-
-// UTF-16 version:
-const MAPPED = 0b000 << 13;
-const NOT_MAPPED = 0b100 << 13;
-const DISALLOWED = NOT_MAPPED | 0b010;
-const VALID = DISALLOWED | 0b1;
-
-// UTF-8 version:
-// const MAPPED = 0b0 << 7;
-// const NOT_MAPPED = 0b1 << 7;
-// const VALID = NOT_MAPPED | 0b011;
-// const DISALLOWED = NOT_MAPPED | 0b010;
-
-const isMapped = (flags) => flags < NOT_MAPPED;
-const isValid = (flags) => flags === VALID;
-const isDisallowed = (flags) => flags === DISALLOWED;
-const isNotMapped = (flags) => !isMapped(flags);
-const flagsStatus = (flags) => {
-    switch (flags) {
-        case VALID:
-            return "valid";
-        case NOT_MAPPED:
-            return "not_mapped";
-        case DISALLOWED:
-            return "disallowed";
-        default:
-            return isMapped(flags) ? `<Mapped:${flags}>` : `<invalid:${flags.toString(16)}>`;
+    const fileContent = await downloadFile(fileUrl, cacheFilePath);
+    const version = findVersion(fileContent);
+    const creationDate = findDate(fileContent);
+    if (version === undefined || creationDate === undefined) {
+        console.error("Could not find the version from the file content.");
+        return;
     }
+    console.log(`Version: ${version}`);
+    console.log(`Creation Date: ${creationDate}`);
+    const table = new MappingTable();
+    await parseIDNAMappingTable(table, fileContent);
+    table.process();
+    await writePieces(outFilePath, [table.render(version, creationDate)]);
+    await runClangFormat(outFilePath);
+    console.log('File processing completed.');
 };
-const flagsOr = (flags, pos) => flags | (isMapped(flags) ? pos : 0);
-
 
 class MappingTable {
 
@@ -121,7 +109,7 @@ class MappingTable {
         // this number affects the size of the tables, try changing it:
         this.#batchBitCount = 6n;
         this.#batchSize = 0b1 << Number(this.#batchBitCount);
-        //     this.#bitLength = Number(this.#refs.sizeof);
+        // this.#bitLength = Number(this.#refs.sizeof);
 
         this.#refMax = (0b1 << Number(sizeOf(this.#refs.type))) - 1;
         this.#refBlocksMax = (0b1 << Number(sizeOf(this.#refBlocks.type))) - 1;
@@ -129,25 +117,15 @@ class MappingTable {
         this.#tablePickMask = 0b1 << (Number(this.#refs.sizeof) - 1);
     }
 
-    append(start, end, flags, mappedTo = []) {
+    add(codePoint, value) {
         // console.assert((mappedTo?.length || 1) > 0 && !isMapped(flags), `Flags don't match the other inputs.`, start, end, flags, mappedTo);
 
-        for (; start <= end; ++start) {
-            const raw = {
-                codePoint: BigInt(start),
-                flags,
-                mappedTo,
-                utf8MappedTo: utf32To8All(mappedTo)
-            };
-
-            // calculating the last disallowed code point
-            if (!isDisallowed(flags)) {
-                this.#lastDisallowed = raw.codePoint + 1n;
-            }
-
-            // console.log(raw)
-            this.#rawMaps.push(raw);
+        // calculating the last disallowed code point
+        if (!isDisallowed(value.flags)) {
+            this.#lastDisallowed = codePoint + 1n;
         }
+
+        this.#rawMaps.push(value);
     }
 
     findBreakPoint() {
@@ -550,74 +528,6 @@ namespace webpp::unicode::idna::details {
 #endif // WEBPP_UNICODE_IDNA_MAPPING_TABLES_HPP
   `;
     }
-}
-
-
-const processCachedFile = async fileContent => {
-    const lines = fileContent.split('\n');
-    const version = findVersion(fileContent);
-    const creationDate = findDate(fileContent);
-    console.assert(version !== undefined, "Could not find the version from the file content.");
-    console.assert(creationDate !== undefined, "No date was found.");
-    console.log(`Version: ${version}`);
-    console.log(`Creation Date: ${creationDate}`);
-
-    const tables = new MappingTable();
-    let maxMappedCount = 0;
-    let cpSum = 0n;
-    lines.forEach((line, index) => {
-        line = cleanComments(line)
-
-        // ignore empty lines
-        if (line.length === 0) {
-            return "";
-        }
-
-        const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
-        const [rangeStart, rangeEnd] = parseCodePointRangeExclusive(codePoints);
-        let mappedValues = mapping ? parseMappedCodePoints(mapping) : undefined;
-
-        let flags = 0;
-        switch (status) {
-            case 'deviation': // https://www.unicode.org/reports/tr46/#Deviations
-            // Deviations are considered valid in IDNA2008 and UTS #46.
-            case 'valid':
-                flags |= VALID;
-                break;
-            case 'ignored':
-                flags |= MAPPED;
-                mappedValues = [];
-                break;
-            case 'mapped':
-                flags |= MAPPED;
-                break;
-            case 'disallowed':
-                flags |= DISALLOWED;
-                break;
-            default:
-                console.error(`Invalid 'status' found: ${status}; line: ${line}`);
-                process.exit(1);
-        }
-        tables.append(rangeStart, rangeEnd, flags, mappedValues);
-
-        if (mappedValues?.length > maxMappedCount) {
-            maxMappedCount = mappedValues.length;
-        }
-        cpSum += rangeEnd - rangeStart + 1n;
-
-        // console.log(`${index}/${cpSum}:`, rangeStart, rangeEnd, status, mappedValues || "", IDNA2008Status || "");
-    });
-
-
-    console.log("Max Mapped Count: ", maxMappedCount);
-    tables.process();
-
-    await writePieces(outFilePath, [tables.render(version, creationDate)]);
-
-    // Reformat the file
-    await runClangFormat(outFilePath);
-
-    console.log('File processing completed.');
 }
 
 

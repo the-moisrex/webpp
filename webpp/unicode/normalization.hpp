@@ -247,27 +247,37 @@ namespace webpp::unicode {
         requires UTF32<CharT>
     static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point)
       noexcept(istl::NothrowAppendable<Iter>) {
+        using details::decomp_breakpoints;
+        using details::decomp_common_position;
         using details::decomp_index;
         using details::decomp_indices;
+        using details::decomp_values;
         using details::trailing_mapped_deomps;
         using unchecked::append;
 
         // Not mapped
-        if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-            return append<Iter, SizeT>(out, code_point);
-        }
+        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+        //     return append<Iter, SizeT>(out, code_point);
+        // }
 
         // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
-        if (is_hangul_code_point(code_point)) [[unlikely]] {
+        if (is_hangul_code_point(code_point)) {
             return decompose_hangul<Iter, SizeT>(out, code_point);
         }
 
-        // Look at the ccc_index table, for how this works:
-        auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
-        auto const code             = decomp_indices[code_point_range];
+        auto const chunk         = code_point >> decomp_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
+        if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
+            return append<Iter, SizeT>(out, code_point);
+        }
+        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+        decomp_index const code =
+          chunk < starting || chunk >= ending
+            ? decomp_common_position
+            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         // Not mapped at all, that means the code point is mapped to itself.
-        if (code.max_length == 0) [[likely]] {
+        if (code.max_length == 0) {
             return append<Iter, SizeT>(out, code_point);
         }
 
@@ -282,11 +292,9 @@ namespace webpp::unicode {
         webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
 
         auto const len = static_cast<SizeT>(ptr - start_ptr);
-
-        if (len == 0) [[likely]] {
+        if (len == 0) {
             return append<Iter, SizeT>(out, code_point);
         }
-
         return len;
     }
 
@@ -360,10 +368,6 @@ namespace webpp::unicode {
         [[nodiscard]] static constexpr decomposition_details<SizeT> canon_decomp_details(
           Iter        pos,
           Iter const& end) noexcept {
-            using details::decomp_index;
-            using details::decomp_indices;
-            using details::decomp_values;
-            using details::trailing_mapped_deomps;
             using enum checked::error_handling;
 
             using char_type = typename std::iterator_traits<Iter>::value_type;
@@ -382,14 +386,16 @@ namespace webpp::unicode {
                     continue;
                 }
 
-                if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+                auto const chunk         = code_point >> decomp_index::chunk_shift;
+                auto const section_index = static_cast<stl::uint16_t>(chunk >> decomp_breakpoint_shift);
+                if (chunk >= decomp_last_breakpoint) [[unlikely]] {
                     continue;
                 }
-
-                // Look at the ccc_index table, for how this works:
-                auto const code_point_range =
-                  static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
-                auto const code = decomp_indices[code_point_range];
+                auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+                decomp_index const code =
+                  chunk < starting || chunk >= ending
+                    ? decomp_common_position
+                    : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
                 // calculating the length of te value in the decomp_values table:
                 info.max_length += code.max_length;

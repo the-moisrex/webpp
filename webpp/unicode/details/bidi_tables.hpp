@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 04 Apr 2025 10:22:03 GMT
+ *   This file's generation date:        Sat, 12 Apr 2025 07:41:57 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       84256
@@ -174,12 +174,11 @@ namespace webpp::unicode::details {
 
 
     /**
-     * BIDI Index Table (combined 21 sections)
+     * bidi Index Table (combined 21 sections)
      *
      * Bidi: Bidirectional Class
      *
-     * Each value contains 1 numbers hidden inside:
-     *     [16bits = pos]
+     * Each value is a [16bits = pos]
      *
      * Table size:
      *   - in bits:       28160
@@ -2058,10 +2057,11 @@ namespace webpp::unicode::details {
 
 
 
+
     /**
      * BIDI Values Table
      *
-     * Bidi: Bidirectional Class
+     * Bidi: Bidirectional Class Values
      *
      * Table size:
      *   - in bits:       51744

@@ -6017,6 +6017,7 @@ TEST(Unicode, UTFLeadingCodeUnitsTest) {
 
 TEST(Unicode, CanonicalComposeSpecial) {
     using webpp::unicode::toNFC;
+    using webpp::unicode::toNFD;
     if constexpr (enable_utf8_composition_tests) {
         EXPECT_EQ(U"⋬⋬⋬", toNFC<std::u32string>(U"⋬⋬⋬"));
         std::u8string str8 = u8"⋬⋬⋬";
@@ -6031,6 +6032,9 @@ TEST(Unicode, CanonicalComposeSpecial) {
 
         EXPECT_EQ(u8"ֱָֹ֑׃ְ֬֟", toNFC<std::u8string>(u8"ֱָֹ֑׃ְ֬֟"));
         EXPECT_EQ(u8"𤋮", toNFC<std::u8string>(u8"𤋮"));
+
+        EXPECT_EQ(U"\x8C48", toNFD<std::u32string>(U"\xF900"));
+        EXPECT_EQ(u8"豈", toNFD<std::u8string>(u8"豈"));
 
         EXPECT_EQ(U"ąུ̡᷎b", toNFC<std::u32string>(U"ąུ̡᷎b"));
         EXPECT_EQ(u8"ąུ̡᷎b", toNFC<std::u8string>(u8"ąུ̡᷎b"));
