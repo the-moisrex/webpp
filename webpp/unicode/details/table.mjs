@@ -5,13 +5,12 @@ import {
 import {
     alignmentOf,
     commentify,
-    cppValueOf, findBestTypeFrom, minRequireStorage,
-    noop,
+    cppValueOf, findBestTypeFrom,
     overlapInserts,
     realSizeOf,
     renderTableValues,
     Span,
-    splitInto, symbolOf,
+    splitInto,
     TableTraits,
     uint16,
     uint32,
@@ -27,7 +26,7 @@ export class TablePairs {
     #description = "";
     data = []; // raw, unprocessed data
     #props = {};
-    #indicesTables = [];
+    #indicesTables = []; // it's distilled from this.indices
     #breakpointsTableSize = 0n;
 
     init(meta) {
@@ -43,14 +42,6 @@ export class TablePairs {
         // the table that points to the values or blocks table
         this.indices = new TableTraits(this.#props?.indices?.max || 435300, this.#props?.indices?.sizeof || uint32);
         this.indices.tableName = this.#props.indices?.tableName || `${this.#name.toLowerCase()}_indices`;
-
-        // the table the points to the value table
-        if (this.#props?.blocks) {
-            this.blocks = new TableTraits(this.#props?.blocks?.max || 435300, this.#props?.blocks?.sizeof || uint16);
-            this.blocks.tableName = this.#props.blocks?.tableName || `${this.#name.toLowerCase()}_blocks`;
-        } else {
-            this.blocks = null;
-        }
 
         // the table that contains the results
         if (this.#props?.values !== null) {
@@ -557,7 +548,7 @@ export class TablePairs {
     }
 
     #renderIndicesTables() {
-        let result = "";
+        let printableValues = [];
         let index = 1;
         const commons = this.#commonIndices;
         const uncommons = this.#uncommonIndices;
@@ -588,11 +579,8 @@ export class TablePairs {
             const indicesBits = table.length * Number(this.#indexAddenda.realSize);
             allIndicesBits += indicesBits;
             allLength += table.length;
-
-            result += `${table.join(", ")},
-    // End of Section #${index} [${start}, ${start + length}) containing ${length} values (${(indicesBits / 8 / 1024).toFixed(2)} KiB).
-    
-    `;
+            table.trailing_comment = `End of Section #${index} [${start}, ${start + length}) containing ${length} values (${(indicesBits / 8 / 1024).toFixed(2)} KiB).`
+            printableValues.push(table);
             ++index;
         }
 
@@ -643,20 +631,13 @@ export class TablePairs {
      *   - in bytes:      ${allIndicesBits / 8} B
      *   - in KibiBytes:  ${(allIndicesBits / 8 / 1024).toFixed(2)} KiB
      */
-    static constexpr std::array<${this.#indexAddenda.name}, ${allLength}ULL> ${this.indices.tableName} {
-        ${result}
-    };
-
-        `;
-    }
-
-    #renderBlocksTables() {
-        if (!this.blocks) {
-            return "";
-        }
-
-        return `
-        
+    ${renderTableValues({
+        name: this.indices.tableName,
+        type: this.#indexAddenda,
+        printableValues,
+        len: allLength,
+        map: this.#props?.indices?.map
+    })}
         `;
     }
 
@@ -737,8 +718,6 @@ export class TablePairs {
         return renderFunc(`
     ${this.#renderIndicesTables()}
 
-    ${this.#renderBlocksTables()}
-    
     ${this.#renderValuesTables()}
         `);
     }

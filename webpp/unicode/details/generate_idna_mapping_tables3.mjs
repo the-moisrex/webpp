@@ -8,8 +8,17 @@ import * as path from "node:path";
 import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {char8, char8_8, runClangFormat, uint16, uint32, uint5, uint8, writePieces} from "./utils.mjs";
+import {
+    char8_8, findSimilarSubRange, realSizeOf, recursiveLength,
+    renderTableValues,
+    runClangFormat, TableTraits,
+    uint16,
+    uint32, uint4,
+    uint5, uint6, uint8,
+    writePieces
+} from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
+import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, VALID} from "./IdnaMappingTable.mjs";
 
 const start = async () => {
     await readme.download();
@@ -24,11 +33,12 @@ const start = async () => {
 
 class IDNAMappings {
     tables = new TablePairs();
-    lastZero = 0n;
+    mappingsTable = [];
+    lastDisallowed = 0n;
 
     constructor() {
         this.tables.init({
-            name: "IDNA Mapping",
+            name: "idna",
             description: "IDNA Mapping Index table",
             ignoreErrors: false,
             disableComments: false,
@@ -36,58 +46,80 @@ class IDNAMappings {
 
             indices: {
                 tableName: "idna_mapping_ref",
-                sizeof: uint32,
+                sizeof: uint16,
 
                 // split the indices table
-                splitInto: 20,
+                splitInto: 5,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
-
                 description: `IDNA Mappings`,
             },
-            blocks: {
-                sizeof: uint16,
-                description: "Block values of the IDNA Mappings"
-            },
             values: {
-                tableName: "idna_mappings", // table name
-                sizeof: char8_8, // turning it into a string
-                description: `IDNA Mapping Values`,
-                map(val, {name}) {
-                    // todo: add comments
+                tableName: "idna_mapping_blocks", // table name
+                sizeof: uint16,
+                description: "Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's not VALID or DISALLOWED specifically specified.",
+
+                // convert values of the values table into booleans if possible, and put them into a different table
+                boolOf(val) {
+                    return val === VALID ? true : val === DISALLOWED ? false : null;
+                },
+
+                /// it runs on print
+                map(vals, info) {
+                    for (let i = 0; i !== vals.length; ++i) {
+                        switch (vals[i]) {
+                            case DISALLOWED:
+                                vals[i] = "disallowed";
+                                break;
+                            case VALID:
+                                vals[i] = "valid";
+                                break;
+                        }
+                    }
                 }
             },
-            genIndexAddenda: () => genSimpleIndexAddenda("index", uint5),
+            genIndexAddenda: () => genSimpleIndexAddenda("index", uint6),
         });
     }
 
     /// proxy the function
     process() {
         this.tables.process();
-        const lastZeroBucket = this.lastZero >> this.tables.chunkShift;
+        const lastZeroBucket = this.lastDisallowed >> this.tables.chunkShift;
         console.log(
             "Trim indices table at: ",
             lastZeroBucket,
-            `(${this.lastZero} >> ${this.tables.chunkShift})`,
+            `(${this.lastDisallowed} >> ${this.tables.chunkShift})`,
         );
         this.tables.indices.trimAt(lastZeroBucket);
     }
 
-    add(codePoint, value) {
+    add(codePoint, {flags, mappedTo, utf8MappedTo}) {
         codePoint = BigInt(codePoint);
-        value = Number(value);
 
         // calculating the last item that it's value is zero
-        if (value !== 0) {
-            // this.lastZero = codePoint + 1;
+        if (isDisallowed(flags)) {
             // find the end of the batch, not just the last item
             const lastZero =
                 (((codePoint + 1n) >> this.tables.chunkShift) + 1n) <<
                 this.tables.chunkShift;
-            if (lastZero > this.lastZero) {
-                this.lastZero = lastZero;
+            if (lastZero > this.lastDisallowed) {
+                this.lastDisallowed = lastZero;
             }
         }
-        return this.tables.add(codePoint, value);
+
+        if (isMapped(flags)) {
+            const utf8Vals = [...utf8MappedTo, 0];
+            utf8Vals.codePoints = [];
+            let blockPtr = findSimilarSubRange(utf8Vals, this.mappingsTable);
+            if (blockPtr === null) {
+                blockPtr = this.mappingsTable.length;
+                this.mappingsTable.push(utf8Vals);
+            }
+            this.mappingsTable[blockPtr].codePoints.push(codePoint);
+            this.tables.add(codePoint, blockPtr);
+        } else {
+            this.tables.add(codePoint, flags);
+        }
     }
 
     render() {
@@ -95,19 +127,24 @@ class IDNAMappings {
     /**
      * The last code point that has a mapping status:
      */
-    static constexpr auto idna_mapping_trailing_zero = 0x${this.lastZero.toString(16).toUpperCase()}UL;
+    static constexpr auto idna_mapping_trailing_zero = 0x${this.lastDisallowed.toString(16).toUpperCase()}UL;
 
 ${this.tables.render()}
         `;
     }
 
     totalTablesSizeInBits() {
-        return this.tables.totalTablesSizeInBits();
+        return this.tables.totalTablesSizeInBits() + this.mappingsTableSizeInBits();
+    }
+
+    mappingsTableSizeInBits() {
+        return BigInt(recursiveLength(this.mappingsTable)) * realSizeOf(char8_8);
     }
 }
 
 const createTableFile = async (table) => {
     const tableContent = table.render();
+    const mappingsBits = Number(table.mappingsTableSizeInBits());
     const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await readme.getReadme();
     const competition = 16.98;
@@ -134,7 +171,7 @@ const createTableFile = async (table) => {
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  *
- * IDNA Mapping Tables are derrived from here:
+ * IDNA Mapping Tables are derived from here:
  *   ${IDNAMappingTable.fileUrl}
  * UCD README file (used to check the version and creation date):
  *   ${readme.fileUrl}
@@ -148,8 +185,34 @@ const createTableFile = async (table) => {
 
 namespace webpp::unicode::details {
 
+    static constexpr auto last_disallowed = static_cast<char32_t>(0x${table.lastDisallowed.toString(16).toUpperCase()});
+
+    [[maybe_unused]] static constexpr ${table.tables.values.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
+    static constexpr ${table.tables.values.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
+    static constexpr ${table.tables.values.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
+    
+
 ${tableContent}
 
+    /**
+     * IDNA Mappings
+     *
+     * Table size:
+     *   - in bits:       ${mappingsBits}
+     *   - in bytes:      ${mappingsBits / 8} B
+     *   - in KibiBytes:  ${(mappingsBits / 8 / 1024).toFixed(2)} KiB
+     */
+    ${renderTableValues({
+        name: "idna_mappings",
+        type: char8_8,
+        printableValues: table.mappingsTable,
+        len: recursiveLength(table.mappingsTable),
+        map: val => {
+            val.inline_comment = val.codePoints.map(cp => cp.toString(16).toUpperCase()).join(", ")
+            return val;
+        }
+    })}
+    \`;
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_IDNA_MAPPINGS_TABLES_HPP

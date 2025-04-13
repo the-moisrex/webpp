@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 12 Apr 2025 07:42:00 GMT
+ *   This file's generation date:        Sun, 13 Apr 2025 17:05:00 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       82824
@@ -130,8 +130,8 @@ namespace webpp::unicode::details {
         /**
          * [16bits = pos]
          */
-        explicit(false) consteval ccc_index(std::uint16_t const value) noexcept
-          : pos{static_cast<std::uint16_t>(value)} {}
+        explicit(false) consteval ccc_index(std::uint16_t const value) noexcept :
+          pos{static_cast<std::uint16_t>(value)} {}
 
         [[nodiscard]] constexpr std::uint16_t value() const noexcept {
             return static_cast<std::uint16_t>(pos);
@@ -167,11 +167,6 @@ namespace webpp::unicode::details {
      *   - in KibiBytes:  1.91 KiB
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
-
-      // Section #1 [0, 979) size containing 979 values:
-      //   - in bits:       15664
-      //   - in bytes:      1958 B
-      //   - in KibiBytes:  1.91 KiB
       0,    0,    0,    0,    0,    0,    128,  0,    0,    253,  0,    364,  476,  589,  700,  775,  901,
       1006, 1134, 1219, 1346, 1346, 1346, 1424, 1502, 1346, 1589, 1427, 1667, 1743, 1847, 1975, 2048, 2163,
       0,    0,    0,    0,    2198, 0,    0,    0,    0,    0,    0,    0,    2306, 2359, 0,    2453, 2524,
@@ -230,9 +225,10 @@ namespace webpp::unicode::details {
       0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
       0,    0,    0,    0,    0,    0,    0,    0,    7649, 7762, 7134, 0,    0,    7844, 0,    0,    0,
       7956, 0,    8068, 0,    0,    0,    0,    0,    8180, 8267,
+      // End of Section #1 [0, 979) containing 979 values (1.91 KiB).
 
+      // done
     };
-
 
 
 
@@ -747,7 +743,9 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 230,
       230, 230, 230, 230, 230, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      // done
+    };
 
 
 

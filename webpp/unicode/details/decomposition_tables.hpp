@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sat, 12 Apr 2025 12:40:23 GMT
+ *   This file's generation date:        Sun, 13 Apr 2025 17:05:05 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -194,9 +194,8 @@ namespace webpp::unicode::details {
       0, 6932228, 6997764, 7063300, 7128836, 7194372, 7259908, 7325444, 7390980, 7456516,
       // End of Section #5 [3039, 3049) containing 10 values (0.04 KiB).
 
-
+      // done
     };
-
 
 
 

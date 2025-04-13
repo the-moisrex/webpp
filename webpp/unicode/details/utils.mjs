@@ -623,10 +623,6 @@ export class TableTraits {
         return (this.bytes[index] = value);
     }
 
-    push(value) {
-        return (this.bytes[this.index++] = value);
-    }
-
     setAt(index, values = []) {
         const endIndex = index + values.length;
         if (endIndex > this.index) {
@@ -667,6 +663,14 @@ export class TableTraits {
         this.bytes[this.index++] = Number(value);
     }
 
+    push(value) {
+        this.append(value);
+    }
+
+    add(value) {
+        this.append(value);
+    }
+
     appendList(list) {
         for (const value of list) {
             this.append(value);
@@ -680,6 +684,16 @@ export class TableTraits {
     clear(value = 0) {
         this.bytes.fill(value);
         this.index = 0;
+    }
+
+    findOrAdd(values) {
+        let pos = findSimilarRange(values, this);
+        if (pos !== null) {
+            return pos;
+        }
+        pos = this.index;
+        this.appendList(values);
+        return pos;
     }
 }
 
@@ -905,43 +919,52 @@ export const renderTableValues = (info) => {
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()} {
-        ${printableValues
-            .map((val) => {
-                val = info?.map?.(val, info) || val;
-                let res = "";
-                if (val.comment) {
-                    res += `
-        // ${val.comment}
-        `;
-                }
-                res += `${prefix}"${val.join("")}"`;
-                if (val.inline_comment) {
-                    res += ` // ${val.inline_comment}`;
-                }
-                return res;
-            })
+        ${printableValues.map((val) => {
+            val = info?.map?.(val, info) || val;
+            let res = "";
+            if (val.comment) {
+                res += `
+                    // ${val.comment}
+                `;
+            }
+            res += `${prefix}"${val?.join("") || val}"`;
+            if (val.inline_comment) {
+                res += ` // ${val.inline_comment}`;
+            }
+            if (val?.trailing_comment) {
+                res += `
+                    // ${val.trailing_comment}
+                    `;
+            }
+            return res;
+        })
             .join("\n")}
         , ${len}UL // String Length
     };
             `;
     } else {
-        valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()} {
-        ${printableValues
-            .map((val) => {
-                val = info?.map?.(val, info) || val;
-                let res = "";
-                if (val.comment) {
-                    res += `
-        // ${val.comment}
-        `;
-                }
-                res += val.join(", ");
-                if (val.inline_comment) {
-                    res += ` // ${val.inline_comment}`;
-                }
-                return res;
-            })
-            .join(", \n")}
+        valuesTable = `static constexpr std::array<${type?.name || type.description}, ${len}ULL> ${name.toLowerCase()} {
+        ${printableValues.map((val) => {
+            val = info?.map?.(val, info) || val;
+            let res = "";
+            if (val.comment) {
+                res += `
+                    // ${val.comment}
+               `;
+            }
+            res += val.join(", ");
+            res += ", "
+            if (val?.inline_comment) {
+                res += ` // ${val.inline_comment}`;
+            }
+            if (val?.trailing_comment) {
+                res += `
+                     // ${val.trailing_comment}
+                 `;
+            }
+            return res;
+        }).join("\n")}
+        // done
     };
             `;
     }
@@ -1183,8 +1206,7 @@ export function getSplitPoints(table, getValue = (val) => val, min_length = 1, s
             const length = (i - 1) - start;
             if (length >= min_length) {
                 tables.push({
-                    start,
-                    length, // Exclusive (the last value is not included)
+                    start, length, // Exclusive (the last value is not included)
                     commonValue: last
                 });
             }
@@ -1208,18 +1230,12 @@ export function splitOn(table, splits = getSplitPoints(table)) {
     for (const {start, length, commonValue} of splits) {
         if (start > lastEnd) {
             tables.push({
-                start: lastEnd,
-                length: start - lastEnd,
-                table: table.slice(lastEnd, start),
-                offset
+                start: lastEnd, length: start - lastEnd, table: table.slice(lastEnd, start), offset
                 // no common value here
             });
         }
         tables.push({
-            start,
-            length,
-            commonValue,
-            // table: table.slice(start, start + length),
+            start, length, commonValue, // table: table.slice(start, start + length),
             offset
         });
         lastEnd = start + length;
@@ -1227,10 +1243,7 @@ export function splitOn(table, splits = getSplitPoints(table)) {
     }
     if (lastEnd !== table.length) {
         tables.push({
-            start: lastEnd,
-            length: table.length - lastEnd,
-            table: table.slice(lastEnd, table.length),
-            offset
+            start: lastEnd, length: table.length - lastEnd, table: table.slice(lastEnd, table.length), offset
         });
     }
     return tables;
@@ -1248,9 +1261,7 @@ export function splitOn(table, splits = getSplitPoints(table)) {
 export function splitInto(table, topCount = 3, getValue = (val) => val, singleValue = false) {
     if (topCount <= 1) {
         return [{
-            start: 0,
-            length: table.length,
-            table
+            start: 0, length: table.length, table
         }];
     }
     const splits = getSplitPoints(table, getValue);
