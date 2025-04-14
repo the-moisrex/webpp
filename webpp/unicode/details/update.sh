@@ -33,7 +33,9 @@ function run() {
   fi
 
   if [ -f "$log_file" ]; then
-    mv "$log_file" "$log_file.backup-${RANDOM}.log"
+    file="$log_file.backup-${RANDOM}.log"
+    mv "$log_file" "$file"
+    gzip "$file"
   fi
 
   echo "Running $(basename "$file")"

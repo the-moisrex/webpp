@@ -14,3 +14,4 @@ PropertyValueAliases.txt
 
 # update.sh will create logs
 *.log
+*.log.gz

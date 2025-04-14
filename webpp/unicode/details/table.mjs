@@ -15,7 +15,7 @@ import {
     uint16,
     uint32,
     uint64,
-    uint8,
+    uint8, updateProgressBar,
 } from "./utils.mjs";
 
 const verbose = process.argv.includes("--verbose");
@@ -313,9 +313,11 @@ export class TablePairs {
 
         const codePointStartHex = codePointStart.toString(16);
         const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
-        console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length, possibilities.slice(0, 5).map((item) => ({
-            ...item, ...item.modifier.necessaries(), inserts: item.inserts.length,
-        })),);
+        if (verbose) {
+            console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length, possibilities.slice(0, 5).map((item) => ({
+                ...item, ...item.modifier.necessaries(), inserts: item.inserts.length,
+            })),);
+        }
         if (possibilities.length === 0) {
             console.error(`  Empty possibilities:`, possibilities, this.values?.length || 0, this.data.length,);
             console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers);
@@ -355,6 +357,8 @@ export class TablePairs {
 
             if (verbose) {
                 console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16), "Values-Table-Length:", this.values?.length || 0, "range:", range, "length:", length, `Progress: ${Math.floor((Number(range) / this.data.length) * 100)}%`,);
+            } else {
+                updateProgressBar(Number(range) / this.data.length * 100);
             }
 
             let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
@@ -424,6 +428,9 @@ export class TablePairs {
                 //     }
                 // }
             }
+        }
+        if (!verbose) {
+            updateProgressBar(100, "----------- Done Finding Ranges -------------");
         }
 
         if (this.#indexAddenda.has("pos")) {
@@ -632,12 +639,12 @@ export class TablePairs {
      *   - in KibiBytes:  ${(allIndicesBits / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
-        name: this.indices.tableName,
-        type: this.#indexAddenda,
-        printableValues,
-        len: allLength,
-        map: this.#props?.indices?.map
-    })}
+            name: this.indices.tableName,
+            type: this.#indexAddenda,
+            printableValues,
+            len: allLength,
+            map: this.#props?.indices?.map
+        })}
         `;
     }
 

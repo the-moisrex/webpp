@@ -1193,6 +1193,28 @@ export function findBreakPoint(table, tolerance = 3, getValue = (val) => val) {
     return {start: i, length: lastLength};
 }
 
+export function getSplitPointsMulti(table, getValue = (val) => val, min_length = 1, splittingValues = undefined) {
+    let last = NaN;
+    let start = 0;
+    let tables = [];
+    let i = 0;
+    for (; i < (table.length + 1); ++i) {
+        const cur = table?.at(i);
+        const curVal = getValue?.(cur);
+        if (getValue(last) !== curVal && (splittingValues === undefined || splittingValues.includes(cur) || splittingValues.includes(last))) {
+            const length = (i - 1) - start;
+            if (length >= min_length) {
+                tables.push({
+                    start, length, // Exclusive (the last value is not included)
+                });
+            }
+            start = i;
+        }
+        last = cur;
+    }
+    return tables;
+}
+
 
 export function getSplitPoints(table, getValue = (val) => val, min_length = 1, splittingValues = undefined) {
     let last = NaN;

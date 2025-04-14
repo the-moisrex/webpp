@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_general_categories_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 13 Apr 2025 17:06:32 GMT
+ *   This file's generation date:        Sun, 13 Apr 2025 17:31:11 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       77960

@@ -509,18 +509,18 @@ namespace webpp::unicode::idna::details {
      * Table size: ${mapsBitLength / 8} B or ${(mapsBitLength / 8 / 1024).toFixed(2)} KiB
      */
     ${renderTableValues({
-            name: "idna_mappings",
-            type: this.#maps.type,
-            printableValues: this.#maps.map(block => {
-                let blk = block.map(val => toHexString(val));
-                let {position, start, codePointSources, utf32MappedTo} = block;
-                codePointSources = codePointSources.map(curCP => curCP.toString(16).toUpperCase());
-                utf32MappedTo = utf32MappedTo.map(curCP => curCP.toString(16).toUpperCase());
-                blk.inline_comment = `#${position}/${start}: [${codePointSources.join(', ')}] ==> [${utf32MappedTo.join(', ')}]`;
-                return blk;
-            }),
-            len: mapsLength,
-        })}
+        name: "idna_mappings",
+        type: this.#maps.type,
+        printableValues: this.#maps.map(block => {
+            let blk = block.map(val => toHexString(val));
+            let {position, start, codePointSources, utf32MappedTo} = block;
+            codePointSources = codePointSources.map(curCP => curCP.toString(16).toUpperCase());
+            utf32MappedTo = utf32MappedTo.map(curCP => curCP.toString(16).toUpperCase());
+            blk.inline_comment = `#${position}/${start}: [${codePointSources.join(', ')}] ==> [${utf32MappedTo.join(', ')}]`;
+            return blk;
+        }),
+        len: mapsLength,
+    })}
     
     
 } // webpp::unicode::idna::details

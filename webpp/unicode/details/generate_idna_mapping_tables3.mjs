@@ -212,7 +212,6 @@ ${tableContent}
             return val;
         }
     })}
-    \`;
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_IDNA_MAPPINGS_TABLES_HPP
