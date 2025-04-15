@@ -6,17 +6,20 @@ import {
     alignmentOf,
     commentify,
     cppValueOf, findBestTypeFrom,
+    newArray,
     overlapInserts,
     realSizeOf,
     renderTableValues,
     Span,
     splitInto,
+    splitIntoMulti,
     TableTraits,
     uint16,
     uint32,
     uint64,
     uint8, updateProgressBar,
 } from "./utils.mjs";
+import { exit } from "node:process";
 
 const verbose = process.argv.includes("--verbose");
 
@@ -27,6 +30,7 @@ export class TablePairs {
     data = []; // raw, unprocessed data
     #props = {};
     #indicesTables = []; // it's distilled from this.indices
+    #valuesTables = []; // it's distilled from this.indices
     #breakpointsTableSize = 0n;
 
     init(meta) {
@@ -147,10 +151,6 @@ export class TablePairs {
         modifier = modifier.clone();
         const left = dataView;
         const right = new ModifiedSpan(this.values, modifier);
-        // if (left.length > this.chunkSize) {
-        //     return null;
-        // }
-        // try {
         top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
             modifier.set({
                 pos: BigInt(rpos),
@@ -167,26 +167,7 @@ export class TablePairs {
             }
             return BigInt(rpos);
         }
-        // } catch (err) {
-        //     if (!(err instanceof RangeError)) {
-        //         throw err;
-        //     }
-        //     else, just say we found nothing
-        // }
         return null;
-
-        // modifier.set({pos: 0});
-        // const modifiedValues = new ModifiedSpan(this.values, modifier);
-        // return findSimilarRange(dataView, modifiedValues);
-
-        // for (let index = 0; index < this.values.length; index += this.chunkSize) {
-        //     modifier.set({pos: index});
-        //     const pos = findSimilarRange(modifiedValues, this.values);
-        //     if (pos !== null) {
-        //         return pos;
-        //     }
-        // }
-        // return null;
     }
 
     #findSimilarMaskedRange(codePointStart) {
@@ -328,10 +309,13 @@ export class TablePairs {
     }
 
     splitTables() {
-        const splitCount = this.#props?.indices?.splitInto ?? 1;
-        const table = this.indices.result;
+        const indicesSplitCount = this.#props?.indices?.splitInto ?? 1;
+        const indices = this.indices.result;
+        const values = this.values.result;
+        const splitIntoFunc = typeof this.#props?.values?.splitInto === "function" ? this.#props.values.splitInto : (val) => !!val;
 
-        this.#indicesTables = splitInto(table, splitCount, (val) => val, true);
+        this.#indicesTables = splitInto(indices, indicesSplitCount, (val) => val, true);
+        this.#valuesTables = splitIntoMulti(values, splitIntoFunc, this.#props?.values?.minSplittingLength || 1);
     }
 
     /// Post-Processing

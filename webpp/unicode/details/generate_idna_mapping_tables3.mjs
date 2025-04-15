@@ -11,7 +11,7 @@ import {TablePairs} from "./table.mjs";
 import {
     char8_8, findSimilarSubRange, realSizeOf, recursiveLength,
     renderTableValues,
-    runClangFormat, TableTraits,
+    runClangFormat, splitInto, TableTraits,
     uint16,
     uint32, uint4,
     uint5, uint6, uint8,
@@ -59,7 +59,8 @@ class IDNAMappings {
                 description: "Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's not VALID or DISALLOWED specifically specified.",
 
                 // convert values of the values table into booleans if possible, and put them into a different table
-                boolOf(val) {
+                minSplittingLength: 10,
+                splitInto(val) {
                     return val === VALID ? true : val === DISALLOWED ? false : null;
                 },
 

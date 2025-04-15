@@ -488,6 +488,43 @@ export class Span {
     }
 }
 
+export function newArray(type, max) {
+    switch (type) {
+        case char8_1:
+        case char8_2:
+        case char8_3:
+        case char8_4:
+        case char8_5:
+        case char8_6:
+        case char8_7:
+        case char8_8:
+        case char1:
+        case char2:
+        case char3:
+        case char4:
+        case char5:
+        case char6:
+        case char7:
+        case char8:
+        case uint3:
+        case uint4:
+        case uint5:
+        case uint6:
+        case uint7:
+        case uint8:
+            return new Uint8Array(max);
+        case uint16:
+            return new Uint16Array(max);
+        case uint32:
+            return new Uint32Array(max);
+        case uint8x2:
+        case null:
+            return [];
+        default:
+            throw new Error("Invalid type provided to CodePointMapper.");
+    }
+}
+
 /**
  * This class will let us handle the types of the tables including:
  *   - unsigned integer 32 bit (uint32)
@@ -499,43 +536,7 @@ export class TableTraits {
     index = 0;
 
     constructor(max, type = uint8) {
-        switch (type) {
-            case char8_1:
-            case char8_2:
-            case char8_3:
-            case char8_4:
-            case char8_5:
-            case char8_6:
-            case char8_7:
-            case char8_8:
-            case char1:
-            case char2:
-            case char3:
-            case char4:
-            case char5:
-            case char6:
-            case char7:
-            case char8:
-            case uint3:
-            case uint4:
-            case uint5:
-            case uint6:
-            case uint7:
-            case uint8:
-                this.bytes = new Uint8Array(max);
-                break;
-            case uint16:
-                this.bytes = new Uint16Array(max);
-                break;
-            case uint32:
-                this.bytes = new Uint32Array(max);
-                break;
-            case uint8x2:
-                this.bytes = [];
-                break;
-            default:
-                throw new Error("Invalid type provided to CodePointMapper.");
-        }
+        this.bytes = newArray(type, max);
         this.#type = type;
     }
 
@@ -1198,6 +1199,7 @@ export function getSplitPointsMulti(table, getValue = (val) => val, min_length =
     let start = 0;
     let tables = [];
     let i = 0;
+    let values = new Set();
     for (; i < (table.length + 1); ++i) {
         const cur = table?.at(i);
         const curVal = getValue?.(cur);
@@ -1206,11 +1208,14 @@ export function getSplitPointsMulti(table, getValue = (val) => val, min_length =
             if (length >= min_length) {
                 tables.push({
                     start, length, // Exclusive (the last value is not included)
+                    values: [...values]
                 });
             }
             start = i;
+            values.clear();
         }
         last = cur;
+        values.add(cur);
     }
     return tables;
 }
@@ -1311,6 +1316,35 @@ export function splitInto(table, topCount = 3, getValue = (val) => val, singleVa
         return splitOn(table, getSplitPoints(table, getValue, min_length));
     }
 }
+
+
+export function splitIntoMulti(table, getValue = (val) => val, minLength = 1) {
+    const splits = getSplitPointsMulti(table, getValue, minLength);
+    let tables = [];
+    let lastEnd = 0;
+    let offset = 0;
+    for (const {start, length, values} of splits) {
+        if (start > lastEnd) {
+            tables.push({
+                start: lastEnd, length: start - lastEnd, table: table.slice(lastEnd, start), offset
+                // no common value here
+            });
+        }
+        tables.push({
+            start, length, values, table: table.slice(start, start + length),
+            offset
+        });
+        lastEnd = start + length;
+        offset += length;
+    }
+    if (lastEnd !== table.length) {
+        tables.push({
+            start: lastEnd, length: table.length - lastEnd, table: table.slice(lastEnd, table.length), offset
+        });
+    }
+    return tables;
+}
+
 
 
 /// Get the most specific range of values that matches best for the input value
