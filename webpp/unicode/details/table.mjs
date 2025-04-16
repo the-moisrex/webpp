@@ -8,6 +8,7 @@ import {
     cppValueOf, findBestTypeFrom,
     newArray,
     overlapInserts,
+    packBoolsIntoInts,
     realSizeOf,
     renderTableValues,
     Span,
@@ -311,11 +312,8 @@ export class TablePairs {
     splitTables() {
         const indicesSplitCount = this.#props?.indices?.splitInto ?? 1;
         const indices = this.indices.result;
-        const values = this.values.result;
-        const splitIntoFunc = typeof this.#props?.values?.splitInto === "function" ? this.#props.values.splitInto : (val) => !!val;
 
         this.#indicesTables = splitInto(indices, indicesSplitCount, (val) => val, true);
-        this.#valuesTables = splitIntoMulti(values, splitIntoFunc, this.#props?.values?.minSplittingLength || 1);
     }
 
     /// Post-Processing
@@ -632,9 +630,78 @@ export class TablePairs {
         `;
     }
 
+
+    #renderSplitValuesTables() {
+        if (!this.#valuesTables || this.#valuesTables.length === 0) {
+            return "";
+        }
+
+        let tbl1 = this.#valuesTables.filter(vals => vals.values !== undefined);
+        const tbl2 = this.#valuesTables.filter(vals => vals.values === undefined);
+
+        const tbl1Sizeof = (this.#props.values.splitInto?.storageType || uint8).sizeof;
+        const tbl1Name = this.#props.values.splitInto?.name || `${this.values.tableName}_1`;
+
+        // mapping to bools
+        if (this.#props.values.splitInto?.map) {
+            if (this.#props.values.splitInto.type === Boolean) {
+                tbl1 = packBoolsIntoInts(tbl1.map(this.#props.values.splitInto.map), tbl1Sizeof);
+            } else {
+                tbl1 = tbl1.map(this.#props.values.splitInto.map);
+            }
+        }
+
+        const tbl1Bits = tbl1.length * Number(tbl1Sizeof);
+        const tbl2Bits = tbl2.length * Number(this.values.type.sizeof);
+
+        return `
+        
+    /**
+     * ${this.#name.toUpperCase()} Values Table 1
+     *
+     * ${commentify(this.#props?.values?.description)}
+     *
+     * Table size:
+     *   - in bits:       ${tbl1Bits}
+     *   - in bytes:      ${tbl1Bits / 8} B
+     *   - in KibiBytes:  ${(tbl1Bits / 8 / 1024).toFixed(2)} KiB
+     */
+    ${renderTableValues({
+        name: tbl1Name,
+        type: this.#props.splitInto?.storageType || uint8,
+        printableValues: tbl1,
+        len: tbl1.length,
+        map: this.#props?.values?.map
+    })}
+
+
+    /**
+     * ${this.#name.toUpperCase()} Values Table 2
+     *
+     * ${commentify(this.#props?.values?.description)}
+     *
+     * Table size:
+     *   - in bits:       ${tbl2Bits}
+     *   - in bytes:      ${tbl2Bits / 8} B
+     *   - in KibiBytes:  ${(tbl2Bits / 8 / 1024).toFixed(2)} KiB
+     */
+    ${renderTableValues({
+        name: this.values.tableName,
+        type: this.values.type,
+        printableValues: tbl2,
+        len: tbl2.length,
+        map: this.#props?.values?.map
+    })}
+        `;
+    }
+
     #renderValuesTables() {
         if (!this.values) {
             return "";
+        }
+
+        if (this.#props.splitInto) {
+            return this.#renderSplitValuesTables();
         }
 
         const indices = this.indices.result;

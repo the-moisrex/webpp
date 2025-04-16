@@ -40,6 +40,7 @@ import {
 } from "./IdnaMappingTable.mjs"
 
 import * as path from "node:path";
+import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
 
 const start = async () => {
     const fileContent = await downloadFile(fileUrl, cacheFilePath);
@@ -404,17 +405,6 @@ class MappingTable {
         console.log();
 
 
-        const refPrinter = ({blockPtr}) => {
-            blockPtr = (blockPtr || 0);
-            let ret = '';
-            if ((blockPtr & this.#tablePickMask) === this.#tablePickMask) {
-                ret += `blt | `;
-                blockPtr &= ~this.#tablePickMask; // removing it
-            }
-            ret += `0x${blockPtr.toString(16).toUpperCase()}U`
-            return ret;
-        };
-
         return `
 /**
  * Attention: Auto-generated file, don't modify.
@@ -462,7 +452,9 @@ namespace webpp::unicode::idna::details {
      * Table size: ${refsBitLength / 8} B or ${(refsBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#refs.type.description}, ${this.#refs.length}ULL> idna_refs {
-       ${this.#refs.map(refPrinter).join(", ")}
+       ${this.#refs.map(({blockPtr}) => {
+           return IDNAMappingTable.refPrinter(blockPtr, this.#tablePickMask, 'blt');
+        }).join(", ")}
     };
     
 
@@ -472,7 +464,9 @@ namespace webpp::unicode::idna::details {
      * Table size: ${refsExtraBitLength / 8} B or ${(refsExtraBitLength / 8 / 1024).toFixed(2)} KiB
      */
     static constexpr std::array<${this.#refsExtra.type.description}, ${this.#refsExtra.length}ULL> idna_refs_extra {
-       ${this.#refsExtra.map(refPrinter).join(", ")}
+       ${this.#refsExtra.map(({blockPtr}) => {
+           return IDNAMappingTable.refPrinter(blockPtr, this.#tablePickMask, 'blt');
+        }).join(", ")}
     };
     
 

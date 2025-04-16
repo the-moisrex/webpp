@@ -18,7 +18,7 @@ import {
     writePieces
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
-import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, VALID} from "./IdnaMappingTable.mjs";
+import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, refPrinter, VALID} from "./IdnaMappingTable.mjs";
 
 const start = async () => {
     await readme.download();
@@ -35,6 +35,7 @@ class IDNAMappings {
     tables = new TablePairs();
     mappingsTable = [];
     lastDisallowed = 0n;
+    #tablePickMask;
 
     constructor() {
         this.tables.init({
@@ -44,6 +45,14 @@ class IDNAMappings {
             disableComments: false,
             validateResults: true,
 
+            modify({codeRange, modifier, inserts}) {
+                const areAllMapped = inserts.every(val => val === VALID || val === DISALLOWED);
+                return {
+                    inserts: areAllMapped ? [] : inserts,
+                    modifier: modifier
+                }
+            },
+
             indices: {
                 tableName: "idna_mapping_ref",
                 sizeof: uint16,
@@ -52,6 +61,13 @@ class IDNAMappings {
                 splitInto: 5,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
                 description: `IDNA Mappings`,
+
+                // add "iblt"
+                map(vals, info) {
+                    for (let i = 0; i !== vals.length; ++i) {
+                        vals[i] = refPrinter(vals[i], this.#tablePickMask, 'iblt');
+                    }
+                }
             },
             values: {
                 tableName: "idna_mapping_blocks", // table name
@@ -59,9 +75,22 @@ class IDNAMappings {
                 description: "Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's not VALID or DISALLOWED specifically specified.",
 
                 // convert values of the values table into booleans if possible, and put them into a different table
-                minSplittingLength: 10,
-                splitInto(val) {
-                    return val === VALID ? true : val === DISALLOWED ? false : null;
+                splitInto: {
+                    type: Boolean,
+                    blockSize: 8n,
+                    areAll(vals) {
+                        return vals.every(val => val === VALID || val === DISALLOWED);
+                    },
+                    map(val) {
+                        switch (val) {
+                            case DISALLOWED:
+                                return false;
+                            case VALID:
+                                return true;
+                            default:
+                                return val;
+                        }
+                    }
                 },
 
                 /// it runs on print
@@ -80,6 +109,8 @@ class IDNAMappings {
             },
             genIndexAddenda: () => genSimpleIndexAddenda("index", uint6),
         });
+
+        this.#tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
     }
 
     /// proxy the function
@@ -129,6 +160,10 @@ class IDNAMappings {
      * The last code point that has a mapping status:
      */
     static constexpr auto idna_mapping_trailing_zero = 0x${this.lastDisallowed.toString(16).toUpperCase()}UL;
+
+    // Pick the table with this mask (between bools table and the block table)
+    static constexpr ${this.tables.indices.type.description} table_pick_mask = 0b${this.#tablePickMask.toString(2)}U;
+    static constexpr auto iblt = table_pick_mask; // (IDNA Boolean Table) shortcut
 
 ${this.tables.render()}
         `;

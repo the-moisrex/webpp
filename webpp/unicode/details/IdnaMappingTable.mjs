@@ -118,3 +118,14 @@ export const parseIDNAMappingTable = async (table, fileContent = undefined) => {
 }
 
 
+export const refPrinter = (blockPtr, tablePickMask, blt = "blt") => {
+    blockPtr = (blockPtr || 0);
+    let ret = '';
+    if ((blockPtr & tablePickMask) === tablePickMask) {
+        ret += `${blt} | `;
+        blockPtr &= ~tablePickMask; // removing it
+    }
+    ret += `0x${blockPtr.toString(16).toUpperCase()}U`
+    return ret;
+};
+
