@@ -1,5 +1,6 @@
 import * as assert from "node:assert";
 import {
+    findModifiedSubsetRange,
     genIndexAddenda, ModifiedSpan, Modifier, rangeLength,
 } from "./modifiers.mjs";
 import {
@@ -144,32 +145,6 @@ export class TablePairs {
         return this.dataView(codePointStart, length);
     }
 
-    #findSubsetRange(dataView, modifier) {
-        if (this.values === null) {
-            return null;
-        }
-
-        modifier = modifier.clone();
-        const left = dataView;
-        const right = new ModifiedSpan(this.values, modifier);
-        top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
-            modifier.set({
-                pos: BigInt(rpos),
-            });
-            for (let lpos = 0; lpos !== left.length; ++lpos) {
-                const rvalue = right.at(lpos);
-                const lvalue = left.at(lpos);
-                // if (!Number.isSafeInteger(rvalue) || !Number.isSafeInteger(lvalue)) {
-                //     return null;
-                // }
-                if (rvalue !== lvalue) {
-                    continue top;
-                }
-            }
-            return BigInt(rpos);
-        }
-        return null;
-    }
 
     #findSimilarMaskedRange(codePointStart) {
         const length = this.rangeLengthStarting(codePointStart);
@@ -197,7 +172,7 @@ export class TablePairs {
             let info = {};
 
             // try {
-            const startPos = this.#findSubsetRange(dataView, indexModifier);
+            const startPos = findModifiedSubsetRange(dataView, this.values, indexModifier);
             if (startPos === null) {
                 info = this.#optimizeInserts(insertsDataView, dataView, indexModifier,);
             } else {
@@ -382,9 +357,9 @@ export class TablePairs {
             /// verify range
             if (this.#props?.validateResults) {
                 const dataView = this.dataView(range, length);
-                if (null === this.#findSubsetRange(dataView, modifier)) {
+                if (null === findModifiedSubsetRange(dataView, this.values, modifier)) {
                     debugger;
-                    this.#findSubsetRange(dataView, modifier);
+                    findModifiedSubsetRange(dataView, this.values, modifier);
                     // throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)} ${this.data.length} ${JSON.stringify(this.data)}`);
                     throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)} ${this.data.length}`);
                 }

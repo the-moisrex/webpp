@@ -360,17 +360,17 @@ export class Addenda {
 
     get minSize() {
         return (this.addenda.reduce((min, addendum) => {
-                if (addendum.affectsChunkSize === false) {
-                    return min;
-                }
-                if (addendum.size > min) {
-                    return min;
-                }
-                if (typeof addendum.affectsChunkSize === "function") {
-                    return addendum.affectsChunkSize(undefined, min);
-                }
-                return addendum.size;
-            }, NaN) || 16n);
+            if (addendum.affectsChunkSize === false) {
+                return min;
+            }
+            if (addendum.size > min) {
+                return min;
+            }
+            if (typeof addendum.affectsChunkSize === "function") {
+                return addendum.affectsChunkSize(undefined, min);
+            }
+            return addendum.size;
+        }, NaN) || 16n);
     }
 
     get realSize() {
@@ -1028,3 +1028,30 @@ export const genSimpleIndexAddenda = (name = "index", type = uint8) => {
     addenda.renderFunctions = [staticFields, getSimplePositionFunction];
     return addenda;
 };
+
+
+export const findModifiedSubsetRange = (left, right, modifier) => {
+    if (right === null) {
+        return null;
+    }
+
+    modifier = modifier.clone();
+    const rightMod = new ModifiedSpan(right, modifier);
+    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+        modifier.set({
+            pos: BigInt(rpos),
+        });
+        for (let lpos = 0; lpos !== left.length; ++lpos) {
+            const rvalue = rightMod.at(lpos);
+            const lvalue = left.at(lpos);
+            // if (!Number.isSafeInteger(rvalue) || !Number.isSafeInteger(lvalue)) {
+            //     return null;
+            // }
+            if (rvalue !== lvalue) {
+                continue top;
+            }
+        }
+        return BigInt(rpos);
+    }
+    return null;
+}
