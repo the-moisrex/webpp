@@ -7,21 +7,15 @@ import {
     alignmentOf,
     commentify,
     cppValueOf, findBestTypeFrom,
-    newArray,
     overlapInserts,
-    packBoolsIntoInts,
     realSizeOf,
     renderTableValues,
     Span,
     splitInto,
-    splitIntoMulti,
     TableTraits,
-    uint16,
     uint32,
-    uint64,
     uint8, updateProgressBar,
 } from "./utils.mjs";
-import { exit } from "node:process";
 
 const verbose = process.argv.includes("--verbose");
 
@@ -32,7 +26,6 @@ export class TablePairs {
     data = []; // raw, unprocessed data
     #props = {};
     #indicesTables = []; // it's distilled from this.indices
-    #valuesTables = []; // it's distilled from this.indices
     #breakpointsTableSize = 0n;
 
     init(meta) {
@@ -289,6 +282,7 @@ export class TablePairs {
         const indices = this.indices.result;
 
         this.#indicesTables = splitInto(indices, indicesSplitCount, (val) => val, true);
+        // todo: distil the values table as well
     }
 
     /// Post-Processing
@@ -322,6 +316,7 @@ export class TablePairs {
             // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
             const modifiedValues = this.#props?.modify?.({
+                start: codeRange, length: this.#indexAddenda.chunkSize, end: codeRange + this.#indexAddenda.chunkSize,
                 codeRange, modifier, inserts, rtrimmed, overlapped,
             });
             modifier = modifiedValues?.modifier || modifier;
@@ -606,77 +601,9 @@ export class TablePairs {
     }
 
 
-    #renderSplitValuesTables() {
-        if (!this.#valuesTables || this.#valuesTables.length === 0) {
-            return "";
-        }
-
-        let tbl1 = this.#valuesTables.filter(vals => vals.values !== undefined);
-        const tbl2 = this.#valuesTables.filter(vals => vals.values === undefined);
-
-        const tbl1Sizeof = (this.#props.values.splitInto?.storageType || uint8).sizeof;
-        const tbl1Name = this.#props.values.splitInto?.name || `${this.values.tableName}_1`;
-
-        // mapping to bools
-        if (this.#props.values.splitInto?.map) {
-            if (this.#props.values.splitInto.type === Boolean) {
-                tbl1 = packBoolsIntoInts(tbl1.map(this.#props.values.splitInto.map), tbl1Sizeof);
-            } else {
-                tbl1 = tbl1.map(this.#props.values.splitInto.map);
-            }
-        }
-
-        const tbl1Bits = tbl1.length * Number(tbl1Sizeof);
-        const tbl2Bits = tbl2.length * Number(this.values.type.sizeof);
-
-        return `
-        
-    /**
-     * ${this.#name.toUpperCase()} Values Table 1
-     *
-     * ${commentify(this.#props?.values?.description)}
-     *
-     * Table size:
-     *   - in bits:       ${tbl1Bits}
-     *   - in bytes:      ${tbl1Bits / 8} B
-     *   - in KibiBytes:  ${(tbl1Bits / 8 / 1024).toFixed(2)} KiB
-     */
-    ${renderTableValues({
-        name: tbl1Name,
-        type: this.#props.splitInto?.storageType || uint8,
-        printableValues: tbl1,
-        len: tbl1.length,
-        map: this.#props?.values?.map
-    })}
-
-
-    /**
-     * ${this.#name.toUpperCase()} Values Table 2
-     *
-     * ${commentify(this.#props?.values?.description)}
-     *
-     * Table size:
-     *   - in bits:       ${tbl2Bits}
-     *   - in bytes:      ${tbl2Bits / 8} B
-     *   - in KibiBytes:  ${(tbl2Bits / 8 / 1024).toFixed(2)} KiB
-     */
-    ${renderTableValues({
-        name: this.values.tableName,
-        type: this.values.type,
-        printableValues: tbl2,
-        len: tbl2.length,
-        map: this.#props?.values?.map
-    })}
-        `;
-    }
-
     #renderValuesTables() {
         if (!this.values) {
             return "";
-        }
-
-        if (this.#props.splitInto) {
-            return this.#renderSplitValuesTables();
         }
 
         const indices = this.indices.result;

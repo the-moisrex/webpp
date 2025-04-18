@@ -916,6 +916,7 @@ export const utf32To8All = (u32Array) => {
 
 export const renderTableValues = (info) => {
     let {name, printableValues, type, len} = info;
+    len = len || printableValues.length;
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);

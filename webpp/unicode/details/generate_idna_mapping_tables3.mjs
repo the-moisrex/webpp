@@ -9,7 +9,7 @@ import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
-    char8_8, findSimilarSubRange, realSizeOf, recursiveLength,
+    char8_8, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
     renderTableValues,
     runClangFormat, splitInto, TableTraits,
     uint16,
@@ -36,8 +36,11 @@ class IDNAMappings {
     mappingsTable = [];
     lastDisallowed = 0n;
     #tablePickMask;
+    boolsTable = [];
+    boolsTablePacked;
 
     constructor() {
+        const self = this;
         this.tables.init({
             name: "idna",
             description: "IDNA Mapping Index table",
@@ -45,8 +48,17 @@ class IDNAMappings {
             disableComments: false,
             validateResults: true,
 
-            modify({codeRange, modifier, inserts}) {
-                const areAllMapped = inserts.every(val => val === VALID || val === DISALLOWED);
+            // Put all the ranges that are not mapped into a different table
+            modify({start, end, modifier, inserts}) {
+                let areAllMapped = true;
+                for (const val of inserts) {
+                    areAllMapped &&= val === VALID || val === DISALLOWED;
+                }
+                if (areAllMapped) {
+                    self.boolsTable.push({
+                        start, end, modifier, values: inserts
+                    });
+                }
                 return {
                     inserts: areAllMapped ? [] : inserts,
                     modifier: modifier
@@ -73,25 +85,6 @@ class IDNAMappings {
                 tableName: "idna_mapping_blocks", // table name
                 sizeof: uint16,
                 description: "Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's not VALID or DISALLOWED specifically specified.",
-
-                // convert values of the values table into booleans if possible, and put them into a different table
-                splitInto: {
-                    type: Boolean,
-                    blockSize: 8n,
-                    areAll(vals) {
-                        return vals.every(val => val === VALID || val === DISALLOWED);
-                    },
-                    map(val) {
-                        switch (val) {
-                            case DISALLOWED:
-                                return false;
-                            case VALID:
-                                return true;
-                            default:
-                                return val;
-                        }
-                    }
-                },
 
                 /// it runs on print
                 map(vals, info) {
@@ -123,6 +116,8 @@ class IDNAMappings {
             `(${this.lastDisallowed} >> ${this.tables.chunkShift})`,
         );
         this.tables.indices.trimAt(lastZeroBucket);
+
+        this.boolsTablePacked = this.getBoolsTable();
     }
 
     add(codePoint, {flags, mappedTo, utf8MappedTo}) {
@@ -170,17 +165,26 @@ ${this.tables.render()}
     }
 
     totalTablesSizeInBits() {
-        return this.tables.totalTablesSizeInBits() + this.mappingsTableSizeInBits();
+        return this.tables.totalTablesSizeInBits() + this.mappingsTableSizeInBits() + this.boolsTableSizeInBits();
     }
 
     mappingsTableSizeInBits() {
         return BigInt(recursiveLength(this.mappingsTable)) * realSizeOf(char8_8);
+    }
+
+    boolsTableSizeInBits() {
+        return this.boolsTablePacked.length * 32;
+    }
+
+    getBoolsTable() {
+        return packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.map(val => val !== DISALLOWED)).flat(), 32n);
     }
 }
 
 const createTableFile = async (table) => {
     const tableContent = table.render();
     const mappingsBits = Number(table.mappingsTableSizeInBits());
+    const boolsBits = Number(table.boolsTableSizeInBits());
     const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await readme.getReadme();
     const competition = 16.98;
@@ -230,6 +234,20 @@ namespace webpp::unicode::details {
 
 ${tableContent}
 
+    /**
+     * IDNA Mapping Status Table
+     *
+     * Table size:
+     *   - in bits:       ${boolsBits}
+     *   - in bytes:      ${boolsBits / 8} B
+     *   - in KibiBytes:  ${(boolsBits / 8 / 1024).toFixed(2)} KiB
+     */
+    ${renderTableValues({
+        name: "idna_mappings_bools",
+        type: uint32,
+        printableValues: table.boolsTablePacked,
+    })}
+    
     /**
      * IDNA Mappings
      *
