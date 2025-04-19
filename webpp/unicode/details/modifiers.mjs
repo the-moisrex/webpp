@@ -529,8 +529,8 @@ export class Modifier {
         return this.#addenda.name;
     }
 
-    clone() {
-        return new Modifier(this.#addenda, this.values());
+    clone(newSet = {}) {
+        return new Modifier(this.#addenda, {...this.values(), ...newSet});
     }
 
     set(values) {

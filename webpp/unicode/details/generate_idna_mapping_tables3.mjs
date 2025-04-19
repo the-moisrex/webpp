@@ -11,10 +11,10 @@ import {TablePairs} from "./table.mjs";
 import {
     char8_8, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
     renderTableValues,
-    runClangFormat, splitInto, TableTraits,
+    runClangFormat,
     uint16,
-    uint32, uint4,
-    uint5, uint6, uint8,
+    uint32,
+    uint6,
     writePieces
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
@@ -35,9 +35,10 @@ class IDNAMappings {
     tables = new TablePairs();
     mappingsTable = [];
     lastDisallowed = 0n;
-    #tablePickMask;
+    tablePickMask;
     boolsTable = [];
     boolsTablePacked;
+    packedAmount = 0;
 
     constructor() {
         const self = this;
@@ -55,13 +56,17 @@ class IDNAMappings {
                     areAllMapped &&= val === VALID || val === DISALLOWED;
                 }
                 if (areAllMapped) {
+                    modifier = modifier.clone({pos: modifier.pos | BigInt(self.tablePickMask)});
                     self.boolsTable.push({
                         start, end, modifier, values: inserts
                     });
+
+                    ++self.packedAmount;
+                    console.log(self.packedAmount, "Packed DISALLOWED/VALID into bools table: ", start, end, modifier);
                 }
                 return {
                     inserts: areAllMapped ? [] : inserts,
-                    modifier: modifier
+                    modifier,
                 }
             },
 
@@ -77,7 +82,7 @@ class IDNAMappings {
                 // add "iblt"
                 map(vals, info) {
                     for (let i = 0; i !== vals.length; ++i) {
-                        vals[i] = refPrinter(vals[i], this.#tablePickMask, 'iblt');
+                        vals[i] = refPrinter(vals[i], this.tablePickMask, 'iblt');
                     }
                 }
             },
@@ -103,7 +108,7 @@ class IDNAMappings {
             genIndexAddenda: () => genSimpleIndexAddenda("index", uint6),
         });
 
-        this.#tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
+        this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
     }
 
     /// proxy the function
@@ -157,7 +162,7 @@ class IDNAMappings {
     static constexpr auto idna_mapping_trailing_zero = 0x${this.lastDisallowed.toString(16).toUpperCase()}UL;
 
     // Pick the table with this mask (between bools table and the block table)
-    static constexpr ${this.tables.indices.type.description} table_pick_mask = 0b${this.#tablePickMask.toString(2)}U;
+    static constexpr ${this.tables.indices.type.description} table_pick_mask = 0b${this.tablePickMask.toString(2)}U;
     static constexpr auto iblt = table_pick_mask; // (IDNA Boolean Table) shortcut
 
 ${this.tables.render()}
