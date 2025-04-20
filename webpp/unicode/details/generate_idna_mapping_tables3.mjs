@@ -5,7 +5,7 @@
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
 import * as path from "node:path";
-import {genSimpleIndexAddenda} from "./modifiers.mjs";
+import {genSimpleTwoTableIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
@@ -19,6 +19,8 @@ import {
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
 import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, refPrinter, VALID} from "./IdnaMappingTable.mjs";
+
+const verbose = process.argv.includes("--verbose");
 
 const start = async () => {
     await readme.download();
@@ -47,7 +49,7 @@ class IDNAMappings {
             description: "IDNA Mapping Index table",
             ignoreErrors: false,
             disableComments: false,
-            validateResults: true,
+            validateResults: false, // the values table will not contain all the values
 
             // Put all the ranges that are not mapped into a different table
             modify({start, end, modifier, inserts}) {
@@ -56,13 +58,18 @@ class IDNAMappings {
                     areAllMapped &&= val === VALID || val === DISALLOWED;
                 }
                 if (areAllMapped) {
-                    modifier = modifier.clone({pos: modifier.pos | BigInt(self.tablePickMask)});
                     self.boolsTable.push({
                         start, end, modifier, values: inserts
                     });
 
                     ++self.packedAmount;
-                    console.log(self.packedAmount, "Packed DISALLOWED/VALID into bools table: ", start, end, modifier);
+                    if (verbose) {
+                        console.log(' ', self.packedAmount, "Packed DISALLOWED/VALID into bools table: ", start, end, modifier);
+                    }
+
+                    // modifier = modifier.clone({pos: modifier.pos | BigInt(self.tablePickMask)});
+                    // modifier.postModify = mod => mod.clone({pos: mod.pos | BigInt(self.tablePickMask)});
+                    modifier.set({use_second_table: true});
                 }
                 return {
                     inserts: areAllMapped ? [] : inserts,
@@ -105,7 +112,7 @@ class IDNAMappings {
                     }
                 }
             },
-            genIndexAddenda: () => genSimpleIndexAddenda("index", uint6),
+            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint6),
         });
 
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
@@ -178,11 +185,11 @@ ${this.tables.render()}
     }
 
     boolsTableSizeInBits() {
-        return this.boolsTablePacked.length * 32;
+        return BigInt(this.boolsTablePacked.length * 32);
     }
 
     getBoolsTable() {
-        return packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.map(val => val !== DISALLOWED)).flat(), 32n);
+        return packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.getAll().map(val => val !== DISALLOWED)).flat(), 32n);
     }
 }
 

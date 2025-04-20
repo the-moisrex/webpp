@@ -3,6 +3,7 @@ import * as assert from "node:assert";
 import child_process from "node:child_process";
 import * as process from "node:process";
 
+export const bool1 = Symbol("bool");
 export const char1 = Symbol("char");
 export const char2 = Symbol("char");
 export const char3 = Symbol("char");
@@ -36,6 +37,8 @@ export const uint64 = Symbol("std::uint64_t");
 
 export const realSizeOf = (symbol) => {
     switch (symbol) {
+        case bool1:
+            return 1n;
         case char8_1:
         case char8_2:
         case char8_3:
@@ -74,6 +77,15 @@ export const realSizeOf = (symbol) => {
     throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
 };
 
+export const isBoolType = (symbol) => {
+    switch (symbol) {
+        case bool1:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export const isStringType = (symbol) => {
     switch (symbol) {
         case char8_1:
@@ -93,6 +105,7 @@ export const isStringType = (symbol) => {
         case char7:
         case char8:
             return true;
+        case bool1:
         default:
             return false;
     }
@@ -147,6 +160,8 @@ export const cppValueOf = (value, symbol) => {
         throw new Error("Invalid value type.");
     }
     switch (symbol) {
+        case bool1:
+            return value ? "true" : "false";
         case char8_1:
         case char8_2:
         case char8_3:
@@ -187,6 +202,7 @@ export const cppValueOf = (value, symbol) => {
 export const sizeOf = (symbol) => {
     switch (symbol) {
         case char8_1:
+        case bool1:
         case char1:
             return 1n;
         case char8_2:
@@ -445,11 +461,20 @@ export class Span {
         return Number(this.#end - this.#start);
     }
 
-    slice(start = 0n, end = BigInt(this.length - start)) {
+    slice(start = 0n, end = BigInt(this.length) - BigInt(start)) {
         const newStart = this.#start + BigInt(start);
         end = BigInt(Math.min(this.length, Number(end)));
         const newLength = this.#start + end - newStart;
         return new Span(this.#arr, newStart, newLength, this.#func);
+    }
+
+    getAll() {
+        let res = [];
+        for (let i = this.#start; i < this.#end; ++i) {
+            const val = this.#arr.at(Number(i));
+            res.push(this.#func(val));
+        }
+        return res;
     }
 
     // expand(newStart = 0, newLength = this.length + newStart) {
@@ -498,6 +523,7 @@ export function newArray(type, max) {
         case char8_6:
         case char8_7:
         case char8_8:
+        case bool1:
         case char1:
         case char2:
         case char3:
@@ -558,6 +584,7 @@ export class TableTraits {
 
     get postfix() {
         switch (this.type) {
+            case bool1:
             case char1:
             case char2:
             case char3:
@@ -954,7 +981,13 @@ export const renderTableValues = (info) => {
                     // ${val.comment}
                `;
             }
-            res += val.join(", ");
+            if (isBoolType(type)) {
+                res += `0b${val.toString(2)}`;
+            } else if (Array.isArray(val)) {
+                res += val.join(", ");
+            } else if (typeof val === "number" || typeof val === "bigint") {
+                res += `0x${val.toString(16).toUpperCase()}`;
+            }
             res += ", "
             if (val?.inline_comment) {
                 res += ` // ${val.inline_comment}`;
@@ -1154,7 +1187,7 @@ export function packBoolsIntoInts(boolArray, blockSize = 8n) {
         if (curBit === true) {
             currentInt |= bit;
         } else if (curBit !== false) {
-            throw new Error(`Invalid boolean: ${curBit}`);
+            throw new Error(`Invalid boolean: ${JSON.stringify(curBit)}`);
         }
 
         // If we've packed 8 booleans, push the current integer to the result

@@ -332,6 +332,14 @@ export class TablePairs {
             this.indices.append(code);
             if (inserts.length > 0) {
                 if (this.values !== null) {
+                    if (this.#props?.validateResults) {
+                        for (const val of inserts) {
+                            if (val === undefined || isNaN(val) || val === null) {
+                                debugger;
+                                throw new Error(`Invalid value found: ${val}`);
+                            }
+                        }
+                    }
                     this.values.appendList(inserts);
                     ++insertedCount;
                     saves += length - inserts.length;
@@ -341,7 +349,7 @@ export class TablePairs {
                 saves += length;
             }
             if (verbose) {
-                console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`, codeRange, "rtrimmed:", rtrimmed, "overlapped:", overlapped, "last-pos", valueStart, "modifier.pos:", modifier.pos, modifier.necessaries(), "samples:", inserts.filter((item) => item).slice(0, 5),);
+                console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`, codeRange, "rtrimmed:", rtrimmed, "overlapped:", overlapped, "last-pos", valueStart, "modifier.pos:", modifier.pos, modifier.necessaries(), "samples:", inserts.filter((item) => item).slice(0, 5));
             }
             uniqueModifiers.add(modifier.categorizableModifier);
 
@@ -356,7 +364,7 @@ export class TablePairs {
                     debugger;
                     findModifiedSubsetRange(dataView, this.values, modifier);
                     // throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)} ${this.data.length} ${JSON.stringify(this.data)}`);
-                    throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView)} ${this.data.length}`);
+                    throw new Error(`Bad insert: ${range}-${length}, ${JSON.stringify(dataView.getAll())} ${this.data.length}`);
                 }
                 // for (let ith = 0; ith !== length; ++ith) {
                 //     const expected = dataView.at(ith);

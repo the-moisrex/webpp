@@ -3,6 +3,7 @@ import {
     alignedSymbol,
     bitCeil,
     bitOnesOf,
+    bool1,
     chunked,
     fillBitsFromRight,
     largestPositionMask,
@@ -338,7 +339,11 @@ export class Addenda {
         let mod = 0n;
         for (const name in values) {
             const value = values[name];
-            mod |= value << this.shiftOf(name);
+            if (typeof value === "boolean") {
+                mod |= (value ? 0b1n : 0b0n) << this.shiftOf(name);
+            } else {
+                mod |= value << this.shiftOf(name);
+            }
         }
         return mod;
     }
@@ -945,9 +950,20 @@ export const genPositionAddendum = (type = null) => new Addendum({
     isCategorizable: false,
 });
 
+export const genTablePickAddendum = (type = null) => new Addendum({
+    name: "use_second_table",
+    description: "Which values table should we choose will be decided by this field.",
+    sizeof: bool1,
+    defaultValue: false,
+    affectsChunkSize: false,
+    isCategorizable: true,
+});
+
+
 export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type), genShiftAddendum(type),];
 export const genMaskedAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type),];
 export const genSimpleAddendaPack = (type = uint8) => [genPositionAddendum(type),];
+export const genSimpleTwoTableAddendaPack = (type = uint8) => [genTablePickAddendum(type), genPositionAddendum(type)];
 
 export const genIndexAddenda = (name = "index", type = uint8) => {
     const addenda = new Addenda(name, genDefaultAddendaPack(type), {
@@ -1028,6 +1044,23 @@ export const genSimpleIndexAddenda = (name = "index", type = uint8) => {
     addenda.renderFunctions = [staticFields, getSimplePositionFunction];
     return addenda;
 };
+
+// This Addenda, contains a pos, and a boolean table choice.
+export const genSimpleTwoTableIndexAddenda = (name = "index", type = uint8) => {
+    const addenda = new Addenda(name, genSimpleTwoTableAddendaPack(type), {
+        modify: function (table, modifier, range, pos) {
+            const newPos = range + pos;
+            if (newPos >= table.length) {
+                return null;
+            }
+            return table.at(Number(newPos));
+        },
+    });
+    addenda.modifierFunctions = {};
+    addenda.renderFunctions = [staticFields, getSimplePositionFunction];
+    return addenda;
+};
+
 
 
 export const findModifiedSubsetRange = (left, right, modifier) => {
