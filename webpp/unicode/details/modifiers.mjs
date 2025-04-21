@@ -130,15 +130,25 @@ export class Addendum {
     }
 
     render(addenda) {
+        let missing = 0n;
+        if (!addenda.allAlignable) {
+            const allAddenda = addenda.addenda.toSorted((a, b) => a.placement - b.placement);
+            for (const addendum of allAddenda) {
+                if (addendum.name === this.name) {
+                    break;
+                }
+                missing += BigInt(addendum.size);
+            }
+        }
         const defaultStr = this?.defaultValue !== undefined ? ` = ${this.defaultValue}` : "";
-        if (alignedSymbol(this.sizeof) || addenda.allAlignable) {
+        if (missing === 0n && (alignedSymbol(this.sizeof) || addenda.allAlignable)) {
             return `
         ${this.commentedDescription}
         ${this.STLTypeString} ${this.name}${defaultStr};`;
         } else {
             return `
         ${this.commentedDescription}
-        ${this.STLTypeString} ${this.name} : ${this.size}${defaultStr};`;
+        ${this.STLTypeString} ${this.name} : ${this.size - missing}${defaultStr};`;
         }
     }
 
@@ -194,7 +204,7 @@ export class Addenda {
     constructor(name, addenda, funcs, inpChunkSize = undefined) {
         this.name = name;
         this.addenda = addenda;
-        this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0n));
+        this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + (addendum.affectsChunkSize ? sizeOf(addendum.sizeof) : 0n), 0n));
 
         /// re-order the placements
         if (addenda.some((addendum) => !addendum.placement)) {
@@ -210,10 +220,16 @@ export class Addenda {
 
         // Resetting the shifts:
         let leftShift = this.allAlignable ? this.alignedSize : this.packedSize;
+        let missing = 0n;
         for (let addendum of this.addenda) {
-            addendum.actualSize = this.allAlignable ? realSizeOf(addendum.sizeof) : addendum.size;
+            addendum.actualSize = (this.allAlignable ? realSizeOf(addendum.sizeof) : addendum.size) - missing;
             leftShift -= addendum.actualSize;
             addendum.leftShift += leftShift;
+            if (addendum?.collapseToNextField) {
+                addendum.leftShift -= addendum.size;
+                missing += addendum.size;
+                leftShift -= addendum.size;
+            }
         }
 
         this.min = addenda.reduce((min, addendum) => (min << addendum.actualSize) | addendum.min, 0n,);
@@ -459,7 +475,7 @@ export class Addenda {
     }
 
     render() {
-        const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement,);
+        const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement);
         for (const addendum of addenda) {
             console.log(`Addendum ${addendum.name}'s mask: ${addendum.mask.toString(16)}`,);
             if (addendum.mask < 0) {
@@ -957,6 +973,8 @@ export const genTablePickAddendum = (type = null) => new Addendum({
     defaultValue: false,
     affectsChunkSize: false,
     isCategorizable: true,
+    generable: false,
+    collapseToNextField: true, // it's one single bit, we don't want to waste storage
 });
 
 
@@ -1069,7 +1087,7 @@ export const findModifiedSubsetRange = (left, right, modifier) => {
     }
 
     modifier = modifier.clone();
-    const rightMod = new ModifiedSpan(right, modifier);
+    const rightMod = new ModifiedSpan(right, modifier).slice();
     top: for (let rpos = 0; rpos !== right.length; ++rpos) {
         modifier.set({
             pos: BigInt(rpos),

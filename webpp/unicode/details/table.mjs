@@ -77,7 +77,7 @@ export class TablePairs {
         // validating inserts:
         if (!this.#indexAddenda.verifyInserts({inserts, dataView, modifier})) {
             return {
-                valid: false, ...modifier, data: [...modifiedInserts],
+                valid: false, ...modifier, data: modifiedInserts.split(),
             };
         }
 
@@ -279,9 +279,8 @@ export class TablePairs {
 
     splitTables() {
         const indicesSplitCount = this.#props?.indices?.splitInto ?? 1;
-        const indices = this.indices.result;
 
-        this.#indicesTables = splitInto(indices, indicesSplitCount, (val) => val, true);
+        this.#indicesTables = splitInto(this.indices.result, indicesSplitCount, (val) => val, true);
         // todo: distil the values table as well
     }
 
