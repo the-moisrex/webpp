@@ -994,10 +994,12 @@ export const renderTableValues = (info) => {
             }
             if (isBoolType(type)) {
                 res += `0b${val.toString(2).padStart(Number(sizeOf(type)))}`;
-            } else if (Array.isArray(val)) {
+            } else if (Array.isArray(val) | ArrayBuffer.isView(val)) {
                 res += val.join(", ");
             } else if (typeof val === "number" || typeof val === "bigint") {
                 res += `0x${val.toString(16).toUpperCase()}`;
+            } else {
+                throw new Error(`Don't know how to print this: ${val}`);
             }
             res += ", "
             if (val?.inline_comment) {
