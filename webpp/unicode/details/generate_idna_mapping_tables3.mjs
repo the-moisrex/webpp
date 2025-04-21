@@ -9,9 +9,11 @@ import {genSimpleTwoTableIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
+    bool32,
     char8_8, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
     renderTableValues,
     runClangFormat,
+    sizeOf,
     uint16,
     uint32,
     uint6,
@@ -58,7 +60,7 @@ class IDNAMappings {
                     areAllMapped &&= val === VALID || val === DISALLOWED;
                 }
                 if (areAllMapped) {
-                    self.boolsTable.push({
+                    const pos = self.findOrInsertBools({
                         start, end, modifier, values: inserts
                     });
 
@@ -69,7 +71,7 @@ class IDNAMappings {
 
                     // modifier = modifier.clone({pos: modifier.pos | BigInt(self.tablePickMask)});
                     // modifier.postModify = mod => mod.clone({pos: mod.pos | BigInt(self.tablePickMask)});
-                    modifier.set({use_second_table: true});
+                    modifier.set({use_second_table: true, pos});
                 }
                 return {
                     inserts: areAllMapped ? [] : inserts,
@@ -82,7 +84,7 @@ class IDNAMappings {
                 sizeof: uint16,
 
                 // split the indices table
-                splitInto: 5,
+                splitInto: 1,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
                 description: `IDNA Mappings`,
 
@@ -117,6 +119,22 @@ class IDNAMappings {
 
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
     }
+
+
+    findOrInsertBools({start, end, modifier, values}) {
+        const found = findSimilarSubRange(values, this.boolsTable.map(({values}) => values));
+        let targetIndex;
+        if (found !== null) {
+            targetIndex = BigInt(found);
+        } else {
+            targetIndex = BigInt(this.boolsTable.length);
+            this.boolsTable.push({
+                start, end, modifier, values
+            });
+        }
+        return targetIndex;
+    }
+
 
     /// proxy the function
     process() {
@@ -185,11 +203,14 @@ ${this.tables.render()}
     }
 
     boolsTableSizeInBits() {
-        return BigInt(this.boolsTablePacked.length * 32);
+        return BigInt(this.boolsTablePacked.length) * sizeOf(this.boolsTablePacked.type);
     }
 
     getBoolsTable() {
-        return packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.getAll().map(val => val !== DISALLOWED)).flat(), 32n);
+        const type = bool32;
+        const tbl = packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.getAll().map(val => val !== DISALLOWED)).flat(), sizeOf(type));
+        tbl.type = type;
+        return tbl;
     }
 }
 
@@ -256,7 +277,7 @@ ${tableContent}
      */
     ${renderTableValues({
         name: "idna_mappings_bools",
-        type: uint32,
+        type: table.boolsTablePacked.type,
         printableValues: table.boolsTablePacked,
     })}
     

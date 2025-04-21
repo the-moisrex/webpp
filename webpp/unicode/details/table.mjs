@@ -454,7 +454,6 @@ export class TablePairs {
     // table is a table of starting positions
     getBreakpointsTable(table) {
         table = table.toSorted();
-        // console.log(table)
         let breakpointsTableShift = Number(realSizeOf(this.#indexAddenda.sizeof)) - 1;
         const limit = this.breakpointsTableLimit;
         let tableSize = 0;

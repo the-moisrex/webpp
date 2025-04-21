@@ -4,6 +4,7 @@ import child_process from "node:child_process";
 import * as process from "node:process";
 
 export const bool1 = Symbol("bool");
+export const bool32 = Symbol("std::uint32_t");
 export const char1 = Symbol("char");
 export const char2 = Symbol("char");
 export const char3 = Symbol("char");
@@ -37,6 +38,8 @@ export const uint64 = Symbol("std::uint64_t");
 
 export const realSizeOf = (symbol) => {
     switch (symbol) {
+        case bool32:
+            return 1n;
         case bool1:
             return 1n;
         case char8_1:
@@ -79,6 +82,7 @@ export const realSizeOf = (symbol) => {
 
 export const isBoolType = (symbol) => {
     switch (symbol) {
+        case bool32:
         case bool1:
             return true;
         default:
@@ -106,6 +110,7 @@ export const isStringType = (symbol) => {
         case char8:
             return true;
         case bool1:
+        case bool32:
         default:
             return false;
     }
@@ -160,6 +165,8 @@ export const cppValueOf = (value, symbol) => {
         throw new Error("Invalid value type.");
     }
     switch (symbol) {
+        case bool32:
+            return value ? "1" : "0";
         case bool1:
             return value ? "true" : "false";
         case char8_1:
@@ -201,6 +208,8 @@ export const cppValueOf = (value, symbol) => {
 
 export const sizeOf = (symbol) => {
     switch (symbol) {
+        case bool32:
+            return 32n;
         case char8_1:
         case bool1:
         case char1:
@@ -541,6 +550,7 @@ export function newArray(type, max) {
             return new Uint8Array(max);
         case uint16:
             return new Uint16Array(max);
+        case bool32:
         case uint32:
             return new Uint32Array(max);
         case uint8x2:
@@ -584,6 +594,7 @@ export class TableTraits {
 
     get postfix() {
         switch (this.type) {
+            case bool32:
             case bool1:
             case char1:
             case char2:
@@ -982,7 +993,7 @@ export const renderTableValues = (info) => {
                `;
             }
             if (isBoolType(type)) {
-                res += `0b${val.toString(2)}`;
+                res += `0b${val.toString(2).padStart(Number(sizeOf(type)))}`;
             } else if (Array.isArray(val)) {
                 res += val.join(", ");
             } else if (typeof val === "number" || typeof val === "bigint") {
