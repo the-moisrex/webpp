@@ -280,7 +280,7 @@ export class TablePairs {
     splitTables() {
         const indicesSplitCount = this.#props?.indices?.splitInto ?? 1;
 
-        this.#indicesTables = splitInto(this.indices.result, indicesSplitCount, (val) => val, true);
+        this.#indicesTables = splitInto(this.indices.result, indicesSplitCount, (val) => val, this.#props?.indices?.splittingSingleValue ?? true);
         // todo: distil the values table as well
     }
 
@@ -524,15 +524,15 @@ export class TablePairs {
         })));
         const commonValues = commons.map(item => item.commonValue);
         const isSingleCommonValue = commonValues.every(val => val === commonValues[0]);
-        if (!isSingleCommonValue) {
-            console.error(commonValues);
-            throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
-        }
+        // if (!isSingleCommonValue) {
+        //     console.error(commonValues);
+        //     throw new Error("Multiple common values are not yet implemented, thought it's easy to implement.");
+        // }
         const startingType = findBestTypeFrom(breakpointsTable, 'starting');
         const endingType = findBestTypeFrom(breakpointsTable, 'ending');
         const offsetType = findBestTypeFrom(breakpointsTable, 'offset');
-        const align = `std::uint${alignmentOf([realSizeOf(startingType), realSizeOf(endingType), realSizeOf(offsetType)])}_t`
-        const sumSize = BigInt(realSizeOf(startingType) + realSizeOf(endingType) + realSizeOf(offsetType));
+        // const align = `std::uint${alignmentOf([realSizeOf(startingType), realSizeOf(endingType), realSizeOf(offsetType)])}_t`
+        const sumSize = BigInt(realSizeOf(startingType) + realSizeOf(endingType) + realSizeOf(offsetType)) + (isSingleCommonValue ? 0 : realSizeOf(this.#indexAddenda.sizeof));
         this.#breakpointsTableSize = BigInt(breakpointsTable.length) * sumSize * 8n;
         let allIndicesBits = 0
         let allLength = 0;
@@ -545,25 +545,48 @@ export class TablePairs {
             allIndicesBits += indicesBits;
             allLength += table.length;
             table.trailing_comment = `End of Section #${index} [${start}, ${start + length}) containing ${length} values (${(indicesBits / 8 / 1024).toFixed(2)} KiB).`
+            if (commons[index - 1]) {
+                table.trailing_comment += ` Skipping ${commons[index - 1].length} values.`;
+            }
             printableValues.push(table);
             ++index;
+        }
+
+        if (!isSingleCommonValue) {
+            let secIndex = 0;
+            const mapper = this.#props.indices?.map ?? ((val) => val);
+            for (let i = 0; i !== breakpointsTable.length; ++i) {
+                let commonValue = commons[0].commonValue;
+                for (const {start, commonValue: curCommonValue} of commons) {
+                    const curIndex = start >> breakpointsTableShift;
+                    // console.log(start, curIndex, commonValue);
+                    if (curIndex >= secIndex) {
+                        break;
+                    }
+                    commonValue = curCommonValue;
+                }
+                breakpointsTable[i].commonValue = mapper([commonValue])[0];
+                // console.log(breakpointsTable[i], commonValue)
+                secIndex += breakpointsTableShift - 1;
+            }
         }
 
         return `
         ${this.#indexAddenda.render()}
         
-        ${commons.length <= 1 ? "" : commons.length === 2 ? `
+        ${commons.length < 1 ? "" : commons.length === 1 ? `
             // You can choose between the indices' table using these breakpoints:
             static constexpr std::size_t breakpoint_start = ${commons[0].start}U;
             static constexpr std::size_t breakpoint_end = ${commons[0].start + commons[0].length}U;
 
             // The removed part of the table has this value in them:
             static constexpr ${this.values.type.description} breakpoint_value = 0x${commons[0].commonValue.toString(16)}U;
-            ` : `
+        ` : `
             struct ${this.#name}_breakpoint_type {
                 ${startingType.description} starting;
                 ${endingType.description} ending;
                 ${offsetType.description} offset;
+                ${isSingleCommonValue ? '' : `${this.#indexAddenda.name} common_value; // if it's not in the specified range, this value should be used.`}
             };
             
 
@@ -573,12 +596,12 @@ export class TablePairs {
              * Table size in KibiBytes:  ${(Number(this.#breakpointsTableSize) / 8 / 1024).toFixed(2)} KiB
              */
             static constexpr std::array<${this.#name}_breakpoint_type, ${breakpointsTable.length}U> ${this.#name}_breakpoints{${breakpointsTable.map((item, index) => `
-               ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset}}, // Section ${item.section}`).join("")}
+               ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset} ${isSingleCommonValue ? '' : `, .common_value = ${item?.commonValue ?? 0}`}}, // Section ${item.section}`).join("")}
             };
 
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{0x${breakpointsTable[breakpointsTable.length - 1].ending.toString(16).toUpperCase()}U};
-            static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
+            ${isSingleCommonValue ? `static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};`: ''}
         `}
 
     /**

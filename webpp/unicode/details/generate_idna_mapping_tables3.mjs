@@ -20,6 +20,7 @@ import {
     uint4,
     uint5,
     uint6,
+    uint7,
     uint8,
     writePieces
 } from "./utils.mjs";
@@ -88,7 +89,8 @@ class IDNAMappings {
                 sizeof: uint16,
 
                 // split the indices table
-                splitInto: 4,
+                splitInto: 7,
+                splittingSingleValue: false,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
                 description: `IDNA Mappings`,
 
@@ -97,6 +99,7 @@ class IDNAMappings {
 
                     // vals may be Uint16Array and what not, and they can't hold strings
                     let res = Array.isArray(vals) ? vals : []; 
+                    res.trailing_comment = vals.trailing_comment;
 
                     for (let i = 0; i !== vals.length; ++i) {
                         res[i] = refPrinter(vals[i], self.tablePickMask, 'iblt');
@@ -128,7 +131,7 @@ class IDNAMappings {
                     return res;
                 }
             },
-            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint8),
+            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint5),
         });
 
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
@@ -234,7 +237,7 @@ const createTableFile = async (table) => {
     const boolsBits = Number(table.boolsTableSizeInBits());
     const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await readme.getReadme();
-    const competition = 16.98;
+    const competition = 84.47;
     const saved = competition - totalBits / 8 / 1024;
     const content = `
 /**
@@ -252,7 +255,6 @@ const createTableFile = async (table) => {
  *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
  *   Some other implementations' total table size was ${competition.toFixed(2)} KiB;
  *   So I have ${saved > 0 ? `saved` : `wasted`} ${Math.abs(saved).toFixed(2)} KiB.
- *   Some other implementations use binary search, which is not be the fastest solution.
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
