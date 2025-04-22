@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_bidi_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 13 Apr 2025 17:29:33 GMT
+ *   This file's generation date:        Tue, 22 Apr 2025 20:36:17 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       106016
@@ -169,8 +169,8 @@ namespace webpp::unicode::details {
     };
 
     static constexpr std::uint16_t bidi_last_breakpoint{0x8800U};
-    static constexpr bidi_index    bidi_common_position{213U};
     static constexpr std::uint16_t bidi_breakpoint_shift{9U};
+    static constexpr bidi_index    bidi_common_position{213U};
 
 
     /**
@@ -208,16 +208,16 @@ namespace webpp::unicode::details {
       213, 2938, 213, 213, 213, 314, 1999, 1999, 2001, 213, 2970, 1999, 1999, 2011, 1999, 1999, 1999, 1999,
       1999, 1999, 2009, 1983, 3002, 3033, 213, 213, 3065, 212, 213, 3094, 213, 213, 213, 213, 213, 213, 1999,
       3126, 216, 213, 1983, 3142, 213, 1982, 3173, 213, 213, 213, 213, 3189, 213, 213, 215, 214,
-      // End of Section #1 [0, 416) containing 416 values (0.81 KiB).
+      // End of Section #1 [0, 416) containing 416 values (0.81 KiB). Skipping 205 values.
 
       213, 1999, 1999,
-      // End of Section #2 [621, 624) containing 3 values (0.01 KiB).
+      // End of Section #2 [621, 624) containing 3 values (0.01 KiB). Skipping 691 values.
 
       213, 1983, 1999, 2749, 213, 213, 213, 213, 213, 213, 213, 213, 213, 3216, 213, 213, 3233, 1006, 213,
       213, 1051, 1999, 2936, 213, 213, 204, 213, 213, 213, 3265, 3292, 213, 3192, 213, 213, 971, 3324, 213,
       3349, 3374, 213, 906, 3392, 213, 1000, 213, 3422, 3451, 977, 213, 3467, 1004, 3499, 213, 213, 213, 3522,
       213, 213, 213, 3549,
-      // End of Section #3 [1315, 1376) containing 61 values (0.12 KiB).
+      // End of Section #3 [1315, 1376) containing 61 values (0.12 KiB). Skipping 631 values.
 
       213, 3563, 3594, 3610, 526, 526, 526, 526, 526, 526, 526, 526, 526, 526, 526, 526, 526, 526, 3626, 3656,
       526, 526, 526, 3673, 3690, 3722, 3754, 3770, 3802, 526, 526, 526, 3818, 3850, 63, 63, 2750, 213, 213,
@@ -243,7 +243,7 @@ namespace webpp::unicode::details {
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       5234,
-      // End of Section #4 [2007, 2467) containing 460 values (0.90 KiB).
+      // End of Section #4 [2007, 2467) containing 460 values (0.90 KiB). Skipping 356 values.
 
       213, 1006, 5266, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
@@ -251,7 +251,7 @@ namespace webpp::unicode::details {
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 5282, 213,
       377, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 990, 213, 5303, 213, 213, 5333,
-      // End of Section #5 [2823, 2944) containing 121 values (0.24 KiB).
+      // End of Section #5 [2823, 2944) containing 121 values (0.24 KiB). Skipping 611 values.
 
       213, 1099, 5365, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
@@ -281,40 +281,40 @@ namespace webpp::unicode::details {
       1999, 1999, 1999, 1999, 2011, 6158, 6177, 1999, 6202, 6233, 1999, 1999, 1999, 1999, 6265, 1999, 1999,
       6285, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213,
       213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 213, 6311,
-      // End of Section #6 [3555, 4096) containing 541 values (1.06 KiB).
+      // End of Section #6 [3555, 4096) containing 541 values (1.06 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #7 [6142, 6144) containing 2 values (0.00 KiB).
+      // End of Section #7 [6142, 6144) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #8 [8190, 8192) containing 2 values (0.00 KiB).
+      // End of Section #8 [8190, 8192) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #9 [10238, 10240) containing 2 values (0.00 KiB).
+      // End of Section #9 [10238, 10240) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #10 [12286, 12288) containing 2 values (0.00 KiB).
+      // End of Section #10 [12286, 12288) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #11 [14334, 14336) containing 2 values (0.00 KiB).
+      // End of Section #11 [14334, 14336) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #12 [16382, 16384) containing 2 values (0.00 KiB).
+      // End of Section #12 [16382, 16384) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #13 [18430, 18432) containing 2 values (0.00 KiB).
+      // End of Section #13 [18430, 18432) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #14 [20478, 20480) containing 2 values (0.00 KiB).
+      // End of Section #14 [20478, 20480) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #15 [22526, 22528) containing 2 values (0.00 KiB).
+      // End of Section #15 [22526, 22528) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #16 [24574, 24576) containing 2 values (0.00 KiB).
+      // End of Section #16 [24574, 24576) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #17 [26622, 26624) containing 2 values (0.00 KiB).
+      // End of Section #17 [26622, 26624) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6342, 6371, 6403, 6403, 6403, 6403, 6403, 6403, 6404, 314, 314, 314, 314, 314, 314, 314, 6436,
       6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403,
@@ -324,13 +324,13 @@ namespace webpp::unicode::details {
       6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403,
       6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403,
       6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6403, 6404,
-      // End of Section #18 [28670, 28800) containing 130 values (0.25 KiB).
+      // End of Section #18 [28670, 28800) containing 130 values (0.25 KiB). Skipping 1918 values.
 
       213, 6311,
-      // End of Section #19 [30718, 30720) containing 2 values (0.00 KiB).
+      // End of Section #19 [30718, 30720) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
-      // End of Section #20 [32766, 32768) containing 2 values (0.00 KiB).
+      // End of Section #20 [32766, 32768) containing 2 values (0.00 KiB). Skipping 2046 values.
 
       213, 6311,
       // End of Section #21 [34814, 34816) containing 2 values (0.00 KiB).

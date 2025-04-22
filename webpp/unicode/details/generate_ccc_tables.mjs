@@ -11,7 +11,6 @@ import { getReadme } from "./readme.mjs";
 import { TablePairs } from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {runClangFormat, runCmd, uint32, uint7, uint8, writePieces} from "./utils.mjs";
-import child_process from "node:child_process";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -34,14 +33,14 @@ class CCCTables {
 
     // these numbers are educated guesses from other projects, they're not that important!
     indices = {
-        max: 4353 * 10,
+        max: 4353 * 100,
         sizeof: uint32,
-        splitInto: 1, // split the table this many tables
+        // splitInto: 1, // split the table this many tables
         description: `CCC: Canonical Combining Class
 These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`,
     };
     values = {
-        max: 65535,
+        max: 65535 * 10,
         sizeof: uint8,
         description: `CCC: Canonical Combining Class
 These values are calculated and individually represent actual CCC values, but they have no

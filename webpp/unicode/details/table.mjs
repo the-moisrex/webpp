@@ -532,7 +532,7 @@ export class TablePairs {
         const endingType = findBestTypeFrom(breakpointsTable, 'ending');
         const offsetType = findBestTypeFrom(breakpointsTable, 'offset');
         // const align = `std::uint${alignmentOf([realSizeOf(startingType), realSizeOf(endingType), realSizeOf(offsetType)])}_t`
-        const sumSize = BigInt(realSizeOf(startingType) + realSizeOf(endingType) + realSizeOf(offsetType)) + (isSingleCommonValue ? 0 : realSizeOf(this.#indexAddenda.sizeof));
+        const sumSize = BigInt(realSizeOf(startingType) + realSizeOf(endingType) + realSizeOf(offsetType)) + (isSingleCommonValue ? 0n : realSizeOf(this.#indexAddenda.sizeof));
         this.#breakpointsTableSize = BigInt(breakpointsTable.length) * sumSize * 8n;
         let allIndicesBits = 0
         let allLength = 0;

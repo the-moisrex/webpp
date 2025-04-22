@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_general_categories_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 13 Apr 2025 17:31:11 GMT
+ *   This file's generation date:        Tue, 22 Apr 2025 20:37:46 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       77960
@@ -286,8 +286,8 @@ namespace webpp::unicode::details {
     };
 
     static constexpr std::uint16_t gc_last_breakpoint{0x7010U};
-    static constexpr gc_index      gc_common_position{0U};
     static constexpr std::uint16_t gc_breakpoint_shift{9U};
+    static constexpr gc_index      gc_common_position{0U};
 
 
     /**
@@ -319,11 +319,11 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2059, 0, 0, 0, 1, 0, 0, 0, 32,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2081, 0, 0, 2097,
-      // End of Section #1 [0, 389) containing 389 values (0.76 KiB).
+      // End of Section #1 [0, 389) containing 389 values (0.76 KiB). Skipping 941 values.
 
       0, 2124, 2, 0, 0, 716, 0, 0, 0, 0, 0, 0, 0, 0, 2154, 2183, 0, 0, 2215, 2227, 2255, 2287, 0, 2312, 2337,
       0, 424, 2357, 2388, 819, 0, 2411, 2440, 2454, 0, 2484, 823, 2516, 0, 0, 0, 0, 0, 0, 0, 2545,
-      // End of Section #2 [1330, 1376) containing 46 values (0.09 KiB).
+      // End of Section #2 [1330, 1376) containing 46 values (0.09 KiB). Skipping 631 values.
 
       0, 2559, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 48, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2560, 0, 0, 0, 0, 0, 0, 0, 2589, 0,
@@ -341,13 +341,13 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 3826,
-      // End of Section #3 [2007, 2467) containing 460 values (0.90 KiB).
+      // End of Section #3 [2007, 2467) containing 460 values (0.90 KiB). Skipping 356 values.
 
       0, 2, 3858, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2654, 0, 2739, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3875, 3892, 3916, 0, 0, 3944,
-      // End of Section #4 [2823, 2944) containing 121 values (0.24 KiB).
+      // End of Section #4 [2823, 2944) containing 121 values (0.24 KiB). Skipping 611 values.
 
       0, 3962, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -360,7 +360,7 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4177, 4207, 0, 0, 183, 0, 0, 0, 0, 2739, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 184, 0, 2681, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2681, 0, 0, 0, 0,
       0, 0, 0, 718, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2739, 0, 0, 0, 1206,
-      // End of Section #5 [3555, 3915) containing 360 values (0.70 KiB).
+      // End of Section #5 [3555, 3915) containing 360 values (0.70 KiB). Skipping 24764 values.
 
       0, 32, 32, 32, 32, 32, 32, 32, 48,
       // End of Section #6 [28679, 28688) containing 9 values (0.02 KiB).

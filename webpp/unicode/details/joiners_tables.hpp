@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_joiners_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 13 Apr 2025 17:31:10 GMT
+ *   This file's generation date:        Tue, 22 Apr 2025 20:37:45 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       93928
@@ -214,8 +214,8 @@ namespace webpp::unicode::details {
     };
 
     static constexpr std::uint16_t joiners_last_breakpoint{0xE01FU};
-    static constexpr joiners_index joiners_common_position{0U};
     static constexpr std::uint16_t joiners_breakpoint_shift{9U};
+    static constexpr joiners_index joiners_common_position{0U};
 
 
     /**
@@ -257,13 +257,13 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 142, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
       0, 0, 0, 19, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 609, 0, 0, 0, 0, 0, 0, 1181,
-      // End of Section #1 [0, 778) containing 778 values (1.52 KiB).
+      // End of Section #1 [0, 778) containing 778 values (1.52 KiB). Skipping 1883 values.
 
       0, 1, 1197, 0, 605, 0, 0, 0, 0, 0, 142, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1211, 0, 1223,
       0, 186, 186, 186, 1239, 0, 0, 0, 0, 586, 0, 19, 634, 0, 0, 1249, 0, 74, 142, 0, 0, 141, 0, 0, 1263, 0,
       0, 599, 0, 0, 0, 690, 1274, 1287, 0, 0, 592, 0, 0, 0, 1303, 603, 0, 637, 598, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 1319,
-      // End of Section #2 [2661, 2751) containing 90 values (0.18 KiB).
+      // End of Section #2 [2661, 2751) containing 90 values (0.18 KiB). Skipping 1265 values.
 
       0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
@@ -284,10 +284,10 @@ namespace webpp::unicode::details {
       346, 0, 1842, 0, 0, 1855, 597, 1870, 0, 0, 689, 1817, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 842, 0, 0, 0, 0, 0, 17, 1886, 1901, 0, 0, 0, 0, 0, 0, 0, 1916, 1786, 0, 0, 0, 0,
       1931, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 587, 142, 0, 0, 1345, 1713, 594,
-      // End of Section #3 [4016, 4598) containing 582 values (1.14 KiB).
+      // End of Section #3 [4016, 4598) containing 582 values (1.14 KiB). Skipping 332 values.
 
       0, 19, 44, 538,
-      // End of Section #4 [4930, 4934) containing 4 values (0.01 KiB).
+      // End of Section #4 [4930, 4934) containing 4 values (0.01 KiB). Skipping 714 values.
 
       0, 605, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -296,10 +296,10 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 139, 0, 0, 0, 537, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 141, 0, 0, 0, 0, 600,
-      // End of Section #5 [5648, 5887) containing 239 values (0.47 KiB).
+      // End of Section #5 [5648, 5887) containing 239 values (0.47 KiB). Skipping 1225 values.
 
       0, 636, 140,
-      // End of Section #6 [7112, 7115) containing 3 values (0.01 KiB).
+      // End of Section #6 [7112, 7115) containing 3 values (0.01 KiB). Skipping 292 values.
 
       0, 19, 19, 21, 19, 537, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 1335, 48, 1947, 0, 609, 0, 0, 0, 0, 0, 0, 0, 0, 0, 891, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -314,7 +314,7 @@ namespace webpp::unicode::details {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 607, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       605, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 537, 0, 0, 186, 186, 186, 186, 2001,
-      // End of Section #7 [7407, 7829) containing 422 values (0.82 KiB).
+      // End of Section #7 [7407, 7829) containing 422 values (0.82 KiB). Skipping 49514 values.
 
       0, 603, 0, 19, 19, 19, 19, 19, 19, 0, 0, 0, 0, 0, 0, 0, 0, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
       19, 19, 19, 19,

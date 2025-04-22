@@ -34,7 +34,7 @@ class BidiTables {
 
     // these numbers are educated guesses from other projects, they're not that important!
     indices = {
-        max: 4353 * 10,
+        max: 4353 * 100,
         sizeof: uint32,
 
         // split the indices table
@@ -44,7 +44,7 @@ class BidiTables {
         description: `Bidi: Bidirectional Class`,
     };
     values = {
-        max: 65535,
+        max: 65535 * 100,
         sizeof: uint8,
         description: `Bidi: Bidirectional Class Values`,
     };

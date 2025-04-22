@@ -1087,7 +1087,7 @@ export const findModifiedSubsetRange = (left, right, modifier) => {
     }
 
     modifier = modifier.clone();
-    const rightMod = new ModifiedSpan(right, modifier).slice();
+    const rightMod = new ModifiedSpan(right, modifier);
     top: for (let rpos = 0; rpos !== right.length; ++rpos) {
         modifier.set({
             pos: BigInt(rpos),

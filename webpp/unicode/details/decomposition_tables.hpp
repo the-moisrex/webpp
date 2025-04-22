@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Mon, 21 Apr 2025 20:14:07 GMT
+ *   This file's generation date:        Tue, 22 Apr 2025 20:36:27 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -148,8 +148,8 @@ namespace webpp::unicode::details {
     };
 
     static constexpr std::uint32_t decomp_last_breakpoint{0xBE9U};
-    static constexpr decomp_index  decomp_common_position{0U};
     static constexpr std::uint32_t decomp_breakpoint_shift{8U};
+    static constexpr decomp_index  decomp_common_position{0U};
 
 
     /**
@@ -175,21 +175,21 @@ namespace webpp::unicode::details {
       3431429, 3510021, 3590917, 3672581, 3754501, 3828229, 3899651, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3941637, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 4020486, 4115718, 4214022,
-      // End of Section #1 [0, 196) containing 196 values (0.77 KiB).
+      // End of Section #1 [0, 196) containing 196 values (0.77 KiB). Skipping 799 values.
 
       0, 4312323, 4361475, 4410627, 4459779, 4508931, 4558084, 4623619, 4672772, 4730886, 4829188, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 4892422, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4984072, 0, 5103368, 0, 0, 0, 0, 0, 0, 0, 0, 5231624, 5361928,
       5491720, 0, 0, 5607688, 0, 0, 0, 5736712, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5859592,
-      // End of Section #2 [995, 1125) containing 130 values (0.51 KiB).
+      // End of Section #2 [995, 1125) containing 130 values (0.51 KiB). Skipping 286 values.
 
       0, 5982220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6168588,
-      // End of Section #3 [1411, 1462) containing 51 values (0.20 KiB).
+      // End of Section #3 [1411, 1462) containing 51 values (0.20 KiB). Skipping 398 values.
 
       0, 6357516, 6539020, 6735628,
-      // End of Section #4 [1860, 1864) containing 4 values (0.02 KiB).
+      // End of Section #4 [1860, 1864) containing 4 values (0.02 KiB). Skipping 1175 values.
 
       0, 6932228, 6997764, 7063300, 7128836, 7194372, 7259908, 7325444, 7390980, 7456516,
       // End of Section #5 [3039, 3049) containing 10 values (0.04 KiB).
