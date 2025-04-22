@@ -14,9 +14,13 @@ import {
     renderTableValues,
     runClangFormat,
     sizeOf,
+    toHexString,
     uint16,
     uint32,
+    uint4,
+    uint5,
     uint6,
+    uint8,
     writePieces
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
@@ -84,15 +88,21 @@ class IDNAMappings {
                 sizeof: uint16,
 
                 // split the indices table
-                splitInto: 1,
+                splitInto: 4,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
                 description: `IDNA Mappings`,
 
                 // add "iblt"
                 map(vals, info) {
+
+                    // vals may be Uint16Array and what not, and they can't hold strings
+                    let res = Array.isArray(vals) ? vals : []; 
+
                     for (let i = 0; i !== vals.length; ++i) {
-                        vals[i] = refPrinter(vals[i], this.tablePickMask, 'iblt');
+                        res[i] = refPrinter(vals[i], self.tablePickMask, 'iblt');
                     }
+
+                    return res;
                 }
             },
             values: {
@@ -102,19 +112,23 @@ class IDNAMappings {
 
                 /// it runs on print
                 map(vals, info) {
+                    let res = Array.isArray(vals) ? vals : [];
                     for (let i = 0; i !== vals.length; ++i) {
                         switch (vals[i]) {
                             case DISALLOWED:
-                                vals[i] = "disallowed";
+                                res[i] = "disallowed";
                                 break;
                             case VALID:
-                                vals[i] = "valid";
+                                res[i] = "valid";
                                 break;
+                            default:
+                                res[i] = vals[i];
                         }
                     }
+                    return res;
                 }
             },
-            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint6),
+            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint8),
         });
 
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
@@ -255,6 +269,7 @@ const createTableFile = async (table) => {
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace webpp::unicode::details {
 
@@ -295,7 +310,9 @@ ${tableContent}
         printableValues: table.mappingsTable,
         len: recursiveLength(table.mappingsTable),
         map: val => {
-            val.inline_comment = val.codePoints.map(cp => cp.toString(16).toUpperCase()).join(", ")
+            const codePoints = val.codePoints;
+            val = val.map(toHexString);
+            val.inline_comment = codePoints.map(cp => cp.toString(16).toUpperCase()).join(", ");
             return val;
         }
     })}

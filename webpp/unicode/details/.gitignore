@@ -1,17 +1,28 @@
-UnicodeData.txt
-ReadMe.txt
-CompositionExclusions.txt
-DerivedNormalizationProps.txt
+
+# IDE stuff
 .vscode
 .idea
+
+# profiling logs
 isolate-*.log
 processed*
+
+# these files will be downloaded by the scripts from unicode.org:
 IdnaMappingTable.txt
 DerivedBidiClass.txt
 DerivedJoiningType.txt
 ArabicShaping.txt
 PropertyValueAliases.txt
+UnicodeData.txt
+ReadMe.txt
+CompositionExclusions.txt
+DerivedNormalizationProps.txt
 
 # update.sh will create logs
 *.log
 *.log.gz
+
+# Gets generated using this command for profiling:
+#   node --cpu-prof file.mjs
+# Can be opened using chrome://inspect or in Performance tab of DevTools
+*.cpuprofile

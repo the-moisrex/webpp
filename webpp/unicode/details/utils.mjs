@@ -993,7 +993,7 @@ export const renderTableValues = (info) => {
                `;
             }
             if (isBoolType(type)) {
-                res += `0b${val.toString(2).padStart(Number(sizeOf(type)))}`;
+                res += `0b${val.toString(2).padStart(Number(sizeOf(type)), "0")}`;
             } else if (Array.isArray(val) | ArrayBuffer.isView(val)) {
                 res += val.join(", ");
             } else if (typeof val === "number" || typeof val === "bigint") {

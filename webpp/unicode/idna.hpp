@@ -28,11 +28,7 @@ namespace webpp::unicode::idna {
 
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
-        using details::batch_bit_count;
-        using details::batch_mask;
         using details::disallowed;
-        using details::idna_ref_blocks;
-        using details::idna_ref_bools;
         using details::not_mapped;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
