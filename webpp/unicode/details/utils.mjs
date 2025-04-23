@@ -1455,30 +1455,31 @@ export function alignmentOf(sizes) {
 }
 
 
-// find left in right table, or insert it
-export function findOverlap(left, right) {
-    const found = findSimilarRange(left, right);
+// find the overlap of the small table in the big table if any.
+export function findOverlap(small, big) {
+    const found = findSimilarRange(small, big);
     if (found !== null) {
         return {
             start: found,
             inserts: null,
-            overlap: left.length,
+            overlap: small.length,
         };
     }
-    const overlap = overlapInserts(left, right);
-    const start = right.length - overlap;
+    const overlap = overlapInserts(big, small);
+    const start = big.length - overlap;
     return {
         start,
         overlap,
-        inserts: left.slice(0, left.length - overlap)
+        inserts: small.slice(overlap)
     };
 }
 
 // left small table
 // right is big table, and gets inserted into
 export function findOrInsert(left, right) {
-    const {start, inserts} = findOverlap(left, right);
+    const {start, inserts, overlap} = findOverlap(left, right);
     if (inserts !== null) {
+        // console.log(start, overlap, inserts, right)
         right.push(...inserts);
     }
     return start;
