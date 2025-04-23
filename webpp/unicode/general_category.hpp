@@ -30,7 +30,7 @@ namespace webpp::unicode {
         auto const [starting, ending, offset] = details::gc_breakpoints[section_index];
 
         gc_index const pos = chunk < starting || chunk >= ending
-                               ? details::gc_common_position
+                               ? details::gc_common_pos
                                : gc_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         return static_cast<general_category>(gc_values[pos.get_position(code_point)]);

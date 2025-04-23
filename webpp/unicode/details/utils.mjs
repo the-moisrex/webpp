@@ -1453,3 +1453,33 @@ export function alignmentOf(sizes) {
     }
     return max;
 }
+
+
+// find left in right table, or insert it
+export function findOverlap(left, right) {
+    const found = findSimilarRange(left, right);
+    if (found !== null) {
+        return {
+            start: found,
+            inserts: null,
+            overlap: left.length,
+        };
+    }
+    const overlap = overlapInserts(left, right);
+    const start = right.length - overlap;
+    return {
+        start,
+        overlap,
+        inserts: left.slice(0, left.length - overlap)
+    };
+}
+
+// left small table
+// right is big table, and gets inserted into
+export function findOrInsert(left, right) {
+    const {start, inserts} = findOverlap(left, right);
+    if (inserts !== null) {
+        right.push(...inserts);
+    }
+    return start;
+}

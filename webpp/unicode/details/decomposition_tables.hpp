@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Tue, 22 Apr 2025 20:36:27 GMT
+ *   This file's generation date:        Wed, 23 Apr 2025 20:08:34 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -82,7 +82,8 @@ namespace webpp::unicode::details {
           pos{inp_pos}, max_length{inp_max_length} {}
 
         [[nodiscard]] constexpr std::uint32_t value() const noexcept {
-            return static_cast<std::uint32_t>(max_length) | (static_cast<std::uint32_t>(pos) << pos_shift);
+            return static_cast<std::uint32_t>(
+              static_cast<std::uint32_t>(max_length) | (static_cast<std::uint32_t>(pos) << pos_shift));
         }
 
         static constexpr std::uint16_t chunk_mask  = 0x3FU;
@@ -149,7 +150,7 @@ namespace webpp::unicode::details {
 
     static constexpr std::uint32_t decomp_last_breakpoint{0xBE9U};
     static constexpr std::uint32_t decomp_breakpoint_shift{8U};
-    static constexpr decomp_index  decomp_common_position{0U};
+    static constexpr decomp_index  decomp_common_pos{0U}; // this is the last common value position
 
 
     /**

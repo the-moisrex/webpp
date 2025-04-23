@@ -315,13 +315,14 @@ export class TablePairs {
             // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
             const modifiedValues = this.#props?.modify?.({
-                start: codeRange, length: this.#indexAddenda.chunkSize, end: codeRange + this.#indexAddenda.chunkSize,
+                start: range, length, end: range + BigInt(length),
                 codeRange, modifier, inserts, rtrimmed, overlapped,
+                values: this.data.slice(Number(range), Number(range) + length)
             });
-            modifier = modifiedValues?.modifier || modifier;
-            inserts = modifiedValues?.inserts || inserts;
-            rtrimmed = modifiedValues?.rtrimmed || rtrimmed;
-            overlapped = modifiedValues?.overlapped || overlapped;
+            modifier = modifiedValues?.modifier ?? modifier;
+            inserts = modifiedValues?.inserts ?? inserts;
+            rtrimmed = modifiedValues?.rtrimmed ?? rtrimmed;
+            overlapped = modifiedValues?.overlapped ?? overlapped;
 
             assert.ok(modifier instanceof Modifier, "The modifier should be an instance of Modifier.",);
             // assert.ok(Array.isArray(inserts), "Inserts should be an array.");
@@ -601,7 +602,7 @@ export class TablePairs {
 
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{0x${breakpointsTable[breakpointsTable.length - 1].ending.toString(16).toUpperCase()}U};
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
-            ${isSingleCommonValue ? `static constexpr ${this.#indexAddenda.name} ${this.#name}_common_position{${commonValues[0]}U};`: ''}
+            static constexpr ${this.#indexAddenda.name} ${this.#name}_common_pos{${commonValues.at(-1)}U}; // this is the last common value position
         `}
 
     /**

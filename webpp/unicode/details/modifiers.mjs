@@ -510,10 +510,10 @@ ${addenda.length <= 1 ? "" : `
 `}
 
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${addenda
+            return static_cast<${this.STLTypeString}>(${addenda
             .reverse()
             .map((addendum) => addendum.renderShift(this.STLTypeString, "_shift", "_mask"),)
-            .join(" | ")};
+            .join(" | ")});
         }
 
 ${this.#renderFunctions.map((func) => func()).join("\n\n")}
@@ -766,7 +766,7 @@ export function getPositionFunction() {
     return `
         /**
          * Get the final position of the second table.
-         * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
+         * This does not apply the shift or get the value of the second table for you; this only applies that mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
             auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
@@ -780,7 +780,7 @@ export function getSimplePositionFunction() {
     return `
         /**
          * Get the final position of the second table.
-         * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
+         * This does not apply the shift or get the value of the second table for you; this only applies that mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
             auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);

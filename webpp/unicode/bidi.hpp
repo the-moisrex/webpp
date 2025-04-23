@@ -145,13 +145,13 @@ namespace webpp::unicode {
     template <UTF CPType>
     [[nodiscard]] static constexpr direction direction_of(CPType const code_point) noexcept {
         using enum direction;
-        using details::bidi_common_position;
+        using details::bidi_common_pos;
         using details::bidi_index;
         using details::bidi_indices;
         using details::bidi_values;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        if (code_point >= static_cast<CPType>(details::trailing_zero_bidis)) [[unlikely]] {
+        if (code_point < 0 || code_point >= static_cast<CPType>(details::trailing_zero_bidis)) [[unlikely]] {
             return NONE;
         }
 
@@ -160,7 +160,7 @@ namespace webpp::unicode {
         auto const [starting, ending, offset] = details::bidi_breakpoints[section_index];
         bidi_index const pos =
           chunk < starting || chunk >= ending
-            ? bidi_common_position
+            ? bidi_common_pos
             : bidi_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         return static_cast<direction>(bidi_values[pos.get_position(code_point)]);

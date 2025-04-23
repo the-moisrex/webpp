@@ -26,48 +26,51 @@ namespace webpp::unicode::idna {
     static constexpr charmap<256U> ASCII_STD3_RULES{LOWER_ALPHA<char>, DIGIT<char>, charset('-')};
     static constexpr auto          NON_ASCII_CODE_UNITS = bitmap_range<0x80U, 0xFFU, 256>();
 
+    /**
+     * Get the status of the specified code point in regarding their IDNA status.
+     * The result is:
+     *   - VALID
+     *   - DISALLOWED
+     *   - Mapped: if it's not valid/disallowed, the return value is the starting position of
+     *             the mapped value in the idna_mappings table.
+     */
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
         using details::disallowed;
         using details::not_mapped;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        stl::uint16_t ref; // NOLINT(*-init-variables)
-        if (code_point <= static_cast<CharT>(details::breakpoint_start) && code_point > 0) [[likely]] {
-            ref = details::idna_refs[static_cast<stl::uint16_t>(code_point >> batch_bit_count)];
-        } else [[unlikely]] {
-            if (code_point >= static_cast<CharT>(details::last_disallowed)) {
-                return disallowed;
-            }
-            if (code_point >= static_cast<CharT>(details::breakpoint_end)) {
-                auto const pos = static_cast<stl::uint16_t>(
-                  (code_point - static_cast<CharT>(details::breakpoint_end)) >> batch_bit_count);
-                ref = details::idna_refs_extra[pos];
-            } else {
-                // negative code points and what not
-                return disallowed;
-            }
+        auto const chunk         = code_point >> details::idna_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::idna_breakpoint_shift);
+
+        if (code_point < 0 || section_index >= details::idna_last_breakpoint) [[unlikely]] {
+            return disallowed;
         }
 
-        stl::uint16_t const clean_ref = ref & static_cast<stl::uint16_t>(~details::table_pick_mask);
-        auto const          ref_ptr   = static_cast<stl::uint16_t>(clean_ref + (code_point & batch_mask));
-        if (clean_ref != ref) {
-            // looking at the idna_ref_bools table
+        auto const [starting, ending, offset, common_value] = details::idna_breakpoints[section_index];
+        details::idna_index const index =
+          chunk < starting || chunk >= ending
+            ? common_value
+            : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
 
-            constexpr auto pack_size = sizeof(typename decltype(idna_ref_bools)::value_type) * CHAR_BIT;
-            auto const     pos       = ref_ptr / pack_size;
+        auto const pos = index.get_position(code_point);
+        if (index.use_second_table) {
+            // looking at the boolean-only table (which includes only VALID/DISALLOWED states)
+
+            constexpr auto pack_size =
+              sizeof(typename decltype(details::idna_mappings_bools)::value_type) * CHAR_BIT;
 
             // the bits in the integer are stored in reverse order, so we don't have to do additional
             // calculations to get the bit that we need.
-            auto const          remaining  = (ref_ptr % pack_size);
-            stl::uint16_t const status_bit = 0b1U & (idna_ref_bools[pos] >> remaining);
+            auto const          bpos       = pos / pack_size;
+            auto const          remaining  = pos % pack_size;
+            stl::uint16_t const status_bit = 0b1U & (details::idna_mappings_bools[bpos] >> remaining);
 
             // if it's 1, it'll become valid, otherwise it'll stay disallowed
             return disallowed | status_bit;
         }
 
-        // we don't need to use ref_ptr, but we've already calculated it anyway:
-        return idna_ref_blocks[ref_ptr];
+        return details::idna_mapping_blocks[pos];
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
@@ -86,8 +89,9 @@ namespace webpp::unicode::idna {
         // ignored code points are mapped to nothing, so no special code is needed
         switch (pos) {
             case disallowed:
-                // disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step
-                // below checks for disallowed characters, after mapping and normalization.
+                // Disallowed: Leave the code point unchanged in the string.
+                // Note: The Convert/Validate step below checks for disallowed characters,
+                //       after mapping and normalization.
                 unchecked::append(out, code_point);
                 return false; // it's not allowed
             case valid:       // or deviation

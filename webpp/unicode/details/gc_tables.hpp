@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_general_categories_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Tue, 22 Apr 2025 20:37:46 GMT
+ *   This file's generation date:        Wed, 23 Apr 2025 20:08:57 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       77960
@@ -196,7 +196,7 @@ namespace webpp::unicode::details {
           pos{static_cast<std::uint16_t>(value)} {}
 
         [[nodiscard]] constexpr std::uint16_t value() const noexcept {
-            return static_cast<std::uint16_t>(pos);
+            return static_cast<std::uint16_t>(static_cast<std::uint16_t>(pos));
         }
 
         static constexpr std::uint16_t chunk_mask  = 0x1FU;
@@ -205,7 +205,7 @@ namespace webpp::unicode::details {
 
         /**
          * Get the final position of the second table.
-         * This does not apply the shift or get the value of the second table for you; this only applies tha
+         * This does not apply the shift or get the value of the second table for you; this only applies that
          * mask.
          */
         [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
@@ -287,7 +287,7 @@ namespace webpp::unicode::details {
 
     static constexpr std::uint16_t gc_last_breakpoint{0x7010U};
     static constexpr std::uint16_t gc_breakpoint_shift{9U};
-    static constexpr gc_index      gc_common_position{0U};
+    static constexpr gc_index      gc_common_pos{0U}; // this is the last common value position
 
 
     /**

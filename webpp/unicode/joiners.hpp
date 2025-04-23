@@ -57,7 +57,7 @@ namespace webpp::unicode {
         auto const [starting, ending, offset] = details::joiners_breakpoints[section_index];
         joiners_index const pos =
           chunk < starting || chunk >= ending
-            ? details::joiners_common_position
+            ? details::joiners_common_pos
             : joiners_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         return static_cast<joiner_type>(joiners_values[pos.get_position(code_point)]);

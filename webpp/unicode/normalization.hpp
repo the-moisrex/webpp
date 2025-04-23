@@ -248,7 +248,7 @@ namespace webpp::unicode {
     static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point)
       noexcept(istl::NothrowAppendable<Iter>) {
         using details::decomp_breakpoints;
-        using details::decomp_common_position;
+        using details::decomp_common_pos;
         using details::decomp_index;
         using details::decomp_indices;
         using details::decomp_values;
@@ -273,7 +273,7 @@ namespace webpp::unicode {
         auto const [starting, ending, offset] = decomp_breakpoints[section_index];
         decomp_index const code =
           chunk < starting || chunk >= ending
-            ? decomp_common_position
+            ? decomp_common_pos
             : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
         // Not mapped at all, that means the code point is mapped to itself.
@@ -394,7 +394,7 @@ namespace webpp::unicode {
                 auto const [starting, ending, offset] = decomp_breakpoints[section_index];
                 decomp_index const code =
                   chunk < starting || chunk >= ending
-                    ? decomp_common_position
+                    ? decomp_common_pos
                     : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
 
                 // calculating the length of te value in the decomp_values table:

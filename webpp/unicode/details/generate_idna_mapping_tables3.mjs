@@ -10,7 +10,7 @@ import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
     bool32,
-    char8_8, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
+    char8_8, findOrInsert, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
     renderTableValues,
     runClangFormat,
     sizeOf,
@@ -59,16 +59,13 @@ class IDNAMappings {
             validateResults: false, // the values table will not contain all the values
 
             // Put all the ranges that are not mapped into a different table
-            modify({start, end, modifier, inserts}) {
+            modify({start, end, modifier, values}) {
                 let areAllMapped = true;
-                for (const val of inserts) {
+                for (const val of values) {
                     areAllMapped &&= val === VALID || val === DISALLOWED;
                 }
                 if (areAllMapped) {
-                    const pos = self.findOrInsertBools({
-                        start, end, modifier, values: inserts
-                    });
-
+                    const pos = BigInt(findOrInsert(values.map(val => val !== DISALLOWED), self.boolsTable));
                     ++self.packedAmount;
                     if (verbose) {
                         console.log(' ', self.packedAmount, "Packed DISALLOWED/VALID into bools table: ", start, end, modifier);
@@ -77,11 +74,12 @@ class IDNAMappings {
                     // modifier = modifier.clone({pos: modifier.pos | BigInt(self.tablePickMask)});
                     // modifier.postModify = mod => mod.clone({pos: mod.pos | BigInt(self.tablePickMask)});
                     modifier.set({use_second_table: true, pos});
+                    return {
+                        inserts: [],
+                        modifier,
+                    }
                 }
-                return {
-                    inserts: areAllMapped ? [] : inserts,
-                    modifier,
-                }
+                return {};
             },
 
             indices: {
@@ -138,21 +136,6 @@ class IDNAMappings {
     }
 
 
-    findOrInsertBools({start, end, modifier, values}) {
-        const found = findSimilarSubRange(values, this.boolsTable.map(({values}) => values));
-        let targetIndex;
-        if (found !== null) {
-            targetIndex = BigInt(found);
-        } else {
-            targetIndex = BigInt(this.boolsTable.length);
-            this.boolsTable.push({
-                start, end, modifier, values
-            });
-        }
-        return targetIndex;
-    }
-
-
     /// proxy the function
     process() {
         this.tables.process();
@@ -190,7 +173,9 @@ class IDNAMappings {
                 this.mappingsTable.push(utf8Vals);
             }
             this.mappingsTable[blockPtr].codePoints.push(codePoint);
-            this.tables.add(codePoint, blockPtr);
+
+            const strBlockPtr = recursiveLength(this.mappingsTable, blockPtr);
+            this.tables.add(codePoint, strBlockPtr);
         } else {
             this.tables.add(codePoint, flags);
         }
@@ -225,7 +210,7 @@ ${this.tables.render()}
 
     getBoolsTable() {
         const type = bool32;
-        const tbl = packBoolsIntoInts(this.boolsTable.map(tbl => tbl.values.getAll().map(val => val !== DISALLOWED)).flat(), sizeOf(type));
+        const tbl = packBoolsIntoInts(this.boolsTable, sizeOf(type));
         tbl.type = type;
         return tbl;
     }
@@ -273,7 +258,7 @@ const createTableFile = async (table) => {
 #include <cstdint>
 #include <string_view>
 
-namespace webpp::unicode::details {
+namespace webpp::unicode::idna::details {
 
     static constexpr auto last_disallowed = static_cast<char32_t>(0x${table.lastDisallowed.toString(16).toUpperCase()});
 
@@ -318,7 +303,7 @@ ${tableContent}
             return val;
         }
     })}
-} // namespace webpp::unicode::details
+} // namespace webpp::unicode::idna::details
 
 #endif // WEBPP_UNICODE_IDNA_MAPPINGS_TABLES_HPP
     `;
