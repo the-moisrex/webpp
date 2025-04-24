@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 23 Apr 2025 20:17:30 GMT
+ *   This file's generation date:        Thu, 24 Apr 2025 15:15:17 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       403856
- *       - in bytes:      50482 B
- *       - in KibiBytes:  49.30 KiB
+ *       - in bits:       367264
+ *       - in bytes:      45908 B
+ *       - in KibiBytes:  44.83 KiB
  *   Some other implementations' total table size was 84.47 KiB;
- *   So I have saved 35.17 KiB.
+ *   So I have saved 39.64 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
@@ -116,155 +116,31 @@ namespace webpp::unicode::idna::details {
     /**
      * You can choose between the indices' table using these breakpoints:
      *
-     * Table size in KibiBytes:  8.50 KiB
+     * Table size in KibiBytes:  0.56 KiB
      */
-    static constexpr std::array<idna_breakpoint_type, 136U> idna_breakpoints{
-      idna_breakpoint_type{    .starting = 0,   .ending = 416,     .offset = 0,  .common_value = iblt | 0x0U}, // Section
-                                                                                                    // 1
-      {    .starting = 0,   .ending = 416,     .offset = 0, .common_value = iblt | 0x20U}, // Section 1
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      { .starting = 1315,  .ending = 1376,   .offset = 899, .common_value = iblt | 0x20U}, // Section 2
-      { .starting = 1724,  .ending = 1728,  .offset = 1247, .common_value = iblt | 0x20U}, // Section 3
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 1991,  .ending = 3177,  .offset = 1510, .common_value = iblt | 0x20U}, // Section 4
-      { .starting = 3454,  .ending = 4096,  .offset = 1787, .common_value = iblt | 0x20U}, // Section 5
-      { .starting = 3454,  .ending = 4096,  .offset = 1787, .common_value = iblt | 0x20U}, // Section 5
-      { .starting = 3454,  .ending = 4096,  .offset = 1787, .common_value = iblt | 0x20U}, // Section 5
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      { .starting = 5430,  .ending = 6430,  .offset = 3121, .common_value = iblt | 0x20U}, // Section 6
-      { .starting = 5430,  .ending = 6430,  .offset = 3121, .common_value = iblt | 0x20U}, // Section 6
-      { .starting = 5430,  .ending = 6430,  .offset = 3121, .common_value = iblt | 0x20U}, // Section 6
-      { .starting = 5430,  .ending = 6430,  .offset = 3121, .common_value = iblt | 0x20U}, // Section 6
-      { .starting = 5430,  .ending = 6430,  .offset = 3121, .common_value = iblt | 0x20U}, // Section 6
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {.starting = 28679, .ending = 28688, .offset = 25370, .common_value = iblt | 0x20U}, // Section 7
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {    .starting = 0,     .ending = 0,     .offset = 0, .common_value = iblt | 0x20U}, // Section Optimized Away
-      {.starting = 34815, .ending = 34816, .offset = 31497, .common_value = iblt | 0x20U}, // Section 8
+    static constexpr std::array<idna_breakpoint_type, 9U> idna_breakpoints{
+      idna_breakpoint_type{.starting     = 0,
+                           .ending       = 4096,
+                           .offset       = 0,
+                           .common_value = iblt | 0x0U                                                      }, // Section
+                                                                                           // 1
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      { .starting = 5430,  .ending = 6430,  .offset = 1334, .common_value = iblt | 0x20U}, // Section 2
+      {.starting = 28679, .ending = 28688, .offset = 23583, .common_value = iblt | 0x20U}, // Section 3
+      {.starting = 34815, .ending = 34816, .offset = 29710,         .common_value = 0x0U}, // Section 4
     };
 
     static constexpr std::uint16_t idna_last_breakpoint{0x8800U};
-    static constexpr std::uint16_t idna_breakpoint_shift{8U};
+    static constexpr std::uint16_t idna_breakpoint_shift{12U};
     static constexpr idna_index    idna_common_pos{32800U}; // this is the last common value position
 
 
     /**
-     * idna Index Table (combined 8 sections)
+     * idna Index Table (combined 4 sections)
      *
      * IDNA Mappings
      *
@@ -272,43 +148,43 @@ namespace webpp::unicode::idna::details {
      *     [1bits = use_second_table] + [15bits = pos]
      *
      * Table size:
-     *   - in bits:       53104
-     *   - in bytes:      6638 B
-     *   - in KibiBytes:  6.48 KiB
+     *   - in bits:       81696
+     *   - in bytes:      10212 B
+     *   - in KibiBytes:  9.97 KiB
      */
-    static constexpr std::array<idna_index, 3319ULL> idna_mapping_ref{
+    static constexpr std::array<idna_index, 5106ULL> idna_mapping_ref{
       iblt | 0x0U, iblt | 0x0U, 0x0U, iblt | 0x0U, iblt | 0x20U, 0x20U, 0x40U, iblt | 0x0U, 0x60U, 0x80U,
       0x9FU, 0xBFU, 0xDFU, 0xFFU, 0x11CU, 0x13CU, 0x15CU, 0x17CU, 0x19BU, iblt | 0x0U, iblt | 0x0U, 0x1ABU,
       0x1C4U, 0x1E4U, iblt | 0x0U, iblt | 0x0U, 0x204U, 0x214U, 0x234U, 0x254U, 0x265U, 0x285U, 0x2A5U,
       0x2C5U, iblt | 0x0U, 0x2E5U, 0x305U, 0x325U, 0x345U, 0x365U, 0x385U, 0x3A5U, 0x3C5U, iblt | 0x0U,
-      0x3DEU, iblt | 0x0U, iblt | 0x30U, iblt | 0x50U, iblt | 0x6DU, iblt | 0x0U, iblt | 0x0U, 0x3EFU,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x8BU, iblt | 0x0U, iblt | 0x9BU, iblt | 0x0U, iblt | 0xA8U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0xEU, iblt | 0x0U, iblt | 0xC5U, iblt | 0x0U, iblt | 0xE5U,
-      iblt | 0x105U, iblt | 0x115U, iblt | 0x12CU, iblt | 0x0U, iblt | 0x0U, iblt | 0x8AU, iblt | 0x0U,
-      iblt | 0x0U, 0x408U, iblt | 0x0U, iblt | 0x13FU, iblt | 0x15BU, 0x428U, iblt | 0x17BU, iblt | 0x18EU,
-      0x448U, 0x466U, iblt | 0x1AEU, iblt | 0x1C1U, iblt | 0x1DDU, iblt | 0x1FDU, iblt | 0x216U,
-      iblt | 0x229U, iblt | 0x1E1U, 0x486U, iblt | 0x249U, iblt | 0x267U, iblt | 0x285U, iblt | 0x2A5U,
-      iblt | 0x2C5U, iblt | 0x2D7U, iblt | 0x2F3U, iblt | 0x313U, iblt | 0x32AU, iblt | 0x33CU, iblt | 0x358U,
-      iblt | 0x378U, iblt | 0x398U, iblt | 0x3AAU, iblt | 0x0U, iblt | 0x3BEU, iblt | 0xC2U, iblt | 0x3D8U,
-      iblt | 0x3F8U, iblt | 0x410U, iblt | 0x430U, iblt | 0x431U, 0x4A5U, iblt | 0x4U, iblt | 0x20U,
-      iblt | 0x43DU, 0x4C4U, 0x4E4U, iblt | 0x20U, 0x502U, iblt | 0x0U, 0x51FU, 0x53CU, 0x55BU, 0x579U,
-      iblt | 0x45DU, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0x599U,
+      0x3DEU, iblt | 0x0U, iblt | 0x40U, iblt | 0x55U, iblt | 0x6FU, iblt | 0x0U, iblt | 0x0U, 0x3EFU,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x8CU, iblt | 0x0U, iblt | 0xAAU, iblt | 0x0U, iblt | 0xADU,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0xEU, iblt | 0x0U, iblt | 0xBAU, iblt | 0x0U, iblt | 0xC7U,
+      iblt | 0xE7U, iblt | 0x107U, iblt | 0x118U, iblt | 0x0U, iblt | 0x0U, iblt | 0x89U, iblt | 0x0U,
+      iblt | 0x0U, 0x408U, iblt | 0x0U, iblt | 0x134U, iblt | 0x14BU, 0x428U, iblt | 0x161U, iblt | 0x180U,
+      0x448U, 0x466U, iblt | 0x1A0U, iblt | 0x1BFU, iblt | 0x1D6U, iblt | 0x1F2U, iblt | 0x212U,
+      iblt | 0x232U, iblt | 0x1D6U, 0x486U, iblt | 0x24EU, iblt | 0x26CU, iblt | 0x28CU, iblt | 0x2AAU,
+      iblt | 0x2C4U, iblt | 0x2E4U, iblt | 0x2FBU, iblt | 0x317U, iblt | 0x337U, iblt | 0x2E4U, iblt | 0x34EU,
+      iblt | 0x36AU, iblt | 0x38AU, iblt | 0x2E4U, iblt | 0x0U, iblt | 0x3AAU, iblt | 0xB4U, iblt | 0x3CAU,
+      iblt | 0x3E4U, iblt | 0x404U, iblt | 0x424U, iblt | 0x443U, 0x4A5U, iblt | 0x4U, iblt | 0x20U,
+      iblt | 0x463U, 0x4C4U, 0x4E4U, iblt | 0x20U, 0x502U, iblt | 0x0U, 0x51FU, 0x53CU, 0x55BU, 0x579U,
+      iblt | 0x476U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0x599U,
       0x5B9U, 0x5C9U, iblt | 0x0U, iblt | 0x0U, 0x5E6U, 0x605U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x47DU, iblt | 0x0U, iblt | 0x48DU, iblt | 0x4ADU,
-      iblt | 0x4C5U, iblt | 0x0U, iblt | 0x4DDU, iblt | 0x0U, iblt | 0xC8U, iblt | 0x3U, iblt | 0x6U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x496U, iblt | 0x0U, iblt | 0x4B6U, iblt | 0x4C6U,
+      iblt | 0x4E4U, iblt | 0x0U, iblt | 0x4FCU, iblt | 0x0U, iblt | 0xBAU, iblt | 0x3U, iblt | 0x6U,
       iblt | 0x0U, iblt | 0x0U, 0x60FU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x4FDU, iblt | 0x0U, iblt | 0x0U, iblt | 0x7U, iblt | 0x51CU, iblt | 0x9U, iblt | 0xCU,
-      iblt | 0x53CU, iblt | 0x0U, 0x62FU, iblt | 0x2U, iblt | 0x55CU, 0x645U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x7U, iblt | 0x0U, iblt | 0x56CU, iblt | 0x0U, iblt | 0xAU, iblt | 0x1U, iblt | 0x58CU,
-      iblt | 0x4FAU, iblt | 0x5ACU, iblt | 0x0U, iblt | 0x5BCU, iblt | 0x5DAU, iblt | 0x0U, iblt | 0x5F8U,
-      iblt | 0x0U, iblt | 0x1U, iblt | 0x617U, iblt | 0x55CU, iblt | 0x608U, iblt | 0x11U, iblt | 0x20U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x7FU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x633U, iblt | 0x0U, iblt | 0x502U, iblt | 0x510U, iblt | 0x0U, 0x665U, 0x685U, iblt | 0x643U,
+      iblt | 0x513U, iblt | 0x0U, iblt | 0x0U, iblt | 0x7U, iblt | 0x51AU, iblt | 0x9U, iblt | 0xCU,
+      iblt | 0x539U, iblt | 0x0U, 0x62FU, iblt | 0x2U, iblt | 0x559U, 0x645U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x7U, iblt | 0x0U, iblt | 0x107U, iblt | 0x0U, iblt | 0xAU, iblt | 0x1U, iblt | 0x579U,
+      iblt | 0x599U, iblt | 0x5ABU, iblt | 0x0U, iblt | 0x5CBU, iblt | 0x5E1U, iblt | 0x0U, iblt | 0x59DU,
+      iblt | 0x0U, iblt | 0x1U, iblt | 0x5FFU, iblt | 0x559U, iblt | 0xAAU, iblt | 0x11U, iblt | 0x20U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x7EU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x61EU, iblt | 0x0U, iblt | 0x63AU, iblt | 0x5F2U, iblt | 0x0U, 0x665U, 0x685U, iblt | 0x40U,
       iblt | 0x5U, iblt | 0x0U, 0x6A5U, 0x6C5U, 0x6E5U, 0x6FEU, 0x71EU, iblt | 0x0U, iblt | 0x0U, 0x73EU,
       0x75EU, 0x77EU, 0x79EU, 0x7BEU, 0x7DEU, 0x7FEU, 0x81EU, 0x83DU, 0x85DU, 0x87DU, 0x89DU, 0x8BDU, 0x8DDU,
-      0x8FDU, 0x91DU, 0x93DU, 0x959U, 0x978U, 0x998U, 0x9B8U, 0x9D8U, iblt | 0x653U, iblt | 0xFU, 0x9F8U,
+      0x8FDU, 0x91DU, 0x93DU, 0x959U, 0x978U, 0x998U, 0x9B8U, 0x9D8U, iblt | 0x659U, iblt | 0xFU, 0x9F8U,
       0xA18U, 0xA38U, 0xA58U, 0xA78U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0xA8CU, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0xAA3U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x16U,
@@ -319,74 +195,261 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0xB57U, iblt | 0x0U, iblt | 0x0U,
       0xB64U, iblt | 0x0U, iblt | 0x0U, 0xB7BU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0xCFU, iblt | 0x76U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0xB9BU, 0xBBBU, iblt | 0x0U, 0xBDBU,
-      0xBFBU, 0xC1BU, 0xC3BU, 0xC5BU, iblt | 0x0U, iblt | 0x663U, iblt | 0x0U, 0xC74U, iblt | 0x9U,
-      iblt | 0x683U, iblt | 0x683U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x2U, iblt | 0x20U, 0xC93U,
+      iblt | 0xC1U, iblt | 0x75U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0xB9BU, 0xBBBU, iblt | 0x0U, 0xBDBU,
+      0xBFBU, 0xC1BU, 0xC3BU, 0xC5BU, iblt | 0x0U, iblt | 0x673U, iblt | 0x0U, 0xC74U, iblt | 0x9U,
+      iblt | 0x68CU, iblt | 0x68CU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x2U, iblt | 0x20U, 0xC93U,
       iblt | 0x0U, iblt | 0x0U, 0xCB3U, 0xCD3U, 0xCF3U, 0xD13U, 0xD33U, 0xD53U, 0xD73U, 0xD93U, iblt | 0x20U,
-      0xDB3U, 0xDBDU, iblt | 0x684U, iblt | 0x0U, 0xDD8U, iblt | 0x0U, iblt | 0x0U, 0xDF8U, iblt | 0x689U,
-      0xE18U, 0xE38U, 0xE58U, 0xE78U, iblt | 0x0U, iblt | 0x0U, iblt | 0x699U, 0xE98U, 0xEB8U, 0xED8U, 0xEF8U,
+      0xDB3U, 0xDBDU, iblt | 0x443U, iblt | 0x0U, 0xDD8U, iblt | 0x0U, iblt | 0x0U, 0xDF8U, iblt | 0x43FU,
+      0xE18U, 0xE38U, 0xE58U, 0xE78U, iblt | 0x0U, iblt | 0x0U, iblt | 0x6A5U, 0xE98U, 0xEB8U, 0xED8U, 0xEF8U,
       0xF18U, 0xF38U, 0xF58U, 0xF78U, 0xF98U, 0xFB8U, 0xFD8U, 0xFF8U, 0x1018U, 0x1038U, 0x1058U, 0x1078U,
-      // End of Section #1 [0, 416) containing 416 values (0.81 KiB). Skipping 899 values.
-
-      iblt | 0x0U, iblt | 0x3E8U, iblt | 0x0U, iblt | 0x6A9U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x14U,
-      0x1098U, 0x10B8U, 0x10D8U, iblt | 0x0U, iblt | 0x0U, iblt | 0x8U, iblt | 0x0U, 0x10F6U, 0x1116U,
-      0x1136U, 0x1156U, 0x1176U, 0x1196U, 0x11B3U, iblt | 0x0U, iblt | 0x6C9U, iblt | 0x0U, iblt | 0x8U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x6E9U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x708U,
-      iblt | 0x3U, iblt | 0x0U, iblt | 0x0U, iblt | 0x726U, iblt | 0x1U, iblt | 0x0U, iblt | 0x9U,
-      iblt | 0x742U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x75DU, iblt | 0x9U, iblt | 0x77DU,
-      iblt | 0x78DU, 0x11CDU, 0x11EDU, 0x120DU, 0x122DU, iblt | 0x0U, iblt | 0x7ADU,
-      // End of Section #2 [1315, 1376) containing 61 values (0.12 KiB). Skipping 348 values.
-
-      iblt | 0x0U, iblt | 0x7BDU, iblt | 0x7C8U, iblt | 0x4U,
-      // End of Section #3 [1724, 1728) containing 4 values (0.01 KiB). Skipping 263 values.
-
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x3D4U, iblt | 0x0U, iblt | 0x6BEU,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x14U, 0x1098U, 0x10B8U, 0x10D8U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x8U, iblt | 0x0U, 0x10F6U, 0x1116U, 0x1136U, 0x1156U, 0x1176U, 0x1196U, 0x11B3U, iblt | 0x0U,
+      iblt | 0x6D1U, iblt | 0x0U, iblt | 0x8U, iblt | 0x0U, iblt | 0x0U, iblt | 0x6E5U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x705U, iblt | 0x3U, iblt | 0x0U, iblt | 0x0U, iblt | 0x724U,
+      iblt | 0x1U, iblt | 0x0U, iblt | 0x9U, iblt | 0x742U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x75FU, iblt | 0x9U, iblt | 0x779U, iblt | 0x799U, 0x11CDU, 0x11EDU, 0x120DU, 0x122DU,
+      iblt | 0x0U, iblt | 0x7ABU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x7C1U, iblt | 0x7DAU, iblt | 0x4U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, 0x124DU, 0x126DU, 0x128DU, 0x12ADU, 0x12CDU, 0x12EDU, 0x130DU, 0x132DU, 0x134DU, 0x136DU,
       0x138DU, 0x13ADU, 0x13CDU, 0x13EDU, 0x140DU, iblt | 0x20U, 0x142DU, 0x144DU, 0x146DU, 0x148BU, 0x14A9U,
       0x14C9U, 0x14E6U, 0x1506U, 0x1526U, 0x1546U, 0x1566U, 0x1586U, 0x15A6U, 0x15C6U, 0x15E6U, 0x1606U,
       0x1626U, 0x1646U, 0x1664U, 0x1683U, 0x16A3U, 0x16C3U, 0x16E3U, 0x16F3U, 0x1713U, 0x1733U, 0x1753U,
       0x1773U, 0x1793U, 0x17B2U, 0x17D1U, 0x17F0U, 0x1810U, 0x1830U, 0x1850U, 0x1870U, 0x1890U, 0x18B0U,
-      0x18CFU, 0x18EFU, iblt | 0x80U, iblt | 0x7E7U, iblt | 0xD5U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x5U, iblt | 0x7EEU, iblt | 0x506U, iblt | 0x0U, iblt | 0x0U, iblt | 0x80EU,
-      iblt | 0x1FU, iblt | 0x66U, iblt | 0x2U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x3U, iblt | 0x0U, iblt | 0xFU, iblt | 0x4U, iblt | 0x0U, iblt | 0x81BU, iblt | 0x82BU,
-      iblt | 0x5U, iblt | 0x84AU, iblt | 0x0U, iblt | 0x86AU, iblt | 0x20U, 0x190FU, 0x192FU, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x2U, 0x1945U, 0x1965U, iblt | 0x4U, iblt | 0x0U, iblt | 0x87AU, iblt | 0x0U,
-      0x1981U, 0x19A1U, iblt | 0x89AU, iblt | 0x0U, iblt | 0xCU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      0x18CFU, 0x18EFU, iblt | 0x7FU, iblt | 0x7F3U, iblt | 0x812U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x5U, iblt | 0x82DU, iblt | 0x839U, iblt | 0x0U, iblt | 0x0U, iblt | 0x474U,
+      iblt | 0x1FU, iblt | 0x859U, iblt | 0x2U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x3U, iblt | 0x0U, iblt | 0xFU, iblt | 0x4U, iblt | 0x0U, iblt | 0x875U, iblt | 0x107U,
+      iblt | 0x5U, iblt | 0x445U, iblt | 0x0U, iblt | 0x891U, iblt | 0x20U, 0x190FU, 0x192FU, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x2U, 0x1945U, 0x1965U, iblt | 0x4U, iblt | 0x0U, iblt | 0x40U, iblt | 0x0U,
+      0x1981U, 0x19A1U, iblt | 0x8B1U, iblt | 0x0U, iblt | 0xCU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x9U, iblt | 0xAU,
-      iblt | 0x18U, 0x19C0U, 0x19E0U, iblt | 0x20U, iblt | 0x20U, iblt | 0x8A4U, iblt | 0x8C3U, iblt | 0x76U,
-      iblt | 0x0U, iblt | 0x1U, iblt | 0x8E3U, iblt | 0x20U, iblt | 0x8FEU, iblt | 0x4FEU, iblt | 0x91DU,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x939U, iblt | 0xD3U, iblt | 0x0U, iblt | 0x952U,
-      iblt | 0x971U, iblt | 0x991U, iblt | 0x0U, iblt | 0x0U, iblt | 0x20U, iblt | 0x0U, iblt | 0x9B1U,
-      iblt | 0x0U, iblt | 0x504U, iblt | 0xCDU, iblt | 0x2CDU, iblt | 0x9D1U, iblt | 0x9F1U, iblt | 0x20U,
+      iblt | 0x18U, 0x19C0U, 0x19E0U, iblt | 0x20U, iblt | 0x20U, iblt | 0x8D1U, iblt | 0x8DBU, iblt | 0x75U,
+      iblt | 0x0U, iblt | 0x1U, iblt | 0x8FBU, iblt | 0x20U, iblt | 0x91BU, iblt | 0x936U, iblt | 0x955U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x974U, iblt | 0xC5U, iblt | 0x0U, iblt | 0x990U,
+      iblt | 0x9A9U, iblt | 0x9C8U, iblt | 0x0U, iblt | 0x0U, iblt | 0x20U, iblt | 0x0U, iblt | 0x9E8U,
+      iblt | 0x0U, iblt | 0x837U, iblt | 0xBFU, iblt | 0x2CCU, iblt | 0xA08U, iblt | 0xA25U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x17U, iblt | 0x20U, 0x1A00U, 0x1A20U, iblt | 0x0U,
-      iblt | 0xA0BU, iblt | 0x0U, iblt | 0xA2BU, 0x1A40U, 0x1A60U, iblt | 0xA4BU, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x1U, iblt | 0x0U, iblt | 0xA6BU,
-      iblt | 0xA8BU, iblt | 0x24U, iblt | 0x0U, iblt | 0xA9BU, iblt | 0x6U, iblt | 0x66U, iblt | 0x16U,
-      iblt | 0x66U, iblt | 0x14U, iblt | 0x9U, iblt | 0x0U, iblt | 0x0U, iblt | 0xAADU, iblt | 0x51DU,
-      iblt | 0x0U, iblt | 0x8DU, iblt | 0xABDU, iblt | 0xADDU, iblt | 0x0U, iblt | 0x77U, iblt | 0xAEDU,
-      iblt | 0x9U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x708U, iblt | 0x7AU, iblt | 0x0U,
-      iblt | 0x1EU, iblt | 0x20U, iblt | 0xB0CU, iblt | 0x6F9U, iblt | 0x0U, iblt | 0xB2CU, iblt | 0xB3FU,
-      iblt | 0xB5AU, iblt | 0xB77U, iblt | 0xB97U, iblt | 0xBA7U, iblt | 0x76U, iblt | 0xBC7U, iblt | 0xBE7U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x8EU, iblt | 0x1EU, iblt | 0x0U, iblt | 0x0U, iblt | 0xA2BU,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0xCDU,
-      iblt | 0x2U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0xC07U, iblt | 0x13U, iblt | 0x0U,
-      iblt | 0x6U, iblt | 0x6F9U, iblt | 0x1CU, iblt | 0xC8U, iblt | 0xC17U, iblt | 0x19U, iblt | 0x20U,
+      iblt | 0xA45U, iblt | 0x0U, iblt | 0xA5FU, 0x1A40U, 0x1A60U, iblt | 0xA73U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x1U, iblt | 0x0U, iblt | 0xA93U,
+      iblt | 0xAB1U, iblt | 0x24U, iblt | 0x0U, iblt | 0x40U, iblt | 0x6U, iblt | 0x859U, iblt | 0x16U,
+      iblt | 0x859U, iblt | 0x14U, iblt | 0x9U, iblt | 0x0U, iblt | 0x0U, iblt | 0x7D3U, iblt | 0x51AU,
+      iblt | 0x0U, iblt | 0x8CU, iblt | 0xAD1U, iblt | 0xAE8U, iblt | 0x0U, iblt | 0x76U, iblt | 0x40U,
+      iblt | 0x9U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x704U, iblt | 0x79U, iblt | 0x0U,
+      iblt | 0x1EU, iblt | 0x20U, iblt | 0xB08U, iblt | 0x196U, iblt | 0x0U, iblt | 0xB27U, iblt | 0x134U,
+      iblt | 0xB47U, iblt | 0xB62U, iblt | 0xB7FU, iblt | 0xB9FU, iblt | 0x75U, iblt | 0xBBEU, iblt | 0xBD4U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x8DU, iblt | 0x1EU, iblt | 0x0U, iblt | 0x0U, iblt | 0xA5FU,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0xBFU,
+      iblt | 0x2U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0xBF4U, iblt | 0x13U, iblt | 0x0U,
+      iblt | 0x6U, iblt | 0x196U, iblt | 0x1CU, iblt | 0xBAU, iblt | 0x5CBU, iblt | 0x19U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x4U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, 0x1A80U, iblt | 0x0U, iblt | 0xC36U, iblt | 0xC4EU, iblt | 0xC69U,
-      iblt | 0xC89U, iblt | 0x20U, iblt | 0x20U, iblt | 0xBEU, iblt | 0xCBU, iblt | 0x1BU, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0xC99U, iblt | 0x0U, iblt | 0x0U, iblt | 0xCA9U, iblt | 0x0U, iblt | 0x7U,
+      iblt | 0x20U, iblt | 0x20U, 0x1A80U, iblt | 0x0U, iblt | 0xC14U, iblt | 0xC33U, iblt | 0xC4BU,
+      iblt | 0xC66U, iblt | 0x20U, iblt | 0x20U, iblt | 0xB0U, iblt | 0xBDU, iblt | 0x1BU, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x40U, iblt | 0x0U, iblt | 0x0U, iblt | 0xAD1U, iblt | 0x0U, iblt | 0x7U,
       iblt | 0x16U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U,
-      iblt | 0xCC9U, iblt | 0x83U, iblt | 0x93U, iblt | 0xCD9U, iblt | 0x3E8U, iblt | 0xD3U, iblt | 0xCF9U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0xC63U, iblt | 0xD18U, iblt | 0xA2BU, iblt | 0xC64U, iblt | 0xD38U,
+      iblt | 0xC7EU, iblt | 0x82U, iblt | 0x92U, iblt | 0x6A5U, iblt | 0x3D4U, iblt | 0xC5U, iblt | 0xC9EU,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0xC40U, iblt | 0xCBEU, iblt | 0xA5FU, iblt | 0xC41U, iblt | 0xCDDU,
       iblt | 0x16U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x7U, iblt | 0x7BU, iblt | 0x4FFU, iblt | 0x5U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0xD58U, iblt | 0x0U, iblt | 0xD77U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x7U, iblt | 0x7AU, iblt | 0x937U, iblt | 0x5U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0xCF6U, iblt | 0x0U, iblt | 0xD16U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x6U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0xD97U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0xD35U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x1CU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
@@ -399,15 +462,11 @@ namespace webpp::unicode::idna::details {
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x66U, iblt | 0x0U, iblt | 0x0U, iblt | 0xDU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x859U, iblt | 0x0U, iblt | 0x0U, iblt | 0xDU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x10U, iblt | 0xAU, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x10U, iblt | 0xAU,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
@@ -419,9 +478,13 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x5U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x19U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x5U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x19U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
@@ -463,13 +526,13 @@ namespace webpp::unicode::idna::details {
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x7U, iblt | 0x1U,
-      iblt | 0xC29U, iblt | 0x0U, iblt | 0x1U, iblt | 0x6F9U, iblt | 0xDB7U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0xDD2U, iblt | 0xDEFU, iblt | 0x10U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x7D7U, iblt | 0x0U, iblt | 0x1U, iblt | 0x196U, iblt | 0xD55U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0xD65U, iblt | 0xD7DU, iblt | 0x10U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x6U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, 0x1AA0U, iblt | 0x0U, iblt | 0x5U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0xC28U, iblt | 0x0U, iblt | 0xDFEU, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0xE1EU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x7D6U, iblt | 0x0U, iblt | 0xD9AU, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0xDB5U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
@@ -498,97 +561,135 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0xAU, iblt | 0x21U, iblt | 0x17U,
-      // End of Section #4 [1991, 3177) containing 1186 values (2.32 KiB). Skipping 277 values.
-
-      iblt | 0x20U, iblt | 0xE3EU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xE5EU, iblt | 0xE7EU, iblt | 0xE8EU,
+      iblt | 0x0U, iblt | 0xAU, iblt | 0x21U, iblt | 0x17U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0xDC7U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xDE7U, iblt | 0xDFAU,
+      iblt | 0xE16U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x4U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xE2BU, iblt | 0xE3FU, 0x1AC0U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, 0x1AE0U, 0x1B00U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x4U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0xEAEU, iblt | 0xECAU, 0x1AC0U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, 0x1AE0U,
-      0x1B00U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xCU, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x0U, iblt | 0x608U, iblt | 0x9C1U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x1CU, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0xAU, iblt | 0x0U, iblt | 0xBFU, 0x1B20U, 0x1B40U, iblt | 0x0U,
-      0x1B5BU, 0x1B7BU, iblt | 0x15U, iblt | 0x0U, iblt | 0x0U, iblt | 0x1AU, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0xCU, iblt | 0xCU, iblt | 0x0U, iblt | 0x0U, iblt | 0x9U, iblt | 0x7U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, 0xB19U, 0xB1FU, 0x1B9BU, 0xB2BU, 0x1BBBU,
-      0x1BDBU, 0x1BFBU, 0xB29U, 0x1C1BU, 0x1C3BU, 0x1C5BU, 0xB27U, 0xB2DU, 0xB19U, 0xB1FU, 0xB25U, 0xB2BU,
-      0x1C7BU, 0xB1DU, 0xB23U, 0xB29U, 0x1C9BU, 0x1CBBU, 0x1CDBU, 0x1CC1U, 0x1CA7U, 0x1CC7U, 0x1CADU, 0x1CCDU,
-      0x1CB3U, 0x1CFBU, 0x1D11U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xEE5U,
-      iblt | 0xF05U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x1U, iblt | 0xF25U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0xF40U, 0x1D31U, 0x1D51U, 0x1D71U, iblt | 0xE61U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x0U, iblt | 0xF60U, iblt | 0xF80U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x66U,
-      iblt | 0x11U, iblt | 0x0U, iblt | 0x91EU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x66U, iblt | 0x6U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x66U, iblt | 0xF9FU, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0xFBFU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0xFDFU, iblt | 0x20U, 0x1D91U, 0x1DB1U, iblt | 0xFFDU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x65U, iblt | 0x0U, iblt | 0xBU, iblt | 0x20U, iblt | 0x20U, iblt | 0xFFEU, iblt | 0x2U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, 0x1DD1U, 0x1DF1U,
-      0x1E0FU, 0x1E2FU, 0x1E4FU, 0x1E6EU, iblt | 0x20U, iblt | 0x101EU, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U,
-      iblt | 0xC27U, iblt | 0x0U, iblt | 0x0U, iblt | 0xCU, iblt | 0x607U, iblt | 0xF4U, iblt | 0xAU, 0x1E8DU,
-      0x1EADU, 0x1ECDU, 0x1EE3U, 0x1EF3U, iblt | 0x12U, iblt | 0x20U, iblt | 0xF9AU, 0x1F13U, 0x1F33U,
-      0x1F53U, iblt | 0x1AU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0xCU, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0xAAU, iblt | 0x6BEU,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x1CU, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xAU, iblt | 0x0U, iblt | 0xB1U,
+      0x1B20U, 0x1B40U, iblt | 0x0U, 0x1B5BU, 0x1B7BU, iblt | 0x15U, iblt | 0x0U, iblt | 0x0U, iblt | 0x1AU,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0xCU, iblt | 0xCU, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x9U, iblt | 0x7U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, 0xB19U, 0xB1FU,
+      0x1B9BU, 0xB2BU, 0x1BBBU, 0x1BDBU, 0x1BFBU, 0xB29U, 0x1C1BU, 0x1C3BU, 0x1C5BU, 0xB27U, 0xB2DU, 0xB19U,
+      0xB1FU, 0xB25U, 0xB2BU, 0x1C7BU, 0xB1DU, 0xB23U, 0xB29U, 0x1C9BU, 0x1CBBU, 0x1CDBU, 0x1CC1U, 0x1CA7U,
+      0x1CC7U, 0x1CADU, 0x1CCDU, 0x1CB3U, 0x1CFBU, 0x1D11U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x93DU, iblt | 0x103EU, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0xFA4U, iblt | 0x0U, iblt | 0x0U, iblt | 0x6U, iblt | 0x105EU,
-      iblt | 0xC27U, iblt | 0x0U, iblt | 0xA2BU, iblt | 0x0U, iblt | 0x106EU, iblt | 0x108EU, iblt | 0x1EU,
+      iblt | 0x0U, iblt | 0xE5BU, iblt | 0xE75U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x1U, iblt | 0xE90U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0xEB0U, 0x1D31U, 0x1D51U, 0x1D71U, iblt | 0xDEAU,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x0U, iblt | 0xECBU, iblt | 0xEDFU, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x859U, iblt | 0x11U, iblt | 0x0U, iblt | 0x955U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x859U, iblt | 0x6U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x859U,
+      iblt | 0xEFFU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0xF1EU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0xF38U, iblt | 0x20U, 0x1D91U, 0x1DB1U, iblt | 0xF58U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0xF78U, iblt | 0x0U, iblt | 0xBU, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x443U, iblt | 0x2U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, 0x1DD1U, 0x1DF1U, 0x1E0FU, 0x1E2FU, 0x1E4FU, 0x1E6EU, iblt | 0x20U, iblt | 0xF98U,
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x0U, iblt | 0x5CBU, iblt | 0x0U, iblt | 0x0U, iblt | 0xCU, iblt | 0xC6U,
+      iblt | 0xD6U, iblt | 0xAU, 0x1E8DU, 0x1EADU, 0x1ECDU, 0x1EE3U, 0x1EF3U, iblt | 0x12U, iblt | 0x20U,
+      iblt | 0x43EU, 0x1F13U, 0x1F33U, 0x1F53U, iblt | 0x1AU, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xCU, iblt | 0xF50U, iblt | 0x83CU, iblt | 0x0U,
-      iblt | 0x10ADU, iblt | 0x10CDU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x79U,
-      iblt | 0x0U, iblt | 0x0U, 0x1F73U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x974U, iblt | 0xFB8U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xF03U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x6U, iblt | 0xFC9U, iblt | 0x5CBU, iblt | 0x0U, iblt | 0xA5FU, iblt | 0x0U,
+      iblt | 0x40U, iblt | 0xFE9U, iblt | 0x1EU, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xCU,
+      iblt | 0xEBBU, iblt | 0x965U, iblt | 0x0U, iblt | 0xFFEU, iblt | 0x101DU, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x78U, iblt | 0x0U, iblt | 0x0U, 0x1F73U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
-      // End of Section #5 [3454, 4096) containing 642 values (1.25 KiB). Skipping 1334 values.
+      iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
+      iblt | 0x20U, iblt | 0x20U,
+      // End of Section #1 [0, 4096) containing 4096 values (8.00 KiB). Skipping 1334 values.
 
       iblt | 0x0U, iblt | 0x20U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
@@ -630,7 +731,7 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x10DDU, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x1034U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
@@ -659,7 +760,7 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0xD68U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x659U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x2U,
       iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U, iblt | 0x20U,
@@ -700,7 +801,7 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
-      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x83BU, iblt | 0x0U,
+      iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x107U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
@@ -718,13 +819,13 @@ namespace webpp::unicode::idna::details {
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U, iblt | 0x0U,
       iblt | 0x0U, iblt | 0x10U,
-      // End of Section #6 [5430, 6430) containing 1000 values (1.95 KiB). Skipping 22249 values.
+      // End of Section #2 [5430, 6430) containing 1000 values (1.95 KiB). Skipping 22249 values.
 
       iblt | 0x20U, 0x21B3U, 0x21B3U, 0x21B3U, 0x21B3U, 0x21B3U, 0x21B3U, 0x21B3U, 0x21C3U,
-      // End of Section #7 [28679, 28688) containing 9 values (0.02 KiB). Skipping 6127 values.
+      // End of Section #3 [28679, 28688) containing 9 values (0.02 KiB). Skipping 6127 values.
 
       iblt | 0x20U,
-      // End of Section #8 [34815, 34816) containing 1 values (0.00 KiB).
+      // End of Section #4 [34815, 34816) containing 1 values (0.00 KiB).
 
       // done
     };
@@ -875,796 +976,766 @@ namespace webpp::unicode::idna::details {
       valid, valid, valid,
 
       // Start of 0x10ee0:
-      valid, valid, valid, valid, 54, valid, 0, valid, valid, 58, valid, 59,
+      valid, valid, valid, valid, 54, valid, 0, valid, valid, 58, valid, 59, valid, valid, 63, 65, 67, 71,
+      valid, valid, 74, 78, 28, valid, 80, 86, 92, valid,
 
-      // Start of 0x5c0:
-      valid, valid, 63, 65, 67, 71, valid, valid, 74, 78, 28, valid, 80, 86, 92, valid,
-
-      // Start of 0xc0:
-      98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134, 137, 140, 143,
+      // Start of 0xc0, 0x5c0, 0x1cc0, 0x10520, 0x10f20, 0x11140, 0x11a40, 0x1f880:
+      98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158,
 
       // Start of 0x5e0:
-      146, 149, 152, 155, 158, 161, 164, valid, 167, 170, 173, 176, 179, 182, 185, valid,
+      161, 164, valid, 167, 170, 173, 176, 179, 182, 185, valid,
 
       // Start of 0x100:
-      188, valid, 191, valid, 194,
-
-      // Start of 0x1ec60:
-      valid,
-
-      // Start of 0x101c0, 0x10f60, 0x10fa0, 0x12f80, 0x1e280, 0x1e4c0, 0x1e5c0:
-      197, valid, 200, valid, 203, valid, 206,
+      188, valid, 191, valid, 194, valid, 197, valid, 200, valid, 203, valid, 206, valid, 209,
 
       // Start of 0x600:
-      valid, 209, valid, 212, valid, 215, valid, 218, valid,
+      valid, 212, valid, 215, valid, 218,
 
       // Start of 0x2b80, 0x10840, 0x113a0:
-      221,
+      valid,
 
       // Start of 0x11120:
-      valid, 224,
+      221, valid,
 
       // Start of 0x1fb80:
-      valid,
+      224,
 
       // Start of 0x11200:
-      227,
+      valid,
 
       // Start of 0x11f00:
-      valid, 230, valid, 233,
+      227, valid, 230, valid,
 
       // Start of 0x1b40:
+      233,
+
+      // Start of 0x10000:
       valid,
 
-      // Start of 0x120, 0x10000:
-      236, valid, 239,
+      // Start of 0x120:
+      236, valid,
 
       // Start of 0x11c00:
-      valid, 242, valid, 245, valid, 248, valid,
+      239, valid, 242, valid, 245, valid, 248,
 
       // Start of 0x8e0:
-      251,
+      valid, 251, valid,
 
-      // Start of 0x6c0:
-      valid, 254,
-
-      // Start of 0x110a0:
-      valid,
+      // Start of 0x6c0, 0x110a0:
+      254,
 
       // Start of 0x11440:
-      257, valid, 260, valid, 264,
+      valid, 257, valid, 260, valid,
 
       // Start of 0x11c20:
-      264, 267, valid, 270, valid, valid, 273, valid,
-
-      // Start of 0x700:
-      276, valid, 279, valid,
+      264, 264, 267, valid, 270, valid, valid, 273, valid, 276, valid, 279, valid,
 
       // Start of 0x140:
-      282, 286, valid, 289, valid, 292, valid, 295, valid,
+      282, 286, valid, 289, valid, 292, valid, 295, valid, 298, 302,
+
+      // Start of 0x700, 0x1aa0, 0x1cf20:
+      valid, 305, valid,
 
       // Start of 0x740:
-      298, 302, valid, 305, valid, 308, valid, 311, valid, 314, valid, 317, valid, 320, valid, 323, valid,
-      326, valid, 329, valid, 332,
+      308, valid, 311,
 
       // Start of 0x119a0:
       valid,
 
-      // Start of 0x160, 0x1d120:
-      335, valid, 338,
+      // Start of 0x1d120:
+      314, valid, 317,
 
       // Start of 0xd60:
-      valid, 341, valid,
+      valid, 320, valid, 323, valid, 326,
 
-      // Start of 0x7e0:
-      344, valid, 347,
-
-      // Start of 0x1340, 0x11700:
-      valid, 350, valid,
+      // Start of 0x7e0, 0x1340, 0x11700:
+      valid, 329, valid,
 
       // Start of 0x119c0:
-      353, valid,
+      332, valid,
 
-      // Start of 0x10b40, 0x115a0:
-      356, valid,
+      // Start of 0x160, 0x10b40, 0x115a0:
+      335, valid,
 
       // Start of 0x2b60:
-      359, valid, 362, valid,
+      338, valid, 341, valid,
 
       // Start of 0x109c0, 0x11c80:
-      365, valid,
+      344,
 
-      // Start of 0x10040:
-      368, valid, 371, 374, valid, 377, valid, 380, valid, 36,
-
-      // Start of 0x180:
-      valid, 383, 386, valid, 389, valid,
+      // Start of 0x1f0a0:
+      valid,
 
       // Start of 0x820:
-      392, 395, valid, 398, 401, 404, valid, valid, 407, 410, 413, 416, valid, 419, 422,
+      347, valid, 350, valid, 353, valid, 356, valid, 359, valid, 362, valid, 365, valid, 368,
 
       // Start of 0x1f0c0:
-      valid, 425, 428, 431, valid, valid, valid, 434, 437, valid, 440,
+      valid, 371, 374, valid, 377, valid, 380, valid, 36,
 
-      // Start of 0x1a0:
-      443, valid, 446, valid, 449, valid,
+      // Start of 0x180:
+      valid, 383, 386, valid, 389, valid, 392, 395,
 
       // Start of 0x840:
-      452, 455, valid, 458, valid, valid, 461, valid, 464, 467, valid, 470, 473, 476, valid, 479,
+      valid, 398, 401, 404, valid, valid, 407, 410, 413, 416, valid, 419, 422, valid, 425, 428, 431, valid,
+      valid, valid, 434, 437, valid, 440,
 
-      // Start of 0x860:
-      valid, 482, 485, valid, valid, valid, 488,
+      // Start of 0x1a0:
+      443, valid, 446, valid, 449, valid, 452, 455,
 
-      // Start of 0x1c0:
-      valid, valid, valid, valid, 491, 491, 491, 495, 495, 495, 498, 498, 498, 501, valid, 504,
+      // Start of 0x860, 0x18a0, 0x10340, 0x31340:
+      valid, 458, valid, valid, 461, valid, 464, 467, valid, 470, 473, 476, valid, 479, valid, 482, 485,
 
       // Start of 0x880:
-      valid, 507, valid, 510, valid, 513, valid, 516, valid, 519, valid, 522, valid, valid, 525, valid,
+      valid, valid, valid, 488,
+
+      // Start of 0x1c0:
+      valid, valid, valid, valid, 491, 491, 491, 495, 495, 495, 498, 498, 498, 501, valid, 504, valid, 507,
+      valid, 510, valid, 513, valid, 516,
+
+      // Start of 0x980, 0x11300:
+      valid, 519, valid, 522, valid, valid, 525, valid,
 
       // Start of 0x1e0:
-      528, valid, 531,
-
-      // Start of 0x980:
-      valid, 534, valid, 537, valid, 540, valid, 543, valid, 546, valid, 549, valid, valid, 552, 552, 552,
-      555, valid, 558, 561, 564, valid, 567, valid, 570, valid, 573,
+      528, valid, 531, valid, 534, valid, 537, valid, 540, valid, 543, valid, 546, valid, 549,
 
       // Start of 0x9a0:
-      valid,
+      valid, valid, 552, 552, 552, 555, valid, 558, 561, 564, valid, 567, valid, 570, valid, 573, valid,
 
       // Start of 0x200:
-      576, valid, 579, valid, 582, valid, 585, valid, 588, valid, 591, valid, 594, valid, 597, valid, 600,
-      valid, 603, valid, 606, valid, 609, valid, 612, valid, 615, valid, 618, valid, 621,
+      576, valid, 579, valid, 582,
 
       // Start of 0x9e0:
-      valid,
+      valid, 585, valid, 588, valid, 591, valid, 594, valid, 597, valid, 600, valid, 603, valid, 606, valid,
+      609, valid, 612, valid, 615, valid, 618, valid, 621, valid,
 
       // Start of 0x220:
-      624, valid, 627, valid, 630, valid, 633, valid, 636, valid, 639, valid, 642, valid, 645, valid, 648,
-      valid,
+      624, valid, 627, valid,
 
       // Start of 0xa00:
-      651, valid, valid, valid, valid, valid, valid, valid, 654, 658, valid, 661, 664,
+      630, valid, 633, valid, 636, valid, 639, valid, 642, valid, 645, valid, 648, valid, 651, valid, valid,
+      valid, valid, valid, valid, valid,
+
+      // Start of 0x112a0, 0x116c0, 0x16ac0:
+      654, 658, valid, 661, 664,
 
       // Start of 0x240:
-      valid, 668, valid, 671, 674, 677, 680, valid, 683, valid, 686, valid, 689, valid, 692, valid,
-
-      // Start of 0x2a0:
-      valid, valid, valid,
+      valid, 668, valid, 671, 674,
 
       // Start of 0xa60:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 14, 695, 18,
-      34, 698, 701,
+      677, 680, valid, 683, valid, 686, valid, 689, valid, 692, valid,
+
+      // Start of 0x2a0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, 14, 695, 18, 34,
 
       // Start of 0xa80:
-      704, 44, 48,
+      698, 701, 704, 44, 48,
 
       // Start of 0x2c0:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, 707,
+      valid, valid, valid,
 
-      // Start of 0xaa0:
-      711, 715, 719, 723,
-
-      // Start of 0xb20:
-      727, valid, valid,
+      // Start of 0xaa0, 0xb20:
+      valid, valid, valid, valid, valid, valid, 707, 711, 715, 719, 723, 727, valid, valid,
 
       // Start of 0x2e0:
-      422, 22, 36, 46, 731, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      422, 22, 36, 46, 731, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0xac0:
-      valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid,
 
       // Start of 0x340:
-      734, 737, valid, 740, 743, 748, valid, valid, valid, valid, valid, valid, valid, valid, valid, 58,
-
-      // Start of 0x360:
-      valid, valid,
+      734, 737, valid, 740, 743, 748, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0xae0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 751,
-      valid, 754, valid, 757,
+      valid, 58,
+
+      // Start of 0x360:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, 751, valid, 754, valid, 757, valid, 760, valid, disallowed, disallowed, 763, valid, valid, valid,
 
       // Start of 0xb00:
-      valid, 760, valid, disallowed, disallowed, 763, valid, valid, valid, 767, 769,
+      767, 769,
 
       // Start of 0x380:
       disallowed, disallowed, disallowed, disallowed, 67, 772, 778, 781, 784, 787, 790, disallowed, 793,
-      disallowed, 796, 799, valid, 802, 805, 808, 811,
+      disallowed, 796, 799, valid, 802, 805, 808, 811, 814, 817, 820, 823, 748,
 
       // Start of 0xb60:
-      814, 817, 820, 823, 748, 826, 829, 71, 832, 835, 838,
+      826, 829, 71, 832, 835, 838,
 
       // Start of 0x3a0:
       841, 844, disallowed, 847, 850, 853, 856, 859, 862, 865, 868, 871, valid, valid, valid, valid, valid,
 
       // Start of 0x3c0:
-      valid, valid,
+      valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0xb80:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 874, 805,
-      823, 853, 796, 871, 856, 841, valid, 877, valid, 880, valid, 883, valid, 886, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, 874, 805, 823, 853, 796, 871, 856, 841, valid,
+      877, valid, 880, valid, 883, valid, 886, valid,
 
-      // Start of 0x3e0, 0xba0:
-      889, valid, 892, valid, 895, valid, 898, valid, 901, valid, 904, valid, 907, valid, 910, valid, 826,
-      844, 847, valid, 823, 814, valid, 913, valid, 847, 916, valid, valid, 919, 922, 925,
+      // Start of 0x3e0:
+      889, valid, 892, valid, 895, valid, 898,
 
-      // Start of 0x400, 0xbc0:
-      928, 931, 934, 937, 940, 943, 946, 949, 952, 955, 958, 961, 964, 967, 970, 973, 976, 979, 982, 985, 988,
-      991, 994, 997, 1000, 1003, 1006, 1009, 1012, 1015, 1018, 1021,
+      // Start of 0xba0:
+      valid, 901, valid, 904, valid, 907, valid, 910, valid, 826, 844, 847, valid, 823, 814, valid, 913,
+      valid, 847, 916, valid, valid, 919, 922, 925,
 
-      // Start of 0x420, 0xbe0:
-      1024, 1027, 1030, 1033, 1036, 1039, 1042, 1045,
+      // Start of 0x400:
+      928, 931, 934, 937, 940,
+
+      // Start of 0xbc0:
+      943, 946, 949, 952, 955, 958, 961, 964, 967, 970, 973, 976, 979, 982, 985, 988, 991, 994, 997, 1000,
+      1003, 1006, 1009, 1012, 1015, 1018,
+
+      // Start of 0xbe0:
+      1021,
+
+      // Start of 0x420:
+      1024, 1027, 1030, 1033, 1036, 1039, 1042,
 
       // Start of 0x10b60:
-      1048, 1051, 1054, 1057, 1060, 1063, 1066, 1069, valid, valid,
+      1045, 1048, 1051, 1054, 1057, 1060, 1063, 1066, 1069, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0xc00:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0xc00, 0xc80, 0xd00:
+      valid,
 
       // Start of 0x460:
-      1072, valid, 1075, valid, 1078, valid, 1081, valid, 1084, valid, 1087, valid, 1090, valid,
+      1072, valid, 1075, valid, 1078, valid, 1081, valid, 1084, valid, 1087, valid, 1090, valid, 1093, valid,
+      1096, valid, 1099, valid, 1102, valid,
 
       // Start of 0xc20:
-      1093, valid, 1096, valid, 1099, valid, 1102, valid, 1105, valid, 1108, valid, 1111, valid, 1114, valid,
-      1117, valid,
+      1105, valid, 1108, valid, 1111, valid, 1114, valid, 1117, valid,
 
       // Start of 0x480:
-      1120, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1123, valid, 1126, valid,
+      1120, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1123, valid, 1126, valid, 1129,
+      valid, 1132, valid,
 
       // Start of 0xc40:
-      1129, valid, 1132, valid, 1135, valid, 1138, valid, 1141, valid, 1144, valid, 1147, valid, 1150, valid,
-      1153, valid,
+      1135, valid, 1138, valid, 1141, valid, 1144, valid, 1147, valid, 1150, valid, 1153, valid,
 
       // Start of 0x4a0:
-      1156, valid, 1159, valid, 1162,
+      1156, valid, 1159, valid, 1162, valid, 1165, valid, 1168, valid, 1171, valid, 1174, valid, 1177, valid,
+      1180, valid,
 
       // Start of 0xc60:
-      valid, 1165, valid, 1168, valid, 1171, valid, 1174, valid, 1177, valid, 1180, valid, 1183, valid, 1186,
-      valid, 1189,
-
-      // Start of 0xc80:
-      valid, 1192, valid, 1195, valid, 1198, valid, 1201, valid,
+      1183, valid, 1186, valid, 1189, valid, 1192, valid, 1195, valid, 1198, valid, 1201, valid,
 
       // Start of 0x4c0:
-      1204, 1207, valid, 1210, valid, 1213, valid, 1216, valid, 1219, valid, 1222, valid, 1225, valid, valid,
-      1228, valid, 1231,
+      1204, 1207, valid, 1210, valid, 1213, valid, 1216, valid,
 
       // Start of 0xca0:
-      valid, 1234, valid, 1237, valid, 1240, valid, 1243, valid, 1246, valid, 1249, valid,
+      1219, valid, 1222, valid, 1225, valid, valid, 1228, valid, 1231, valid, 1234, valid, 1237, valid, 1240,
+      valid, 1243, valid, 1246, valid, 1249, valid,
 
       // Start of 0x4e0:
-      1252, valid, 1255, valid, 1258, valid, 1261, valid, 1264, valid, 1267, valid, 1270, valid, 1273, valid,
-      1276, valid, 1279,
+      1252, valid, 1255, valid, 1258,
 
       // Start of 0xcc0:
-      valid, 1282, valid, 1285, valid, 1288, valid, 1291, valid, 1294, valid, 1297, valid,
+      valid, 1261, valid, 1264, valid, 1267, valid, 1270, valid, 1273, valid, 1276, valid, 1279, valid, 1282,
+      valid, 1285, valid, 1288, valid, 1291, valid, 1294, valid, 1297, valid,
 
       // Start of 0x500:
-      1300, valid, 1303, valid, 1306, valid, 1309, valid, 1312, valid, 1315, valid, 1318, valid, 1321, valid,
-      1324, valid, 1327,
+      1300, valid, 1303, valid, 1306,
 
       // Start of 0xce0:
-      valid, 1330, valid, 1333, valid, 1336, valid, 1339, valid, 1342, valid, 1345, valid,
+      valid, 1309, valid, 1312, valid, 1315, valid, 1318, valid, 1321, valid, 1324, valid, 1327, valid, 1330,
+      valid, 1333, valid, 1336, valid, 1339, valid, 1342, valid, 1345, valid,
 
       // Start of 0x520:
       1348, valid, 1351, valid, 1354,
 
-      // Start of 0xd00:
-      valid, 1357, valid, 1360, valid, 1363, valid, 1366, valid, 1369, valid, disallowed, 1372, 1375, 1378,
-      1381, 1384, 1387, 1390, 1393,
-
       // Start of 0xd40:
-      1396, 1399, 1402, 1405, 1408, 1411, 1414,
+      valid, 1357, valid, 1360, valid, 1363, valid, 1366, valid, 1369, valid, disallowed, 1372, 1375, 1378,
+      1381, 1384, 1387, 1390, 1393, 1396, 1399, 1402, 1405, 1408, 1411, 1414,
 
       // Start of 0x540:
-      1417, 1420, 1423, 1426, 1429, 1432, 1435, 1438, 1441, 1444, 1447, 1450, 1453, 1456, 1459, 1462, 1465,
-      1468, 1471,
+      1417, 1420, 1423, 1426, 1429,
 
       // Start of 0xd80:
-      1474, 1477, 1480, 1483, disallowed, disallowed,
-
-      // Start of 0x580:
-      valid, valid, valid, valid, valid, valid, valid, 1486, valid, valid,
+      1432, 1435, 1438, 1441, 1444, 1447, 1450, 1453, 1456, 1459,
 
       // Start of 0xa480, 0x11c60:
-      valid, disallowed, disallowed, valid, valid, valid, disallowed,
+      1462, 1465, 1468, 1471, 1474, 1477, 1480, 1483, disallowed, disallowed,
 
-      // Start of 0x660:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0x580:
+      valid, valid, valid, valid, valid, valid,
 
       // Start of 0xda0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1491, 1496, 1501,
-      1506,
+      valid, 1486, valid, valid, valid, disallowed, disallowed, valid, valid, valid, disallowed,
 
-      // Start of 0x940:
-      valid, valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0x660:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid,
 
       // Start of 0xdc0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, 1511, 1518, 1525, 1532, 1539, 1546, 1553, 1560,
+      1491, 1496, 1501, 1506,
 
-      // Start of 0x9c0:
-      valid, valid, valid, valid, valid, disallowed, disallowed, valid,
+      // Start of 0x940:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, 1511, 1518, 1525, 1532,
 
       // Start of 0xde0:
-      valid,
+      1539, 1546, 1553, 1560,
 
-      // Start of 0xe00:
-      disallowed, disallowed, valid, valid, valid, valid, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed,
+      // Start of 0x9c0:
+      valid, valid, valid, valid, valid, disallowed, disallowed, valid, valid, disallowed, disallowed, valid,
+      valid, valid, valid, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
 
-      // Start of 0xe80:
-      disallowed, disallowed, valid, disallowed, disallowed, disallowed, disallowed, 1567, 1574, disallowed,
-      1581,
+      // Start of 0x1f1e0:
+      disallowed,
+
+      // Start of 0x3100:
+      valid, disallowed, disallowed, disallowed,
+
+      // Start of 0xe00, 0x3040, 0x1ed00:
+      disallowed, 1567,
+
+      // Start of 0x10380:
+      1574, disallowed, 1581,
 
       // Start of 0xa20:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, disallowed, valid, valid, valid, valid,
-      valid, valid, valid, disallowed, valid, 1588, disallowed,
+      valid, valid, valid, disallowed, valid, 1588, disallowed, valid, 1595, disallowed, valid, valid,
+      disallowed,
 
-      // Start of 0xfc0:
-      valid, 1595, disallowed, valid, valid, disallowed, disallowed, valid, disallowed,
+      // Start of 0xe80:
+      disallowed, valid, disallowed,
 
       // Start of 0xa40:
       valid, valid, valid, disallowed, disallowed, disallowed, disallowed, valid, valid, disallowed,
-      disallowed, valid, valid, valid, disallowed, disallowed, disallowed, valid, disallowed, disallowed,
-      disallowed, disallowed, disallowed,
+      disallowed, valid, valid, valid,
 
-      // Start of 0x1240:
-      disallowed, disallowed, 1602, 1609, 1616, valid, disallowed, 1623, disallowed,
+      // Start of 0x10180:
+      disallowed, disallowed,
+
+      // Start of 0xfc0:
+      disallowed, valid, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
+      1602, 1609, 1616, valid, disallowed, 1623, disallowed,
 
       // Start of 0xb40:
-      valid, valid, valid, valid, valid, disallowed, disallowed,
+      valid, valid, valid, valid, valid, disallowed, disallowed, valid, valid, disallowed, disallowed, valid,
+      valid, valid, disallowed, disallowed,
 
-      // Start of 0x1280:
-      valid, valid, disallowed, disallowed, valid, valid, valid, disallowed, disallowed, disallowed,
-      disallowed, disallowed, disallowed, disallowed, valid, valid, valid, disallowed, disallowed, disallowed,
-      disallowed, 1630, 1637, disallowed,
+      // Start of 0x1240:
+      disallowed, disallowed, disallowed, disallowed, disallowed, valid, valid, valid, disallowed, disallowed,
+      disallowed, disallowed, 1630, 1637, disallowed,
 
       // Start of 0xe20:
-      valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid,
 
-      // Start of 0x12a0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1644, valid, valid, valid,
-      valid, valid, valid, valid, disallowed, disallowed, disallowed, disallowed,
-
-      // Start of 0xea0:
-      valid,
-
-      // Start of 0x12c0:
-      valid, valid, valid, disallowed, valid, disallowed, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, 1651, valid, valid, valid, valid, valid,
-
-      // Start of 0x1300:
-      valid, valid, valid, valid, valid, disallowed, disallowed,
-
-      // Start of 0xec0:
-      valid, valid, valid, valid, valid, disallowed, valid, disallowed, valid, valid, valid, valid, valid,
-      valid, valid, disallowed, valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x1940:
-      valid, valid, valid,
-
-      // Start of 0x1680:
-      valid,
-
-      // Start of 0x10900:
+      // Start of 0x1280:
+      valid, valid, 1644, valid, valid, valid, valid, valid, valid, valid, disallowed, disallowed, disallowed,
       disallowed,
 
-      // Start of 0x11f20:
-      disallowed, 1658, 1665,
-
-      // Start of 0xf00, 0x1c20:
+      // Start of 0xea0:
       valid, valid,
 
-      // Start of 0x10b20:
+      // Start of 0x12a0:
+      valid, valid, disallowed, valid, disallowed, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, 1651, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      disallowed, disallowed,
+
+      // Start of 0xec0, 0x12c0:
+      valid, valid, valid, valid, valid, disallowed, valid, disallowed, valid, valid, valid, valid, valid,
+      valid, valid, disallowed, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x1300:
+      valid, valid, disallowed, disallowed, 1658, 1665,
+
+      // Start of 0xf00:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1672, valid, valid,
       valid, valid,
 
-      // Start of 0x10120:
-      valid, valid, valid, valid, valid, valid, valid, valid, 1672, valid,
+      // Start of 0x1680:
+      valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x1c40:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x1700:
-      valid,
-
-      // Start of 0x11060:
-      valid, valid,
+      // Start of 0x1700, 0x11060:
+      valid, valid, valid, valid, valid,
 
       // Start of 0xf40:
       valid, valid, valid, 1676, valid, valid, valid, valid, disallowed, valid, valid, valid, valid, 1683,
-      valid, valid, valid, valid, 1690, valid, valid, valid, valid, 1697, valid, valid, valid, valid, 1704,
+      valid, valid, valid, valid, 1690, valid, valid, valid, valid, 1697, valid, valid,
 
-      // Start of 0xf60, 0x1760:
+      // Start of 0x1760:
+      valid, valid, 1704,
+
+      // Start of 0xf60:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, 1711, valid, valid, valid, disallowed,
       disallowed, disallowed, disallowed, valid, valid, 1718, valid, 1725, 1732, 1739, 1749, 1756, valid,
-      valid, valid, valid, valid,
-
-      // Start of 0xf80:
-      valid,
-
-      // Start of 0x17e0, 0x1a80:
-      1766, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid,
-
-      // Start of 0x18a0:
-      valid, valid, 1773, valid, valid, valid, valid, disallowed, valid, valid, valid, valid, 1780,
-
-      // Start of 0xfa0:
-      valid, valid, 1787, valid, valid, valid, valid, 1794, valid, valid, valid, valid, 1801, valid, valid,
-      valid, valid, valid, valid,
-
-      // Start of 0x1920:
-      valid, valid, valid, valid, valid, valid, 1808, valid, valid, valid, disallowed, valid, valid,
-
-      // Start of 0x10a0:
-      1815, 1819, 1823, 1827, 1831, 1835, 1839, 1843, 1847, 1851, 1855, 1859, 1863, 1867, 1871, 1875, 1879,
-      1883, 1887,
-
-      // Start of 0x1960:
-      1891, 1895, 1899, 1903, 1907, 1911, 1915, 1919, 1923, 1927, 1931, 1935, 1939,
-
-      // Start of 0x10c0:
-      1943, 1947, 1951,
-
-      // Start of 0x19a0:
-      1955, 1959, 1963, disallowed, 1967, disallowed, disallowed, disallowed, disallowed, disallowed, 1971,
-      disallowed, disallowed,
-
-      // Start of 0x10e0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
       valid, valid,
 
-      // Start of 0x19c0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1975,
+      // Start of 0x17e0, 0x1a80:
+      valid, valid,
 
-      // Start of 0x1140:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid,
+      // Start of 0xf80:
+      valid, 1766, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, 1773, valid, valid, valid, valid, disallowed, valid, valid, valid, valid,
+      1780,
+
+      // Start of 0xfa0, 0x1920:
+      valid, valid, 1787, valid, valid, valid, valid, 1794, valid, valid, valid, valid, 1801, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 1808, valid, valid, valid,
+      disallowed, valid, valid,
+
+      // Start of 0x10a0, 0x1940:
+      1815, 1819, 1823, 1827,
 
       // Start of 0x1a00:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      1831, 1835, 1839, 1843, 1847, 1851, 1855, 1859, 1863, 1867, 1871, 1875, 1879, 1883,
 
-      // Start of 0x1160:
-      58, valid,
+      // Start of 0x1960:
+      1887, 1891, 1895, 1899, 1903, 1907, 1911, 1915, 1919, 1923, 1927, 1931, 1935, 1939,
 
-      // Start of 0x1f0a0:
-      valid,
+      // Start of 0x10c0:
+      1943, 1947, 1951, 1955, 1959, 1963, disallowed, 1967, disallowed, disallowed, disallowed, disallowed,
+      disallowed, 1971, disallowed, disallowed,
 
-      // Start of 0x1aa0, 0x1cf20:
+      // Start of 0x10e0:
+      valid, valid,
+
+      // Start of 0x19a0, 0x11720, 0x1f020, 0x1f800:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
       valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x13e0:
-      valid, valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0x19c0:
+      valid, valid, valid, valid, 1975,
+
+      // Start of 0x1140:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x1c40:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x1a60:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      disallowed, disallowed, 1979, 1983, 1987, 1991, 1995, 1999, disallowed, disallowed,
+      valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x17a0:
-      valid, valid, valid, valid,
+      // Start of 0x1160:
+      58, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x13e0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x1be0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid,
+      valid, valid, valid, valid, valid, valid, valid, disallowed, disallowed, 1979, 1983, 1987, 1991, 1995,
+      1999, disallowed, disallowed,
 
-      // Start of 0x1cc0:
-      58, 58,
+      // Start of 0x17a0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x1c20:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, 58, 58,
 
       // Start of 0x1800:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 58, 58, 58,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 58, 58, 58, 58, 58, valid,
+      valid, valid, valid,
 
-      // Start of 0x20c0:
-      58, 58, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, disallowed, disallowed,
-      disallowed, disallowed,
-
-      // Start of 0x2d20:
-      disallowed, disallowed,
+      // Start of 0x20c0, 0x2ebe0:
+      valid, valid, valid, valid, valid, valid, disallowed, disallowed, disallowed, disallowed, disallowed,
+      disallowed,
 
       // Start of 0x1c80:
       982, 988, 1018, 1027, 1030, 1030, 1054, 1075, 2003, 2007, valid, disallowed, disallowed, disallowed,
+
+      // Start of 0x2d20:
       disallowed, disallowed, 2011, 2015, 2019, 2023, 2027, 2031, 2035, 2039, 2043, 2047, 2051, 2055, 1975,
-      2059,
-
-      // Start of 0x2da0-0x2dc0:
-      2063,
-
-      // Start of 0x3040:
-      2067,
+      2059, 2063, 2067,
 
       // Start of 0x1ca0:
-      2071, 2075, 2079, 2083,
+      2071, 2075, 2079, 2083, 2087, 2091, 2095,
 
-      // Start of 0x3100:
-      2087, 2091, 2095, 2099, 2103, 2107, 2111, 2115, 2119, 2123, 2127, 2131, 2135, 2139, 2143, 2147,
+      // Start of 0x2da0-0x2dc0:
+      2099, 2103, 2107, 2111, 2115, 2119, 2123, 2127, 2131, 2135, 2139, 2143, 2147, 2151, 2155, 2159, 2163,
+      2167, 2171, 2175, disallowed, disallowed, 2179, 2183, 2187,
 
-      // Start of 0x31e0:
-      2151, 2155, 2159, 2163, 2167, 2171, 2175, disallowed, disallowed, 2179, 2183, 2187,
+      // Start of 0x1d20, 0x31e0, 0x11c40:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 0, 116, 2, valid, 6,
+      8, 407, 12, 14, 16, 18, 20, 22,
 
-      // Start of 0x1d20:
-      valid, valid, valid, valid,
-
-      // Start of 0xa4c0:
-      valid, valid, valid, valid, valid, valid, valid, valid, 0, 116, 2, valid, 6, 8, 407, 12, 14, 16, 18, 20,
-      22, 24, 26, valid, 28, 627, 30, 34,
+      // Start of 0xa4c0, 0x1cf40:
+      24, 26, valid, 28, 627, 30, 34,
 
       // Start of 0x1d40:
-      38, 40, 44, 0,
+      38, 40, 44, 0, 2191, 2194, 2197, 2, 6, 8, 410, 413,
 
       // Start of 0xa820:
-      2191, 2194, 2197, 2, 6, 8, 410, 413, 2201, 12, valid, 20, 24, 302, 28, 392, 2204, 2208, 30, 38, 40,
-      2212, 434, 42, 2216, 805, 808, 811,
+      2201, 12, valid, 20, 24, 302, 28, 392, 2204, 2208, 30, 38, 40, 2212, 434, 42, 2216, 805, 808, 811,
 
-      // Start of 0x1d60:
-      856, 859, 16, 34,
-
-      // Start of 0xa8c0:
-      40, 42, 805, 808, 844, 856, 859, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x112a0, 0x116c0, 0x16ac0:
-      valid, valid, valid, valid, 1015,
+      // Start of 0x1d60, 0xa8c0:
+      856, 859, 16, 34, 40, 42, 805, 808, 844, 856, 859, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, 1015,
 
       // Start of 0x1d80:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid,
 
-      // Start of 0xa940, 0x111e0:
+      // Start of 0x111e0:
+      valid,
+
+      // Start of 0xa940:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, 2220, 4, 2223, 146, 2201,
+      valid, valid, valid, valid, valid, 2220, 4, 2223, 146, 2201,
 
       // Start of 0x1da0:
-      10, 2226, 2229, 2232, 428, 425, 2235, 2238,
+      10, 2226, 2229, 2232, 428, 425,
 
       // Start of 0xa9c0:
-      2242, 2245, 2248, 2252, 2255, 2258, 437, 2261, 2264, 440, 2267, 2270, 458, 2273, 674, 470, 2276, 473,
-      677, 50, 2280, 2283, 482, 823,
+      2235, 2238, 2242, 2245, 2248, 2252, 2255, 2258, 437, 2261, 2264, 440, 2267, 2270, 458, 2273, 674, 470,
+      2276, 473, 677, 50, 2280, 2283, 482, 823,
 
       // Start of 0x1e00:
       2286, valid, 2290, valid,
 
       // Start of 0xaa40:
       2294, valid, 2298, valid, 2302, valid, 2306, valid, 2310, valid, 2314, valid, 2318, valid, 2322, valid,
-      2326, valid, 2330, valid, 2334, valid, 2338, valid, 2342, valid, 2346,
-
-      // Start of 0xaac0:
-      valid,
+      2326, valid, 2330, valid, 2334, valid, 2338, valid, 2342, valid, 2346, valid,
 
       // Start of 0x1e20:
-      2350, valid, 2354, valid, 2358, valid, 2362, valid, 2366, valid, 2370, valid, 2374, valid, 2378, valid,
-      2382, valid, 2386, valid, 2390, valid, 2394, valid, 2398, valid, 2402, valid, 2406, valid, 2410,
+      2350,
+
+      // Start of 0xaac0:
+      valid, 2354, valid, 2358, valid, 2362, valid, 2366, valid, 2370, valid, 2374, valid, 2378, valid, 2382,
+      valid, 2386, valid, 2390, valid, 2394, valid, 2398, valid, 2402,
 
       // Start of 0xab00:
-      valid,
+      valid, 2406, valid, 2410, valid,
 
       // Start of 0x1e40:
-      2414, valid, 2418, valid, 2422, valid, 2426, valid, 2430, valid, 2434, valid, 2438, valid, 2442,
+      2414, valid, 2418, valid, 2422, valid, 2426, valid, 2430, valid, 2434, valid, 2438, valid, 2442, valid,
+      2446, valid, 2450, valid, 2454, valid, 2458, valid, 2462, valid, 2466,
 
       // Start of 0xab20:
-      valid, 2446, valid, 2450, valid, 2454, valid, 2458, valid, 2462, valid, 2466, valid, 2470, valid, 2474,
-      valid,
+      valid, 2470, valid, 2474, valid,
 
       // Start of 0x1e60:
-      2478, valid, 2482, valid, 2486, valid, 2490, valid, 2494, valid, 2498, valid, 2502, valid, 2506,
+      2478, valid, 2482, valid, 2486, valid, 2490, valid, 2494, valid, 2498, valid, 2502,
 
       // Start of 0xabe0:
-      valid, 2510, valid, 2514, valid, 2518, valid, 2522, valid, 2526, valid, 2530, valid, 2534, valid, 2538,
-
-      // Start of 0xd7a0:
-      valid,
+      valid, 2506, valid, 2510, valid, 2514, valid, 2518, valid, 2522, valid, 2526, valid, 2530, valid, 2534,
+      valid, 2538, valid,
 
       // Start of 0x1e80:
-      2542, valid, 2546, valid, 2550, valid, 2554, valid, 2558, valid,
+      2542, valid, 2546,
+
+      // Start of 0xd7a0:
+      valid, 2550, valid, 2554, valid, 2558, valid, 2562, valid, 2566, valid, 2570, valid, 2574, valid, 2578,
+      valid, 2582,
+
+      // Start of 0x11040:
+      valid, valid, valid,
+
+      // Start of 0x16f40:
+      valid,
+
+      // Start of 0x16a60:
+      valid, 2586, 2478,
 
       // Start of 0xd7c0:
-      2562, valid, 2566, valid, 2570, valid, 2574, valid, 2578, valid, 2582, valid, valid, valid, valid,
-      valid, 2586, 2478, valid, valid, 2590, valid,
+      valid, valid, 2590, valid,
 
       // Start of 0x1ea0:
-      2593, valid, 2597, valid, 2601, valid, 2605, valid, 2609,
+      2593, valid, 2597, valid, 2601, valid, 2605, valid, 2609, valid, 2613, valid, 2617, valid, 2621, valid,
+      2625, valid, 2629, valid, 2633,
 
       // Start of 0x10020:
-      valid, 2613, valid, 2617, valid, 2621, valid,
-
-      // Start of 0x10100:
-      2625, valid, 2629, valid, 2633, valid, 2637, valid, 2641, valid, 2645, valid, 2649, valid, 2653, valid,
+      valid, 2637, valid, 2641, valid, 2645, valid, 2649, valid, 2653, valid,
 
       // Start of 0x1ec0:
       2657, valid, 2661, valid, 2665, valid, 2669, valid, 2673, valid, 2677, valid, 2681, valid, 2685, valid,
+      2689, valid, 2693, valid,
 
-      // Start of 0x10180:
-      2689, valid, 2693, valid, 2697, valid, 2701, valid, 2705, valid, 2709, valid, 2713,
-
-      // Start of 0x10320:
-      valid, 2717, valid,
+      // Start of 0x10040:
+      2697, valid, 2701, valid, 2705, valid, 2709, valid, 2713, valid, 2717, valid,
 
       // Start of 0x1ee0:
-      2721, valid, 2725, valid, 2729, valid, 2733, valid, 2737, valid, 2741, valid, 2745,
+      2721, valid, 2725, valid, 2729, valid, 2733, valid, 2737, valid, 2741, valid, 2745, valid, 2749,
 
-      // Start of 0x10340:
-      valid, 2749, valid, 2753, valid, 2757, valid, 2761, valid, 2765, valid, 2769, valid, 2773, valid, 2777,
+      // Start of 0x10100:
+      valid, 2753, valid, 2757, valid, 2761, valid, 2765, valid, 2769,
 
-      // Start of 0x31340:
-      valid,
+      // Start of 0x10b20:
+      valid, 2773,
 
-      // Start of 0x1fa80:
-      2781,
+      // Start of 0x10120:
+      valid, 2777, valid, 2781,
 
       // Start of 0x1f00:
-      valid, valid, valid, valid, valid, valid, valid, valid, 2785, 2789, 2793, 2797, 2801,
+      valid, valid, valid, valid, valid, valid, valid, valid, 2785, 2789, 2793, 2797, 2801, 2805, 2809, 2813,
+      valid, valid, valid, valid, valid, valid, disallowed, disallowed, 2817, 2821, 2825, 2829,
 
-      // Start of 0x10380:
-      2805, 2809, 2813, valid, valid, valid, valid, valid, valid, disallowed, disallowed, 2817, 2821, 2825,
-      2829, 2833, 2837, disallowed, disallowed,
+      // Start of 0x101c0, 0x10f60, 0x10fa0, 0x12f80, 0x1e280, 0x1e4c0, 0x1e5c0:
+      2833, 2837, disallowed, disallowed,
 
       // Start of 0x1f20:
-      valid, valid, valid, valid, valid, valid, valid, valid, 2841, 2845, 2849, 2853, 2857,
+      valid, valid, valid, valid, valid, valid, valid, valid, 2841, 2845, 2849, 2853, 2857, 2861, 2865, 2869,
+      valid, valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x103c0:
-      2861, 2865, 2869, valid, valid, valid, valid, valid, valid, valid, valid, 2873, 2877, 2881, 2885, 2889,
-
-      // Start of 0x10520:
-      2893, 2897, 2901,
+      // Start of 0x10320:
+      2873, 2877, 2881, 2885, 2889, 2893, 2897, 2901,
 
       // Start of 0x1f40:
       valid, valid, valid, valid, valid, valid, disallowed, disallowed, 2905, 2909, 2913, 2917, 2921, 2925,
-      disallowed, disallowed, valid, valid, valid, valid, valid, valid, valid, valid, disallowed, 2929,
-      disallowed, 2933, disallowed,
+      disallowed, disallowed, valid, valid, valid, valid,
 
-      // Start of 0x105a0:
-      2937, disallowed, 2941,
+      // Start of 0x103c0:
+      valid, valid, valid, valid, disallowed, 2929, disallowed, 2933, disallowed, 2937, disallowed, 2941,
 
       // Start of 0x1f60:
-      valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, 2945, 2949, 2953, 2957, 2961, 2965, 2969, 2973,
+      valid, 778, valid, 784,
 
-      // Start of 0x10800:
-      valid, 2945, 2949, 2953, 2957, 2961, 2965, 2969, 2973, valid, 778, valid, 784, valid, 787, valid, 790,
-      valid, 793, valid, 796, valid, 799, disallowed, disallowed,
+      // Start of 0x105a0:
+      valid, 787, valid, 790, valid, 793, valid, 796, valid, 799, disallowed, disallowed,
 
       // Start of 0x1f80:
-      2977, 2983, 2989, 2995, 3001, 3007,
+      2977, 2983, 2989, 2995, 3001, 3007, 3013, 3019, 2977, 2983, 2989, 2995, 3001, 3007, 3013, 3019, 3025,
+      3031, 3037, 3043,
+
+      // Start of 0x10800:
+      3049, 3055, 3061, 3067, 3025, 3031, 3037, 3043, 3049, 3055,
 
       // Start of 0x10820:
-      3013, 3019, 2977, 2983, 2989, 2995, 3001, 3007, 3013, 3019, 3025, 3031, 3037, 3043, 3049, 3055, 3061,
-      3067, 3025, 3031, 3037, 3043, 3049, 3055, 3061, 3067,
+      3061, 3067,
 
       // Start of 0x1fa0:
-      3073, 3079, 3085, 3091, 3097, 3103,
+      3073, 3079, 3085, 3091, 3097, 3103, 3109, 3115, 3073, 3079, 3085, 3091, 3097, 3103, 3109, 3115, valid,
+      valid, 3121, 3127, 3132, disallowed, valid, 3137, 3143, 3147, 3151, 778, 3127, 3155,
 
       // Start of 0x108a0:
-      3109, 3115, 3073, 3079, 3085, 3091, 3097, 3103, 3109, 3115, valid, valid, 3121, 3127, 3132, disallowed,
-      valid, 3137, 3143, 3147, 3151, 778, 3127, 3155, 748, 3155,
+      748, 3155,
 
       // Start of 0x1fc0:
-      3159,
+      3159, 3163, 3169, 3175, 3180, disallowed, valid, 3185, 3191, 784, 3195, 787, 3175, 3199, 3205, 3211,
+      valid, valid, valid, 3217, disallowed, disallowed, valid, valid, 3220, 3224, 3228, 790, disallowed,
+      3232,
 
       // Start of 0x108e0:
-      3163, 3169, 3175, 3180, disallowed, valid, 3185, 3191, 784, 3195, 787, 3175, 3199, 3205, 3211, valid,
-      valid, valid, 3217, disallowed, disallowed, valid, valid, 3220, 3224, 3228, 790, disallowed, 3232, 3238,
-      3244,
+      3238, 3244,
 
-      // Start of 0x1fe0, 0x10920:
-      valid,
+      // Start of 0x1fe0:
+      valid, valid, valid, 3250, valid, valid, valid, valid, 3253, 3257, 3261, 796, 3265, 3269, 772, 3275,
+      disallowed, disallowed, 3277, 3283, 3288, disallowed, valid, 3293, 3299,
 
-      // Start of 0x1e2e0:
-      valid, valid, 3250, valid, valid, valid, valid, 3253, 3257, 3261, 796, 3265, 3269, 772, 3275,
-      disallowed, disallowed, 3277, 3283, 3288, disallowed, valid, 3293, 3299, 793, 3303, 799,
+      // Start of 0x10900:
+      793,
 
-      // Start of 0x109a0:
-      3283, 67, 3307, disallowed,
+      // Start of 0x11f20:
+      3303, 799, 3283, 67, 3307, disallowed,
 
-      // Start of 0x2000, 0x1f6c0:
+      // Start of 0x2000:
       52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 58, valid, valid, disallowed, disallowed, valid, 3311,
-      valid, valid, valid,
+      valid, valid, valid, valid, valid, 3315,
 
-      // Start of 0x10a00:
-      valid, valid, 3315, valid, valid, valid, valid,
+      // Start of 0x10920, 0x1e2e0:
+      valid, valid, valid, valid,
 
       // Start of 0x2020:
       valid, valid, valid, valid, disallowed, disallowed, disallowed, valid, disallowed, disallowed,
-      disallowed, disallowed, disallowed, disallowed, disallowed, 52, valid, valid, valid, 3319, 3326, valid,
-      3336, 3343,
+      disallowed, disallowed,
 
-      // Start of 0x10a20:
-      valid, valid, valid, valid, 3353, valid, 3356,
+      // Start of 0x1fa80:
+      disallowed, disallowed, disallowed, 52, valid, valid, valid, 3319, 3326, valid, 3336, 3343, valid,
+      valid, valid,
+
+      // Start of 0x109a0, 0x1f6c0:
+      valid, 3353, valid, 3356,
 
       // Start of 0x2040:
       valid, valid, valid, valid, valid, valid, valid, 3360, 3363, 3366, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, 3369, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, 3369,
 
-      // Start of 0x10a40:
-      valid, valid, valid, valid, valid, valid, 52,
+      // Start of 0x10a00:
+      valid, valid, valid, valid, valid, valid, valid, 52,
 
       // Start of 0x2060:
       58, 58, 58, 58, 58, disallowed, disallowed, disallowed, disallowed, disallowed, 58, 58, 58, 58, 58, 58,
-      3382, 16, disallowed, disallowed, 3384, 3386, 3388, 3390, 3392,
+      3382,
 
-      // Start of 0x10ae0:
-      3394, 3396, 3398, 3402, 3404, 3406, 26,
+      // Start of 0x10a20:
+      16, disallowed, disallowed, 3384, 3386, 3388, 3390, 3392, 3394, 3396, 3398, 3402, 3404, 3406, 26,
 
       // Start of 0x2080:
-      3382, 78, 63, 65, 3384, 3386, 3388, 3390, 3392,
+      3382, 78, 63, 65, 3384, 3386, 3388, 3390, 3392, 3394, 3396, 3398, 3402, 3404, 3406, disallowed,
 
-      // Start of 0x1cf40:
-      3394, 3396, 3398, 3402, 3404, 3406, disallowed, 0, 8, 28, 46, 410, 14, 20, 22, 24,
-
-      // Start of 0x10b80:
-      26, 30, 36, 38, disallowed, disallowed, disallowed,
+      // Start of 0x10a40:
+      0, 8, 28, 46, 410, 14, 20, 22, 24, 26, 30, 36, 38, disallowed, disallowed, disallowed,
 
       // Start of 0x20a0:
       valid, valid, valid, valid, valid, valid, valid, valid, 3408, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid,
 
-      // Start of 0x10ba0:
-      valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0x10ae0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid,
 
       // Start of 0x2100:
-      3411, 3415, 4, 3419, valid, 3423, 3427, 413, valid, 3431, 12, 14, 14, 14, 14, 245, 16, 16, 22,
+      3411, 3415, 4, 3419, valid, 3423, 3427, 413, valid, 3431, 12, 14, 14, 14, 14, 245,
 
-      // Start of 0x10ce0:
-      22, valid, 26, 3435, valid, valid, 30, 32, 34, 34, 34, valid, valid,
+      // Start of 0x10b80:
+      16, 16, 22, 22, valid, 26, 3435, valid, valid, 30, 32, 34, 34, 34, valid, valid,
 
       // Start of 0x2120:
-      3438, 3441, 3445, valid, 50, valid, 865, valid, 50, valid, 20, 113, 2, 4, valid, 8, 8, 10, 3448,
+      3438, 3441, 3445, valid, 50, valid, 865, valid, 50, valid, 20, 113, 2,
 
-      // Start of 0x10d20, 0x114c0, 0x11d40, 0x1f840:
-      24, 28, 3452, 3455, 3458, 3461, 16, valid, 3464, 841, 808, 808, 841,
+      // Start of 0x10ba0:
+      4, valid, 8, 8, 10, 3448, 24, 28, 3452, 3455, 3458, 3461, 16, valid, 3464, 841, 808, 808, 841,
 
       // Start of 0x2140:
-      3468, valid, valid, valid, valid, 6, 6, 8, 16, 18, valid, valid, valid, valid, valid, valid, 3472, 3478,
-      3484,
+      3468, valid, valid, valid, valid, 6, 6, 8, 16, 18, valid, valid, valid,
 
-      // Start of 0x10d80:
-      3491, 3497, 3503, 3509, 3515, 3521, 3527, 3533, 3539, 3545, 3551, 3557, 3563,
+      // Start of 0x10ce0:
+      valid, valid, valid, 3472, 3478, 3484, 3491, 3497, 3503, 3509, 3515, 3521, 3527, 3533, 3539, 3545, 3551,
+      3557, 3563,
 
       // Start of 0x2160:
-      16, 3568, 3571, 3575, 42, 3578, 3581, 3585, 3590, 46, 3593, 3596, 22, 4, 6, 24, 16, 3568, 3571,
+      16, 3568, 3571, 3575, 42, 3578, 3581,
 
-      // Start of 0x10ea0:
-      3575, 42, 3578, 3581, 3585, 3590, 46, 3593, 3596, 22, 4, 6, 24,
+      // Start of 0x10d20, 0x114c0, 0x11d40, 0x1f840:
+      3585, 3590, 46, 3593, 3596, 22, 4, 6, 24, 16, 3568, 3571, 3575, 42, 3578, 3581, 3585, 3590, 46, 3593,
+
+      // Start of 0x10d80:
+      3596, 22, 4, 6, 24,
 
       // Start of 0x2180:
       valid, valid, valid, 3600, valid, valid, valid, valid, valid, 3604, valid, valid, disallowed,
-      disallowed, disallowed, disallowed, valid, valid, valid,
-
-      // Start of 0x10ec0:
-      valid,
+      disallowed, disallowed, disallowed, valid, valid, valid, valid,
 
       // Start of 0x2220:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 3610, 3617, valid,
+      valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x10f20:
-      3627, 3634, valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x2320:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, 3644,
-
-      // Start of 0x11040:
-      3648, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      // Start of 0x10ea0:
+      valid, valid, valid, valid, valid, 3610, 3617, valid, 3627, 3634, valid, valid, valid, valid, valid,
       valid,
 
-      // Start of 0x110c0:
-      valid, valid, valid, valid, valid, valid,
+      // Start of 0x2320:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, 3644, 3648, valid, valid, valid,
+
+      // Start of 0x10ec0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid,
 
       // Start of 0x2460:
-      78, 63, 65, 3384, 3386, 3388, 3390, 3392, 3394, 3652, 3655, 3658, 3661, 3664, 3667, 3670, 3673, 3676,
-      3679, 3682, 3685, 3689, 3693, 3697, 3701, 3705,
+      78, 63, 65, 3384, 3386, 3388, 3390, 3392, 3394, 3652, 3655, 3658, 3661, 3664,
 
-      // Start of 0x110e0:
-      3709, 3713, 3717, 3721, 3726, 3731,
+      // Start of 0x110c0, 0x11aa0:
+      3667, 3670, 3673, 3676, 3679, 3682, 3685, 3689, 3693, 3697, 3701, 3705, 3709, 3713, 3717, 3721, 3726,
+      3731,
 
       // Start of 0x2480:
-      3736, 3741, 3746, 3751, 3756, 3761, 3766, 3771, disallowed, disallowed,
+      3736, 3741, 3746, 3751, 3756,
 
-      // Start of 0x11140:
+      // Start of 0x110e0:
+      3761, 3766, 3771, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
       disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed, 3776, 3780, 3784, 3788,
+      disallowed, disallowed, disallowed, disallowed, disallowed, 3776, 3780, 3784, 3788,
 
       // Start of 0x24a0:
-      3792, 3796, 3800, 3804, 3808, 3812, 3816, 3820, 3824,
+      3792, 3796, 3800, 3804, 3808,
 
       // Start of 0x11280:
-      3828, 3832, 3836, 3840, 3844, 3848, 3852, 3856, 3860, 3864, 3868, 3872, 3876,
+      3812, 3816, 3820, 3824, 3828, 3832, 3836, 3840, 3844, 3848, 3852, 3856, 3860, 3864, 3868, 3872, 3876,
 
       // Start of 0x1d400, 0x1d5a0:
       0, 2, 4, 6,
@@ -1681,395 +1752,346 @@ namespace webpp::unicode::idna::details {
       // Start of 0x1d5e0:
       24, 26,
 
-      // Start of 0x1d560:
+      // Start of 0x112e0, 0x1d560:
       28, 30,
 
       // Start of 0x1d4e0, 0x1d680:
       32, 34,
 
       // Start of 0x1d460, 0x1d600:
-      36,
-
-      // Start of 0x112e0:
-      38,
+      36, 38,
 
       // Start of 0x1d580:
-      40, 42, 44, 46, 48, 50, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22,
-
-      // Start of 0x11300:
-      24, 26, 28, 30,
+      40, 42, 44, 46, 48, 50, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
 
       // Start of 0x24e0:
-      32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 3382, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid,
-
-      // Start of 0x2a00:
-      valid, valid, valid,
+      32, 34, 36, 38,
 
       // Start of 0x11320:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, 3880,
+      40, 42, 44, 46, 48, 50, 3382, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x2a00:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x11340:
+      valid, 3880,
 
       // Start of 0x2a60:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid,
-
-      // Start of 0x11340:
-      valid, 3893, 3897, 3900,
+      valid, valid, valid, valid, valid, 3893, 3897, 3900,
 
       // Start of 0x2ac0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid,
 
       // Start of 0x11360:
-      3904, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, 3904, valid, valid, valid,
 
       // Start of 0x2c00:
-      3910, 3914, 3918, 3922, 3926, 3930, 3934, 3938, 3942, 3946, 3950, 3954,
+      3910, 3914, 3918, 3922,
 
       // Start of 0x11380:
-      3958, 3962, 3966, 3970, 3974, 3978, 3982, 3986, 3990, 3994, 3998, 4002, 4006, 4010, 4014, 4018, 4022,
-      4026, 4030, 4034,
+      3926, 3930, 3934, 3938, 3942, 3946, 3950, 3954, 3958, 3962, 3966, 3970, 3974, 3978, 3982, 3986, 3990,
+      3994, 3998, 4002, 4006, 4010, 4014, 4018, 4022, 4026, 4030, 4034,
 
       // Start of 0x2c20:
-      4038, 4042, 4046, 4050, 4054, 4058, 4062, 4066, 4070, 4074, 4078, 4082,
+      4038, 4042, 4046,
 
       // Start of 0x113c0:
-      4086, 4090, 4094, 4098, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid,
-
-      // Start of 0x2c60:
-      4102, valid, 4106, 4109, 4113, valid, valid, 4116, valid, 4120, valid, 4124,
+      4050, 4054, 4058, 4062, 4066, 4070, 4074, 4078, 4082, 4086, 4090, 4094, 4098, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid,
 
       // Start of 0x113e0:
-      valid, 2194, 2255, 2191, 2220, valid, 4128, valid, valid, 4132, valid, valid, valid, valid, valid,
-      valid, 18, 42, 4136, 4139,
+      valid, valid, valid, valid, valid, valid, valid,
 
-      // Start of 0x2c80:
-      4142, valid, 4146, valid, 4150, valid, 4154, valid, 4158, valid, 4162, valid,
+      // Start of 0x2c60:
+      4102, valid, 4106, 4109, 4113, valid, valid, 4116, valid, 4120, valid, 4124, valid, 2194, 2255, 2191,
+      2220, valid, 4128, valid, valid, 4132, valid, valid, valid,
 
       // Start of 0x11640:
-      4166, valid, 4170, valid, 4174, valid, 4178, valid, 4182, valid, 4186, valid, 4190, valid, 4194, valid,
+      valid, valid, valid, 18, 42, 4136, 4139,
 
-      // Start of 0x11720:
-      4198, valid, 4202, valid,
-
-      // Start of 0x2ca0:
-      4206, valid, 4210, valid, 4214, valid, 4218, valid, 4222, valid, 4226, valid,
-
-      // Start of 0x1f020, 0x1f800:
-      4230,
-
-      // Start of 0x16f40:
-      valid,
-
-      // Start of 0x16a60:
-      4234, valid, 4238, valid, 4242, valid, 4246, valid, 4250, valid, 4254, valid, 4258,
+      // Start of 0x2c80:
+      4142, valid, 4146, valid, 4150, valid, 4154, valid, 4158, valid, 4162, valid, 4166, valid, 4170, valid,
+      4174, valid, 4178, valid, 4182, valid, 4186, valid, 4190,
 
       // Start of 0x118e0:
-      valid, 4262, valid, 4266, valid,
+      valid, 4194, valid, 4198, valid, 4202, valid,
 
-      // Start of 0x2cc0:
-      4270, valid, 4274, valid, 4278, valid, 4282, valid, 4286, valid, 4290, valid, 4294, valid, 4298, valid,
-      4302, valid, 4306,
+      // Start of 0x2ca0:
+      4206, valid, 4210, valid, 4214, valid, 4218, valid, 4222, valid, 4226, valid, 4230, valid, 4234, valid,
+      4238, valid, 4242, valid, 4246, valid, 4250, valid,
 
       // Start of 0x11900:
-      valid, 4310, valid, 4314, valid, 4318, valid, 4322, valid, 4326, valid, 4330, valid,
+      4254, valid, 4258, valid, 4262, valid, 4266, valid,
 
-      // Start of 0x2ce0:
-      4334, valid, 4338, valid, valid, valid, valid, valid,
+      // Start of 0x2cc0:
+      4270, valid, 4274, valid, 4278,
 
       // Start of 0x11d00:
       valid,
 
       // Start of 0x11d60:
-      valid, valid, 4342, valid, 4346,
+      4282, valid, 4286, valid, 4290, valid, 4294, valid, 4298, valid,
 
       // Start of 0x11920:
-      valid, valid, valid, valid, 4350, valid, disallowed, disallowed, disallowed, disallowed, disallowed,
+      4302, valid, 4306, valid, 4310, valid, 4314, valid, 4318, valid, 4322, valid, 4326, valid, 4330, valid,
 
-      // Start of 0x2d60:
-      valid, valid, valid, valid, valid, valid, valid, valid, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed, disallowed, 4354, valid, disallowed, disallowed, disallowed, disallowed,
+      // Start of 0x2ce0:
+      4334, valid, 4338, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x11940:
-      disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
+      4342, valid, 4346, valid, valid, valid, valid, 4350, valid, disallowed, disallowed, disallowed,
       disallowed, disallowed,
 
-      // Start of 0x2e80:
-      valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x11a40:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid,
-
-      // Start of 0x11aa0:
-      valid, valid, valid, valid, disallowed, valid, valid, valid, valid, 4358,
-
-      // Start of 0x2ee0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, 4362, disallowed, disallowed,
+      // Start of 0x2d60:
+      valid, valid, valid, valid, valid, valid, valid, valid, disallowed, disallowed,
 
       // Start of 0x11be0:
+      disallowed, disallowed, disallowed, disallowed, disallowed, 4354, valid, disallowed, disallowed,
       disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed,
+      disallowed, disallowed, disallowed, disallowed,
 
-      // Start of 0x2f00:
-      4366, 4370, 4374, 4378, 4382, 4386,
-
-      // Start of 0x11c40:
-      4390, 4394, 4398, 4402, 4406, 4410, 4414, 4418, 4422, 4426, 4430, 4434, 4438, 4442, 4446, 4450, 4454,
-      4458, 4462, 4466, 4470, 4474, 4478, 4482, 4486, 4490,
-
-      // Start of 0x2f20:
-      4494, 4498, 4502, 4506, 4510, 4514,
+      // Start of 0x2e80:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x11ca0:
-      4518, 4522, 4526, 4530, 4534, 4538, 4542, 4546, 4550, 4554, 4558, 4562, 4566, 4570, 4574, 4578, 4582,
-      4586, 4590, 4594, 4598, 4602, 4606, 4610, 4614, 4618,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      disallowed, valid, valid, valid, valid, 4358,
 
-      // Start of 0x2f40:
-      4622, 4626, 4630, 4634, 4638,
+      // Start of 0x2ee0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x11d20:
-      4642, 4646, 4650, 4654, 4658, 4662, 4666, 4670, 4674, 4678, 4682, 4686, 4690, 4694, 4698, 4702, 4706,
-      4710, 4714, 4718, 4722, 4726, 4730, 4734, 4738, 4742, 4746,
+      valid, valid, valid, valid, valid, valid, valid, valid, 4362, disallowed, disallowed, disallowed,
+      disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
+      disallowed,
 
-      // Start of 0x2f60:
-      4750, 4754, 4758, 4762, 4766,
+      // Start of 0x2f00:
+      4366, 4370, 4374, 4378, 4382, 4386, 4390, 4394, 4398, 4402,
 
       // Start of 0x11d80:
-      4770, 4774, 4778, 4782, 4786, 4790, 4794, 4798, 4802, 4806, 4810, 4814, 4818, 4822, 4826, 4830, 4834,
-      4838, 4842, 4846, 4850, 4854, 4858, 4862, 4866, 4870, 4874,
+      4406, 4410, 4414, 4418, 4422, 4426, 4430, 4434, 4438, 4442, 4446, 4450, 4454, 4458, 4462, 4466, 4470,
+      4474, 4478, 4482, 4486, 4490,
 
-      // Start of 0x2f80:
-      4878, 4882, 4886, 4890, 4894,
+      // Start of 0x2f20:
+      4494, 4498, 4502,
 
       // Start of 0x11fa0:
-      4898, 4902, 4906, 4910, 4914, 4918, 4922, 4926, 4930, 4934, 4938, 4942, 4946, 4950, 4954, 4958,
+      4506, 4510, 4514, 4518, 4522, 4526, 4530, 4534, 4538, 4542, 4546, 4550, 4554, 4558, 4562, 4566, 4570,
+      4574, 4578, 4582, 4586, 4590, 4594, 4598, 4602, 4606, 4610, 4614, 4618,
 
-      // Start of 0x2ebe0:
-      4962, 4966, 4970, 4974, 4978, 4982, 4986, 4990, 4994, 4998, 5002,
-
-      // Start of 0x2fa0:
-      5006, 5010, 5014, 5018,
+      // Start of 0x2f40:
+      4622, 4626, 4630,
 
       // Start of 0x11fe0:
-      5022, 5026, 5030, 5034, 5038, 5042, 5046, 5050, 5054, 5058, 5062, 5066, 5070, 5074, 5078, 5082, 5086,
-      5090, 5094, 5098, 5102, 5106, 5110, 5114, 5118, 5122, 5126, 5130,
+      4634, 4638, 4642, 4646, 4650, 4654, 4658, 4662, 4666, 4670, 4674, 4678, 4682, 4686, 4690, 4694, 4698,
+      4702, 4706, 4710, 4714, 4718, 4722, 4726, 4730, 4734, 4738, 4742, 4746,
 
-      // Start of 0x2fc0:
-      5134, 5138, 5142, 5146,
+      // Start of 0x2f60:
+      4750, 4754,
 
       // Start of 0x12460:
-      5150, 5154, 5158, 5162, 5166, 5170, 5174, 5178, 5182, 5186, 5190, 5194, 5198, 5202, 5206, 5210, 5214,
-      5218, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
-      disallowed, disallowed,
+      4758, 4762, 4766, 4770, 4774, 4778, 4782, 4786, 4790, 4794, 4798, 4802, 4806, 4810, 4814, 4818, 4822,
+      4826, 4830, 4834, 4838, 4842, 4846, 4850, 4854, 4858, 4862, 4866, 4870, 4874,
 
-      // Start of 0x3000:
-      52, valid, 5222, valid,
+      // Start of 0x2f80:
+      4878, 4882,
 
       // Start of 0x16ae0:
-      valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x3020:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid,
+      4886, 4890, 4894, 4898, 4902, 4906, 4910, 4914, 4918, 4922, 4926, 4930, 4934, 4938, 4942, 4946,
 
       // Start of 0x16b40:
-      valid, 5224, valid, 4458, 5228, 5232,
+      4950, 4954, 4958, 4962, 4966, 4970, 4974, 4978, 4982, 4986, 4990, 4994, 4998, 5002,
+
+      // Start of 0x2fa0:
+      5006, 5010, 5014, 5018, 5022, 5026, 5030, 5034, 5038, 5042,
+
+      // Start of 0x16b60:
+      5046, 5050, 5054, 5058, 5062, 5066, 5070, 5074, 5078, 5082, 5086, 5090, 5094, 5098, 5102, 5106, 5110,
+      5114, 5118, 5122, 5126, 5130,
+
+      // Start of 0x2fc0:
+      5134, 5138, 5142, 5146, 5150, 5154, 5158,
+
+      // Start of 0x16f80:
+      5162, 5166, 5170, 5174, 5178, 5182, 5186, 5190, 5194, 5198, 5202, 5206, 5210, 5214, 5218, disallowed,
+      disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed, disallowed,
+      disallowed,
+
+      // Start of 0x3000:
+      52, valid,
+
+      // Start of 0x16fe0:
+      5222, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x3020:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+
+      // Start of 0x1afe0:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 5224, valid, 4458,
+      5228, 5232,
 
       // Start of 0x3080:
       valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x16b60:
-      disallowed, disallowed, valid, valid, 5236, 5241, valid, valid, 5246,
-
-      // Start of 0x30e0:
-      valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x16f80:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, 5253,
-
-      // Start of 0x3120:
-      valid, valid, valid, valid, valid, valid,
-
-      // Start of 0x16fe0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, disallowed, 5260, 5264, 5268,
-      5272, 5276, 5280, 5284, 5288, 5292, 5296, 5300, 5304, 5308, 5312, 5316,
-
-      // Start of 0x3140:
-      5320, 5324, 5328, 5332, 5336, 5340,
-
-      // Start of 0x1afe0:
-      5344, 5348, 5352, 5356, 5360, 5364, 5368, 5372, 5376, 5380, 5384, 5388, 5392, 5396, 5400, 5404, 5408,
-      5412, 5416, 5420, 5424, 5428, 5432, 5436, 5440, 5444,
-
-      // Start of 0x3160:
-      5448, 5452, 5456, 5460, 58, 5464,
 
       // Start of 0x1b120:
-      5468, 5472, 5476,
+      valid, valid, valid,
 
       // Start of 0x1e080:
-      5480, 5484, 5488, 5492, 5496, 5500, 5504, 5508, 5512, 5516, 5520, 5524, 5528, 5532, 5536, 5540, 5544,
-      5548, 5552, 5556, 5560, 5564, 5568,
+      valid, valid, valid, valid, valid, disallowed, disallowed, valid, valid, 5236, 5241, valid, valid, 5246,
 
-      // Start of 0x3180:
-      5572, 5576, 5580, 5584, 5588, 5592,
+      // Start of 0x30e0:
+      valid, valid,
 
       // Start of 0x1b140:
-      5596, 5600, 5604, 5608, 5612, 5616, 5620, 5624, 5628, disallowed, valid, valid, 4366, 4390, 5632, 5636,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
 
       // Start of 0x1b160:
-      5640, 5644, 5648, 5652, 4382, 5656, 5660, 5664, 5668, 4398,
+      valid, 5253,
+
+      // Start of 0x3120:
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, disallowed, 5260, 5264,
+
+      // Start of 0x1bc60:
+      5268, 5272, 5276, 5280, 5284, 5288, 5292, 5296, 5300, 5304, 5308, 5312, 5316,
+
+      // Start of 0x3140:
+      5320, 5324, 5328, 5332, 5336, 5340, 5344,
+
+      // Start of 0x1bc80:
+      5348, 5352, 5356, 5360, 5364, 5368, 5372, 5376, 5380, 5384, 5388, 5392, 5396, 5400, 5404, 5408, 5412,
+      5416, 5420, 5424, 5428, 5432, 5436, 5440, 5444,
+
+      // Start of 0x3160:
+      5448, 5452, 5456,
+
+      // Start of 0x1da80:
+      5460, 58, 5464, 5468, 5472, 5476, 5480, 5484, 5488, 5492, 5496, 5500, 5504, 5508, 5512, 5516, 5520,
+      5524, 5528, 5532, 5536, 5540, 5544, 5548, 5552, 5556,
+
+      // Start of 0x1daa0:
+      5560, 5564, 5568,
+
+      // Start of 0x3180:
+      5572, 5576, 5580, 5584, 5588, 5592, 5596, 5600, 5604, 5608, 5612, 5616, 5620, 5624, 5628, disallowed,
+      valid, valid, 4366, 4390, 5632, 5636, 5640, 5644,
+
+      // Start of 0x1df20:
+      5648, 5652, 4382, 5656, 5660, 5664, 5668, 4398,
 
       // Start of 0x3200:
       5672, 5678, 5684, 5690, 5696, 5702, 5708, 5714, 5720, 5726, 5732, 5738, 5744, 5750, 5756, 5762, 5768,
-      5774, 5780, 5786, 5792, 5798,
-
-      // Start of 0x1bc60:
-      5804, 5810, 5816, 5822, 5828, 5834, 5840, 5846, 5855, disallowed,
-
-      // Start of 0x3220:
-      5864, 5870, 5876, 5882, 5888, 5894, 5900, 5906, 5912, 5918, 5924, 5930, 5936, 5942, 5948, 5954, 5960,
-      5966,
-
-      // Start of 0x1bc80:
-      5972, 5978, 5984, 5990, 5996, 6002, 6008, 6014, 6020, 6026, 6032, 6038, 6044, 6050,
-
-      // Start of 0x3240:
-      6056, 6062, 6068, 6074, 6080, 6084, 4630, 6088, valid, valid, valid, valid, valid,
-
-      // Start of 0x1da80:
-      valid, valid, valid, 6092, 6096, 6099, 6102, 6105, 6108, 6111, 6114, 6117, 6120, 6123, 6126, 6129, 6132,
-      6135, 6138,
-
-      // Start of 0x3260:
-      5260, 5272, 5284, 5292, 5324, 5328, 5340, 5348, 5352, 5360, 5364, 5368, 5372,
-
-      // Start of 0x1daa0:
-      5376, 6141, 6145, 6149, 6153, 6157, 6161, 6165, 6169, 6173, 6177, 6181, 6185, 6189, 6193, 6197, 6204,
-      6211, valid,
-
-      // Start of 0x3280:
-      4366, 4390, 5632, 5636, 6215, 6219, 6223, 4410, 6227, 4458, 4658, 4706, 4702,
-
-      // Start of 0x1df20:
-      4662, 5030, 4490, 4650, 6231, 6235, 6239, 6243, 6247, 6251, 6255, 6259, 6263, 6267, 4514, 6271, 6275,
-      6279, 6283,
-
-      // Start of 0x32a0:
-      6287, 6291, 6295, 6299, 5640, 5644, 5648, 6303,
+      5774, 5780, 5786, 5792, 5798, 5804, 5810,
 
       // Start of 0x1e000:
-      6307, 6311, 6315, 6319, 6323, 6327, 6331, 6335, 6339, 6343, 6346, 6349, 6352, 6355, 6358, 6361,
+      5816, 5822, 5828, 5834, 5840, 5846, 5855, disallowed,
+
+      // Start of 0x3220:
+      5864, 5870, 5876,
 
       // Start of 0x1fa60:
-      6364, 6367, 6370, 6373, 6376, 6379, 6382, 6385,
-
-      // Start of 0x32c0:
-      6388, 6393, 6398, 6403, 6408, 6413, 6418, 6423,
+      5882, 5888, 5894, 5900, 5906, 5912, 5918, 5924, 5930, 5936, 5942, 5948, 5954, 5960, 5966, 5972,
 
       // Start of 0x1e120:
-      6428, 6433, 6439, 6445, 6451, 6454, 6458, 6461, 6465, 6469, 6473, 6477, 6481, 6485, 6489, 6493, 6497,
-      6501, 6505, 6509, 6513, 6517, 6521, 6525,
+      5978, 5984, 5990, 5996, 6002, 6008, 6014, 6020, 6026, 6032, 6038, 6044, 6050,
 
-      // Start of 0x32e0:
-      6529, 6533, 6537, 6541, 6545, 6549, 6553, 6557,
+      // Start of 0x3240:
+      6056, 6062, 6068, 6074, 6080, 6084, 4630,
 
       // Start of 0x1e140:
-      6561, 6565, 6569, 6573, 6577, 6581, 6585, 6589, 6593, 6597, 6601, 6605, 6609, 6613, 6617, 6621, 6625,
-      6629, 6633, 6637, 6641, 6645, 6649, 6653,
+      6088, valid, valid, valid, valid, valid, valid, valid, valid, 6092, 6096, 6099, 6102, 6105, 6108, 6111,
+      6114, 6117, 6120, 6123, 6126, 6129, 6132, 6135, 6138,
 
-      // Start of 0x3300:
-      6660, 6673,
-
-      // Start of 0x1f1e0:
-      6686, 6699, 6709, 6722, 6732,
+      // Start of 0x3260:
+      5260, 5272, 5284, 5292, 5324, 5328, 5340,
 
       // Start of 0x1e5e0:
-      6742, 6758, 6771, 6781, 6791,
+      5348, 5352, 5360, 5364,
 
       // Start of 0x1f760:
-      6801, 6814, 6827, 6837, 6847, 6854, 6864, 6877, 6890, 6897, 6913, 6932, 6948, 6958, 6974, 6990, 7003,
-      7013, 7023, 7033,
+      5368, 5372, 5376, 6141, 6145, 6149, 6153, 6157, 6161, 6165, 6169, 6173, 6177, 6181, 6185, 6189, 6193,
+      6197, 6204, 6211, valid,
 
-      // Start of 0x3320:
-      7046, 7062, 7075, 7085, 7095, 7105, 7112,
+      // Start of 0x3280:
+      4366, 4390, 5632, 5636, 6215, 6219,
 
       // Start of 0x1e7e0:
-      7119, 7126, 7133, 7143, 7153, 7169, 7179, 7192, 7208, 7218, 7225, 7232, 7248, 7261, 7277, 7287, 7303,
-      7310, 7320, 7330, 7340, 7350, 7360, 7373, 7383,
+      6223, 4410, 6227, 4458, 4658, 4706, 4702, 4662, 5030, 4490, 4650, 6231, 6235, 6239, 6243, 6247, 6251,
+      6255, 6259, 6263, 6267, 4514, 6271, 6275, 6279, 6283,
+
+      // Start of 0x32a0, 0x1e8c0:
+      6287, 6291, 6295, 6299, 5640, 5644, 5648, 6303, 6307, 6311, 6315, 6319, 6323, 6327, 6331, 6335, 6339,
+      6343, 6346, 6349, 6352, 6355, 6358, 6361, 6364, 6367, 6370, 6373, 6376, 6379, 6382, 6385,
+
+      // Start of 0x32c0, 0x1e940:
+      6388, 6393, 6398, 6403, 6408, 6413, 6418, 6423, 6428, 6433, 6439, 6445, 6451, 6454, 6458, 6461, 6465,
+      6469, 6473, 6477, 6481, 6485, 6489, 6493, 6497, 6501, 6505, 6509, 6513, 6517, 6521, 6525,
+
+      // Start of 0x32e0, 0x1ec60:
+      6529, 6533, 6537, 6541, 6545, 6549, 6553, 6557, 6561, 6565, 6569, 6573, 6577, 6581, 6585, 6589, 6593,
+      6597, 6601, 6605, 6609, 6613, 6617, 6621, 6625, 6629, 6633, 6637, 6641, 6645, 6649, 6653,
+
+      // Start of 0x3300, 0x1eee0:
+      6660, 6673, 6686, 6699, 6709, 6722, 6732, 6742, 6758, 6771, 6781, 6791, 6801, 6814, 6827, 6837, 6847,
+      6854, 6864, 6877, 6890, 6897, 6913, 6932, 6948, 6958, 6974, 6990, 7003, 7013, 7023, 7033,
+
+      // Start of 0x3320, 0x1f6e0:
+      7046, 7062, 7075, 7085, 7095, 7105, 7112, 7119, 7126, 7133, 7143, 7153, 7169, 7179, 7192, 7208, 7218,
+
+      // Start of 0x1f7e0:
+      7225, 7232, 7248, 7261, 7277, 7287, 7303, 7310, 7320, 7330, 7340, 7350, 7360, 7373, 7383,
 
       // Start of 0x3340:
-      7390, 7400, 7410, 7420, 7433, 7443, 7453,
+      7390, 7400, 7410, 7420, 7433, 7443, 7453, 7463, 7479, 7492, 7499, 7515, 7522, 7535, 7548, 7558, 7568,
 
-      // Start of 0x1e8c0:
-      7463, 7479, 7492, 7499, 7515, 7522, 7535, 7548, 7558, 7568, 7578, 7591, 7598, 7608, 7621, 7628, 7644,
-      7654, 7659, 7664, 7669, 7674, 7679, 7684, 7689,
+      // Start of 0x1f8a0:
+      7578, 7591, 7598, 7608, 7621, 7628, 7644, 7654, 7659, 7664, 7669, 7674, 7679, 7684, 7689,
 
       // Start of 0x3360:
-      7694, 7699, 7704, 7710, 7716,
+      7694, 7699, 7704, 7710, 7716, 7722,
 
-      // Start of 0x1e940:
-      7722,
-
-      // Start of 0x1ed00:
+      // Start of 0x1fac0:
       7728, 7734, 7740, 7746, 7752, 7758, 7764, 7770, 7776, 7782, 7788, 7794, 7798, 7801, 7804, 7808, 7811,
       7814, 7817, 7821, 7825, 7828, 7835, 7842, 7849, 7856,
 
       // Start of 0x3380:
-      7869, 7872, 7875, 7879, 7882, 7885,
+      7869, 7872, 7875, 7879, 7882,
 
-      // Start of 0x1eee0:
-      7888, 7891, 7894, 7898, 7903, 7906, 7909, 7913, 7917, 7920, 7923, 7926, 7930, 7934, 7938, 7942, 7946,
-      7949, 7952, 7955, 7958, 7961, 7965, 7968, 7971, 7974,
+      // Start of 0x1fae0:
+      7885, 7888, 7891, 7894, 7898, 7903, 7906, 7909, 7913, 7917, 7920, 7923, 7926, 7930, 7934, 7938, 7942,
+      7946, 7949, 7952, 7955, 7958, 7961,
+
+      // Start of 0x2cea0:
+      7965, 7968, 7971, 7974,
 
       // Start of 0x33a0:
-      7978, 7982, 7985, 7989, 7993, 7997,
-
-      // Start of 0x1f6e0:
-      8000, 8004, 8010, 7869, 8017, 8021, 8025, 8029, 8033, 8041, 8050, 8053, 8056, 8060, 8063, 8066, 8069,
-      8073, 8076, 8073, 8079, 8082, 8085, 8089, 8092, 8089,
+      7978, 7982, 7985, 7989, 7993, 7997, 8000, 8004, 8010, 7869, 8017, 8021, 8025, 8029, 8033, 8041, 8050,
+      8053, 8056, 8060, 8063, 8066, 8069, 8073, 8076, 8073, 8079, 8082, 8085, 8089, 8092, 8089,
 
       // Start of 0x33c0:
-      8095, 8099, disallowed, 8103, 8106, 8109,
-
-      // Start of 0x1f7e0:
-      8112, disallowed, 8119, 8122, 8125, 8128, 8131, 8134, 7971, 8137, 8140, 8143, 8146, 8150, 7888, 8153,
-
-      // Start of 0x1f880:
-      8157, 8161, disallowed, 8164, 8168, 8171, 8174, 8177, 8180, 8186,
+      8095, 8099, disallowed, 8103, 8106, 8109, 8112, disallowed, 8119, 8122, 8125, 8128, 8131, 8134, 7971,
+      8137, 8140, 8143, 8146, 8150, 7888, 8153, 8157, 8161, disallowed, 8164, 8168, 8171, 8174, 8177, 8180,
+      8186,
 
       // Start of 0x33e0:
       8192, 8197, 8202, 8207, 8212, 8217, 8222, 8227, 8232, 8237, 8243, 8249, 8255, 8261, 8267, 8273, 8279,
-      8285, 8291, 8297, 8303, 8309,
-
-      // Start of 0x1f8a0:
-      8315, 8321, 8327, 8333, 8339, 8345, 8351, 8357, 8363, 8369,
+      8285, 8291, 8297, 8303, 8309, 8315, 8321, 8327, 8333, 8339, 8345, 8351, 8357, 8363, 8369,
 
       // Start of 0xa640:
       8373, valid, 8377, valid, 8381, valid, 8385, valid, 8389, valid, 2003, valid, 8393, valid, 8397, valid,
-      8401, valid, 8405, valid, 8409,
-
-      // Start of 0x1fac0:
-      valid, 8413, valid, 8417, valid, 8421, valid, 8425, valid, 8429, valid,
+      8401, valid, 8405, valid, 8409, valid, 8413, valid, 8417, valid, 8421, valid, 8425, valid, 8429, valid,
 
       // Start of 0xa660:
       8433, valid, 8437, valid, 8441, valid, 8445, valid, 8449, valid, 8453, valid, 8457, valid, valid, valid,
-      valid, valid, valid, valid, valid,
-
-      // Start of 0x1fae0:
-      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid, valid,
+      valid,
 
       // Start of 0xa680:
-      8461, valid, 8465, valid, 8469,
-
-      // Start of 0x2cea0:
-      valid, 8473, valid, 8477, valid, 8481, valid, 8485, valid, 8489, valid, 8493, valid, 8497, valid, 8501,
-      valid, 8505, valid, 8509, valid, 8513, valid, 1054, 1060,
+      8461, valid, 8465, valid, 8469, valid, 8473, valid, 8477, valid, 8481, valid, 8485, valid, 8489, valid,
+      8493, valid, 8497, valid, 8501, valid, 8505, valid, 8509, valid, 8513, valid, 1054, 1060,
 
       // Start of 0xa720:
       valid, valid, 8517, valid, 8521, valid, 8525, valid, 8529, valid, 8533, valid, 8537, valid, 8541, valid,
@@ -2753,79 +2775,77 @@ namespace webpp::unicode::idna::details {
      * IDNA Mapping Status Table
      *
      * Table size:
-     *   - in bits:       4352
-     *   - in bytes:      544 B
-     *   - in KibiBytes:  0.53 KiB
+     *   - in bits:       4192
+     *   - in bytes:      524 B
+     *   - in KibiBytes:  0.51 KiB
      */
-    static constexpr std::array<std::uint32_t, 136ULL> idna_mappings_bools{
+    static constexpr std::array<std::uint32_t, 131ULL> idna_mappings_bools{
       0b1111'1111'1111'1111'1111'1111'1111'1111, 0b0000'0000'0000'0000'0000'0000'0000'0000,
-      0b1000'0111'1111'1111'0000'0000'1111'1111, 0b1111'1111'1100'0000'0000'0000'0001'1111,
-      0b1111'1111'1111'1111'1110'1111'1111'1111, 0b1111'1001'1111'1111'1111'1011'1111'1111,
-      0b1111'1111'1111'1111'1111'1111'0011'1111, 0b1111'1111'1110'0111'1111'1111'1110'0111,
-      0b1111'1111'1111'1111'1111'1111'1110'1111, 0b1111'1111'1110'0000'1111'1111'1110'1001,
-      0b1001'1001'1111'1110'1111'0000'0000'1111, 0b0111'1001'1110'0010'1111'1110'1111'1111,
-      0b0111'0011'1111'1111'1111'1111'1111'1110, 0b1111'1111'1111'0000'0000'1100'0011'1111,
-      0b1110'1111'1111'1011'1000'0000'0001'1111, 0b1110'0111'1101'1011'1111'1011'1111'1110,
-      0b1110'0000'0000'0000'0010'0111'0111'0111, 0b1111'1011'1000'0000'0111'1111'1111'1001,
-      0b1111'1111'1111'1111'1001'1110'0110'0111, 0b0111'1011'1000'1111'1101'1000'0000'0001,
-      0b1111'1111'1110'0011'1000'1100'0010'1100, 0b0001'0000'0010'0111'1011'1000'1110'0001,
-      0b1111'1111'1111'1111'1111'1000'0000'0000, 0b1111'1111'1011'1011'1111'1111'1110'0000,
-      0b1110'1110'1111'1001'1111'1111'1111'1110, 0b1111'1110'0111'1001'0011'1011'0000'0001,
-      0b1111'0111'0111'1111'1111'1100'0000'0111, 0b1101'1111'0011'1110'1111'1111'1101'1111,
-      0b1100'1111'0110'0000'0110'0000'0011'1101, 0b1111'1111'0000'0000'0000'1110'1111'1111,
-      0b1000'0011'1111'0111'0111'1101'1101'1111, 0b1111'1111'0001'1111'1111'1111'1111'1011,
-      0b0111'1111'0010'1111'1111'1011'1111'1111, 0b1111'1111'1100'0000'0101'1111'1000'0100,
-      0b1110'1111'1010'1100'0000'0000'0001'1100, 0b1110'0000'1111'1111'1111'1011'1111'1111,
-      0b1110'0111'1010'1111'1110'0111'1011'1111, 0b1011'1111'1111'1111'1110'0111'1011'1111,
-      0b1111'1111'1110'0111'1010'1111'1110'0111, 0b1100'0111'1011'1111'1111'1111'1110'1111,
-      0b1110'0011'1111'1111'1111'1111'1111'1111, 0b1111'0000'0000'0111'1111'1111'1111'1111,
-      0b1111'0000'0000'0000'1101'1101'1111'1111, 0b1111'0000'0011'1111'1111'0000'0011'1111,
-      0b1111'0000'1111'1111'1111'0000'0111'1111, 0b1111'0011'1111'1111'1111'0000'1111'1111,
-      0b1111'0000'1111'1111'1111'0000'0000'0001, 0b1111'1100'0111'1111'1111'0000'0011'1111,
-      0b1111'1111'0011'1111'1111'1111'1111'1111, 0b1111'1111'1001'1111'1111'1111'1111'1111,
-      0b0000'0111'1111'1000'0000'0111'1111'1111, 0b0000'0101'1111'1000'0000'0000'0000'1000,
-      0b1111'1011'1111'1011'1111'1011'1111'1001, 0b1111'1110'0000'0000'0111'1110'0000'0011,
-      0b1111'1110'0011'1111'1111'1110'0000'0000, 0b1111'1111'1000'0000'0111'1110'0000'0111,
-      0b0001'1111'1111'1111'1111'1110'0000'0111, 0b1111'1111'1011'1111'1111'1111'0000'0000,
-      0b1111'1111'1100'1111'1111'1111'1100'0011, 0b1100'0000'0000'0000'0000'0000'0001'1100,
-      0b1110'0000'0000'1111'1100'1111'1100'1111, 0b1110'0111'1111'1111'1110'1111'1110'1111,
-      0b1110'0000'0000'0001'1110'0000'0111'1111, 0b1111'1111'1111'1111'0111'1111'0000'1111,
-      0b1101'1111'1111'1111'1100'0011'1011'0111, 0b1111'1000'0000'0011'1100'0111'1111'1111,
-      0b1111'1111'1111'1111'1111'1000'0011'1111, 0b1111'1111'1111'1100'0011'1101'1111'1111,
-      0b1110'1100'0000'0011'1111'1100'0000'0000, 0b1111'1100'0110'1111'1110'1111'1111'1111,
-      0b0001'1011'1111'1111'1111'1111'1111'0100, 0b0000'0000'0000'0111'1111'1100'0000'0001,
-      0b1100'0001'1011'1111'1111'1111'1111'1000, 0b1110'0000'1111'1111'1111'1111'1111'1111,
-      0b1101'1110'0001'1111'1111'1111'1111'1111, 0b1111'1111'1111'1101'1101'1111'1110'0000,
-      0b0000'0011'1111'1110'0001'1100'1111'1111, 0b1111'0000'1111'1110'0000'0011'1111'1110,
-      0b1111'1111'1111'1110'0000'0000'1111'1111, 0b1111'1100'0000'0000'0011'1100'0000'0111,
-      0b1111'1111'1111'1110'0000'0000'0000'0001, 0b1111'1000'0000'0111'1111'1000'0000'1111,
-      0b0000'0110'0000'0001'1111'1000'0001'1111, 0b0001'1001'1101'1111'1111'1000'0000'0000,
-      0b0000'0000'0000'0000'1110'0000'0000'0000, 0b1111'1000'0000'0111'1111'1000'0000'0000,
-      0b1110'0000'0000'0000'1110'0001'1111'1111, 0b1110'0000'0111'1111'1110'0000'0011'1111,
-      0b1111'0111'1010'1111'1110'0000'0001'1111, 0b1111'0000'0111'1111'1111'0111'1111'1111,
-      0b1001'1001'1111'1110'1111'0000'0011'1111, 0b0111'1101'1111'0110'1111'1110'1111'1111,
-      0b1110'0111'1000'0010'0000'0100'1110'0110, 0b1111'1111'1000'0000'0000'1111'1000'1111,
-      0b1101'1111'1111'1011'1101'0010'1010'0101, 0b0000'0000'0000'0000'0000'0011'0000'0000,
-      0b1111'1111'1000'0000'0000'1111'1000'0000, 0b1111'1111'1000'0111'1111'1111'1000'0001,
-      0b1001'1111'1100'0000'0000'0011'1111'1111, 0b1111'1111'1111'1111'1101'1011'1111'1100,
-      0b1111'1110'0000'0000'1111'1110'0110'1111, 0b0000'1110'0000'0001'1111'1110'0000'0111,
-      0b1111'1110'0000'0000'0000'0110'0000'0000, 0b1111'1110'0000'0000'0111'1110'0000'0111,
-      0b1111'1110'0000'0000'1111'1111'1111'1101, 0b1111'1111'0110'1000'1111'1111'1111'1111,
-      0b0000'0000'0000'0001'1111'1011'0111'1111, 0b1111'1111'0000'0000'0000'0001'0000'0000,
-      0b1111'1111'1000'0000'0000'0011'1111'1111, 0b1111'1111'1000'0000'0000'1111'1011'1111,
-      0b0001'1111'1000'0000'0001'1111'1001'1111, 0b1111'1111'1110'1101'1111'1111'1000'0000,
-      0b1100'0000'0111'1111'1000'0011'1111'1111, 0b0000'0000'0000'0000'1100'0000'0000'0111,
-      0b1101'1011'1111'1011'1100'0000'0000'0000, 0b0000'0000'0000'0001'0000'0000'0000'0001,
-      0b0000'0000'0000'1001'1100'0000'0000'0000, 0b1100'0001'1111'1111'1100'0000'0011'1100,
-      0b1100'0000'0111'1111'1100'0111'1111'1111, 0b0000'0000'0011'1111'1111'1100'1111'1111,
-      0b0000'0000'0001'1111'1111'1111'1100'0000, 0b0000'0000'0000'0000'1111'1100'0000'0000,
-      0b0011'1111'1111'1111'1110'1111'1110'0000, 0b0011'1111'1111'1111'0001'1111'1111'1111,
-      0b0000'0000'0000'0000'1100'0011'1111'1111, 0b1000'0111'1111'1111'1111'1111'1111'1111,
-      0b1011'1111'1111'1111'1011'0111'1011'1111, 0b1000'0000'0011'1111'1111'1111'1100'1111,
-      0b0000'0001'1111'1111'1000'0111'1111'1111, 0b1100'0000'0000'0000'1100'0000'0000'0000,
-      0b1100'0111'1111'1111'1100'0111'1111'1111, 0b1100'0000'0000'0000'0100'0011'1111'1111,
-      0b1100'1111'1111'1111'1100'0000'0011'1111, 0b1111'0000'0001'1111'1100'0011'1111'1111,
-      0b1110'0000'0111'1111'1110'0111'1111'1111, 0b0000'0000'0000'0000'0110'0000'0011'1111,
+      0b1111'1111'1111'1111'0000'0000'1111'1111, 0b1111'1111'1110'0000'0000'0011'1111'0000,
+      0b1111'1111'1111'1111'1111'0111'1111'1111, 0b1111'1100'1111'1111'1111'1101'1111'1111,
+      0b1111'1111'1001'1111'1111'1111'1111'1111, 0b1111'1111'1111'1111'1111'1111'1011'1111,
+      0b1111'1111'1000'0011'1111'1111'1010'0111, 0b1111'1110'1111'1111'1000'0000'0111'1111,
+      0b0010'1111'1110'1111'1111'1111'1001'1001, 0b1111'1111'1111'1111'1111'1111'1001'1110,
+      0b1111'1111'1111'1001'1000'0111'1110'1110, 0b0000'0000'0111'1111'1111'1111'1100'0000,
+      0b0111'1111'1111'1101'1101'1111'1111'0111, 0b1110'1110'1111'1100'1111'1011'0111'1111,
+      0b1111'1111'0011'1100'0000'0000'0000'0100, 0b0111'1111'1011'1011'1111'1000'0000'1111,
+      0b1111'1111'1111'0011'1111'1111'1110'0110, 0b1101'1100'0111'1110'1100'0000'0011'1111,
+      0b1111'1100'0111'0001'1000'1101'0110'0011, 0b0000'0100'1111'0111'0001'1100'0011'1111,
+      0b0111'1111'1111'1111'1111'1100'0000'0010, 0b1111'1111'1101'1101'1111'1111'1111'0000,
+      0b1110'1111'1001'1111'1111'1111'1110'1111, 0b1110'0111'1001'0011'1011'0000'0001'1110,
+      0b1111'1111'0111'1111'1100'0000'0111'1111, 0b1000'0000'1111'0111'0111'1100'1111'1011,
+      0b0011'1011'1111'1111'0011'1101'1000'0001, 0b1100'0011'1111'0111'0111'1100'0000'0000,
+      0b1111'1111'1111'1111'1011'1011'1111'1111, 0b1111'1111'1011'1111'1111'1111'1111'0001,
+      0b1111'0101'1111'1000'0100'0111'1111'0010, 0b0000'0001'1100'1111'1111'1100'0000'1111,
+      0b1111'1111'1111'1111'1111'1111'1111'0000, 0b1111'1111'1111'1111'1011'1110'1011'0111,
+      0b0111'1111'1100'0001'1111'1111'1111'0111, 0b0111'1111'1100'1111'0101'1111'1100'1111,
+      0b1100'1111'0111'1111'1111'1111'1100'1111, 0b1111'0111'1111'1111'1111'0011'1101'1111,
+      0b1111'1111'1111'0011'1101'1111'1111'1111, 0b1111'1110'0000'0000'1111'1111'1111'1111,
+      0b1111'1110'0000'0000'0001'1011'1011'1111, 0b1111'1110'0000'0111'1111'1110'0000'0111,
+      0b1110'0010'0001'1111'1111'1110'0001'1111, 0b1111'1001'1111'1111'1111'1111'1111'1111,
+      0b1111'1000'0111'1111'1111'1000'0000'0000, 0b1000'1111'1111'1110'0000'0111'1111'1111,
+      0b1100'1111'1111'1111'1111'1111'1111'1111, 0b1111'1100'0000'0011'1111'1111'1111'1111,
+      0b0000'0011'1110'0011'1111'1111'1111'1111, 0b0000'0101'1111'1111'1111'1110'0000'0000,
+      0b1111'0111'1111'0111'1111'1111'1111'1001, 0b1111'1111'1110'0000'0000'0111'1111'0111,
+      0b0011'1111'1111'1111'1100'0000'0001'1111, 0b0111'1111'1111'1000'0000'0111'1111'1110,
+      0b0000'0001'1111'1111'1111'1111'1110'0000, 0b0011'1111'1111'1011'1111'1111'1111'0000,
+      0b1100'1111'1111'1100'1111'1111'1111'1100, 0b1111'1100'0000'0000'0000'0000'0000'0011,
+      0b1111'1110'0000'0000'1111'1100'1111'1100, 0b1111'1001'1111'1111'1111'1110'1111'1110,
+      0b1111'1111'1111'1110'0000'0000'0001'1111, 0b1111'1011'1111'1111'1111'1111'1110'0001,
+      0b1111'1111'1111'1101'1011'1111'1111'1111, 0b1111'1111'1111'0000'1111'1111'1111'1100,
+      0b0000'0001'1111'1111'0001'1111'1111'1111, 0b0000'0001'1111'1111'1111'1110'0000'0000,
+      0b1111'1110'0001'1111'1111'1111'1111'1100, 0b1111'1111'1111'0110'0000'0000'0111'1111,
+      0b1111'1010'0111'1110'0011'0111'1111'0111, 0b0000'0100'1000'1101'1111'1111'1111'1111,
+      0b1111'1000'0000'0000'0000'0111'1111'1100, 0b1111'1111'1100'0001'1011'1111'1111'1111,
+      0b1111'1111'1110'0011'1111'1111'1111'1111, 0b1111'1111'1111'0000'0111'1111'1111'1111,
+      0b1111'0000'0110'1111'0000'1111'1111'1111, 0b0111'1111'1111'1111'1111'1110'1110'1111,
+      0b1111'1111'0000'0001'1111'1111'0000'1110, 0b0111'1111'1111'1000'0111'1111'0000'0001,
+      0b0000'0011'1111'1111'1111'1111'0000'0000, 0b0000'0000'0001'1111'1100'0000'0001'1110,
+      0b1000'0000'1111'1111'1111'1111'1110'0000, 0b0000'0001'1111'1111'1000'0000'0111'1111,
+      0b1101'1111'1111'1000'0000'0000'0000'0110, 0b0000'0000'0011'1000'0000'0000'0001'1001,
+      0b0000'0000'0000'1110'0000'0000'0000'0000, 0b1111'1111'0000'0001'1111'1111'1111'1110,
+      0b1111'1111'1011'1101'0111'1111'0000'0011, 0b1111'1111'1000'0011'1111'1111'1011'1111,
+      0b1111'0110'1111'1110'1111'1111'1000'0001, 0b1000'0010'0000'0100'1110'0110'0111'1101,
+      0b1000'0000'0000'1111'1000'1111'1110'0111, 0b0111'1111'1111'1111'1010'0101'1111'1111,
+      0b0000'0000'0110'1111'1111'1101'1110'1001, 0b0000'0001'1111'0000'0000'0000'0000'0000,
+      0b1111'1111'1111'0000'0011'1111'1111'0000, 0b1001'0011'1111'1000'0000'0000'0111'1111,
+      0b1111'1111'1111'1111'1111'1011'0111'1111, 0b1111'1111'1100'0000'0001'1111'1100'1101,
+      0b1100'0000'1111'1111'1100'0000'0000'0000, 0b1100'0000'0001'1111'1111'1111'1011'1111,
+      0b1110'1101'0001'1111'1111'1111'1111'1111, 0b0000'0000'0011'1111'0110'1111'1111'1111,
+      0b1111'1111'1100'0000'0000'0000'0100'0000, 0b1111'1111'1110'0000'0000'0000'1111'1111,
+      0b1111'1111'1110'0000'0000'0011'1110'1111, 0b0111'1111'1110'0000'0000'0111'1110'0111,
+      0b1111'1100'0001'1111'1111'1111'1111'1111, 0b0000'0011'1111'1111'1111'1110'0000'0011,
+      0b1111'0111'1000'0000'0000'0000'0110'0000, 0b0000'0010'0000'0000'0000'0011'1011'0111,
+      0b0011'1100'0000'0000'1001'1100'0000'0000, 0b1111'1000'0011'1111'1111'1111'1100'0000,
+      0b1111'1001'1111'1111'1000'0000'1111'1111, 0b1111'1111'1100'0000'0000'0000'0111'1111,
+      0b0000'0111'1110'0000'0000'0000'0001'1111, 0b1111'1111'0111'1111'0000'0000'0000'0000,
+      0b1111'1000'1111'1111'1111'1001'1111'1111, 0b1000'0000'0000'0000'0110'0001'1111'1111,
+      0b1100'0011'1111'1111'1111'1111'1111'1111, 0b1001'1111'1111'1111'1101'1011'1101'1111,
+      0b1111'1111'0000'0000'0111'1111'1111'1111, 0b0000'0000'1100'0011'1111'1111'0000'1111,
+      0b0000'0000'1111'1111'1111'1110'0000'0000, 0b1111'1111'0000'0000'0000'0011'0000'0000,
+      0b0000'0010'0001'1111'1111'1111'0001'1111, 0b1111'1110'0111'1111'1111'1110'0000'0000,
+      0b1110'0111'1111'1111'1111'0000'0001'1111, 0b0000'0000'0011'1111'1110'0000'0111'1111,
+      0b0000'0000'0000'1111'1111'1111'1111'0000,
       // done
     };
 

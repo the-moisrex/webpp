@@ -554,21 +554,32 @@ export class TablePairs {
         }
 
         if (!isSingleCommonValue) {
-            let secIndex = 0;
+            if (verbose) {
+                for (const {start, length, commonValue: curCommonValue} of commons) {
+                    console.log('Common Value Range:', start, length, curCommonValue);
+                }
+            }
+            // let secIndex = 0;
             const mapper = this.#props.indices?.map ?? ((val) => val);
+            let lastEnding = 0n;
             for (let i = 0; i !== breakpointsTable.length; ++i) {
-                let commonValue = commons[0].commonValue;
+                let commonValue = 0n;
+                if (breakpointsTable[i].ending >= lastEnding) {
+                    lastEnding =  breakpointsTable[i].ending;
+                } else {
+                    breakpointsTable[i] = breakpointsTable[i - 1];
+                }
                 for (const {start, commonValue: curCommonValue} of commons) {
-                    const curIndex = start >> breakpointsTableShift;
-                    // console.log(start, curIndex, commonValue);
-                    if (curIndex >= secIndex) {
+                    // const curIndex = start >> breakpointsTableShift;
+                    // const curEIndex = (start + length - 1) >> breakpointsTableShift;
+                    if (start >= lastEnding) {
+                        commonValue = curCommonValue;
                         break;
                     }
-                    commonValue = curCommonValue;
                 }
                 breakpointsTable[i].commonValue = mapper([commonValue])[0];
                 // console.log(breakpointsTable[i], commonValue)
-                secIndex += breakpointsTableShift - 1;
+                // secIndex += breakpointsTableShift - 1;
             }
         }
 

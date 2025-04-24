@@ -49,9 +49,9 @@ namespace webpp::unicode::idna {
 
         auto const [starting, ending, offset, common_value] = details::idna_breakpoints[section_index];
         details::idna_index const index =
-          chunk < starting || chunk >= ending
-            ? common_value
-            : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
+          chunk >= ending    ? common_value
+          : chunk < starting ? details::idna_breakpoints[section_index - 1].common_value
+                             : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
 
         auto const pos = index.get_position(code_point);
         if (index.use_second_table) {

@@ -87,7 +87,7 @@ class IDNAMappings {
                 sizeof: uint16,
 
                 // split the indices table
-                splitInto: 7,
+                splitInto: 3,
                 splittingSingleValue: false,
                 // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
                 description: `IDNA Mappings`,
