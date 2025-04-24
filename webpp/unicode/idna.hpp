@@ -39,7 +39,7 @@ namespace webpp::unicode::idna {
         using details::disallowed;
         using details::not_mapped;
 
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-avoid-nested-conditional-operator)
         auto const chunk         = code_point >> details::idna_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::idna_breakpoint_shift);
 
@@ -71,7 +71,7 @@ namespace webpp::unicode::idna {
         }
 
         return details::idna_mapping_blocks[pos];
-        // NOLINTEND(*-pro-bounds-constant-array-index)
+        // NOLINTEND(*-pro-bounds-constant-array-index, *-avoid-nested-conditional-operator)
     }
 
     /**

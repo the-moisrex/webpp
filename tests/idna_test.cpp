@@ -730,6 +730,21 @@ TEST(BasicIDNATests, GeneralCategoryTest) {
     EXPECT_EQ(general_category_of(U'\x0313'), general_category::Mn);  // COMBINING COMMA ABOVE
 }
 
+TEST(BasicIDNATests, IDNALabelSeparator) {
+    using webpp::unicode::idna::mapped;
+    // https://www.unicode.org/reports/tr46/#Notation
+    // Label Separators are:
+    //   - U+002E ( . ) FULL STOP
+    //   - U+FF0E ( ． ) FULLWIDTH FULL STOP
+    //   - U+3002 ( 。 ) IDEOGRAPHIC FULL STOP
+    //   - U+FF61 ( ｡ ) HALFWIDTH IDEOGRAPHIC FULL STOP
+
+    EXPECT_EQ(mapped(U'\x002E'), u8"\x002E");
+    EXPECT_EQ(mapped(U'\xFF0E'), u8"\x002E");
+    EXPECT_EQ(mapped(U'\x3002'), u8"\x002E");
+    EXPECT_EQ(mapped(U'\xFF61'), u8"\x002E");
+}
+
 TEST(BasicIDNATests, CheckValidiyCriteria) {
     using webpp::stl::array;
     using webpp::stl::string;
