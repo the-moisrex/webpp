@@ -1,13 +1,12 @@
 #ifndef WEBPP_URL_PUNY_CODES_HPP
 #define WEBPP_URL_PUNY_CODES_HPP
 
+#include "../std/functional.hpp"
 #include "../std/iterator.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "./unicode.hpp"
-#include "std/functional.hpp"
 
-#include <boost/beast/http/field.hpp>
 #include <cstdint>
 #include <cstring>
 
@@ -115,9 +114,10 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using istl::iter_append;
         using char_type = typename stl::iterator_traits<IterT>::value_type;
+        using size_type = istl::size_type_of_t<OIterT>;
 
         // out can be an iterator
-        auto const src_length = send - spos;
+        auto const src_length = static_cast<size_type>(send - spos);
         if constexpr (istl::String<OIterT>) {
             out.reserve(src_length + out.size());
         }
@@ -128,14 +128,16 @@ namespace webpp::unicode::idna {
         stl::size_t   handled_len = 0; // it's the number of code points that have been handled
 
         // ASCII characters are put in order they appear:
-        for (auto pos = spos; pos != send; ++pos) {
+        for (auto pos = spos; pos != send;) {
             if (is_ascii(*pos)) {
-                ++handled_len;
                 iter_append(out, *pos);
+                ++handled_len;
+                ++pos;
             } else {
                 auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
-                // Technically we don't have to check for invalid code points, but only for
-                // negative code points.
+                if (code_point == 0) {
+                    break;
+                }
                 if (!is_code_point_valid(code_point)) [[unlikely]] {
                     return bad_input;
                 }
