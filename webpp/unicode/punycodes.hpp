@@ -99,7 +99,7 @@ namespace webpp::unicode::idna {
      * Converts a UTF-8 input into punycode.
      *
      * We don't need to use unchecked::append(...) to append the code in the implementation,
-     * since anything that we append, must be in ASCII range.
+     * since anything that we append must be in the ASCII range.
      *
      * https://www.rfc-editor.org/info/rfc3492
      * https://www.rfc-editor.org/info/rfc5891
@@ -221,7 +221,12 @@ namespace webpp::unicode::idna {
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
         using enum checked::error_handling;
-        using out_char_type = istl::appendable_value_type_t<OIterT>;
+        using istl::iter_append;
+
+        auto const src_length = static_cast<stl::size_t>(send - spos);
+        if constexpr (istl::String<OIterT>) {
+            out.reserve(src_length + out.size());
+        }
 
         punycode_uint out_len{0};
         punycode_uint n_val = Options.initial_n;
@@ -231,43 +236,52 @@ namespace webpp::unicode::idna {
         // Consume all code points before the last delimiter (if there is one)
         // and copy them to output, fail on any non-basic code point
         auto last_delim = send;
-        for (auto pos = send; pos != spos; --pos) {
-            if (*pos == Options.delimiter) {
-                last_delim = pos;
-                break;
-            }
+        for (; last_delim != spos && *last_delim != Options.delimiter; --last_delim) {
+            // finding the last '-' character
         }
         auto pos = spos;
-        for (; pos != last_delim; ++pos) {
-            if (is_ascii(*pos)) {
-                ++out_len;
-                iter_append(out, *pos);
-            } else [[unlikely]] {
-                return bad_input;
+        if (last_delim != spos) {
+            for (;; ++pos) {
+                if (pos == last_delim) {
+                    ++pos;
+                    break;
+                }
+                if (is_ascii(*pos)) {
+                    ++out_len;
+                    iter_append(out, *pos);
+                } else [[unlikely]] {
+                    return bad_input;
+                }
             }
+        }
+
+        if constexpr (!istl::String<OIterT>) {
+            stl::advance(out, -static_cast<stl::int32_t>(out_len));
         }
 
         // Main decoding loop: Start just after the last delimiter if any
         // basic code points were copied; start at the beginning otherwise.
-        for (; pos != send; ++pos) {
+        while (pos != send) {
             punycode_uint const oldi  = i_val;
             punycode_uint       w_val = 1;
             punycode_uint       k_val = Options.base;
 
-            // Decode a generalized variable-length integer into delta,
-            // which gets added to "i".  The overflow checking is easier
-            // if we increase i as we go, then subtract off its starting
-            // value at the end to obtain delta.
-            for (; pos != send; k_val += Options.base) {
-                auto const          code_point = checked::next_code_point<return_unchanged>(pos, send);
-                punycode_uint const digit      = decode_digit(code_point);
-                if (code_point == 0 || digit >= Options.base) [[unlikely]] {
+            // Decode a generalized variable-length integer into 'delta', which gets added to "i".
+            // The overflow checking is easier if we increase i as we go, then subtract off its starting
+            // value at the end to obtain 'delta'.
+            for (;; k_val += Options.base) {
+                if (pos >= send) [[unlikely]] {
+                    return bad_input;
+                }
+                // no need for Unicode Code Point handling, a valid punycode is all ascii.
+                punycode_uint const digit = decode_digit<Options>(*pos++);
+                if (digit >= Options.base) [[unlikely]] {
                     return bad_input;
                 }
                 if (digit > (max_utf32<punycode_uint> - i_val) / w_val) [[unlikely]] {
                     return overflow;
                 }
-                i_val = i_val + digit * w_val;
+                i_val += digit * w_val;
                 punycode_uint const t_val =
                   k_val <= bias ? Options.tmin
                   : k_val >= bias + Options.tmax // NOLINT(*-avoid-nested-conditional-operator)
@@ -285,7 +299,7 @@ namespace webpp::unicode::idna {
 
             // "i" was supposed to wrap around from out+1 to 0,
             // incrementing n each time, so we'll fix that now:
-            if (i_val / (out_len + 1) > max_utf32<punycode_uint> - n_val) {
+            if (i_val / (out_len + 1) > max_utf32<punycode_uint> - n_val) [[unlikely]] {
                 return overflow;
             }
             n_val += i_val / (out_len + 1);
@@ -293,13 +307,18 @@ namespace webpp::unicode::idna {
             if (n_val < 0x80) [[unlikely]] { // fail if it's ascii
                 return bad_input;
             }
-            if constexpr (UTF32<out_char_type> && istl::String<OIterT>) {
-                out.insert(out.begin() + i_val, n_val);
+            if constexpr (istl::String<OIterT>) {
+                checked::insert(out, i_val, n_val);
             } else {
-                // todo
+                // todo: try to optimize this
+                checked::insert_at(out, stl::next(out, src_length), i_val, n_val);
             }
             ++out_len;
             ++i_val;
+        }
+        if constexpr (!istl::String<OIterT>) {
+            // stl::advance(out, -static_cast<int32_t>(ascii_len));
+            unchecked::next_char(out, out_len);
         }
         return success;
     }
@@ -309,6 +328,13 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr punycode_status to_punycode(stl::basic_string_view<CharT> src, Iter &out)
       noexcept(istl::NothrowAppendable<Iter>) {
         return punycode_encode<punycode_options{}>(src.begin(), src.end(), out);
+    }
+
+    /// Convert to unicode (from punycode)
+    template <istl::CharType CharT = char32_t, istl::Appendable Iter = std::u8string::iterator>
+    [[nodiscard]] static constexpr punycode_status to_unicode(stl::basic_string_view<CharT> src, Iter &out)
+      noexcept(istl::NothrowAppendable<Iter>) {
+        return punycode_decode<punycode_options{}>(src.begin(), src.end(), out);
     }
 
     /// Same as punycode_to, but it returns the resulting string; this function ignores the status of the
@@ -321,6 +347,19 @@ namespace webpp::unicode::idna {
         using char_type     = istl::char_type_of_t<decltype(src_view)>;
         OutStrT out{stl::forward<Args>(args)...};
         static_cast<void>(to_punycode<char_type, OutStrT>(src_view, out));
+        return out;
+    }
+
+    /// Same as to_unicode, but it returns the resulting string; this function ignores the status of the
+    /// conversions, so you may not use this function for serious work.
+    template <istl::String            OutStrT = std::string,
+              istl::StringViewifiable StrVT   = stl::string_view,
+              typename... Args>
+    [[nodiscard]] static constexpr OutStrT unicode_of(StrVT &&src, Args &&...args) {
+        auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
+        using char_type     = istl::char_type_of_t<decltype(src_view)>;
+        OutStrT out{stl::forward<Args>(args)...};
+        static_cast<void>(to_unicode<char_type, OutStrT>(src_view, out));
         return out;
     }
 

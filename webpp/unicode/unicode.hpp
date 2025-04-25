@@ -93,7 +93,7 @@ namespace webpp::unicode {
       0,           // Cannot happen
     };
 
-    /// utf16_leading_code_units[N] gives you the start of code unit that is required to
+    /// utf16_leading_code_units[N] gives you the start of Code Unit that is required to
     /// be followed by N other code units.
     template <UTF16 T = char16_t>
     static constexpr stl::array<T, 3UL> utf16_leading_code_units{
@@ -267,7 +267,7 @@ namespace webpp::unicode {
             }
             return 3U;
         }
-        // Max code point for Unicode is 0x0010FFFF.
+        // Max Code Point for Unicode is 0x0010FFFF.
         if (code_point <= max_legal_utf32<CharT>) {
             return 4U;
         }
@@ -327,14 +327,14 @@ namespace webpp::unicode {
 
     /// Count the required length to store this code unit
     /// Attention: this is a code unit, not a code point
-    template <typename T, stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    template <typename T, stl::integral SizeT = stl::size_t, UTF CharT = char32_t>
     [[nodiscard]] static constexpr SizeT utf_length_from(CharT const code_unit) noexcept {
         if constexpr (UTF32<T>) {
             return 1;
         } else if constexpr (UTF16<T>) {
             if constexpr (UTF32<CharT>) {
                 return utf16_length_from_utf32<SizeT>(code_unit);
-            } else if constexpr (UTF8<T>) {
+            } else if constexpr (UTF8<CharT>) {
                 return utf16_length_from_utf8<SizeT>(code_unit);
             } else {
                 return required_length_of<SizeT>(code_unit); // both are UTF-16
@@ -682,7 +682,8 @@ namespace webpp::unicode {
 
         /**
          * Go to the beginning of the previous character.
-         * This function does not check if previous character exists or not or even if it's a valid character.
+         * This function does not check if a previous character exists or not or even
+         * if it's a valid character.
          */
         template <stl::bidirectional_iterator Iter = char8_t const*>
         static constexpr void prev_char(Iter& pos) noexcept {
@@ -784,7 +785,7 @@ namespace webpp::unicode {
         }
 
         /**
-         * Append a code point to a string
+         * Append a Code Point to a string
          * "out" can be an iterator/pointer or a string
          */
         template <istl::Appendable StrT,
@@ -963,8 +964,7 @@ namespace webpp::unicode {
             auto const cu1        = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
             auto       code_point = cu1;
 
-            // we're in a constexpr land, we can't use goto; damn all of you developers who think goto
-            // is not good enough for you; well, guess what, you're not smart enough to use goto.
+            // We're in a constexpr land, we can't use goto.
             for (;;) {
                 // double casting to make sure negative values can't come out of it
                 if constexpr (UTF32<char_type>) {
@@ -1079,8 +1079,8 @@ namespace webpp::unicode {
                 return replacement_char<code_point_type>;
             } else if constexpr (ErrorHandling == return_negated_char) {
                 // static_assert(stl::is_signed_v<code_point_type>,
-                //               "The code point type should support negative values if you want us to return
-                //               " "negative values as errors.");
+                //             "The code point type should support negative values if you want us to return"
+                //             "negative values as errors.");
                 return -code_point;
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<code_point_type>(0);
@@ -1288,8 +1288,8 @@ namespace webpp::unicode {
                 return replacement_char<code_point_type>;
             } else if constexpr (ErrorHandling == return_negated_char) {
                 // static_assert(stl::is_signed_v<code_point_type>,
-                //               "The code point type should support negative values if you want us to return
-                //               " "negative values as errors.");
+                //             "The code point type should support negative values if you want us to return"
+                //             "negative values as errors.");
                 return -code_point;
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<code_point_type>(0);
@@ -1333,6 +1333,56 @@ namespace webpp::unicode {
             }
         }
 
+        template <stl::random_access_iterator OIterT = stl::u8string::iterator>
+        static constexpr void advance(OIterT& out, OIterT const oend, stl::size_t index) noexcept {
+            assert(static_cast<stl::size_t>(oend - out) >= index);
+            if constexpr (UTF32<typename std::iterator_traits<OIterT>::value_type>) {
+                stl::advance(out, index);
+            } else {
+                for (; index != 0; --index) {
+                    static_cast<void>(next_code_point(out, oend));
+                }
+            }
+        }
+
+        template <istl::String StrT = stl::u8string, UTF CharT = char32_t>
+        static constexpr void insert(StrT& out, stl::size_t index, CharT val) {
+            using out_char_type = istl::char_type_of_t<StrT>;
+            if constexpr (UTF32<out_char_type>) {
+                out.insert(out.begin() + index, static_cast<out_char_type>(val));
+            } else {
+                auto       pos  = out.begin();
+                auto const pend = out.end();
+                assert(out.size() >= index);
+                advance(pos, pend, index);
+                if constexpr (sizeof(out_char_type) == sizeof(CharT)) {
+                    out.insert(pos, static_cast<out_char_type>(val));
+                } else {
+                    auto const arr = unchecked::to<stl::array<out_char_type, 4U>>(val);
+                    out.insert(pos, arr.begin(), arr.begin() + utf_length_from<out_char_type>(val));
+                }
+            }
+        }
+
+        /// Attention: this function will remove the last Code Point
+        template <stl::random_access_iterator OIterT = stl::u8string::iterator, UTF CharT = char32_t>
+        static constexpr void insert(OIterT& out, OIterT const oend, stl::size_t index, CharT val) noexcept {
+            using out_char_type = istl::char_type_of_t<OIterT>;
+            advance(out, oend, index);
+            if constexpr (UTF32<CharT> && UTF32<out_char_type>) {
+                stl::copy_n(out, oend - out - 1, stl::next(out));
+            } else {
+                auto const len = utf_length_from<out_char_type>(val);
+                stl::copy_n(out, oend - out - len, stl::next(out, len));
+            }
+            unchecked::append(out, val);
+        }
+
+        template <stl::random_access_iterator OIterT = stl::u8string::iterator, UTF CharT = char32_t>
+        static constexpr void
+        insert_at(OIterT out, OIterT const oend, stl::size_t index, CharT val) noexcept {
+            insert(out, oend, index, val);
+        }
 
     } // namespace checked
 
