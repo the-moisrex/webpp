@@ -186,12 +186,13 @@ namespace webpp::unicode::idna {
         punycode_overflow  = stl::to_underlying(punycode_status::overflow),
 
         // More errors:
-        empty_domain_label = 0b1U << 3U,
-        too_long_label     = 0b1U << 4U, // the subdomain is more than 63
-        too_long_domain    = 0b1U << 5U, // the whole domain is more than 255
+        empty_domain_label       = 0b1U << 3U,
+        too_long_label           = 0b1U << 4U, // the subdomain is more than 63
+        too_long_domain          = 0b1U << 5U, // the whole domain is more than 255
+        failed_validity_criteria = 0b1U << 6U, // the label failed the validity criteria requirements.
     };
 
-    struct idna_options {                // NOLINT(*-struct-pack-align)
+    struct idna_options {                      // NOLINT(*-struct-pack-align)
         bool CheckHyphens            = false;
         bool CheckBidi               = true;
         bool CheckJoiners            = true;
@@ -462,6 +463,7 @@ namespace webpp::unicode::idna {
 
         // 1.2. Normalize
         {
+            // todo: output to a temporary storage maybe?
             auto       pos  = istl::appendable_next(out, obeg);
             auto const oend = istl::appendable_end(out);
             normalize<normalization_form::NFC>(pos, oend, out);
@@ -507,26 +509,44 @@ namespace webpp::unicode::idna {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
                     status |= to_underlying(empty_domain_label);
+                    break;
                 case ace_flag:
                     if (label_length >= 4 && lpos[0] == 'x' && lpos[1] == 'n' && lpos[2] == '-' &&
                         lpos[3] == '-')
                     {
-                        // found xn--
-                        // If the label contains any non-ASCII code point (i.e., a code point greater than
-                        // U+007F), record that there was an error, and continue with the next label.
+                        // Found xn--.
+                        // 1.4.1. If the label contains any non-ASCII code point (i.e., a code point greater
+                        // than U+007F), record that there was an error, and continue with the next label.
                         if ((flag & non_ascii_flag) != 0) [[unlikely]] {
                             status |= to_underlying(invalid_code_point);
                             continue;
                         }
 
-                        // Attempt to convert the rest of the label to Unicode according to Punycode
+                        // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
+                        // todo: output is not correct
+                        auto const pun_status = punycode_decode(lpos, spos, out);
+                        if (pun_status != punycode_status::success) [[unlikely]] {
+                            status |= to_underlying(pun_status);
+                        }
+
+                        // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
+                        // record that there was an error. todo
+
+                        // 1.4.4. If the label is empty, or if the label contains only ASCII code points,
+                        // record that there was an error.
                         // todo
                     }
                     [[fallthrough]];
                 [[likely]] default:
+                    // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
+                    // Criteria. If any of the validity criteria are not satisfied, record that there was
+                    // an error.
+                    if (!is_label_valid(lpos, spos)) [[unlikely]] {
+                        status |= to_underlying(failed_validity_criteria);
+                    }
                     break;
             }
 
@@ -541,13 +561,10 @@ namespace webpp::unicode::idna {
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     status |= to_underlying(p_status);
                 }
-
-                // If the label is empty, or if the label contains only ASCII code points, record that there
-                // was an error.
             }
 
 
-            // 6. Join the labels using U+002E FULL STOP as a separator, and return the result
+            // 6. Join the labels using U+002E FULL STOP as a separator and return the result
             if ((flag & dot_flag) == dot_flag && flag != dot_flag) { // every label except the last label
                 iter_append(out, '.');
             }
