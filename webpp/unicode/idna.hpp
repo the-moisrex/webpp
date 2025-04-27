@@ -37,10 +37,11 @@ namespace webpp::unicode::idna {
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
         using details::disallowed;
+        using details::idna_index;
         using details::not_mapped;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-avoid-nested-conditional-operator)
-        auto const chunk         = code_point >> details::idna_index::chunk_shift;
+        auto const chunk         = code_point >> idna_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::idna_breakpoint_shift);
 
         if (code_point < 0 || section_index >= details::idna_last_breakpoint) [[unlikely]] {
@@ -48,13 +49,14 @@ namespace webpp::unicode::idna {
         }
 
         auto const [starting, ending, offset, common_value] = details::idna_breakpoints[section_index];
-        details::idna_index const index =
+        stl::uint16_t const index =
           chunk >= ending    ? common_value
           : chunk < starting ? details::idna_breakpoints[section_index - 1].common_value
                              : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
 
-        auto const pos = index.get_position(code_point);
-        if (index.use_second_table) {
+        auto const remaining_pos = static_cast<std::uint16_t>(code_point & idna_index::chunk_mask);
+        auto const pos           = (index & idna_index::pos_mask) + remaining_pos;
+        if ((index & idna_index::use_second_table_mask) != 0) {
             // looking at the boolean-only table (which includes only VALID/DISALLOWED states)
 
             constexpr auto pack_size =

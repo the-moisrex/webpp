@@ -129,7 +129,11 @@ class IDNAMappings {
                     return res;
                 }
             },
-            genIndexAddenda: () => genSimpleTwoTableIndexAddenda("index", uint5),
+            genIndexAddenda: () => {
+                const ret = genSimpleTwoTableIndexAddenda("index", uint5);
+                ret.noStruct = true;
+                return ret;
+            },
         });
 
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);

@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 24 Apr 2025 15:44:18 GMT
+ *   This file's generation date:        Sun, 27 Apr 2025 21:03:58 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       365680
@@ -55,7 +55,7 @@ namespace webpp::unicode::idna::details {
      * Idna (Index Table)
      * IDNA Mapping Index table
      */
-    struct alignas(std::uint16_t) idna_index {
+    struct idna_index {
         /// The shifts required to extract the values out of a std::uint16_t; you can use masks as well:
         static constexpr std::uint8_t use_second_table_shift = 15U;
         static constexpr std::uint8_t pos_shift              = 0U;
@@ -64,53 +64,18 @@ namespace webpp::unicode::idna::details {
         static constexpr std::uint16_t use_second_table_mask = 0x8000U;
         static constexpr std::uint16_t pos_mask              = 0x7FFFU;
 
-        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
 
-        /// Which values table should we choose will be decided by this field.
-        bool use_second_table : 1 = false;
-
-        /// This is the position that should be looked for in the values table.
-        std::uint16_t pos     : 15 = 0;
-
-        // NOLINTEND(*-non-private-member-variables-in-classes)
-
-        /**
-         * [1bits = use_second_table] + [15bits = pos]
-         */
-        explicit(false) consteval idna_index(std::uint16_t const value) noexcept :
-          use_second_table{static_cast<bool>((value & use_second_table_mask) >> use_second_table_shift)},
-          pos{static_cast<std::uint16_t>(value)} {}
-
-        // NOLINTNEXTLINE(*-easily-swappable-parameters)
-        explicit consteval idna_index(bool const inp_use_second_table, std::uint16_t const inp_pos) noexcept :
-          use_second_table{inp_use_second_table}, pos{inp_pos} {}
-
-        [[nodiscard]] constexpr std::uint16_t value() const noexcept {
-            return static_cast<std::uint16_t>(
-              static_cast<std::uint16_t>(pos) |
-              (static_cast<std::uint16_t>(use_second_table) << use_second_table_shift));
-        }
 
         static constexpr std::uint16_t chunk_mask  = 0x1FU;
         static constexpr std::size_t   chunk_size  = 32U;
         static constexpr std::uint8_t  chunk_shift = 5U;
-
-        /**
-         * Get the final position of the second table.
-         * This does not apply the shift or get the value of the second table for you; this only applies that
-         * mask.
-         */
-        [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
-            auto const remaining_pos = static_cast<std::uint16_t>(request_position & chunk_mask);
-            return pos + remaining_pos;
-        }
     };
 
     struct idna_breakpoint_type {
         std::uint16_t starting;
         std::uint16_t ending;
         std::uint16_t offset;
-        idna_index    common_value; // if it's not in the specified range, this value should be used.
+        std::uint16_t common_value; // if it's not in the specified range, this value should be used.
     };
 
     /**
@@ -158,7 +123,7 @@ namespace webpp::unicode::idna::details {
 
     static constexpr std::uint16_t idna_last_breakpoint{0x8800U};
     static constexpr std::uint16_t idna_breakpoint_shift{10U};
-    static constexpr idna_index    idna_common_pos{32800U}; // this is the last common value position
+    static constexpr std::uint16_t idna_common_pos{32800U}; // this is the last common value position
 
 
     /**
@@ -174,7 +139,7 @@ namespace webpp::unicode::idna::details {
      *   - in bytes:      8414 B
      *   - in KibiBytes:  8.22 KiB
      */
-    static constexpr std::array<idna_index, 4207ULL> idna_mapping_ref{
+    static constexpr std::array<std::uint16_t, 4207ULL> idna_mapping_ref{
       iblt | 0x0U, iblt | 0x0U, 0x0U, iblt | 0x0U, iblt | 0x20U, 0x20U, 0x40U, iblt | 0x0U, 0x60U, 0x80U,
       0x9FU, 0xBFU, 0xDFU, 0xFFU, 0x11CU, 0x13CU, 0x15CU, 0x17CU, 0x19BU, iblt | 0x0U, iblt | 0x0U, 0x1ABU,
       0x1C4U, 0x1E4U, iblt | 0x0U, iblt | 0x0U, 0x204U, 0x214U, 0x234U, 0x254U, 0x265U, 0x285U, 0x2A5U,

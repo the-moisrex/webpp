@@ -178,13 +178,14 @@ export class Addendum {
  * A combination of specified addenda
  */
 export class Addenda {
-    name;
+    #name;
     description = null;
     addenda;
     min;
     max;
     mask;
     sizeof;
+    noStruct = false; // disable render
     #chunkSize = NaN;
     #chunkMask = NaN;
     #chunkShift = NaN;
@@ -274,6 +275,17 @@ export class Addenda {
             }
             lastAddendumPlacement = Number(addendum.placement);
         }
+    }
+
+    get name() {
+        if (this.noStruct) {
+            return this.STLTypeString;
+        }
+        return this.#name;
+    }
+
+    set name(val) {
+        this.#name = val;
     }
 
     get size() {
@@ -486,14 +498,14 @@ export class Addenda {
     /**
      * ${this.desc}
      */
-    struct alignas(${this.STLTypeString}) ${this.name} {
+    struct ${this.noStruct ? '' : `alignas(${this.STLTypeString})`} ${this.noStruct ? this.#name : this.name} {
 
         /// The shifts required to extract the values out of a ${this.STLTypeString}; you can use masks as well:
         ${addenda.map((addendum) => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
 
         /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
         ${addenda.map((addendum) => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
-
+        ${this.noStruct ? '' : `
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         ${addenda.map((addendum) => addendum.render(this)).join("\n        ")}
         // NOLINTEND(*-non-private-member-variables-in-classes)
@@ -515,6 +527,7 @@ ${addenda.length <= 1 ? "" : `
             .map((addendum) => addendum.renderShift(this.STLTypeString, "_shift", "_mask"),)
             .join(" | ")});
         }
+        `}
 
 ${this.#renderFunctions.map((func) => func()).join("\n\n")}
 
@@ -1075,7 +1088,7 @@ export const genSimpleTwoTableIndexAddenda = (name = "index", type = uint8) => {
         },
     });
     addenda.modifierFunctions = {};
-    addenda.renderFunctions = [staticFields, getSimplePositionFunction];
+    addenda.renderFunctions = [staticFields];
     return addenda;
 };
 
