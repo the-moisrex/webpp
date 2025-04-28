@@ -19,6 +19,8 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
+        using webpp::unicode::normalization_form;
+        using webpp::unicode::normalize;
         using webpp::unicode::toNFC;
 
         auto const        length = data.size();
@@ -55,11 +57,24 @@ namespace webpp::tests {
 
 
         std::string resStringStyle;
-        webpp::unicode::normalize<webpp::unicode::normalization_form::NFC>(
-          str.begin(),
-          str.end(),
-          resStringStyle);
+        normalize<normalization_form::NFC>(str.begin(), str.end(), resStringStyle);
         ASSERT_EQ(resStringStyle, res) << to_hex(str);
+
+        // test inplace
+        normalize<normalization_form::NFC>(resStringStyle);
+        ASSERT_EQ(resStringStyle, res) << to_hex(str);
+
+        // test inplace with pointers
+        {
+            resStringStyle.resize(resStringStyle.size() * 19); // UB if we don't
+            auto outptr = resStringStyle.begin();
+            auto endptr =
+              stl::next(resStringStyle.begin(), static_cast<std::string::difference_type>(res.size()));
+            normalize<normalization_form::NFC>(outptr, endptr, outptr);
+            ASSERT_EQ(outptr - resStringStyle.begin(), res.size()) << to_hex(str);
+            resStringStyle.resize(static_cast<stl::size_t>(outptr - resStringStyle.begin()));
+            ASSERT_EQ(resStringStyle, res) << to_hex(str) << "\n" << str;
+        }
 
 
         std::string resPtrStyle;
@@ -67,7 +82,7 @@ namespace webpp::tests {
           [&]<typename T>(T*                                 cur_ptr,
                           [[maybe_unused]] stl::size_t const n_length /* = max_length */) constexpr noexcept {
               auto const beg = cur_ptr;
-              webpp::unicode::normalize<webpp::unicode::normalization_form::NFC>(
+              normalize<normalization_form::NFC>(
                 str.data(),
                 str.data() + str.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
                 cur_ptr);

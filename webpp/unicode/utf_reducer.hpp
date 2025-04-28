@@ -59,8 +59,8 @@ namespace webpp::unicode {
                 this->clear();
             } else {
                 assert(other.beginp < other.endp);
-                beginp = stl::exchange(other.beginp, nullptr);
-                endp   = stl::exchange(other.endp, nullptr);
+                beginp = stl::exchange(other.beginp, istl::nullptr_of<decltype(other.beginp)>());
+                endp   = stl::exchange(other.endp, istl::nullptr_of<decltype(other.endp)>());
                 assert(beginp < endp);
             }
         }
@@ -194,7 +194,7 @@ namespace webpp::unicode {
             if (diff < 0) {
                 for (auto& cur : iters) {
                     if (cur >= new_beg && cur < old_beg) {
-                        cur += length;
+                        stl::advance(cur, length);
                     } else if (cur >= old_beg && cur < old_end) {
                         cur = old_end;
                         while (!is_code_unit_start(*--cur)) {
@@ -205,7 +205,7 @@ namespace webpp::unicode {
             } else if (diff > 0) {
                 for (auto& cur : iters) {
                     if (cur >= old_end && cur < new_end) {
-                        cur -= length;
+                        stl::advance(cur, -length);
                     } else if (cur >= old_beg && cur < old_end) {
                         cur = old_beg;
                         while (!is_code_unit_start(*--cur)) {

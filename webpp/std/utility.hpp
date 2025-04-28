@@ -3,6 +3,7 @@
 #ifndef WEBPP_UTILITY_HPP
 #define WEBPP_UTILITY_HPP
 
+#include "../common/meta.hpp"
 #include "std.hpp"
 
 #include <utility>
@@ -108,6 +109,18 @@ namespace webpp::istl {
         static_assert(std::is_invocable_v<Func, make_index_range<Start, End>>,
                       "Function must have an specific signature.");
         return stl::forward<Func>(func)(make_index_range<Start, End>());
+    }
+
+    template <typename T>
+    [[nodiscard]] static consteval auto nullptr_of() noexcept {
+        using type = stl::remove_cvref_t<T>;
+        if constexpr (stl::is_pointer_v<type>) {
+            return nullptr;
+        } else if constexpr (stl::input_or_output_iterator<type>) {
+            return type{};
+        } else {
+            static_assert_false(T, "We don't know the nullptr of the specified type.");
+        }
     }
 
 } // namespace webpp::istl

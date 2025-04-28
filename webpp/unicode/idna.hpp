@@ -54,8 +54,8 @@ namespace webpp::unicode::idna {
           : chunk < starting ? details::idna_breakpoints[section_index - 1].common_value
                              : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
 
-        auto const remaining_pos = static_cast<std::uint16_t>(code_point & idna_index::chunk_mask);
-        auto const pos           = (index & idna_index::pos_mask) + remaining_pos;
+        auto const remaining_pos = static_cast<stl::uint16_t>(code_point & idna_index::chunk_mask);
+        auto const pos           = static_cast<stl::uint16_t>((index & idna_index::pos_mask) + remaining_pos);
         if ((index & idna_index::use_second_table_mask) != 0) {
             // looking at the boolean-only table (which includes only VALID/DISALLOWED states)
 
@@ -101,7 +101,7 @@ namespace webpp::unicode::idna {
                 unchecked::append(out, code_point);
                 return true;
 
-            default: { // mapped, or ignored
+            default: { // mapped or ignored
                 auto ptr = idna_mappings.begin() + pos;
                 if constexpr (UTF8String<OutStrT>) {
                     for (; *ptr != u8'\0'; ++ptr) {
@@ -160,8 +160,8 @@ namespace webpp::unicode::idna {
                 break;
             }
 
-            // disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step below
-            // checks for disallowed characters, after mapping and normalization.
+            // Disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step below
+            //             checks for disallowed characters, after mapping and normalization.
             is_valid &= map(code_point, out);
         }
         return is_valid;
@@ -463,12 +463,15 @@ namespace webpp::unicode::idna {
             status |= to_underlying(invalid_code_point);
         }
 
-        // 1.2. Normalize
+        // 1.2. Normalize inplace
         {
-            // todo: output to a temporary storage maybe?
-            auto       pos  = istl::appendable_next(out, obeg);
-            auto const oend = istl::appendable_end(out);
-            normalize<normalization_form::NFC>(pos, oend, out);
+            if constexpr (istl::String<OIter>) {
+                normalize<normalization_form::NFC>(out);
+            } else {
+                auto       pos  = istl::appendable_next(out, obeg);
+                auto const oend = istl::appendable_end(out);
+                normalize<normalization_form::NFC>(pos, oend, out);
+            }
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -500,8 +503,8 @@ namespace webpp::unicode::idna {
               interesting_characters,
               spos,
               send,
-              [](flag_type const res) constexpr noexcept -> bool {
-                  return res >= dot_flag; // we found a dot
+              [](flag_type const cur_flags) constexpr noexcept -> bool {
+                  return cur_flags >= dot_flag; // we found a dot
               });
 
             auto const label_length = spos - lpos;

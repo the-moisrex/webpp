@@ -430,6 +430,11 @@ namespace webpp::unicode {
         using size_type = stl::size_t;
         using enum checked::error_handling;
 
+        if constexpr (stl::is_convertible_v<Iter, StrT>) {
+            // Output cannot be in between the input, out == spos is okay, it's an inplace decomposition.
+            assert(!(out > spos && out < send));
+        }
+
         auto const [max_length, requires_mapping] = details::canon_decomp_details(spos, send);
         auto const cur_len                        = static_cast<size_type>(send - spos);
 
@@ -438,16 +443,18 @@ namespace webpp::unicode {
                 out.append(spos, send);
             } else {
                 stl::copy(spos, send, out);
-                out += cur_len;
+                stl::advance(out, cur_len);
             }
             return;
         }
 
         assert(cur_len <= max_length);
         auto const overwrite =
-          [spos, send]<typename T>(T ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
-              auto              pos = spos;
-              auto const* const beg = ptr;
+          [&spos, &send]<typename T>(
+            T                                  ptr,
+            [[maybe_unused]] stl::size_t const length /* = max_length */) constexpr noexcept {
+              auto       pos = spos;
+              auto const beg = ptr;
 
               while (pos != send) {
                   auto const cur_cp = checked::next_code_point<return_negated_char>(pos, send);
@@ -467,7 +474,17 @@ namespace webpp::unicode {
                 out.resize(overwrite(out.data(), max_length));
             }
         } else {
-            out += overwrite(out, max_length);
+            // inplace decomposition has been asked of us:
+            if (out == spos) {
+                // moving everything to the end
+                // spos may be const, so we change `out`
+                using diff_type = typename stl::iterator_traits<StrT>::difference_type;
+                auto const diff = static_cast<diff_type>(max_length - cur_len);
+                stl::copy_n(out, cur_len, stl::next(out, diff));
+                stl::advance(spos, diff);
+                stl::advance(send, diff);
+            }
+            stl::advance(out, overwrite(out, max_length));
         }
     }
 
@@ -477,7 +494,6 @@ namespace webpp::unicode {
     template <istl::String StrT = stl::u32string>
     static constexpr void canonical_decompose(StrT& out) {
         using size_type = typename StrT::size_type;
-        using char_type = typename StrT::value_type;
         using enum checked::error_handling;
 
         auto const [max_length, requires_mapping] = details::canon_decomp_details(out.begin(), out.end());
@@ -502,7 +518,7 @@ namespace webpp::unicode {
               while (backup_start != backup_end) {
                   auto const cur_cp = checked::next_code_point<return_negated_char>(backup_start, backup_end);
                   if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
-                      *ptr++ = static_cast<char_type>(-cur_cp); // NOLINT(*-pro-bounds-pointer-arithmetic)
+                      istl::iter_append(ptr, -cur_cp);
                       continue;
                   }
                   canonical_decompose_to(ptr, cur_cp);
@@ -689,13 +705,21 @@ namespace webpp::unicode {
               istl::Appendable            StrT = stl::u32string,
               stl::random_access_iterator Iter>
     static constexpr void normalize(Iter spos, Iter send, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
+        using out_char_type = istl::char_type_of_t<StrT>;
+        using in_char_type  = istl::char_type_of_t<Iter>;
         if constexpr (istl::String<StrT>) {
             // There is also a Unicode Consortium stability policy that canonical mappings are always limited
             // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3×
             // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
             // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
             // determining buffer sizes.
-            out.reserve(static_cast<stl::size_t>((send - spos) * 3));
+
+            // If input and output character types are different, this will take those into account as well
+            webpp_static_constexpr stl::size_t diff_space =
+              sizeof(out_char_type) > sizeof(in_char_type)
+                ? sizeof(out_char_type) - sizeof(in_char_type)
+                : 1U;
+            out.reserve(static_cast<stl::size_t>(send - spos) * diff_space * 3U);
         }
 
         if constexpr (normalization_form::gibberish == Form) {
@@ -718,11 +742,12 @@ namespace webpp::unicode {
                 canonical_reorder(out);
                 canonical_compose(out);
             } else {
+                using diff_type                       = typename stl::iterator_traits<StrT>::difference_type;
                 stl::random_access_iterator auto obeg = out;
                 canonical_decompose(spos, send, out);
                 stl::random_access_iterator auto const oend = out;
                 canonical_reorder(obeg, oend);
-                out = obeg + canonical_compose(obeg, oend);
+                out = stl::next(obeg, static_cast<diff_type>(canonical_compose(obeg, oend)));
             }
         } else {
             // todo: NFKC and NFKD
