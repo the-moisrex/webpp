@@ -88,7 +88,7 @@ namespace webpp::tests {
                 cur_ptr);
               return static_cast<std::size_t>(cur_ptr - beg);
           };
-        resPtrStyle.resize(res.size());
+        resPtrStyle.resize(res.size() * 19);
         resPtrStyle.resize(overwrite(resPtrStyle.data(), res.size()));
         ASSERT_EQ(resPtrStyle, res) << to_hex(str);
     }
