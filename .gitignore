@@ -135,3 +135,6 @@ fabric.properties
 
 # Vim/Neovim Session files
 *.vim
+
+# Fuzz tests create this kinda stuff:
+crash-*
