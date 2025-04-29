@@ -363,17 +363,17 @@ namespace webpp {
         /**
          * @brief get string representation of the ip
          */
-        template <typename StrT = stl::string, typename... Args>
+        template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr auto string(Args&&... args) const {
+            using char_type = istl::char_type_of_t<StrT>;
             StrT str{stl::forward<Args>(args)...};
-#ifdef __cpp_lib_string_resize_and_overwrite
-            str.resize_and_overwrite(max_ipv4_str_len, [this](auto* buf, stl::size_t) constexpr noexcept {
-                auto const _octets = octets();
-                return static_cast<stl::size_t>(inet_ntop4(_octets.data(), buf) - buf);
-            });
-#else
-            to_string(str);
-#endif
+            istl::resize_and_overwrite(
+              str,
+              max_ipv4_str_len,
+              [this](char_type* buf, stl::size_t) constexpr noexcept {
+                  auto const _octets = octets();
+                  return static_cast<stl::size_t>(inet_ntop4(_octets.data(), buf) - buf);
+              });
             return str;
         }
 

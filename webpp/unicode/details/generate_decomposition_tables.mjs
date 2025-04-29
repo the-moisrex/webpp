@@ -9,7 +9,7 @@ import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8All, writePieces,
+    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8, utf32To8All, writePieces,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {TablePairs} from "./table.mjs";
@@ -59,6 +59,9 @@ class DecompTable {
 
     #cacheMaxLen = {};
     #dataViewCache = {};
+
+    #utf8MaxLen = 0;
+    #utf8MaxDiff = 0;
 
     // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
     findMaxLengths({codePointStart, length, data}) {
@@ -487,6 +490,17 @@ class DecompTable {
         if (mapped) {
             // find the end of the batch, not just the last item
             this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
+
+            // UTF-8 Max MappedTo Length
+            const curUTF8 = utf32To8(codePoint);
+            const mappedToUTF8 = utf32To8All(mappedTo);
+            const curDiff = mappedToUTF8.length - curUTF8.length;
+            if (mappedToUTF8.length > this.#utf8MaxLen) {
+                this.#utf8MaxLen = mappedToUTF8.length;
+            }
+            if (curDiff > this.#utf8MaxDiff) {
+                this.#utf8MaxDiff = curDiff;
+            }
         } else {
             return;
         }
@@ -516,6 +530,12 @@ class DecompTable {
 
     processRendered(renderedTables) {
         return `
+    /// Max UTF-8 Decomposition's Length
+    static constexpr std::uint16_t max_utf8_decomp = ${this.#utf8MaxLen}U;
+
+    /// Max UTF-8 Decomposition's Length minus the that Code Point
+    static constexpr std::uint16_t max_utf8_decomp_diff = ${this.#utf8MaxDiff}U;
+
     /**
      * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by standard);
      * so it's designed this way to reduce the table size.

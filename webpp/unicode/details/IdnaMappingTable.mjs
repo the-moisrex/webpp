@@ -3,9 +3,7 @@ import {
     findDate,
     findVersion,
     parseCodePointRangeExclusive,
-    runClangFormat,
-    splitLine, utf32To8All,
-    writePieces
+    splitLine, utf32To8All, utf32To8,
 } from "./utils.mjs";
 
 export const fileUrl = 'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
@@ -99,7 +97,8 @@ export const parseIDNAMappingTable = async (table, fileContent = undefined) => {
                 codePoint: BigInt(pos),
                 flags,
                 mappedTo: mappedValues,
-                utf8MappedTo: utf32To8All(mappedValues)
+                utf8MappedTo: utf32To8All(mappedValues),
+                utf8CodePoint: utf32To8(pos)
             };
 
             table.add(value.codePoint, value);

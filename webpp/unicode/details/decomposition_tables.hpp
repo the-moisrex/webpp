@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 24 Apr 2025 15:43:03 GMT
+ *   This file's generation date:        Tue, 29 Apr 2025 20:10:49 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -37,6 +37,12 @@
 
 namespace webpp::unicode::details {
 
+
+    /// Max UTF-8 Decomposition's Length
+    static constexpr std::uint16_t max_utf8_decomp = 8U;
+
+    /// Max UTF-8 Decomposition's Length minus the that Code Point
+    static constexpr std::uint16_t max_utf8_decomp_diff = 4U;
 
     /**
      * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's

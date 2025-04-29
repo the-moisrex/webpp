@@ -48,6 +48,8 @@ class IDNAMappings {
     boolsTable = [];
     boolsTablePacked;
     packedAmount = 0;
+    #maxMappedLength = 0n;
+    #maxMappedDiff = 0n;
 
     constructor() {
         const self = this;
@@ -154,7 +156,7 @@ class IDNAMappings {
         this.boolsTablePacked = this.getBoolsTable();
     }
 
-    add(codePoint, {flags, mappedTo, utf8MappedTo}) {
+    add(codePoint, {flags, mappedTo, utf8MappedTo, utf8CodePoint}) {
         codePoint = BigInt(codePoint);
 
         // calculating the last item that it's value is zero
@@ -180,6 +182,16 @@ class IDNAMappings {
 
             const strBlockPtr = recursiveLength(this.mappingsTable, blockPtr);
             this.tables.add(codePoint, strBlockPtr);
+
+            const curLen = BigInt(utf8MappedTo.length);
+            const curCPLen = BigInt(utf8CodePoint.length);
+            const curDiff = curLen - curCPLen;
+            if (curLen > this.#maxMappedLength) {
+                this.#maxMappedLength = curLen;
+            }
+            if (curDiff > this.#maxMappedDiff) {
+                this.#maxMappedDiff = curDiff;
+            }
         } else {
             this.tables.add(codePoint, flags);
         }
@@ -187,6 +199,14 @@ class IDNAMappings {
 
     render() {
         return `
+    /// Max UTF-8 IDNA mapping length
+    static constexpr std::size_t max_mapping_length = ${this.#maxMappedLength}UL;
+
+    /// Max UTF-8 IDNA mapping length change
+    /// When Code Points are being mapped, this is the maximum length change.
+    /// This can be used to calculate the necessary space required for mapping a string.
+    static constexpr std::size_t max_mapping_diff = ${this.#maxMappedDiff}UL;
+
     /**
      * The last code point that has a mapping status:
      */

@@ -9,6 +9,7 @@
 
 #include <array>
 #include <compare>
+#include <eve/detail/raberu.hpp>
 
 // There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
 // them, so we're disabling this warning for this file.
@@ -1121,16 +1122,15 @@ namespace webpp {
       public:
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT string(Args&&... str_args) const noexcept {
+            using char_type = istl::char_type_of_t<StrT>;
             StrT output{stl::forward<Args>(str_args)...};
-#ifdef __cpp_lib_string_resize_and_overwrite
-            output.resize_and_overwrite(max_ipv6_str_len + 5,
-                                        [this](auto* buf, stl::size_t) constexpr noexcept {
-                                            auto const pos = this->to_data_string(buf);
-                                            return static_cast<stl::size_t>(pos - buf);
-                                        });
-#else
-            to_string(output);
-#endif
+            istl::resize_and_overwrite(
+              output,
+              max_ipv6_str_len + 5,
+              [this](char_type* buf, stl::size_t) constexpr noexcept {
+                  auto const pos = this->to_data_string(buf);
+                  return static_cast<stl::size_t>(pos - buf);
+              });
             return output;
         }
 
@@ -1145,14 +1145,14 @@ namespace webpp {
 
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT ip_string(Args&&... str_args) const noexcept {
+            using char_type = istl::char_type_of_t<StrT>;
             StrT output{stl::forward<Args>(str_args)...};
-#ifdef __cpp_lib_string_resize_and_overwrite
-            output.resize_and_overwrite(max_ipv6_str_len, [this](auto* buf, stl::size_t) constexpr noexcept {
-                return static_cast<stl::size_t>(inet_ntop6(_data.data(), buf) - buf);
-            });
-#else
-            ip_to_string(output);
-#endif
+            istl::resize_and_overwrite(
+              output,
+              max_ipv6_str_len,
+              [this](char_type* buf, stl::size_t) constexpr noexcept {
+                  return static_cast<stl::size_t>(inet_ntop6(_data.data(), buf) - buf);
+              });
             return output;
         }
 

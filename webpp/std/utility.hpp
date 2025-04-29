@@ -112,7 +112,7 @@ namespace webpp::istl {
     }
 
     template <typename T>
-    [[nodiscard]] static consteval auto nullptr_of() noexcept {
+    [[nodiscard]] static constexpr auto nullptr_of() noexcept {
         using type = stl::remove_cvref_t<T>;
         if constexpr (stl::is_pointer_v<type>) {
             return nullptr;

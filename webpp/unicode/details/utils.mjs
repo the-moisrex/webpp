@@ -945,9 +945,7 @@ export const utf8To32 = (utf8Bytes) => {
 export const utf32To8All = (u32Array) => {
     let arr = [];
     for (const codePoint of u32Array) {
-        for (const unit of utf32To8(codePoint)) {
-            arr.push(unit);
-        }
+        arr.push(...utf32To8(codePoint));
     }
     return arr;
 };

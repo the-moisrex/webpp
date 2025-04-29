@@ -254,36 +254,28 @@ namespace webpp::ascii {
 
     template <typename It, typename EIt = It, istl::String StrT>
     constexpr void lower_to(StrT& out, It beg, EIt end) {
-#if __cpp_lib_string_resize_and_overwrite
-        stl::size_t const count = end - beg;
-        out.resize_and_overwrite(
+        using size_type  = typename StrT::size_type;
+        auto const count = static_cast<size_type>(end - beg);
+        istl::resize_and_overwrite(
+          out,
           count,
           [beg, count](auto* ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
               lower_to(beg, ptr, count);
               return count;
           });
-#else
-        using size_type = typename StrT::size_type;
-        out.resize(static_cast<size_type>(end - beg));
-        lower_to(beg, out.begin(), static_cast<stl::size_t>(end - beg));
-#endif
     }
 
     template <typename It, typename EIt = It, istl::String StrT>
     constexpr void upper_to(StrT& out, It beg, EIt end) {
-#if __cpp_lib_string_resize_and_overwrite
-        stl::size_t const count = end - beg;
-        out.resize_and_overwrite(
+        using size_type  = typename StrT::size_type;
+        auto const count = static_cast<size_type>(end - beg);
+        istl::resize_and_overwrite(
+          out,
           count,
           [beg, count](auto* ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
               upper_to(beg, ptr, count);
               return count;
           });
-#else
-        using size_type = typename StrT::size_type;
-        out.resize(static_cast<size_type>(end - beg));
-        upper_to(beg, out.begin(), static_cast<stl::size_t>(end - beg));
-#endif
     }
 
 } // namespace webpp::ascii

@@ -350,78 +350,55 @@ namespace webpp::unicode {
         return arr;
     }
 
-    namespace details {
-
-        template <stl::integral SizeT = stl::size_t>
-        struct decomposition_details {
-            SizeT max_length       = 0; // max possible length required for decompositions
-            bool  requires_mapping = false;
-        };
-
-        /**
-         * Finding out these things:
-         *   1. the max length required (the sum of max_lengths essentially)
-         *   2. and should we continue mapping or not
-         */
-        template <stl::integral               SizeT = stl::size_t,
-                  stl::random_access_iterator Iter  = stl::u8string::const_iterator>
-        [[nodiscard]] static constexpr decomposition_details<SizeT> canon_decomp_details(
-          Iter        pos,
-          Iter const& end) noexcept {
-            using enum checked::error_handling;
-
-            using char_type = typename std::iterator_traits<Iter>::value_type;
-
-            decomposition_details<SizeT> info;
-            auto const                   actual_length = static_cast<SizeT>(end - pos);
-            while (pos != end) {
-                auto const code_point =
-                  checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
-
-                // handling hangul code points
-                if (is_hangul_code_point(code_point)) [[unlikely]] {
-                    info.max_length +=
-                      hangul_decompose_length<char_type, decltype(code_point), SizeT>(code_point);
-                    info.requires_mapping = true;
-                    continue;
-                }
-
-                auto const chunk         = code_point >> decomp_index::chunk_shift;
-                auto const section_index = static_cast<stl::uint16_t>(chunk >> decomp_breakpoint_shift);
-                if (chunk >= decomp_last_breakpoint) [[unlikely]] {
-                    continue;
-                }
-                auto const [starting, ending, offset] = decomp_breakpoints[section_index];
-                decomp_index const code =
-                  chunk < starting || chunk >= ending
-                    ? decomp_common_pos
-                    : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
-
-                // calculating the length of te value in the decomp_values table:
-                info.max_length += code.max_length;
-                if (code.max_length != 0) {
-                    info.requires_mapping = true;
-                }
-            }
-
-            info.max_length += actual_length;
-            assert(info.max_length >= actual_length);
-            return info;
-        }
-    } // namespace details
-
     /**
+     *
      * Get the max required length for the specified range of code points
      * Attention: this does not return the exact size.
-     * @tparam Iter
-     * @tparam EIter Iter
-     * @tparam SizeT std::size_t
-     * @param pos start position
-     * @param end end of the string
+     * Finding out these things:
+     *   1. the max length required (the sum of max_lengths essentially)
      */
-    template <typename Iter, typename EIter = Iter, stl::unsigned_integral SizeT = stl::size_t>
-    [[nodiscard]] static constexpr SizeT canonical_decomp_max_size(Iter pos, EIter end) noexcept {
-        return details::canon_decomp_details<Iter, EIter, SizeT>(pos, end).max_length;
+    template <stl::random_access_iterator Iter = stl::u8string::const_iterator>
+    [[nodiscard]] static constexpr stl::size_t canonical_decomp_max_size(Iter pos, Iter const& end) noexcept {
+        using details::decomp_breakpoint_shift;
+        using details::decomp_breakpoints;
+        using details::decomp_common_pos;
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_last_breakpoint;
+        using enum checked::error_handling;
+
+        using char_type = typename std::iterator_traits<Iter>::value_type;
+
+        stl::size_t max_length    = 0;
+        auto const  actual_length = static_cast<stl::size_t>(end - pos);
+        while (pos != end) {
+            auto const code_point =
+              checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+
+            // handling hangul code points
+            if (is_hangul_code_point(code_point)) [[unlikely]] {
+                max_length += hangul_decompose_length<char_type, decltype(code_point)>(code_point);
+                continue;
+            }
+
+            auto const chunk         = code_point >> decomp_index::chunk_shift;
+            auto const section_index = static_cast<stl::uint16_t>(chunk >> decomp_breakpoint_shift);
+            if (chunk >= decomp_last_breakpoint) [[unlikely]] {
+                continue;
+            }
+            auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+            decomp_index const code =
+              chunk < starting || chunk >= ending
+                ? decomp_common_pos
+                : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+
+            // calculating the length of the value in the decomp_values table:
+            max_length += code.max_length;
+        }
+
+        max_length += actual_length;
+        assert(max_length >= actual_length);
+        return max_length;
     }
 
     template <istl::Appendable StrT = stl::u32string, stl::random_access_iterator Iter>
@@ -435,8 +412,9 @@ namespace webpp::unicode {
             assert(!(out > spos && out < send));
         }
 
-        auto const [max_length, requires_mapping] = details::canon_decomp_details(spos, send);
-        auto const cur_len                        = static_cast<size_type>(send - spos);
+        auto const cur_len          = static_cast<size_type>(send - spos);
+        auto const max_length       = canonical_decomp_max_size(spos, send);
+        bool const requires_mapping = max_length != cur_len;
 
         if (!requires_mapping) [[likely]] {
             if constexpr (istl::String<StrT>) {
@@ -467,12 +445,7 @@ namespace webpp::unicode {
               return static_cast<size_type>(ptr - beg);
           };
         if constexpr (istl::String<StrT>) {
-            if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {
-                out.resize_and_overwrite(max_length, overwrite);
-            } else {
-                out.resize(max_length);
-                out.resize(overwrite(out.data(), max_length));
-            }
+            istl::resize_and_overwrite(out, max_length, overwrite);
         } else {
             // inplace decomposition has been asked of us:
             if (out == spos) {
@@ -496,8 +469,9 @@ namespace webpp::unicode {
         using size_type = typename StrT::size_type;
         using enum checked::error_handling;
 
-        auto const [max_length, requires_mapping] = details::canon_decomp_details(out.begin(), out.end());
-        auto const cur_len                        = out.size();
+        auto const cur_len          = out.size();
+        auto const max_length       = canonical_decomp_max_size(out.begin(), out.end());
+        bool const requires_mapping = max_length != cur_len;
 
         if (!requires_mapping) [[likely]] {
             return;
@@ -525,12 +499,7 @@ namespace webpp::unicode {
               }
               return static_cast<size_type>(ptr - beg);
           };
-        if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {
-            out.resize_and_overwrite(max_length, overwrite);
-        } else {
-            out.resize(max_length);
-            out.resize(overwrite(out.data(), max_length));
-        }
+        istl::resize_and_overwrite(out, max_length, overwrite);
     }
 
     /**

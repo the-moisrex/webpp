@@ -187,6 +187,18 @@ namespace webpp::istl {
         return count;
     }
 
+    /// A polyfill for std::string::resize_and_override
+    template <String StrT, typename Func>
+    static constexpr void resize_and_overwrite(StrT& str, size_type_of_t<StrT> const max_size, Func&& func)
+      noexcept(stl::is_nothrow_invocable_v<Func>) {
+        if constexpr (requires { str.resize_and_overwrite(max_size, std::forward<Func>(func)); }) {
+            return str.resize_and_overwrite(max_size, std::forward<Func>(func));
+        } else {
+            str.resize(max_size);
+            auto const new_len = stl::forward<Func>(func)(str.data(), max_size);
+            str.resize(new_len);
+        }
+    }
 
 } // namespace webpp::istl
 

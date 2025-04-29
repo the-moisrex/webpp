@@ -437,9 +437,9 @@ namespace webpp::unicode::idna {
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
-    template <idna_options Options = {}, stl::random_access_iterator Iter, istl::Appendable OIter = char*>
+    template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type
-    unsafe_to_ascii(Iter spos, Iter const send, OIter& out) noexcept(istl::NothrowAppendable<OIter>) {
+    to_ascii(Iter spos, Iter const send, OIter& out) noexcept {
         using enum to_ascii_status;
         using istl::iter_append;
         using stl::to_underlying;
@@ -452,7 +452,10 @@ namespace webpp::unicode::idna {
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
         auto const src_length = send - spos;
         auto       status     = to_underlying(valid);
-        auto const obeg       = istl::appendable_size(out);
+        auto const obeg       = out;
+
+        // If output is in between the input, it's a disaster waiting to happen.
+        assert(!(out > spos && out < send));
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
@@ -465,13 +468,9 @@ namespace webpp::unicode::idna {
 
         // 1.2. Normalize inplace
         {
-            if constexpr (istl::String<OIter>) {
-                normalize<normalization_form::NFC>(out);
-            } else {
-                auto       pos  = istl::appendable_next(out, obeg);
-                auto const oend = istl::appendable_end(out);
-                normalize<normalization_form::NFC>(pos, oend, out);
-            }
+            auto       pos  = istl::appendable_next(out, obeg);
+            auto const oend = istl::appendable_end(out);
+            normalize<normalization_form::NFC>(pos, oend, out);
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -520,7 +519,7 @@ namespace webpp::unicode::idna {
                         lpos[3] == '-')
                     {
                         // Found xn--.
-                        // 1.4.1. If the label contains any non-ASCII code point (i.e., a code point greater
+                        // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
                         // than U+007F), record that there was an error, and continue with the next label.
                         if ((flag & non_ascii_flag) != 0) [[unlikely]] {
                             status |= to_underlying(invalid_code_point);
@@ -538,7 +537,8 @@ namespace webpp::unicode::idna {
                         }
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
-                        // record that there was an error. todo
+                        // record that there was an error.
+                        // todo
 
                         // 1.4.4. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
@@ -605,20 +605,18 @@ namespace webpp::unicode::idna {
     template <idna_options Options = {}, stl::random_access_iterator Iter, istl::String StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
         if constexpr (Options.VerifyDnsLength) {
-            constexpr auto max_domain_length = 254U;
-#ifdef __cpp_lib_string_resize_and_overwrite
-            to_ascii_status_type status = 0;
-            out.resize_and_overwrite(max_domain_length,
-                                     [&](auto* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
-                                         auto const beg = buf;
-                                         status         = unsafe_to_ascii<Options>(spos, send, buf);
-                                         return static_cast<stl::size_t>(buf - beg);
-                                     });
+            using char_type                        = istl::char_type_of_t<StrT>;
+            constexpr auto       max_domain_length = 254U;
+            to_ascii_status_type status            = 0;
+            istl::resize_and_overwrite(
+              out,
+              max_domain_length,
+              [&](char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+                  auto const beg = buf;
+                  status         = unsafe_to_ascii<Options>(spos, send, buf);
+                  return static_cast<stl::size_t>(buf - beg);
+              });
             return status;
-#else
-            out.reserve(out.size() + max_domain_length);
-            return unsafe_to_ascii<Options>(spos, send, out);
-#endif
         } else {
             return unsafe_to_ascii<Options>(spos, send, out);
         }

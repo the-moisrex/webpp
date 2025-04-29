@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Sun, 27 Apr 2025 21:03:58 GMT
+ *   This file's generation date:        Tue, 29 Apr 2025 17:52:31 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       365680
@@ -41,6 +41,13 @@ namespace webpp::unicode::idna::details {
     static constexpr std::uint16_t                  disallowed = 0b1000'0000'0000'0010U;
 
 
+    /// Max UTF-8 IDNA mapping length
+    static constexpr std::size_t max_mapping_length = 33UL;
+
+    /// Max UTF-8 IDNA mapping length change
+    /// When Code Points are being mapped, this is the maximum length change.
+    /// This can be used to calculate the necessary space required for mapping a string.
+    static constexpr std::size_t max_mapping_diff = 30UL;
 
     /**
      * The last code point that has a mapping status:
