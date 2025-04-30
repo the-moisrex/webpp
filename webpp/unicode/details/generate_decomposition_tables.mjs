@@ -62,6 +62,8 @@ class DecompTable {
 
     #utf8MaxLen = 0;
     #utf8MaxDiff = 0;
+    #utf8MaxFactor = 0;
+    #utf8MaxCP = {};
 
     // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
     findMaxLengths({codePointStart, length, data}) {
@@ -444,9 +446,42 @@ class DecompTable {
         }
     }
 
+    #findMaxes() {
+        for (let codePoint in this.tables.data) {
+            codePoint = parseInt(codePoint);
+            let {mapped, mappedTo} = this.tables.data.at(codePoint);
+            if (isNaN(codePoint)) {
+                console.error(this.tables.data.at(index));
+                throw new Error(`code: ${codePoint}, index: ${index}`);
+            }
+            if (!mapped) {
+                continue;
+            }
+            // UTF-8 Max MappedTo Length
+            const curUTF8 = utf32To8(codePoint);
+            const mappedToUTF8 = utf32To8All(mappedTo);
+            const curDiff = mappedToUTF8.length - curUTF8.length;
+            const curFactor = mappedToUTF8.length / curUTF8.length;
+            if (mappedToUTF8.length > this.#utf8MaxLen) {
+                this.#utf8MaxLen = mappedToUTF8.length;
+            }
+            if (curDiff > this.#utf8MaxDiff) {
+                this.#utf8MaxDiff = curDiff;
+                this.#utf8MaxFactor = curFactor;
+                this.#utf8MaxCP = {
+                    codePoint,
+                    mappedTo,
+                    mappedToUTF8,
+                    codePointUTF8: curUTF8
+                };
+            }
+        }
+    }
+
     /// proxy the function
     process() {
         this.recursive_decompose();
+        this.#findMaxes();
         this.convert_to_utf8();
         this.tables.process();
         const lastMappedBucket = this.lastMapped >> this.tables.chunkShift;
@@ -490,17 +525,6 @@ class DecompTable {
         if (mapped) {
             // find the end of the batch, not just the last item
             this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
-
-            // UTF-8 Max MappedTo Length
-            const curUTF8 = utf32To8(codePoint);
-            const mappedToUTF8 = utf32To8All(mappedTo);
-            const curDiff = mappedToUTF8.length - curUTF8.length;
-            if (mappedToUTF8.length > this.#utf8MaxLen) {
-                this.#utf8MaxLen = mappedToUTF8.length;
-            }
-            if (curDiff > this.#utf8MaxDiff) {
-                this.#utf8MaxDiff = curDiff;
-            }
         } else {
             return;
         }
@@ -530,11 +554,17 @@ class DecompTable {
 
     processRendered(renderedTables) {
         return `
-    /// Max UTF-8 Decomposition's Length
-    static constexpr std::uint16_t max_utf8_decomp = ${this.#utf8MaxLen}U;
-
     /// Max UTF-8 Decomposition's Length minus the that Code Point
-    static constexpr std::uint16_t max_utf8_decomp_diff = ${this.#utf8MaxDiff}U;
+    /// ${this.#utf8MaxCP.codePoint.toString(16).toUpperCase()} => ${this.#utf8MaxCP.mappedTo.map(val => Number(val).toString(16).toUpperCase()).join(", ")}
+    /// ${this.#utf8MaxCP.codePointUTF8.join(', ')} => ${this.#utf8MaxCP.mappedToUTF8.join(", ")}
+    ///
+    /// There is also a Unicode Consortium stability policy that canonical mappings are always limited in
+    /// all versions of Unicode, so that no string when decomposed with NFC expands to more than 3x in
+    /// length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
+    /// guarantee also allows for certain optimizations in processing, especially in determining buffer sizes.
+    static constexpr std::uint16_t max_decomp_factor = ${this.#utf8MaxFactor}U; // times
+    static constexpr std::uint16_t max_decomp_diff = ${this.#utf8MaxDiff}U;
+    static constexpr std::uint16_t max_utf8_decomp_length = ${this.#utf8MaxLen}U;
 
     /**
      * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by standard);

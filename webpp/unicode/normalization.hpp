@@ -351,7 +351,6 @@ namespace webpp::unicode {
     }
 
     /**
-     *
      * Get the max required length for the specified range of code points
      * Attention: this does not return the exact size.
      * Finding out these things:

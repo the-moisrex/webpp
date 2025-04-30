@@ -214,6 +214,10 @@ namespace webpp::unicode::idna {
         return success;
     }
 
+    /**
+     * Punycode Decode.
+     * The output length cannot exceed the input length.
+     */
     template <punycode_options            Options = {},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>

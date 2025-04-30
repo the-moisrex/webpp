@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Tue, 29 Apr 2025 20:10:49 GMT
+ *   This file's generation date:        Wed, 30 Apr 2025 00:45:44 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -38,11 +38,17 @@
 namespace webpp::unicode::details {
 
 
-    /// Max UTF-8 Decomposition's Length
-    static constexpr std::uint16_t max_utf8_decomp = 8U;
-
     /// Max UTF-8 Decomposition's Length minus the that Code Point
-    static constexpr std::uint16_t max_utf8_decomp_diff = 4U;
+    /// 16126 => 1611E, 1611E, 1611F
+    /// 240, 150, 132, 166 => 240, 150, 132, 158, 240, 150, 132, 158, 240, 150, 132, 159
+    ///
+    /// There is also a Unicode Consortium stability policy that canonical mappings are always limited in
+    /// all versions of Unicode, so that no string when decomposed with NFC expands to more than 3x in
+    /// length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
+    /// guarantee also allows for certain optimizations in processing, especially in determining buffer sizes.
+    static constexpr std::uint16_t max_decomp_factor      = 3U; // times
+    static constexpr std::uint16_t max_decomp_diff        = 8U;
+    static constexpr std::uint16_t max_utf8_decomp_length = 12U;
 
     /**
      * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's

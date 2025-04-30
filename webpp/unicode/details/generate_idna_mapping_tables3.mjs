@@ -48,8 +48,11 @@ class IDNAMappings {
     boolsTable = [];
     boolsTablePacked;
     packedAmount = 0;
-    #maxMappedLength = 0n;
-    #maxMappedDiff = 0n;
+
+    #maxMappedLength = 0;
+    #maxMappedDiff = 0;
+    #maxMappedFactor = 0;
+    #maxMappedCP = {};
 
     constructor() {
         const self = this;
@@ -183,14 +186,23 @@ class IDNAMappings {
             const strBlockPtr = recursiveLength(this.mappingsTable, blockPtr);
             this.tables.add(codePoint, strBlockPtr);
 
-            const curLen = BigInt(utf8MappedTo.length);
-            const curCPLen = BigInt(utf8CodePoint.length);
+            const curLen = utf8MappedTo.length;
+            const curCPLen = utf8CodePoint.length;
             const curDiff = curLen - curCPLen;
+            const curFactor = curLen / curCPLen;
             if (curLen > this.#maxMappedLength) {
                 this.#maxMappedLength = curLen;
             }
             if (curDiff > this.#maxMappedDiff) {
                 this.#maxMappedDiff = curDiff;
+                this.#maxMappedFactor = Math.ceil(curFactor);
+                this.#maxMappedCP = {
+                    codePoint,
+                    mappedTo,
+                    utf8MappedTo,
+                    utf8CodePoint
+                };
+                // console.log(curDiff, curFactor, this.#maxMappedCP);
             }
         } else {
             this.tables.add(codePoint, flags);
@@ -199,13 +211,14 @@ class IDNAMappings {
 
     render() {
         return `
-    /// Max UTF-8 IDNA mapping length
-    static constexpr std::size_t max_mapping_length = ${this.#maxMappedLength}UL;
-
     /// Max UTF-8 IDNA mapping length change
     /// When Code Points are being mapped, this is the maximum length change.
     /// This can be used to calculate the necessary space required for mapping a string.
+    /// ${this.#maxMappedCP.codePoint.toString(16).toUpperCase()} => ${this.#maxMappedCP.mappedTo.map(val => Number(val).toString(16).toUpperCase()).join(", ")}
+    /// ${this.#maxMappedCP.utf8CodePoint.join(', ')} => ${this.#maxMappedCP.utf8MappedTo.join(", ")}
+    static constexpr std::size_t max_mapping_factor = ${this.#maxMappedFactor}UL; // times of the original string
     static constexpr std::size_t max_mapping_diff = ${this.#maxMappedDiff}UL;
+    static constexpr std::size_t max_mapping_length = ${this.#maxMappedLength}UL;
 
     /**
      * The last code point that has a mapping status:
