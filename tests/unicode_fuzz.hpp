@@ -76,6 +76,13 @@ namespace webpp::tests {
             ASSERT_EQ(resStringStyle, res) << to_hex(str) << "\n" << str;
         }
 
+        // test append
+        {
+            std::string out = "one two three. ";
+            normalize<normalization_form::NFC>(str.begin(), str.end(), out);
+            EXPECT_EQ(out, "one two three. " + res) << to_hex(res);
+        }
+
 
         std::string resPtrStyle;
         auto const  overwrite =

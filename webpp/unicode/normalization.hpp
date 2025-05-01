@@ -500,7 +500,7 @@ namespace webpp::unicode {
                       canonical_decompose_to(ptr, cur_cp);
                   }
 
-                  return static_cast<size_type>(ptr - beg);
+                  return out_len + static_cast<size_type>(ptr - beg);
               });
         } else {
             auto const      cur_len    = static_cast<size_type>(send - spos);
