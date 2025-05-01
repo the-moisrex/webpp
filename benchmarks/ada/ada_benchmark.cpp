@@ -573,13 +573,13 @@ static void AdaDecomposeLength(benchmark::State& state) {
 
 BENCHMARK(AdaDecomposeLength);
 
-static void WebppDecomposeLength(benchmark::State& state) {
-    for (auto _ : state) {
-        auto [max_len, decomposition_needed] =
-          webpp::unicode::details::canon_decomp_details(decompsableStr.begin(), decompsableStr.end());
-        benchmark::DoNotOptimize(decomposition_needed);
-        benchmark::DoNotOptimize(max_len);
-    }
-}
-
-BENCHMARK(WebppDecomposeLength);
+// static void WebppDecomposeLength(benchmark::State& state) {
+//     for (auto _ : state) {
+//         auto [max_len, decomposition_needed] =
+//           webpp::unicode::details::canon_decomp_details(decompsableStr.begin(), decompsableStr.end());
+//         benchmark::DoNotOptimize(decomposition_needed);
+//         benchmark::DoNotOptimize(max_len);
+//     }
+// }
+//
+// BENCHMARK(WebppDecomposeLength);

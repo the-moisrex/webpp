@@ -299,6 +299,51 @@ namespace webpp::unicode {
     }
 
     /**
+     * Go to the first Code Point that requires Decomposition.
+     */
+    template <stl::random_access_iterator Iter>
+    static constexpr void skip_to_decomp(Iter& spos, Iter const send) noexcept {
+        using details::decomp_breakpoints;
+        using details::decomp_common_pos;
+        using details::decomp_index;
+        using details::decomp_indices;
+        using stl::swap;
+        using enum checked::error_handling;
+
+
+        for (auto pos = spos; pos != send; spos = pos) {
+            auto const code_point = checked::next_code_point<return_negated_char>(pos, send);
+
+            if (is_hangul_code_point(code_point)) {
+                break;
+            }
+
+            // invalid characters are needed to be skipped too, we cast the code point into unsigned integer,
+            // and it'll cause the same effect.
+            auto const chunk         = static_cast<stl::uint32_t>(code_point) >> decomp_index::chunk_shift;
+            auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
+            if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
+                continue;
+            }
+            auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+            decomp_index const code =
+              chunk < starting || chunk >= ending
+                ? decomp_common_pos
+                : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+
+            // Not mapped at all; that means the code point is mapped to itself.
+            if (code.max_length == 0) {
+                continue;
+            }
+
+            auto const start_ptr = decomp_ptr(code, code_point);
+            if (*start_ptr != u'\0') {
+                break;
+            }
+        }
+    }
+
+    /**
      * Decompose to an array/string
      */
     template <istl::AppendableStorage StrT  = decomposed_array<>,
@@ -351,53 +396,53 @@ namespace webpp::unicode {
     }
 
     /**
-     * Get the max required length for the specified range of code points
-     * Attention: this does not return the exact size.
-     * Finding out these things:
-     *   1. the max length required (the sum of max_lengths essentially)
+     * `ptr` MUST at least contain 3 times the current length (send - spos)
      */
-    template <stl::random_access_iterator Iter = stl::u8string::const_iterator>
-    [[nodiscard]] static constexpr stl::size_t canonical_decomp_max_size(Iter pos, Iter const& end) noexcept {
-        using details::decomp_breakpoint_shift;
-        using details::decomp_breakpoints;
-        using details::decomp_common_pos;
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_last_breakpoint;
+    template <stl::random_access_iterator Iter, stl::random_access_iterator OIter = Iter>
+    static constexpr void
+    canonical_decompose(Iter spos, Iter send, OIter& ptr, stl::size_t const max_length) noexcept {
         using enum checked::error_handling;
+        using diff_type     = typename stl::iterator_traits<OIter>::difference_type;
+        using in_char_type  = typename stl::iterator_traits<Iter>::value_type;
+        using out_char_type = typename stl::iterator_traits<OIter>::value_type;
 
-        using char_type = typename std::iterator_traits<Iter>::value_type;
+        auto const orig_len = static_cast<stl::size_t>(send - spos);
 
-        stl::size_t max_length    = 0;
-        auto const  actual_length = static_cast<stl::size_t>(end - pos);
-        while (pos != end) {
-            auto const code_point =
-              checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
-
-            // handling hangul code points
-            if (is_hangul_code_point(code_point)) [[unlikely]] {
-                max_length += hangul_decompose_length<char_type, decltype(code_point)>(code_point);
-                continue;
-            }
-
-            auto const chunk         = code_point >> decomp_index::chunk_shift;
-            auto const section_index = static_cast<stl::uint16_t>(chunk >> decomp_breakpoint_shift);
-            if (chunk >= decomp_last_breakpoint) [[unlikely]] {
-                continue;
-            }
-            auto const [starting, ending, offset] = decomp_breakpoints[section_index];
-            decomp_index const code =
-              chunk < starting || chunk >= ending
-                ? decomp_common_pos
-                : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
-
-            // calculating the length of the value in the decomp_values table:
-            max_length += code.max_length;
+        if constexpr (stl::is_convertible_v<Iter, OIter>) {
+            // Output cannot be in between the input, out == spos is okay, it's an inplace decomposition.
+            assert(!(ptr > spos && ptr < send));
         }
 
-        max_length += actual_length;
-        assert(max_length >= actual_length);
-        return max_length;
+        // If input and output character types are different, this will take those into account as well
+        webpp_static_constexpr stl::size_t diff_space =
+          sizeof(out_char_type) > sizeof(in_char_type) ? sizeof(out_char_type) - sizeof(in_char_type) : 1U;
+        assert(max_length >= ((orig_len * 3U) * diff_space) + 1U);
+
+        // inplace decomposition has been asked of us:
+        if constexpr (stl::same_as<in_char_type, out_char_type>) {
+            if (ptr == spos) {
+                auto const sbeg = spos;
+                skip_to_decomp(spos, send);
+                // moving everything to the end
+                // spos may be const, so we change the output pointer
+                auto const cur_len    = spos - sbeg;
+                auto const rem_len    = send - spos;
+                auto const rest_start = static_cast<diff_type>(max_length - rem_len);
+                stl::copy_n(spos, rem_len, stl::next(ptr, rest_start));
+                stl::advance(ptr, cur_len);
+                spos = stl::next(sbeg, rest_start);
+                send = stl::next(sbeg, max_length);
+            }
+        }
+
+        while (spos != send) {
+            auto const cur_cp = checked::next_code_point<return_negated_char>(spos, send);
+            if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                istl::iter_append(ptr, -cur_cp);
+                continue;
+            }
+            canonical_decompose_to(ptr, cur_cp);
+        }
     }
 
     template <istl::Appendable StrT = stl::u32string, stl::random_access_iterator Iter>
@@ -405,58 +450,62 @@ namespace webpp::unicode {
       noexcept(istl::NothrowAppendable<StrT>) {
         using size_type = stl::size_t;
         using enum checked::error_handling;
+        using in_char_type  = typename stl::iterator_traits<Iter>::value_type;
+        using out_char_type = istl::char_type_of_t<StrT>;
 
-        if constexpr (stl::is_convertible_v<Iter, StrT>) {
-            // Output cannot be in between the input, out == spos is okay, it's an inplace decomposition.
-            assert(!(out > spos && out < send));
-        }
+        // There is also a Unicode Consortium stability policy that canonical mappings are always limited
+        // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3×
+        // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
+        // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
+        // determining buffer sizes.
 
-        auto const cur_len          = static_cast<size_type>(send - spos);
-        auto const max_length       = canonical_decomp_max_size(spos, send);
-        bool const requires_mapping = max_length != cur_len;
+        // If input and output character types are different, this will take those into account as well
+        webpp_static_constexpr stl::size_t diff_space =
+          sizeof(out_char_type) > sizeof(in_char_type) ? sizeof(out_char_type) - sizeof(in_char_type) : 1U;
 
-        if (!requires_mapping) [[likely]] {
-            if constexpr (istl::String<StrT>) {
-                out.append(spos, send);
-            } else {
-                stl::copy(spos, send, out);
-                stl::advance(out, cur_len);
-            }
-            return;
-        }
-
-        assert(cur_len <= max_length);
-        auto const overwrite =
-          [&spos, &send]<typename T>(
-            T                                  ptr,
-            [[maybe_unused]] stl::size_t const length /* = max_length */) constexpr noexcept {
-              auto       pos = spos;
-              auto const beg = ptr;
-
-              while (pos != send) {
-                  auto const cur_cp = checked::next_code_point<return_negated_char>(pos, send);
-                  if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
-                      istl::iter_append(ptr, -cur_cp);
-                      continue;
-                  }
-                  canonical_decompose_to(ptr, cur_cp);
-              }
-              return static_cast<size_type>(ptr - beg);
-          };
         if constexpr (istl::String<StrT>) {
-            istl::resize_and_overwrite(out, max_length, overwrite);
-        } else {
-            // inplace decomposition has been asked of us:
-            if (out == spos) {
-                // moving everything to the end
-                // spos may be const, so we change `out`
-                using diff_type = typename stl::iterator_traits<StrT>::difference_type;
-                auto const diff = static_cast<diff_type>(max_length - cur_len);
-                stl::copy_n(out, cur_len, stl::next(out, diff));
-                stl::advance(spos, diff);
-                stl::advance(send, diff);
+            // The source should not be the output; for inplace decomposition, use its own function.
+            assert(!(spos >= out.begin() && spos < out.end()));
+            assert(!(send >= out.begin() && send < out.end()));
+
+            // A poor man's attempt at not allocating if the string doesn't require decomposition.
+            auto const sbeg = spos;
+            skip_to_decomp(spos, send);
+            if (spos == send) {
+                // copy it over
+                out.append(sbeg, spos);
+                return;
             }
-            stl::advance(out, overwrite(out, max_length));
+
+            auto const new_len     = static_cast<size_type>(send - spos);
+            auto const skipped_len = static_cast<size_type>(spos - sbeg);
+
+            istl::resize_and_overwrite(
+              out,
+              out.size() + ((skipped_len + (new_len * 3U)) * diff_space) + 1U,
+              [out_len = out.size(), sbeg, skipped_len, &spos, send](
+                auto*                            ptr,
+                [[maybe_unused]] size_type const length) constexpr noexcept {
+                  stl::advance(ptr, out_len); // We're going to append to the string
+                  auto const beg = ptr;
+                  stl::copy_n(sbeg, skipped_len, ptr);
+                  stl::advance(ptr, skipped_len);
+
+                  while (spos != send) {
+                      auto const cur_cp = checked::next_code_point<return_negated_char>(spos, send);
+                      if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                          istl::iter_append(ptr, -cur_cp);
+                          continue;
+                      }
+                      canonical_decompose_to(ptr, cur_cp);
+                  }
+
+                  return static_cast<size_type>(ptr - beg);
+              });
+        } else {
+            auto const      cur_len    = static_cast<size_type>(send - spos);
+            size_type const max_length = (cur_len * 3U * diff_space) + 1U;
+            canonical_decompose(spos, send, out, max_length);
         }
     }
 
@@ -468,37 +517,41 @@ namespace webpp::unicode {
         using size_type = typename StrT::size_type;
         using enum checked::error_handling;
 
-        auto const cur_len          = out.size();
-        auto const max_length       = canonical_decomp_max_size(out.begin(), out.end());
-        bool const requires_mapping = max_length != cur_len;
-
-        if (!requires_mapping) [[likely]] {
+        // A poor man's attempt at not allocating if the string doesn't require decomposition.
+        auto const sbeg = out.begin();
+        auto       spos = out.begin();
+        auto const send = out.end();
+        skip_to_decomp(spos, send);
+        if (spos == send) [[likely]] {
             return;
         }
+        auto const new_len     = static_cast<size_type>(send - spos);
+        auto const skipped_len = static_cast<size_type>(spos - sbeg);
+        istl::resize_and_overwrite(
+          out,
+          skipped_len + (new_len * 3U) + 1U,
+          [new_len, skipped_len](auto* ptr, size_type const max_length) constexpr noexcept {
+              // copy the skipped Code Points
+              auto const beg  = ptr;
+              auto       sptr = stl::next(ptr, max_length - new_len); // source start
+              auto const sfin = stl::next(ptr, max_length);           // source end
+              stl::advance(ptr, skipped_len);
 
-        assert(out.size() <= max_length);
-        auto const overwrite =
-          [cur_len]<typename T>(T* ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
-              auto const* const beg = ptr;
+              // moving the source to the end
+              stl::copy_n(ptr, new_len, sptr);
 
-              auto       backup_start = ptr + length - cur_len;
-              auto const backup_end   = ptr + length;
-              if (cur_len != length) {
-                  // moving everything to the end
-                  stl::copy(ptr, ptr + cur_len, backup_start);
-              }
-
-              while (backup_start != backup_end) {
-                  auto const cur_cp = checked::next_code_point<return_negated_char>(backup_start, backup_end);
+              while (sptr != sfin) {
+                  auto const cur_cp = checked::next_code_point<return_negated_char>(sptr, sfin);
                   if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
                       istl::iter_append(ptr, -cur_cp);
                       continue;
                   }
                   canonical_decompose_to(ptr, cur_cp);
               }
+              assert(ptr <= sfin);
+
               return static_cast<size_type>(ptr - beg);
-          };
-        istl::resize_and_overwrite(out, max_length, overwrite);
+          });
     }
 
     /**
@@ -548,7 +601,7 @@ namespace webpp::unicode {
     /**
      * Compose a Unicode string inplace
      *
-     * Attention: this function does NOT decompose, meaning, this function can be used in
+     * Attention: this function does NOT decompose, meaning this function can be used in
      * NFC normalization, but itself is NOT NFC.
      *
      * @returns the new length of the string. Specified end is no longer valid.
@@ -603,7 +656,7 @@ namespace webpp::unicode {
     /**
      * Compose a Unicode string inplace
      *
-     * Attention: this function does NOT decompose, meaning, this function can be used in
+     * Attention: this function does NOT decompose, meaning this function can be used in
      * NFC normalization, but itself is NOT NFC.
      *
      * This function is indeed noexcept, and that's not a mistake; but in case you know your
@@ -645,12 +698,8 @@ namespace webpp::unicode {
      */
     template <normalization_form Form = normalization_form::NFC, istl::String StrT = stl::u32string>
     static constexpr void normalize(StrT& out) {
-        // There is also a Unicode Consortium stability policy that canonical mappings are always limited in
-        // all versions of Unicode, so that no string when decomposed with NFC expands to more than 3× in
-        // length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
-        // guarantee also allows for certain optimizations in processing, especially in determining buffer
-        // sizes.
-        out.reserve(out.size() * 3);
+        // We don't need to reserve it, canonical_decompose will do it.
+        // out.reserve(out.size() * 3 + 1);
 
         if constexpr (normalization_form::gibberish == Form) {
             throw std::invalid_argument(
@@ -673,23 +722,6 @@ namespace webpp::unicode {
               istl::Appendable            StrT = stl::u32string,
               stl::random_access_iterator Iter>
     static constexpr void normalize(Iter spos, Iter send, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
-        using out_char_type = istl::char_type_of_t<StrT>;
-        using in_char_type  = istl::char_type_of_t<Iter>;
-        if constexpr (istl::String<StrT>) {
-            // There is also a Unicode Consortium stability policy that canonical mappings are always limited
-            // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3×
-            // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
-            // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
-            // determining buffer sizes.
-
-            // If input and output character types are different, this will take those into account as well
-            webpp_static_constexpr stl::size_t diff_space =
-              sizeof(out_char_type) > sizeof(in_char_type)
-                ? sizeof(out_char_type) - sizeof(in_char_type)
-                : 1U;
-            out.reserve(static_cast<stl::size_t>(send - spos) * diff_space * 3U);
-        }
-
         if constexpr (normalization_form::gibberish == Form) {
             throw std::invalid_argument(
               "We don't know what your intentions are, but calling this function and ask to normalize it to "

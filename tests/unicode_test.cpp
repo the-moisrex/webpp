@@ -6019,6 +6019,12 @@ TEST(Unicode, CanonicalComposeSpecial) {
     using webpp::unicode::toNFC;
     using webpp::unicode::toNFD;
     if constexpr (enable_utf8_composition_tests) {
+        EXPECT_EQ(u8"\xa\xa", toNFD<std::u8string>(u8"\xa\xa"));
+        EXPECT_EQ(U"\xa\xa", toNFD<std::u32string>(U"\xa\xa"));
+
+        EXPECT_EQ(u8"ᾂ", toNFD<std::u8string>(u8"ᾂ"));
+        EXPECT_EQ(U"ᾂ", toNFD<std::u32string>(U"ᾂ"));
+
         EXPECT_EQ(U"⋬⋬⋬", toNFC<std::u32string>(U"⋬⋬⋬"));
         std::u8string str8 = u8"⋬⋬⋬";
         webpp::unicode::canonical_compose(str8);
