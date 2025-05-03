@@ -357,31 +357,6 @@ namespace webpp::unicode {
         return arr;
     }
 
-    /**
-     * Decompose the `code_point` into `out`.
-     * @tparam Iter Iter can be an array, iterator, string, or similar types.
-     * @returns the UTF-8 size of mapped values
-     */
-    template <istl::Appendable Iter   = std::u8string::iterator,
-              stl::integral    SizeT  = istl::size_type_of_t<Iter>,
-              istl::Iterable   InpStr = stl::u32string_view>
-    static constexpr SizeT canonical_decompose_to(Iter& out, InpStr const str)
-      noexcept(istl::NothrowAppendable<Iter>) {
-        using enum checked::error_handling;
-        using char_type  = istl::appendable_value_type_t<Iter>;
-        SizeT      count = 0;
-        auto const endp  = stl::end(str);
-        for (auto pos = stl::begin(str); pos != endp;) {
-            auto const code_point = checked::next_code_point<return_negated_char>(pos, endp);
-            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                istl::iter_append(out, static_cast<char_type>(-code_point));
-                ++count;
-                continue;
-            }
-            count += canonical_decompose_to(out, code_point);
-        }
-        return count; // UTF-8 length
-    }
 
     /// Get the max length required for decomposition
     template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
@@ -414,7 +389,7 @@ namespace webpp::unicode {
         assert((max_length >= decomp_max_required_length<in_char_type, out_char_type>(orig_len)));
 
         // inplace decomposition has been asked of us:
-        if constexpr (stl::same_as<in_char_type, out_char_type>) {
+        if constexpr (stl::same_as<Iter, OIter>) {
             if (ptr == spos) {
                 auto const sbeg = spos;
                 skip_to_decomp(spos, send);
@@ -501,6 +476,13 @@ namespace webpp::unicode {
             size_type const max_length = decomp_max_required_length<in_char_type, out_char_type>(cur_len);
             canonical_decompose(spos, send, out, max_length);
         }
+    }
+
+    template <istl::Appendable StrT = stl::u32string, istl::StringViewifiable InpStrT>
+    static constexpr void canonical_decompose(InpStrT&& src, StrT& out)
+      noexcept(istl::NothrowAppendable<StrT>) {
+        auto const strv = istl::string_viewify(stl::forward<InpStrT>(src));
+        canonical_decompose(strv.begin(), strv.end(), out);
     }
 
     /**
