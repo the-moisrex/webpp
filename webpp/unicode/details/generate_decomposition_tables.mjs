@@ -52,7 +52,7 @@ class DecompTable {
     maxMappedLength = 0;
     hangulIgnored = 0;
     // flattedDataView = [];
-    maxMaxLength = 0;
+    max8MaxLength = 0;
     max32MaxLength = 0;
     max16MaxLength = 0;
     #canonicalCompositions = null;
@@ -63,6 +63,7 @@ class DecompTable {
     #utf8MaxLen = 0;
     #utf8MaxDiff = 0;
     #utf8MaxFactor = 0;
+    #maxExpandFactor = 0;
     #utf8MaxCP = {};
 
     // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
@@ -331,7 +332,7 @@ class DecompTable {
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
-        static constexpr auto max_utf8_mapped_length = ${self.maxMaxLength}UL;
+        static constexpr auto max_utf8_mapped_length = ${self.max8MaxLength}UL;
 
         /// Maximum values of UTF-16 code points mapped
         static constexpr auto max_utf16_mapped_length = ${self.max16MaxLength}UL;
@@ -417,7 +418,8 @@ class DecompTable {
 
             if (mappedTo.length > this.max32MaxLength) {
                 this.max32MaxLength = mappedTo.length;
-                this.max16MaxLength = String.fromCodePoint(...mappedTo.map((val) => Number(val))).length; // convert to UTF-16, then get the length
+                this.max16MaxLength = mappedTo.length * 2;
+                this.max8MaxLength = utf32To8All(mappedTo).length;
             }
 
             // calculating the last item that it's value is zero
@@ -474,6 +476,11 @@ class DecompTable {
                     mappedToUTF8,
                     codePointUTF8: curUTF8
                 };
+            }
+
+            const expandFactor = Math.max(mappedTo.length, curFactor);
+            if (expandFactor > this.#maxExpandFactor) {
+                this.#maxExpandFactor = expandFactor;
             }
         }
     }
@@ -554,7 +561,7 @@ class DecompTable {
 
     processRendered(renderedTables) {
         return `
-    /// Max UTF-8 Decomposition's Length minus the that Code Point
+    /// Max UTF-8 Decomposition's Length minus the Code Point
     /// ${this.#utf8MaxCP.codePoint.toString(16).toUpperCase()} => ${this.#utf8MaxCP.mappedTo.map(val => Number(val).toString(16).toUpperCase()).join(", ")}
     /// ${this.#utf8MaxCP.codePointUTF8.join(', ')} => ${this.#utf8MaxCP.mappedToUTF8.join(", ")}
     ///
@@ -562,12 +569,13 @@ class DecompTable {
     /// all versions of Unicode, so that no string when decomposed with NFC expands to more than 3x in
     /// length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
     /// guarantee also allows for certain optimizations in processing, especially in determining buffer sizes.
-    static constexpr std::uint16_t max_decomp_factor = ${this.#utf8MaxFactor}U; // times
-    static constexpr std::uint16_t max_decomp_diff = ${this.#utf8MaxDiff}U;
+    static constexpr std::uint16_t max_utf8_decomp_factor = ${this.#utf8MaxFactor}U; // times - original-length
+    static constexpr std::uint16_t max_utf8_decomp_diff = ${this.#utf8MaxDiff}U;
     static constexpr std::uint16_t max_utf8_decomp_length = ${this.#utf8MaxLen}U;
+    static constexpr std::uint16_t max_decomp_expand_factor = ${this.#maxExpandFactor}U; // times; UTF8/UTF16/UTF32
 
     /**
-     * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by standard);
+     * In index table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by the standard);
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_mapped_deomps = 0x${this.lastMapped.toString(16).toUpperCase()}UL;

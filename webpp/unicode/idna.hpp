@@ -445,7 +445,6 @@ namespace webpp::unicode::idna {
         using stl::to_underlying;
         using unicode::normalization_form;
 
-        // NOLINTBEGIN(*-signed-bitwise)
 
         // Normalization is guaranteed to not require more space than 3 times the input.
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
@@ -594,8 +593,6 @@ namespace webpp::unicode::idna {
         // Standard #39, Unicode Security Mechanisms [UTS39], and take appropriate actions. For example, a
         // label with mixed scripts or confusables may be called out in the UI. Note that the use of Punycode
         // to signal problems may be counter-productive, as described in [UTR36].
-
-        // NOLINTEND(*-signed-bitwise)
 
         // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
         // returned. No DNS lookup should be done.

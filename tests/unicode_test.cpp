@@ -7030,7 +7030,9 @@ TEST(Unicode, FuzzFixes2) {
 TEST(Unicode, FuzzTestFixes3) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
+    using webpp::stl::u32string;
     using webpp::unicode::canonical_composed;
+    using webpp::unicode::canonical_decomposed;
     using webpp::unicode::replacement_char;
 
     EXPECT_EQ(canonical_composed<char32_t>(0xffff'ff74, 0x30c), replacement_char<char32_t>);
@@ -7078,6 +7080,26 @@ TEST(Unicode, FuzzTestFixes3) {
       "\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab"
       "\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xaf\xab\xab\xab\xab\xab\xab"
       "\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab"sv);
+
+
+    webpp::stl::string_view const big =
+      "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82"
+      "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1"
+      "\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE"
+      "\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82";
+    webpp::stl::u32string_view const u32big =
+      U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82"
+      U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82";
+
+    auto const u32bigger = canonical_decomposed<u32string>(u32big);
+    EXPECT_EQ(u32bigger.size(), u32big.size() * 4U);
+
+    auto const bigger = canonical_decomposed<u8string>(big);
+    EXPECT_EQ(bigger.size(), 240);
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x1F82'), U"\x03B1\x0313\x0300\x0345");
+
+    auto const u8to32bigger = canonical_decomposed<u32string>(big);
+    EXPECT_EQ(u8to32bigger.size(), (webpp::unicode::decomp_max_required_length<char, char32_t>(big.size())));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

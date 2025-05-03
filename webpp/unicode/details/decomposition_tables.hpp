@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 30 Apr 2025 00:45:44 GMT
+ *   This file's generation date:        Sat, 03 May 2025 00:00:41 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       251096
@@ -38,7 +38,7 @@
 namespace webpp::unicode::details {
 
 
-    /// Max UTF-8 Decomposition's Length minus the that Code Point
+    /// Max UTF-8 Decomposition's Length minus the Code Point
     /// 16126 => 1611E, 1611E, 1611F
     /// 240, 150, 132, 166 => 240, 150, 132, 158, 240, 150, 132, 158, 240, 150, 132, 159
     ///
@@ -46,13 +46,14 @@ namespace webpp::unicode::details {
     /// all versions of Unicode, so that no string when decomposed with NFC expands to more than 3x in
     /// length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
     /// guarantee also allows for certain optimizations in processing, especially in determining buffer sizes.
-    static constexpr std::uint16_t max_decomp_factor      = 3U; // times
-    static constexpr std::uint16_t max_decomp_diff        = 8U;
-    static constexpr std::uint16_t max_utf8_decomp_length = 12U;
+    static constexpr std::uint16_t max_utf8_decomp_factor   = 3U; // times - original-length
+    static constexpr std::uint16_t max_utf8_decomp_diff     = 8U;
+    static constexpr std::uint16_t max_utf8_decomp_length   = 12U;
+    static constexpr std::uint16_t max_decomp_expand_factor = 4U; // times; UTF8/UTF16/UTF32
 
     /**
-     * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's
-     * mapped to the input code point by standard); so it's designed this way to reduce the table size.
+     * In index table, any code point bigger than this number will be "non-mapped" (it's mapped to the input
+     * code point by the standard); so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_mapped_deomps = 0x2FA40UL;
 
@@ -112,10 +113,10 @@ namespace webpp::unicode::details {
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
-        static constexpr auto max_utf8_mapped_length = 0UL;
+        static constexpr auto max_utf8_mapped_length = 8UL;
 
         /// Maximum values of UTF-16 code points mapped
-        static constexpr auto max_utf16_mapped_length = 4UL;
+        static constexpr auto max_utf16_mapped_length = 8UL;
 
         /// Maximum values of code points mapped (UTF-32)
         static constexpr auto max_utf32_mapped_length = 4UL;

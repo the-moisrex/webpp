@@ -77,6 +77,20 @@ namespace webpp::unicode {
     static constexpr auto half_base  = 0x001'0000UL;
     static constexpr auto half_mask  = 0x3FFUL;
 
+    /// Match the max length of two strings based on their character type
+    template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
+    [[nodiscard]] static constexpr stl::size_t adjust_utf_output_size(stl::size_t inp_size) noexcept {
+        webpp_static_constexpr auto inp = sizeof(InCharT);
+        webpp_static_constexpr auto out = sizeof(OutCharT);
+
+        // If the input and output character types are different, this will take those into account as well
+        if constexpr (inp < out) {
+            inp_size /= out - inp;
+        } else if constexpr (inp > out) {
+            inp_size *= inp - out;
+        }
+        return inp_size; // output size
+    }
 
     /// utf8_leading_code_units[N] gives you the start of code unit that is required to
     /// be followed by N other code units.
@@ -210,15 +224,14 @@ namespace webpp::unicode {
         // NOLINTEND(*-avoid-c-arrays)
     } // namespace details
 
-    template <typename value_type, stl::integral SizeT = stl::size_t>
-        requires(stl::is_integral_v<value_type>)
-    [[nodiscard]] static constexpr SizeT required_length_of(value_type const value) noexcept {
-        if constexpr (UTF16<value_type>) {
-            if ((value & 0xFC00U) == 0xD800U) {
+    template <UTF CharT, stl::integral SizeT = stl::size_t>
+    [[nodiscard]] static constexpr SizeT required_length_of(CharT const code_unit) noexcept {
+        if constexpr (UTF16<CharT>) {
+            if ((code_unit & 0xFC00U) == 0xD800U) {
                 return 2U;
             }
             return 1U;
-        } else if constexpr (UTF8<value_type>) {
+        } else if constexpr (UTF8<CharT>) {
             // alternative implementation:
             // return value < 0x80
             //          ? 1
@@ -243,8 +256,7 @@ namespace webpp::unicode {
             // return 1;
 
             // impl 3:
-            using unsigned_type = stl::make_unsigned_t<value_type>; // to avoid using "char" warnings
-            return static_cast<SizeT>(details::utf8_skip[static_cast<unsigned_type>(value)]);
+            return static_cast<SizeT>(details::utf8_skip[static_cast<unsigned char>(code_unit)]);
         } else {
             return 1U;
         }

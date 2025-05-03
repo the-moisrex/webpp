@@ -174,7 +174,7 @@ namespace webpp::unicode {
             auto       cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
-                // skip next code point as well, the next one is never going to be swapped with this one
+                // skip the next code point as well, the next one is never going to be swapped with this one
                 if (!checked::next_char<Iter>(pos, end)) {
                     break;
                 }
@@ -239,7 +239,7 @@ namespace webpp::unicode {
     /**
      * Decompose the `code_point` into `out`.
      * @tparam Iter Iter can be an array, iterator, string, or similar types.
-     * @returns the number of mapped values
+     * @returns the UTF-8 length of mapped values
      */
     template <istl::Appendable       Iter  = std::u8string::iterator,
               stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
@@ -295,7 +295,7 @@ namespace webpp::unicode {
         if (len == 0) {
             return append<Iter, SizeT>(out, code_point);
         }
-        return len;
+        return len; // UTF-8 Length regardless of the output type.
     }
 
     /**
@@ -360,7 +360,7 @@ namespace webpp::unicode {
     /**
      * Decompose the `code_point` into `out`.
      * @tparam Iter Iter can be an array, iterator, string, or similar types.
-     * @returns the number of mapped values
+     * @returns the UTF-8 size of mapped values
      */
     template <istl::Appendable Iter   = std::u8string::iterator,
               stl::integral    SizeT  = istl::size_type_of_t<Iter>,
@@ -380,24 +380,21 @@ namespace webpp::unicode {
             }
             count += canonical_decompose_to(out, code_point);
         }
-        return count;
+        return count; // UTF-8 length
     }
 
-    template <istl::AppendableStorage StrT   = decomposed_array<>,
-              istl::Iterable          InpStr = stl::u32string_view,
-              typename... Args>
-        requires(stl::constructible_from<StrT, Args...>)
-    [[nodiscard]] static constexpr StrT canonical_decomposed(InpStr&& str, Args&&... args)
-      noexcept(istl::NothrowAppendable<StrT>) {
-        StrT arr{stl::forward<Args>(args)...};
-        auto iter = istl::appendable_iter_of(arr);
-        canonical_decompose_to(iter, stl::forward<InpStr>(str));
-        return arr;
+    /// Get the max length required for decomposition
+    template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
+    [[nodiscard]] static constexpr stl::size_t decomp_max_required_length(
+      stl::size_t const orig_size) noexcept {
+        // There is also a Unicode Consortium stability policy that canonical mappings are always limited
+        // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3x
+        // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
+        // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
+        // determining buffer sizes.
+        return adjust_utf_output_size<InCharT, OutCharT>(orig_size * details::max_decomp_expand_factor);
     }
 
-    /**
-     * `ptr` MUST at least contain 3 times the current length (send - spos)
-     */
     template <stl::random_access_iterator Iter, stl::random_access_iterator OIter = Iter>
     static constexpr void
     canonical_decompose(Iter spos, Iter send, OIter& ptr, stl::size_t const max_length) noexcept {
@@ -407,16 +404,14 @@ namespace webpp::unicode {
         using out_char_type = typename stl::iterator_traits<OIter>::value_type;
 
         auto const orig_len = static_cast<stl::size_t>(send - spos);
+        auto const ptr_beg  = ptr;
 
         if constexpr (stl::is_convertible_v<Iter, OIter>) {
             // Output cannot be in between the input, out == spos is okay, it's an inplace decomposition.
             assert(!(ptr > spos && ptr < send));
         }
 
-        // If input and output character types are different, this will take those into account as well
-        webpp_static_constexpr stl::size_t diff_space =
-          sizeof(out_char_type) > sizeof(in_char_type) ? sizeof(out_char_type) - sizeof(in_char_type) : 1U;
-        assert(max_length >= ((orig_len * 3U) * diff_space) + 1U);
+        assert((max_length >= decomp_max_required_length<in_char_type, out_char_type>(orig_len)));
 
         // inplace decomposition has been asked of us:
         if constexpr (stl::same_as<in_char_type, out_char_type>) {
@@ -427,11 +422,11 @@ namespace webpp::unicode {
                 // spos may be const, so we change the output pointer
                 auto const cur_len    = spos - sbeg;
                 auto const rem_len    = send - spos;
-                auto const rest_start = static_cast<diff_type>(max_length - rem_len);
+                auto const rest_start = static_cast<diff_type>(max_length) - static_cast<diff_type>(rem_len);
                 stl::copy_n(spos, rem_len, stl::next(ptr, rest_start));
                 stl::advance(ptr, cur_len);
                 spos = stl::next(sbeg, rest_start);
-                send = stl::next(sbeg, max_length);
+                send = stl::next(sbeg, static_cast<diff_type>(max_length));
             }
         }
 
@@ -443,6 +438,8 @@ namespace webpp::unicode {
             }
             canonical_decompose_to(ptr, cur_cp);
         }
+
+        assert(max_length >= static_cast<stl::size_t>(ptr - ptr_beg));
     }
 
     template <istl::Appendable StrT = stl::u32string, stl::random_access_iterator Iter>
@@ -453,20 +450,12 @@ namespace webpp::unicode {
         using in_char_type  = typename stl::iterator_traits<Iter>::value_type;
         using out_char_type = istl::char_type_of_t<StrT>;
 
-        // There is also a Unicode Consortium stability policy that canonical mappings are always limited
-        // in all versions of Unicode, so that no string when decomposed with NFC expands to more than 3×
-        // in length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or
-        // UTF-32. This guarantee also allows for certain optimizations in processing, especially in
-        // determining buffer sizes.
-
-        // If input and output character types are different, this will take those into account as well
-        webpp_static_constexpr stl::size_t diff_space =
-          sizeof(out_char_type) > sizeof(in_char_type) ? sizeof(out_char_type) - sizeof(in_char_type) : 1U;
-
         if constexpr (istl::String<StrT>) {
-            // The source should not be the output; for inplace decomposition, use its own function.
-            assert(!(spos >= out.begin() && spos < out.end()));
-            assert(!(send >= out.begin() && send < out.end()));
+            if constexpr (stl::convertible_to<Iter, typename StrT::const_iterator>) {
+                // The source should not be the output; for inplace decomposition, use its own function.
+                assert(!(spos >= out.begin() && spos < out.end()));
+                assert(!(send >= out.begin() && send < out.end()));
+            }
 
             // A poor man's attempt at not allocating if the string doesn't require decomposition.
             auto const sbeg = spos;
@@ -479,15 +468,18 @@ namespace webpp::unicode {
 
             auto const new_len     = static_cast<size_type>(send - spos);
             auto const skipped_len = static_cast<size_type>(spos - sbeg);
+            auto const max_len =
+              out.size() + adjust_utf_output_size<in_char_type, out_char_type>(skipped_len) +
+              decomp_max_required_length<in_char_type, out_char_type>(new_len);
 
             istl::resize_and_overwrite(
               out,
-              out.size() + ((skipped_len + (new_len * 3U)) * diff_space) + 1U,
+              max_len,
               [out_len = out.size(), sbeg, skipped_len, &spos, send](
                 auto*                            ptr,
                 [[maybe_unused]] size_type const length) constexpr noexcept {
-                  stl::advance(ptr, out_len); // We're going to append to the string
                   auto const beg = ptr;
+                  stl::advance(ptr, out_len); // We're going to append to the string
                   stl::copy_n(sbeg, skipped_len, ptr);
                   stl::advance(ptr, skipped_len);
 
@@ -500,11 +492,13 @@ namespace webpp::unicode {
                       canonical_decompose_to(ptr, cur_cp);
                   }
 
-                  return out_len + static_cast<size_type>(ptr - beg);
+                  auto const str_len = static_cast<size_type>(ptr - beg);
+                  assert(str_len <= length);
+                  return str_len;
               });
         } else {
             auto const      cur_len    = static_cast<size_type>(send - spos);
-            size_type const max_length = (cur_len * 3U * diff_space) + 1U;
+            size_type const max_length = decomp_max_required_length<in_char_type, out_char_type>(cur_len);
             canonical_decompose(spos, send, out, max_length);
         }
     }
@@ -515,6 +509,7 @@ namespace webpp::unicode {
     template <istl::String StrT = stl::u32string>
     static constexpr void canonical_decompose(StrT& out) {
         using size_type = typename StrT::size_type;
+        using diff_type = typename StrT::difference_type;
         using enum checked::error_handling;
 
         // A poor man's attempt at not allocating if the string doesn't require decomposition.
@@ -527,14 +522,17 @@ namespace webpp::unicode {
         }
         auto const new_len     = static_cast<size_type>(send - spos);
         auto const skipped_len = static_cast<size_type>(spos - sbeg);
+
+        // no need to use adjust_utf_size since input and output are the same
+        auto const max_len = skipped_len + decomp_max_required_length(new_len);
         istl::resize_and_overwrite(
           out,
-          skipped_len + (new_len * 3U) + 1U,
+          max_len,
           [new_len, skipped_len](auto* ptr, size_type const max_length) constexpr noexcept {
               // copy the skipped Code Points
               auto const beg  = ptr;
-              auto       sptr = stl::next(ptr, max_length - new_len); // source start
-              auto const sfin = stl::next(ptr, max_length);           // source end
+              auto       sptr = stl::next(ptr, static_cast<diff_type>(max_length - new_len)); // source start
+              auto const sfin = stl::next(ptr, static_cast<diff_type>(max_length));           // source end
               stl::advance(ptr, skipped_len);
 
               // moving the source to the end
@@ -548,10 +546,19 @@ namespace webpp::unicode {
                   }
                   canonical_decompose_to(ptr, cur_cp);
               }
+              auto const written_len = static_cast<size_type>(ptr - beg);
               assert(ptr <= sfin);
-
-              return static_cast<size_type>(ptr - beg);
+              assert(written_len <= max_length);
+              return written_len;
           });
+    }
+
+    template <istl::String OStrT = stl::u32string, istl::StringViewifiable InpStr, typename... Args>
+    [[nodiscard]] static constexpr OStrT canonical_decomposed(InpStr&& src, Args&&... args) {
+        auto const strv = istl::string_viewify(stl::forward<InpStr>(src));
+        OStrT      out{stl::forward<Args>(args)...};
+        canonical_decompose(strv.begin(), strv.end(), out);
+        return out;
     }
 
     /**
@@ -565,7 +572,7 @@ namespace webpp::unicode {
         using details::composition::cp2s_rem;
 
 
-        // there are less second code points, so there will be more early bailouts
+        // there are fewer second code points, so there will be more early bailouts
         stl::size_t const pos2 = static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem);
         if (pos2 >= cp2s.size()) [[unlikely]] {
             return replacement_char<CharT>;
