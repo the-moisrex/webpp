@@ -68,7 +68,7 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
         using enum domain_name_status;
 
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
+        using char_type = stl::iter_value_t<Iter>;
 
         if (pos == end) {
             return empty_subdomain;

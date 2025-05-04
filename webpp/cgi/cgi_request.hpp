@@ -16,7 +16,7 @@
 namespace webpp::http {
 
     template <typename CommonHTTPRequest>
-    struct cgi_request final : public CommonHTTPRequest,
+    struct cgi_request final : CommonHTTPRequest,
                                details::request_view_interface<typename CommonHTTPRequest::traits_type> {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
@@ -30,7 +30,7 @@ namespace webpp::http {
         string_type cache;
 
         string_view_type put_header_name(string_view_type name) {
-            using diff_t = typename stl::iterator_traits<typename string_type::iterator>::difference_type;
+            using diff_t = stl::iter_difference_t<typename string_type::iterator>;
             cache.append(name.data(), name.size());
             stl::replace(cache.begin() + static_cast<diff_t>(cache.size()) - static_cast<diff_t>(name.size()),
                          cache.end(),

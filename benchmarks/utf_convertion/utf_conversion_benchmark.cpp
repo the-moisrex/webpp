@@ -16,7 +16,7 @@ namespace v1 {
               UTF32                       CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
         using code_point_type    = CodePointType;
-        using char_type          = typename stl::iterator_traits<Iter>::value_type;
+        using char_type          = stl::iter_value_t<Iter>;
         using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
         if (pos == end) {

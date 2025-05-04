@@ -29,10 +29,9 @@ namespace webpp::uri {
                                                   uri_components<base_seg_type, BaseIter>>;
         using seg_type       = typename clean_out_type::seg_type; // this might be different from OutSegType
         using iterator       = Iter;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-        using state_type      = uri_status_type;
-        using vec_iterator    = typename clean_out_type::vec_iterator;
+        using char_type      = stl::iter_value_t<iterator>;
+        using state_type     = uri_status_type;
+        using vec_iterator   = typename clean_out_type::vec_iterator;
 
         static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;

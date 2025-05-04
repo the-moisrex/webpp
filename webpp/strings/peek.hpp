@@ -9,7 +9,7 @@ namespace webpp::ascii {
 
     /// Look ahead and see if the next values are the ones that we expect
     template <typename Iter, typename EIter = Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool peek(Iter pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
             return pos != end && ((val == *pos) && ...);
@@ -21,7 +21,7 @@ namespace webpp::ascii {
 
     /// Look ahead and see if the expected values are there, or we're at the end
     template <typename Iter, typename EIter = Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool peek_or_end(Iter pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
             return pos == end || ((val == *pos) && ...);
@@ -34,7 +34,7 @@ namespace webpp::ascii {
     /// Look ahead and see if the specified values are there or not
     /// This one doesn't check the boundaries
     template <typename Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool peek(Iter pos, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
             return ((val == *pos) && ...);
@@ -47,7 +47,7 @@ namespace webpp::ascii {
     /// Look ahead and see if the next values are the ones that we expect, if it is, move "pos" there,
     /// otherwise, do nothing.
     template <typename Iter, typename EIter = Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool inc_if(Iter& pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
             if (pos != end && ((val == *pos) && ...)) {
@@ -70,7 +70,7 @@ namespace webpp::ascii {
     /// otherwise, do nothing.
     /// If any of the specified values are there, the increment will happen
     template <typename Iter, typename EIter = Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool inc_if_any(Iter& pos, EIter end, ValT... val) noexcept {
         if (pos != end && ((val == *pos) || ...)) {
             ++pos;
@@ -81,7 +81,7 @@ namespace webpp::ascii {
 
     /// trim left
     template <typename Iter, typename EIter = Iter, typename... ValT>
-        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+        requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     static constexpr bool inc_until_any(Iter& pos, EIter end, ValT... val) noexcept {
         bool found_value = false;
         while (pos != end && ((val == *pos) || ...)) {

@@ -158,7 +158,7 @@ namespace webpp::unicode {
      */
     template <stl::indirectly_swappable Iter = char8_t*>
     static constexpr void canonical_reorder(Iter start, Iter const& end)
-      noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using unchecked::next_char_copy;
         using unchecked::swap_code_points;
         using enum checked::error_handling;
@@ -197,8 +197,7 @@ namespace webpp::unicode {
 
     template <istl::String StrT = stl::u32string>
     static constexpr void canonical_reorder(StrT& out)
-      noexcept(stl::is_nothrow_swappable_v<
-               typename stl::iterator_traits<typename stl::remove_cvref_t<StrT>::iterator>::value_type>) {
+      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<typename stl::remove_cvref_t<StrT>::iterator>>) {
         using iterator_type = typename stl::remove_cvref_t<StrT>::iterator;
         canonical_reorder<iterator_type>(stl::begin(out), stl::end(out));
     }
@@ -220,7 +219,7 @@ namespace webpp::unicode {
     //           typename Iter,
     //           typename EIter = istl::nothing_type>
     // [[nodiscard]] static constexpr bool is_normalized(Iter start, EIter end = {}) noexcept {
-    //     using char_type = typename stl::iterator_traits<Iter>::value_type;
+    //     using char_type = stl::iter_value_t<Iter>;
     //     return false;
     // }
 
@@ -373,9 +372,9 @@ namespace webpp::unicode {
     static constexpr void
     canonical_decompose(Iter spos, Iter send, OIter& ptr, stl::size_t const max_length) noexcept {
         using enum checked::error_handling;
-        using diff_type     = typename stl::iterator_traits<OIter>::difference_type;
-        using in_char_type  = typename stl::iterator_traits<Iter>::value_type;
-        using out_char_type = typename stl::iterator_traits<OIter>::value_type;
+        using diff_type     = stl::iter_difference_t<OIter>;
+        using in_char_type  = stl::iter_value_t<Iter>;
+        using out_char_type = stl::iter_value_t<OIter>;
 
         auto const orig_len = static_cast<stl::size_t>(send - spos);
         auto const ptr_beg  = ptr;
@@ -421,7 +420,7 @@ namespace webpp::unicode {
       noexcept(istl::NothrowAppendable<StrT>) {
         using size_type = stl::size_t;
         using enum checked::error_handling;
-        using in_char_type  = typename stl::iterator_traits<Iter>::value_type;
+        using in_char_type  = stl::iter_value_t<Iter>;
         using out_char_type = istl::char_type_of_t<StrT>;
 
         if constexpr (istl::String<StrT>) {
@@ -599,8 +598,7 @@ namespace webpp::unicode {
               stl::random_access_iterator EIter = char32_t const* const>
     [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT canonical_compose(
       Iter& ptr,
-      EIter end)
-      noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
+      EIter end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
         using reducer_type = utf_reducer<4, Iter>;
 
         reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
@@ -730,7 +728,7 @@ namespace webpp::unicode {
                 canonical_reorder(out);
                 canonical_compose(out);
             } else {
-                using diff_type                       = typename stl::iterator_traits<StrT>::difference_type;
+                using diff_type                       = stl::iter_difference_t<StrT>;
                 stl::random_access_iterator auto obeg = out;
                 canonical_decompose(spos, send, out);
                 stl::random_access_iterator auto const oend = out;

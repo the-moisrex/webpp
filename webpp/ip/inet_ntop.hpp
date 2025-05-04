@@ -63,7 +63,7 @@ namespace webpp {
     static constexpr Iter inet_ntop6(stl::uint8_t const* src, Iter out) noexcept {
         using ascii::details::hex_chars;
 
-        using char_type = typename istl::char_type_of_t<typename stl::iterator_traits<Iter>::pointer>;
+        using char_type = stl::iter_value_t<Iter>;
 
         if (src == nullptr) {
             return nullptr;
@@ -72,9 +72,8 @@ namespace webpp {
         *out = '\0';
 
         char_type           hexa[8 * 5];
-        char_type*          hex_ptr   = static_cast<char*>(hexa);
-        stl::uint8_t const* src_ptr   = src;
-        char_type*          octet_ptr = hex_ptr;
+        char_type*          hex_ptr = static_cast<char*>(hexa);
+        stl::uint8_t const* src_ptr = src;
 
 
         int j             = 0;
@@ -84,13 +83,13 @@ namespace webpp {
         for (int i = 0; i != 8; ++i) {
             bool skip = true;
 
-            octet_ptr    = hex_ptr;
-            *octet_ptr++ = '\0';
-            *octet_ptr++ = '\0';
-            *octet_ptr++ = '\0';
-            *octet_ptr++ = '\0';
-            *octet_ptr++ = '\0';
-            octet_ptr    = hex_ptr;
+            char_type* octet_ptr = hex_ptr;
+            *octet_ptr++         = '\0';
+            *octet_ptr++         = '\0';
+            *octet_ptr++         = '\0';
+            *octet_ptr++         = '\0';
+            *octet_ptr           = '\0';
+            octet_ptr            = hex_ptr;
 
             stl::uint8_t low_hex_8bit  = *src_ptr++;
             stl::uint8_t high_hex_8bit = low_hex_8bit >> 4U;
@@ -114,7 +113,7 @@ namespace webpp {
             }
 
             high_hex_8bit  = low_hex_8bit & 0x0FU;
-            *octet_ptr++   = hex_chars<char_type>[high_hex_8bit];
+            *octet_ptr      = hex_chars<char_type>[high_hex_8bit];
             hex_ptr       += 5;
 
 
@@ -244,7 +243,7 @@ namespace webpp {
             return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
         }
 
-        // Step 3: Calculate total length based on longest run
+        // Step 3: Calculate total length based on the longest run
         int total_length = 0;
         if (longest_count >= 1) {
             int const groups_before = longest_index;

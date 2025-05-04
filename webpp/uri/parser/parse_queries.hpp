@@ -30,9 +30,11 @@ namespace webpp::uri {
         }
 
         template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void
-        append_query_value(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count, typename CtxT::iterator seg_beg)
-          noexcept(CtxT::is_nothrow) {
+        static constexpr void append_query_value(
+          CtxT&                        ctx,
+          BufT&                        buffer,
+          stl::iter_difference_t<CtxT> count,
+          typename CtxT::iterator      seg_beg) noexcept(CtxT::is_nothrow) {
             if constexpr (CtxMappedBuffer<BufT, CtxT>) {
                 if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
                     ctx.pos += count;

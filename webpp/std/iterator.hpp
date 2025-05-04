@@ -65,7 +65,7 @@ namespace webpp::istl {
         requires(stl::forward_iterator<stl::remove_cvref_t<T>> &&
                  !requires { typename stl::remove_pointer_t<stl::remove_cvref_t<T>>::value_type; })
     struct appendable_value_type<T> {
-        using type = typename stl::iterator_traits<stl::remove_cvref_t<T>>::value_type;
+        using type = stl::iter_value_t<stl::remove_cvref_t<T>>;
     };
 
     template <typename T>

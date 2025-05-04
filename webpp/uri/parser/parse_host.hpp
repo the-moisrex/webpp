@@ -89,7 +89,7 @@ namespace webpp::uri {
 
         template <bool IgnoreWhitespaces = true, typename Iter>
         static constexpr auto head(Iter& pos, [[maybe_unused]] Iter end) noexcept {
-            using char_type = typename std::iterator_traits<Iter>::value_type;
+            using char_type = stl::iter_value_t<Iter>;
             if constexpr (IgnoreWhitespaces) {
                 for (;; ++pos) {
                     if (pos == end) {
@@ -115,7 +115,7 @@ namespace webpp::uri {
 
         template <bool IgnoreWhitespaces = true, typename Iter>
         static constexpr auto tail(Iter& pos, [[maybe_unused]] Iter beg) noexcept {
-            using char_type = typename std::iterator_traits<Iter>::value_type;
+            using char_type = stl::iter_value_t<Iter>;
             if constexpr (IgnoreWhitespaces) {
                 for (;; --pos) {
                     if (pos == beg) [[unlikely]] {

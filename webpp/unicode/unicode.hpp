@@ -371,7 +371,7 @@ namespace webpp::unicode {
         template <stl::forward_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
             using code_point_type    = CodePointType;
-            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
             // double casting to make sure negative values can't come out of it
@@ -426,7 +426,7 @@ namespace webpp::unicode {
                   UTF32                       CodePointType = char32_t>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
             using code_point_type    = CodePointType;
-            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
             if (pos == end) {
@@ -508,7 +508,7 @@ namespace webpp::unicode {
         template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
         [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos) noexcept {
             using code_point_type = CodePointType;
-            using char_type       = typename stl::iterator_traits<Iter>::value_type;
+            using char_type       = stl::iter_value_t<Iter>;
 
             auto val = static_cast<code_point_type>(*--pos);
             if constexpr (UTF16<char_type>) {
@@ -585,7 +585,7 @@ namespace webpp::unicode {
         static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from)
           noexcept(istl::NothrowAppendable<Iter>) {
             using char_type     = istl::appendable_value_type_t<Iter>;
-            using src_char_type = typename stl::iterator_traits<stl::remove_cvref_t<Iter2>>::value_type;
+            using src_char_type = stl::iter_value_t<stl::remove_cvref_t<Iter2>>;
             static_assert(sizeof(char_type) == sizeof(src_char_type),
                           "Character types need to have the same size.");
             if constexpr (UTF8<char_type>) {
@@ -617,7 +617,7 @@ namespace webpp::unicode {
 
         template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos) noexcept {
-            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            using char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF8<char_type>) {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
@@ -635,9 +635,8 @@ namespace webpp::unicode {
 
         template <stl::forward_iterator Iter = char8_t*>
         [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
-            using iter_type       = stl::iterator_traits<Iter>;
-            using char_type       = typename iter_type::value_type;
-            using difference_type = typename iter_type::difference_type;
+            using char_type       = stl::iter_value_t<Iter>;
+            using difference_type = stl::iter_difference_t<Iter>;
             if (pos == end) {
                 return false;
             }
@@ -668,8 +667,8 @@ namespace webpp::unicode {
 
         template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos, stl::size_t count) noexcept {
-            using char_type = typename stl::iterator_traits<Iter>::value_type;
-            using diff_type = typename stl::iterator_traits<Iter>::difference_type;
+            using char_type = stl::iter_value_t<Iter>;
+            using diff_type = stl::iter_difference_t<Iter>;
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 while (count != 0) {
                     next_char(pos);
@@ -699,7 +698,7 @@ namespace webpp::unicode {
          */
         template <stl::bidirectional_iterator Iter = char8_t const*>
         static constexpr void prev_char(Iter& pos) noexcept {
-            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            using char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF8<char_type>) {
                 --pos;
                 if ((*pos & 0xc0) != 0x80) {
@@ -734,7 +733,7 @@ namespace webpp::unicode {
 
         template <stl::bidirectional_iterator Iter = char8_t const*>
         static constexpr void prev_char(Iter& pos, stl::size_t count) noexcept {
-            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            using char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 while (count != 0) {
                     prev_char(pos);
@@ -761,10 +760,10 @@ namespace webpp::unicode {
         template <stl::indirectly_swappable Iter = char8_t*>
             requires(stl::random_access_iterator<Iter>)
         static constexpr void swap_code_points(Iter lhs, Iter rhs)
-          noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+          noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
             using stl::swap;
-            using char_type = typename stl::iterator_traits<Iter>::value_type;
-            using diff_type = typename stl::iterator_traits<Iter>::difference_type;
+            using char_type = stl::iter_value_t<Iter>;
+            using diff_type = stl::iter_difference_t<Iter>;
 
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 if (lhs > rhs) {
@@ -884,7 +883,7 @@ namespace webpp::unicode {
                   stl::forward_iterator Iter  = char32_t const*>
         static constexpr SizeT append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::appendable_value_type_t<StrT>;
-            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF32<src_char_type>) {
                 return append<StrT, SizeT>(out, *src++);
             } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
@@ -899,7 +898,7 @@ namespace webpp::unicode {
                   stl::forward_iterator Iter  = char32_t const*>
         static constexpr SizeT append(StrT& out, Iter const& src) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::appendable_value_type_t<StrT>;
-            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF32<src_char_type>) {
                 return append<StrT, SizeT>(out, *src);
             } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
@@ -916,7 +915,7 @@ namespace webpp::unicode {
         static constexpr SizeT append(StrT& out, Iter& src, EIter end)
           noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::char_traits_type_of_t<StrT>;
-            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
                 // no need to convert to UTF32 then convert to whatever
                 return append<StrT, SizeT>(out, *src++);
@@ -964,10 +963,9 @@ namespace webpp::unicode {
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
-            using iter_traits        = stl::iterator_traits<Iter>;
-            using char_type          = typename iter_traits::value_type;
+            using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
-            using difference_type    = typename iter_traits::difference_type;
+            using difference_type    = stl::iter_difference_t<Iter>;
 
             if (pos == end) {
                 return static_cast<code_point_type>(0); // return \0 if we're at the end already
@@ -1146,7 +1144,7 @@ namespace webpp::unicode {
         [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, Iter const& beg) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
-            using char_type          = typename stl::iterator_traits<Iter>::value_type;
+            using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
             if (pos == beg) {
@@ -1315,7 +1313,7 @@ namespace webpp::unicode {
         ///   the values are not a valid code point (upon which we return the length of 1).
         template <stl::random_access_iterator Iter = char8_t const*, stl::integral SizeT = stl::size_t>
         [[nodiscard]] static constexpr SizeT code_point_length(Iter pos, Iter const& end) noexcept {
-            using value_type = typename std::iterator_traits<Iter>::value_type;
+            using value_type = stl::iter_value_t<Iter>;
             if (pos == end) {
                 return 0;
             }
@@ -1348,7 +1346,7 @@ namespace webpp::unicode {
         template <stl::random_access_iterator OIterT = stl::u8string::iterator>
         static constexpr void advance(OIterT& out, OIterT const oend, stl::size_t index) noexcept {
             assert(static_cast<stl::size_t>(oend - out) >= index);
-            if constexpr (UTF32<typename std::iterator_traits<OIterT>::value_type>) {
+            if constexpr (UTF32<stl::iter_value_t<OIterT>>) {
                 stl::advance(out, index);
             } else {
                 for (; index != 0; --index) {

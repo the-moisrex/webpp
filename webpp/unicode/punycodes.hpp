@@ -113,7 +113,7 @@ namespace webpp::unicode::idna {
         using enum punycode_status;
         using enum checked::error_handling;
         using istl::iter_append;
-        using char_type = typename stl::iterator_traits<IterT>::value_type;
+        using char_type = stl::iter_value_t<IterT>;
         using size_type = istl::size_type_of_t<OIterT>;
 
         // out can be an iterator

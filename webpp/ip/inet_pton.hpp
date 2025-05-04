@@ -185,7 +185,7 @@ namespace webpp {
     inet_pton6(Iter& src, CIter src_endp, stl::uint8_t* out, CharT special_character = '/') noexcept {
         using enum inet_pton6_status;
 
-        using char_type = istl::char_type_of_t<stl::iterator_traits<Iter>>;
+        using char_type = stl::iter_value_t<Iter>;
 
         stl::uint8_t*             colon_ptr = nullptr;
         stl::uint8_t const* const beg       = out;

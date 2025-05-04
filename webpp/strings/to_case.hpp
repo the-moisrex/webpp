@@ -209,8 +209,8 @@ namespace webpp::ascii {
 
     template <typename InpIter, typename OutIter>
     constexpr void lower_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
-        using char_type       = typename stl::iterator_traits<InpIter>::value_type;
-        using difference_type = typename stl::iterator_traits<InpIter>::difference_type;
+        using char_type       = stl::iter_value_t<InpIter>;
+        using difference_type = stl::iter_difference_t<InpIter>;
         // if constexpr (sizeof(char_type) == sizeof(char)) {
         //     webpp_static_constexpr auto broadcast_80 = broadcast(0x80U);
         //     webpp_static_constexpr auto A_pack       = broadcast(128 - 'A');
@@ -245,7 +245,7 @@ namespace webpp::ascii {
 
     template <typename InpIter, typename OutIter>
     constexpr void upper_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
-        using difference_type = typename stl::iterator_traits<InpIter>::difference_type;
+        using difference_type = stl::iter_difference_t<InpIter>;
         auto const end        = inp + static_cast<difference_type>(length);
         while (inp != end) {
             *out++ = to_upper_copy(*inp++);

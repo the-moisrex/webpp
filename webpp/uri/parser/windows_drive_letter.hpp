@@ -17,7 +17,7 @@ namespace webpp::uri::details {
             // the non-modifiable version is the one that needs to be set, the modified versions already
             // contain the right value at this point in time
             istl::emplace_one(out, out.get_allocator());
-            buffer = out.begin() + static_cast<diff_type_of<CtxT>>(out.size() - 1);
+            buffer = out.begin() + static_cast<stl::iter_difference_t<CtxT>>(out.size() - 1);
         }
     }
 
@@ -45,11 +45,11 @@ namespace webpp::uri::details {
     /// 2. Set the segment start
     template <ParsingURIContext CtxT, ParsingOutput OutT>
     static constexpr void next_segment(
-      CtxT&                    ctx,
-      OutT&                    out,
-      CtxBufferOf<CtxT> auto&  buffer,
-      typename CtxT::iterator& beg,
-      diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
+      CtxT&                        ctx,
+      OutT&                        out,
+      CtxBufferOf<CtxT> auto&      buffer,
+      typename CtxT::iterator&     beg,
+      stl::iter_difference_t<CtxT> sep_count = 1) noexcept(CtxT::is_nothrow) {
         if constexpr (SegregatedOutput<OutT>) {
             if constexpr (CtxT::is_modifiable) {
                 skip_separator(ctx, out, sep_count);
@@ -83,7 +83,7 @@ namespace webpp::uri::details {
     [[nodiscard]] static constexpr bool starts_with_windows_driver_letter(Iter pos, EIter end) noexcept {
         // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
 
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
+        using char_type = stl::iter_value_t<Iter>;
 
         switch (end - pos) {
             case 0:

@@ -17,7 +17,7 @@ namespace webpp::v1 {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
-        using char_type = typename std::iterator_traits<Iter>::value_type;
+        using char_type = stl::iter_value_t<Iter>;
 
         // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
         // if it's an invalid character or out of range without putting 2 if statements on the main loop
@@ -96,7 +96,7 @@ namespace webpp::v2 {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
+        using char_type = stl::iter_value_t<Iter>;
 
         // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
         // if it's an invalid character or out of range without putting 2 if statements on the main loop
@@ -189,7 +189,7 @@ namespace webpp::v3 {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
+        using char_type = stl::iter_value_t<Iter>;
 
         // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
         // if it's an invalid character or out of range without putting 2 if statements on the main loop

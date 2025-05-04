@@ -693,8 +693,7 @@ namespace webpp::uri {
         // this might be different from OutSegType
         using seg_type        = typename clean_out_type::seg_type;
         using iterator        = typename clean_out_type::iterator;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using char_type       = stl::iter_value_t<iterator>;
         using state_type      = uri_status_type;
         using vec_iterator    = typename clean_out_type::vec_iterator;
 
@@ -771,8 +770,7 @@ namespace webpp::uri {
         using seg_type        = OutType;
         using base_type       = uri_components<base_seg_type, BaseIter>;
         using iterator        = Iter;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using char_type       = stl::iter_value_t<iterator>;
         using state_type      = uri_status_type;
 
         using out_container_type = stl::remove_pointer_t<out_type>;

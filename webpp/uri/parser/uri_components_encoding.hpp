@@ -11,9 +11,6 @@
 
 namespace webpp::uri::details {
 
-    template <ParsingURIContext CtxT>
-    using diff_type_of = typename stl::iterator_traits<typename CtxT::iterator>::difference_type;
-
 
     /// if it's segregated:
     ///   if it's modifiable path, vector::iterator
@@ -208,7 +205,7 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void skip_separator(CtxT& ctx, OutT& out, diff_type_of<CtxT> count) noexcept {
+    static constexpr void skip_separator(CtxT& ctx, OutT& out, stl::iter_difference_t<CtxT> count) noexcept {
         if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
             for (; count != 0; --count) {
                 append_to(out, *ctx.pos++);
@@ -221,9 +218,11 @@ namespace webpp::uri::details {
     /// Parsing path requires this so we can make sure the modifiable strings' separator is always '/' and
     /// not '\\' if the input contains that separator
     template <ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void
-    skip_separator(CtxT& ctx, OutT& out, typename CtxT::char_type separator, diff_type_of<CtxT> count = 1)
-      noexcept(CtxT::is_nothrow) {
+    static constexpr void skip_separator(
+      CtxT&                        ctx,
+      OutT&                        out,
+      typename CtxT::char_type     separator,
+      stl::iter_difference_t<CtxT> count = 1) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
             append_to(out, separator);
             ctx.pos += count;
@@ -242,12 +241,12 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT>
-    static constexpr void ignore_character(CtxT& ctx, diff_type_of<CtxT> count = 1) noexcept {
+    static constexpr void ignore_character(CtxT& ctx, stl::iter_difference_t<CtxT> count = 1) noexcept {
         ctx.pos += count;
     }
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-    static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept {
+    static constexpr void append_n(CtxT& ctx, BufT& buffer, stl::iter_difference_t<CtxT> count) noexcept {
         if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             for (; count != 0; --count) {
                 append_to(buffer, *ctx.pos++);
@@ -267,10 +266,10 @@ namespace webpp::uri::details {
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
     constexpr void append_inplace_of(
-      CtxT&                    ctx,
-      BufT&                    buffer,
-      typename CtxT::char_type inp_char,
-      diff_type_of<CtxT>       count = 1) noexcept {
+      CtxT&                        ctx,
+      BufT&                        buffer,
+      typename CtxT::char_type     inp_char,
+      stl::iter_difference_t<CtxT> count = 1) noexcept {
         if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }

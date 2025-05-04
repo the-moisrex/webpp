@@ -191,7 +191,7 @@ namespace webpp::unicode {
         using stl::to_underlying;
         using enum direction;
         using enum checked::error_handling;
-        using char_type = typename stl::iterator_traits<IterT>::value_type;
+        using char_type = stl::iter_value_t<IterT>;
 
         // The following rule, consisting of six conditions, applies to labels in Bidi domain names.
         // All the conditions must be satisfied for the rule to be satisfied.

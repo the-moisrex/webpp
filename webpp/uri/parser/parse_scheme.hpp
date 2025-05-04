@@ -59,8 +59,7 @@ namespace webpp::uri {
 
                 auto& out_str         = get_storage<components::scheme>(ctx);
                 using string_type     = stl::remove_cvref_t<decltype(out_str)>;
-                using iter_traits     = stl::iterator_traits<typename string_type::iterator>;
-                using difference_type = typename iter_traits::difference_type;
+                using difference_type = stl::iter_difference_t<typename string_type::iterator>;
                 using size_type       = typename string_type::size_type;
 
                 iterator   beg   = ctx.beg;

@@ -53,7 +53,7 @@ namespace webpp::http {
         using byte_type       = stl::byte;
         using vector_type     = istl::vector<stl::byte, traits_type>;
         using iterator        = typename vector_type::iterator;
-        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+        using difference_type = stl::iter_difference_t<iterator>;
 
         using istl::vector<stl::byte, TraitsType>::vector; // ctors
 

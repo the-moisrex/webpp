@@ -47,9 +47,7 @@ namespace webpp::uri {
               typename ConstIter         = char const*>
     [[nodiscard]] static constexpr bool
     decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
-        using iterator_traits = stl::iterator_traits<Iter>;
-        using pointer         = typename iterator_traits::pointer;
-        using char_type       = istl::char_type_of_t<pointer>;
+        using char_type = stl::iter_value_t<Iter>;
 
         webpp_static_constexpr auto ones      = static_cast<int>(~0UL);
         webpp_static_constexpr auto zero_char = static_cast<char_type>('\0');
@@ -101,7 +99,7 @@ namespace webpp::uri {
               istl::String OutStrT = stl::string>
     [[nodiscard]] static constexpr bool
     decode_uri_component(Iter& pos, CIter end, OutStrT& output, CharSet auto const& chars) {
-        using char_type = istl::char_type_of_t<typename stl::iterator_traits<Iter>::pointer>;
+        using char_type = stl::iter_value_t<Iter>;
 
         webpp_static_constexpr auto ones = static_cast<int>(~0UL);
 

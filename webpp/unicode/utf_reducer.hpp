@@ -21,9 +21,8 @@ namespace webpp::unicode {
     struct utf_range_marker {
         static_assert(stl::is_default_constructible_v<IterT>, "Iterator is not default constructible");
 
-        using iter_traits     = stl::iterator_traits<IterT>;
-        using unit_type       = typename iter_traits::value_type;
-        using difference_type = typename iter_traits::difference_type;
+        using unit_type       = stl::iter_value_t<IterT>;
+        using difference_type = stl::iter_difference_t<IterT>;
         using size_type       = stl::size_t;
 
       private:
@@ -347,7 +346,7 @@ namespace webpp::unicode {
 
     /// We don't need UTF-32 ranges, so we disable it
     template <typename IterT>
-        requires(UTF32<typename stl::iterator_traits<IterT>::value_type>)
+        requires(UTF32<stl::iter_value_t<IterT>>)
     struct utf_range_marker<IterT> {
         explicit constexpr utf_range_marker([[maybe_unused]] auto&&... args) noexcept {}
 
@@ -784,8 +783,8 @@ namespace webpp::unicode {
     struct utf_reducer {
         using value_type      = CodePointT;
         using iterator        = IterT;
-        using unit_type       = typename stl::iterator_traits<IterT>::value_type;
-        using difference_type = typename stl::iterator_traits<IterT>::difference_type;
+        using unit_type       = stl::iter_value_t<IterT>;
+        using difference_type = stl::iter_difference_t<IterT>;
         using size_type       = stl::size_t;
 
         static constexpr value_type  npos      = stl::numeric_limits<value_type>::max();

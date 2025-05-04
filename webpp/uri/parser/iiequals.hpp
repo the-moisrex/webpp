@@ -28,7 +28,7 @@ namespace webpp::uri {
             auto lhs_it = stl::begin(lhs);
             auto rhs_it = stl::begin(rhs);
 
-            using char_type = typename stl::iterator_traits<decltype(lhs_it)>::value_type;
+            using char_type = stl::iter_value_t<decltype(lhs_it)>;
 
             for (;;) {
                 if (lhs_it == stl::end(lhs)) {
