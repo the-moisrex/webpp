@@ -15,12 +15,12 @@ namespace webpp::uri {
 
         template <ParsingURIContext CtxT, ParsingOutput OutT>
         static constexpr void next_segment_of(
-          CtxT&                        ctx,
-          OutT&                        out,
-          CtxBufferOf<CtxT> auto&      buffer,
-          typename CtxT::iterator&     beg,
-          typename CtxT::char_type     separator,
-          stl::iter_difference_t<CtxT> sep_count = 1) noexcept(CtxT::is_nothrow) {
+          CtxT&                    ctx,
+          OutT&                    out,
+          CtxBufferOf<CtxT> auto&  buffer,
+          typename CtxT::iterator& beg,
+          typename CtxT::char_type separator,
+          diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
             if constexpr (SegregatedOutput<OutT>) {
                 if constexpr (CtxT::is_modifiable) {
                     skip_separator(ctx, out, sep_count);
@@ -44,12 +44,12 @@ namespace webpp::uri {
 
         template <ParsingURIContext CtxT, ParsingOutput OutT>
         static constexpr void pop_back(
-          CtxT&                                         ctx,
-          OutT&                                         out,
-          CtxBufferOf<CtxT> auto&                       buffer,
-          typename CtxT::iterator&                      beg,
-          [[maybe_unused]] stl::iter_difference_t<CtxT> hint = 0) noexcept {
-            using difference_type = stl::iter_difference_t<CtxT>;
+          CtxT&                               ctx,
+          OutT&                               out,
+          CtxBufferOf<CtxT> auto&             buffer,
+          typename CtxT::iterator&            beg,
+          [[maybe_unused]] diff_type_of<CtxT> hint = 0) noexcept {
+            using difference_type = diff_type_of<CtxT>;
             if constexpr (CtxT::is_modifiable && VectorOutput<OutT>) {
                 if (out.size() > 2) {
                     out.pop_back();

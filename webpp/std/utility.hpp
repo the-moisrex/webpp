@@ -112,15 +112,9 @@ namespace webpp::istl {
     }
 
     template <typename T>
-    [[nodiscard]] static constexpr auto nullptr_of() noexcept {
+    [[nodiscard]] static constexpr auto nullptr_of([[maybe_unused]] T&& obj) noexcept {
         using type = stl::remove_cvref_t<T>;
-        if constexpr (stl::is_pointer_v<type>) {
-            return nullptr;
-        } else if constexpr (stl::input_or_output_iterator<type>) {
-            return type{};
-        } else {
-            static_assert_false(T, "We don't know the nullptr of the specified type.");
-        }
+        return type{}; // std::nullptr_t{}
     }
 
 } // namespace webpp::istl

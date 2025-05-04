@@ -58,13 +58,13 @@ namespace webpp::unicode {
                 this->clear();
             } else {
                 assert(other.beginp < other.endp);
-                beginp = stl::exchange(other.beginp, istl::nullptr_of<decltype(other.beginp)>());
-                endp   = stl::exchange(other.endp, istl::nullptr_of<decltype(other.endp)>());
+                beginp = stl::exchange(other.beginp, istl::nullptr_of(other.beginp));
+                endp   = stl::exchange(other.endp, istl::nullptr_of(other.endp));
                 assert(beginp < endp);
             }
         }
 
-        /// str_end is the end of the string, and has nothing to do with the hole's end
+        /// str_end is the end of the string and has nothing to do with the hole's end
         constexpr void mark_code_point(IterT const& cp_beg, IterT const& str_end) noexcept {
             beginp = cp_beg;
             endp   = stl::next(beginp, checked::code_point_length<IterT, difference_type>(cp_beg, str_end));
