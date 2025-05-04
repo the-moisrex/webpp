@@ -357,7 +357,6 @@ namespace webpp::unicode {
         return arr;
     }
 
-
     /// Get the max length required for decomposition
     template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
     [[nodiscard]] static constexpr stl::size_t decomp_max_required_length(
@@ -593,7 +592,7 @@ namespace webpp::unicode {
      * Attention: this function does NOT decompose, meaning this function can be used in
      * NFC normalization, but itself is NOT NFC.
      *
-     * @returns the new length of the string. Specified end is no longer valid.
+     * @returns The new length of the string. Specified end is no longer valid.
      */
     template <stl::integral               SizeT = stl::size_t,
               stl::random_access_iterator Iter  = char32_t*,
@@ -678,7 +677,7 @@ namespace webpp::unicode {
      * Normalize a string inplace.
      *
      * Normalization in Unicode is a process that standardizes different binary representations of characters
-     * to ensure that equivalent characters are represented in a consistent manner. This is essential for
+     * to ensure that equivalent characters are represented consistently. This is essential for
      * accurate string comparison and processing in software applications.
      *
      * @tparam Form Normalization Form

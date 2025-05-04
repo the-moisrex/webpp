@@ -302,7 +302,7 @@ namespace webpp::unicode::idna {
     }
 
     /**
-     * Is Domain Label Valid.
+     * Is Domain Label Valid?
      * Valid Criteria: https://www.unicode.org/reports/tr46/#Validity_Criteria
      *
      * Preconditions:
@@ -370,7 +370,7 @@ namespace webpp::unicode::idna {
             valid &= length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-';
         }
 
-        // 5. Check if includes any dots (SKIPPED by default)
+        // 5. Check if it includes any dots (SKIPPED by default)
         if constexpr (Options.CheckDotInclusions) {
             // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
             // be optimizing for the failure path as opposed to optimizing for the happy path
@@ -379,7 +379,7 @@ namespace webpp::unicode::idna {
             }
         }
 
-        // 6. The label must not start with combining mark
+        // 6. The label must not start with a combining mark
         {
             auto const cur_cp = checked::next_code_point_copy<return_unchanged>(spos, send);
 
@@ -431,7 +431,7 @@ namespace webpp::unicode::idna {
      * make up one label and transforms it into a sequence of code points in
      * the ASCII range (0..7F).  If ToASCII succeeds, the original sequence
      * and the resulting sequence are equivalent labels.
-     *  - from RFC 3490
+     *  - From RFC 3490
      *
      *         RFC: https://www.rfc-editor.org/rfc/rfc3490.html#section-4.1
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
