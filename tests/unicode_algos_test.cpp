@@ -6,7 +6,6 @@
 
 using webpp::unicode::utf_reducer;
 
-
 TEST(UnicodeAlgos, BasicCodePointIterator) {
     std::u8string str = u8"تست";
     {
@@ -97,8 +96,8 @@ TEST(UnicodeAlgos, SimpleForward) {
         EXPECT_EQ(*pin, U'b');
         ++pin;
         EXPECT_EQ(*pin, U'س');
-        pin.spillover_set(U'\u0800'); // E0-A0-80
-        // EXPECT_EQ(*pin, U'\u0800');
+        pin.set(U'\u0800'); // E0-A0-80
+        EXPECT_EQ(*pin, U'\u0800');
         str.resize(reducer.size());
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
@@ -115,11 +114,11 @@ TEST(UnicodeAlgos, DoubleForward) {
         EXPECT_EQ(*pin2, U'a');
         ++pin2;
         pin1 = pin2.iter();
-        pin1.idle_set(U'b');
-        // EXPECT_EQ(*pin1, U'b');
-        // EXPECT_EQ(*pin2, U'b');
+        pin1.set(U'b');
+        EXPECT_EQ(*pin1, U'b');
+        EXPECT_EQ(*pin2, U'b');
         ++pin2;
-        pin2.spillover_set(U'\u0800'); // E0-A0-80
+        pin2.set(U'\u0800'); // E0-A0-80
         str.resize(reducer.size());
     }
     EXPECT_EQ(str, u8"ab\xE0\xA0\x80");
@@ -136,11 +135,11 @@ TEST(UnicodeAlgos, DoubleForwardUTF32) {
         EXPECT_EQ(*pin2, U'a');
         ++pin2;
         pin1 = pin2;
-        pin1.idle_set(U'b');
+        pin1.set(U'b');
         EXPECT_EQ(*pin1, U'b');
         EXPECT_EQ(*pin2, U'b');
         ++pin2;
-        pin2.spillover_set(U'\u0800'); // E0-A0-80
+        pin2.set(U'\u0800'); // E0-A0-80
         str.resize(reducer.size());
     }
     EXPECT_EQ(str, U"ab\u0800");
@@ -174,7 +173,7 @@ TEST(UnicodeAlgos, LinkedStates) {
         ++two;
         ++two;
         one = two;
-        one.idle_set(U'x');
+        one.set(U'x');
         ++two;
         two = 'y';
         str.resize(reducer.size());
@@ -182,16 +181,15 @@ TEST(UnicodeAlgos, LinkedStates) {
     EXPECT_EQ(str, u8"abcdxyت");
 }
 
+// We no longer have const pins
 TEST(UnicodeAlgos, ConstPin) {
     std::u8string str = u8"تتت";
     {
         utf_reducer<1> reducer{str.data(), str.size()};
-        auto [pin]  = reducer.pins();
-        auto [cpin] = reducer.new_const_pins();
-        pin         = U'a';
+        auto [pin] = reducer.pins();
+        pin        = U'a';
         EXPECT_EQ(*pin, U'a');
-        ++cpin;
-        pin = cpin;
+        ++pin;
         pin = 'b';
         reducer.set_end(++pin);
         str.resize(reducer.size());

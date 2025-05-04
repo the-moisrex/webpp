@@ -111,12 +111,6 @@ namespace webpp::istl {
         return stl::forward<Func>(func)(make_index_range<Start, End>());
     }
 
-    template <typename T>
-    [[nodiscard]] static constexpr auto nullptr_of([[maybe_unused]] T&& obj) noexcept {
-        using type = stl::remove_cvref_t<T>;
-        return type{}; // std::nullptr_t{}
-    }
-
 } // namespace webpp::istl
 
 namespace webpp::stl {

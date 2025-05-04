@@ -58,8 +58,8 @@ namespace webpp::unicode {
                 this->clear();
             } else {
                 assert(other.beginp < other.endp);
-                beginp = stl::exchange(other.beginp, istl::nullptr_of(other.beginp));
-                endp   = stl::exchange(other.endp, istl::nullptr_of(other.endp));
+                beginp = stl::exchange(other.beginp, IterT{});
+                endp   = stl::exchange(other.endp, IterT{});
                 assert(beginp < endp);
             }
         }
@@ -155,15 +155,13 @@ namespace webpp::unicode {
 
         /// Move the content of the hole
         constexpr void move_content(difference_type diff) noexcept {
-            if constexpr (stl::is_pointer_v<IterT>) {
-                assert(this->begin() != nullptr);
-                assert(this->end() != nullptr);
-            }
+            assert(this->begin() != IterT{});
+            assert(this->end() != IterT{});
             assert(!this->empty());
             assert(this->begin() < this->end());
-            if (diff == 0) {
-                return;
-            }
+            // if (diff == 0) {
+            //     return;
+            // }
             auto const length = this->size();
             assert(length > 0);
             if (diff < 0) {
@@ -175,7 +173,7 @@ namespace webpp::unicode {
             endp   += diff;
         }
 
-        /// Move the pack of iterators that you pass, and move them to the right position according to the
+        /// Move the pack of iterators that you pass and move them to the right position according to the
         /// previously moved content by move_content.
         template <typename IterableT>
         constexpr void move_iterators(difference_type diff, IterableT& iters) noexcept {
@@ -269,7 +267,7 @@ namespace webpp::unicode {
             }
         }
 
-        /// Shrinks the code hole to the specified length, and fills the removed parts
+        /// Shrinks the code hole to the specified length and fills the removed parts
         constexpr void shrink_into(size_type const length) noexcept {
             assert(length != 0);
             assert(length <= size());
@@ -379,14 +377,13 @@ namespace webpp::unicode {
     struct utf_reducer;
 
     /**
-     * Pin is a forward-iterator-like type that is designed to be used inside utf_reducer.
+     * Pin is a forward-iterator-like type designed to be used inside utf_reducer.
      *
      * Pin Acts (capabilities of pins):
      *   - Get: get the code point
      *   - Set (or Replace): replace a code point inplace if possible
      *   - Change Pin position to another pin location
      *   - Forward: go to the next code point
-     *
      *
      *   enum struct pin_states {
      *       filled,  // [X|'|']      All code units are filled
@@ -440,7 +437,7 @@ namespace webpp::unicode {
                 assert(iter() >= reducer->begin());
             }
 
-            // early blow up in case we did not find the correct ptr position:
+            // early blow-up in case we did not find the correct ptr position:
             // assert(is_code_unit_start(*iter()));
         }
 
@@ -571,7 +568,7 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(iterator other) const noexcept {
             // this might have unintentional consequences if other is in the middle of a UTF-8 code point
-            // and the ptr is in the beginning of that code point. we're assuming pointers can't be
+            // and the ptr is at the beginning of that code point. we're assuming pointers can't be
             // pointed to the middle of the Unicode code points.
             return iter() <=> other;
         }
@@ -642,11 +639,11 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void set_inplace(value_type            inp_code_point,
+        constexpr void set_inplace(value_type            code_point,
                                    difference_type const cur_len,
                                    difference_type const new_len) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
-                *iter() = inp_code_point;
+                *iter() = code_point;
             } else {
                 assert(iter() < reducer->newend);
 
@@ -654,7 +651,7 @@ namespace webpp::unicode {
                 auto       iter_cpy = istl::deref(iter());
 
                 adjust_hole(stl::next(iter(), cur_len), diff);
-                auto const changed_length = unchecked::append(iter_cpy, inp_code_point);
+                auto const changed_length = unchecked::append(iter_cpy, code_point);
                 assert(static_cast<difference_type>(changed_length) == new_len);
 
                 test_state_correctness();
@@ -663,22 +660,22 @@ namespace webpp::unicode {
 
       public:
         /// Pin Act: Set
-        constexpr void set(value_type inp_code_point) noexcept(is_nothrow) {
+        constexpr void set(value_type code_point) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
-                *iter() = inp_code_point;
+                *iter() = code_point;
             } else {
                 assert(iter() < reducer->endptr);
 
                 // handling invalid code points
-                if (static_cast<stl::int32_t>(inp_code_point) < 0) [[unlikely]] {
-                    *iter() = -static_cast<unit_type>(inp_code_point);
+                if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                    *iter() = -static_cast<unit_type>(code_point);
                     return;
                 }
 
-                auto const new_len = required_length_of<unit_type, stl::int_fast8_t>(inp_code_point);
+                auto const new_len = utf_length_from<unit_type, stl::int_fast8_t>(code_point);
                 auto const cur_len =
                   checked::code_point_length<iterator, difference_type>(iter(), reducer->end());
-                set_inplace(inp_code_point, cur_len, new_len);
+                set_inplace(code_point, cur_len, new_len);
             }
         }
 
@@ -704,7 +701,7 @@ namespace webpp::unicode {
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
 
-                // if new length is 0, a bad code point is given to the input.
+                // if 'new length' is 0, a bad code point is given to the input.
                 assert(new_len != 0);
 
                 // Move the hole to the current place in order to make cur_len bigger than the new_len
@@ -772,7 +769,7 @@ namespace webpp::unicode {
      *
      * Rules:
      *   1. Pointers/Iterators should not be pointing to the middle of a Unicode code unit.
-     *   2. Pins are ordered, meaning pin-1 cannot point to location after the pin-2's location.
+     *   2. Pins are ordered, meaning pin-1 cannot point to the location after the pin-2's location.
      *   3. Pins can point to the same place though
      *   4. This class is not thread-safe, though you probably don't need that anyway.
      *
@@ -823,10 +820,8 @@ namespace webpp::unicode {
           : beg{inp_pos},
             endptr{stl::next(inp_pos, static_cast<difference_type>(inp_length))},
             newend{endptr} {
-            if constexpr (std::is_pointer_v<iterator>) {
-                assert(inp_pos != nullptr);
-                assert(endptr != nullptr);
-            }
+            assert(inp_pos != iterator{});
+            assert(endptr != iterator{});
             assert(inp_pos <= endptr);
             // assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<unit_type>) {
@@ -839,10 +834,8 @@ namespace webpp::unicode {
           : beg{inp_pos},
             endptr{inp_endp},
             newend{endptr} {
-            if constexpr (std::is_pointer_v<iterator>) {
-                assert(inp_pos != nullptr);
-                assert(endptr != nullptr);
-            }
+            assert(inp_pos != iterator{});
+            assert(endptr != iterator{});
             assert(inp_pos <= inp_endp);
             // assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<unit_type>) {
