@@ -15,13 +15,19 @@ namespace webpp::istl {
     template <typename T>
     concept ModifiableString = String<T>;
 
-    template <StringLike StrT, typename InputIt>
-    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(StringView<StrT>) {
-        if constexpr (StringView<StrT>) {
-            str = StrT{beg, end};
-        } else {
-            str.assign(beg, end);
-        }
+    /// No need to use StringLike; this can be used for other types as well.
+    template <typename StrT, typename InputIt>
+    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(requires {
+        {
+            str.assign(beg, end)
+        } noexcept;
+    }) {
+        str.assign(beg, end);
+    }
+
+    template <StringView StrT, typename InputIt>
+    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept {
+        str = StrT{beg, end};
     }
 
     /**
@@ -46,12 +52,13 @@ namespace webpp::istl {
         }
     }
 
-    template <StringLike StrT>
+    /// No need to use StringLike constraint on the type; we want it to be used for other types as well.
+    template <typename StrT>
     constexpr void clear(StrT& str) noexcept {
         if constexpr (StringView<StrT>) {
             str = StrT{};
         } else {
-            str.clear(); // doesn't deallocate actually, so it's nothrow
+            str.clear(); // doesn't deallocate, so it's nothrow
         }
     }
 

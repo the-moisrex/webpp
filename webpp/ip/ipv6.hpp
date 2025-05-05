@@ -386,8 +386,7 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets and not the prefix
-            return basic_ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr)))._data ==
-                   _data;
+            return basic_ipv6(istl::string_viewify(stl::forward<StrT>(ip_addr)))._data == _data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv6 const ip_addr) const noexcept {

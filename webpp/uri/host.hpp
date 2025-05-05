@@ -377,34 +377,24 @@ namespace webpp::uri {
         /// Equality check
         /// https://url.spec.whatwg.org/#host-equivalence
         /// Attention: this function doesn't parse your input
-        // template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
-        // [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-        //     auto str      = istl::string_viewify(stl::forward<NStrT>(inp_str));
-        //     auto piece_it = storage.begin();
-        //     for (; piece_it != storage.end(); ++piece_it) {
-        //         bool should_continue = false;
-        //         if constexpr (is_modifiable) {
-        //             should_continue = iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(
-        //               *piece_it,
-        //               str.substr(0, piece_it->size()));
-        //         } else {
-        //             should_continue = iiequals<details::TABS_OR_NEWLINES<char_type>>(
-        //               *piece_it,
-        //               str.substr(0, piece_it->size()));
-        //         }
-        //         if (!should_continue) {
-        //             return false;
-        //         }
-        //         str.remove_prefix(piece_it->size());
-        //         // todo: does this support label-separators?
-        //         if (!str.starts_with('.')) {
-        //             ++piece_it;
-        //             break;
-        //         }
-        //         str.remove_prefix(1);
-        //     }
-        //     return str.empty() && piece_it == storage.end();
-        // }
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            using details::TABS_OR_NEWLINES;
+            if (auto const* domain = as_domain()) {
+                if constexpr (is_modifiable) {
+                    return iiequals_fl<TABS_OR_NEWLINES<char_type>>(*domain, stl::forward<NStrT>(inp_str));
+                } else {
+                    return iiequals<TABS_OR_NEWLINES<char_type>>(*domain, stl::forward<NStrT>(inp_str));
+                }
+            }
+            if (auto const* ip4 = as_ipv4()) {
+                return *ip4 == stl::forward<NStrT>(inp_str);
+            }
+            if (auto const* ip6 = as_ipv6()) {
+                return *ip6 == stl::forward<NStrT>(inp_str);
+            }
+            [[unlikely]] { return false; }
+        }
 
         // [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
         //     return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, other.storage_ref());

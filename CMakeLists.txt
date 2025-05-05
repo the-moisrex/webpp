@@ -106,6 +106,11 @@ if (WEBPP_DEV)
 
     if (IS_DEBUG)
         enable_testing()
+
+        if (IS_CLANG OR IS_GCC)
+            # For libstdc++ (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html)
+            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR")
+        endif ()
     endif ()
 
     # if (IS_CLANG AND LIBCXX)

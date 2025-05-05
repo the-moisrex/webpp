@@ -332,15 +332,13 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         constexpr stl::strong_ordering operator<=>(StrT&& ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr))}.data <=>
-                   data;
+            return basic_ipv4{istl::string_viewify(stl::forward<StrT>(ip_addr))}.data <=> data;
         }
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr))}.data ==
-                   data;
+            return basic_ipv4{istl::string_viewify(stl::forward<StrT>(ip_addr))}.data == data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv4 const ip_addr) const noexcept {

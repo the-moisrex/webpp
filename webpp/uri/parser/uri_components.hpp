@@ -691,11 +691,11 @@ namespace webpp::uri {
                                                   uri_components<base_seg_type, BaseIter>>;
 
         // this might be different from OutSegType
-        using seg_type        = typename clean_out_type::seg_type;
-        using iterator        = typename clean_out_type::iterator;
-        using char_type       = stl::iter_value_t<iterator>;
-        using state_type      = uri_status_type;
-        using vec_iterator    = typename clean_out_type::vec_iterator;
+        using seg_type     = typename clean_out_type::seg_type;
+        using iterator     = typename clean_out_type::iterator;
+        using char_type    = stl::iter_value_t<iterator>;
+        using state_type   = uri_status_type;
+        using vec_iterator = typename clean_out_type::vec_iterator;
 
         static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -765,13 +765,13 @@ namespace webpp::uri {
         requires(stl::is_pointer_v<OutType> && !stl::integral<OutType>)
     struct parsing_uri_component_context
       : details::extract_types_from_out_type<stl::remove_pointer_t<OutType>> {
-        using base_seg_type   = BaseSegType;
-        using out_type        = OutType;
-        using seg_type        = OutType;
-        using base_type       = uri_components<base_seg_type, BaseIter>;
-        using iterator        = Iter;
-        using char_type       = stl::iter_value_t<iterator>;
-        using state_type      = uri_status_type;
+        using base_seg_type = BaseSegType;
+        using out_type      = OutType;
+        using seg_type      = OutType;
+        using base_type     = uri_components<base_seg_type, BaseIter>;
+        using iterator      = Iter;
+        using char_type     = stl::iter_value_t<iterator>;
+        using state_type    = uri_status_type;
 
         using out_container_type = stl::remove_pointer_t<out_type>;
         using out_seg_type       = out_container_type;
@@ -1030,13 +1030,14 @@ namespace webpp::uri {
 
     template <components Comp, ParsingURIContext CtxT, typename... Args>
     constexpr void set_value(CtxT& ctx, Args&&... args) noexcept(CtxT::is_nothrow) {
+        using istl::deptr;
         if constexpr (single_component<CtxT>) {
             // works for strings only
             if constexpr (Comp == CtxT::component) {
-                istl::deptr(ctx.out).assign(stl::forward<Args>(args)...);
+                istl::assign(deptr(ctx.out), stl::forward<Args>(args)...);
             }
         } else {
-            details::set_value_to<Comp>(istl::deptr(ctx.out), stl::forward<Args>(args)...);
+            details::set_value_to<Comp>(deptr(ctx.out), stl::forward<Args>(args)...);
         }
 
         if constexpr (components::host == Comp) {
@@ -1049,14 +1050,15 @@ namespace webpp::uri {
     template <components Comp, ParsingURIContext CtxT>
     constexpr void clear(CtxT& ctx) noexcept {
         using istl::clear;
+        using istl::deptr;
 
         if constexpr (single_component<CtxT>) {
             // won't work with the integers
             if constexpr (Comp == CtxT::component) {
-                clear(istl::deptr(ctx.out));
+                clear(deptr(ctx.out));
             }
         } else {
-            details::clear_from<Comp>(istl::deptr(ctx.out));
+            details::clear_from<Comp>(deptr(ctx.out));
         }
 
         if constexpr (components::host == Comp) {

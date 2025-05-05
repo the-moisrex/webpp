@@ -72,7 +72,7 @@ namespace webpp {
         *out = '\0';
 
         char_type           hexa[8 * 5];
-        char_type*          hex_ptr = static_cast<char*>(hexa);
+        auto*               hex_ptr = static_cast<char_type*>(hexa);
         stl::uint8_t const* src_ptr = src;
 
 

@@ -342,8 +342,8 @@ namespace webpp::uri {
             return storage;
         }
 
-        /// Equality check
-        /// Attention: this function doesn't parse your input
+        /// Equality check.
+        /// Attention: this function doesn't parse/normalize your input
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
