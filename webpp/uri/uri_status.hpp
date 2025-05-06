@@ -21,12 +21,12 @@ namespace webpp::uri {
     /// These options are designed to
     /// Default values are WHATWG-Compliant values (if relevant)
     static constexpr struct uri_parsing_options {
-        /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
+        /// Consider `\0` (EOF) as a valid end-of-string character; you may want to disable it if you already
         /// know the end of your string, and you may enable if you're working with a stream
         bool eof_is_valid = true;
 
         /// Parse username and password part of the authority (you may want to disable it if you're trying to
-        /// parse Host Authority which doesn't have credentials)
+        /// parse Host Authority, which doesn't have credentials)
         bool parse_credentials = true;
 
         /// Empty Host is an error (file:// URIs can have empty hosts)
@@ -80,8 +80,8 @@ namespace webpp::uri {
 
 
         /// Dots in paths are: `.`, `..`, `%2e`, '.%2e`, '%2e.', and '%2e%2e'
-        /// By disabling this, these will be segments of their own and single dot won't mean
-        /// current directory and double dot won't mean anything either.
+        /// By disabling this, these will be segments of their own, and a single dot won't mean
+        /// a current directory and double dot won't mean anything either.
         bool handle_dots_in_paths = true;
 
         /// UseSTD3ASCIIRules from:

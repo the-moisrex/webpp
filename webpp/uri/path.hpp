@@ -76,7 +76,7 @@ namespace webpp::uri {
 
       private:
         container_type storage;
-        bool           m_is_opaque = false;
+        bool           m_is_opaque = false; // todo
 
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
@@ -105,8 +105,16 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-forwarding-reference-overload)
         template <istl::StringViewifiable T, typename InpAlloc = allocator_type>
             requires(!istl::cvref_as<T, basic_path>)
-        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) : storage{alloc} {
+        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) noexcept(is_nothrow)
+          : storage{alloc} {
             parse(stl::forward<T>(str));
+        }
+
+        template <uri_parsing_options Options, typename IterT = iterator, typename... T>
+            requires(stl::is_constructible_v<container_type, T...>)
+        explicit constexpr basic_path(IterT beg, IterT end, T&&... args) noexcept(is_nothrow)
+          : storage{stl::forward<T>(args)...} {
+            parse<Options>(beg, end);
         }
 
         template <istl::String T>
@@ -117,6 +125,28 @@ namespace webpp::uri {
         }
 
         // NOLINTEND(*-forwarding-reference-overload)
+
+        [[nodiscard]] constexpr basic_path clone() const noexcept(is_nothrow) {
+            if constexpr (is_modifiable) {
+                return basic_path{storage.get_allocator()};
+            } else {
+                return basic_path{};
+            }
+        }
+
+        template <uri_parsing_options Options = {}, typename IterT = iterator>
+        constexpr basic_path clone(IterT beg, IterT end) const noexcept(is_nothrow) {
+            auto out = clone();
+            out.template parse<Options>(beg, end);
+            return out;
+        }
+
+        template <uri_parsing_options Options = {}, istl::StringViewifiable StrT>
+        constexpr basic_path clone(StrT&& str) const noexcept(is_nothrow) {
+            auto out = clone();
+            out.template parse<Options>(stl::forward<StrT>(str));
+            return out;
+        }
 
         template <istl::StringViewifiable SegStrT>
         constexpr basic_path& operator/=(SegStrT&& seg_str) {
@@ -343,21 +373,30 @@ namespace webpp::uri {
         }
 
         /// Equality check.
-        /// Attention: this function doesn't parse/normalize your input
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        /// https://url.spec.whatwg.org/#url-equivalence
+        /// https://url.spec.whatwg.org/#url-path-serializer
+        template <uri_parsing_options     Options = {},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
-            for (auto const& piece : storage) {
-                if (!str.starts_with(piece)) {
-                    return false;
-                }
-                str.remove_prefix(piece.size() + 1);
-            }
-            return true;
+            return *this == clone<Options>(stl::forward<NStrT>(inp_str));
         }
 
-        [[nodiscard]] constexpr bool operator==(basic_path const& other) const noexcept {
-            return storage == other.storage_ref();
+        /// Equality check.
+        /// https://url.spec.whatwg.org/#url-equivalence
+        /// https://url.spec.whatwg.org/#url-path-serializer
+        [[nodiscard]] constexpr bool operator==(basic_path const& inp_str) const noexcept {
+            if (inp_str.storage.size() != storage.size()) {
+                return false;
+            }
+            auto       lhs     = this->storage.begin();
+            auto const lhs_end = this->storage.end();
+            auto       rhs     = this->storage.begin();
+            for (; lhs != lhs_end; ++lhs, ++rhs) {
+                if (lhs != rhs) {
+                    return false;
+                }
+            }
+            return true;
         }
     };
 
