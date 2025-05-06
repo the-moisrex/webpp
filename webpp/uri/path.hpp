@@ -359,6 +359,7 @@ namespace webpp::uri {
             }
         }
 
+        /// Attention: this does not parse the input, it's raw emplace back
         template <typename... Args>
         constexpr decltype(auto) emplace_back(Args&&... args) {
             return storage.emplace_back(stl::forward<Args>(args)...);

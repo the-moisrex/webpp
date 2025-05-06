@@ -23,18 +23,18 @@ namespace webpp {
      */
     template <typename Iter = char*>
     static constexpr Iter inet_ntop4(stl::uint8_t const* src, Iter out) noexcept {
-#define WEBPP_PUT_CHAR()                                       \
-    do {                                                       \
-        if (*src < 10) {                                       \
-            *out++ = static_cast<char>('0' + *src);            \
-        } else if (*src < 100) {                               \
-            *out++ = static_cast<char>('0' + *src / 10);       \
-            *out++ = static_cast<char>('0' + *src % 10);       \
-        } else {                                               \
-            *out++ = static_cast<char>('0' + *src / 100);      \
-            *out++ = static_cast<char>('0' + *src % 100 / 10); \
-            *out++ = static_cast<char>('0' + *src % 10);       \
-        }                                                      \
+#define WEBPP_PUT_CHAR()                                         \
+    do {                                                         \
+        if (*src < 10) {                                         \
+            *out++ = static_cast<char>('0' + *src);              \
+        } else if (*src < 100) {                                 \
+            *out++ = static_cast<char>('0' + (*src / 10));       \
+            *out++ = static_cast<char>('0' + (*src % 10));       \
+        } else {                                                 \
+            *out++ = static_cast<char>('0' + (*src / 100));      \
+            *out++ = static_cast<char>('0' + (*src % 100 / 10)); \
+            *out++ = static_cast<char>('0' + (*src % 10));       \
+        }                                                        \
     } while (false)
         WEBPP_PUT_CHAR();
         ++src;

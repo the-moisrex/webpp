@@ -16,18 +16,14 @@ import {
     sizeOf,
     toHexString,
     uint16,
-    uint32,
-    uint4,
     uint5,
-    uint6,
-    uint7,
-    uint8,
     writePieces
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
 import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, refPrinter, VALID} from "./IdnaMappingTable.mjs";
 
 const verbose = process.argv.includes("--verbose");
+const printInfo = process.argv.includes("--info");
 
 const start = async () => {
     await readme.download();
@@ -53,6 +49,7 @@ class IDNAMappings {
     #maxMappedDiff = 0;
     #maxMappedFactor = 0;
     #maxMappedCP = {};
+    #maxMapped = {};
 
     constructor() {
         const self = this;
@@ -61,7 +58,7 @@ class IDNAMappings {
             description: "IDNA Mapping Index table",
             ignoreErrors: false,
             disableComments: false,
-            validateResults: false, // the values table will not contain all the values
+            validateResults: false, // the `values` table will not contain all the values
 
             // Put all the ranges that are not mapped into a different table
             modify({start, end, modifier, values}) {
@@ -94,7 +91,7 @@ class IDNAMappings {
                 // split the indices table
                 splitInto: 4,
                 splittingSingleValue: false,
-                // breakpointsTableLimit: 3, // limit it to first 3 uncommon tables for breakpoints table
+                // breakpointsTableLimit: 3, // limit it to first 3 `uncommon tables` for breakpoints table
                 description: `IDNA Mappings`,
 
                 // add "iblt"
@@ -147,6 +144,10 @@ class IDNAMappings {
 
     /// proxy the function
     process() {
+        if (printInfo) {
+            console.log(this.#maxMapped);
+            process.exit();
+        }
         this.tables.process();
         const lastZeroBucket = this.lastDisallowed >> this.tables.chunkShift;
         console.log(
@@ -189,13 +190,13 @@ class IDNAMappings {
             const curLen = utf8MappedTo.length;
             const curCPLen = utf8CodePoint.length;
             const curDiff = curLen - curCPLen;
-            const curFactor = curLen / curCPLen;
+            const curFactor = Math.ceil(curLen / curCPLen);
             if (curLen > this.#maxMappedLength) {
                 this.#maxMappedLength = curLen;
             }
             if (curDiff > this.#maxMappedDiff) {
                 this.#maxMappedDiff = curDiff;
-                this.#maxMappedFactor = Math.ceil(curFactor);
+                this.#maxMappedFactor = curFactor;
                 this.#maxMappedCP = {
                     codePoint,
                     mappedTo,
@@ -203,6 +204,17 @@ class IDNAMappings {
                     utf8CodePoint
                 };
                 // console.log(curDiff, curFactor, this.#maxMappedCP);
+            }
+
+            if (printInfo) {
+                this.#maxMapped[curFactor] = this.#maxMapped?.[curFactor] ?? {
+                    count: 0,
+                    codePoints: [],
+                    mappedTo: [],
+                };
+                ++this.#maxMapped[curFactor].count;
+                this.#maxMapped[curFactor].codePoints.push(codePoint);
+                this.#maxMapped[curFactor].mappedTo.push(mappedTo.map(cp => cp.toString(16).toUpperCase()).join(', '));
             }
         } else {
             this.tables.add(codePoint, flags);
