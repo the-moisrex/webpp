@@ -213,7 +213,7 @@ class IDNAMappings {
                     mappedTo: [],
                 };
                 ++this.#maxMapped[curFactor].count;
-                this.#maxMapped[curFactor].codePoints.push(codePoint);
+                this.#maxMapped[curFactor].codePoints.push(codePoint.toString(16).toUpperCase());
                 this.#maxMapped[curFactor].mappedTo.push(mappedTo.map(cp => cp.toString(16).toUpperCase()).join(', '));
             }
         } else {

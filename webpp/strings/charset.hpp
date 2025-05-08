@@ -792,7 +792,16 @@ namespace webpp {
      */
     template <typename T, stl::size_t N, typename... CharSetsT>
     [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
-        stl::array<T, N> data{};
+        using flag_type = typename stl::
+          conditional_t<stl::is_enum_v<T>, stl::underlying_type<T>, stl::type_identity<T>>::type;
+        stl::array<flag_type, N> data{};
+        auto const               value_of = [](auto value) {
+            if constexpr (stl::is_enum_v<T>) {
+                return stl::to_underlying(value);
+            } else {
+                return static_cast<T>(value);
+            }
+        };
         (([&]<typename CharSetT>(CharSetT const& set, auto value) {
              using value_type = istl::char_type_of_t<CharSetT>;
              if constexpr (stl::same_as<value_type, bool>) {
@@ -800,16 +809,16 @@ namespace webpp {
                  auto const len = set.size();
                  for (stl::size_t i = 0; i < len; ++i) {
                      if (set[i]) {
-                         data[i] |= static_cast<T>(value);
+                         data[i] |= value_of(value);
                      }
                  }
              } else if constexpr (istl::Iterable<CharSetT>) {
                  for (auto const character : set) {
-                     data[static_cast<stl::size_t>(character)] |= static_cast<T>(value);
+                     data[static_cast<stl::size_t>(character)] |= value_of(value);
                  }
              } else { // for strings (char const*)
                  for (auto cur = set; *cur != '\0'; ++cur) {
-                     data[static_cast<stl::size_t>(*cur)] |= static_cast<T>(value);
+                     data[static_cast<stl::size_t>(*cur)] |= value_of(value);
                  }
              }
          })(sets.set, sets.value),
