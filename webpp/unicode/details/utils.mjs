@@ -996,6 +996,8 @@ export const renderTableValues = (info) => {
                 res += val.join(", ");
             } else if (typeof val === "number" || typeof val === "bigint") {
                 res += `0x${val.toString(16).toUpperCase()}`;
+            } else if (typeof val === "string") {
+                res += val;
             } else {
                 throw new Error(`Don't know how to print this: ${val}`);
             }
@@ -1391,7 +1393,6 @@ export function splitIntoMulti(table, getValue = (val) => val, minLength = 1) {
 }
 
 
-
 /// Get the most specific range of values that matches best for the input value
 export function getMostSpecializedIn(value, list) {
     let selected = undefined;
@@ -1453,7 +1454,7 @@ export function alignmentOf(sizes) {
 }
 
 
-// find the overlap of the small table in the big table if any.
+// find the overlap of the small table in the big table, if any.
 export function findOverlap(small, big) {
     const found = findSimilarRange(small, big);
     if (found !== null) {
@@ -1473,7 +1474,7 @@ export function findOverlap(small, big) {
 }
 
 // left small table
-// right is big table, and gets inserted into
+// right is big table and gets inserted into
 export function findOrInsert(left, right) {
     const {start, inserts, overlap} = findOverlap(left, right);
     if (inserts !== null) {
@@ -1482,3 +1483,37 @@ export function findOrInsert(left, right) {
     }
     return start;
 }
+
+
+/// Find the smallest remaining value for the input sparse table
+export function findRem(inpTable, defValue = 0, iter = noop) {
+    let rem = 0;
+    let table = [];
+
+    // Find the remaining:
+    nextRem: for (; ; ++rem, iter(rem)) {
+        table = [];
+        for (let {pos, val} of inpTable) {
+            const newPos = pos % rem;
+            const newVal = table?.[newPos]?.val;
+            if (newVal !== val && newVal !== undefined) {
+                continue nextRem;
+            }
+            table[pos % rem] = {val, pos};
+        }
+
+        break;
+    }
+
+    for (let pos = 0; pos !== rem; ++pos) {
+        if (table[pos] === undefined) {
+            table[pos] = {val: defValue, pos: 0};
+        }
+    }
+
+    return {
+        rem,
+        table
+    };
+}
+

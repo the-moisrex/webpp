@@ -426,19 +426,24 @@ namespace webpp::unicode::idna {
         return valid;
     }
 
+    /**
+     * This class helps you get information about your string before you allocate enough storage for toASCII
+     * algorithm.
+     */
     struct to_ascii_info {
         using flag_type = stl::uint_fast8_t;
         enum struct flag_types : flag_type {
             // ASCII and Non-ASCII:
-            non_ascii = 0b1000U,
-            ascii     = 0b1'0000U,
-            dot       = 0b100'0000U | ascii,
+            non_ascii   = 0b1000U,
+            ascii       = 0b1'0000U,
+            ascii_upper = 0b10'0000U | ascii,
+            dot         = 0b100'0000U | ascii,
 
             // xn-- (Called ACE Prefix):
-            x    = 0b1U,
-            n    = 0b10U,
-            dash = 0b100U,
-            ace  = x | n | dash | ascii, // ACE prefix
+            x    = 0b1U | ascii,
+            n    = 0b10U | ascii,
+            dash = 0b100U | ascii,
+            ace  = x | n | dash, // ACE prefix
 
             // Misc:
             clean            = static_cast<flag_type>(~dot),
@@ -455,8 +460,10 @@ namespace webpp::unicode::idna {
           cat{.set = ALL_ASCII<char8_t>, .value = flag_types::ascii});
 
 
-        stl::size_t max_length       = 0;
-        bool        requires_mapping = false;
+        stl::size_t max_size = 0; // not adjusted to the output size if the input and output's character types
+                                  // are different.
+        bool requires_mapping = false;
+        bool has_punycode     = false;
 
         /**
          * @returns maximum required storage length for conversion; zero if no need for conversion.
@@ -469,6 +476,9 @@ namespace webpp::unicode::idna {
             if constexpr (Options.CheckStatusValues) {
             }
 
+            auto const   cur_len = send - spos;
+            flag_type    flags   = 0U;
+            stl::uint8_t factor  = 4U; // max_decomp_expand_factor
 
             while (spos != send) {
                 flag_type const flag = or_all_if<flag_type>(
@@ -479,6 +489,9 @@ namespace webpp::unicode::idna {
                       return (cur_flag & to_underlying(non_ascii)) != 0;
                   });
 
+                flags |= flag;
+
+
                 switch (flag & to_underlying(clean)) {
                     // we optimize this function for ascii-only strings
                     [[unlikely]] case to_underlying(non_ascii): {
@@ -488,6 +501,9 @@ namespace webpp::unicode::idna {
                     }
                 }
             }
+
+            requires_mapping = flags & to_underlying(non_ascii) != 0;
+            max_size         = cur_len * factor;
         }
     };
 
@@ -653,14 +669,15 @@ namespace webpp::unicode::idna {
 
     template <idna_options Options = {}, stl::random_access_iterator Iter, istl::String StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
-        using char_type             = istl::char_type_of_t<StrT>;
+        using input_char_type       = stl::iter_value_t<Iter>;
+        using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
         if constexpr (Options.VerifyDnsLength) {
             constexpr auto max_domain_length = 254U;
             istl::resize_and_overwrite(
               out,
               max_domain_length,
-              [&](char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+              [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
                   auto const beg = buf;
                   status         = to_ascii<Options>(spos, send, buf);
                   return static_cast<stl::size_t>(buf - beg);
@@ -670,8 +687,8 @@ namespace webpp::unicode::idna {
             info(spos, send);
             istl::resize_and_overwrite(
               out,
-              info.max_length,
-              [&](char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+              adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
+              [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
                   auto const beg = buf;
                   status         = to_ascii<Options>(spos, send, buf);
                   return static_cast<stl::size_t>(buf - beg);

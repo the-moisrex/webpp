@@ -10,13 +10,13 @@ import * as readme from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
     bool32,
-    char8_8, findOrInsert, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
+    char8_8, findOrInsert, findRem, findSimilarSubRange, packBoolsIntoInts, realSizeOf, recursiveLength,
     renderTableValues,
     runClangFormat,
     sizeOf,
     toHexString,
-    uint16,
-    uint5,
+    uint16, uint32,
+    uint5, uint8, updateProgressBar,
     writePieces
 } from "./utils.mjs";
 import * as IDNAMappingTable from "./IdnaMappingTable.mjs";
@@ -24,6 +24,7 @@ import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, refPrinter,
 
 const verbose = process.argv.includes("--verbose");
 const printInfo = process.argv.includes("--info");
+const enableMaxLenTable = true;
 
 const start = async () => {
     await readme.download();
@@ -50,6 +51,11 @@ class IDNAMappings {
     #maxMappedFactor = 0;
     #maxMappedCP = {};
     #maxMapped = {};
+
+    #lenTable = [];
+    tooLongStartingFactor = 4; // Decomposition's expansion factor is 4, so we do 5 and above
+    lenTableRem = 0;
+    compactLenTable = [];
 
     constructor() {
         const self = this;
@@ -98,7 +104,7 @@ class IDNAMappings {
                 map(vals, info) {
 
                     // vals may be Uint16Array and what not, and they can't hold strings
-                    let res = Array.isArray(vals) ? vals : []; 
+                    let res = Array.isArray(vals) ? vals : [];
                     res.trailing_comment = vals.trailing_comment;
 
                     for (let i = 0; i !== vals.length; ++i) {
@@ -141,6 +147,30 @@ class IDNAMappings {
         this.tablePickMask = 0b1 << (Number(this.tables.indices.sizeof) - 1);
     }
 
+    #processLenTable() {
+        updateProgressBar(0);
+        const {rem, table} = findRem(this.#lenTable, this.tooLongStartingFactor, (rem) => {
+            updateProgressBar(rem / this.tables.data.length * 100, `Rem: ${rem}`);
+        })
+        updateProgressBar(100, `Found the rem: ${rem}`);
+
+        this.compactLenTable = table;
+        this.lenTableRem = rem;
+
+        // prevent integer overflow:
+        const mask24 = 0b1 << 24 - 1;
+        const mask8 = 0b1 << 8 - 1;
+        for (const {pos, val} of this.compactLenTable) {
+            if (pos >= mask24) {
+                throw new Error('We exceeded the 32bit storage.');
+            }
+
+            if (val >= mask8) {
+                throw new Error('We exceeded the 32bit storage.');
+            }
+        }
+    }
+
 
     /// proxy the function
     process() {
@@ -149,6 +179,12 @@ class IDNAMappings {
             process.exit();
         }
         this.tables.process();
+
+        if (enableMaxLenTable) {
+            console.log("Processing the length table.");
+            this.#processLenTable();
+        }
+
         const lastZeroBucket = this.lastDisallowed >> this.tables.chunkShift;
         console.log(
             "Trim indices table at: ",
@@ -216,6 +252,11 @@ class IDNAMappings {
                 this.#maxMapped[curFactor].codePoints.push(codePoint.toString(16).toUpperCase());
                 this.#maxMapped[curFactor].mappedTo.push(mappedTo.map(cp => cp.toString(16).toUpperCase()).join(', '));
             }
+
+
+            if (enableMaxLenTable && curFactor >= this.tooLongStartingFactor) {
+                this.#lenTable.push({pos: Number(codePoint), val: curFactor});
+            }
         } else {
             this.tables.add(codePoint, flags);
         }
@@ -269,7 +310,8 @@ const createTableFile = async (table) => {
     const tableContent = table.render();
     const mappingsBits = Number(table.mappingsTableSizeInBits());
     const boolsBits = Number(table.boolsTableSizeInBits());
-    const totalBits = Number(table.totalTablesSizeInBits());
+    const lenTableBits = table.compactLenTable.length * 32;
+    const totalBits = Number(table.totalTablesSizeInBits()) + lenTableBits;
     const readmeData = await readme.getReadme();
     const competition = 84.47;
     const saved = competition - totalBits / 8 / 1024;
@@ -314,6 +356,26 @@ namespace webpp::unicode::idna::details {
     [[maybe_unused]] static constexpr ${table.tables.values.type.description} ${flagsStatus(NOT_MAPPED)} = 0b${NOT_MAPPED.toString(2)}U;
     static constexpr ${table.tables.values.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
     static constexpr ${table.tables.values.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
+ 
+    /// 'CodePoint % idna_rem' is used to get the max length of IDNA Mapping you're about to do.
+    static constexpr std::uint8_t idna_rem = ${table.lenTableRem};
+    
+    /**
+     * IDNA Mapping Max Length
+     * This table helps you figure out the maximum length of a string that can be mapped.
+     *   The default value is: ${table.tooLongStartingFactor}
+     *   Rem value: ${table.lenTableRem}
+     *
+     * Table size:
+     *   - in bits:       ${lenTableBits}
+     *   - in bytes:      ${lenTableBits / 8} B
+     *   - in KibiBytes:  ${(lenTableBits / 8 / 1024).toFixed(2)} KiB
+     */
+    ${renderTableValues({
+        name: "idna_max_len_factors",
+        type: uint32,
+        printableValues: table.compactLenTable.map(({pos, val}) => `${val}U << 24U | ${pos}U`),
+    })}
     
 
 ${tableContent}

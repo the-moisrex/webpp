@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Wed, 30 Apr 2025 00:47:04 GMT
+ *   This file's generation date:        Fri, 09 May 2025 03:48:52 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
- *       - in bits:       365680
- *       - in bytes:      45710 B
- *       - in KibiBytes:  44.64 KiB
+ *       - in bits:       367504
+ *       - in bytes:      45938 B
+ *       - in KibiBytes:  44.86 KiB
  *   Some other implementations' total table size was 84.47 KiB;
- *   So I have saved 39.83 KiB.
+ *   So I have saved 39.61 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
@@ -39,6 +39,37 @@ namespace webpp::unicode::idna::details {
     [[maybe_unused]] static constexpr std::uint16_t not_mapped = 0b1000'0000'0000'0000U;
     static constexpr std::uint16_t                  valid      = 0b1000'0000'0000'0011U;
     static constexpr std::uint16_t                  disallowed = 0b1000'0000'0000'0010U;
+
+    /// 'CodePoint % idna_rem' is used to get the max length of IDNA Mapping you're about to do.
+    static constexpr std::uint8_t idna_rem = 57;
+
+    /**
+     * IDNA Mapping Max Length
+     * This table helps you figure out the maximum length of a string that can be mapped.
+     *   The default value is: 4
+     *   Rem value: 57
+     *
+     * Table size:
+     *   - in bits:       1824
+     *   - in bytes:      228 B
+     *   - in KibiBytes:  0.22 KiB
+     */
+    static constexpr std::array<std::uint32_t, 57ULL> idna_max_len_factors{
+      5U << 24U | 13110U, 4U << 24U | 0U,     4U << 24U | 0U,     4U << 24U | 13056U,  4U << 24U | 13057U,
+      4U << 24U | 13058U, 4U << 24U | 0U,     4U << 24U | 13117U, 4U << 24U | 0U,      4U << 24U | 0U,
+      5U << 24U | 13063U, 4U << 24U | 13064U, 4U << 24U | 0U,     4U << 24U | 13123U,  4U << 24U | 8279U,
+      4U << 24U | 13068U, 4U << 24U | 13183U, 5U << 24U | 13127U, 4U << 24U | 13128U,  4U << 24U | 0U,
+      5U << 24U | 13130U, 4U << 24U | 13074U, 4U << 24U | 13132U, 4U << 24U | 13133U,  5U << 24U | 13077U,
+      6U << 24U | 13078U, 5U << 24U | 13079U, 4U << 24U | 13137U, 5U << 24U | 13081U,  5U << 24U | 13082U,
+      4U << 24U | 13140U, 4U << 24U | 0U,     5U << 24U | 13142U, 4U << 24U | 0U,      4U << 24U | 13087U,
+      5U << 24U | 13088U, 4U << 24U | 13089U, 4U << 24U | 0U,     11U << 24U | 65018U, 5U << 24U | 65019U,
+      4U << 24U | 0U,     4U << 24U | 0U,     4U << 24U | 0U,     4U << 24U | 0U,      4U << 24U | 0U,
+      4U << 24U | 0U,     5U << 24U | 13099U, 4U << 24U | 0U,     4U << 24U | 13101U,  5U << 24U | 13102U,
+      4U << 24U | 0U,     4U << 24U | 0U,     4U << 24U | 0U,     5U << 24U | 13106U,  4U << 24U | 13107U,
+      5U << 24U | 13108U, 4U << 24U | 0U,
+      // done
+    };
+
 
 
 
