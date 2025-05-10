@@ -254,7 +254,7 @@ class IDNAMappings {
             }
 
 
-            if (enableMaxLenTable && curFactor >= this.tooLongStartingFactor) {
+            if (enableMaxLenTable && curFactor > this.tooLongStartingFactor) {
                 this.#lenTable.push({pos: Number(codePoint), val: curFactor});
             }
         } else {
@@ -358,7 +358,8 @@ namespace webpp::unicode::idna::details {
     static constexpr ${table.tables.values.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
  
     /// 'CodePoint % idna_rem' is used to get the max length of IDNA Mapping you're about to do.
-    static constexpr std::uint8_t idna_rem = ${table.lenTableRem};
+    static constexpr std::uint8_t idna_rem = ${table.lenTableRem}U;
+    static constexpr std::uint8_t idna_default_max_len_factor = ${table.tooLongStartingFactor}U;
     
     /**
      * IDNA Mapping Max Length

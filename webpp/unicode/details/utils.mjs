@@ -1496,7 +1496,7 @@ export function findRem(inpTable, defValue = 0, iter = noop) {
         for (let {pos, val} of inpTable) {
             const newPos = pos % rem;
             const newVal = table?.[newPos]?.val;
-            if (newVal !== val && newVal !== undefined) {
+            if (/* newVal !== val && */ newVal !== undefined) {
                 continue nextRem;
             }
             table[pos % rem] = {val, pos};

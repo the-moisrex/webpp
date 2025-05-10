@@ -190,7 +190,7 @@ namespace webpp::unicode::idna {
         // More errors:
         empty_domain_label       = 0b1U << 3U,
         too_long_label           = 0b1U << 4U, // the subdomain is more than 63
-        too_long_domain          = 0b1U << 5U, // the whole domain is more than 255
+        too_long_domain          = 0b1U << 5U, // the whole domain is more than 253 without last dot
         failed_validity_criteria = 0b1U << 6U, // the label failed the validity criteria requirements.
     };
 
@@ -465,20 +465,28 @@ namespace webpp::unicode::idna {
         bool requires_mapping = false;
         bool has_punycode     = false;
 
+        [[nodiscard]] static constexpr stl::uint8_t best_factor_of(UTF32 auto const code_point) noexcept {
+            constexpr stl::uint32_t split = 24U;
+            constexpr stl::uint32_t mask  = 0b1U << split - 1U;
+            auto const              inf   = details::idna_max_len_factors[code_point % details::idna_rem];
+            if ((inf & mask) == code_point) [[unlikely]] {
+                return static_cast<stl::uint8_t>(inf >> split);
+            }
+            return details::idna_default_max_len_factor;
+        }
+
         /**
          * @returns maximum required storage length for conversion; zero if no need for conversion.
          */
         template <idna_options Options = {}, stl::random_access_iterator Iter>
         constexpr void operator()(Iter spos, Iter send) noexcept {
             using enum flag_types;
+            using details::idna_default_max_len_factor;
             using stl::to_underlying;
 
-            if constexpr (Options.CheckStatusValues) {
-            }
-
-            auto const   cur_len = send - spos;
-            flag_type    flags   = 0U;
-            stl::uint8_t factor  = 4U; // max_decomp_expand_factor
+            auto const cur_len = send - spos;
+            flag_type  flags   = 0U;
+            max_size           = cur_len * idna_default_max_len_factor;
 
             while (spos != send) {
                 flag_type const flag = or_all_if<flag_type>(
@@ -495,15 +503,25 @@ namespace webpp::unicode::idna {
                 switch (flag & to_underlying(clean)) {
                     // we optimize this function for ascii-only strings
                     [[unlikely]] case to_underlying(non_ascii): {
-                        auto code_point = checked::next_code_point(spos, send);
-                        // todo
+                        auto const code_point = checked::next_code_point(spos, send);
+
+                        // Update the max size
+                        max_size += best_factor_of(code_point) - idna_default_max_len_factor;
                         break;
                     }
                 }
             }
 
             requires_mapping = flags & to_underlying(non_ascii) != 0;
-            max_size         = cur_len * factor;
+
+            // We're not going to apply this since the toASCII function itself may encounter undefined
+            // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
+            // slower.
+            //
+            // if constexpr (Options.VerifyDnsLength) {
+            //     // The length of the domain name, excluding the root label and its dot, is from 1 to 253.
+            //     max_size = stl::max<stl::size_t>(max_size, 254U); // NOLINT(*-magic-numbers)
+            // }
         }
     };
 
@@ -624,7 +642,7 @@ namespace webpp::unicode::idna {
             accum_length |= label_length;
 
             // 3. Punycode
-            // Convert each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
+            // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
                 iter_append(out, 'x', 'n', '-', '-'); // prepend ACE prefix
@@ -646,7 +664,7 @@ namespace webpp::unicode::idna {
 
         // 4. VerifyDnsLength
         if constexpr (Options.VerifyDnsLength) {
-            // no need to bailout early
+            // No need to bailout early
             constexpr auto max_label   = 63U;
             constexpr auto max_domain  = 253U;
             status                     |= accum_length > max_label ? to_underlying(too_long_label) : status;
@@ -672,28 +690,16 @@ namespace webpp::unicode::idna {
         using input_char_type       = stl::iter_value_t<Iter>;
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
-        if constexpr (Options.VerifyDnsLength) {
-            constexpr auto max_domain_length = 254U;
-            istl::resize_and_overwrite(
-              out,
-              max_domain_length,
-              [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
-                  auto const beg = buf;
-                  status         = to_ascii<Options>(spos, send, buf);
-                  return static_cast<stl::size_t>(buf - beg);
-              });
-        } else {
-            to_ascii_info info;
-            info(spos, send);
-            istl::resize_and_overwrite(
-              out,
-              adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
-              [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
-                  auto const beg = buf;
-                  status         = to_ascii<Options>(spos, send, buf);
-                  return static_cast<stl::size_t>(buf - beg);
-              });
-        }
+        to_ascii_info        info;
+        info(spos, send);
+        istl::resize_and_overwrite(
+          out,
+          adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
+          [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+              auto const beg = buf;
+              status         = to_ascii<Options>(spos, send, buf);
+              return static_cast<stl::size_t>(buf - beg);
+          });
         return status;
     }
 
