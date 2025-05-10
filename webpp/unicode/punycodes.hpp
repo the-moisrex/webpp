@@ -227,7 +227,7 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using istl::iter_append;
 
-        auto const src_length = static_cast<stl::size_t>(send - spos);
+        auto const src_length = send - spos;
         if constexpr (istl::String<OIterT>) {
             out.reserve(src_length + out.size());
         }

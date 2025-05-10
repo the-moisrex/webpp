@@ -1388,12 +1388,13 @@ namespace webpp::unicode {
         /// Attention: this function will remove the last Code Point
         template <stl::random_access_iterator OIterT = stl::u8string::iterator, UTF CharT = char32_t>
         static constexpr void insert(OIterT& out, OIterT const oend, stl::size_t index, CharT val) noexcept {
-            using out_char_type = istl::char_type_of_t<OIterT>;
+            using out_char_type = stl::iter_value_t<OIterT>;
+            using diff_type     = stl::iter_difference_t<OIterT>;
             advance(out, oend, index);
             if constexpr (UTF32<CharT> && UTF32<out_char_type>) {
                 stl::copy_n(out, oend - out - 1, stl::next(out));
             } else {
-                auto const len = utf_length_from<out_char_type>(val);
+                auto const len = utf_length_from<out_char_type, diff_type>(val);
                 stl::copy_n(out, oend - out - len, stl::next(out, len));
             }
             unchecked::append(out, val);

@@ -20,6 +20,7 @@
 #include <climits>
 #include <cstdint>
 #include <iterator>
+#include <limits>
 
 namespace webpp::unicode::idna {
 
@@ -488,7 +489,7 @@ namespace webpp::unicode::idna {
 
             auto const cur_len = send - spos;
             flag_type  flags   = 0U;
-            max_size           = cur_len * idna_default_max_len_factor;
+            max_size           = static_cast<stl::size_t>(cur_len * idna_default_max_len_factor);
 
             while (spos != send) {
                 flag_type const flag = or_all_if<flag_type>(
@@ -557,6 +558,7 @@ namespace webpp::unicode::idna {
         // Normalization is guaranteed to not require more space than 3 times the input.
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
+
         auto const src_length      = send - spos;
         auto       status          = to_underlying(valid);
         auto const obeg            = out;
@@ -566,6 +568,7 @@ namespace webpp::unicode::idna {
 
         // If output is in between the input, it's a disaster waiting to happen.
         assert(!(out > spos && out < send));
+        assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
@@ -591,9 +594,7 @@ namespace webpp::unicode::idna {
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
-        stl::size_t accum_length = 0;
-        auto        pos          = istl::appendable_next(out, obeg);
-        auto const  oend         = istl::appendable_end(out);
+        stl::uint16_t accum_length = 0;
         for (; spos != send; ++spos) {
             auto const lpos = spos; // start of label
 
@@ -662,7 +663,9 @@ namespace webpp::unicode::idna {
                     break;
             }
 
-            accum_length |= label_length;
+            // don't worry about length being longer than uint16_t, it'll require it to be more than the max
+            // size for that to happen.
+            accum_length |= static_cast<stl::uint16_t>(label_length);
 
             // 3. Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
@@ -730,6 +733,26 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT&& src, StrT& out) {
         auto const src_v = istl::string_viewify(stl::forward<StrVT>(src));
         return to_ascii<Options>(src_v.begin(), src_v.end(), out);
+    }
+
+    /**
+     * @returns empty string if error occured.
+     */
+    template <istl::String            StrT    = stl::u8string,
+              idna_options            Options = {},
+              istl::StringViewifiable StrVT,
+              typename... Args>
+        requires(stl::is_constructible_v<StrT, Args...>)
+    [[nodiscard]] static constexpr StrT to_ascii(StrVT&& src, Args&&... args) {
+        using stl::to_underlying;
+
+        StrT       out{stl::forward<Args>(args)...};
+        auto const src_v  = istl::string_viewify(stl::forward<StrVT>(src));
+        auto const status = to_ascii<Options>(src_v.begin(), src_v.end(), out);
+        if (status != to_underlying(to_ascii_status::valid)) {
+            out.clear();
+        }
+        return out;
     }
 
     template <idna_options   Options = {},
