@@ -244,6 +244,15 @@ namespace webpp::ascii {
     }
 
     template <typename InpIter, typename OutIter>
+    constexpr void lower_to(InpIter inp, InpIter const end, OutIter out) noexcept {
+        using char_type = stl::iter_value_t<InpIter>;
+        // todo: SWAR optimization
+        while (inp != end) {
+            *out++ = to_lower_copy<char_type>(*inp++);
+        }
+    }
+
+    template <typename InpIter, typename OutIter>
     constexpr void upper_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
         using difference_type = stl::iter_difference_t<InpIter>;
         auto const end        = inp + static_cast<difference_type>(length);

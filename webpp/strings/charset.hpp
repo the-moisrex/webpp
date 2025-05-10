@@ -797,7 +797,7 @@ namespace webpp {
         stl::array<flag_type, N> data{};
         auto const               value_of = [](auto value) {
             if constexpr (stl::is_enum_v<T>) {
-                return stl::to_underlying(value);
+                return static_cast<flag_type>(value);
             } else {
                 return static_cast<T>(value);
             }

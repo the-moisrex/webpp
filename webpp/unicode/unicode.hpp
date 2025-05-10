@@ -138,6 +138,17 @@ namespace webpp::unicode {
         }
     }
 
+    template <stl::random_access_iterator Iter = char8_t const*>
+    [[nodiscard]] static constexpr bool is_ascii(Iter spos, Iter send) noexcept {
+        // TODO: add SWAR optimization
+        for (; spos != send; ++spos) {
+            if (!is_ascii(*spos)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
         return static_cast<u8>(0xFF & oct);

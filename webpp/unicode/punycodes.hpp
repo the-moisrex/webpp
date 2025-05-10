@@ -16,7 +16,7 @@ namespace webpp::unicode::idna {
 
     using punycode_uint = stl::uint32_t;
 
-    enum struct punycode_status : stl::uint8_t {
+    enum struct punycode_status : stl::uint16_t { // NOLINT(*-enum-size)
         // these values are a match for to to_ascii_status as well, so if you ever change these values, you
         // may need to change them as well.
 

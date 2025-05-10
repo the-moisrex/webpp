@@ -7,6 +7,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/to_case.hpp"
 #include "./bidi.hpp"
 #include "./details/idna_mapping_tables.hpp"
 #include "./general_category.hpp"
@@ -184,14 +185,16 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        invalid_code_point = stl::to_underlying(punycode_status::bad_input),
-        punycode_overflow  = stl::to_underlying(punycode_status::overflow),
+        invalid_code_point  = stl::to_underlying(punycode_status::bad_input),
+        punycode_overflow   = stl::to_underlying(punycode_status::overflow),
+        ascii_only_punycode = 0b1U << 3U,
+        empty_punycode      = 0b1U << 4U,
 
         // More errors:
-        empty_domain_label       = 0b1U << 3U,
-        too_long_label           = 0b1U << 4U, // the subdomain is more than 63
-        too_long_domain          = 0b1U << 5U, // the whole domain is more than 253 without last dot
-        failed_validity_criteria = 0b1U << 6U, // the label failed the validity criteria requirements.
+        empty_domain_label       = 0b1U << 5U,
+        too_long_label           = 0b1U << 6U, // the subdomain is more than 63
+        too_long_domain          = 0b1U << 7U, // the whole domain is more than 253 without last dot
+        failed_validity_criteria = 0b1U << 8U, // the label failed the validity criteria requirements.
     };
 
     struct idna_options {                      // NOLINT(*-struct-pack-align)
@@ -448,6 +451,7 @@ namespace webpp::unicode::idna {
             // Misc:
             clean            = static_cast<flag_type>(~dot),
             messy_code_units = dot | non_ascii | ace,
+            all              = 0b1111'1111U, // all possiblities
         };
 
         // array<flag_types, 256>
@@ -462,12 +466,10 @@ namespace webpp::unicode::idna {
 
         stl::size_t max_size = 0; // not adjusted to the output size if the input and output's character types
                                   // are different.
-        bool requires_mapping = false;
-        bool has_punycode     = false;
 
         [[nodiscard]] static constexpr stl::uint8_t best_factor_of(UTF32 auto const code_point) noexcept {
             constexpr stl::uint32_t split = 24U;
-            constexpr stl::uint32_t mask  = 0b1U << split - 1U;
+            constexpr stl::uint32_t mask  = (0b1U << split) - 1U;
             auto const              inf   = details::idna_max_len_factors[code_point % details::idna_rem];
             if ((inf & mask) == code_point) [[unlikely]] {
                 return static_cast<stl::uint8_t>(inf >> split);
@@ -479,7 +481,7 @@ namespace webpp::unicode::idna {
          * @returns maximum required storage length for conversion; zero if no need for conversion.
          */
         template <idna_options Options = {}, stl::random_access_iterator Iter>
-        constexpr void operator()(Iter spos, Iter send) noexcept {
+        [[nodiscard]] constexpr flag_type operator()(Iter spos, Iter send) noexcept {
             using enum flag_types;
             using details::idna_default_max_len_factor;
             using stl::to_underlying;
@@ -512,7 +514,7 @@ namespace webpp::unicode::idna {
                 }
             }
 
-            requires_mapping = flags & to_underlying(non_ascii) != 0;
+            // requires_mapping = (flags & to_underlying(non_ascii)) != 0;
 
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
@@ -522,6 +524,8 @@ namespace webpp::unicode::idna {
             //     // The length of the domain name, excluding the root label and its dot, is from 1 to 253.
             //     max_size = stl::max<stl::size_t>(max_size, 254U); // NOLINT(*-magic-numbers)
             // }
+
+            return flags;
         }
     };
 
@@ -537,21 +541,28 @@ namespace webpp::unicode::idna {
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
     template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
-    [[nodiscard]] static constexpr to_ascii_status_type
-    to_ascii(Iter spos, Iter const send, OIter& out) noexcept {
+    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
+      Iter                     spos,
+      Iter const               send,
+      OIter&                   out,
+      to_ascii_info::flag_type flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
         using istl::iter_append;
         using stl::to_underlying;
         using unicode::normalization_form;
+        using flag_type = to_ascii_info::flag_type;
 
 
         // Normalization is guaranteed to not require more space than 3 times the input.
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
-        auto const src_length = send - spos;
-        auto       status     = to_underlying(valid);
-        auto const obeg       = out;
+        auto const src_length      = send - spos;
+        auto       status          = to_underlying(valid);
+        auto const obeg            = out;
+        bool const all_ascii       = (flags & to_underlying(non_ascii)) == 0;
+        bool const has_no_punycode = (flags & to_underlying(ace)) == 0;
+        bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) == 0;
 
         // If output is in between the input, it's a disaster waiting to happen.
         assert(!(out > spos && out < send));
@@ -559,22 +570,27 @@ namespace webpp::unicode::idna {
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
 
-        // 1.1 Map (and/or copy to output)
-        if (!idna::map(spos, send, out)) [[unlikely]] {
-            // Disallowed code point was found
-            status |= to_underlying(invalid_code_point);
-        }
+        if (all_lower_ascii) {
+            stl::copy(spos, send, out);
+        } else if (all_ascii) {
+            // 1.1 ASCII Map (and/or copy to output
+            ascii::lower_to(spos, send, out);
+        } else {
+            // 1.1 Map (and/or copy to output)
+            if (!idna::map(spos, send, out)) [[unlikely]] {
+                // Disallowed code point was found
+                status |= to_underlying(invalid_code_point);
+            }
 
-        // 1.2. Normalize inplace
-        {
-            auto       pos  = istl::appendable_next(out, obeg);
-            auto const oend = istl::appendable_end(out);
-            normalize<normalization_form::NFC>(pos, oend, out);
+            // 1.2. Normalize inplace
+            {
+                auto       pos  = istl::appendable_next(out, obeg);
+                auto const oend = istl::appendable_end(out);
+                normalize<normalization_form::NFC>(pos, oend, out);
+            }
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
-        using flag_type = to_ascii_info::flag_type;
-
         stl::size_t accum_length = 0;
         auto        pos          = istl::appendable_next(out, obeg);
         auto const  oend         = istl::appendable_end(out);
@@ -615,18 +631,25 @@ namespace webpp::unicode::idna {
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
                         // todo: output is not correct
+                        auto const out_beg    = out;
                         auto const pun_status = punycode_decode(lpos, spos, out);
-                        if (pun_status != punycode_status::success) [[unlikely]] {
-                            status |= to_underlying(pun_status);
+                        auto const out_len    = out - out_beg;
+                        if constexpr (!Options.IgnoreInvalidPunycode) {
+                            if (pun_status != punycode_status::success) [[unlikely]] {
+                                // todo: restore the replaced label
+                                status |= to_underlying(pun_status);
+                                continue;
+                            }
                         }
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
-                        // todo
-
-                        // 1.4.4. If the label is empty, or if the label contains only ASCII code points,
-                        // record that there was an error.
-                        // todo
+                        if (out_len == 0) [[unlikely]] {
+                            status |= to_underlying(empty_punycode);
+                        }
+                        if (is_ascii(out_beg, out)) [[unlikely]] {
+                            status |= to_underlying(ascii_only_punycode);
+                        }
                     }
                     [[fallthrough]];
                 [[likely]] default:
@@ -691,13 +714,13 @@ namespace webpp::unicode::idna {
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
         to_ascii_info        info;
-        info(spos, send);
+        auto const           flags = info(spos, send);
         istl::resize_and_overwrite(
           out,
           adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
-          [&](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+          [&, flags](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
               auto const beg = buf;
-              status         = to_ascii<Options>(spos, send, buf);
+              status         = to_ascii<Options>(spos, send, buf, flags);
               return static_cast<stl::size_t>(buf - beg);
           });
         return status;
