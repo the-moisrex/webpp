@@ -600,7 +600,7 @@ namespace webpp::unicode::idna {
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
         while (spos != send) {
-            auto const lbeg = spos; // start of label
+            auto lbeg = spos; // start of label
 
             // find the label:
             flag_type const flag = or_all_if<flag_type>(
@@ -635,9 +635,15 @@ namespace webpp::unicode::idna {
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
+                        auto const capacity = ((send - lbeg) * 3U) + 4U;
+                        stl::copy_backward(lbeg, send, out); // reserve enough storage for output
+                        lbeg += capacity;
+                        spos += capacity;
+                        send += capacity;
+
                         auto const pun_status = punycode_decode(lbeg, spos, out);
                         auto const out_len    = out - lbeg;
-                        assert(out_len <= label_length);
+                        assert(out_len <= capacity);
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
                                 // todo: restore the replaced label
@@ -727,10 +733,12 @@ namespace webpp::unicode::idna {
         istl::resize_and_overwrite(
           out,
           adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
-          [&, flags](output_char_type* buf, [[maybe_unused]] stl::size_t max_len) constexpr noexcept {
+          [&, flags](output_char_type* buf, stl::size_t const max_len) constexpr noexcept {
               auto const beg = buf;
               status         = to_ascii<Options>(spos, send, buf, flags);
-              return static_cast<stl::size_t>(buf - beg);
+              auto const len = static_cast<stl::size_t>(buf - beg);
+              assert(len <= max_len); // let's not rely on -D_GLIBCXX_ASSERTS or -D_GLIBCXX_DEBUG
+              return len;
           });
         return status;
     }

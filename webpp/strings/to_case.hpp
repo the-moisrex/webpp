@@ -245,10 +245,10 @@ namespace webpp::ascii {
 
     template <typename InpIter, typename OutIter>
     constexpr void lower_to(InpIter inp, InpIter const end, OutIter out) noexcept {
-        using char_type = stl::iter_value_t<InpIter>;
+        using char_type = stl::iter_value_t<OutIter>;
         // todo: SWAR optimization
         while (inp != end) {
-            *out++ = to_lower_copy<char_type>(*inp++);
+            *out++ = to_lower_copy<char_type>(static_cast<char_type>(*inp++));
         }
     }
 

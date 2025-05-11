@@ -792,6 +792,7 @@ namespace webpp {
      */
     template <typename T, stl::size_t N, typename... CharSetsT>
     [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
+        static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         using flag_type = typename stl::
           conditional_t<stl::is_enum_v<T>, stl::underlying_type<T>, stl::type_identity<T>>::type;
         stl::array<flag_type, N> data{};
@@ -814,11 +815,11 @@ namespace webpp {
                  }
              } else if constexpr (istl::Iterable<CharSetT>) {
                  for (auto const character : set) {
-                     data[static_cast<stl::size_t>(character)] |= value_of(value);
+                     data[static_cast<stl::uint8_t>(character)] |= value_of(value);
                  }
              } else { // for strings (char const*)
                  for (auto cur = set; *cur != '\0'; ++cur) {
-                     data[static_cast<stl::size_t>(*cur)] |= value_of(value);
+                     data[static_cast<stl::uint8_t>(*cur)] |= value_of(value);
                  }
              }
          })(sets.set, sets.value),
@@ -847,6 +848,7 @@ namespace webpp {
      */
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
+        static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         T res{};
         while (stl::next(pos, 4) <= end) {
             res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
@@ -855,7 +857,7 @@ namespace webpp {
             res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
         }
         for (; pos != end; ++pos) {
-            res |= static_cast<T>(arr[*pos]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos)]);
         }
         return res;
     }
@@ -863,12 +865,14 @@ namespace webpp {
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T
     or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
+        static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         T res{};
         for (;; ++pos) {
             if (pos == end || func(res)) {
                 break;
             }
-            res |= static_cast<T>(arr[*pos]);
+            // unsigned char must be used to make sure the Unicode Code Units don't show up as negative
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos)]);
         }
         return res;
     }

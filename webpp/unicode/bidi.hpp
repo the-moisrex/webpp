@@ -227,7 +227,7 @@ namespace webpp::unicode {
         }
 
         if constexpr (UTF32<char_type>) {
-            // Will enable auto vectorization since it's more simple
+            // Will enable auto-vectorization since it's more simple
             for (; pos != endp; ++pos) {
                 accum |= 0b1U << to_underlying(direction_of(*pos));
             }
@@ -253,7 +253,7 @@ namespace webpp::unicode {
         // we don't need to check other things, the first rule will make sure it's not valid otherwise
         bool const is_rtl = (first != to_underlying(L));
 
-        // 1. First character must be L, R, or AL:
+        // 1. The first character must be L, R, or AL:
         valid &= (first & bidi_mask(L, R, AL)) != 0;
 
         if (!is_rtl) {

@@ -278,7 +278,7 @@ namespace webpp::unicode::idna {
                     return bad_input;
                 }
                 // no need for Unicode Code Point handling, a valid punycode is all ascii.
-                punycode_uint const digit = decode_digit<Options>(*pos++);
+                punycode_uint const digit = decode_digit<Options>(static_cast<punycode_uint>(*pos++));
                 if (digit >= Options.base) [[unlikely]] {
                     return bad_input;
                 }
