@@ -543,8 +543,8 @@ namespace webpp::unicode::idna {
      */
     template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
-      Iter                     spos,
-      Iter const               send,
+      Iter                     ipos,
+      Iter const               iend,
       OIter&                   out,
       to_ascii_info::flag_type flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
         using enum to_ascii_status;
@@ -559,44 +559,47 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const src_length      = send - spos;
+        auto const src_length      = iend - ipos;
         auto       status          = to_underlying(valid);
         auto const obeg            = out;
+        auto       oend            = out + src_length; // init
         bool const all_ascii       = (flags & to_underlying(non_ascii)) == 0;
         bool const has_no_punycode = (flags & to_underlying(ace)) == 0;
-        bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) == 0;
+        bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) != 0;
 
         // If output is in between the input, it's a disaster waiting to happen.
-        assert(!(out > spos && out < send));
+        assert(!(out > ipos && out < iend));
         assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
 
         if (all_lower_ascii) {
-            stl::copy(spos, send, out);
+            stl::copy(ipos, iend, out);
         } else if (all_ascii) {
-            // 1.1 ASCII Map (and/or copy to output
-            ascii::lower_to(spos, send, out);
+            // 1.1 ASCII Map (and/or copy to output)
+            ascii::lower_to(ipos, iend, out);
         } else {
             // 1.1 Map (and/or copy to output)
-            if (!idna::map(spos, send, out)) [[unlikely]] {
+            if (!idna::map(ipos, iend, out)) [[unlikely]] {
                 // Disallowed code point was found
                 status |= to_underlying(invalid_code_point);
             }
 
             // 1.2. Normalize inplace
             {
-                auto       pos  = istl::appendable_next(out, obeg);
-                auto const oend = istl::appendable_end(out);
+                auto pos = out;
                 normalize<normalization_form::NFC>(pos, oend, out);
+                oend = pos; // the new end
             }
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
-        for (; spos != send; ++spos) {
-            auto const lpos = spos; // start of label
+        auto          spos         = out;
+        auto const    send         = oend;
+        for (; spos != send;) {
+            auto const lbeg = spos; // start of label
 
             // find the label:
             flag_type const flag = or_all_if<flag_type>(
@@ -607,7 +610,7 @@ namespace webpp::unicode::idna {
                   return cur_flags >= to_underlying(dot); // we found a dot
               });
 
-            auto const label_length = spos - lpos;
+            auto const label_length = spos - lbeg;
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & to_underlying(clean)) {
@@ -616,8 +619,8 @@ namespace webpp::unicode::idna {
                     status |= to_underlying(empty_domain_label);
                     break;
                 case to_underlying(ace):
-                    if (label_length >= 4 && lpos[0] == 'x' && lpos[1] == 'n' && lpos[2] == '-' &&
-                        lpos[3] == '-')
+                    if (label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
+                        lbeg[3] == '-')
                     {
                         // Found xn--.
                         // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
@@ -631,10 +634,9 @@ namespace webpp::unicode::idna {
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
-                        // todo: output is not correct
-                        auto const out_beg    = out;
-                        auto const pun_status = punycode_decode(lpos, spos, out);
-                        auto const out_len    = out - out_beg;
+                        auto const pun_status = punycode_decode(lbeg, spos, out);
+                        auto const out_len    = out - lbeg;
+                        assert(out_len <= label_length);
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
                                 // todo: restore the replaced label
@@ -648,7 +650,7 @@ namespace webpp::unicode::idna {
                         if (out_len == 0) [[unlikely]] {
                             status |= to_underlying(empty_punycode);
                         }
-                        if (is_ascii(out_beg, out)) [[unlikely]] {
+                        if (is_ascii(lbeg, out)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
                         }
                     }
@@ -657,7 +659,7 @@ namespace webpp::unicode::idna {
                     // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
                     // Criteria. If any of the validity criteria are not satisfied, record that there was
                     // an error.
-                    if (!is_label_valid(lpos, spos)) [[unlikely]] {
+                    if (!is_label_valid(lbeg, out)) [[unlikely]] {
                         status |= to_underlying(failed_validity_criteria);
                     }
                     break;
@@ -671,8 +673,9 @@ namespace webpp::unicode::idna {
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
+                // todo: output is not correct
                 iter_append(out, 'x', 'n', '-', '-'); // prepend ACE prefix
-                [[maybe_unused]] auto const p_status = punycode_encode(lpos, spos, out);
+                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, out, out);
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     status |= to_underlying(p_status);
                 }
