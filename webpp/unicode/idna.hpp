@@ -543,10 +543,10 @@ namespace webpp::unicode::idna {
      */
     template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
-      Iter                     ipos,
-      Iter const               iend,
-      OIter&                   out,
-      to_ascii_info::flag_type flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
+      Iter                           ipos,
+      Iter const                     iend,
+      OIter&                         out,
+      to_ascii_info::flag_type const flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
         using istl::iter_append;
@@ -561,10 +561,10 @@ namespace webpp::unicode::idna {
 
         auto const src_length      = iend - ipos;
         auto       status          = to_underlying(valid);
-        auto const obeg            = out;
-        auto       oend            = out + src_length; // init
+        auto       spos            = out;
+        auto       send            = out + src_length; // init
         bool const all_ascii       = (flags & to_underlying(non_ascii)) == 0;
-        bool const has_no_punycode = (flags & to_underlying(ace)) == 0;
+        // bool const has_no_punycode = (flags & to_underlying(ace)) == 0;
         bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) != 0;
 
         // If output is in between the input, it's a disaster waiting to happen.
@@ -576,9 +576,11 @@ namespace webpp::unicode::idna {
 
         if (all_lower_ascii) {
             stl::copy(ipos, iend, out);
+            stl::advance(out, src_length);
         } else if (all_ascii) {
             // 1.1 ASCII Map (and/or copy to output)
             ascii::lower_to(ipos, iend, out);
+            stl::advance(out, src_length);
         } else {
             // 1.1 Map (and/or copy to output)
             if (!idna::map(ipos, iend, out)) [[unlikely]] {
@@ -589,16 +591,14 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             {
                 auto pos = out;
-                normalize<normalization_form::NFC>(pos, oend, out);
-                oend = pos; // the new end
+                normalize<normalization_form::NFC>(pos, send, out);
+                send = pos; // the new end
             }
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
-        auto          spos         = out;
-        auto const    send         = oend;
-        for (; spos != send;) {
+        while (spos != send) {
             auto const lbeg = spos; // start of label
 
             // find the label:
@@ -670,7 +670,7 @@ namespace webpp::unicode::idna {
             accum_length |= static_cast<stl::uint16_t>(label_length);
 
             // 3. Punycode
-            // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefix by “xn--”.
+            // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
                 // todo: output is not correct

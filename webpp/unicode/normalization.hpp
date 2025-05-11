@@ -251,7 +251,6 @@ namespace webpp::unicode {
         using details::decomp_index;
         using details::decomp_indices;
         using details::decomp_values;
-        using details::trailing_mapped_deomps;
         using unchecked::append;
 
         // Not mapped

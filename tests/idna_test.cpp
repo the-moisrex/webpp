@@ -818,8 +818,10 @@ TEST(BasicIDNATests, ToASCIITest) {
     using webpp::unicode::idna::to_ascii;
     using enum webpp::unicode::idna::to_ascii_status;
 
+    EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");
+    EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org");
     EXPECT_EQ(to_ascii(u8"one"), u8"one");
-    EXPECT_EQ(to_ascii(u8"..."), u8""); // empty string is invalid
+    EXPECT_EQ(to_ascii(u8"..."), u8""); // an empty string is invalid
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
