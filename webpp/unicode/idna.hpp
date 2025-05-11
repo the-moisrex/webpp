@@ -3,7 +3,6 @@
 #ifndef WEBPP_URI_IDNA_MAPPINGS_HPP
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
-#include "../std/expected.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
@@ -450,9 +449,9 @@ namespace webpp::unicode::idna {
             ace  = x | n | dash, // ACE prefix
 
             // Misc:
-            clean            = static_cast<flag_type>(~dot),
+            clean            = static_cast<flag_type>(~dot | ascii),
             messy_code_units = dot | non_ascii | ace,
-            all              = 0b1111'1111U, // all possiblities
+            all              = 0b1111'1111U, // all possibilities
         };
 
         // array<flag_types, 256>
@@ -568,7 +567,9 @@ namespace webpp::unicode::idna {
         bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) != 0;
 
         // If output is in between the input, it's a disaster waiting to happen.
-        assert(!(out > ipos && out < iend));
+        if constexpr (stl::convertible_to<Iter, OIter>) {
+            assert(!(out > ipos && out < iend));
+        }
         assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
 
         // 1. Processing
@@ -683,10 +684,12 @@ namespace webpp::unicode::idna {
 
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
-            if ((flag & to_underlying(dot)) == to_underlying(dot) && flag != to_underlying(dot)) {
-                // every label except the last label
-                iter_append(out, '.');
-            }
+            // if (spos == send && flag == to_underlying(dot)) {
+            // assert((flag & to_underlying(dot)) == to_underlying(dot) && flag != to_underlying(dot));
+            // every label except the last label
+            // iter_append(out, '.');
+            // --out;
+            // }
         }
 
 
@@ -739,13 +742,13 @@ namespace webpp::unicode::idna {
     }
 
     /**
-     * @returns empty string if error occured.
+     * @returns empty string if error occurred.
      */
     template <istl::String            StrT    = stl::u8string,
               idna_options            Options = {},
               istl::StringViewifiable StrVT,
               typename... Args>
-        requires(stl::is_constructible_v<StrT, Args...>)
+        requires(stl::is_constructible_v<StrT, Args...> && !istl::cvref_as<StrT, Args...>)
     [[nodiscard]] static constexpr StrT to_ascii(StrVT&& src, Args&&... args) {
         using stl::to_underlying;
 
@@ -758,33 +761,33 @@ namespace webpp::unicode::idna {
         return out;
     }
 
-    template <idna_options   Options = {},
-              istl::CharType CharT   = char,
-              istl::String   OutStrT = stl::basic_string<CharT>,
-              typename... Args>
-    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
-      stl::basic_string_view<CharT> src,
-      Args&&... args) {
-        OutStrT    out{stl::forward<Args>(args)...};
-        auto const status = to_ascii<Options>(src.begin(), src.end(), out);
-        if (status == to_ascii_status::valid) {
-            return out;
-        }
-        return status;
-    }
+    // template <idna_options   Options = {},
+    //           istl::CharType CharT   = char,
+    //           istl::String   OutStrT = stl::basic_string<CharT>,
+    //           typename... Args>
+    // [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
+    //   stl::basic_string_view<CharT> src,
+    //   Args&&... args) {
+    //     OutStrT    out{stl::forward<Args>(args)...};
+    //     auto const status = to_ascii<Options>(src.begin(), src.end(), out);
+    //     if (status == to_ascii_status::valid) {
+    //         return out;
+    //     }
+    //     return status;
+    // }
 
     [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs,
                                                    to_ascii_status const      rhs) noexcept {
         return lhs == static_cast<to_ascii_status_type>(rhs);
     }
 
-    template <istl::String OutStrT>
-    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
-                                                   to_ascii_status const rhs) noexcept {
-        to_ascii_status_type const status =
-          lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
-        return status == static_cast<to_ascii_status_type>(rhs);
-    }
+    // template <istl::String OutStrT>
+    // [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+    //                                                to_ascii_status const rhs) noexcept {
+    //     to_ascii_status_type const status =
+    //       lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
+    //     return status == static_cast<to_ascii_status_type>(rhs);
+    // }
 
     [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs,
                                                    to_ascii_status const      rhs) noexcept {
