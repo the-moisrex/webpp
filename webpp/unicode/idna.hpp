@@ -539,12 +539,14 @@ namespace webpp::unicode::idna {
      *         RFC: https://www.rfc-editor.org/rfc/rfc3490.html#section-4.1
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
+     *    Used by:  https://url.spec.whatwg.org/#idna
      */
     template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
       Iter                           ipos,
       Iter const                     iend,
       OIter&                         out,
+      stl::size_t                    out_len,
       to_ascii_info::flag_type const flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
@@ -558,23 +560,25 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const src_length      = iend - ipos;
-        auto       status          = to_underlying(valid);
-        auto       spos            = out;
-        auto       send            = out + src_length; // init
-        bool const all_ascii       = (flags & to_underlying(non_ascii)) == 0;
-        // bool const has_no_punycode = (flags & to_underlying(ace)) == 0;
-        bool const all_lower_ascii = (flags & to_underlying(ascii_upper)) != 0;
+        auto const src_length          = iend - ipos;
+        auto       status              = to_underlying(valid);
+        auto const out_beg             = out;
+        bool const all_ascii           = (flags & to_underlying(non_ascii)) == 0;
+        bool const might_have_punycode = (flags & to_underlying(ace)) != 0;
+        bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == 0;
+        auto       spos                = out;
+        auto       send                = stl::next(spos, src_length); // init
+        auto const oend                = out + out_len;
 
         // If output is in between the input, it's a disaster waiting to happen.
-        if constexpr (stl::convertible_to<Iter, OIter>) {
-            assert(!(out > ipos && out < iend));
+        if constexpr (stl::same_as<Iter, OIter>) {
+            assert(!(out >= ipos && out < iend));
         }
         assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
+        assert(out_len < stl::numeric_limits<stl::uint32_t>::max());
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
-
         if (all_lower_ascii) {
             stl::copy(ipos, iend, out);
             stl::advance(out, src_length);
@@ -600,7 +604,8 @@ namespace webpp::unicode::idna {
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
         while (spos != send) {
-            auto lbeg = spos; // start of label
+            auto const lcbeg = spos;
+            auto       lbeg  = spos; // start of label
 
             // find the label:
             flag_type const flag = or_all_if<flag_type>(
@@ -611,14 +616,18 @@ namespace webpp::unicode::idna {
                   return cur_flags >= to_underlying(dot); // we found a dot
               });
 
-            auto const label_length = spos - lbeg;
+            auto const lcend        = spos;
+            auto       lend         = spos;
+            auto const label_length = lend - lbeg;
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & to_underlying(clean)) {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
                     status |= to_underlying(empty_domain_label);
-                    break;
+                    out     = out_beg;
+                    *out    = '\0';
+                    return status;
                 case to_underlying(ace):
                     if (label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
                         lbeg[3] == '-')
@@ -635,30 +644,32 @@ namespace webpp::unicode::idna {
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
-                        auto const capacity = ((send - lbeg) * 3U) + 4U;
-                        stl::copy_backward(lbeg, send, out); // reserve enough storage for output
-                        lbeg += capacity;
-                        spos += capacity;
-                        send += capacity;
-
-                        auto const pun_status = punycode_decode(lbeg, spos, out);
-                        auto const out_len    = out - lbeg;
-                        assert(out_len <= capacity);
+                        lend                     = send;
+                        lbeg                     = send;
+                        auto const pun_status    = punycode_decode(lcbeg, lcend, lend);
+                        auto const new_label_len = lend - send;
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
-                                // todo: restore the replaced label
-                                status |= to_underlying(pun_status);
+                                // restore the original label:
+                                status       |= to_underlying(pun_status);
+                                accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
                                 continue;
                             }
                         }
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
-                        if (out_len == 0) [[unlikely]] {
+                        if (new_label_len == 0) [[unlikely]] {
                             status |= to_underlying(empty_punycode);
+                            out     = out_beg;
+                            *out    = '\0';
+                            return status;
                         }
                         if (is_ascii(lbeg, out)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
+                            out     = out_beg;
+                            *out    = '\0';
+                            return status;
                         }
                     }
                     [[fallthrough]];
@@ -666,36 +677,54 @@ namespace webpp::unicode::idna {
                     // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
                     // Criteria. If any of the validity criteria are not satisfied, record that there was
                     // an error.
-                    if (!is_label_valid(lbeg, out)) [[unlikely]] {
+                    if (!is_label_valid(lbeg, lend)) [[unlikely]] {
                         status |= to_underlying(failed_validity_criteria);
+                        out     = out_beg;
+                        *out    = '\0';
+                        return status;
                     }
                     break;
             }
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
-            accum_length |= static_cast<stl::uint16_t>(label_length);
+            accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
 
             // 3. Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                // todo: output is not correct
-                iter_append(out, 'x', 'n', '-', '-'); // prepend ACE prefix
-                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, out, out);
+                out                                  = stl::max(send, lend); // temp storage
+                auto const                  tmp_beg  = out;
+                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
+                assert(out <= oend);
+
+                auto const label_len = out - tmp_beg + 4U;
+                {
+                    // Create space for the new label
+                    auto const move_amount = label_len - label_length;
+                    stl::copy_backward(lcend, send, stl::next(send, move_amount));
+                    stl::advance(spos, move_amount);
+                    stl::advance(send, move_amount);
+                }
+                {
+                    // write the new label
+                    iter_append(lbeg, 'x', 'n', '-', '-'); // prepend ACE prefix
+                    stl::copy(tmp_beg, out, lbeg);
+                    out = stl::next(lbeg, label_len);
+                }
                 if constexpr (!Options.IgnoreInvalidPunycode) {
-                    status |= to_underlying(p_status);
+                    if (p_status != punycode_status::success) [[unlikely]] {
+                        status |= to_underlying(p_status);
+                        // todo: Clearing the output is not needed?
+                        *out    = '\0';
+                        return status;
+                    }
                 }
             }
 
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
-            // if (spos == send && flag == to_underlying(dot)) {
-            // assert((flag & to_underlying(dot)) == to_underlying(dot) && flag != to_underlying(dot));
-            // every label except the last label
-            // iter_append(out, '.');
-            // --out;
-            // }
         }
 
 
@@ -708,6 +737,9 @@ namespace webpp::unicode::idna {
             status                     |= accum_length > max_label ? to_underlying(too_long_label) : status;
             if (out.size() > max_domain && (out.size() != max_domain + 1 || out.back() != '.')) [[unlikely]] {
                 status |= to_underlying(too_long_domain);
+                out     = out_beg;
+                *out    = '\0';
+                return status;
             }
         }
 
@@ -720,6 +752,7 @@ namespace webpp::unicode::idna {
 
         // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
         // returned. No DNS lookup should be done.
+        *out = '\0';
         return status;
     }
 
@@ -735,7 +768,7 @@ namespace webpp::unicode::idna {
           adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
           [&, flags](output_char_type* buf, stl::size_t const max_len) constexpr noexcept {
               auto const beg = buf;
-              status         = to_ascii<Options>(spos, send, buf, flags);
+              status         = to_ascii<Options>(spos, send, buf, max_len, flags);
               auto const len = static_cast<stl::size_t>(buf - beg);
               assert(len <= max_len); // let's not rely on -D_GLIBCXX_ASSERTS or -D_GLIBCXX_DEBUG
               return len;
@@ -760,12 +793,9 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr StrT to_ascii(StrVT&& src, Args&&... args) {
         using stl::to_underlying;
 
-        StrT       out{stl::forward<Args>(args)...};
-        auto const src_v  = istl::string_viewify(stl::forward<StrVT>(src));
-        auto const status = to_ascii<Options>(src_v.begin(), src_v.end(), out);
-        if (status != to_underlying(to_ascii_status::valid)) {
-            out.clear();
-        }
+        StrT                        out{stl::forward<Args>(args)...};
+        auto const                  src_v  = istl::string_viewify(stl::forward<StrVT>(src));
+        [[maybe_unused]] auto const status = to_ascii<Options>(src_v.begin(), src_v.end(), out);
         return out;
     }
 

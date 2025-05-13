@@ -122,6 +122,13 @@ namespace webpp::unicode::idna {
             out.reserve(src_length + out.size());
         }
 
+        if constexpr (stl::same_as<IterT, OIterT>) {
+            // Inplace encoding is not allowed.
+            assert(!(out >= spos && out < send));
+            // assert(out < (spos - src_length * 3) || out >= send);
+            assert(out < (spos - src_length) || out >= send);
+        }
+
         punycode_uint n_val       = Options.initial_n;
         punycode_uint delta       = 0;
         punycode_uint bias        = Options.initial_bias;

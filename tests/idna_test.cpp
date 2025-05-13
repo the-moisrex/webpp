@@ -896,6 +896,15 @@ TEST(BasicIDNATests, ToASCIITest) {
       {                                                                       "≠",              "xn--1ch"},
     };
 
+    EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
+    EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
+    EXPECT_EQ(to_ascii(u8"يa"), u8"");
+    EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");
+    EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
+    EXPECT_EQ(to_ascii(u8"one"), u8"one");
+    EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
+    EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
+
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid), u8"") << invalid;
         string out;
@@ -903,16 +912,12 @@ TEST(BasicIDNATests, ToASCIITest) {
     }
 
     for (auto const [raw, mappedTo] : valids) {
+        // todo: support validateDNS option
         EXPECT_EQ(to_ascii<string>(raw), mappedTo) << raw;
         string out;
         EXPECT_NE(to_ascii(raw, out), valid) << raw;
         EXPECT_EQ(out, mappedTo) << raw;
     }
-
-    EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");
-    EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
-    EXPECT_EQ(to_ascii(u8"one"), u8"one");
-    EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
