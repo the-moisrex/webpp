@@ -429,6 +429,12 @@ namespace webpp::unicode::idna {
         return valid;
     }
 
+    template <idna_options Options = {}, istl::StringViewifiable StrT>
+    [[nodiscard]] static constexpr bool is_label_valid(StrT&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        return is_label_valid<Options>(str.begin(), str.end());
+    }
+
     /**
      * This class helps you get information about your string before you allocate enough storage for toASCII
      * algorithm.
@@ -461,7 +467,8 @@ namespace webpp::unicode::idna {
           cat{.set = "nN", .value = flag_types::n},
           cat{.set = "-", .value = flag_types::dash},
           cat{.set = NON_ASCII_CODE_UNITS, .value = flag_types::non_ascii},
-          cat{.set = ALL_ASCII<char8_t>, .value = flag_types::ascii});
+          cat{.set = ALL_ASCII<char8_t>, .value = flag_types::ascii},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = flag_types::ascii_upper});
 
 
         stl::size_t max_size = 0; // not adjusted to the output size if the input and output's character types
@@ -565,7 +572,7 @@ namespace webpp::unicode::idna {
         auto const out_beg             = out;
         bool const all_ascii           = (flags & to_underlying(non_ascii)) == 0;
         bool const might_have_punycode = (flags & to_underlying(ace)) != 0;
-        bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == 0;
+        bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
         auto       spos                = out;
         auto       send                = stl::next(spos, src_length); // init
         auto const oend                = out + out_len;
@@ -665,7 +672,7 @@ namespace webpp::unicode::idna {
                             *out    = '\0';
                             return status;
                         }
-                        if (is_ascii(lbeg, out)) [[unlikely]] {
+                        if (is_ascii(lbeg, lend)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
                             out     = out_beg;
                             *out    = '\0';
@@ -677,7 +684,7 @@ namespace webpp::unicode::idna {
                     // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
                     // Criteria. If any of the validity criteria are not satisfied, record that there was
                     // an error.
-                    if (!is_label_valid(lbeg, lend)) [[unlikely]] {
+                    if (!is_label_valid<Options>(lbeg, lend)) [[unlikely]] {
                         status |= to_underlying(failed_validity_criteria);
                         out     = out_beg;
                         *out    = '\0';
@@ -694,7 +701,7 @@ namespace webpp::unicode::idna {
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                out                                  = stl::max(send, lend); // temp storage
+                out = stl::max(stl::next(send, send - spos), lend); // temp storage
                 auto const                  tmp_beg  = out;
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
                 assert(out <= oend);
@@ -703,22 +710,24 @@ namespace webpp::unicode::idna {
                 {
                     // Create space for the new label
                     auto const move_amount = label_len - label_length;
+                    assert(move_amount >= 0);
                     stl::copy_backward(lcend, send, stl::next(send, move_amount));
                     stl::advance(spos, move_amount);
                     stl::advance(send, move_amount);
                 }
                 {
                     // write the new label
-                    iter_append(lbeg, 'x', 'n', '-', '-'); // prepend ACE prefix
-                    stl::copy(tmp_beg, out, lbeg);
-                    out = stl::next(lbeg, label_len);
+                    auto lpos = lcbeg;
+                    iter_append(lpos, 'x', 'n', '-', '-'); // prepend ACE prefix
+                    stl::copy(tmp_beg, out, lpos);
+                    out = send;
                 }
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
                         status |= to_underlying(p_status);
                         // todo: Clearing the output is not needed?
-                        *out    = '\0';
-                        return status;
+                        // *out    = '\0';
+                        // return status;
                     }
                 }
             }

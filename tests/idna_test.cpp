@@ -896,6 +896,10 @@ TEST(BasicIDNATests, ToASCIITest) {
       {                                                                       "≠",              "xn--1ch"},
     };
 
+    EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
+    EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
+    EXPECT_EQ(to_ascii(u8"xn--zca.xn--zca"), u8"xn--zca.xn--zca");
+    EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
     EXPECT_EQ(to_ascii(u8"يa"), u8"");
@@ -903,7 +907,6 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
     EXPECT_EQ(to_ascii(u8"one"), u8"one");
     EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
-    EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
 
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid), u8"") << invalid;
