@@ -899,11 +899,11 @@ TEST(BasicIDNATests, ToASCIITest) {
     };
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
+    EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
     EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
     EXPECT_EQ(to_ascii(u8"xn--zca.xn--zca"), u8"xn--zca.xn--zca");
-    EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
     EXPECT_EQ(to_ascii(u8"يa"), u8"");
     EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");

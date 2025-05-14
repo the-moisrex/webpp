@@ -256,7 +256,7 @@ namespace webpp::unicode::idna {
                             continue;
                         }
                         if (joining_type == left_joining || joining_type == dual_joining) {
-                            is_valid &= true;
+                            is_valid = true;
                             break;
                         }
                     }
@@ -274,7 +274,7 @@ namespace webpp::unicode::idna {
                             continue;
                         }
                         if (joining_type == right_joining || joining_type == dual_joining) {
-                            is_valid &= true;
+                            is_valid = true;
                             break;
                         }
                     }
@@ -514,6 +514,8 @@ namespace webpp::unicode::idna {
 
                     // Update the max size
                     max_size += best_factor_of(code_point) - idna_default_max_len_factor;
+
+                    // todo: this gets duplicated for each Code Point, while we only need it once for each label
                     max_size += 4; // xn-- is 4
                 }
             }
@@ -618,7 +620,7 @@ namespace webpp::unicode::idna {
             auto       lbeg  = spos; // start of label
 
             // find the label:
-            flag_type const flag = or_all_if<flag_type>(
+            flag_type flag = or_all_if<flag_type>(
               to_ascii_info::interesting_characters,
               spos,
               send,
@@ -626,8 +628,9 @@ namespace webpp::unicode::idna {
                   return cur_flags >= to_underlying(dot); // we found a dot
               });
 
-            auto const lcend        = spos;
-            auto       lend         = spos;
+            bool const contains_dot = (flag & to_underlying(dot)) == to_underlying(dot);
+            auto const lcend        = contains_dot ? stl::prev(spos) : spos;
+            auto       lend         = lcend;
             auto const label_length = lend - lbeg;
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
@@ -657,7 +660,7 @@ namespace webpp::unicode::idna {
                         // original label in the string by the results of the conversion.
                         lend                     = stl::next(send, 4);
                         lbeg                     = lend;
-                        auto const pun_status    = punycode_decode(lcbeg, lcend, lend);
+                        auto const pun_status    = punycode_decode(stl::next(lcbeg, 4), lcend, lend);
                         auto const new_label_len = lend - send;
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
@@ -667,6 +670,7 @@ namespace webpp::unicode::idna {
                                 continue;
                             }
                         }
+                        flag |= to_underlying(non_ascii); // make sure to re-convert it back to punycode
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
@@ -725,6 +729,10 @@ namespace webpp::unicode::idna {
                     auto lpos = lcbeg;
                     iter_append(lpos, 'x', 'n', '-', '-'); // prepend ACE prefix
                     stl::copy(tmp_beg, out, lpos);
+                    if (contains_dot) {
+                        stl::advance(lpos, out - tmp_beg);
+                        iter_append(lpos, '.'); // append dot
+                    }
                     out = send;
                 }
                 if constexpr (!Options.IgnoreInvalidPunycode) {
@@ -739,6 +747,9 @@ namespace webpp::unicode::idna {
 
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
+            // if (contains_dot) {
+            //     *lcend = '.';
+            // }
         }
 
 
