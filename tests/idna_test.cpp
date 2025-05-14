@@ -775,7 +775,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
         }, }
     };
 
-    static constexpr array<opts, 134> tests{
+    static constexpr array<opts, 21> tests{
       opts{"", true, -1},
       {"a", true, -1},
       {"-"},
@@ -799,6 +799,8 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
 
       {"ABC", true, 0}, // STD3 Rule
       {"ABC", false, 1}, // STD3 Rule
+
+      {"تست", true, -1}
     };
 
     for (auto const [str, is_valid, opts_index] : tests) {
@@ -897,9 +899,10 @@ TEST(BasicIDNATests, ToASCIITest) {
     };
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
+    EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
+    EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
     EXPECT_EQ(to_ascii(u8"xn--zca.xn--zca"), u8"xn--zca.xn--zca");
-    EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
     EXPECT_EQ(to_ascii(u8"يa"), u8"");
@@ -911,14 +914,14 @@ TEST(BasicIDNATests, ToASCIITest) {
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid), u8"") << invalid;
         string out;
-        EXPECT_NE(to_ascii(invalid, out), valid) << invalid;
+        EXPECT_NE(to_ascii(invalid, out), stl::to_underlying(valid)) << invalid;
     }
 
     for (auto const [raw, mappedTo] : valids) {
         // todo: support validateDNS option
         EXPECT_EQ(to_ascii<string>(raw), mappedTo) << raw;
         string out;
-        EXPECT_NE(to_ascii(raw, out), valid) << raw;
+        EXPECT_EQ(to_ascii(raw, out), stl::to_underlying(valid)) << raw;
         EXPECT_EQ(out, mappedTo) << raw;
     }
 }

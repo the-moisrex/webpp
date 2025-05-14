@@ -455,9 +455,9 @@ namespace webpp::unicode::idna {
             ace  = x | n | dash, // ACE prefix
 
             // Misc:
-            clean            = static_cast<flag_type>(~dot | ascii),
-            messy_code_units = dot | non_ascii | ace,
-            all              = 0b1111'1111U, // all possibilities
+            clean         = static_cast<flag_type>(~dot | ascii),
+            length_police = non_ascii,
+            all           = 0b1111'1111U, // all possibilities
         };
 
         // array<flag_types, 256>
@@ -498,26 +498,23 @@ namespace webpp::unicode::idna {
             max_size           = static_cast<stl::size_t>(cur_len * idna_default_max_len_factor);
 
             while (spos != send) {
+                auto const      sbeg = spos;
                 flag_type const flag = or_all_if<flag_type>(
                   interesting_characters,
                   spos,
                   send,
                   [](flag_type const cur_flag) constexpr noexcept {
-                      return (cur_flag & to_underlying(non_ascii)) != 0;
+                      return (cur_flag & to_underlying(length_police)) != 0;
                   });
 
                 flags |= flag;
 
+                if ((flag & to_underlying(non_ascii)) != 0) {
+                    auto const code_point = checked::next_code_point(spos, send);
 
-                switch (flag & to_underlying(clean)) {
-                    // we optimize this function for ascii-only strings
-                    [[unlikely]] case to_underlying(non_ascii): {
-                        auto const code_point = checked::next_code_point(spos, send);
-
-                        // Update the max size
-                        max_size += best_factor_of(code_point) - idna_default_max_len_factor;
-                        break;
-                    }
+                    // Update the max size
+                    max_size += best_factor_of(code_point) - idna_default_max_len_factor;
+                    max_size += 4; // xn-- is 4
                 }
             }
 
@@ -589,10 +586,16 @@ namespace webpp::unicode::idna {
         if (all_lower_ascii) {
             stl::copy(ipos, iend, out);
             stl::advance(out, src_length);
+            if (!might_have_punycode) {
+                return status;
+            }
         } else if (all_ascii) {
             // 1.1 ASCII Map (and/or copy to output)
             ascii::lower_to(ipos, iend, out);
             stl::advance(out, src_length);
+            if (!might_have_punycode) {
+                return status;
+            }
         } else {
             // 1.1 Map (and/or copy to output)
             if (!idna::map(ipos, iend, out)) [[unlikely]] {
@@ -647,12 +650,13 @@ namespace webpp::unicode::idna {
                             continue;
                         }
 
+                        // Decode Punycode
                         // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
-                        lend                     = send;
-                        lbeg                     = send;
+                        lend                     = stl::next(send, 4);
+                        lbeg                     = lend;
                         auto const pun_status    = punycode_decode(lcbeg, lcend, lend);
                         auto const new_label_len = lend - send;
                         if constexpr (!Options.IgnoreInvalidPunycode) {
@@ -697,11 +701,11 @@ namespace webpp::unicode::idna {
             // size for that to happen.
             accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
 
-            // 3. Punycode
+            // 3. Encode Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                out = stl::max(stl::next(send, send - spos), lend); // temp storage
+                out = stl::max(stl::next(send, send - lcbeg + 4U), lend); // temp storage
                 auto const                  tmp_beg  = out;
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
                 assert(out <= oend);
@@ -710,10 +714,11 @@ namespace webpp::unicode::idna {
                 {
                     // Create space for the new label
                     auto const move_amount = label_len - label_length;
-                    assert(move_amount >= 0);
                     stl::copy_backward(lcend, send, stl::next(send, move_amount));
                     stl::advance(spos, move_amount);
                     stl::advance(send, move_amount);
+                    assert(move_amount >= 0);
+                    assert(send < tmp_beg);
                 }
                 {
                     // write the new label
