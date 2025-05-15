@@ -96,7 +96,7 @@ namespace webpp::unicode::idna {
     }
 
     /**
-     * Converts a UTF-8 input into punycode.
+     * Converts a UTF-8/16/32 input into punycode.
      *
      * We don't need to use unchecked::append(...) to append the code in the implementation,
      * since anything that we append must be in the ASCII range.
@@ -132,7 +132,8 @@ namespace webpp::unicode::idna {
         punycode_uint n_val       = Options.initial_n;
         punycode_uint delta       = 0;
         punycode_uint bias        = Options.initial_bias;
-        stl::size_t   handled_len = 0; // it's the number of code points that have been handled
+        size_type     handled_len = 0; // it's the number of code points that have been handled
+        size_type     utf32_size  = 0;
 
         // ASCII characters are put in order they appear:
         for (auto pos = spos; pos != send;) {
@@ -145,17 +146,20 @@ namespace webpp::unicode::idna {
                 if (code_point == 0) {
                     break;
                 }
+                ++utf32_size;
                 if (!is_code_point_valid(code_point)) [[unlikely]] {
                     return bad_input;
                 }
             }
         }
+        utf32_size += handled_len;
+        assert(utf32_size <= src_length);
 
         auto const basics_len = handled_len; // it's the number of basic code points
         if (basics_len > 0) {
             iter_append(out, Options.delimiter);
         }
-        while (handled_len < src_length) {
+        while (handled_len < utf32_size) {
             // Find the next larger non-ascii code point:
             punycode_uint max_m = max_legal_utf32<punycode_uint>;
             for (auto pos = spos;;) {

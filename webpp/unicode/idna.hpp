@@ -638,9 +638,7 @@ namespace webpp::unicode::idna {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
                     status |= to_underlying(empty_domain_label);
-                    out     = out_beg;
-                    *out    = '\0';
-                    return status;
+                    break;
                 case to_underlying(ace):
                     if (label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
                         lbeg[3] == '-')
@@ -676,15 +674,9 @@ namespace webpp::unicode::idna {
                         // record that there was an error.
                         if (new_label_len == 0) [[unlikely]] {
                             status |= to_underlying(empty_punycode);
-                            out     = out_beg;
-                            *out    = '\0';
-                            return status;
                         }
                         if (is_ascii(lbeg, lend)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
-                            out     = out_beg;
-                            *out    = '\0';
-                            return status;
                         }
                     }
                     [[fallthrough]];
@@ -694,9 +686,6 @@ namespace webpp::unicode::idna {
                     // an error.
                     if (!is_label_valid<Options>(lbeg, lend)) [[unlikely]] {
                         status |= to_underlying(failed_validity_criteria);
-                        out     = out_beg;
-                        *out    = '\0';
-                        return status;
                     }
                     break;
             }
@@ -738,9 +727,6 @@ namespace webpp::unicode::idna {
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
                         status |= to_underlying(p_status);
-                        // todo: Clearing the output is not needed?
-                        // *out    = '\0';
-                        // return status;
                     }
                 }
             }
@@ -777,6 +763,9 @@ namespace webpp::unicode::idna {
 
         // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
         // returned. No DNS lookup should be done.
+        if (status != to_underlying(valid)) [[unlikely]] {
+            out = out_beg;
+        }
         *out = '\0';
         return status;
     }
