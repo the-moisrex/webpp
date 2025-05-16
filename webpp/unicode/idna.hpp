@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_IDNA_MAPPINGS_HPP
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
+#include "../std/expected.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
@@ -193,24 +194,43 @@ namespace webpp::unicode::idna {
         // More errors:
         empty_domain_label       = 0b1U << 5U,
         too_long_label           = 0b1U << 6U, // the subdomain is more than 63
-        too_long_domain          = 0b1U << 7U, // the whole domain is more than 253 without last dot
+        too_long_domain          = 0b1U << 7U, // the whole domain is more than 253 without the last dot
         failed_validity_criteria = 0b1U << 8U, // the label failed the validity criteria requirements.
     };
 
     struct idna_options {                      // NOLINT(*-struct-pack-align)
-        bool CheckHyphens            = false;
-        bool CheckBidi               = true;
-        bool CheckJoiners            = true;
-        bool UseSTD3ASCIIRules       = false;
-        bool Transitional_Processing = false;
-        bool VerifyDnsLength         = false;
-        bool IgnoreInvalidPunycode   = false;
+        bool CheckHyphens          = false;
+        bool CheckBidi             = true;
+        bool CheckJoiners          = true;
+        bool UseSTD3ASCIIRules     = false;
+        bool VerifyDnsLength       = false;
+        bool IgnoreInvalidPunycode = false;
+
+        // we don't support Transitional Processing since it's been deprecated.
+        // bool Transitional_Processing = false;
 
         // Skipped Steps:
         bool CheckNFC           = false;
         bool CheckDotInclusions = false;
         bool CheckStatusValues  = false; // rule 7 of the Validity Criteria
     };
+
+    [[nodiscard]] static constexpr stl::string_view to_string(to_ascii_status const status) noexcept {
+        using enum to_ascii_status;
+        switch (status) {
+            case valid: return {"valid"};
+            case invalid_code_point: return {"Bad input for punycode was given."};
+            case punycode_overflow: return {"Punycode overflow."};
+            case ascii_only_punycode:
+                return {"The ASCII-Only label was unnecessarily encoded into punycode."};
+            case empty_punycode: return {"Empty punycode-encoded label was found."};
+            case empty_domain_label: return {"Empty domain labels are not valid."};
+            case too_long_label: return {"Label was too long."};
+            case too_long_domain: return {"The Domain was too long."};
+            default: break;
+        }
+        return {"<unknown-to-ascii-status>"};
+    }
 
     /**
      * Check if joiner code points are correct.
@@ -285,7 +305,7 @@ namespace webpp::unicode::idna {
                 }
 
                     // This may occur in Indic scripts in a consonant-conjunct context (immediately following
-                    // a virama), to control required display of such conjuncts.
+                    // a virama), to control the required display of such conjuncts.
                 case U'\x200D': { // ZERO WIDTH JOINER
                     auto       pos       = spos;
                     auto const before_cp = checked::prev_code_point<return_unchanged>(pos, send);
@@ -498,7 +518,6 @@ namespace webpp::unicode::idna {
             max_size           = static_cast<stl::size_t>(cur_len * idna_default_max_len_factor);
 
             while (spos != send) {
-                auto const      sbeg = spos;
                 flag_type const flag = or_all_if<flag_type>(
                   interesting_characters,
                   spos,
@@ -745,12 +764,14 @@ namespace webpp::unicode::idna {
             // No need to bailout early
             constexpr auto max_label   = 63U;
             constexpr auto max_domain  = 253U;
-            status                     |= accum_length > max_label ? to_underlying(too_long_label) : status;
-            if (out.size() > max_domain && (out.size() != max_domain + 1 || out.back() != '.')) [[unlikely]] {
+            auto const     cur_out_len = out - out_beg;
+            if (accum_length > max_label) [[unlikely]] {
+                status |= to_underlying(too_long_label);
+            }
+            if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || *stl::prev(out) != '.'))
+              [[unlikely]]
+            {
                 status |= to_underlying(too_long_domain);
-                out     = out_beg;
-                *out    = '\0';
-                return status;
             }
         }
 
@@ -796,50 +817,44 @@ namespace webpp::unicode::idna {
         return to_ascii<Options>(src_v.begin(), src_v.end(), out);
     }
 
-    /**
-     * @returns empty string if error occurred.
-     */
-    template <istl::String            StrT    = stl::u8string,
+    template <istl::String            OutStrT = stl::u8string,
               idna_options            Options = {},
-              istl::StringViewifiable StrVT,
+              istl::StringViewifiable StrT,
               typename... Args>
-        requires(stl::is_constructible_v<StrT, Args...> && !istl::cvref_as<StrT, Args...>)
-    [[nodiscard]] static constexpr StrT to_ascii(StrVT&& src, Args&&... args) {
-        using stl::to_underlying;
-
-        StrT                        out{stl::forward<Args>(args)...};
-        auto const                  src_v  = istl::string_viewify(stl::forward<StrVT>(src));
-        [[maybe_unused]] auto const status = to_ascii<Options>(src_v.begin(), src_v.end(), out);
-        return out;
+    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
+      StrT&& src,
+      Args&&... args) {
+        auto const str = istl::string_viewify(stl::forward<StrT>(src));
+        OutStrT    out{stl::forward<Args>(args)...};
+        auto const status = to_ascii<Options>(str.begin(), str.end(), out);
+        if (status == to_ascii_status::valid) {
+            return out;
+        }
+        return stl::unexpected{status};
     }
-
-    // template <idna_options   Options = {},
-    //           istl::CharType CharT   = char,
-    //           istl::String   OutStrT = stl::basic_string<CharT>,
-    //           typename... Args>
-    // [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
-    //   stl::basic_string_view<CharT> src,
-    //   Args&&... args) {
-    //     OutStrT    out{stl::forward<Args>(args)...};
-    //     auto const status = to_ascii<Options>(src.begin(), src.end(), out);
-    //     if (status == to_ascii_status::valid) {
-    //         return out;
-    //     }
-    //     return status;
-    // }
 
     [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs,
                                                    to_ascii_status const      rhs) noexcept {
         return lhs == static_cast<to_ascii_status_type>(rhs);
     }
 
-    // template <istl::String OutStrT>
-    // [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
-    //                                                to_ascii_status const rhs) noexcept {
-    //     to_ascii_status_type const status =
-    //       lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
-    //     return status == static_cast<to_ascii_status_type>(rhs);
-    // }
+    template <istl::String OutStrT>
+    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+                                                   to_ascii_status const rhs) noexcept {
+        to_ascii_status_type const status =
+          lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
+        return status == static_cast<to_ascii_status_type>(rhs);
+    }
+
+    template <istl::String OutStrT, istl::StringViewifiable StrV>
+    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+                                                   StrV&& rhs) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrV>(rhs));
+        if (lhs.has_value()) {
+            return lhs.value() == str;
+        }
+        return false;
+    }
 
     [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs,
                                                    to_ascii_status const      rhs) noexcept {

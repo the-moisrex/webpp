@@ -762,16 +762,16 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {
        idna_options{},
        idna_options{
-          .CheckHyphens            = true,
-          .CheckBidi               = true,
-          .CheckJoiners            = true,
-          .UseSTD3ASCIIRules       = true,
-          .Transitional_Processing = true,
-          .VerifyDnsLength         = true,
-          .IgnoreInvalidPunycode   = true,
-          .CheckNFC                = false, // todo
-          .CheckDotInclusions      = true,
-          .CheckStatusValues       = true,
+          .CheckHyphens          = true,
+          .CheckBidi             = true,
+          .CheckJoiners          = true,
+          .UseSTD3ASCIIRules     = true,
+          // .Transitional_Processing = true,
+          .VerifyDnsLength       = true,
+          .IgnoreInvalidPunycode = true,
+          .CheckNFC              = false, // todo
+          .CheckDotInclusions    = true,
+          .CheckStatusValues     = true,
         }, }
     };
 
@@ -823,7 +823,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     using webpp::stl::string;
     using webpp::stl::string_view;
 
-    static constexpr array<string_view, 12> invalids{
+    static constexpr array<string_view, 13> invalids{
       "xn--",
       "xn--zn7c.com",
       "xn--a-yoc",
@@ -833,6 +833,7 @@ TEST(BasicIDNATests, ToASCIITest) {
       "xn--a.ß",
       "xn--ls8h=",
       "xn--tešla",
+      "128.0,0.1",
       "يa",
       "xn--",
       "xn--zn7c.com",
@@ -899,8 +900,8 @@ TEST(BasicIDNATests, ToASCIITest) {
     };
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
-    EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
+    EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
     EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
@@ -924,6 +925,35 @@ TEST(BasicIDNATests, ToASCIITest) {
         EXPECT_EQ(to_ascii(raw, out), stl::to_underlying(valid)) << raw;
         EXPECT_EQ(out, mappedTo) << raw;
     }
+}
+
+TEST(BasicIDNATests, ToASCIITestBadInput) {
+    using std::array;
+    using std::string;
+    using std::string_view;
+    using std::u8string;
+    using webpp::unicode::idna::to_ascii;
+
+    constexpr array<char, 9> buffer = {'x', 'n', '-', '-', 'z', 'c', 'a', char{-1}, '\0'};
+    EXPECT_FALSE(to_ascii(string_view{buffer.data(), buffer.size()}));
+    EXPECT_FALSE(to_ascii("xn--zcaش"));
+
+    // German capital sharp S (ẞ)
+    EXPECT_EQ(to_ascii<u8string>("\xe1\xba\x9e"), u8"xn--zca")
+      << "German capital sharp S should convert to expected Punycode";
+    EXPECT_EQ(to_ascii<string>(U"\u1E9E"), "xn--zca")
+      << "German capital sharp S should convert to expected Punycode";
+
+    // Replacement character (U+FFFD)
+    EXPECT_FALSE(to_ascii("\xef\xbf\xbd.com"))
+      << "Replacement character in domain should result in empty string";
+
+    // soft hyphen (U+00AD)
+    EXPECT_FALSE(to_ascii("\u00AD")) << "Soft hyphen should result in empty string";
+
+    // Just don't blow up
+    EXPECT_FALSE(to_ascii("\376\001\001"));
+    EXPECT_FALSE(to_ascii("\341\012"));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

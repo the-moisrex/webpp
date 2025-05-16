@@ -326,6 +326,7 @@ namespace webpp::unicode::idna {
                 checked::insert(out, i_val, n_val);
             } else {
                 // todo: try to optimize this
+                // todo: is using src_length okay? source and output types may not be the same!
                 checked::insert_at(out, stl::next(out, src_length), i_val, n_val);
             }
             ++out_len;
