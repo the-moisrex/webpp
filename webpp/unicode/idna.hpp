@@ -88,6 +88,7 @@ namespace webpp::unicode::idna {
         using details::disallowed;
         using details::idna_mappings;
         using details::valid;
+        using istl::iter_append;
         auto const pos = status_of(code_point);
 
         // ignored code points are mapped to nothing, so no special code is needed
@@ -107,7 +108,7 @@ namespace webpp::unicode::idna {
                 auto ptr = idna_mappings.begin() + pos;
                 if constexpr (UTF8String<OutStrT>) {
                     for (; *ptr != u8'\0'; ++ptr) {
-                        unchecked::append(out, *ptr);
+                        iter_append(out, *ptr);
                     }
                 } else {
                     while (*ptr != u8'\0') {
@@ -152,19 +153,61 @@ namespace webpp::unicode::idna {
     template <istl::Appendable OutStrT, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out)
       noexcept(istl::NothrowAppendable<OutStrT>) {
-        using enum checked::error_handling;
         using checked::next_code_point;
+        using details::disallowed;
+        using details::idna_mappings;
+        using details::valid;
+        using istl::iter_append;
+        using istl::iter_append_range;
+        using enum checked::error_handling;
+        using inp_char_type = stl::iter_value_t<Iter>;
+        using out_iter_type = istl::iterator_type_of_t<OutStrT>;
+
+        if constexpr (stl::same_as<Iter, OutStrT>) {
+            // no inplace mapping
+            assert(!(out >= beg && out < end));
+        }
 
         auto is_valid = true;
         for (auto pos = beg;;) {
-            auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
+            auto const cp_beg     = istl::deref(pos);
+            auto const code_point = next_code_point<return_unchanged, char32_t, Iter>(pos, end);
             if (code_point == 0) {
                 break;
             }
 
-            // Disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate step below
-            //             checks for disallowed characters, after mapping and normalization.
-            is_valid &= map(code_point, out);
+            auto const map_pos = status_of(code_point);
+
+            // ignored code points are mapped to nothing, so no special code is needed
+            switch (map_pos) {
+                case disallowed:
+                case valid: // Or deviation
+                    // Disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate
+                    //             step below checks for disallowed characters, after mapping
+                    //             and normalization.
+                    if constexpr (stl::output_iterator<out_iter_type, inp_char_type>) {
+                        iter_append_range(out, cp_beg, pos);
+                    } else {
+                        unchecked::append(out, code_point);
+                    }
+                    is_valid &= map_pos == valid;
+                    break;
+
+                default: { // mapped or ignored
+                    auto ptr = idna_mappings.begin() + map_pos;
+                    if constexpr (stl::output_iterator<out_iter_type, char8_t>) {
+                        for (; *ptr != u8'\0'; ++ptr) {
+                            iter_append(out, *ptr);
+                        }
+                    } else {
+                        while (*ptr != u8'\0') {
+                            auto const cur_cp = unchecked::next_code_point(ptr);
+                            unchecked::append(out, cur_cp);
+                        }
+                    }
+                    break;
+                }
+            }
         }
         return is_valid;
     }
@@ -579,6 +622,7 @@ namespace webpp::unicode::idna {
         using stl::to_underlying;
         using unicode::normalization_form;
         using flag_type = to_ascii_info::flag_type;
+        using diff_type = stl::iter_difference_t<OIter>;
 
 
         // Normalization is guaranteed to not require more space than 3 times the input.
@@ -587,13 +631,13 @@ namespace webpp::unicode::idna {
 
         auto const src_length          = iend - ipos;
         auto       status              = to_underlying(valid);
-        auto const out_beg             = out;
+        auto const out_beg             = istl::deref(out);
         bool const all_ascii           = (flags & to_underlying(non_ascii)) == 0;
         bool const might_have_punycode = (flags & to_underlying(ace)) != 0;
         bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
-        auto       spos                = out;
+        auto       spos                = istl::deref(out);
         auto       send                = stl::next(spos, src_length); // init
-        auto const oend                = out + out_len;
+        auto const oend                = stl::next(out, static_cast<diff_type>(out_len));
 
         // If output is in between the input, it's a disaster waiting to happen.
         if constexpr (stl::same_as<Iter, OIter>) {
@@ -626,9 +670,9 @@ namespace webpp::unicode::idna {
 
             // 1.2. Normalize inplace
             {
-                auto pos = out;
-                normalize<normalization_form::NFC>(pos, send, out);
-                send = pos; // the new end
+                assert(out <= send);
+                send = spos;
+                normalize<normalization_form::NFC>(out_beg, out, send); // inplace normalization
             }
         }
 

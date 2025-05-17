@@ -932,7 +932,14 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using std::string;
     using std::string_view;
     using std::u8string;
+    using webpp::unicode::toNFC;
     using webpp::unicode::idna::to_ascii;
+
+    // Just don't blow up
+    EXPECT_EQ(toNFC<string>("\365"), "\365");
+    EXPECT_FALSE(to_ascii("\365"));
+    EXPECT_FALSE(to_ascii("\376\001\001"));
+    EXPECT_FALSE(to_ascii("\341\012"));
 
     constexpr array<char, 9> buffer = {'x', 'n', '-', '-', 'z', 'c', 'a', char{-1}, '\0'};
     EXPECT_FALSE(to_ascii(string_view{buffer.data(), buffer.size()}));
@@ -950,10 +957,6 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     // soft hyphen (U+00AD)
     EXPECT_FALSE(to_ascii("\u00AD")) << "Soft hyphen should result in empty string";
-
-    // Just don't blow up
-    EXPECT_FALSE(to_ascii("\376\001\001"));
-    EXPECT_FALSE(to_ascii("\341\012"));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -6,6 +6,7 @@
 #include "./string_concepts.hpp"
 #include "concepts.hpp"
 
+#include <cassert>
 #include <iterator>
 
 #if !__cpp_lib_concepts
@@ -37,24 +38,23 @@ namespace webpp::istl {
 
     template <typename T>
     struct iterator_type_of {
-        using type = stl::remove_cvref_t<decltype(stl::begin(
-          stl::declval<stl::remove_pointer_t<stl::remove_cvref_t<T>>>()))>;
+        using type = stl::remove_cvref_t<decltype(stl::begin(stl::declval<stl::remove_pointer_t<T>>()))>;
     };
 
     template <typename T>
-        requires requires { typename stl::remove_cvref_t<T>::iterator; }
+        requires stl::input_or_output_iterator<T>
     struct iterator_type_of<T> {
-        using type = typename stl::remove_cvref_t<T>::iterator;
+        using type = T;
     };
 
     template <typename T>
-        requires stl::is_array_v<stl::remove_cvref_t<T>>
+        requires requires { typename T::iterator; }
     struct iterator_type_of<T> {
-        using type = stl::decay_t<T>;
+        using type = typename T::iterator;
     };
 
     template <typename T>
-    using iterator_type_of_t = typename iterator_type_of<T>::type;
+    using iterator_type_of_t = typename iterator_type_of<stl::remove_cvref_t<T>>::type;
 
     template <typename T>
     struct appendable_value_type {
@@ -135,6 +135,21 @@ namespace webpp::istl {
         } else {
             // pointer or an iterator
             ((*(out++) = static_cast<char_type>(value)), ...);
+        }
+    }
+
+    template <Appendable T, typename Iter>
+    static constexpr void iter_append_range(T& out, Iter beg, Iter const end) noexcept(NothrowAppendable<T>) {
+        using char_type = stl::iter_value_t<Iter>;
+        if constexpr (stl::output_iterator<T, char_type>) {
+            auto const len = end - beg;
+            assert(len >= 0);
+            stl::copy(beg, end, out);
+            stl::advance(out, len);
+        } else {
+            for (; beg != end; ++beg) {
+                iter_append(out, *beg);
+            }
         }
     }
 
