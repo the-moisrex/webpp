@@ -171,9 +171,14 @@ namespace webpp::unicode::idna {
         auto is_valid = true;
         for (auto pos = beg;;) {
             auto const cp_beg     = istl::deref(pos);
-            auto const code_point = next_code_point<return_unchanged, char32_t, Iter>(pos, end);
+            auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
             if (code_point == 0) {
                 break;
+            }
+            if (code_point < 0) [[unlikely]] {
+                is_valid = false;
+                iter_append_range(out, cp_beg, pos);
+                continue;
             }
 
             auto const map_pos = status_of(code_point);
@@ -519,7 +524,7 @@ namespace webpp::unicode::idna {
 
             // Misc:
             clean         = static_cast<flag_type>(~dot | ascii),
-            length_police = non_ascii,
+            length_police = (non_ascii | dot) & ~ascii,
             all           = 0b1111'1111U, // all possibilities
         };
 
@@ -553,12 +558,15 @@ namespace webpp::unicode::idna {
         template <idna_options Options = {}, stl::random_access_iterator Iter>
         [[nodiscard]] constexpr flag_type operator()(Iter spos, Iter send) noexcept {
             using enum flag_types;
+            using enum checked::error_handling;
             using details::idna_default_max_len_factor;
             using stl::to_underlying;
 
-            auto const cur_len = send - spos;
-            flag_type  flags   = 0U;
-            max_size           = static_cast<stl::size_t>(cur_len * idna_default_max_len_factor);
+            auto const cur_len    = send - spos;
+            flag_type  flags      = 0U;
+            max_size              = static_cast<stl::size_t>(cur_len);
+            stl::size_t dot_count = 0;
+
 
             while (spos != send) {
                 flag_type const flag = or_all_if<flag_type>(
@@ -572,15 +580,19 @@ namespace webpp::unicode::idna {
                 flags |= flag;
 
                 if ((flag & to_underlying(non_ascii)) != 0) {
-                    auto const code_point = checked::next_code_point(spos, send);
+                    auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
 
                     // Update the max size
                     max_size += best_factor_of(code_point) - idna_default_max_len_factor;
+                    max_size += 3; // For punycode
+                }
 
-                    // todo: this gets duplicated for each Code Point, while we only need it once for each label
-                    max_size += 4; // xn-- is 4
+                if ((flag & to_underlying(dot)) != 0) {
+                    ++dot_count;
                 }
             }
+            max_size += dot_count * 4U; // each label can have an ACE Prefix (xn--)
+            max_size *= static_cast<stl::size_t>(idna_default_max_len_factor);
 
             // requires_mapping = (flags & to_underlying(non_ascii)) != 0;
 
@@ -670,17 +682,17 @@ namespace webpp::unicode::idna {
 
             // 1.2. Normalize inplace
             {
-                assert(out <= send);
                 send = spos;
                 normalize<normalization_form::NFC>(out_beg, out, send); // inplace normalization
             }
+            assert(out <= oend);                                        // we ran out of space.
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
         while (spos != send) {
             auto const lcbeg = spos;
-            auto       lbeg  = spos; // start of label
+            auto       lbeg  = istl::deref(spos); // start of label
 
             // find the label:
             flag_type flag = or_all_if<flag_type>(
@@ -691,10 +703,10 @@ namespace webpp::unicode::idna {
                   return cur_flags >= to_underlying(dot); // we found a dot
               });
 
-            bool const contains_dot = (flag & to_underlying(dot)) == to_underlying(dot);
-            auto const lcend        = contains_dot ? stl::prev(spos) : spos;
-            auto       lend         = lcend;
-            auto const label_length = lend - lbeg;
+            bool const contains_dot     = (flag & to_underlying(dot)) == to_underlying(dot);
+            auto const lcend            = contains_dot ? stl::prev(spos) : spos;
+            auto       lend             = istl::deref(lcend);
+            auto const src_label_length = lend - lbeg;
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & to_underlying(clean)) {
@@ -703,7 +715,7 @@ namespace webpp::unicode::idna {
                     status |= to_underlying(empty_domain_label);
                     break;
                 case to_underlying(ace):
-                    if (label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
+                    if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
                         lbeg[3] == '-')
                     {
                         // Found xn--.
@@ -761,20 +773,23 @@ namespace webpp::unicode::idna {
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                out = stl::max(stl::next(send, send - lcbeg + 4U), lend); // temp storage
+                // temp storage:
+                out                                  = stl::max(stl::next(send, send - lbeg + 4U + 1U), lend);
                 auto const                  tmp_beg  = out;
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
+
+                // we ran out of space
                 assert(out <= oend);
 
                 auto const label_len = out - tmp_beg + 4U;
                 {
                     // Create space for the new label
-                    auto const move_amount = label_len - label_length;
+                    auto const move_amount = label_len - src_label_length;
                     stl::copy_backward(lcend, send, stl::next(send, move_amount));
                     stl::advance(spos, move_amount);
                     stl::advance(send, move_amount);
                     assert(move_amount >= 0);
-                    assert(send < tmp_beg);
+                    assert(send <= tmp_beg);
                 }
                 {
                     // write the new label
