@@ -524,7 +524,7 @@ namespace webpp::unicode::idna {
 
             // Misc:
             clean         = static_cast<flag_type>(~dot | ascii),
-            length_police = (non_ascii | dot) & ~ascii,
+            length_police = (dot | non_ascii) & ~ascii,
             all           = 0b1111'1111U, // all possibilities
         };
 
@@ -555,19 +555,26 @@ namespace webpp::unicode::idna {
         /**
          * @returns maximum required storage length for conversion; zero if no need for conversion.
          */
-        template <idna_options Options = {}, stl::random_access_iterator Iter>
+        template <UTF OutCharT, stl::random_access_iterator Iter>
         [[nodiscard]] constexpr flag_type operator()(Iter spos, Iter send) noexcept {
             using enum flag_types;
             using enum checked::error_handling;
             using details::idna_default_max_len_factor;
             using stl::to_underlying;
+            using inp_char_type = stl::iter_value_t<Iter>;
 
-            auto const cur_len    = send - spos;
-            flag_type  flags      = 0U;
-            max_size              = static_cast<stl::size_t>(cur_len);
-            stl::size_t dot_count = 0;
+            auto const cur_len =
+              adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
+            flag_type   flags         = 0U;
+            stl::size_t biggest_label = 0U;
+            auto        lbeg          = spos;
 
+            max_size  = cur_len;
+            max_size *= static_cast<stl::size_t>(idna_default_max_len_factor);
 
+            // We can't rely on finding dots and using them as label lengths since this is before IDNA Mapping
+            // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
+            // consider the whole string as one big label.
             while (spos != send) {
                 flag_type const flag = or_all_if<flag_type>(
                   interesting_characters,
@@ -579,22 +586,27 @@ namespace webpp::unicode::idna {
 
                 flags |= flag;
 
-                if ((flag & to_underlying(non_ascii)) != 0) {
+                if ((flag & to_underlying(dot)) == to_underlying(dot)) {
+                    biggest_label =
+                      stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
+                    lbeg = spos;
+                } else if ((flag & to_underlying(non_ascii)) != 0) {
                     auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
 
                     // Update the max size
-                    max_size += best_factor_of(code_point) - idna_default_max_len_factor;
-                    max_size += 3; // For punycode
-                }
-
-                if ((flag & to_underlying(dot)) != 0) {
-                    ++dot_count;
+                    auto map_count  = adjust_utf_output_size<char32_t, OutCharT>(best_factor_of(code_point));
+                    map_count      *= 4; // For punycode: each code point at max may turn into N ascii chars
+                    max_size       += map_count;
+                    max_size       -= idna_default_max_len_factor; // remove the default max len factor
+                    max_size       += 4;                           // each label can have an ACE Prefix (xn--)
                 }
             }
-            max_size += dot_count * 4U; // each label can have an ACE Prefix (xn--)
-            max_size *= static_cast<stl::size_t>(idna_default_max_len_factor);
 
-            // requires_mapping = (flags & to_underlying(non_ascii)) != 0;
+            biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
+
+            // We only care about the biggest label because punycode conversions happen on each label, and the
+            // biggest label would become the maximum required length for processing.
+            max_size += biggest_label * 3U; // max punycode
 
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
@@ -731,10 +743,15 @@ namespace webpp::unicode::idna {
                         // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
                         // there was an error, and continue with the next label. Otherwise, replace the
                         // original label in the string by the results of the conversion.
-                        lend                     = stl::next(send, 4);
-                        lbeg                     = lend;
-                        auto const pun_status    = punycode_decode(stl::next(lcbeg, 4), lcend, lend);
-                        auto const new_label_len = lend - send;
+
+                        // Give enough room for re-conversion
+                        // No need to take xn-- into account, it's already in 'src length'.
+                        auto const max_punycode_len = src_label_length * (4 - 1);
+                        lend                        = stl::next(send, max_punycode_len);
+                        lbeg                        = lend;
+                        auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, lend);
+                        auto const new_label_len    = lend - send;
+                        assert(lend <= oend);
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
                                 // restore the original label:
@@ -773,35 +790,16 @@ namespace webpp::unicode::idna {
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                // temp storage:
-                out                                  = stl::max(stl::next(send, send - lbeg + 4U + 1U), lend);
+                out                                  = send;
                 auto const                  tmp_beg  = out;
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
 
-                // we ran out of space
+                // We ran out of space
                 assert(out <= oend);
 
-                auto const label_len = out - tmp_beg + 4U;
-                {
-                    // Create space for the new label
-                    auto const move_amount = label_len - src_label_length;
-                    stl::copy_backward(lcend, send, stl::next(send, move_amount));
-                    stl::advance(spos, move_amount);
-                    stl::advance(send, move_amount);
-                    assert(move_amount >= 0);
-                    assert(send <= tmp_beg);
-                }
-                {
-                    // write the new label
-                    auto lpos = lcbeg;
-                    iter_append(lpos, 'x', 'n', '-', '-'); // prepend ACE prefix
-                    stl::copy(tmp_beg, out, lpos);
-                    if (contains_dot) {
-                        stl::advance(lpos, out - tmp_beg);
-                        iter_append(lpos, '.'); // append dot
-                    }
-                    out = send;
-                }
+                // Move the new generated label to its rightful place:
+                stl::rotate(lcbeg, tmp_beg, out);
+
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
                         status |= to_underlying(p_status);
@@ -852,14 +850,13 @@ namespace webpp::unicode::idna {
 
     template <idna_options Options = {}, stl::random_access_iterator Iter, istl::String StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
-        using input_char_type       = stl::iter_value_t<Iter>;
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
         to_ascii_info        info;
-        auto const           flags = info(spos, send);
+        auto const           flags = info.operator()<output_char_type>(spos, send);
         istl::resize_and_overwrite(
           out,
-          adjust_utf_output_size<input_char_type, output_char_type>(info.max_size),
+          info.max_size,
           [&, flags](output_char_type* buf, stl::size_t const max_len) constexpr noexcept {
               auto const beg = buf;
               status         = to_ascii<Options>(spos, send, buf, max_len, flags);

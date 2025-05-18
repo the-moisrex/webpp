@@ -931,12 +931,48 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using std::array;
     using std::string;
     using std::string_view;
+    using std::u16string;
+    using std::u32string;
     using std::u8string;
     using webpp::unicode::toNFC;
     using webpp::unicode::idna::to_ascii;
 
     // Just don't blow up
     EXPECT_EQ(toNFC<string>("\365"), "\365");
+
+    EXPECT_FALSE(to_ascii<u16string>("\232"));
+    EXPECT_FALSE(to_ascii<u16string>("\330"));
+    EXPECT_FALSE(to_ascii<u16string>("\012\241"));
+    EXPECT_FALSE(to_ascii<u16string>("\012\012\012\377"));
+    EXPECT_FALSE(to_ascii<u16string>("\367"));
+    EXPECT_FALSE(to_ascii<u16string>("\300\205"));
+    EXPECT_FALSE(to_ascii<u16string>("\232G"));
+    EXPECT_FALSE(to_ascii<u16string>("\365"));
+    EXPECT_FALSE(to_ascii<u16string>("\376\001\001"));
+    EXPECT_FALSE(to_ascii<u16string>("\341\012"));
+
+    EXPECT_FALSE(to_ascii<string>("\232"));
+    EXPECT_FALSE(to_ascii<string>("\330"));
+    EXPECT_FALSE(to_ascii<string>("\012\241"));
+    EXPECT_FALSE(to_ascii<string>("\012\012\012\377"));
+    EXPECT_FALSE(to_ascii<string>("\367"));
+    EXPECT_FALSE(to_ascii<string>("\300\205"));
+    EXPECT_FALSE(to_ascii<string>("\232G"));
+    EXPECT_FALSE(to_ascii<string>("\365"));
+    EXPECT_FALSE(to_ascii<string>("\376\001\001"));
+    EXPECT_FALSE(to_ascii<string>("\341\012"));
+
+    EXPECT_FALSE(to_ascii<u32string>("\232"));
+    EXPECT_FALSE(to_ascii<u32string>("\330"));
+    EXPECT_FALSE(to_ascii<u32string>("\012\241"));
+    EXPECT_FALSE(to_ascii<u32string>("\012\012\012\377"));
+    EXPECT_FALSE(to_ascii<u32string>("\367"));
+    EXPECT_FALSE(to_ascii<u32string>("\300\205"));
+    EXPECT_FALSE(to_ascii<u32string>("\232G"));
+    EXPECT_FALSE(to_ascii<u32string>("\365"));
+    EXPECT_FALSE(to_ascii<u32string>("\376\001\001"));
+    EXPECT_FALSE(to_ascii<u32string>("\341\012"));
+
     EXPECT_FALSE(to_ascii("\232"));
     EXPECT_FALSE(to_ascii("\330"));
     EXPECT_FALSE(to_ascii("\012\241"));
