@@ -937,6 +937,13 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     // Just don't blow up
     EXPECT_EQ(toNFC<string>("\365"), "\365");
+    EXPECT_FALSE(to_ascii("\232"));
+    EXPECT_FALSE(to_ascii("\330"));
+    EXPECT_FALSE(to_ascii("\012\241"));
+    EXPECT_FALSE(to_ascii("\012\012\012\377"));
+    EXPECT_FALSE(to_ascii("\367"));
+    EXPECT_FALSE(to_ascii("\300\205"));
+    EXPECT_FALSE(to_ascii("\232G"));
     EXPECT_FALSE(to_ascii("\365"));
     EXPECT_FALSE(to_ascii("\376\001\001"));
     EXPECT_FALSE(to_ascii("\341\012"));
@@ -952,7 +959,10 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
       << "German capital sharp S should convert to expected Punycode";
 
     // Replacement character (U+FFFD)
-    EXPECT_FALSE(to_ascii("\xef\xbf\xbd.com"))
+    EXPECT_EQ(to_ascii<string>("\xef\xbf\xbd.com").value(), ".com")
+      << "Replacement character in domain should result in empty string";
+
+    EXPECT_EQ(to_ascii<string>(U"\uFFFD.com").value(), ".com")
       << "Replacement character in domain should result in empty string";
 
     // soft hyphen (U+00AD)

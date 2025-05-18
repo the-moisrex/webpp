@@ -16,7 +16,7 @@ void to_ascii_fuzz(std::string_view data) {
         auto const res32 = to_ascii<u32string, Options>(data);
 
         if (res.has_value()) {
-            ASSERT_NE(res->size(), res8->size());
+            ASSERT_EQ(res->size(), res8->size());
         }
 
         // todo: add to_unicode to the tests as well after implementing it
