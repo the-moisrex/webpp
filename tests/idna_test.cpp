@@ -900,8 +900,8 @@ TEST(BasicIDNATests, ToASCIITest) {
     };
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
-    EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
+    EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
     EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
     EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
@@ -920,7 +920,8 @@ TEST(BasicIDNATests, ToASCIITest) {
 
     for (auto const [raw, mappedTo] : valids) {
         // todo: support validateDNS option
-        EXPECT_EQ(to_ascii<string>(raw), mappedTo) << raw;
+        auto const res = to_ascii<string>(raw);
+        EXPECT_EQ(res, mappedTo) << raw << "\n" << res.value_or("Nothing");
         string out;
         EXPECT_EQ(to_ascii(raw, out), stl::to_underlying(valid)) << raw;
         EXPECT_EQ(out, mappedTo) << raw;

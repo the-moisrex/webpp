@@ -792,13 +792,17 @@ namespace webpp::unicode::idna {
             if ((flag & to_underlying(non_ascii)) != 0) {
                 out                                  = send;
                 auto const                  tmp_beg  = out;
+                iter_append(out, 'x', 'n', '-', '-');
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
 
                 // We ran out of space
                 assert(out <= oend);
 
                 // Move the new generated label to its rightful place:
-                stl::rotate(lcbeg, tmp_beg, out);
+                lbeg = lcbeg;
+                stl::rotate(lcend, tmp_beg, out);
+                stl::shift_left(lbeg, out, src_label_length);
+                stl::advance(out, -src_label_length);
 
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
@@ -895,7 +899,7 @@ namespace webpp::unicode::idna {
     }
 
     template <istl::String OutStrT>
-    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
                                                    to_ascii_status const rhs) noexcept {
         to_ascii_status_type const status =
           lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
@@ -903,7 +907,7 @@ namespace webpp::unicode::idna {
     }
 
     template <istl::String OutStrT, istl::StringViewifiable StrV>
-    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const lhs,
+    [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
                                                    StrV&& rhs) noexcept {
         auto const str = istl::string_viewify(stl::forward<StrV>(rhs));
         if (lhs.has_value()) {
