@@ -913,7 +913,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
 
     for (auto const invalid : invalids) {
-        EXPECT_EQ(to_ascii(invalid), u8"") << invalid;
+        EXPECT_EQ(to_ascii(invalid).value_or(u8""), u8"") << invalid;
         string out;
         EXPECT_NE(to_ascii(invalid, out), stl::to_underlying(valid)) << invalid;
     }
@@ -921,7 +921,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     for (auto const [raw, mappedTo] : valids) {
         // todo: support validateDNS option
         auto const res = to_ascii<string>(raw);
-        EXPECT_EQ(res, mappedTo) << raw << "\n" << res.value_or("Nothing");
+        EXPECT_EQ(res.value_or(""), mappedTo) << raw << "\n" << res.value_or("Nothing");
         string out;
         EXPECT_EQ(to_ascii(raw, out), stl::to_underlying(valid)) << raw;
         EXPECT_EQ(out, mappedTo) << raw;

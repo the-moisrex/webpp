@@ -146,6 +146,12 @@ namespace webpp::unicode::idna {
         }
     }
 
+    template <stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool requires_idna_mapping(Iter start, Iter end) noexcept {
+        // todo
+        return false;
+    }
+
     /**
      * Mapping Step of the IDNA Processing
      * UTS #46: https://www.unicode.org/reports/tr46/#ProcessingStepMap
@@ -234,19 +240,22 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        invalid_code_point  = stl::to_underlying(punycode_status::bad_input),
-        punycode_overflow   = stl::to_underlying(punycode_status::overflow),
-        ascii_only_punycode = 0b1U << 3U,
-        empty_punycode      = 0b1U << 4U,
+        invalid_code_point             = stl::to_underlying(punycode_status::bad_input),
+        punycode_overflow              = stl::to_underlying(punycode_status::overflow),
+        ascii_only_punycode            = 0b1U << 3U,
+        empty_punycode                 = 0b1U << 4U,
+        non_normalized_punycode        = 0b1U << 5U,
+        punycode_requires_idna_mapping = 0b1U << 6U,
+
 
         // More errors:
-        empty_domain_label       = 0b1U << 5U,
-        too_long_label           = 0b1U << 6U, // the subdomain is more than 63
-        too_long_domain          = 0b1U << 7U, // the whole domain is more than 253 without the last dot
-        failed_validity_criteria = 0b1U << 8U, // the label failed the validity criteria requirements.
+        empty_domain_label       = 0b1U << 7U,
+        too_long_label           = 0b1U << 8U,  // the subdomain is more than 63
+        too_long_domain          = 0b1U << 9U,  // the whole domain is more than 253 without the last dot
+        failed_validity_criteria = 0b1U << 10U, // the label failed the validity criteria requirements.
     };
 
-    struct idna_options {                      // NOLINT(*-struct-pack-align)
+    struct idna_options {                       // NOLINT(*-struct-pack-align)
         bool CheckHyphens          = false;
         bool CheckBidi             = true;
         bool CheckJoiners          = true;
@@ -272,6 +281,8 @@ namespace webpp::unicode::idna {
             case ascii_only_punycode:
                 return {"The ASCII-Only label was unnecessarily encoded into punycode."};
             case empty_punycode: return {"Empty punycode-encoded label was found."};
+            case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form."};
+            case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping."};
             case empty_domain_label: return {"Empty domain labels are not valid."};
             case too_long_label: return {"Label was too long."};
             case too_long_domain: return {"The Domain was too long."};
@@ -746,6 +757,7 @@ namespace webpp::unicode::idna {
 
                         // Give enough room for re-conversion
                         // No need to take xn-- into account, it's already in 'src length'.
+                        // todo: optimize this to use UTF-32 storage since it's completely temporary
                         auto const max_punycode_len = src_label_length * (4 - 1);
                         lend                        = stl::next(send, max_punycode_len);
                         lbeg                        = lend;
@@ -770,6 +782,14 @@ namespace webpp::unicode::idna {
                         if (is_ascii(lbeg, lend)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
                         }
+
+                        if (is_normalized<normalization_form::NFC>(lbeg, lend)) [[unlikely]] {
+                            status |= to_underlying(non_normalized_punycode);
+                        }
+
+                        if (requires_idna_mapping(lbeg, lend)) [[unlikely]] {
+                            status |= to_underlying(punycode_requires_idna_mapping);
+                        }
                     }
                     [[fallthrough]];
                 [[likely]] default:
@@ -790,8 +810,8 @@ namespace webpp::unicode::idna {
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & to_underlying(non_ascii)) != 0) {
-                out                                  = send;
-                auto const                  tmp_beg  = out;
+                out                = send;
+                auto const tmp_beg = out;
                 iter_append(out, 'x', 'n', '-', '-');
                 [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
 
