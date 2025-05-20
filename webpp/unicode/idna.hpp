@@ -146,10 +146,25 @@ namespace webpp::unicode::idna {
         }
     }
 
+    /**
+     * Check if a string requires any type of IDNA mapping.
+     */
     template <stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool requires_idna_mapping(Iter start, Iter end) noexcept {
-        // todo
-        return false;
+    [[nodiscard]] static constexpr bool requires_idna_mapping(Iter pos, Iter const end) noexcept {
+        using enum checked::error_handling;
+        using checked::next_code_point;
+        using details::valid;
+        for (;;) {
+            auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
+            if (code_point == 0) {
+                break;
+            }
+            auto const map_pos = status_of(code_point);
+            if (map_pos != valid) {
+                return true;
+            }
+        }
+        [[likely]] { return false; }
     }
 
     /**
