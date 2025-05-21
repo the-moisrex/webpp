@@ -254,7 +254,7 @@ namespace webpp::unicode {
     // NOLINTEND(*-avoid-nested-conditional-operator)
 
     template <istl::CharType CharT = char8_t>
-    using decomposed_array = std::array<CharT, max_decomposed_length<CharT>>;
+    using decomposed_array = std::array<CharT, max_decomposed_length<CharT> + 1U>; // +1 for null terminator
 
     /**
      * Decompose the `code_point` into `out`.
@@ -761,64 +761,16 @@ namespace webpp::unicode {
         }
     }
 
-    template <stl::random_access_iterator Iter, typename = istl::nothing_type>
-    struct decompose_iterator {
-        using value_type = char32_t;
-
-      private:
-        char32_t                     code_point = 0;
-        Iter                         sbeg;
-        Iter                         pos;
-        Iter                         send;
-        decomposed_array<value_type> decomp_buf{};
-        stl::size_t                  decomp_index = decomp_buf.size();
-
-        friend struct decompose_iterator<Iter, void>;
-
-      public:
-        constexpr decompose_iterator(Iter start, Iter const end) noexcept : sbeg{start}, send{end} {}
-
-        constexpr decompose_iterator(decompose_iterator const&)                = default;
-        constexpr decompose_iterator(decompose_iterator&&) noexcept            = default;
-        constexpr decompose_iterator& operator=(decompose_iterator const&)     = default;
-        constexpr decompose_iterator& operator=(decompose_iterator&&) noexcept = default;
-        constexpr ~decompose_iterator() noexcept                               = default;
-
-        [[nodiscard]] constexpr auto begin() noexcept {
-            return decompose_iterator<Iter, void>{this};
-        }
-
-        [[nodiscard]] constexpr auto end() const noexcept {
-            return decompose_iterator<Iter, void>{};
-        }
-
-        constexpr decompose_iterator& operator++() noexcept {
-            using enum checked::error_handling;
-            if (decomp_index == decomp_buf.size()) {
-                code_point = checked::next_code_point<return_unchanged, value_type, Iter>(pos, send);
-                decomp_buf = canonical_decomposed<decomposed_array<value_type>>(code_point);
-            } else {
-                code_point = decomp_buf[decomp_index++];
-            }
-            return *this;
-        }
-
-        constexpr decompose_iterator& operator--() noexcept {
-            using enum checked::error_handling;
-            if (decomp_index == 0) {
-                code_point   = checked::prev_code_point<return_unchanged, value_type, Iter>(pos, sbeg);
-                decomp_index = decomp_buf.size();
-            } else {
-                code_point = decomp_buf[--decomp_index];
-            }
-            return *this;
-        }
-    };
-
+    /**
+     * Decomposition Iterator Wrapper
+     * It decomposes the iterator given.
+     * Attention: it is unsafe to use for strings that may contain bad inputs at the beginning/end of
+     *            the string.
+     */
     template <stl::random_access_iterator Iter>
-    struct decompose_iterator<Iter, void> {
+    struct decompose_iterator {
         using difference_type   = stl::iter_difference_t<Iter>;
-        using value_type        = char32_t;
+        using value_type        = stl::iter_value_t<Iter>;
         using traits            = stl::iterator_traits<Iter>;
         using pointer           = typename traits::pointer;
         using reference         = value_type&;
@@ -826,11 +778,14 @@ namespace webpp::unicode {
         using iterator_category = stl::bidirectional_iterator_tag;
         using iterator_concept  = stl::bidirectional_iterator_tag;
 
+
       private:
-        decompose_iterator<Iter>* ptr = nullptr;
+        Iter                         pos{};
+        decomposed_array<value_type> decomp_buf{};
+        stl::uint8_t                 decomp_index = 0;
 
       public:
-        explicit constexpr decompose_iterator(decompose_iterator<Iter>* inp_ptr) noexcept : ptr{inp_ptr} {}
+        explicit constexpr decompose_iterator(Iter inp_pos) noexcept : pos{inp_pos} {}
 
         constexpr decompose_iterator()                                         = default;
         constexpr decompose_iterator(decompose_iterator const&)                = default;
@@ -839,30 +794,55 @@ namespace webpp::unicode {
         constexpr decompose_iterator& operator=(decompose_iterator&&) noexcept = default;
         constexpr ~decompose_iterator() noexcept                               = default;
 
-        constexpr const_reference operator*() const noexcept {
-            return ptr->code_point;
-        }
-
         constexpr decompose_iterator& operator++() noexcept {
-            ptr->operator++();
+            using enum checked::error_handling;
+            if (decomp_index == decomp_buf.size() - 1U) {
+                ++pos;
+                auto const code_point = unchecked::next_code_point_copy(pos);
+                decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
+                decomp_index          = 0;
+            } else {
+                ++decomp_index;
+            }
             return *this;
         }
 
         constexpr decompose_iterator& operator--() noexcept {
-            ptr->operator--();
+            using enum checked::error_handling;
+            if (decomp_index == 0) {
+                auto const code_point = unchecked::prev_code_point_copy(pos);
+                decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
+
+                // we start from zero since we're assuming most input Code Points won't have mappings; so
+                // it would be faster to find the end of it this way.
+                decomp_index = 0;
+                // the array has a \0 at the end guaranteed.
+                for (; decomp_buf[decomp_index + 1U] != '\0'; ++decomp_index) {
+                }
+                --pos;
+            } else {
+                --decomp_index;
+            }
             return *this;
         }
 
+        constexpr const_reference operator*() const noexcept {
+            if (decomp_buf[decomp_index] != '\0') {
+                return decomp_buf[decomp_index];
+            }
+            return *pos;
+        }
+
         [[nodiscard]] constexpr decompose_iterator operator--(int) const noexcept {
-            return decompose_iterator{ptr}.operator--();
+            return decompose_iterator{*this}.operator--();
         }
 
         [[nodiscard]] constexpr decompose_iterator operator++(int) const noexcept {
-            return decompose_iterator{ptr}.operator++();
+            return decompose_iterator{*this}.operator++();
         }
 
         [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
-            return ptr == other.ptr && ptr->pos == ptr->send && ptr->decomp_index == ptr->decomp_buf.size();
+            return pos == other.pos && decomp_index == other.decomp_index;
         }
     };
 
@@ -885,6 +865,7 @@ namespace webpp::unicode {
     template <normalization_form Form = normalization_form::NFC, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const send) noexcept {
         using enum normalization_form;
+        using enum checked::error_handling;
         if constexpr (gibberish == Form) {
             throw std::invalid_argument(
               "We don't know what your intentions are, but calling this function and ask to normalize it to "
@@ -897,8 +878,9 @@ namespace webpp::unicode {
                 return false;
             }
         } else if constexpr (NFC == Form) {
-            decompose_iterator<Iter> decomper{spos, send};
-            if (!is_canonically_ordered(decomper.begin(), decomper.end())) [[unlikely]] {
+            assert(is_code_point_valid(checked::next_code_point_copy<return_negated_char>(spos, send)));
+            assert(is_code_point_valid(checked::prev_code_point_copy<return_negated_char>(send, spos)));
+            if (!is_canonically_ordered(decompose_iterator{spos}, decompose_iterator{send})) [[unlikely]] {
                 return false;
             }
             // if (is_non_composeable(spos, send)) [[unlikely]] {

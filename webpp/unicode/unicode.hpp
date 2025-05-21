@@ -1017,8 +1017,10 @@ namespace webpp::unicode {
                 } else if constexpr (UTF8<char_type>) {
                     auto const len =
                       required_length_of<char_type, difference_type>(static_cast<char_type>(cu1));
-                    if (end - pos < len - 1) [[unlikely]] {
-                        break;
+                    if constexpr (stl::random_access_iterator<Iter>) {
+                        if (end - pos < len - 1) [[unlikely]] {
+                            break;
+                        }
                     }
                     switch (len) {
                         case 1:
@@ -1027,6 +1029,11 @@ namespace webpp::unicode {
                             }
                             return cu1;
                         case 2: {
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu2 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             bool error   = (cu1 & 0b1110'0000) != 0b1100'0000;
@@ -1042,8 +1049,18 @@ namespace webpp::unicode {
                             return code_point;
                         }
                         case 3: {
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu2 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu3 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             bool error   = (cu1 & 0b1111'0000) != 0b1110'0000;
@@ -1063,10 +1080,25 @@ namespace webpp::unicode {
                             return code_point;
                         }
                         case 4: {
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu2 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu3 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            if constexpr (!stl::random_access_iterator<Iter>) {
+                                if (pos == end) [[unlikely]] {
+                                    break;
+                                }
+                            }
                             auto const cu4 =
                               static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             bool error   = (cu1 & 0b1111'0000) != 0b1111'0000;
@@ -1211,7 +1243,34 @@ namespace webpp::unicode {
                     code_point_type   cu1, cu2, cu3; // NOLINT(*-isolate-declaration)
                     stl::uint_fast8_t magic_code = 0;
                     stl::uint8_t      length;        // NOLINT(*-init-variables)
-                    if (pos - beg >= 3) {
+                    if constexpr (!stl::random_access_iterator<Iter>) {
+                        // To make support for bidirectional iterators that are not random iterators
+                        for (;;) {
+                            auto const before_beg  = stl::prev(beg);
+                            magic_code            |= (cu4 & 0b1100'0000) >> 6U;
+                            if (pos == before_beg) {
+                                break;
+                            }
+                            cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            magic_code |= (cu3 & 0b1100'0000) >> 4U;
+                            if (pos == before_beg) {
+                                break;
+                            }
+                            cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            magic_code |= (cu2 & 0b1100'0000) >> 2U;
+                            if (pos == before_beg) {
+                                break;
+                            }
+                            cu1 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            magic_code |= cu1 & 0b1100'0000;
+                            break;
+                        }
+
+                        // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
+                        length = details::utf8_magic_lengths[magic_code];
+
+                        stl::advance(pos, 4 - length);
+                    } else if (pos - beg >= 3) {
                         cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu1 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1224,7 +1283,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        pos += 4 - length;
+                        stl::advance(pos, 4 - length);
                     } else {
                         for (;;) {
                             auto const before_beg  = stl::prev(beg);
@@ -1244,7 +1303,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        pos += 3 - length;
+                        stl::advance(pos, 3 - length);
                     }
 
                     switch (length) {
@@ -1317,6 +1376,15 @@ namespace webpp::unicode {
             } else {
                 return code_point;
             }
+        }
+
+        template <error_handling              ErrorHandling = error_handling::return_unchanged,
+                  UTF32                       CodePointType = char32_t,
+                  stl::bidirectional_iterator Iter          = char8_t const*>
+        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(
+          Iter        pos,
+          Iter const& end) noexcept {
+            return prev_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
         }
 
         /// Length of Code Units in current Code Point:
