@@ -767,7 +767,7 @@ namespace webpp::unicode {
      * Attention: it is unsafe to use for strings that may contain bad inputs at the beginning/end of
      *            the string.
      */
-    template <stl::random_access_iterator Iter>
+    template <stl::bidirectional_iterator Iter>
     struct decompose_iterator {
         using difference_type   = stl::iter_difference_t<Iter>;
         using value_type        = stl::iter_value_t<Iter>;
@@ -785,7 +785,10 @@ namespace webpp::unicode {
         stl::uint8_t                 decomp_index = 0;
 
       public:
-        explicit constexpr decompose_iterator(Iter inp_pos) noexcept : pos{inp_pos} {}
+        explicit constexpr decompose_iterator(Iter inp_pos) noexcept
+          : pos{inp_pos},
+            decomp_buf{
+              canonical_decomposed<decomposed_array<value_type>>(unchecked::next_code_point_copy(pos))} {}
 
         constexpr decompose_iterator()                                         = default;
         constexpr decompose_iterator(decompose_iterator const&)                = default;
@@ -796,7 +799,7 @@ namespace webpp::unicode {
 
         constexpr decompose_iterator& operator++() noexcept {
             using enum checked::error_handling;
-            if (decomp_index == decomp_buf.size() - 1U) {
+            if (decomp_buf[decomp_index] == '\0') {
                 ++pos;
                 auto const code_point = unchecked::next_code_point_copy(pos);
                 decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
