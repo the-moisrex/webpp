@@ -138,7 +138,7 @@ namespace webpp::unicode {
         }
     }
 
-    template <stl::random_access_iterator Iter = char8_t const*>
+    template <stl::forward_iterator Iter = char8_t const*>
     [[nodiscard]] static constexpr bool is_ascii(Iter spos, Iter send) noexcept {
         // TODO: add SWAR optimization
         for (; spos != send; ++spos) {
@@ -970,7 +970,7 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_replacement_char,
                   UTF32                       CodePointType = char32_t,
-                  stl::random_access_iterator Iter          = char8_t const*>
+                  stl::bidirectional_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
@@ -1112,14 +1112,14 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::random_access_iterator Iter          = char8_t const*>
+                  stl::bidirectional_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point_copy(
           Iter        pos,
           Iter const& end) noexcept {
             return next_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
         }
 
-        template <stl::random_access_iterator Iter = char8_t*>
+        template <stl::bidirectional_iterator Iter = char8_t*>
         [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
             // todo: is there a way to optimize this?
             auto const code_point =
@@ -1151,7 +1151,7 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::random_access_iterator Iter          = char8_t const*>
+                  stl::bidirectional_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, Iter const& beg) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
@@ -1322,7 +1322,7 @@ namespace webpp::unicode {
         /// Length of Code Units in current Code Point:
         ///   Safely check the length of the current code point that the iterator is pointing to even if
         ///   the values are not a valid code point (upon which we return the length of 1).
-        template <stl::random_access_iterator Iter = char8_t const*, stl::integral SizeT = stl::size_t>
+        template <stl::bidirectional_iterator Iter = char8_t const*, stl::integral SizeT = stl::size_t>
         [[nodiscard]] static constexpr SizeT code_point_length(Iter pos, Iter const& end) noexcept {
             using value_type = stl::iter_value_t<Iter>;
             if (pos == end) {
@@ -1354,7 +1354,7 @@ namespace webpp::unicode {
             }
         }
 
-        template <stl::random_access_iterator OIterT = stl::u8string::iterator>
+        template <stl::bidirectional_iterator OIterT = stl::u8string::iterator>
         static constexpr void advance(OIterT& out, OIterT const oend, stl::size_t index) noexcept {
             assert(static_cast<stl::size_t>(oend - out) >= index);
             if constexpr (UTF32<stl::iter_value_t<OIterT>>) {

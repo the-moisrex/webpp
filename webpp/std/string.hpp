@@ -4,8 +4,8 @@
 #define WEBPP_STD_STRING_HPP
 
 #include "../common/meta.hpp"
-#include "../std/type_traits.hpp"
-#include "string_concepts.hpp"
+#include "./string_concepts.hpp"
+#include "./type_traits.hpp"
 
 #include <string>
 

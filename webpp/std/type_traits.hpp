@@ -3,7 +3,7 @@
 #ifndef WEBPP_TYPE_TRAITS_HPP
 #define WEBPP_TYPE_TRAITS_HPP
 
-#include "std.hpp"
+#include "./std.hpp"
 
 #include <cstdint> // for std::size_t and what not
 #include <type_traits>

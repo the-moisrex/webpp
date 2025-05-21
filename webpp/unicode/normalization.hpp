@@ -146,6 +146,7 @@ namespace webpp::unicode {
      *
      * More information about Canonical Ordering Algorithm:
      *       (section 3.11 of https://www.unicode.org/versions/latest)
+     *       https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G49591
      *
      * Reorder-able Pairs:
      *       Classes Reorder-able?  Reason
@@ -159,7 +160,8 @@ namespace webpp::unicode {
     template <stl::indirectly_swappable Iter = char8_t*>
     static constexpr void canonical_reorder(Iter start, Iter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
-        using unchecked::next_char_copy;
+        using checked::next_code_point;
+        using checked::prev_code_point;
         using unchecked::swap_code_points;
         using enum checked::error_handling;
 
@@ -168,10 +170,10 @@ namespace webpp::unicode {
         }
 
         auto pos = start;
-        static_cast<void>(checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
+        static_cast<void>(next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
-            auto       cur_cp   = checked::next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+            auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip the next code point as well, the next one is never going to be swapped with this one
@@ -185,7 +187,7 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto       prev    = back_pos;
-                auto const prev_cp = checked::prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -195,24 +197,52 @@ namespace webpp::unicode {
         }
     }
 
+    /**
+     * Check if the string is canonically ordered (will be when it has ran through
+     * the canonical_reorder function).
+     */
+    template <stl::bidirectional_iterator Iter>
+    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter start, Iter const end) noexcept {
+        using checked::next_code_point;
+        using checked::prev_code_point;
+        using enum checked::error_handling;
+
+        if (start == end) {
+            return true;
+        }
+
+        auto pos = start;
+        static_cast<void>(next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
+        while (pos != end) {
+            auto       back_pos = pos;
+            auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+            auto const ccc      = ccc_of(cur_cp);
+            if (ccc == 0) {
+                // skip the next code point as well, the next one is never going to be swapped with this one
+                if (!checked::next_char<Iter>(pos, end)) {
+                    break;
+                }
+
+                continue; // Skip non-combining characters (starter code points)
+            }
+
+            while (back_pos != start) {
+                auto       prev    = back_pos;
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                if (ccc_of(prev_cp) <= ccc) {
+                    break;
+                }
+                [[unlikely]] { return false; }
+            }
+        }
+        return true;
+    }
+
     template <istl::String StrT = stl::u32string>
     static constexpr void canonical_reorder(StrT& out)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<typename stl::remove_cvref_t<StrT>::iterator>>) {
         using iterator_type = typename stl::remove_cvref_t<StrT>::iterator;
         canonical_reorder<iterator_type>(stl::begin(out), stl::end(out));
-    }
-
-    /**
-     * Is a normalized Unicode string
-     * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
-     *
-     * When implementations keep strings in a normalized form, they can be assured that equivalent strings
-     * have a unique binary representation
-     */
-    template <normalization_form NF = normalization_form::NFC, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool is_normalized(Iter start, Iter const end) noexcept {
-        // todo
-        return false;
     }
 
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
@@ -290,7 +320,7 @@ namespace webpp::unicode {
     /**
      * Go to the first Code Point that requires Decomposition.
      */
-    template <stl::random_access_iterator Iter>
+    template <stl::forward_iterator Iter>
     static constexpr void skip_to_decomp(Iter& spos, Iter const send) noexcept {
         using details::decomp_breakpoints;
         using details::decomp_common_pos;
@@ -729,6 +759,156 @@ namespace webpp::unicode {
             // todo: NFKC and NFKD
             throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");
         }
+    }
+
+    template <stl::random_access_iterator Iter, typename = istl::nothing_type>
+    struct decompose_iterator {
+        using value_type = char32_t;
+
+      private:
+        char32_t                     code_point = 0;
+        Iter                         sbeg;
+        Iter                         pos;
+        Iter                         send;
+        decomposed_array<value_type> decomp_buf{};
+        stl::size_t                  decomp_index = decomp_buf.size();
+
+        friend struct decompose_iterator<Iter, void>;
+
+      public:
+        constexpr decompose_iterator(Iter start, Iter const end) noexcept : sbeg{start}, send{end} {}
+
+        constexpr decompose_iterator(decompose_iterator const&)                = default;
+        constexpr decompose_iterator(decompose_iterator&&) noexcept            = default;
+        constexpr decompose_iterator& operator=(decompose_iterator const&)     = default;
+        constexpr decompose_iterator& operator=(decompose_iterator&&) noexcept = default;
+        constexpr ~decompose_iterator() noexcept                               = default;
+
+        [[nodiscard]] constexpr auto begin() noexcept {
+            return decompose_iterator<Iter, void>{this};
+        }
+
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return decompose_iterator<Iter, void>{};
+        }
+
+        constexpr decompose_iterator& operator++() noexcept {
+            using enum checked::error_handling;
+            if (decomp_index == decomp_buf.size()) {
+                code_point = checked::next_code_point<return_unchanged, value_type, Iter>(pos, send);
+                decomp_buf = canonical_decomposed<decomposed_array<value_type>>(code_point);
+            } else {
+                code_point = decomp_buf[decomp_index++];
+            }
+            return *this;
+        }
+
+        constexpr decompose_iterator& operator--() noexcept {
+            using enum checked::error_handling;
+            if (decomp_index == 0) {
+                code_point   = checked::prev_code_point<return_unchanged, value_type, Iter>(pos, sbeg);
+                decomp_index = decomp_buf.size();
+            } else {
+                code_point = decomp_buf[--decomp_index];
+            }
+            return *this;
+        }
+    };
+
+    template <stl::random_access_iterator Iter>
+    struct decompose_iterator<Iter, void> {
+        using difference_type   = stl::iter_difference_t<Iter>;
+        using value_type        = char32_t;
+        using traits            = stl::iterator_traits<Iter>;
+        using pointer           = typename traits::pointer;
+        using reference         = value_type&;
+        using const_reference   = value_type const&;
+        using iterator_category = stl::bidirectional_iterator_tag;
+        using iterator_concept  = stl::bidirectional_iterator_tag;
+
+      private:
+        decompose_iterator<Iter>* ptr = nullptr;
+
+      public:
+        explicit constexpr decompose_iterator(decompose_iterator<Iter>* inp_ptr) noexcept : ptr{inp_ptr} {}
+
+        constexpr decompose_iterator()                                         = default;
+        constexpr decompose_iterator(decompose_iterator const&)                = default;
+        constexpr decompose_iterator(decompose_iterator&&) noexcept            = default;
+        constexpr decompose_iterator& operator=(decompose_iterator const&)     = default;
+        constexpr decompose_iterator& operator=(decompose_iterator&&) noexcept = default;
+        constexpr ~decompose_iterator() noexcept                               = default;
+
+        constexpr const_reference operator*() const noexcept {
+            return ptr->code_point;
+        }
+
+        constexpr decompose_iterator& operator++() noexcept {
+            ptr->operator++();
+            return *this;
+        }
+
+        constexpr decompose_iterator& operator--() noexcept {
+            ptr->operator--();
+            return *this;
+        }
+
+        [[nodiscard]] constexpr decompose_iterator operator--(int) const noexcept {
+            return decompose_iterator{ptr}.operator--();
+        }
+
+        [[nodiscard]] constexpr decompose_iterator operator++(int) const noexcept {
+            return decompose_iterator{ptr}.operator++();
+        }
+
+        [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
+            return ptr == other.ptr && ptr->pos == ptr->send && ptr->decomp_index == ptr->decomp_buf.size();
+        }
+    };
+
+    /**
+     * Check if the specified string is decomposable
+     */
+    template <stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr bool is_decomposable(Iter spos, Iter send) noexcept {
+        skip_to_decomp(spos, send);
+        return spos != send;
+    }
+
+    /**
+     * Is a normalized Unicode string
+     * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
+     *
+     * When implementations keep strings in a normalized form, they can be assured that equivalent strings
+     * have a unique binary representation
+     */
+    template <normalization_form Form = normalization_form::NFC, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const send) noexcept {
+        using enum normalization_form;
+        if constexpr (gibberish == Form) {
+            throw std::invalid_argument(
+              "We don't know what your intentions are, but calling this function and ask to normalize it to "
+              "gibberish is not it.");
+        } else if constexpr (NFD == Form) {
+            if (is_decomposable(spos, send)) [[unlikely]] {
+                return false;
+            }
+            if (!is_canonically_ordered(spos, send)) [[unlikely]] {
+                return false;
+            }
+        } else if constexpr (NFC == Form) {
+            decompose_iterator<Iter> decomper{spos, send};
+            if (!is_canonically_ordered(decomper.begin(), decomper.end())) [[unlikely]] {
+                return false;
+            }
+            // if (is_non_composeable(spos, send)) [[unlikely]] {
+            //     return false;
+            // }
+        } else {
+            // todo: NFKC and NFKD
+            throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");
+        }
+        return true;
     }
 
     /// to Normalization Form C (this is not inplace)
