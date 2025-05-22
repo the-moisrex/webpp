@@ -149,6 +149,11 @@ export class TablePairs {
             codePointStart, length, data: this.data, dataView,
         }) || {};
 
+        if (dataView.getAll().includes(undefined)) {
+            console.error(dataView.getAll());
+            throw new Error(`Undefined found in data view: ${dataView.getAll()}`);
+        }
+
         for (const indexModifier of this.#indexAddenda.generate({
             dataView, length,
         })) {
@@ -199,19 +204,9 @@ export class TablePairs {
                     break;
                 }
             }
-            // } catch (err) {
-            //     if (err instanceof InvalidModifier) {
-            //         invalidModifiers.push(err);
-            //     } else {
-            //         if (!this.#props?.ignoreErrors) {
-            //             throw err;
-            //         }
-            //     }
-            // }
 
             /// check if we can have "shift"s.
             if (indexModifier.unshiftAll) {
-                // try {
                 // now, try the shifted inserts as well see if they're any good:
                 info = this.#optimizeInserts(indexModifier.unshiftAll(insertsDataView), dataView, indexModifier,);
                 if (!info.valid) {
@@ -237,15 +232,6 @@ export class TablePairs {
                         }
                     }
                 }
-                // } catch (err) {
-                //     if (err instanceof InvalidModifier) {
-                //         invalidModifiers.push(err);
-                //     } else {
-                //         if (!this.#props?.ignoreErrors) {
-                //             throw err;
-                //         }
-                //     }
-                // }
             }
         }
 
@@ -336,7 +322,9 @@ export class TablePairs {
                         for (const val of inserts) {
                             if (val === undefined || isNaN(val) || val === null) {
                                 debugger;
-                                throw new Error(`Invalid value found: ${val}`);
+                                console.error(val, inserts, inserts.length, inserts.getAll());
+                                console.error(range, code, modifiedValues, modifier, rtrimmed, overlapped);
+                                throw new Error(`Invalid value found: ${val}, ${JSON.stringify(inserts)}`);
                             }
                         }
                     }

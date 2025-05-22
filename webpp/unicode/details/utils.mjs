@@ -1187,6 +1187,17 @@ export function fillEmpty(arr, invalidValue = null) {
     return Array.from(arr, (val, i) => (i in arr ? val : invalidValue));
 }
 
+export function fillEmptyObject(obj, invalidValue = null) {
+    const maxCP = BigInt(Object.keys(obj).map(cp => parseInt(cp)).filter(Number.isInteger).toSorted((a, b) => b - a)[0]);
+    for (let codePoint = 0n; codePoint !== maxCP; ++codePoint) {
+        if (codePoint in obj) {
+            continue;
+        }
+        obj[codePoint] = invalidValue;
+    }
+    return obj;
+}
+
 
 /// This is done in reverse order
 export function packBoolsIntoInts(boolArray, blockSize = 8n) {

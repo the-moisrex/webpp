@@ -20,7 +20,7 @@ export const props = (() => {
         NFC_Quick_Check: Symbol("NFC_QC"), // NFC_Quick_Check=No/Maybe
         NFKD_Quick_Check: Symbol("NFKD_QC"), // NFKD_Quick_Check=No
         NFKC_Quick_Check: Symbol("NFKC_QC"), // NFKC_Quick_Check=No
-        Quick_Check: Symbol("NF_QC"), // NFKD_Quick_Check=No
+        Quick_Check: Symbol("NF_QC"),
         Expands_On_NFD: Symbol("Expands_On_NFD"), // Deprecated
         Expands_On_NFC: Symbol("Expands_On_NFC"), // Deprecated
         Expands_On_NFKD: Symbol("Expands_On_NFKD"), // Deprecated
@@ -49,6 +49,7 @@ export const isDeprecated = (property) => {
 }
 
 export const defaultValueOf = (property) => {
+    // Checkout the @missing values int he text file.
     switch (property) {
         case props.Quick_Check:
         case props.NFC_Quick_Check:
@@ -207,6 +208,72 @@ export const getFullCompositionExclusions = async () => {
     return getDerivedNormalizationProps(props.Full_Composition_Exclusion);
 };
 
+export const QuickCheck = {
+    yes: 0b0,
+    Y: 0b0,
+
+    no: 0b1,
+    N: 0b1,
+
+    maybe: 0b10,
+    M: 0b1,
+    
+    nfd: 0b1000,
+    nfd_no: 0b1001,
+
+    nfc: 0b10000,
+    nfc_no: 0b10001,
+    nfc_maybe: 0b10010,
+
+    nfkd: 0b100000,
+    nfkc: 0b1000000,
+    nfkd_no: 0b100001,
+    nfkc_no: 0b1000001,
+};
+
+/**
+ * Get Quick Check Integer value
+ * @param {props} property 
+ * @param {string} value 
+ * @returns {Number}
+ */
+export function getQC(property, value) {
+    if (Number.isInteger(value)) {
+        return value;
+    }
+    let cat = 0b0;
+    switch (property) {
+        case props.NFD_Quick_Check: cat = QuickCheck.nfd; break;
+        case props.NFC_Quick_Check: cat = QuickCheck.nfc; break;
+        case props.NFKD_Quick_Check: cat = QuickCheck.nfkd; break;
+        case props.NFKC_Quick_Check: cat = QuickCheck.nfkc; break;
+
+        case props.NFD_Quick_Check.description: cat = QuickCheck.nfd; break;
+        case props.NFC_Quick_Check.description: cat = QuickCheck.nfc; break;
+        case props.NFKD_Quick_Check.description: cat = QuickCheck.nfkd; break;
+        case props.NFKC_Quick_Check.description: cat = QuickCheck.nfkc; break;
+
+        default:
+            throw new Error(`Bad Quick_Check peroperty: ${property}`);
+    }
+    if (! (value in QuickCheck)) {
+        throw new Error("Not a valid Quick_Check value");
+    }
+    return cat | QuickCheck[value];
+}
+
+export function getQCs(values) {
+    if (Number.isInteger(Number(values))) {
+        return Number(values);
+    }
+    let cat = 0b0;
+    for (const property in values) {
+        const value = values[property];
+        cat |= getQC(property, value);
+    }
+    return cat;
+}
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
     const qcs = await getFullCompositionExclusions();
     for (const codePoint in qcs) {
@@ -216,3 +283,4 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     console.log("Start Code Point:", qcs[0]);
     console.log("Last Code Point:", qcs[qcs.length - 1]);
 }
+

@@ -179,6 +179,21 @@ namespace webpp::unicode {
         return code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static bool is_bmp(CharT const code_point) noexcept {
+        return code_point >= 0 && code_point <= 0xFFFFU;
+    }
+
+    /**
+     * This is used to determine if a given Unicode code point is a supplementary character. Supplementary
+     * characters are those with code points in the range from U+10000 to U+10FFFF, which are beyond the Basic
+     * Multilingual Plane (BMP) that covers U+0000 to U+FFFF.
+     */
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static bool is_supplementary(CharT codePoint) noexcept {
+        return codePoint > 0xFFFFU && codePoint <= 0x10'FFFFU;
+    }
+
     /**
      * Check if it's a start of a Code Unit
      */
