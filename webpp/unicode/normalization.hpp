@@ -949,7 +949,7 @@ namespace webpp::unicode {
             }
             prev_ccc = ccc;
         }
-        return static_cast<quick_check_state>(result);
+        return static_cast<quick_check_state>(result & to_underlying(simplify_mask));
     }
 
     /**
@@ -1012,7 +1012,8 @@ namespace webpp::unicode {
             // to look at previous characters, back to the last starter. See Section 9, Detecting
             // Normalization Forms, for more information.
 
-            switch (quick_check<NFC>(spos, send)) {
+            auto const qc_val = quick_check<NFC>(spos, send);
+            switch (qc_val) {
                 [[likely]] case quick_check_state::YES:
                     return true;
                 case quick_check_state::MAYBE: break;
