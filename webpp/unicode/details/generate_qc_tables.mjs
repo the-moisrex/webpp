@@ -4,23 +4,23 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import { TablePairs } from "./table.mjs";
 import {fillEmptyObject, runClangFormat, uint32, uint7, uint8, writePieces} from "./utils.mjs";
-import { getQCs, getQuickChecks, props } from "./DerivedNormalizationProps.mjs";
+import { getQCs, getQuickChecks } from "./DerivedNormalizationProps.mjs";
 
 const outFile = `qc_tables.hpp`;
+const excludeDecompositionOnly = true; // Disables NFD
+const excludeKompatibility = true; // Disables NFKC, NFKD
 
 const start = async () => {
     await readme.download();
 
-    const orgQCs = await getQuickChecks();
-    const qcs = fillEmptyObject(orgQCs, 0b0) ;
+    const qcs = fillEmptyObject(await getQuickChecks(), 0b0) ;
     const qcTables = new QCTables();
-    // console.log(orgQCs);
     for (const codePointStr in qcs) {
         const codePoint = parseInt(codePointStr);
         if (isNaN(codePoint)) {
             continue;
         }
-        const qcCode = getQCs(qcs[codePointStr]);
+        const qcCode = getQCs(qcs[codePointStr], excludeKompatibility, excludeDecompositionOnly);
         // console.log(codePoint, qcCode, qcs[codePointStr]);
         qcTables.add(codePoint, qcCode);
     }
@@ -138,6 +138,9 @@ const createTableFile = async (table) => {
  *
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
+ * 
+ * ${!excludeDecompositionOnly ? '' : `NFD Quick Check values are excluded in these tables.`}
+ * ${!excludeKompatibility ? '' : `Kompatibility values like NFKC and NFKD Quick Check values are excluded in these tables.`}
  */
 
 #ifndef WEBPP_UNICODE_QC_TABLES_HPP

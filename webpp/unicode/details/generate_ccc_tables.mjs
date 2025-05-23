@@ -10,18 +10,43 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import { TablePairs } from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {runClangFormat, runCmd, uint32, uint7, uint8, writePieces} from "./utils.mjs";
+import {fillEmptyObject, runClangFormat, runCmd, uint32, uint7, uint16, uint8, writePieces} from "./utils.mjs";
+import { getQCs, getQuickChecks } from "./DerivedNormalizationProps.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
+const embedQuickCheckTables = true;
+const excludeDecompositionOnly = true;
+const excludeKompatibility = true;
 
 const start = async () => {
     await readme.download();
 
-    // database file
     const cccsTables = new CCCTables();
-    await UnicodeData.parse(cccsTables, UnicodeData.properties.ccc);
+    if (embedQuickCheckTables) {
+        const qcs = fillEmptyObject(await getQuickChecks(), 0b0) ;
+        let data = [];
+        for (const codePointStr in qcs) {
+            const codePoint = parseInt(codePointStr);
+            if (isNaN(codePoint)) {
+                continue;
+            }
+            const qcCode = getQCs(qcs[codePointStr], excludeKompatibility, excludeDecompositionOnly);
+            // console.log(codePoint, qcCode, qcs[codePointStr]);
+            data[codePoint] = qcCode << 8;
+        }
+        await UnicodeData.parse({
+            add(codePoint, value) {
+                data[codePoint] |= Number(value);
+            }
+        }, UnicodeData.properties.ccc);
+        for (const codePoint in data) {
+            cccsTables.add(codePoint, data[codePoint]);
+        }
+    } else {
+        await UnicodeData.parse(cccsTables, UnicodeData.properties.ccc);
+    }
     cccsTables?.process?.();
-    await createTableFile([cccsTables]);
+    await createTableFile(cccsTables);
     console.log("File processing completed.");
 };
 
@@ -41,12 +66,30 @@ These are the indices that are used to find which values from "ccc_values" table
     };
     values = {
         max: 65535 * 10,
-        sizeof: uint8,
-        description: `CCC: Canonical Combining Class
+        sizeof: embedQuickCheckTables ? uint16 : uint8,
+        description: `CCC: Canonical Combining Class ${embedQuickCheckTables ? 'and Quick Check' : ''}
 These values are calculated and individually represent actual CCC values, but they have no
 valid order by themselves, and they only make sense if they're being used in conjunction with
 the "ccc_indices" table.
         `,
+        map: !embedQuickCheckTables ? undefined : (vals, info) => {
+            let res = Array.isArray(vals) ? vals : [];
+            for (let i = 0; i !== vals.length; ++i) {
+                const code = vals[i];
+                const qcCode = code >> 8;
+                const ccc = code & 0xFF;
+                if (code === 0) {
+                    res[i] = vals[i];
+                    continue;
+                }
+                if (qcCode === 0) {
+                    res[i] = ccc;
+                    continue;
+                }
+                res[i] = `${ccc} | 0x${qcCode.toString(16).toUpperCase()}U << 8U`;
+            }
+            return res;
+        }
     };
     lastZero = 0n;
 
@@ -119,24 +162,17 @@ the "ccc_indices" table.
 
     processRendered(renderedTables) {
         return `
-    /**
-     * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
-     * so it's designed this way to reduce the table size.
-     */
-    static constexpr auto trailing_zero_cccs = 0x${this.lastZero.toString(16).toUpperCase()}UL;
-
 ${renderedTables}
         `;
     }
 }
 
-const createTableFile = async (tables) => {
-    const totalBits = tables.reduce(
-        (acc, cur) => acc + Number(cur.totalTablesSizeInBits()),
-        0,
-    );
+const createTableFile = async (table) => {
+    const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await getReadme();
-    const begContent = `
+    const competition = 21;
+    const saved = (competition - totalBits / 8 / 1024).toFixed(2);
+    const content = `
 /**
  * Attention:
  *   Auto-generated file, don't modify this file; use the mentioned file below
@@ -150,8 +186,8 @@ const createTableFile = async (tables) => {
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${(totalBits / 8 / 1024).toFixed(2)} KiB
- *   Some other implementations' total table size was 21 KiB;
- *   So I saved ${(21 - totalBits / 8 / 1024).toFixed(2)} KiB.
+ *   Some other implementations' total table size (excluding the Quick Check tables) was ${competition} KiB;
+ *   So I have ${saved > 0 ? `saved` : `wasted`} ${Math.abs(saved).toFixed(2)} KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -164,6 +200,10 @@ const createTableFile = async (tables) => {
  *       ${readme.fileUrl}
  *   Known Properties' Values are taken from:
  *       https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
+ * 
+ * ${!embedQuickCheckTables ? '' : `Quick Check values are embedded in CCC values in these tables, which grows the tables.`}
+ * ${!embedQuickCheckTables || !excludeDecompositionOnly ? '' : `NFD Quick Check values are excluded in these tables.`}
+ * ${!embedQuickCheckTables || !excludeKompatibility ? '' : `Kompatibility values like NFKC and NFKD Quick Check values are excluded in these tables.`}
  */
 
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP
@@ -183,20 +223,20 @@ namespace webpp::unicode {
 
 namespace webpp::unicode::details {
 
-`;
+    /**
+     * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
+     * so it's designed this way to reduce the table size.
+     */
+    static constexpr auto trailing_zero_cccs = 0x${table.lastZero.toString(16).toUpperCase()}UL;
 
-    const endContent = `
+${table.render()}
+
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_CCC_TABLES_HPP
     `;
 
-    let pieces = [begContent];
-    for (const table of tables) {
-        pieces.push(table.render());
-    }
-    pieces.push(endContent);
-    await writePieces(cccOutFile, pieces);
+    await writePieces(cccOutFile, [content]);
     await runClangFormat(cccOutFile);
 };
 

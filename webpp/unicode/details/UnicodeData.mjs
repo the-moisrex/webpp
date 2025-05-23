@@ -88,7 +88,6 @@ export const parse = async (table, property, onlyValid = false, fileContent = un
     }
 
     const lines = fileContent.split("\n");
-
     let action = noop;
 
     switch (property) {
