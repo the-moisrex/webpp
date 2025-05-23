@@ -811,8 +811,8 @@ namespace webpp::unicode {
           : beg{inp_pos},
             pos{inp_pos},
             send{inp_end},
-            decomp_buf{
-              canonical_decomposed<decomposed_array<value_type>>(unchecked::next_code_point_copy(pos))} {}
+            decomp_buf{canonical_decomposed<decomposed_array<value_type>>(
+              checked::next_code_point_copy<checked::error_handling::return_negated_char>(pos, send))} {}
 
         constexpr decompose_iterator()                                         = default;
         constexpr decompose_iterator(decompose_iterator const&)                = default;
@@ -861,12 +861,16 @@ namespace webpp::unicode {
             return *pos;
         }
 
-        [[nodiscard]] constexpr decompose_iterator operator--(int) const noexcept {
-            return decompose_iterator{*this}.operator--();
+        [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept {
+            auto const res = decompose_iterator{*this};
+            operator--();
+            return res;
         }
 
-        [[nodiscard]] constexpr decompose_iterator operator++(int) const noexcept {
-            return decompose_iterator{*this}.operator++();
+        [[nodiscard]] constexpr decompose_iterator operator++(int) noexcept {
+            auto const res = decompose_iterator{*this};
+            operator++();
+            return res;
         }
 
         [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
