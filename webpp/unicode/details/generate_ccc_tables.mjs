@@ -10,7 +10,7 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import { TablePairs } from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {fillEmptyObject, runClangFormat, runCmd, uint32, uint7, uint16, uint8, writePieces} from "./utils.mjs";
+import {fillEmptyObject, runClangFormat, runCmd, uint32, uint7, uint16, uint8, writePieces, uint6, uint5, uint4} from "./utils.mjs";
 import { getQCs, getQuickChecks } from "./DerivedNormalizationProps.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
@@ -60,7 +60,7 @@ class CCCTables {
     indices = {
         max: 4353 * 100,
         sizeof: uint32,
-        // splitInto: 1, // split the table this many tables
+        // splitInto: 6, // split the table this many tables
         description: `CCC: Canonical Combining Class
 These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`,
     };
@@ -102,7 +102,7 @@ the "ccc_indices" table.
             indices: this.indices,
             values: this.values,
             validateResults: true,
-            genIndexAddenda: () => genSimpleIndexAddenda("index", uint7),
+            genIndexAddenda: () => genSimpleIndexAddenda("index", uint6),
         });
     }
 
@@ -168,6 +168,7 @@ ${renderedTables}
 }
 
 const createTableFile = async (table) => {
+    const rendered = table.render();
     const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await getReadme();
     const competition = 21;
@@ -223,13 +224,18 @@ namespace webpp::unicode {
 
 namespace webpp::unicode::details {
 
+
+    static constexpr bool embed_quick_check_tables = ${embedQuickCheckTables.toString()};
+    static constexpr bool exclude_NFD = ${excludeDecompositionOnly.toString()};
+    static constexpr bool exclude_kompatibility = ${excludeKompatibility.toString()};
+
     /**
      * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_zero_cccs = 0x${table.lastZero.toString(16).toUpperCase()}UL;
 
-${table.render()}
+${rendered}
 
 } // namespace webpp::unicode::details
 

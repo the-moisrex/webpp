@@ -208,88 +208,64 @@ export const getFullCompositionExclusions = async () => {
     return getDerivedNormalizationProps(props.Full_Composition_Exclusion);
 };
 
+// If you change these, change them in C++ codes as well.
 export const QuickCheck = {
     yes: 0b0,
     Y: 0b0,
 
-    no: 0b1,
-    N: 0b1,
+    no: 0b11,
+    N: 0b11,
 
     maybe: 0b10,
     M: 0b10,
     
-    nfd: 0b1000,
-    nfd_no: 0b1001,
+    NFD_QC_N: 0b111,
 
-    nfc: 0b10000,
-    nfc_no: 0b10001,
-    nfc_maybe: 0b10010,
+    NFC_QC_N: 0B11011,
+    NFC_QC_M: 0B10010,
 
-    nfkd: 0b100000,
-    nfkc: 0b1000000,
-    nfkd_no: 0b100001,
-    nfkc_no: 0b1000001,
+    NFKD_N: 0B100011,
+    NFKC_N: 0B1000011,
 };
 
 /**
  * Get Quick Check Integer value
- * @param {props} property 
- * @param {string} value 
+ * @param {string} property
+ * @param {string|Number} value
+ * @param {boolean} excludeDecompositionOnly
+ * @param {boolean} excludeKompatibility
  * @returns {Number}
  */
 export function getQC(property, value, excludeKompatibility = false, excludeDecompositionOnly = false) {
     if (Number.isInteger(value)) {
         return value;
     }
-    let cat = 0b0;
+    property = property?.description ?? property;
     switch (property) {
-        case props.NFD_Quick_Check: 
-            if (excludeDecompositionOnly) {
-                return cat;
-            }
-            cat = QuickCheck.nfd;
-            break;
-        case props.NFC_Quick_Check: cat = QuickCheck.nfc; break;
-        case props.NFKD_Quick_Check: 
-            if (excludeKompatibility) {
-                return cat;
-            }
-            cat = QuickCheck.nfkd;
-            break;
-        case props.NFKC_Quick_Check: 
-            if (excludeKompatibility) {
-                return cat;
-            }
-            cat = QuickCheck.nfkc;
-            break;
-
         case props.NFD_Quick_Check.description:
             if (excludeDecompositionOnly) {
-                return cat;
+                return 0;
             }
-            cat = QuickCheck.nfd;
             break;
-        case props.NFC_Quick_Check.description: cat = QuickCheck.nfc; break;
+        case props.NFKC_Quick_Check.description:
         case props.NFKD_Quick_Check.description:
             if (excludeKompatibility) {
-                return cat;
+                return 0;
             }
-            cat = QuickCheck.nfkd;
             break;
-        case props.NFKC_Quick_Check.description: 
-            if (excludeKompatibility) {
-                return cat;
-            }
-            cat = QuickCheck.nfkc;
+        case props.NFC_Quick_Check.description:
             break;
-
         default:
-            throw new Error(`Bad Quick_Check peroperty: ${property}`);
+            throw new Error(`Bad Quick_Check property: ${property}`);
     }
     if (! (value in QuickCheck)) {
         throw new Error("Not a valid Quick_Check value");
     }
-    return cat | QuickCheck[value];
+    const key = `${property}_${value}`;
+    if (! (key in QuickCheck)) {
+        throw new Error("Not a valid Key");
+    }
+    return QuickCheck[key];
 }
 
 export function getQCs(values, excludeKompatibility = false, excludeDecompositionOnly = false) {

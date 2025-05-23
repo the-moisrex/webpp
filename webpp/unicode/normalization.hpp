@@ -698,6 +698,9 @@ namespace webpp::unicode {
      * to ensure that equivalent characters are represented consistently. This is essential for
      * accurate string comparison and processing in software applications.
      *
+     * Check out the normalization FAQ to find out the max length of normalization:
+     *    https://www.unicode.org/faq/normalization.html
+     *
      * @tparam Form Normalization Form
      * @tparam StrT String type
      * @param out the string you want to be normalized
@@ -724,6 +727,16 @@ namespace webpp::unicode {
         }
     }
 
+    /**
+     * Normalize a string (possibly) inplace.
+     *
+     * Normalization in Unicode is a process that standardizes different binary representations of characters
+     * to ensure that equivalent characters are represented consistently. This is essential for
+     * accurate string comparison and processing in software applications.
+     *
+     * Check out the normalization FAQ to find out the max length of normalization:
+     *    https://www.unicode.org/faq/normalization.html
+     */
     template <normalization_form          Form = normalization_form::NFC,
               istl::Appendable            StrT = stl::u32string,
               stl::random_access_iterator Iter>
@@ -743,6 +756,12 @@ namespace webpp::unicode {
                 out                                         = obeg + canonical_compose(obeg, oend);
             }
         } else if constexpr (normalization_form::NFC == Form) {
+            // Q: Is text always the same length or shorter after being put into NFC?
+            // Although it is usually the same length or shorter, it may expand. One of the goals for NFC was
+            // to match legacy practice where possible, and in some cases, the legacy representation was
+            // decomposed. In addition, for stability, characters encoded after Unicode 3.0 do not compose,
+            // except in unusual circumstances. See UAX #15 for more details.
+            // https://www.unicode.org/faq/normalization.html
             if constexpr (istl::String<StrT>) {
                 canonical_decompose(spos, send, out);
                 canonical_reorder(out);
@@ -764,8 +783,9 @@ namespace webpp::unicode {
     /**
      * Decomposition Iterator Wrapper
      * It decomposes the iterator given.
-     * Attention: it is unsafe to use for strings that may contain bad inputs at the beginning/end of
-     *            the string.
+     *
+     * This is not the most performant way of doing this, so use it in slow paths of your code.
+     * This allocates NOTHING.
      */
     template <stl::bidirectional_iterator Iter>
     struct decompose_iterator {
@@ -780,13 +800,17 @@ namespace webpp::unicode {
 
 
       private:
+        Iter                         beg{};
         Iter                         pos{};
+        Iter                         send{};
         decomposed_array<value_type> decomp_buf{};
         stl::uint8_t                 decomp_index = 0;
 
       public:
-        explicit constexpr decompose_iterator(Iter inp_pos) noexcept
-          : pos{inp_pos},
+        explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
+          : beg{inp_pos},
+            pos{inp_pos},
+            send{inp_end},
             decomp_buf{
               canonical_decomposed<decomposed_array<value_type>>(unchecked::next_code_point_copy(pos))} {}
 
@@ -801,7 +825,8 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             if (decomp_buf[decomp_index] == '\0') {
                 ++pos;
-                auto const code_point = unchecked::next_code_point_copy(pos);
+                // todo: we can optimize?
+                auto const code_point = checked::next_code_point_copy<return_negated_char>(pos, send);
                 decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
                 decomp_index          = 0;
             } else {
@@ -813,7 +838,7 @@ namespace webpp::unicode {
         constexpr decompose_iterator& operator--() noexcept {
             using enum checked::error_handling;
             if (decomp_index == 0) {
-                auto const code_point = unchecked::prev_code_point_copy(pos);
+                auto const code_point = checked::prev_code_point_copy<return_negated_char>(pos, beg);
                 decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
 
                 // we start from zero since we're assuming most input Code Points won't have mappings; so
@@ -849,6 +874,92 @@ namespace webpp::unicode {
         }
     };
 
+
+    /**
+     * QC (Quick Check) states
+     */
+    enum struct quick_check_state : stl::uint8_t {
+        // If you plan to change these, make sure to change them in the tables as well
+
+        YES   = 0b0U,  // Default
+        NO    = 0b11U, // 'No' suppresses 'Maybe'
+        MAYBE = 0b10U,
+
+        simplify_mask = 0b11,
+
+        NFD_NO    = NO | 0b100U,
+        NFC_NO    = NO | 0b1'1000U, // 'No' must hide 'Maybe'
+        NFC_MAYBE = MAYBE | 0b1'0000U,
+        NFKD_NO   = NO | 0b10'0000U,
+        NFKC_NO   = NO | 0b100'0000U,
+    };
+
+    /**
+     * Given a QC value, this function will simplify it to Yes, No, Maybe
+     */
+    template <normalization_form Form = normalization_form::NFC>
+    [[nodiscard]] static constexpr quick_check_state qc_of(
+      stl::underlying_type_t<quick_check_state> const code) noexcept {
+        using stl::to_underlying;
+        using enum quick_check_state;
+        // if they're separately included, this function needs to be modified.
+        static_assert(details::embed_quick_check_tables, "Quick Check values are not embedded.");
+        if constexpr (normalization_form::NFC == Form) {
+            return static_cast<quick_check_state>(code & to_underlying(NFC_NO));
+        } else if constexpr (normalization_form::NFD == Form) {
+            static_assert(!details::exclude_NFD,
+                          "Data required for QuickCheck is not included in the source code.");
+            return static_cast<quick_check_state>(code & to_underlying(NFD_NO));
+        } else if constexpr (normalization_form::NFKD == Form) {
+            static_assert(!details::exclude_kompatibility,
+                          "Data required for QuickCheck is not included in the source code.");
+            return static_cast<quick_check_state>(code & to_underlying(NFKD_NO));
+        } else if constexpr (normalization_form::NFKC == Form) {
+            static_assert(!details::exclude_kompatibility,
+                          "Data required for QuickCheck is not included in the source code.");
+            return static_cast<quick_check_state>(code & to_underlying(NFKC_NO));
+        } else {
+            static_assert_false(bool, "Bad normalization form.");
+            return NO;
+        }
+    }
+
+    /**
+     * https://www.unicode.org/reports/tr15/tr15-54.html#Detecting_Normalization_Forms
+     */
+    template <normalization_form Form = normalization_form::NFC, stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr quick_check_state quick_check(Iter spos, Iter const send) noexcept {
+        using stl::to_underlying;
+        using enum quick_check_state;
+        using enum checked::error_handling;
+
+        stl::uint8_t prev_ccc = 0;
+        auto         result   = to_underlying(YES);
+        for (;;) {
+            auto const code_point = checked::next_code_point<return_negated_char>(spos, send);
+            if (code_point == 0) {
+                break;
+            }
+            auto const info  = qc_ccc_of(code_point);
+            auto const ccc   = static_cast<stl::uint8_t>(info & 0xFFU);
+            auto const qc    = static_cast<stl::uint8_t>(info >> 8U);
+            result          |= to_underlying(qc_of<Form>(qc));
+            if ((prev_ccc > ccc && ccc != 0) || result == to_underlying(NO)) [[unlikely]] {
+                return NO;
+            }
+            prev_ccc = ccc;
+        }
+        return static_cast<quick_check_state>(result);
+    }
+
+    /**
+     * Usage: is_ccc_of(cp, ccc_props::Virama);
+     */
+    template <UTF CharT = char32_t>
+    [[nodiscard]] static constexpr bool is_ccc_of(CharT const code_point, stl::uint8_t const alias) noexcept {
+        return ccc_of(code_point) == alias;
+    }
+
     /**
      * Check if the specified string is decomposable
      */
@@ -870,28 +981,58 @@ namespace webpp::unicode {
         using enum normalization_form;
         using enum checked::error_handling;
         if constexpr (gibberish == Form) {
-            throw std::invalid_argument(
+            static_assert_false(
+              Iter,
               "We don't know what your intentions are, but calling this function and ask to normalize it to "
               "gibberish is not it.");
         } else if constexpr (NFD == Form) {
-            if (is_decomposable(spos, send)) [[unlikely]] {
-                return false;
-            }
-            if (!is_canonically_ordered(spos, send)) [[unlikely]] {
-                return false;
+            // https://www.unicode.org/reports/tr15/tr15-54.html#NFD_Table_Optimization
+            // The values of the Canonical_Combining_Class property are constrained by the character encoding
+            // stability guarantees to the range 0..254; the value 255 will never be assigned for a
+            // Canonical_Combining_Class value. Because of this constraint, implementations can make use of
+            // 255 as an implementation-specific value for optimizing data tables. For example, one can do a
+            // fast and compact table for implementing isNFD(x) by using the value 255 to represent
+            // NFKC_QC=No.
+            if constexpr (!details::exclude_NFD) {
+                return quick_check<NFD>(spos, send) == quick_check_state::YES;
+            } else {
+                if (is_decomposable(spos, send)) [[unlikely]] {
+                    return false;
+                }
+                if (!is_canonically_ordered(spos, send)) [[unlikely]] {
+                    return false;
+                }
             }
         } else if constexpr (NFC == Form) {
-            assert(is_code_point_valid(checked::next_code_point_copy<return_negated_char>(spos, send)));
-            assert(is_code_point_valid(checked::prev_code_point_copy<return_negated_char>(send, spos)));
-            if (!is_canonically_ordered(decompose_iterator{spos}, decompose_iterator{send})) [[unlikely]] {
+            // https://www.unicode.org/reports/tr15/tr15-54.html#NFC_QC_Optimization
+            // When normalizing to NFC, rather than first decomposing the text fully, a quick check can be
+            // made on each character. If it is already in the proper precomposed form, then no work has to be
+            // done. Only if the current character is a combining mark or is in the Composition Exclusion
+            // Table [Exclusions], does a slower code path need to be invoked. The slower code path will need
+            // to look at previous characters, back to the last starter. See Section 9, Detecting
+            // Normalization Forms, for more information.
+
+            switch (quick_check<NFC>(spos, send)) {
+                [[likely]] case quick_check_state::YES:
+                    return true;
+                case quick_check_state::MAYBE: break;
+                default: assert(false); stl::unreachable();
+            }
+
+            // assert(is_code_point_valid(checked::next_code_point_copy<return_negated_char>(spos, send)));
+            // assert(is_code_point_valid(checked::prev_code_point_copy<return_negated_char>(send, spos)));
+            if (!is_canonically_ordered(decompose_iterator{spos, send}, decompose_iterator{send, send}))
+              [[unlikely]]
+            {
                 return false;
             }
+            // todo: implement this
             // if (is_non_composeable(spos, send)) [[unlikely]] {
             //     return false;
             // }
         } else {
             // todo: NFKC and NFKD
-            throw stl::invalid_argument("NFKC and NFKD are not yet implemented.");
+            static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");
         }
         return true;
     }
@@ -911,58 +1052,58 @@ namespace webpp::unicode {
     }
 
     /// Check the Normalization Form
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    template <stl::forward_iterator Iter>
     [[nodiscard]] static constexpr normalization_form normalization_form_of(
-      [[maybe_unused]] Iter  start,
-      [[maybe_unused]] EIter end) noexcept {
+      [[maybe_unused]] Iter start,
+      [[maybe_unused]] Iter end) noexcept {
         using enum normalization_form;
         // todo
         static_assert_false(Iter, "Not yet implemented.");
         return gibberish;
     }
 
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr bool isNFC(Iter start, EIter end) noexcept {
-        return normalization_form_of(start, end) == normalization_form::NFC;
+    template <stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr bool isNFC(Iter start, Iter end) noexcept {
+        return is_normalized<normalization_form::NFC>(start, end);
     }
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFC(StrT&& str) noexcept {
         auto str_view = istl::string_viewify(stl::forward<StrT>(str));
-        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFC;
+        return is_normalized<normalization_form::NFC>(str_view.begin(), str_view.end());
     }
 
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr bool isNFD(Iter start, EIter end) noexcept {
-        return normalization_form_of(start, end) == normalization_form::NFD;
+    template <stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr bool isNFD(Iter start, Iter end) noexcept {
+        return is_normalized<normalization_form::NFD>(start, end);
     }
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFD(StrT&& str) noexcept {
         auto str_view = istl::string_viewify(stl::forward<StrT>(str));
-        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFD;
+        return is_normalized<normalization_form::NFD>(str_view.begin(), str_view.end());
     }
 
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr bool isNFKC(Iter start, EIter end) noexcept {
-        return normalization_form_of(start, end) == normalization_form::NFKC;
+    template <stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr bool isNFKC(Iter start, Iter end) noexcept {
+        return is_normalized<normalization_form::NFKC>(start, end);
     }
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFKC(StrT&& str) noexcept {
         auto str_view = istl::string_viewify(stl::forward<StrT>(str));
-        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFKC;
+        return is_normalized<normalization_form::NFKC>(str_view.begin(), str_view.end());
     }
 
-    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr bool isNFKD(Iter start, EIter end) noexcept {
-        return normalization_form_of(start, end) == normalization_form::NFKD;
+    template <stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr bool isNFKD(Iter start, Iter end) noexcept {
+        return is_normalized<normalization_form::NFKD>(start, end);
     }
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFKD(StrT&& str) noexcept {
         auto str_view = istl::string_viewify(stl::forward<StrT>(str));
-        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFKD;
+        return is_normalized<normalization_form::NFKD>(str_view.begin(), str_view.end());
     }
 
 } // namespace webpp::unicode

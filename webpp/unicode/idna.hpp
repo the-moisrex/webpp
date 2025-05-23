@@ -798,7 +798,7 @@ namespace webpp::unicode::idna {
                             status |= to_underlying(ascii_only_punycode);
                         }
 
-                        if (is_normalized<normalization_form::NFC>(lbeg, lend)) [[unlikely]] {
+                        if (!is_normalized<normalization_form::NFC>(lbeg, lend)) [[unlikely]] {
                             status |= to_underlying(non_normalized_punycode);
                         }
 

@@ -19,9 +19,11 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
+        using webpp::unicode::isNFC;
         using webpp::unicode::normalization_form;
         using webpp::unicode::normalize;
         using webpp::unicode::toNFC;
+        using enum normalization_form;
 
         auto const        length = data.size();
         auto const* const ptr    = data.data();
@@ -54,14 +56,17 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
+        ASSERT_TRUE(isNFC(res.begin(), res.end())) << to_hex(res);
+        ASSERT_TRUE(isNFC(res16.begin(), res16.end())) << to_hex(res);
+        ASSERT_TRUE(isNFC(res32.begin(), res32.end())) << to_hex(res);
 
 
         std::string resStringStyle;
-        normalize<normalization_form::NFC>(str.begin(), str.end(), resStringStyle);
+        normalize<NFC>(str.begin(), str.end(), resStringStyle);
         ASSERT_EQ(resStringStyle, res) << to_hex(str);
 
         // test inplace
-        normalize<normalization_form::NFC>(resStringStyle);
+        normalize<NFC>(resStringStyle);
         ASSERT_EQ(resStringStyle, res) << to_hex(str);
 
         // test inplace with pointers
@@ -70,7 +75,7 @@ namespace webpp::tests {
             auto outptr = resStringStyle.begin();
             auto endptr =
               stl::next(resStringStyle.begin(), static_cast<std::string::difference_type>(res.size()));
-            normalize<normalization_form::NFC>(outptr, endptr, outptr);
+            normalize<NFC>(outptr, endptr, outptr);
             ASSERT_EQ(outptr - resStringStyle.begin(), res.size()) << to_hex(str);
             resStringStyle.resize(static_cast<stl::size_t>(outptr - resStringStyle.begin()));
             ASSERT_EQ(resStringStyle, res) << to_hex(str) << "\n" << str;
@@ -79,7 +84,7 @@ namespace webpp::tests {
         // test append
         {
             std::string out = "one two three. ";
-            normalize<normalization_form::NFC>(str.begin(), str.end(), out);
+            normalize<NFC>(str.begin(), str.end(), out);
             EXPECT_EQ(out, "one two three. " + res) << to_hex(res);
         }
 
@@ -89,10 +94,9 @@ namespace webpp::tests {
           [&]<typename T>(T*                                 cur_ptr,
                           [[maybe_unused]] stl::size_t const n_length /* = max_length */) constexpr noexcept {
               auto const beg = cur_ptr;
-              normalize<normalization_form::NFC>(
-                str.data(),
-                str.data() + str.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
-                cur_ptr);
+              normalize<NFC>(str.data(),
+                             str.data() + str.size(), // NOLINT(*-pro-bounds-pointer-arithmetic)
+                             cur_ptr);
               return static_cast<std::size_t>(cur_ptr - beg);
           };
         resPtrStyle.resize(res.size() * 19);

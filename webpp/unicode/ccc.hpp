@@ -8,9 +8,11 @@
 
 namespace webpp::unicode {
 
-    /// Canonical Combining Class
+    /**
+     * Get CCC (Canonical Combining Class) and QC (Quick Check) info of the inputted Code Point
+     */
     template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::uint16_t qc_ccc_of(CharT const code_point) noexcept {
         using details::ccc_index;
         using details::ccc_indices;
         using details::ccc_values;
@@ -21,19 +23,18 @@ namespace webpp::unicode {
             return 0;
         }
 
-        // Look at the ccc_index table, for how this works:
+        // Look at the ccc_index table for how this works:
         auto const code = ccc_indices[static_cast<stl::uint32_t>(code_point) >> ccc_index::chunk_shift];
 
-        // calculating the position of te value in the ccc_values table:
+        // calculating the position of the value in the ccc_values table:
         return ccc_values[code.get_position(code_point)];
     }
 
-    /**
-     * Usage: is_ccc_of(cp, ccc_props::Virama);
-     */
+    /// Canonical Combining Class
     template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_ccc_of(CharT const code_point, stl::uint8_t const alias) noexcept {
-        return ccc_of(code_point) == alias;
+    [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
+        // NOLINTNEXTLINE(*-magic-numbers)
+        return static_cast<stl::uint8_t>(qc_ccc_of(code_point) & 0xFFU);
     }
 
     /// Canonical Combining Class

@@ -111,6 +111,7 @@ class QCTables {
 }
 
 const createTableFile = async (table) => {
+    const rendered = table.render();
     const totalBits = Number(table.totalTablesSizeInBits());
     const readmeData = await getReadme();
     const content = `
@@ -153,7 +154,7 @@ namespace webpp::unicode::details {
 
     static constexpr auto trailing_zero_qcs = 0x${table.lastZero.toString(16).toUpperCase()}UL;
 
-${table.render()}
+${rendered}
 
 } // namespace webpp::unicode::details
 
