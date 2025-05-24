@@ -3,16 +3,26 @@
 #ifndef UNICODE_FUZZ_HPP
 #define UNICODE_FUZZ_HPP
 
+#include "../webpp/strings/hex.hpp"
 #include "../webpp/unicode/normalization.hpp"
 #include "./common/tests_common_pch.hpp"
 
 namespace webpp::tests {
 
-    template <typename CharT>
-    std::string to_hex(std::basic_string<CharT> const& hexString) {
+    std::string to_hex(auto const& hexString) {
+        using str_t     = stl::remove_cvref_t<decltype(hexString)>;
+        using char_type = stl::iter_value_t<str_t>;
         std::ostringstream oss;
         for (auto const codePoint : hexString) {
-            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+            if constexpr (unicode::UTF8<char_type>) {
+                oss << "\\x" << ascii::to_percent_hex<stl::uint8_t>(codePoint) + 1;
+            } else if constexpr (unicode::UTF16<char_type>) {
+                oss << "\\x" << ascii::to_percent_hex<stl::uint16_t>(codePoint) + 1;
+            } else if constexpr (unicode::UTF32<char_type>) {
+                oss << "\\x" << ascii::to_percent_hex<stl::uint32_t>(codePoint) + 1;
+            } else {
+                oss << "\\x????";
+            }
         }
         return oss.str();
     }
@@ -56,9 +66,12 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
-        ASSERT_TRUE(isNFC(res.begin(), res.end())) << to_hex(res);
-        ASSERT_TRUE(isNFC(res16.begin(), res16.end())) << to_hex(res);
-        ASSERT_TRUE(isNFC(res32.begin(), res32.end())) << to_hex(res);
+        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+        ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
+          << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+        ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
+          << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+
 
 
         std::string resStringStyle;

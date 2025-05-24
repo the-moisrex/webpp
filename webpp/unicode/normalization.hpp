@@ -1020,7 +1020,10 @@ namespace webpp::unicode {
             switch (qc_val) {
                 [[likely]] case quick_check_state::YES:
                     return true;
-                case quick_check_state::MAYBE: break;
+                case quick_check_state::MAYBE:
+                    break;
+                [[unlikely]] case quick_check_state::NO:
+                    return false;
                 default: assert(false); stl::unreachable();
             }
 

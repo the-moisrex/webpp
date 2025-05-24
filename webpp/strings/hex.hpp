@@ -17,7 +17,7 @@ namespace webpp::ascii {
           0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 13, 14, 15, 0,  0,  0,  0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  10, 11, 12, 13, 14, 15};
 
-        // template <typename IntegerType = stl::uint8_t, IntegerType NAN = -1, bool Hex = true>
+        // template <typename IntegerType = std::uint8_t, IntegerType NAN = -1, bool Hex = true>
         // static constexpr IntegerType hex_to_binary_table_full[256] = {
         //   NAN,
         //   NAN,
@@ -416,12 +416,12 @@ namespace webpp::ascii {
      */
     template <typename IntegerType   = int,
               bool        SupportHex = true,
-              IntegerType NotANumber = -1,
+              IntegerType NotANumber = static_cast<IntegerType>(-1),
               typename CharT         = char>
     [[nodiscard]] static constexpr IntegerType hex_digit(CharT inp_char) noexcept {
-        // if constexpr (sizeof(CharT) == sizeof(stl::uint8_t)) {
+        // if constexpr (sizeof(CharT) == sizeof(std::uint8_t)) {
         //     return details::hex_to_binary_table_full<IntegerType, NotANumber, SupportHex>[static_cast<
-        //       stl::uint8_t>(inp_char)];
+        //       std::uint8_t>(inp_char)];
         // } else {
         return hex_digit_safe<IntegerType, true, SupportHex>(inp_char, NotANumber);
         // }
@@ -454,7 +454,7 @@ namespace webpp::ascii {
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
         // webpp_assume(inp_int <= static_cast<IntType>(0xFFU) && inp_int >= static_cast<IntType>(0U));
-        return details::percent_hex_table<CharT> + (static_cast<stl::uint8_t>(inp_int) * 4);
+        return details::percent_hex_table<CharT> + (static_cast<std::uint8_t>(inp_int) * 4);
     }
 
     // NOLINTEND(*-avoid-c-arrays)
