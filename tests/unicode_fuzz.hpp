@@ -29,10 +29,12 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
+        using webpp::unicode::decompose_iterator;
         using webpp::unicode::isNFC;
         using webpp::unicode::normalization_form;
         using webpp::unicode::normalize;
         using webpp::unicode::toNFC;
+        using webpp::unicode::toNFD;
         using enum normalization_form;
 
         auto const        length = data.size();
@@ -66,11 +68,35 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
-        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Source: " << to_hex(data) << "\nNFC: " << to_hex(res);
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
           << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+
+
+        auto const dres   = toNFD<std::string>(str);
+        auto const dres8  = toNFD<std::u8string>(str8);
+        auto const dres16 = toNFD<std::u16string>(str16);
+        auto const dres32 = toNFD<std::u32string>(str32);
+        if (!str8.empty()) {
+            if (length / 2 != 0) {
+                ASSERT_NE(dres16.size(), 0) << to_hex(str);
+            }
+            if (length / 4 != 0) {
+                ASSERT_NE(dres32.size(), 0) << to_hex(str);
+            }
+            ASSERT_NE(dres.size(), 0) << to_hex(str);
+            ASSERT_NE(dres8.size(), 0) << to_hex(str);
+        }
+
+        decompose_iterator       dbeg{str.begin(), str.end()};
+        decompose_iterator const dend{str.end(), str.end()};
+        stl::string const        idres{dbeg, dend};
+
+        ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
+        ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
+          << "Source: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
 
