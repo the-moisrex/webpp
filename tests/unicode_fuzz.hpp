@@ -68,11 +68,9 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
-        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Source: " << to_hex(data) << "\nNFC: " << to_hex(res);
-        ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
-          << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
-        ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
-          << "Source: " << to_hex(data) << "\nNFC:" << to_hex(res);
+        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
+        ASSERT_TRUE(isNFC(res16.begin(), res16.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
+        ASSERT_TRUE(isNFC(res32.begin(), res32.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
 
 
         auto const dres   = toNFD<std::string>(str);
@@ -96,7 +94,7 @@ namespace webpp::tests {
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
-          << "Source: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
+          << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
 

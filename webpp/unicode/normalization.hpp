@@ -116,6 +116,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 
 namespace webpp::unicode {
     /**
@@ -565,7 +566,7 @@ namespace webpp::unicode {
      * Compose 2 code points into one
      * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
      */
-    template <UTF32 CharT = char32_t>
+    template <UTF32 CharT = char32_t, CharT Error = replacement_char<CharT>>
     [[nodiscard]] static constexpr CharT canonical_composed(CharT const lhs, CharT const rhs) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
@@ -575,7 +576,7 @@ namespace webpp::unicode {
         // there are fewer second code points, so there will be more early bailouts
         stl::size_t const pos2 = static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem);
         if (pos2 >= cp2s.size()) [[unlikely]] {
-            return replacement_char<CharT>;
+            return Error;
         }
         auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
 
@@ -586,7 +587,7 @@ namespace webpp::unicode {
             if (hangul != 0) {
                 return hangul;
             }
-            return replacement_char<CharT>;
+            return Error;
         }
 
         stl::size_t const pos        = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
@@ -600,7 +601,7 @@ namespace webpp::unicode {
         // Invalid code points are visible with 0
         error |= static_cast<std::uint8_t>(lhs) != cp1_mask;
         if (error) [[unlikely]] {
-            return replacement_char<CharT>;
+            return Error;
         }
         return static_cast<CharT>(replacement);
     }
@@ -632,8 +633,8 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto       replaced_cp = canonical_composed(cp1, cp2);
-                if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
+                auto const replaced_cp = canonical_composed<char32_t, max_utf32<char32_t>>(cp1, cp2);
+                if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
                     hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
@@ -944,10 +945,10 @@ namespace webpp::unicode {
             if (code_point == 0) {
                 break;
             }
-            auto const info  = qc_ccc_of(code_point);
-            auto const ccc   = static_cast<stl::uint8_t>(info & 0xFFU);
-            auto const qc    = static_cast<stl::uint8_t>(info >> 8U);
-            result          |= to_underlying(qc_of<Form>(qc));
+            auto const info    = qc_ccc_of(code_point);
+            auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
+            auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
+            result            |= to_underlying(qc_of<Form>(qc_val));
             if ((prev_ccc > ccc && ccc != 0) || result == to_underlying(NO)) [[unlikely]] {
                 return NO;
             }
@@ -971,6 +972,68 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr bool is_decomposable(Iter spos, Iter send) noexcept {
         skip_to_decomp(spos, send);
         return spos != send;
+    }
+
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr bool is_composable(CharT const lhs, CharT const rhs) noexcept {
+        return canonical_composed<CharT, unicode::max_utf32<CharT>>(lhs, rhs) != unicode::max_utf32<CharT>;
+    }
+
+    /**
+     *
+     */
+    template <stl::forward_iterator Iter, stl::forward_iterator CIter>
+    [[nodiscard]] static constexpr bool
+    is_composable_to(Iter spos, Iter const send, CIter cpos, CIter const cend) noexcept {
+        using checked::next_code_point;
+        using checked::next_code_point_copy;
+        using istl::deref;
+        using enum checked::error_handling;
+
+        auto rep_pin = deref(spos);
+        auto cp1_pin = deref(spos);
+        auto cp2_pin = deref(spos);
+
+        auto rep_cpin = deref(cpos);
+        for (;;) {
+            auto cp1 = next_code_point<return_unchanged>(cp1_pin, send);
+            if (cp1 == 0) {
+                break;
+            }
+            static_cast<void>(next_code_point<return_unchanged>(rep_pin, send));
+            static_cast<void>(next_code_point<return_unchanged>(rep_cpin, cend));
+            auto const starter_ccp = next_code_point<return_unchanged>(rep_cpin, cend);
+            cp2_pin                = cp1_pin;
+            auto cp2               = next_code_point<return_unchanged>(cp2_pin, send);
+            for (stl::int_fast16_t prev_ccc = -1; cp2 != 0;
+                 cp1                        = next_code_point<return_unchanged>(cp1_pin, send),
+                                   cp2      = next_code_point<return_unchanged>(cp2_pin, send))
+            {
+                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
+                auto const replaced_cp = canonical_composed<char32_t, max_utf32<char32_t>>(cp1, cp2);
+                if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
+                    // found a composition
+                    cp1 = replaced_cp;
+                    continue;
+                }
+                if (ccc == 0) [[likely]] {
+                    break;
+                }
+                prev_ccc = ccc;
+
+                auto const rep_ccp = next_code_point<return_unchanged>(rep_cpin, cend);
+                static_cast<void>(next_code_point<return_unchanged>(rep_pin, send));
+
+                if (rep_ccp != cp2) [[unlikely]] {
+                    return false;
+                }
+            }
+
+            if (starter_ccp != cp1) [[unlikely]] {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1020,24 +1083,16 @@ namespace webpp::unicode {
             switch (qc_val) {
                 [[likely]] case quick_check_state::YES:
                     return true;
-                case quick_check_state::MAYBE:
-                    break;
                 [[unlikely]] case quick_check_state::NO:
                     return false;
+                case quick_check_state::MAYBE: break;
                 default: assert(false); stl::unreachable();
             }
 
-            // assert(is_code_point_valid(checked::next_code_point_copy<return_negated_char>(spos, send)));
-            // assert(is_code_point_valid(checked::prev_code_point_copy<return_negated_char>(send, spos)));
-            if (!is_canonically_ordered(decompose_iterator{spos, send}, decompose_iterator{send, send}))
-              [[unlikely]]
-            {
-                return false;
-            }
-            // todo: implement this
-            // if (is_non_composeable(spos, send)) [[unlikely]] {
-            //     return false;
-            // }
+            // Slow path:
+            decompose_iterator const dbeg{spos, send};
+            decompose_iterator const dend{send, send};
+            return is_canonically_ordered(dbeg, dend) && is_composable_to(dbeg, dend, spos, send);
         } else {
             // todo: NFKC and NFKD
             static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");
