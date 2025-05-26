@@ -171,7 +171,7 @@ namespace webpp::unicode {
         }
 
         auto pos = start;
-        static_cast<void>(next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
+        static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
@@ -213,7 +213,7 @@ namespace webpp::unicode {
         }
 
         auto pos = start;
-        static_cast<void>(next_code_point<return_replacement_char, char32_t, Iter>(pos, end));
+        static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
@@ -247,14 +247,14 @@ namespace webpp::unicode {
     }
 
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
-    template <istl::CharType CharT = char8_t>
+    template <UTF CharT = char8_t>
     static constexpr auto max_decomposed_length =
       UTF32<CharT> ? details::decomp_index::max_utf32_mapped_length
                    : (UTF16<CharT> ? details::decomp_index::max_utf16_mapped_length
                                    : details::decomp_index::max_utf8_mapped_length);
     // NOLINTEND(*-avoid-nested-conditional-operator)
 
-    template <istl::CharType CharT = char8_t>
+    template <UTF CharT = char8_t>
     using decomposed_array = std::array<CharT, max_decomposed_length<CharT> + 1U>; // +1 for null terminator
 
     /**
@@ -264,8 +264,7 @@ namespace webpp::unicode {
      */
     template <istl::Appendable       Iter  = std::u8string::iterator,
               stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
-              istl::CharType         CharT = char32_t>
-        requires UTF32<CharT>
+              UTF32                  CharT = char32_t>
     static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point)
       noexcept(istl::NothrowAppendable<Iter>) {
         using details::decomp_breakpoints;
@@ -287,7 +286,7 @@ namespace webpp::unicode {
 
         auto const chunk         = code_point >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
-        if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
+        if (chunk < 0 || chunk >= details::decomp_last_breakpoint) [[unlikely]] {
             return append<Iter, SizeT>(out, code_point);
         }
         auto const [starting, ending, offset] = decomp_breakpoints[section_index];
@@ -332,7 +331,7 @@ namespace webpp::unicode {
 
 
         for (auto pos = spos; pos != send; spos = pos) {
-            auto const code_point = checked::next_code_point<return_negated_char>(pos, send);
+            auto const code_point = checked::next_code_point<return_negated>(pos, send);
 
             if (is_hangul_code_point(code_point)) {
                 break;
@@ -366,9 +365,7 @@ namespace webpp::unicode {
     /**
      * Decompose to an array/string
      */
-    template <istl::AppendableStorage StrT  = decomposed_array<>,
-              istl::CharType          CharT = char32_t,
-              typename... Args>
+    template <istl::AppendableStorage StrT = decomposed_array<>, UTF32 CharT = char32_t, typename... Args>
     [[nodiscard]] static constexpr StrT canonical_decomposed(CharT const code_point, Args&&... args)
       noexcept(istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
@@ -425,8 +422,8 @@ namespace webpp::unicode {
         }
 
         while (spos != send) {
-            auto const cur_cp = checked::next_code_point<return_negated_char>(spos, send);
-            if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+            auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(spos, send);
+            if (cur_cp < 0) [[unlikely]] {
                 istl::iter_append(ptr, -cur_cp);
                 continue;
             }
@@ -478,8 +475,8 @@ namespace webpp::unicode {
                   stl::advance(ptr, skipped_len);
 
                   while (spos != send) {
-                      auto const cur_cp = checked::next_code_point<return_negated_char>(spos, send);
-                      if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                      auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(spos, send);
+                      if (cur_cp < 0) [[unlikely]] {
                           istl::iter_append(ptr, -cur_cp);
                           continue;
                       }
@@ -540,8 +537,8 @@ namespace webpp::unicode {
               stl::copy_n(ptr, new_len, sptr);
 
               while (sptr != sfin) {
-                  auto const cur_cp = checked::next_code_point<return_negated_char>(sptr, sfin);
-                  if (static_cast<stl::int32_t>(cur_cp) < 0) [[unlikely]] {
+                  auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(sptr, sfin);
+                  if (cur_cp < 0) [[unlikely]] {
                       istl::iter_append(ptr, -cur_cp);
                       continue;
                   }
@@ -811,9 +808,15 @@ namespace webpp::unicode {
         explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
           : beg{inp_pos},
             pos{inp_pos},
-            send{inp_end},
-            decomp_buf{canonical_decomposed<decomposed_array<value_type>>(
-              checked::next_code_point_copy<checked::error_handling::return_negated_char>(pos, send))} {}
+            send{inp_end} {
+            using enum checked::error_handling;
+            decomp_buf[0]         = *pos;
+            auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
+            if (code_point >= 0) [[unlikely]] {
+                auto cur = decomp_buf.data();
+                canonical_decompose_to(cur, code_point);
+            }
+        }
 
         constexpr decompose_iterator()                                         = default;
         constexpr decompose_iterator(decompose_iterator const&)                = default;
@@ -824,23 +827,35 @@ namespace webpp::unicode {
 
         constexpr decompose_iterator& operator++() noexcept {
             using enum checked::error_handling;
+            // todo: we can optimize?
+            ++decomp_index;
             if (decomp_buf[decomp_index] == '\0') {
-                ++pos;
-                // todo: we can optimize?
-                auto const code_point = checked::next_code_point_copy<return_negated_char>(pos, send);
-                decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
+                decomp_buf[0]         = *pos;
+                decomp_buf[1]         = 0;
                 decomp_index          = 0;
-            } else {
-                ++decomp_index;
+                auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
+                if (code_point >= 0) {
+                    auto cur = decomp_buf.data();
+                    canonical_decompose_to(cur, code_point);
+                    *cur = 0;
+                }
             }
             return *this;
         }
 
         constexpr decompose_iterator& operator--() noexcept {
             using enum checked::error_handling;
-            if (decomp_index == 0) {
-                auto const code_point = checked::prev_code_point_copy<return_negated_char>(pos, beg);
-                decomp_buf            = canonical_decomposed<decomposed_array<value_type>>(code_point);
+            --decomp_index;
+            if (decomp_index <= 0) {
+                auto const code_point = checked::prev_code_point<return_negated, stl::int32_t>(pos, beg);
+                if (code_point < 0) [[unlikely]] {
+                    decomp_index  = -1;
+                    decomp_buf[0] = 0;
+                    return *this;
+                }
+                auto cur = decomp_buf.data();
+                canonical_decompose_to(cur, code_point);
+                *cur = 0;
 
                 // we start from zero since we're assuming most input Code Points won't have mappings; so
                 // it would be faster to find the end of it this way.
@@ -848,18 +863,12 @@ namespace webpp::unicode {
                 // the array has a \0 at the end guaranteed.
                 for (; decomp_buf[decomp_index + 1U] != '\0'; ++decomp_index) {
                 }
-                --pos;
-            } else {
-                --decomp_index;
             }
             return *this;
         }
 
         constexpr const_reference operator*() const noexcept {
-            if (decomp_buf[decomp_index] != '\0') {
-                return decomp_buf[decomp_index];
-            }
-            return *pos;
+            return decomp_buf[decomp_index];
         }
 
         [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept {
@@ -875,7 +884,8 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
-            return pos == other.pos && decomp_index == other.decomp_index;
+            return pos == other.pos && decomp_index == other.decomp_index &&
+                   decomp_buf[decomp_index] == other.decomp_buf[other.decomp_index];
         }
     };
 
@@ -910,19 +920,23 @@ namespace webpp::unicode {
         // if they're separately included, this function needs to be modified.
         static_assert(details::embed_quick_check_tables, "Quick Check values are not embedded.");
         if constexpr (normalization_form::NFC == Form) {
-            return static_cast<quick_check_state>(code & to_underlying(NFC_NO));
+            return static_cast<quick_check_state>(
+              code & to_underlying(NFC_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFD == Form) {
             static_assert(!details::exclude_NFD,
                           "Data required for QuickCheck is not included in the source code.");
-            return static_cast<quick_check_state>(code & to_underlying(NFD_NO));
+            return static_cast<quick_check_state>(
+              code & to_underlying(NFD_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFKD == Form) {
             static_assert(!details::exclude_kompatibility,
                           "Data required for QuickCheck is not included in the source code.");
-            return static_cast<quick_check_state>(code & to_underlying(NFKD_NO));
+            return static_cast<quick_check_state>(
+              code & to_underlying(NFKD_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFKC == Form) {
             static_assert(!details::exclude_kompatibility,
                           "Data required for QuickCheck is not included in the source code.");
-            return static_cast<quick_check_state>(code & to_underlying(NFKC_NO));
+            return static_cast<quick_check_state>(
+              code & to_underlying(NFKC_NO) & to_underlying(simplify_mask));
         } else {
             static_assert_false(bool, "Bad normalization form.");
             return NO;
@@ -941,8 +955,8 @@ namespace webpp::unicode {
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
         for (;;) {
-            auto const code_point = checked::next_code_point<return_negated_char>(spos, send);
-            if (code_point == 0) {
+            auto const code_point = checked::next_code_point<return_negated>(spos, send);
+            if (spos == send) {
                 break;
             }
             auto const info    = qc_ccc_of(code_point);
@@ -954,7 +968,7 @@ namespace webpp::unicode {
             }
             prev_ccc = ccc;
         }
-        return static_cast<quick_check_state>(result & to_underlying(simplify_mask));
+        return static_cast<quick_check_state>(result);
     }
 
     /**
@@ -997,7 +1011,7 @@ namespace webpp::unicode {
         auto rep_cpin = deref(cpos);
         for (;;) {
             auto cp1 = next_code_point<return_unchanged>(cp1_pin, send);
-            if (cp1 == 0) {
+            if (cp1_pin == send) {
                 break;
             }
             static_cast<void>(next_code_point<return_unchanged>(rep_pin, send));
@@ -1005,7 +1019,7 @@ namespace webpp::unicode {
             auto const starter_ccp = next_code_point<return_unchanged>(rep_cpin, cend);
             cp2_pin                = cp1_pin;
             auto cp2               = next_code_point<return_unchanged>(cp2_pin, send);
-            for (stl::int_fast16_t prev_ccc = -1; cp2 != 0;
+            for (stl::int_fast16_t prev_ccc = -1; cp2_pin != send;
                  cp1                        = next_code_point<return_unchanged>(cp1_pin, send),
                                    cp2      = next_code_point<return_unchanged>(cp2_pin, send))
             {

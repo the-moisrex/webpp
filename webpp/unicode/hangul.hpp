@@ -189,7 +189,7 @@ namespace webpp::unicode {
      *
      * @returns decomposed_hangul which contains all the parts of a hangul decomposed code point
      */
-    template <istl::CharType CharT = char32_t>
+    template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr decomposed_hangul_code_point<CharT> decomposed_hangul(
       CharT const code_point) noexcept {
         auto const pos = code_point - hangul_syllable_base;
@@ -234,7 +234,7 @@ namespace webpp::unicode {
     }
 
     /**
-     * L, V and LV, T Hangul Syllable Composition
+     * L, V, and LV, T Hangul Syllable Composition
      * L = Leading
      * V = Vowel
      * T = Trailing

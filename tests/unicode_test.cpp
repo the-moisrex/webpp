@@ -6934,12 +6934,12 @@ TEST(Unicode, CheckedNextCodePoint) {
 
     std::u8string str = u8"\xac";
     EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
-    EXPECT_EQ(next_code_point_copy<return_negated_char>(str.begin(), str.end()), -U'\xac');
+    EXPECT_EQ(next_code_point_copy<return_negated>(str.begin(), str.end()), -U'\xac');
     EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()),
               replacement_char<char32_t>);
 
     std::u8string str2 = u8"\xac\xac";
-    EXPECT_EQ(next_code_point_copy<return_negated_char>(str2.begin(), str2.end()), -U'\xac');
+    EXPECT_EQ(next_code_point_copy<return_negated>(str2.begin(), str2.end()), -U'\xac');
 }
 
 TEST(Unicode, FuzzFixes) {
@@ -7140,6 +7140,18 @@ TEST(Unicode, FuzzFixes2) {
 
     unicode_fuzz("\x0\xd8\x1\x3"sv);
     unicode_fuzz("\x0\xda\x0\x3"sv);
+}
+
+TEST(Unicode, FuzzFixes3) {
+    using webpp::tests::unicode_fuzz;
+    using std::string_view_literals::operator""sv;
+
+    unicode_fuzz("\x0A\x2D\x29\x00\x20\x00"sv);
+    unicode_fuzz("\x2E\xDD\x0A"sv);
+    unicode_fuzz("\x0A\x0A\xD9\xD9"sv);
+    unicode_fuzz("\xE0\xDE\xBC\x0A"sv);
+    unicode_fuzz(
+      "\x3D\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"sv);
 }
 
 TEST(Unicode, FuzzTestFixes3) {

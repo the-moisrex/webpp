@@ -979,7 +979,7 @@ namespace webpp::unicode {
         enum struct error_handling : stl::uint8_t {
             return_replacement_char = 0,
             return_unchanged        = 1,
-            return_negated_char     = 2,
+            return_negated          = 2,
             return_zero_char        = 3,
         };
 
@@ -1145,11 +1145,11 @@ namespace webpp::unicode {
             // handle errors:
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char<code_point_type>;
-            } else if constexpr (ErrorHandling == return_negated_char) {
+            } else if constexpr (ErrorHandling == return_negated) {
                 // static_assert(stl::is_signed_v<code_point_type>,
                 //             "The code point type should support negative values if you want us to return"
                 //             "negative values as errors.");
-                return -code_point;
+                return code_point > 0 ? -code_point : code_point;
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<code_point_type>(0);
             } else {
@@ -1170,7 +1170,7 @@ namespace webpp::unicode {
         [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
             // todo: is there a way to optimize this?
             auto const code_point =
-              next_code_point<error_handling::return_negated_char, stl::int32_t, Iter>(pos, end);
+              next_code_point<error_handling::return_negated, stl::int32_t, Iter>(pos, end);
             return code_point > 0;
         }
 
@@ -1381,11 +1381,11 @@ namespace webpp::unicode {
             // handle errors:
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char<code_point_type>;
-            } else if constexpr (ErrorHandling == return_negated_char) {
+            } else if constexpr (ErrorHandling == return_negated) {
                 // static_assert(stl::is_signed_v<code_point_type>,
                 //             "The code point type should support negative values if you want us to return"
                 //             "negative values as errors.");
-                return -code_point;
+                return code_point > 0 ? -code_point : code_point;
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<code_point_type>(0);
             } else {

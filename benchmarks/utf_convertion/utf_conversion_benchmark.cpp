@@ -252,7 +252,7 @@ namespace v2 {
         // handle errors:
         if constexpr (ErrorHandling == return_replacement_char) {
             return replacement_char<code_point_type>;
-        } else if constexpr (ErrorHandling == return_negated_char) {
+        } else if constexpr (ErrorHandling == return_negated) {
             static_assert(stl::is_unsigned_v<code_point_type>,
                           "The code point type should support negative values if you want us to return "
                           "negative values as errors.");

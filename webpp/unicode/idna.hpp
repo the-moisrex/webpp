@@ -155,7 +155,7 @@ namespace webpp::unicode::idna {
         using checked::next_code_point;
         using details::valid;
         for (;;) {
-            auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
+            auto const code_point = next_code_point<return_negated, char32_t, Iter>(pos, end);
             if (code_point == 0) {
                 break;
             }
@@ -192,7 +192,7 @@ namespace webpp::unicode::idna {
         auto is_valid = true;
         for (auto pos = beg;;) {
             auto const cp_beg     = istl::deref(pos);
-            auto const code_point = next_code_point<return_negated_char, char32_t, Iter>(pos, end);
+            auto const code_point = next_code_point<return_negated, char32_t, Iter>(pos, end);
             if (code_point == 0) {
                 break;
             }

@@ -548,7 +548,7 @@ namespace webpp::unicode {
             } else {
                 using enum checked::error_handling;
                 assert(iter() < reducer->end());
-                return checked::next_code_point_copy<return_negated_char, value_type>(iter(), reducer->end());
+                return checked::next_code_point_copy<return_negated, value_type>(iter(), reducer->end());
             }
         }
 

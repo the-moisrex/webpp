@@ -29,6 +29,7 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
+        using webpp::unicode::canonical_decomposed;
         using webpp::unicode::decompose_iterator;
         using webpp::unicode::isNFC;
         using webpp::unicode::normalization_form;
@@ -69,14 +70,16 @@ namespace webpp::tests {
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
         ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
-        ASSERT_TRUE(isNFC(res16.begin(), res16.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
-        ASSERT_TRUE(isNFC(res32.begin(), res32.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
+        ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
+          << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res16);
+        ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
+          << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res32);
 
 
-        auto const dres   = toNFD<std::string>(str);
-        auto const dres8  = toNFD<std::u8string>(str8);
-        auto const dres16 = toNFD<std::u16string>(str16);
-        auto const dres32 = toNFD<std::u32string>(str32);
+        auto const dres   = canonical_decomposed<std::string>(str);
+        auto const dres8  = canonical_decomposed<std::u8string>(str8);
+        auto const dres16 = canonical_decomposed<std::u16string>(str16);
+        auto const dres32 = canonical_decomposed<std::u32string>(str32);
         if (!str8.empty()) {
             if (length / 2 != 0) {
                 ASSERT_NE(dres16.size(), 0) << to_hex(str);
@@ -90,7 +93,18 @@ namespace webpp::tests {
 
         decompose_iterator       dbeg{str.begin(), str.end()};
         decompose_iterator const dend{str.end(), str.end()};
-        stl::string const        idres{dbeg, dend};
+
+        // we don't use the iterators directly since std::string will try to use distance on it
+        stl::string idres;
+        webpp::istl::resize_and_overwrite(idres, data.size() * 4, [&](auto* ptr, stl::size_t max_len) {
+            stl::size_t count = 0;
+            for (; dbeg != dend; ++dbeg, ++ptr) {
+                *ptr = *dbeg;
+                ++count;
+            }
+            *ptr = 0;
+            return count;
+        });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
