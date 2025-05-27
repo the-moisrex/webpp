@@ -420,12 +420,8 @@ namespace webpp::unicode {
         }
 
         while (spos != send) {
-            auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(spos, send);
-            if (cur_cp < 0) [[unlikely]] {
-                istl::iter_append(ptr, static_cast<char32_t>(-cur_cp));
-                continue;
-            }
-            canonical_decompose_to(ptr, static_cast<char32_t>(cur_cp));
+            auto const cur_cp = checked::next_code_point<return_unchanged>(spos, send);
+            canonical_decompose_to(ptr, cur_cp);
         }
 
         assert(max_length >= static_cast<stl::size_t>(ptr - ptr_beg));
@@ -473,12 +469,8 @@ namespace webpp::unicode {
                   stl::advance(ptr, skipped_len);
 
                   while (spos != send) {
-                      auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(spos, send);
-                      if (cur_cp < 0) [[unlikely]] {
-                          istl::iter_append(ptr, static_cast<char32_t>(-cur_cp));
-                          continue;
-                      }
-                      canonical_decompose_to(ptr, static_cast<char32_t>(cur_cp));
+                      auto const cur_cp = checked::next_code_point<return_unchanged>(spos, send);
+                      canonical_decompose_to(ptr, cur_cp);
                   }
 
                   auto const str_len = static_cast<size_type>(ptr - beg);
@@ -535,12 +527,8 @@ namespace webpp::unicode {
               stl::copy_n(ptr, new_len, sptr);
 
               while (sptr != sfin) {
-                  auto const cur_cp = checked::next_code_point<return_negated, stl::int32_t>(sptr, sfin);
-                  if (cur_cp < 0) [[unlikely]] {
-                      istl::iter_append(ptr, static_cast<char32_t>(-cur_cp));
-                      continue;
-                  }
-                  canonical_decompose_to(ptr, static_cast<char32_t>(cur_cp));
+                  auto const cur_cp = checked::next_code_point<return_unchanged>(sptr, sfin);
+                  canonical_decompose_to(ptr, cur_cp);
               }
               auto const written_len = static_cast<size_type>(ptr - beg);
               assert(ptr <= sfin);
@@ -809,10 +797,10 @@ namespace webpp::unicode {
             send{inp_end} {
             using enum checked::error_handling;
             decomp_buf[0]         = *pos;
-            auto const code_point = checked::next_code_point<return_negated>(pos, send);
+            auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
             if (code_point >= 0) [[unlikely]] {
                 auto cur = decomp_buf.data();
-                canonical_decompose_to(cur, code_point);
+                canonical_decompose_to(cur, static_cast<char32_t>(code_point));
             }
         }
 
@@ -831,10 +819,10 @@ namespace webpp::unicode {
                 decomp_buf[0]         = *pos;
                 decomp_buf[1]         = 0;
                 decomp_index          = 0;
-                auto const code_point = checked::next_code_point<return_negated>(pos, send);
+                auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
                 if (code_point >= 0) {
                     auto cur = decomp_buf.data();
-                    canonical_decompose_to(cur, code_point);
+                    canonical_decompose_to(cur, static_cast<char32_t>(code_point));
                     *cur = 0;
                 }
             }
@@ -953,7 +941,7 @@ namespace webpp::unicode {
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
         for (;;) {
-            auto const code_point = checked::next_code_point<return_negated>(spos, send);
+            auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
             if (spos == send) {
                 break;
             }

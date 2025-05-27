@@ -3,29 +3,121 @@
 #ifndef UNICODE_FUZZ_HPP
 #define UNICODE_FUZZ_HPP
 
+#include "../webpp/std/format.hpp"
 #include "../webpp/strings/hex.hpp"
 #include "../webpp/unicode/normalization.hpp"
 #include "./common/tests_common_pch.hpp"
 
 namespace webpp::tests {
 
-    std::string to_hex(auto const& hexString) {
-        using str_t     = stl::remove_cvref_t<decltype(hexString)>;
-        using char_type = stl::iter_value_t<str_t>;
-        std::ostringstream oss;
-        for (auto const codePoint : hexString) {
-            if constexpr (unicode::UTF8<char_type>) {
-                oss << "\\x" << ascii::to_percent_hex<stl::uint8_t>(codePoint) + 1;
-            } else if constexpr (unicode::UTF16<char_type>) {
-                oss << "\\x" << ascii::to_percent_hex<stl::uint16_t>(codePoint) + 1;
-            } else if constexpr (unicode::UTF32<char_type>) {
-                oss << "\\x" << ascii::to_percent_hex<stl::uint32_t>(codePoint) + 1;
-            } else {
-                oss << "\\x????";
-            }
-        }
-        return oss.str();
+    // NOLINTBEGIN(*)
+    // Helper function to convert a single byte to hex
+    std::string byteToHex(unsigned char byte) {
+        return fmt::format("{:02X}", static_cast<unsigned int>(byte));
     }
+
+    // Concept to check if a type is a character type suitable for basic_string or basic_string_view
+    template <typename T>
+    concept CharacterType = std::is_same_v<T, char> || std::is_same_v<T, char8_t> ||
+                            std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t>;
+
+    // --- Overloads for std::basic_string ---
+
+    // Overload for UTF-8 (std::string)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string<CharT> const& str)
+        requires(std::is_same_v<CharT, char> || std::is_same_v<CharT, char8_t>)
+    {
+        std::string hex_str;
+        hex_str.reserve(str.length() * 2); // Pre-allocate memory for efficiency
+        for (unsigned char byte : str) {
+            hex_str += "\\x";
+            hex_str += byteToHex(byte);
+        }
+        return hex_str;
+    }
+
+    // Overload for UTF-16 (std::u16string)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string<CharT> const& str)
+        requires std::is_same_v<CharT, char16_t>
+    {
+        std::string hex_str;
+        hex_str.reserve(str.length() * 4); // Each char16_t is 2 bytes, 4 hex chars
+        for (char16_t unit : str) {
+            hex_str += "\\x";
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
+        }
+        return hex_str;
+    }
+
+    // Overload for UTF-32 (std::u32string)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string<CharT> const& str)
+        requires std::is_same_v<CharT, char32_t>
+    {
+        std::string hex_str;
+        hex_str.reserve(str.length() * 8); // Each char32_t is 4 bytes, 8 hex chars
+        for (char32_t unit : str) {
+            hex_str += "\\x";
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 24) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 16) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
+        }
+        return hex_str;
+    }
+
+    // --- Overloads for std::basic_string_view ---
+
+    // Overload for UTF-8 (std::string_view)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+        requires(std::is_same_v<CharT, char> || std::is_same_v<CharT, char8_t>)
+    {
+        std::string hex_str;
+        hex_str.reserve(str_view.length() * 2);
+        for (unsigned char byte : str_view) {
+            hex_str += "\\x";
+            hex_str += byteToHex(byte);
+        }
+        return hex_str;
+    }
+
+    // Overload for UTF-16 (std::u16string_view)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+        requires std::is_same_v<CharT, char16_t>
+    {
+        std::string hex_str;
+        hex_str.reserve(str_view.length() * 4);
+        for (char16_t unit : str_view) {
+            hex_str += "\\x";
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
+        }
+        return hex_str;
+    }
+
+    // Overload for UTF-32 (std::u32string_view)
+    template <CharacterType CharT>
+    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+        requires std::is_same_v<CharT, char32_t>
+    {
+        std::string hex_str;
+        hex_str.reserve(str_view.length() * 8);
+        for (char32_t unit : str_view) {
+            hex_str += "\\x";
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 24) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 16) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
+            hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
+        }
+        return hex_str;
+    }
+
+    // NOLINTEND(*)
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
@@ -73,7 +165,7 @@ namespace webpp::tests {
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
           << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res16);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
-          << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res32);
+          << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 
 
         auto const dres   = canonical_decomposed<std::string>(str);
@@ -99,13 +191,13 @@ namespace webpp::tests {
         webpp::istl::resize_and_overwrite(
           idres,
           data.size() * 4,
-          [&](auto* ptr, [[maybe_unused]] stl::size_t max_len) {
+          [&](auto* buf, [[maybe_unused]] stl::size_t max_len) {
               stl::size_t count = 0;
-              for (; dbeg != dend; ++dbeg, ++ptr) { // NOLINT(*-pro-bounds-pointer-arithmetic)
-                  *ptr = *dbeg;
+              for (; dbeg != dend; ++dbeg, ++buf) { // NOLINT(*-pro-bounds-pointer-arithmetic)
+                  *buf = *dbeg;
                   ++count;
               }
-              *ptr = 0;
+              *buf = 0;
               return count;
           });
 

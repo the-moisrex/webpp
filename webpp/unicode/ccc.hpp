@@ -11,28 +11,28 @@ namespace webpp::unicode {
     /**
      * Get CCC (Canonical Combining Class) and QC (Quick Check) info of the inputted Code Point
      */
-    template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr stl::uint16_t qc_ccc_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::uint16_t qc_ccc_of(char32_t const code_point) noexcept {
         using details::ccc_index;
         using details::ccc_indices;
         using details::ccc_values;
         using details::trailing_zero_cccs;
 
         // The CCC of anything bigger than this number is zero because zero is the default by Unicode standard
-        if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
+        if (code_point >= static_cast<char32_t>(trailing_zero_cccs)) [[unlikely]] {
             return 0;
         }
 
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         // Look at the ccc_index table for how this works:
         auto const code = ccc_indices[static_cast<stl::uint32_t>(code_point) >> ccc_index::chunk_shift];
 
         // calculating the position of the value in the ccc_values table:
         return ccc_values[code.get_position(code_point)];
+        // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
     /// Canonical Combining Class
-    template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::uint8_t ccc_of(char32_t const code_point) noexcept {
         // NOLINTNEXTLINE(*-magic-numbers)
         return static_cast<stl::uint8_t>(qc_ccc_of(code_point) & 0xFFU);
     }
@@ -61,8 +61,7 @@ namespace webpp::unicode {
      * combined with combining characters to represent a single written unit. It is the first code point in a
      * grapheme cluster.
      */
-    template <stl::integral CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_starter(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_starter(char32_t const code_point) noexcept {
         return ccc_of(code_point) == 0;
     }
 
@@ -85,7 +84,7 @@ namespace webpp::unicode {
      * been applied. The combining classes of the combining characters determine the order in which they
      * can be applied to the base character.
      *
-     * Attention: this function does not check validity of the iterator itself.
+     * Attention: this function does not check the validity of the iterator itself.
      */
     template <stl::input_iterator Iter>
     [[nodiscard]] static constexpr bool is_blocked(Iter const inp) noexcept {

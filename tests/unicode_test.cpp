@@ -7154,6 +7154,17 @@ TEST(Unicode, FuzzFixes3) {
       "\x3D\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"sv);
 }
 
+TEST(Unicode, FuzzFixes4) {
+    using webpp::tests::unicode_fuzz;
+    using std::string_view_literals::operator""sv;
+
+    unicode_fuzz(
+      "\012\001\000\000\000\000\000\377\377\337\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
+      "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
+      "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
+      "\377\000\000"sv);
+}
+
 TEST(Unicode, FuzzTestFixes3) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
