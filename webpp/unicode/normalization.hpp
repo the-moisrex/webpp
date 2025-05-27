@@ -789,8 +789,9 @@ namespace webpp::unicode {
         Iter                         beg{};
         Iter                         pos{};
         Iter                         send{};
-        decomposed_array<value_type> decomp_buf{};
-        stl::int8_t                  decomp_index = 0;
+        decomposed_array<value_type> buf{};
+        stl::int8_t                  index = 0;
+        stl::uint8_t                 len   = 0;
 
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
@@ -798,11 +799,16 @@ namespace webpp::unicode {
             pos{inp_pos},
             send{inp_end} {
             using enum checked::error_handling;
-            decomp_buf[0]         = *pos;
+            if (pos == send) {
+                return;
+            }
+            buf[0]                = *pos;
+            len                   = 1;
             auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
             if (code_point >= 0) [[unlikely]] {
-                auto cur = decomp_buf.data();
+                auto cur = buf.data();
                 canonical_decompose_to(cur, static_cast<char32_t>(code_point));
+                len = static_cast<stl::uint8_t>(cur - buf.data());
             }
         }
 
@@ -816,16 +822,21 @@ namespace webpp::unicode {
         constexpr decompose_iterator& operator++() noexcept {
             using enum checked::error_handling;
             // todo: we can optimize?
-            ++decomp_index;
-            if (decomp_buf[decomp_index] == '\0') {
-                decomp_buf[0]         = *pos;
-                decomp_buf[1]         = 0;
-                decomp_index          = 0;
+            ++index;
+            if (index >= len) {
+                buf[0]                = *pos;
+                buf[1]                = 0;
+                index                 = 0;
+                len                   = 1;
                 auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
                 if (code_point >= 0) {
-                    auto cur = decomp_buf.data();
+                    auto cur = buf.data();
                     canonical_decompose_to(cur, static_cast<char32_t>(code_point));
                     *cur = 0;
+                    len  = static_cast<stl::uint8_t>(cur - buf.data());
+                    if (pos == send) {
+                        len = 0;
+                    }
                 }
             }
             return *this;
@@ -833,30 +844,32 @@ namespace webpp::unicode {
 
         constexpr decompose_iterator& operator--() noexcept {
             using enum checked::error_handling;
-            --decomp_index;
-            if (decomp_index < 0) {
+            --index;
+            if (index < 0) {
                 auto const code_point = checked::prev_code_point<return_negated, stl::int32_t>(pos, beg);
                 if (code_point < 0) [[unlikely]] {
-                    decomp_buf[0] = *pos;
-                    decomp_buf[1] = 0;
+                    buf[0] = *pos;
+                    buf[1] = 0;
+                    len    = 1;
                     return *this;
                 }
-                auto cur = decomp_buf.data();
+                auto cur = buf.data();
                 canonical_decompose_to(cur, static_cast<char32_t>(code_point));
                 *cur = 0;
+                len  = static_cast<stl::uint8_t>(cur - buf.data());
 
                 // we start from zero since we're assuming most input Code Points won't have mappings; so
                 // it would be faster to find the end of it this way.
-                decomp_index = 0;
+                index = 0;
                 // the array has a \0 at the end guaranteed.
-                for (; decomp_buf[decomp_index + 1U] != '\0'; ++decomp_index) {
+                for (; buf[index + 1U] != '\0'; ++index) {
                 }
             }
             return *this;
         }
 
         constexpr const_reference operator*() const noexcept {
-            return decomp_buf[decomp_index];
+            return buf[index];
         }
 
         [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept {
@@ -872,8 +885,7 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
-            return pos == other.pos && decomp_index == other.decomp_index &&
-                   decomp_buf[decomp_index] == other.decomp_buf[other.decomp_index];
+            return pos == other.pos && index == other.index && len == other.len;
         }
     };
 
