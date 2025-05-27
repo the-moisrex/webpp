@@ -96,15 +96,18 @@ namespace webpp::tests {
 
         // we don't use the iterators directly since std::string will try to use distance on it
         stl::string idres;
-        webpp::istl::resize_and_overwrite(idres, data.size() * 4, [&](auto* ptr, stl::size_t max_len) {
-            stl::size_t count = 0;
-            for (; dbeg != dend; ++dbeg, ++ptr) {
-                *ptr = *dbeg;
-                ++count;
-            }
-            *ptr = 0;
-            return count;
-        });
+        webpp::istl::resize_and_overwrite(
+          idres,
+          data.size() * 4,
+          [&](auto* ptr, [[maybe_unused]] stl::size_t max_len) {
+              stl::size_t count = 0;
+              for (; dbeg != dend; ++dbeg, ++ptr) { // NOLINT(*-pro-bounds-pointer-arithmetic)
+                  *ptr = *dbeg;
+                  ++count;
+              }
+              *ptr = 0;
+              return count;
+          });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
