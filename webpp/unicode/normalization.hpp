@@ -282,6 +282,7 @@ namespace webpp::unicode {
             return decompose_hangul<Iter>(out, code_point);
         }
 
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
         auto const chunk         = code_point >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
         if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
@@ -298,9 +299,10 @@ namespace webpp::unicode {
             return append<Iter>(out, code_point);
         }
 
-        auto const start_ptr = decomp_ptr(code, code_point);
-        auto       ptr       = start_ptr;
-        auto const end_ptr   = start_ptr + code.max_length;
+        auto const* const start_ptr = decomp_ptr(code, code_point);
+        auto const*       ptr       = start_ptr;
+        auto const* const end_ptr   = start_ptr + code.max_length;
+        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
 
         webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
         while (*ptr != u8'\0' && ptr != end_ptr) {
@@ -363,8 +365,8 @@ namespace webpp::unicode {
     /**
      * Decompose to an array/string
      */
-    template <istl::AppendableStorage StrT = decomposed_array<>, UTF32 CharT = char32_t, typename... Args>
-    [[nodiscard]] static constexpr StrT canonical_decomposed(CharT const code_point, Args&&... args)
+    template <istl::AppendableStorage StrT = decomposed_array<>, typename... Args>
+    [[nodiscard]] static constexpr StrT canonical_decomposed(char32_t const code_point, Args&&... args)
       noexcept(istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
         auto iter = istl::appendable_iter_of(arr);
@@ -549,8 +551,9 @@ namespace webpp::unicode {
      * Compose 2 code points into one
      * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
      */
-    template <UTF32 CharT = char32_t, CharT Error = replacement_char<CharT>>
-    [[nodiscard]] static constexpr CharT canonical_composed(CharT const lhs, CharT const rhs) noexcept {
+    template <char32_t Error = replacement_char<char32_t>>
+    [[nodiscard]] static constexpr char32_t canonical_composed(char32_t const lhs,
+                                                               char32_t const rhs) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
@@ -561,22 +564,21 @@ namespace webpp::unicode {
         if (pos2 >= cp2s.size()) [[unlikely]] {
             return Error;
         }
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
 
         // early bailout:
         // todo: use -1 as invalid values for cp2 instead of 0 to eliminate the necessity of cp2 == 0 comparison
-        if (cp2 == 0 || static_cast<CharT>(cp2) != rhs) {
+        if (cp2 == 0 || cp2 != rhs) {
             auto const hangul = compose_hangul(lhs, rhs);
-            if (hangul != 0) {
-                return hangul;
-            }
-            return Error;
+            return hangul != 0 ? hangul : Error;
         }
 
         stl::size_t const pos        = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
         // there's no need to check if the position here is valid or not, the `cp1s` table is guaranteed to
         // have the max number of elements.
         auto [cp1_mask, replacement] = cp1s[pos];
+        // NOLINTEND(*-pro-bounds-constant-array-index)
 
         bool error  = !is_code_point_valid(lhs);
         error      |= !is_code_point_valid(rhs);
@@ -586,7 +588,7 @@ namespace webpp::unicode {
         if (error) [[unlikely]] {
             return Error;
         }
-        return static_cast<CharT>(replacement);
+        return replacement;
     }
 
     /**
@@ -616,7 +618,7 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<char32_t, max_utf32<char32_t>>(cp1, cp2);
+                auto const replaced_cp = canonical_composed<max_utf32<char32_t>>(cp1, cp2);
                 if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
@@ -788,7 +790,7 @@ namespace webpp::unicode {
         Iter                         pos{};
         Iter                         send{};
         decomposed_array<value_type> decomp_buf{};
-        stl::uint8_t                 decomp_index = 0;
+        stl::int8_t                  decomp_index = 0;
 
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
@@ -832,11 +834,11 @@ namespace webpp::unicode {
         constexpr decompose_iterator& operator--() noexcept {
             using enum checked::error_handling;
             --decomp_index;
-            if (decomp_index <= 0) {
+            if (decomp_index < 0) {
                 auto const code_point = checked::prev_code_point<return_negated, stl::int32_t>(pos, beg);
                 if (code_point < 0) [[unlikely]] {
-                    decomp_index  = -1;
-                    decomp_buf[0] = 0;
+                    decomp_buf[0] = *pos;
+                    decomp_buf[1] = 0;
                     return *this;
                 }
                 auto cur = decomp_buf.data();
@@ -974,13 +976,13 @@ namespace webpp::unicode {
         return spos != send;
     }
 
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_composable(CharT const lhs, CharT const rhs) noexcept {
-        return canonical_composed<CharT, unicode::max_utf32<CharT>>(lhs, rhs) != unicode::max_utf32<CharT>;
+    [[nodiscard]] static constexpr bool is_composable(char32_t const lhs, char32_t const rhs) noexcept {
+        using unicode::max_utf32;
+        return canonical_composed<max_utf32<char32_t>>(lhs, rhs) != max_utf32<char32_t>;
     }
 
     /**
-     *
+     * Check if the source would become the second pair of iterators.
      */
     template <stl::forward_iterator Iter, stl::forward_iterator CIter>
     [[nodiscard]] static constexpr bool
@@ -1010,7 +1012,7 @@ namespace webpp::unicode {
                                    cp2      = next_code_point<return_unchanged>(cp2_pin, send))
             {
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<char32_t, max_utf32<char32_t>>(cp1, cp2);
+                auto const replaced_cp = canonical_composed<max_utf32<char32_t>>(cp1, cp2);
                 if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
                     // found a composition
                     cp1 = replaced_cp;

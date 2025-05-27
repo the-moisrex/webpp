@@ -12,7 +12,7 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*)
     // Helper function to convert a single byte to hex
-    std::string byteToHex(unsigned char byte) {
+    inline std::string byteToHex(unsigned char byte) {
         return fmt::format("{:02X}", static_cast<unsigned int>(byte));
     }
 
@@ -25,7 +25,7 @@ namespace webpp::tests {
 
     // Overload for UTF-8 (std::string)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string<CharT> const& str)
+    inline std::string to_hex(std::basic_string<CharT> const& str)
         requires(std::is_same_v<CharT, char> || std::is_same_v<CharT, char8_t>)
     {
         std::string hex_str;
@@ -39,7 +39,7 @@ namespace webpp::tests {
 
     // Overload for UTF-16 (std::u16string)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string<CharT> const& str)
+    inline std::string to_hex(std::basic_string<CharT> const& str)
         requires std::is_same_v<CharT, char16_t>
     {
         std::string hex_str;
@@ -54,7 +54,7 @@ namespace webpp::tests {
 
     // Overload for UTF-32 (std::u32string)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string<CharT> const& str)
+    inline std::string to_hex(std::basic_string<CharT> const& str)
         requires std::is_same_v<CharT, char32_t>
     {
         std::string hex_str;
@@ -73,7 +73,7 @@ namespace webpp::tests {
 
     // Overload for UTF-8 (std::string_view)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+    inline std::string to_hex(std::basic_string_view<CharT> const& str_view)
         requires(std::is_same_v<CharT, char> || std::is_same_v<CharT, char8_t>)
     {
         std::string hex_str;
@@ -87,7 +87,7 @@ namespace webpp::tests {
 
     // Overload for UTF-16 (std::u16string_view)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+    inline std::string to_hex(std::basic_string_view<CharT> const& str_view)
         requires std::is_same_v<CharT, char16_t>
     {
         std::string hex_str;
@@ -102,7 +102,7 @@ namespace webpp::tests {
 
     // Overload for UTF-32 (std::u32string_view)
     template <CharacterType CharT>
-    std::string to_hex(std::basic_string_view<CharT> const& str_view)
+    inline std::string to_hex(std::basic_string_view<CharT> const& str_view)
         requires std::is_same_v<CharT, char32_t>
     {
         std::string hex_str;
@@ -163,7 +163,7 @@ namespace webpp::tests {
         }
         ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
-          << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res16);
+          << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 

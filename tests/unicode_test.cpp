@@ -6070,9 +6070,9 @@ TEST(Unicode, ComposeStr) {
     using webpp::unicode::canonical_compose;
     using webpp::unicode::canonical_composed;
 
-    EXPECT_EQ(canonical_composed<char32_t>('a', 0x0300), U'\x00e0');
-    EXPECT_EQ(canonical_composed<char32_t>(1488, 776), webpp::unicode::replacement_char<char32_t>);
-    EXPECT_EQ(canonical_composed<char32_t>(111, 0x03'08bb), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed('a', 0x0300), U'\x00e0');
+    EXPECT_EQ(canonical_composed(1488, 776), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(111, 0x03'08bb), webpp::unicode::replacement_char<char32_t>);
     EXPECT_EQ(canonical_composed<u32string>(U"o\u0308bb"), U"\u00f6bb");
     EXPECT_EQ(canonical_composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
     EXPECT_EQ(canonical_composed<u32string>(U"."), U".");
@@ -6574,7 +6574,7 @@ TEST(Unicode, ComposedStr2) {
     using webpp::unicode::canonical_composed;
     using webpp::unicode::compose_hangul;
 
-    EXPECT_EQ(canonical_composed<char32_t>(canonical_composed<char32_t>(0x1100, 0x1173), 0x11B2), 0xAE03);
+    EXPECT_EQ(canonical_composed(canonical_composed(0x1100, 0x1173), 0x11B2), 0xAE03);
 
     EXPECT_EQ(canonical_composed<u32string>(U"\u200c\u1100\u1173\u11b2.\u69b6-"), U"\u200c\uae03.\u69b6-");
     EXPECT_EQ(canonical_composed<u32string>(U"\u200c\u1100\u1173\u11b2.\u69b6-"), U"\u200c\uae03.\u69b6-");
@@ -6880,7 +6880,7 @@ TEST(Unicode, NormalizationTests) {
       };
 
     // special cases:
-    EXPECT_EQ(canonical_composed<char32_t>(0xE0, 0x302), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(0xE0, 0x302), webpp::unicode::replacement_char<char32_t>);
     EXPECT_EQ(toNFC<std::u32string>(U"\x61\x5ae\x300\x302\x315\x62"), U"\xe0\x5ae\x302\x315\x62");
     EXPECT_EQ(canonical_decomposed<u32string>(U'\u1e0a'), U"D\x307") << "Ḋ";
     EXPECT_EQ(canonical_decomposed<u32string>(u32string_view{U"\x1e0a"}), U"D\x307") << "Ḋ";
@@ -7159,6 +7159,13 @@ TEST(Unicode, FuzzFixes4) {
     using std::string_view_literals::operator""sv;
 
     unicode_fuzz(
+      "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x80\x00\x00\x00\x03\x03\x03\x03"
+      "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
+      "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
+      "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x30\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
+      "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
+      "\x03\x03\x0A");
+    unicode_fuzz(
       "\012\001\000\000\000\000\000\377\377\337\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
@@ -7173,7 +7180,7 @@ TEST(Unicode, FuzzTestFixes3) {
     using webpp::unicode::canonical_decomposed;
     using webpp::unicode::replacement_char;
 
-    EXPECT_EQ(canonical_composed<char32_t>(0xffff'ff74, 0x30c), replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(0xffff'ff74, 0x30c), replacement_char<char32_t>);
 
     unicode_fuzz("\xed\x96\x96\xd6\x96"sv);
     unicode_fuzz("\xa\xae\xae\xae"sv);

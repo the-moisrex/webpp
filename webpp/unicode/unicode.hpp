@@ -1293,7 +1293,7 @@ namespace webpp::unicode {
                         magic_code |= (cu4 & 0b1100'0000) >> 6U;
                         magic_code |= (cu3 & 0b1100'0000) >> 4U;
                         magic_code |= (cu2 & 0b1100'0000) >> 2U;
-                        magic_code |= cu1 & 0b1100'0000;
+                        magic_code |= static_cast<stl::uint_fast8_t>(cu1 & 0b1100'0000);
 
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
