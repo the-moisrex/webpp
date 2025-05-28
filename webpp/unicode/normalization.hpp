@@ -828,15 +828,16 @@ namespace webpp::unicode {
                 buf[1]                = 0;
                 index                 = 0;
                 len                   = 1;
+                bool const at_end     = pos == send;
                 auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
                 if (code_point >= 0) {
                     auto cur = buf.data();
                     canonical_decompose_to(cur, static_cast<char32_t>(code_point));
                     *cur = 0;
                     len  = static_cast<stl::uint8_t>(cur - buf.data());
-                    if (pos == send) {
-                        len = 0;
-                    }
+                }
+                if (at_end) {
+                    len = 0;
                 }
             }
             return *this;
