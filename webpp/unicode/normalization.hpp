@@ -113,6 +113,7 @@
 #include "./hangul.hpp"
 #include "./unicode.hpp"
 #include "./utf_reducer.hpp"
+#include "unicode.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -318,6 +319,74 @@ namespace webpp::unicode {
     }
 
     /**
+     * Canonical Decompose Into the specified output.
+     * This function is not the same as taking char32_t as input since bad UTF-8 code units that have
+     * been turned into UTF-32 will not go back to being UTF-8 the same way they came in.
+     */
+    template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter>
+    static constexpr stl::size_t canonical_decompose_to(Iter& out, SIter& spos, SIter const send)
+      noexcept(istl::NothrowAppendable<Iter>) {
+        using details::decomp_breakpoints;
+        using details::decomp_common_pos;
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using unchecked::append;
+        using enum checked::error_handling;
+
+        assert(spos != send);
+        auto       beg        = spos;
+        auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
+
+        // Not mapped
+        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+        //     return append<Iter, SizeT>(out, code_point);
+        // }
+
+        // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
+        if (is_hangul_code_point(code_point)) {
+            return decompose_hangul<Iter>(out, code_point);
+        }
+
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
+        auto const chunk         = code_point >> decomp_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
+        if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
+            for (; beg != spos; ++beg) {
+                append<Iter>(out, *beg);
+            }
+            return 1U;
+        }
+        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+        decomp_index const code =
+          chunk < starting || chunk >= ending
+            ? decomp_common_pos
+            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+
+        // Not mapped at all, that means the code point is mapped to itself.
+        if (code.max_length == 0) {
+            return append<Iter>(out, code_point);
+        }
+
+        auto const* const start_ptr = decomp_ptr(code, code_point);
+        auto const*       ptr       = start_ptr;
+        auto const* const end_ptr   = start_ptr + code.max_length;
+        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
+
+        webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
+        while (*ptr != u8'\0' && ptr != end_ptr) {
+            append<Iter>(out, ptr);
+        }
+        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
+
+        auto const len = static_cast<stl::size_t>(ptr - start_ptr);
+        if (len == 0) {
+            return append<Iter>(out, code_point);
+        }
+        return len; // UTF-8 Length regardless of the output type.
+    }
+
+    /**
      * Go to the first Code Point that requires Decomposition.
      */
     template <stl::forward_iterator Iter>
@@ -422,8 +491,7 @@ namespace webpp::unicode {
         }
 
         while (spos != send) {
-            auto const cur_cp = checked::next_code_point<return_unchanged>(spos, send);
-            canonical_decompose_to(ptr, cur_cp);
+            canonical_decompose_to(ptr, spos, send);
         }
 
         assert(max_length >= static_cast<stl::size_t>(ptr - ptr_beg));
@@ -471,8 +539,7 @@ namespace webpp::unicode {
                   stl::advance(ptr, skipped_len);
 
                   while (spos != send) {
-                      auto const cur_cp = checked::next_code_point<return_unchanged>(spos, send);
-                      canonical_decompose_to(ptr, cur_cp);
+                      canonical_decompose_to(ptr, spos, send);
                   }
 
                   auto const str_len = static_cast<size_type>(ptr - beg);
@@ -529,8 +596,7 @@ namespace webpp::unicode {
               stl::copy_n(ptr, new_len, sptr);
 
               while (sptr != sfin) {
-                  auto const cur_cp = checked::next_code_point<return_unchanged>(sptr, sfin);
-                  canonical_decompose_to(ptr, cur_cp);
+                  canonical_decompose_to(ptr, sptr, sfin);
               }
               auto const written_len = static_cast<size_type>(ptr - beg);
               assert(ptr <= sfin);
@@ -789,9 +855,9 @@ namespace webpp::unicode {
         Iter                         beg{};
         Iter                         pos{};
         Iter                         send{};
-        decomposed_array<value_type> buf{};
         stl::int8_t                  index = 0;
         stl::uint8_t                 len   = 0;
+        decomposed_array<value_type> buf{};
 
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
@@ -804,12 +870,13 @@ namespace webpp::unicode {
             }
             buf[0]                = *pos;
             len                   = 1;
-            auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
-            if (code_point >= 0) [[unlikely]] {
+            auto const code_point = checked::next_code_point<return_max_utf32>(pos, send);
+            if (code_point != max_utf32<char32_t>) {
                 auto cur = buf.data();
-                canonical_decompose_to(cur, static_cast<char32_t>(code_point));
+                canonical_decompose_to(cur, code_point);
                 len = static_cast<stl::uint8_t>(cur - buf.data());
             }
+            assert(index >= 0);
         }
 
         constexpr decompose_iterator()                                         = default;
@@ -824,22 +891,18 @@ namespace webpp::unicode {
             // todo: we can optimize?
             ++index;
             if (index >= len) {
-                buf[0]                = *pos;
-                buf[1]                = 0;
-                index                 = 0;
-                len                   = 1;
-                bool const at_end     = pos == send;
-                auto const code_point = checked::next_code_point<return_negated, stl::int32_t>(pos, send);
-                if (code_point >= 0) {
-                    auto cur = buf.data();
-                    canonical_decompose_to(cur, static_cast<char32_t>(code_point));
-                    *cur = 0;
-                    len  = static_cast<stl::uint8_t>(cur - buf.data());
-                }
+                index             = 0;
+                bool const at_end = pos == send;
+                auto       cur    = buf.data();
                 if (at_end) {
                     len = 0;
+                } else {
+                    canonical_decompose_to(cur, pos, send);
+                    len = static_cast<stl::uint8_t>(cur - buf.data());
                 }
+                *cur = 0;
             }
+            assert(index >= 0);
             return *this;
         }
 
@@ -847,25 +910,27 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             --index;
             if (index < 0) {
-                auto const code_point = checked::prev_code_point<return_negated, stl::int32_t>(pos, beg);
-                if (code_point < 0) [[unlikely]] {
+                // we start from zero since we're assuming most input Code Points won't have mappings; so
+                // it would be faster to find the end of it this way.
+                index = 0;
+
+                auto const code_point = checked::prev_code_point<return_max_utf32>(pos, beg);
+                if (code_point != max_utf32<char32_t>) {
                     buf[0] = *pos;
                     buf[1] = 0;
                     len    = 1;
                     return *this;
                 }
                 auto cur = buf.data();
-                canonical_decompose_to(cur, static_cast<char32_t>(code_point));
+                canonical_decompose_to(cur, code_point);
                 *cur = 0;
                 len  = static_cast<stl::uint8_t>(cur - buf.data());
 
-                // we start from zero since we're assuming most input Code Points won't have mappings; so
-                // it would be faster to find the end of it this way.
-                index = 0;
                 // the array has a \0 at the end guaranteed.
                 for (; buf[index + 1U] != '\0'; ++index) {
                 }
             }
+            assert(index >= 0);
             return *this;
         }
 
@@ -1002,28 +1067,22 @@ namespace webpp::unicode {
     is_composable_to(Iter spos, Iter const send, CIter cpos, CIter const cend) noexcept {
         using checked::next_code_point;
         using checked::next_code_point_copy;
+        using checked::utf32_forward_iter;
         using istl::deref;
         using enum checked::error_handling;
 
-        auto rep_pin = deref(spos);
-        auto cp1_pin = deref(spos);
-        auto cp2_pin = deref(spos);
+        utf32_forward_iter rep_pin{spos, send};
+        utf32_forward_iter cp1_pin{spos, send};
+        utf32_forward_iter cp2_pin{spos, send};
+        utf32_forward_iter rep_cpin{cpos, cend};
 
-        auto rep_cpin = deref(cpos);
-        for (;;) {
-            auto cp1 = next_code_point<return_unchanged>(cp1_pin, send);
-            if (cp1_pin == send) {
-                break;
-            }
-            static_cast<void>(next_code_point<return_unchanged>(rep_pin, send));
-            static_cast<void>(next_code_point<return_unchanged>(rep_cpin, cend));
-            auto const starter_ccp = next_code_point<return_unchanged>(rep_cpin, cend);
+        for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_pin, ++rep_cpin) {
+            auto       cp1         = *cp1_pin;
+            auto const starter_ccp = *rep_cpin;
             cp2_pin                = cp1_pin;
-            auto cp2               = next_code_point<return_unchanged>(cp2_pin, send);
-            for (stl::int_fast16_t prev_ccc = -1; cp2_pin != send;
-                 cp1                        = next_code_point<return_unchanged>(cp1_pin, send),
-                                   cp2      = next_code_point<return_unchanged>(cp2_pin, send))
-            {
+            ++cp2_pin;
+            for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
+                auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
                 auto const replaced_cp = canonical_composed<max_utf32<char32_t>>(cp1, cp2);
                 if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
@@ -1036,10 +1095,9 @@ namespace webpp::unicode {
                 }
                 prev_ccc = ccc;
 
-                auto const rep_ccp = next_code_point<return_unchanged>(rep_cpin, cend);
-                static_cast<void>(next_code_point<return_unchanged>(rep_pin, send));
-
-                if (rep_ccp != cp2) [[unlikely]] {
+                ++rep_pin;
+                ++rep_cpin;
+                if (*rep_cpin != cp2) [[unlikely]] {
                     return false;
                 }
             }

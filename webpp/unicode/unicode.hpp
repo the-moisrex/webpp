@@ -981,9 +981,10 @@ namespace webpp::unicode {
             return_unchanged        = 1,
             return_negated          = 2,
             return_zero_char        = 3,
+            return_max_utf32        = 4,
         };
 
-        template <error_handling              ErrorHandling = error_handling::return_replacement_char,
+        template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
                   stl::bidirectional_iterator Iter          = char8_t const*>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
@@ -1145,6 +1146,8 @@ namespace webpp::unicode {
             // handle errors:
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char<code_point_type>;
+            } else if constexpr (ErrorHandling == return_max_utf32) {
+                return max_utf32<code_point_type>;
             } else if constexpr (ErrorHandling == return_negated) {
                 // static_assert(stl::is_signed_v<code_point_type>,
                 //             "The code point type should support negative values if you want us to return"
@@ -1168,10 +1171,10 @@ namespace webpp::unicode {
 
         template <stl::bidirectional_iterator Iter = char8_t*>
         [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
+            using enum error_handling;
             // todo: is there a way to optimize this?
-            auto const code_point =
-              next_code_point<error_handling::return_negated, stl::int32_t, Iter>(pos, end);
-            return code_point > 0;
+            static_cast<void>(next_code_point<return_negated, stl::int32_t, Iter>(pos, end));
+            return pos != end;
         }
 
         namespace details {
@@ -1381,6 +1384,8 @@ namespace webpp::unicode {
             // handle errors:
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char<code_point_type>;
+            } else if constexpr (ErrorHandling == return_max_utf32) {
+                return max_utf32<code_point_type>;
             } else if constexpr (ErrorHandling == return_negated) {
                 // static_assert(stl::is_signed_v<code_point_type>,
                 //             "The code point type should support negative values if you want us to return"
@@ -1488,6 +1493,153 @@ namespace webpp::unicode {
         insert_at(OIterT out, OIterT const oend, stl::size_t index, CharT val) noexcept {
             insert(out, oend, index, val);
         }
+
+        /**
+         * UTF-32 Bidirectional Iterator
+         */
+        template <stl::bidirectional_iterator Iter,
+                  UTF32                       CharT         = char32_t,
+                  error_handling              ErrorHandling = error_handling::return_unchanged>
+        struct utf32_bidi_iter {
+            using difference_type   = stl::iter_difference_t<Iter>;
+            using value_type        = CharT;
+            using traits            = stl::iterator_traits<Iter>;
+            using pointer           = typename traits::pointer;
+            using reference         = value_type&;
+            using const_reference   = value_type const&;
+            using iterator_category = stl::bidirectional_iterator_tag;
+            using iterator_concept  = stl::bidirectional_iterator_tag;
+
+          private:
+            Iter       beg{};
+            Iter       pos{};
+            Iter       send{};
+            value_type code_point{};
+
+          public:
+            explicit constexpr utf32_bidi_iter(Iter inp_pos, Iter inp_end) noexcept
+              : beg{inp_pos},
+                pos{inp_pos},
+                send{inp_end} {
+                using enum error_handling;
+                if (pos == send) {
+                    return;
+                }
+                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            }
+
+            constexpr utf32_bidi_iter()                                      = default;
+            constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
+            constexpr utf32_bidi_iter(utf32_bidi_iter&&) noexcept            = default;
+            constexpr utf32_bidi_iter& operator=(utf32_bidi_iter const&)     = default;
+            constexpr utf32_bidi_iter& operator=(utf32_bidi_iter&&) noexcept = default;
+            constexpr ~utf32_bidi_iter() noexcept                            = default;
+
+            constexpr utf32_bidi_iter& operator++() noexcept {
+                using enum error_handling;
+                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+                return *this;
+            }
+
+            constexpr utf32_bidi_iter& operator--() noexcept {
+                using enum error_handling;
+                code_point = checked::prev_code_point<ErrorHandling, value_type>(pos, beg);
+                return *this;
+            }
+
+            constexpr const_reference operator*() const noexcept {
+                return code_point;
+            }
+
+            [[nodiscard]] constexpr utf32_bidi_iter operator--(int) noexcept {
+                auto const res = utf32_bidi_iter{*this};
+                operator--();
+                return res;
+            }
+
+            [[nodiscard]] constexpr utf32_bidi_iter operator++(int) noexcept {
+                auto const res = utf32_bidi_iter{*this};
+                operator++();
+                return res;
+            }
+
+            [[nodiscard]] constexpr bool operator==(utf32_bidi_iter other) const noexcept {
+                return pos == other.pos;
+            }
+
+            [[nodiscard]] constexpr bool at_end() const noexcept {
+                return pos == send;
+            }
+
+            [[nodiscard]] constexpr bool at_start() const noexcept {
+                return pos == beg;
+            }
+        };
+
+        /**
+         * UTF-32 Forward Iterator
+         */
+        template <stl::forward_iterator Iter,
+                  UTF32                 CharT         = char32_t,
+                  error_handling        ErrorHandling = error_handling::return_unchanged>
+        struct utf32_forward_iter {
+            using difference_type   = stl::iter_difference_t<Iter>;
+            using value_type        = CharT;
+            using traits            = stl::iterator_traits<Iter>;
+            using pointer           = typename traits::pointer;
+            using reference         = value_type&;
+            using const_reference   = value_type const&;
+            using iterator_category = stl::forward_iterator_tag;
+            using iterator_concept  = stl::forward_iterator_tag;
+
+          private:
+            Iter       pos{};
+            Iter       send{};
+            value_type code_point{};
+
+          public:
+            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept
+              : pos{inp_pos},
+                send{inp_end} {
+                using enum error_handling;
+                if (pos == send) {
+                    return;
+                }
+                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            }
+
+            constexpr utf32_forward_iter()                                         = default;
+            constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;
+            constexpr utf32_forward_iter(utf32_forward_iter&&) noexcept            = default;
+            constexpr utf32_forward_iter& operator=(utf32_forward_iter const&)     = default;
+            constexpr utf32_forward_iter& operator=(utf32_forward_iter&&) noexcept = default;
+            constexpr ~utf32_forward_iter() noexcept                               = default;
+
+            constexpr utf32_forward_iter& operator++() noexcept {
+                using enum error_handling;
+                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+                return *this;
+            }
+
+            constexpr const_reference operator*() const noexcept {
+                return code_point;
+            }
+
+            [[nodiscard]] constexpr utf32_forward_iter operator++(int) noexcept {
+                auto const res = utf32_forward_iter{*this};
+                operator++();
+                return res;
+            }
+
+            [[nodiscard]] constexpr bool operator==(utf32_forward_iter other) const noexcept {
+                return pos == other.pos;
+            }
+
+            [[nodiscard]] constexpr bool at_end() const noexcept {
+                return pos == send;
+            }
+        };
+
 
     } // namespace checked
 

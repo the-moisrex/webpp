@@ -30,7 +30,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str.length() * 2); // Pre-allocate memory for efficiency
-        for (unsigned char byte : str) {
+        for (unsigned char const byte : str) {
             hex_str += "\\x";
             hex_str += byteToHex(byte);
         }
@@ -44,7 +44,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str.length() * 4); // Each char16_t is 2 bytes, 4 hex chars
-        for (char16_t unit : str) {
+        for (char16_t const unit : str) {
             hex_str += "\\x";
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
             hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
@@ -59,7 +59,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str.length() * 8); // Each char32_t is 4 bytes, 8 hex chars
-        for (char32_t unit : str) {
+        for (char32_t const unit : str) {
             hex_str += "\\x";
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 24) & 0xFF));
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 16) & 0xFF));
@@ -92,7 +92,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str_view.length() * 4);
-        for (char16_t unit : str_view) {
+        for (char16_t const unit : str_view) {
             hex_str += "\\x";
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 8) & 0xFF));
             hex_str += byteToHex(static_cast<unsigned char>(unit & 0xFF));
@@ -107,7 +107,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str_view.length() * 8);
-        for (char32_t unit : str_view) {
+        for (char32_t const unit : str_view) {
             hex_str += "\\x";
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 24) & 0xFF));
             hex_str += byteToHex(static_cast<unsigned char>((unit >> 16) & 0xFF));
@@ -128,6 +128,7 @@ namespace webpp::tests {
         using webpp::unicode::normalize;
         using webpp::unicode::toNFC;
         using webpp::unicode::toNFD;
+        using webpp::unicode::checked::utf32_forward_iter;
         using enum normalization_form;
 
         auto const        length = data.size();
@@ -161,12 +162,6 @@ namespace webpp::tests {
             ASSERT_NE(res.size(), 0) << to_hex(str);
             ASSERT_NE(res8.size(), 0) << to_hex(str);
         }
-        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
-        ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
-          << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16);
-        ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
-          << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
-
 
         auto const dres   = canonical_decomposed<std::string>(str);
         auto const dres8  = canonical_decomposed<std::u8string>(str8);
@@ -205,6 +200,12 @@ namespace webpp::tests {
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
+
+        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
+        ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
+          << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16);
+        ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
+          << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 
 
         std::string resStringStyle;
@@ -246,7 +247,7 @@ namespace webpp::tests {
               return static_cast<std::size_t>(cur_ptr - beg);
           };
         resPtrStyle.resize(res.size() * 19);
-        resPtrStyle.resize(overwrite(resPtrStyle.data(), res.size()));
+        resPtrStyle.resize(overwrite(resPtrStyle.data(), res.size() * 19));
         ASSERT_EQ(resPtrStyle, res) << to_hex(str);
     }
 } // namespace webpp::tests
