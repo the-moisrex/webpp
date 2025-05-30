@@ -6961,13 +6961,13 @@ TEST(Unicode, FuzzFixes) {
     EXPECT_EQ("\x90\xe", toNFC<std::string>("\x90\xe"));
     EXPECT_EQ("\xa\x8a", toNFC<std::string>("\xa\x8a"));
     EXPECT_EQ("\xb6\x4a", toNFC<std::string>("\xb6\x4a"));
-    EXPECT_EQ("\xa\xc0", toNFC<std::string>("\xa\xc0"));
+    EXPECT_EQ(U"\xa\xc0", toNFC<std::u32string>(U"\xa\xc0"));
     EXPECT_EQ(U"\xce", toNFC<std::u32string>(U"\xce"));
-    EXPECT_EQ("\xce", toNFC<std::string>("\xce"));
-    EXPECT_EQ("\x49\x302", toNFD<std::string>("\xce"));
-    EXPECT_EQ("\x10\xf4", toNFC<std::string>("\x10\xf4"));
-    EXPECT_EQ("\xa\xa\xfc", toNFC<std::string>("\xa\xa\xfc"));
-    EXPECT_EQ("\x75\xb2\xf5\xf5", toNFC<std::string>("\x75\xb2\xf5\xf5"));
+    EXPECT_EQ(U"\xce", toNFC<std::u32string>(U"\xce"));
+    EXPECT_EQ(U"\x49\x302", toNFD<std::u32string>(U"\xce"));
+    EXPECT_EQ(U"\x10\xf4", toNFC<std::u32string>(U"\x10\xf4"));
+    EXPECT_EQ(U"\xa\xa\xfc", toNFC<std::u32string>(U"\xa\xa\xfc"));
+    EXPECT_EQ(U"\x75\xb2\xf5\xf5", toNFC<std::u32string>(U"\x75\xb2\xf5\xf5"));
 
     unicode_fuzz(
       "\012\001\000\000\000\000\000\377\377\337\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
