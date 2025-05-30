@@ -12,8 +12,8 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*)
     // Helper function to convert a single byte to hex
-    inline std::string byteToHex(unsigned char byte) {
-        return fmt::format("{:02X}", static_cast<unsigned int>(byte));
+    inline std::string byteToHex(auto byte) {
+        return fmt::format("{:02X}", static_cast<stl::uint8_t>(byte));
     }
 
     // Concept to check if a type is a character type suitable for basic_string or basic_string_view
@@ -30,7 +30,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str.length() * 2); // Pre-allocate memory for efficiency
-        for (unsigned char const byte : str) {
+        for (auto const byte : str) {
             hex_str += "\\x";
             hex_str += byteToHex(byte);
         }
@@ -78,7 +78,7 @@ namespace webpp::tests {
     {
         std::string hex_str;
         hex_str.reserve(str_view.length() * 2);
-        for (unsigned char byte : str_view) {
+        for (auto byte : str_view) {
             hex_str += "\\x";
             hex_str += byteToHex(byte);
         }

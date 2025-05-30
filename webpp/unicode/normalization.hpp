@@ -880,7 +880,7 @@ namespace webpp::unicode {
             auto cur = buf.data();
             canonical_decompose_to(cur, pos, send);
             len = static_cast<stl::int8_t>(cur - buf.data());
-            assert(len >= 0 && len <= buf.size());
+            assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
         }
 
         constexpr decompose_iterator()                                         = default;
@@ -902,11 +902,11 @@ namespace webpp::unicode {
                     len = 0;
                 } else {
                     canonical_decompose_to(cur, pos, send);
-                    len = static_cast<stl::uint8_t>(cur - buf.data());
+                    len = static_cast<stl::int8_t>(cur - buf.data());
                 }
             }
-            assert(len >= 0 && len <= buf.size());
-            assert(index >= 0 && index < buf.size());
+            assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
+            assert(index >= 0 && static_cast<stl::size_t>(index) < buf.size());
             return *this;
         }
 
@@ -926,13 +926,13 @@ namespace webpp::unicode {
                 len   = static_cast<stl::int8_t>(cur - buf.data());
                 index = stl::max<stl::int8_t>(len - 1, 0);
             }
-            assert(len >= 0 && len <= buf.size());
-            assert(index >= 0 && index < buf.size());
+            assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
+            assert(index >= 0 && static_cast<stl::size_t>(index) < buf.size());
             return *this;
         }
 
         constexpr const_reference operator*() const noexcept {
-            return buf[index];
+            return buf[static_cast<stl::uint8_t>(index)];
         }
 
         [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept {

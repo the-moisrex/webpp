@@ -194,9 +194,10 @@ namespace webpp::istl {
         if constexpr (requires { str.resize_and_overwrite(max_size, std::forward<Func>(func)); }) {
             return str.resize_and_overwrite(max_size, std::forward<Func>(func));
         } else {
+            using size_type = size_type_of_t<StrT>;
             str.resize(max_size);
             auto const new_len = stl::forward<Func>(func)(str.data(), max_size);
-            str.resize(new_len);
+            str.resize(static_cast<size_type>(new_len));
         }
     }
 
