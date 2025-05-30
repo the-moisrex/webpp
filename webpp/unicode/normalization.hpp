@@ -335,7 +335,7 @@ namespace webpp::unicode {
         using enum checked::error_handling;
 
         assert(spos != send);
-        auto       beg        = spos;
+        auto       beg        = istl::deref(spos);
         auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
 
         // Not mapped
@@ -400,7 +400,7 @@ namespace webpp::unicode {
 
 
         for (auto pos = spos; pos != send; spos = pos) {
-            auto const code_point = checked::next_code_point<return_negated>(pos, send);
+            auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
 
             if (is_hangul_code_point(code_point)) {
                 break;
@@ -868,14 +868,10 @@ namespace webpp::unicode {
             if (pos == send) {
                 return;
             }
-            buf[0]                = *pos;
-            len                   = 1;
-            auto const code_point = checked::next_code_point<return_max_utf32>(pos, send);
-            if (code_point != max_utf32<char32_t>) {
-                auto cur = buf.data();
-                canonical_decompose_to(cur, code_point);
-                len = static_cast<stl::uint8_t>(cur - buf.data());
-            }
+            auto cur = buf.data();
+            canonical_decompose_to(cur, pos, send);
+            *cur = 0;
+            len  = static_cast<stl::uint8_t>(cur - buf.data());
             assert(index >= 0);
         }
 

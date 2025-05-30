@@ -6945,6 +6945,7 @@ TEST(Unicode, CheckedNextCodePoint) {
 TEST(Unicode, FuzzFixes) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::toNFC;
+    using webpp::unicode::toNFD;
     using std::string_view_literals::operator""sv;
 
     EXPECT_EQ(u"", toNFC<std::u16string>(u""));
@@ -6953,7 +6954,9 @@ TEST(Unicode, FuzzFixes) {
     EXPECT_EQ("\xa\x8a", toNFC<std::string>("\xa\x8a"));
     EXPECT_EQ("\xb6\x4a", toNFC<std::string>("\xb6\x4a"));
     EXPECT_EQ("\xa\xc0", toNFC<std::string>("\xa\xc0"));
+    EXPECT_EQ(U"\xce", toNFC<std::u32string>(U"\xce"));
     EXPECT_EQ("\xce", toNFC<std::string>("\xce"));
+    EXPECT_EQ("\x49\x302", toNFD<std::string>("\xce"));
     EXPECT_EQ("\x10\xf4", toNFC<std::string>("\x10\xf4"));
     EXPECT_EQ("\xa\xa\xfc", toNFC<std::string>("\xa\xa\xfc"));
     EXPECT_EQ("\x75\xb2\xf5\xf5", toNFC<std::string>("\x75\xb2\xf5\xf5"));
