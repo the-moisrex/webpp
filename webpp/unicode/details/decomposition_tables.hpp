@@ -55,7 +55,7 @@ namespace webpp::unicode::details {
      * In index table, any code point bigger than this number will be "non-mapped" (it's mapped to the input
      * code point by the standard); so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_mapped_deomps = 0x2FA40UL;
+    static constexpr auto trailing_mapped_decomps = 0x2FA40UL;
 
     /**
      * Decomp (Index Table)

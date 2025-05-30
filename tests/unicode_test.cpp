@@ -292,8 +292,8 @@ result: {}
         using webpp::unicode::details::decomp_index;
         using webpp::unicode::details::decomp_indices;
         using webpp::unicode::details::decomp_values;
-        using webpp::unicode::details::trailing_mapped_deomps;
-        if (code_point >= static_cast<CharT>(trailing_mapped_deomps)) [[unlikely]] {
+        using webpp::unicode::details::trailing_mapped_decomps;
+        if (code_point >= static_cast<CharT>(trailing_mapped_decomps)) [[unlikely]] {
             return "Definite Zero";
         }
         auto const code_point_range = static_cast<size_t>(code_point) >> decomp_index::chunk_shift;
@@ -6806,6 +6806,7 @@ TEST(Unicode, NormalizationTests) {
     using webpp::tests::to_hex;
     using webpp::unicode::canonical_composed;
     using webpp::unicode::canonical_decomposed;
+    using webpp::unicode::decompose_iterator;
     using webpp::unicode::toNFC;
     using webpp::unicode::toNFD;
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
@@ -6868,6 +6869,13 @@ TEST(Unicode, NormalizationTests) {
                 << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
                 << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
+          }
+
+          {
+              auto const               dres = canonical_decomposed<std::u32string>(source);
+              decompose_iterator       dbeg{source.begin(), source.end()};
+              decompose_iterator const dend{source.end(), source.end()};
+              EXPECT_TRUE(std::equal(dbeg, dend, dres.begin()));
           }
 
           check_idempotent(source, nfc, nfd);
@@ -7161,7 +7169,11 @@ TEST(Unicode, FuzzFixes4) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
 
-    unicode_fuzz("\xd6\xeb\x8c\xcc\x8c\x8c"sv);
+    unicode_fuzz("\x80");
+    unicode_fuzz("\x03\x03\x03\x80");
+    unicode_fuzz("\x03\x03\x03\x0A");
+    unicode_fuzz("\x03\x0A");
+    unicode_fuzz("\x0A");
     unicode_fuzz(
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x80\x00\x00\x00\x03\x03\x03\x03"
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
@@ -7174,6 +7186,7 @@ TEST(Unicode, FuzzFixes4) {
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\000\000"sv);
+    unicode_fuzz("\xd6\xeb\x8c\xcc\x8c\x8c"sv);
 }
 
 TEST(Unicode, FuzzTestFixes3) {

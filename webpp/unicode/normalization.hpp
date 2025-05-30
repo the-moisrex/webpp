@@ -200,7 +200,7 @@ namespace webpp::unicode {
     }
 
     /**
-     * Check if the string is canonically ordered (will be when it has ran through
+     * Check if the string is canonically ordered (will be when it has run through
      * the canonical_reorder function).
      */
     template <stl::bidirectional_iterator Iter>
@@ -274,7 +274,7 @@ namespace webpp::unicode {
         using unchecked::append;
 
         // Not mapped
-        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_decomps) [[unlikely]] {
         //     return append<Iter, SizeT>(out, code_point);
         // }
 
@@ -339,7 +339,7 @@ namespace webpp::unicode {
         auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
 
         // Not mapped
-        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_decomps) [[unlikely]] {
         //     return append<Iter, SizeT>(out, code_point);
         // }
 
@@ -352,10 +352,11 @@ namespace webpp::unicode {
         auto const chunk         = code_point >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
         if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
+            stl::size_t clen = 0;
             for (; beg != spos; ++beg) {
-                append<Iter>(out, *beg);
+                clen += append<Iter>(out, *beg);
             }
-            return 1U;
+            return clen;
         }
         auto const [starting, ending, offset] = decomp_breakpoints[section_index];
         decomp_index const code =
@@ -365,7 +366,11 @@ namespace webpp::unicode {
 
         // Not mapped at all, that means the code point is mapped to itself.
         if (code.max_length == 0) {
-            return append<Iter>(out, code_point);
+            stl::size_t clen = 0;
+            for (; beg != spos; ++beg) {
+                clen += append<Iter>(out, *beg);
+            }
+            return clen;
         }
 
         auto const* const start_ptr = decomp_ptr(code, code_point);
@@ -381,7 +386,11 @@ namespace webpp::unicode {
 
         auto const len = static_cast<stl::size_t>(ptr - start_ptr);
         if (len == 0) {
-            return append<Iter>(out, code_point);
+            stl::size_t clen = 0;
+            for (; beg != spos; ++beg) {
+                clen += append<Iter>(out, *beg);
+            }
+            return clen;
         }
         return len; // UTF-8 Length regardless of the output type.
     }
@@ -856,7 +865,7 @@ namespace webpp::unicode {
         Iter                         pos{};
         Iter                         send{};
         stl::int8_t                  index = 0;
-        stl::uint8_t                 len   = 0;
+        stl::int8_t                  len   = 0;
         decomposed_array<value_type> buf{};
 
       public:
@@ -870,9 +879,8 @@ namespace webpp::unicode {
             }
             auto cur = buf.data();
             canonical_decompose_to(cur, pos, send);
-            *cur = 0;
-            len  = static_cast<stl::uint8_t>(cur - buf.data());
-            assert(index >= 0);
+            len = static_cast<stl::int8_t>(cur - buf.data());
+            assert(len >= 0 && len <= buf.size());
         }
 
         constexpr decompose_iterator()                                         = default;
@@ -896,9 +904,9 @@ namespace webpp::unicode {
                     canonical_decompose_to(cur, pos, send);
                     len = static_cast<stl::uint8_t>(cur - buf.data());
                 }
-                *cur = 0;
             }
-            assert(index >= 0);
+            assert(len >= 0 && len <= buf.size());
+            assert(index >= 0 && index < buf.size());
             return *this;
         }
 
@@ -906,27 +914,20 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             --index;
             if (index < 0) {
-                // we start from zero since we're assuming most input Code Points won't have mappings; so
-                // it would be faster to find the end of it this way.
-                index = 0;
-
                 auto const code_point = checked::prev_code_point<return_max_utf32>(pos, beg);
                 if (code_point != max_utf32<char32_t>) {
                     buf[0] = *pos;
-                    buf[1] = 0;
                     len    = 1;
+                    index  = 0;
                     return *this;
                 }
                 auto cur = buf.data();
                 canonical_decompose_to(cur, code_point);
-                *cur = 0;
-                len  = static_cast<stl::uint8_t>(cur - buf.data());
-
-                // the array has a \0 at the end guaranteed.
-                for (; buf[index + 1U] != '\0'; ++index) {
-                }
+                len   = static_cast<stl::int8_t>(cur - buf.data());
+                index = stl::max<stl::int8_t>(len - 1, 0);
             }
-            assert(index >= 0);
+            assert(len >= 0 && len <= buf.size());
+            assert(index >= 0 && index < buf.size());
             return *this;
         }
 

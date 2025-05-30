@@ -578,7 +578,7 @@ class DecompTable {
      * In index table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by the standard);
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_mapped_deomps = 0x${this.lastMapped.toString(16).toUpperCase()}UL;
+    static constexpr auto trailing_mapped_decomps = 0x${this.lastMapped.toString(16).toUpperCase()}UL;
 
 ${renderedTables}
         `;

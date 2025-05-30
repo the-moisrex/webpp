@@ -187,13 +187,7 @@ namespace webpp::tests {
           idres,
           data.size() * 4,
           [&](auto* buf, [[maybe_unused]] stl::size_t max_len) {
-              stl::size_t count = 0;
-              for (; dbeg != dend; ++dbeg, ++buf) { // NOLINT(*-pro-bounds-pointer-arithmetic)
-                  *buf = *dbeg;
-                  ++count;
-              }
-              *buf = 0;
-              return count;
+              return stl::copy(dbeg, dend, buf) - buf;
           });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
