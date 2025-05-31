@@ -195,7 +195,9 @@ namespace webpp::tests {
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
-        ASSERT_TRUE(isNFC(res.begin(), res.end())) << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res);
+        ASSERT_TRUE(isNFC(res.begin(), res.end()))
+          << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
+          << "\nNFD: " << to_hex(toNFD<std::string>(str));
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
           << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))

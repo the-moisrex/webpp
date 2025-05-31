@@ -1564,16 +1564,17 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool operator==(utf32_bidi_iter other) const noexcept {
-                return pos == other.pos;
+                return pos == other.pos && code_point == other.code_point;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
-                return pos == send;
+                return pos == send && code_point == 0;
             }
 
-            [[nodiscard]] constexpr bool at_start() const noexcept {
-                return pos == beg;
-            }
+            // todo: check code point to fix off-by-one bugs
+            // [[nodiscard]] constexpr bool at_start() const noexcept {
+            //     return pos == beg;
+            // }
         };
 
         /**
@@ -1632,11 +1633,11 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool operator==(utf32_forward_iter other) const noexcept {
-                return pos == other.pos;
+                return pos == other.pos && code_point == other.code_point;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
-                return pos == send;
+                return pos == send && code_point == 0;
             }
         };
 

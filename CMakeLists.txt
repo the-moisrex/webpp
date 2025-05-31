@@ -1,15 +1,5 @@
 cmake_minimum_required(VERSION 3.23...3.31.5)
 
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# if (IS_CLANG)
-#     set(CMAKE_CXX_STANDARD 20)
-# else ()
-#     set(CMAKE_CXX_STANDARD 23)
-# endif ()
-
-# set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
-# set(CMAKE_CXX_EXTENSIONS OFF)
-
 project(webpp
         VERSION 1.0.0
         LANGUAGES CXX

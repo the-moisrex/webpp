@@ -6671,7 +6671,7 @@ TEST(Unicode, NoCompose) {
               webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(0U, std::numeric_limits<std::uint32_t>::max()),
               webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(-1, 0), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(canonical_composed(static_cast<char32_t>(-1), 0), webpp::unicode::replacement_char<>);
     EXPECT_NE(canonical_composed(0x594, 0x0020), 0x00A8);
     EXPECT_NE(canonical_composed(0x307, 0x0061), 0x00AA);
     EXPECT_NE(canonical_composed(0x579, 0x0020), 0x00AF);
@@ -7268,6 +7268,12 @@ TEST(Unicode, FuzzFixes5) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
 
+    unicode_fuzz("\xCC\x8A\xCC"sv);
+    unicode_fuzz("\xCC\x82\xCC"sv);
+    unicode_fuzz("\xCD\x84\xCD"sv);
+    unicode_fuzz("\x28\x03\x8A\x03"sv);
+    unicode_fuzz("\x00\x03\x00\x02"sv);
+    unicode_fuzz("\x03\x03\x00\x04"sv);
     unicode_fuzz("\x26\x03\x00\xB2"sv);
     unicode_fuzz("\x0A\x01\x01\x01\x01\x03\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"sv);
     unicode_fuzz(

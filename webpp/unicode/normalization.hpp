@@ -915,7 +915,7 @@ namespace webpp::unicode {
             --index;
             if (index < 0) {
                 auto const code_point = checked::prev_code_point<return_max_utf32>(pos, beg);
-                if (code_point != max_utf32<char32_t>) {
+                if (code_point == max_utf32<char32_t>) {
                     buf[0] = *pos;
                     len    = 1;
                     index  = 0;
