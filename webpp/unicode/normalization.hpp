@@ -862,6 +862,7 @@ namespace webpp::unicode {
 
       private:
         Iter                         beg{};
+        Iter                         cur{};
         Iter                         pos{};
         Iter                         send{};
         stl::int8_t                  index = 0;
@@ -871,15 +872,16 @@ namespace webpp::unicode {
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
           : beg{inp_pos},
+            cur{inp_pos},
             pos{inp_pos},
             send{inp_end} {
             using enum checked::error_handling;
             if (pos == send) {
                 return;
             }
-            auto cur = buf.data();
-            canonical_decompose_to(cur, pos, send);
-            len = static_cast<stl::int8_t>(cur - buf.data());
+            auto cur_buf = buf.data();
+            canonical_decompose_to(cur_buf, pos, send);
+            len = static_cast<stl::int8_t>(cur_buf - buf.data());
             assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
         }
 
@@ -895,14 +897,14 @@ namespace webpp::unicode {
             // todo: we can optimize?
             ++index;
             if (index >= len) {
-                index             = 0;
-                bool const at_end = pos == send;
-                auto       cur    = buf.data();
-                if (at_end) {
+                index = 0;
+                cur   = pos;
+                if (send == pos) {
                     len = 0;
                 } else {
-                    canonical_decompose_to(cur, pos, send);
-                    len = static_cast<stl::int8_t>(cur - buf.data());
+                    auto cur_buf = buf.data();
+                    canonical_decompose_to(cur_buf, pos, send);
+                    len = static_cast<stl::int8_t>(cur_buf - buf.data());
                 }
             }
             assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
@@ -914,7 +916,8 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             --index;
             if (index < 0) {
-                auto const code_point = checked::prev_code_point<return_max_utf32>(pos, beg);
+                pos                   = cur;
+                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, beg);
                 if (code_point == max_utf32<char32_t>) {
                     buf[0] = *pos;
                     len    = 1;
@@ -947,8 +950,8 @@ namespace webpp::unicode {
             return res;
         }
 
-        [[nodiscard]] constexpr bool operator==(decompose_iterator other) const noexcept {
-            return pos == other.pos && index == other.index && len == other.len;
+        [[nodiscard]] constexpr bool operator==(decompose_iterator const& other) const noexcept {
+            return cur == other.cur;
         }
     };
 

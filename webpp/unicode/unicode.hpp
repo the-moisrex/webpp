@@ -1498,11 +1498,10 @@ namespace webpp::unicode {
          * UTF-32 Bidirectional Iterator
          */
         template <stl::bidirectional_iterator Iter,
-                  UTF32                       CharT         = char32_t,
                   error_handling              ErrorHandling = error_handling::return_unchanged>
         struct utf32_bidi_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
-            using value_type        = CharT;
+            using value_type        = char32_t;
             using traits            = stl::iterator_traits<Iter>;
             using pointer           = typename traits::pointer;
             using reference         = value_type&;
@@ -1512,6 +1511,7 @@ namespace webpp::unicode {
 
           private:
             Iter       beg{};
+            Iter       cur{};
             Iter       pos{};
             Iter       send{};
             value_type code_point{};
@@ -1519,6 +1519,7 @@ namespace webpp::unicode {
           public:
             explicit constexpr utf32_bidi_iter(Iter inp_pos, Iter inp_end) noexcept
               : beg{inp_pos},
+                cur{inp_pos},
                 pos{inp_pos},
                 send{inp_end} {
                 using enum error_handling;
@@ -1537,13 +1538,15 @@ namespace webpp::unicode {
 
             constexpr utf32_bidi_iter& operator++() noexcept {
                 using enum error_handling;
+                cur        = pos;
                 code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
                 return *this;
             }
 
             constexpr utf32_bidi_iter& operator--() noexcept {
                 using enum error_handling;
-                code_point = checked::prev_code_point<ErrorHandling, value_type>(pos, beg);
+                pos        = cur;
+                code_point = checked::prev_code_point<ErrorHandling, value_type>(cur, beg);
                 return *this;
             }
 
@@ -1563,29 +1566,101 @@ namespace webpp::unicode {
                 return res;
             }
 
-            [[nodiscard]] constexpr bool operator==(utf32_bidi_iter other) const noexcept {
-                return pos == other.pos && code_point == other.code_point;
+            [[nodiscard]] constexpr bool operator==(utf32_bidi_iter const& other) const noexcept {
+                return cur == other.cur;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
-                return pos == send && code_point == 0;
+                return cur == send;
             }
 
-            // todo: check code point to fix off-by-one bugs
-            // [[nodiscard]] constexpr bool at_start() const noexcept {
-            //     return pos == beg;
-            // }
+            [[nodiscard]] constexpr bool at_start() const noexcept {
+                return cur == beg;
+            }
         };
 
         /**
-         * UTF-32 Forward Iterator
+         * UTF-32 Specialization of bidirectional UTF iterator wrapper.
          */
-        template <stl::forward_iterator Iter,
-                  UTF32                 CharT         = char32_t,
-                  error_handling        ErrorHandling = error_handling::return_unchanged>
+        template <stl::bidirectional_iterator Iter, error_handling ErrorHandling>
+            requires(UTF32<stl::iter_value_t<Iter>>)
+        struct utf32_bidi_iter<Iter, ErrorHandling> {
+            using difference_type   = stl::iter_difference_t<Iter>;
+            using value_type        = stl::iter_value_t<Iter>;
+            using traits            = stl::iterator_traits<Iter>;
+            using pointer           = typename traits::pointer;
+            using reference         = value_type&;
+            using const_reference   = value_type const&;
+            using iterator_category = stl::bidirectional_iterator_tag;
+            using iterator_concept  = stl::bidirectional_iterator_tag;
+
+          private:
+            Iter beg{};
+            Iter pos{};
+            Iter send{};
+
+          public:
+            explicit constexpr utf32_bidi_iter(Iter inp_pos, Iter inp_end) noexcept
+              : beg{inp_pos},
+                pos{inp_pos},
+                send{inp_end} {}
+
+            constexpr utf32_bidi_iter()                                      = default;
+            constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
+            constexpr utf32_bidi_iter(utf32_bidi_iter&&) noexcept            = default;
+            constexpr utf32_bidi_iter& operator=(utf32_bidi_iter const&)     = default;
+            constexpr utf32_bidi_iter& operator=(utf32_bidi_iter&&) noexcept = default;
+            constexpr ~utf32_bidi_iter() noexcept                            = default;
+
+            constexpr utf32_bidi_iter& operator++() noexcept {
+                using enum error_handling;
+                ++pos;
+                return *this;
+            }
+
+            constexpr utf32_bidi_iter& operator--() noexcept {
+                using enum error_handling;
+                --pos;
+                return *this;
+            }
+
+            constexpr const_reference operator*() const noexcept {
+                return *pos;
+            }
+
+            [[nodiscard]] constexpr utf32_bidi_iter operator--(int) noexcept {
+                auto const res = utf32_bidi_iter{*this};
+                operator--();
+                return res;
+            }
+
+            [[nodiscard]] constexpr utf32_bidi_iter operator++(int) noexcept {
+                auto const res = utf32_bidi_iter{*this};
+                operator++();
+                return res;
+            }
+
+            [[nodiscard]] constexpr bool operator==(utf32_bidi_iter const& other) const noexcept {
+                return pos == other.pos;
+            }
+
+            [[nodiscard]] constexpr bool at_end() const noexcept {
+                return pos == send;
+            }
+
+            [[nodiscard]] constexpr bool at_start() const noexcept {
+                return pos == beg;
+            }
+        };
+
+        /**
+         * UTF-32 Forward Iterator Wrapper.
+         * Input Iterator may be UTF-8 or UTF-16.
+         */
+        template <stl::forward_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
         struct utf32_forward_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
-            using value_type        = CharT;
+            using value_type        = char32_t;
             using traits            = stl::iterator_traits<Iter>;
             using pointer           = typename traits::pointer;
             using reference         = value_type&;
@@ -1594,13 +1669,15 @@ namespace webpp::unicode {
             using iterator_concept  = stl::forward_iterator_tag;
 
           private:
+            Iter       cur{};
             Iter       pos{};
             Iter       send{};
             value_type code_point{};
 
           public:
             explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept
-              : pos{inp_pos},
+              : cur{inp_pos},
+                pos{inp_pos},
                 send{inp_end} {
                 using enum error_handling;
                 if (pos == send) {
@@ -1618,6 +1695,7 @@ namespace webpp::unicode {
 
             constexpr utf32_forward_iter& operator++() noexcept {
                 using enum error_handling;
+                cur        = pos;
                 code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
                 return *this;
             }
@@ -1632,12 +1710,68 @@ namespace webpp::unicode {
                 return res;
             }
 
-            [[nodiscard]] constexpr bool operator==(utf32_forward_iter other) const noexcept {
-                return pos == other.pos && code_point == other.code_point;
+            [[nodiscard]] constexpr bool operator==(utf32_forward_iter const& other) const noexcept {
+                return cur == other.cur;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
-                return pos == send && code_point == 0;
+                return cur == send;
+            }
+        };
+
+        /**
+         * UTF-32 Specialization of the above UTF forward iterator
+         */
+        template <stl::forward_iterator Iter, error_handling ErrorHandling>
+            requires(UTF32<stl::iter_value_t<Iter>>)
+        struct utf32_forward_iter<Iter, ErrorHandling> {
+            using difference_type   = stl::iter_difference_t<Iter>;
+            using value_type        = stl::iter_value_t<Iter>;
+            using traits            = stl::iterator_traits<Iter>;
+            using pointer           = typename traits::pointer;
+            using reference         = value_type&;
+            using const_reference   = value_type const&;
+            using iterator_category = stl::forward_iterator_tag;
+            using iterator_concept  = stl::forward_iterator_tag;
+
+          private:
+            Iter pos{};
+            Iter send{};
+
+          public:
+            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept
+              : pos{inp_pos},
+                send{inp_end} {}
+
+            constexpr utf32_forward_iter()                                         = default;
+            constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;
+            constexpr utf32_forward_iter(utf32_forward_iter&&) noexcept            = default;
+            constexpr utf32_forward_iter& operator=(utf32_forward_iter const&)     = default;
+            constexpr utf32_forward_iter& operator=(utf32_forward_iter&&) noexcept = default;
+            constexpr ~utf32_forward_iter() noexcept                               = default;
+
+            constexpr utf32_forward_iter& operator++() noexcept {
+                using enum error_handling;
+                ++pos;
+                return *this;
+            }
+
+            constexpr const_reference operator*() const noexcept {
+                return *pos;
+            }
+
+            [[nodiscard]] constexpr utf32_forward_iter operator++(int) noexcept {
+                auto const res = utf32_forward_iter{*this};
+                operator++();
+                return res;
+            }
+
+            [[nodiscard]] constexpr bool operator==(utf32_forward_iter const& other) const noexcept {
+                return pos == other.pos;
+            }
+
+            [[nodiscard]] constexpr bool at_end() const noexcept {
+                return pos == send;
             }
         };
 

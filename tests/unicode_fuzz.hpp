@@ -193,6 +193,11 @@ namespace webpp::tests {
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
+        stl::advance(dbeg, dres.size());
+        ASSERT_TRUE(stl::equal(std::reverse_iterator{dbeg},
+                               std::reverse_iterator{dend},
+                               std::next(dres.begin(), dres.size())))
+          << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
         ASSERT_TRUE(isNFC(res.begin(), res.end()))
