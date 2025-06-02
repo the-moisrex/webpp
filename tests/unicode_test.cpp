@@ -7308,4 +7308,52 @@ TEST(Unicode, FuzzFixes6) {
       "\x00\x03\x03\x03\x03\x01"sv);
 }
 
+TEST(Unicode, UTFIteratorsTest) {
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::decompose_iterator;
+    using webpp::unicode::checked::utf32_bidi_iter;
+    using webpp::unicode::checked::utf32_forward_iter;
+    using std::string_view_literals::operator""sv;
+
+    // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
+    // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
+    auto                             str  = U"\xF0\xCD\x81\xCC"sv;
+    auto const* const                spos = str.begin();
+    auto const* const                send = str.end();
+    decompose_iterator const         dbeg{spos, send};
+    decompose_iterator const         dend{send, send};
+    utf32_bidi_iter const            ubeg{dbeg, dend};
+    utf32_bidi_iter                  upos{dbeg, dend};
+    [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
+
+    EXPECT_EQ(*upos, 0xF0);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);
+    ++upos;
+    EXPECT_EQ(*upos, 0x301);
+    ++upos;
+    EXPECT_EQ(*upos, 0x81);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);  // 0xCC Decomposed
+    ++upos;
+    EXPECT_NE(upos, uend);
+    EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
+    ++upos;
+    EXPECT_EQ(upos, uend);
+    --upos;
+    EXPECT_EQ(*upos, 0x300);
+    --upos;
+    EXPECT_EQ(*upos, 0x49);
+    --upos;
+    EXPECT_EQ(*upos, 0x81);
+    --upos;
+    EXPECT_EQ(*upos, 0x301);
+    --upos;
+    EXPECT_EQ(*upos, 0x49);
+    EXPECT_NE(upos, ubeg);
+    --upos;
+    EXPECT_EQ(*upos, 0xF0);
+    EXPECT_EQ(upos, ubeg);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

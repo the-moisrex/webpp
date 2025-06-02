@@ -924,9 +924,9 @@ namespace webpp::unicode {
                     index  = 0;
                     return *this;
                 }
-                auto cur = buf.data();
-                canonical_decompose_to(cur, code_point);
-                len   = static_cast<stl::int8_t>(cur - buf.data());
+                auto cur_buf = buf.data();
+                canonical_decompose_to(cur_buf, code_point);
+                len   = static_cast<stl::int8_t>(cur_buf - buf.data());
                 index = stl::max<stl::int8_t>(len - 1, 0);
             }
             assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
