@@ -7308,7 +7308,7 @@ TEST(Unicode, FuzzFixes6) {
       "\x00\x03\x03\x03\x03\x01"sv);
 }
 
-TEST(Unicode, UTFIteratorsTest) {
+TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;
     using webpp::unicode::checked::utf32_bidi_iter;
@@ -7338,6 +7338,52 @@ TEST(Unicode, UTFIteratorsTest) {
     ++upos;
     EXPECT_NE(upos, uend);
     EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
+    ++upos;
+    EXPECT_EQ(upos, uend);
+    --upos;
+    EXPECT_EQ(*upos, 0x300);
+    --upos;
+    EXPECT_EQ(*upos, 0x49);
+    --upos;
+    EXPECT_EQ(*upos, 0x81);
+    --upos;
+    EXPECT_EQ(*upos, 0x301);
+    --upos;
+    EXPECT_EQ(*upos, 0x49);
+    EXPECT_NE(upos, ubeg);
+    --upos;
+    EXPECT_EQ(*upos, 0xF0);
+    EXPECT_EQ(upos, ubeg);
+}
+
+TEST(Unicode, UTF8IteratorsTest) {
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::decompose_iterator;
+    using webpp::unicode::checked::utf32_bidi_iter;
+    using webpp::unicode::checked::utf32_forward_iter;
+    using std::string_view_literals::operator""sv;
+
+    auto                             str  = u8"\xF0\xCD\x81\xCC"sv;
+    auto const* const                spos = str.begin();
+    auto const* const                send = str.end();
+    decompose_iterator const         dbeg{spos, send};
+    decompose_iterator const         dend{send, send};
+    utf32_bidi_iter const            ubeg{dbeg, dend};
+    utf32_bidi_iter                  upos{dbeg, dend};
+    [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
+
+    EXPECT_EQ(*upos, 0xF0);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);
+    ++upos;
+    EXPECT_EQ(*upos, 0x301);
+    ++upos;
+    EXPECT_EQ(*upos, 0x81);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);
+    ++upos;
+    EXPECT_NE(upos, uend);
+    EXPECT_EQ(*upos, 0x300);
     ++upos;
     EXPECT_EQ(upos, uend);
     --upos;
