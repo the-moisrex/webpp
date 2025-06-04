@@ -7359,6 +7359,7 @@ TEST(Unicode, UTF32IteratorsTest) {
 TEST(Unicode, UTF8IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;
+    using webpp::unicode::checked::prev_code_point;
     using webpp::unicode::checked::utf32_bidi_iter;
     using webpp::unicode::checked::utf32_forward_iter;
     using std::string_view_literals::operator""sv;
@@ -7366,19 +7367,20 @@ TEST(Unicode, UTF8IteratorsTest) {
     auto                             str  = u8"\xF0\xCD\x81\xCC"sv;
     auto const* const                spos = str.begin();
     auto const* const                send = str.end();
+    auto const*                      sback = spos + 4;
     decompose_iterator const         dbeg{spos, send};
     decompose_iterator const         dend{send, send};
     utf32_bidi_iter const            ubeg{dbeg, dend};
     utf32_bidi_iter                  upos{dbeg, dend};
     [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
 
+    EXPECT_EQ(prev_code_point(sback, spos), 0xCC);
+    EXPECT_EQ(prev_code_point(sback, spos), 0x341); // \xCD\x81
+    EXPECT_EQ(prev_code_point(sback, spos), 0xF0);
+
     EXPECT_EQ(*upos, 0xF0);
     ++upos;
-    EXPECT_EQ(*upos, 0x49);
-    ++upos;
     EXPECT_EQ(*upos, 0x301);
-    ++upos;
-    EXPECT_EQ(*upos, 0x81);
     ++upos;
     EXPECT_EQ(*upos, 0x49);
     ++upos;
@@ -7391,11 +7393,7 @@ TEST(Unicode, UTF8IteratorsTest) {
     --upos;
     EXPECT_EQ(*upos, 0x49);
     --upos;
-    EXPECT_EQ(*upos, 0x81);
-    --upos;
     EXPECT_EQ(*upos, 0x301);
-    --upos;
-    EXPECT_EQ(*upos, 0x49);
     EXPECT_NE(upos, ubeg);
     --upos;
     EXPECT_EQ(*upos, 0xF0);

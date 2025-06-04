@@ -1213,7 +1213,7 @@ namespace webpp::unicode {
             }
 
             // Last Code Unit of the code point:
-            auto const cu_last    = static_cast<code_point_type>(*--pos);
+            auto const cu_last    = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
             auto       code_point = cu_last;
 
             for (;;) {
