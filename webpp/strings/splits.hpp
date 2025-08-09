@@ -153,22 +153,33 @@ namespace webpp::strings {
 
 
       public:
-        template <istl::StringLike StrV = string_view_type>
-            requires stl::convertible_to<typename StrV::iterator, src_iterator>
-        constexpr explicit splitter(StrV str_val, DelimT&&... delims_input) noexcept
+        template <istl::StringLike StrV = string_view_type, Delimiter... InpDelimT>
+            requires(stl::convertible_to<typename StrV::iterator, src_iterator>)
+        constexpr explicit splitter(StrV str_val, InpDelimT&&... delims_input) noexcept
           : beg{str_val.begin()},
             endp{str_val.end()},
-            delims{stl::forward<DelimT>(delims_input)...} {}
+            delims{stl::forward<InpDelimT>(delims_input)...} {}
 
-        template <istl::StringViewifiable StrV = string_view_type>
+        template <istl::StringViewifiable StrV = string_view_type, Delimiter... InpDelimT>
             requires(!istl::StringLike<StrV>)
-        constexpr explicit splitter(StrV str_val, DelimT&&... delims_input) noexcept
-          : splitter{istl::string_viewify(stl::forward<StrV>(str_val)), stl::forward<DelimT>(delims_input)...} {}
+        constexpr explicit splitter(StrV str_val, InpDelimT&&... delims_input) noexcept
+          : beg{istl::string_viewify(stl::forward<StrV>(str_val)).data()},
+            endp{istl::string_viewify(stl::forward<StrV>(str_val)).data() +
+                 istl::string_viewify(stl::forward<StrV>(str_val)).size()},
+            delims{stl::forward<InpDelimT>(delims_input)...} {}
 
-        constexpr explicit splitter(src_iterator inp_beg, src_iterator inp_end, DelimT&&... delims_input) noexcept
+        template <Delimiter... InpDelimT>
+        constexpr explicit splitter(src_iterator inp_beg, src_iterator inp_end, InpDelimT&&... delims_input) noexcept
           : beg{inp_beg},
             endp{inp_end},
-            delims{stl::forward<DelimT>(delims_input)...} {}
+            delims{stl::forward<InpDelimT>(delims_input)...} {}
+
+        template <Delimiter... InpDelimT>
+        constexpr explicit splitter(src_iterator inp_beg, InpDelimT&&... delims_input) noexcept
+            requires(istl::CharType<std::iter_value_t<iterator_type>>)
+          : beg{inp_beg},
+            endp{std::next(inp_beg, std::strlen(inp_beg))},
+            delims{stl::forward<InpDelimT>(delims_input)...} {}
 
         [[nodiscard]] constexpr iterator_type begin() const noexcept {
             return iterator_type{this}.operator++();
@@ -261,10 +272,12 @@ namespace webpp::strings {
         // todo: add a way to use coroutines here as another way of doing the same thing
     };
 
-    template <typename T, Delimiter... DelimT>
+    template <typename T, typename... DelimT>
+        requires(sizeof...(DelimT) > 0)
     splitter(T&&, DelimT&&...) -> splitter<istl::iterator_type_of_t<T>, DelimT...>;
 
-    template <stl::random_access_iterator T, Delimiter... DelimT>
+    template <stl::random_access_iterator T, typename... DelimT>
+        requires(sizeof...(DelimT) > 0)
     splitter(T, T, DelimT&&...) -> splitter<T, DelimT...>;
 
 } // namespace webpp::strings

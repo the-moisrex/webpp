@@ -65,8 +65,20 @@ namespace webpp::istl {
         using type = T const*;
     };
 
+    // Specialization for const arrays ref
+    template <typename T, stl::size_t N>
+    struct iterator_type_of<T const (&)[N]> { // NOLINT(*-avoid-c-arrays)
+        using type = T const*;
+    };
+
     template <typename T>
-    using iterator_type_of_t = typename iterator_type_of<stl::remove_cvref_t<T>>::type;
+    struct iterator_type_of<T&> : iterator_type_of<std::remove_reference_t<T>> {};
+
+    template <typename T>
+    struct iterator_type_of<T const> : iterator_type_of<std::remove_const_t<T>> {};
+
+    template <typename T>
+    using iterator_type_of_t = typename iterator_type_of<T>::type;
 
     template <typename T>
     struct appendable_value_type {
