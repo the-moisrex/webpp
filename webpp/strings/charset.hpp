@@ -75,14 +75,28 @@ namespace webpp {
         consteval auto merge(charset<value_type, N1> const& set1,
                              charset<value_type, N2> const& set2,
                              charset<value_type, NN> const&... c_sets) noexcept {
-            super data;
-            auto  write = [&, index = 0UL](auto const& set) constexpr mutable noexcept {
-                stl::copy(set.begin(), set.end(), data.begin() + index);
-                index += set.size();
-            };
-            write(set1);
-            write(set2);
-            (write(c_sets), ...);
+            super       data{};
+            stl::size_t index = 0;
+
+            // Copy elements from set1
+            for (stl::size_t i = 0; i < set1.size(); ++i) {
+                data[index++] = set1[i];
+            }
+
+            // Copy elements from set2
+            for (stl::size_t i = 0; i < set2.size(); ++i) {
+                data[index++] = set2[i];
+            }
+
+            // Copy elements from additional sets
+            (
+              [&] {
+                  for (stl::size_t i = 0; i < c_sets.size(); ++i) {
+                      data[index++] = c_sets[i];
+                  }
+              }(),
+              ...);
+
             return data;
         }
 
