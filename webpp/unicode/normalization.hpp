@@ -985,22 +985,22 @@ namespace webpp::unicode {
         using enum quick_check_state;
         // if they're separately included, this function needs to be modified.
         static_assert(details::embed_quick_check_tables, "Quick Check values are not embedded.");
+        static_assert(normalization_form::NFD != Form || !details::exclude_NFD,
+                      "Data required for QuickCheck is not included in the source code.");
+        static_assert(normalization_form::NFKD != Form || !details::exclude_kompatibility,
+                      "Data required for QuickCheck is not included in the source code.");
+        static_assert(normalization_form::NFKC != Form || !details::exclude_kompatibility,
+                      "Data required for QuickCheck is not included in the source code.");
         if constexpr (normalization_form::NFC == Form) {
             return static_cast<quick_check_state>(
               code & to_underlying(NFC_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFD == Form) {
-            static_assert(!details::exclude_NFD,
-                          "Data required for QuickCheck is not included in the source code.");
             return static_cast<quick_check_state>(
               code & to_underlying(NFD_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFKD == Form) {
-            static_assert(!details::exclude_kompatibility,
-                          "Data required for QuickCheck is not included in the source code.");
             return static_cast<quick_check_state>(
               code & to_underlying(NFKD_NO) & to_underlying(simplify_mask));
         } else if constexpr (normalization_form::NFKC == Form) {
-            static_assert(!details::exclude_kompatibility,
-                          "Data required for QuickCheck is not included in the source code.");
             return static_cast<quick_check_state>(
               code & to_underlying(NFKC_NO) & to_underlying(simplify_mask));
         } else {
