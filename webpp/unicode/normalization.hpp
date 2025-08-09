@@ -992,7 +992,7 @@ namespace webpp::unicode {
         } else if constexpr (norm_form::NFKC == Form) {
             return static_cast<quick_check_state>(code & to_underlying(NFKC_NO) & to_underlying(simplify_mask));
         } else {
-            static_assert_false(bool, "Bad normalization form.");
+            static_assert_false(decltype(Form), "Bad normalization form.");
             return NO;
         }
     }
