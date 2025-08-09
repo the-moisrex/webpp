@@ -1476,7 +1476,7 @@ namespace webpp::unicode {
          * UTF-32 Bidirectional Iterator
          */
         template <stl::bidirectional_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
-        struct utf32_bidi_iter {
+        struct [[nodiscard]] utf32_bidi_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = char32_t;
             using traits            = stl::iterator_traits<Iter>;
@@ -1561,7 +1561,7 @@ namespace webpp::unicode {
          */
         template <stl::bidirectional_iterator Iter, error_handling ErrorHandling>
             requires(UTF32<stl::iter_value_t<Iter>>)
-        struct utf32_bidi_iter<Iter, ErrorHandling> {
+        struct [[nodiscard]] utf32_bidi_iter<Iter, ErrorHandling> {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = stl::iter_value_t<Iter>;
             using traits            = stl::iterator_traits<Iter>;
@@ -1635,7 +1635,7 @@ namespace webpp::unicode {
          * Input Iterator may be UTF-8 or UTF-16.
          */
         template <stl::forward_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
-        struct utf32_forward_iter {
+        struct [[nodiscard]] utf32_forward_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = char32_t;
             using traits            = stl::iterator_traits<Iter>;
@@ -1701,7 +1701,7 @@ namespace webpp::unicode {
          */
         template <stl::forward_iterator Iter, error_handling ErrorHandling>
             requires(UTF32<stl::iter_value_t<Iter>>)
-        struct utf32_forward_iter<Iter, ErrorHandling> {
+        struct [[nodiscard]] utf32_forward_iter<Iter, ErrorHandling> {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = stl::iter_value_t<Iter>;
             using traits            = stl::iterator_traits<Iter>;
