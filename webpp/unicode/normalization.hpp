@@ -113,7 +113,6 @@
 #include "./hangul.hpp"
 #include "./unicode.hpp"
 #include "./utf_reducer.hpp"
-#include "unicode.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -975,24 +974,25 @@ namespace webpp::unicode {
       stl::underlying_type_t<quick_check_state> const code) noexcept {
         using stl::to_underlying;
         using enum quick_check_state;
+        using enum norm_form;
+
         // if they're separately included, this function needs to be modified.
         static_assert(details::embed_quick_check_tables, "Quick Check values are not embedded.");
-        static_assert(norm_form::NFD != Form || !details::exclude_NFD,
+        static_assert(NFD != Form || !details::exclude_NFD,
                       "Data required for QuickCheck is not included in the source code.");
-        static_assert(norm_form::NFKD != Form || !details::exclude_kompatibility,
+        static_assert(NFKD != Form || !details::exclude_kompatibility,
                       "Data required for QuickCheck is not included in the source code.");
-        static_assert(norm_form::NFKC != Form || !details::exclude_kompatibility,
+        static_assert(NFKC != Form || !details::exclude_kompatibility,
                       "Data required for QuickCheck is not included in the source code.");
-        if constexpr (norm_form::NFC == Form) {
+        if constexpr (NFC == Form) {
             return static_cast<quick_check_state>(code & to_underlying(NFC_NO) & to_underlying(simplify_mask));
-        } else if constexpr (norm_form::NFD == Form) {
+        } else if constexpr (NFD == Form) {
             return static_cast<quick_check_state>(code & to_underlying(NFD_NO) & to_underlying(simplify_mask));
-        } else if constexpr (norm_form::NFKD == Form) {
+        } else if constexpr (NFKD == Form) {
             return static_cast<quick_check_state>(code & to_underlying(NFKD_NO) & to_underlying(simplify_mask));
-        } else if constexpr (norm_form::NFKC == Form) {
+        } else if constexpr (NFKC == Form) {
             return static_cast<quick_check_state>(code & to_underlying(NFKC_NO) & to_underlying(simplify_mask));
         } else {
-            static_assert_false(decltype(Form), "Bad normalization form.");
             return NO;
         }
     }
