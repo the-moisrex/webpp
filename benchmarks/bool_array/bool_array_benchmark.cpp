@@ -19,24 +19,22 @@ static constexpr bool is_token(char item) {
 }
 
 static constexpr array<bool, 256> bool_token_char_map{
-  {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, true,  false, true,  true,  true,  true,  true,  false, false, true,  true,  false,
-   true,  true,  false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false,
-   false, false, false, false, false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-   true,  false, false, false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-   true,  true,  true,  false, true,  false, true,  false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-   false}
+  {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, true,  false, true,  true,  true,  true,  true,  false, false, true,  true,  false, true,  true,  false,
+   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false, false, false, false,
+   false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false, true,  true,
+   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+   true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, true,  false, true,  false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+   false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}
 };
 
 static constexpr bool bool_is_token(char item) {

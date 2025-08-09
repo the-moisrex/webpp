@@ -157,8 +157,7 @@ namespace webpp::modp_b64 {
      *
      * todo: this function can be "constexpr"
      */
-    [[nodiscard]] static inline std::size_t
-    encode(char* dest, char const* str, std::size_t const len) noexcept {
+    [[nodiscard]] static inline std::size_t encode(char* dest, char const* str, std::size_t const len) noexcept {
         std::size_t i = 0;
         auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
@@ -282,12 +281,12 @@ namespace webpp::modp_b64 {
                     break;
                 case 2:
                     x  = d3[y >> 24] * 64 + d3[(y >> 16) & 0xff];
-                    *p = (std::uint8_t)(x >> 4);
+                    *p = (std::uint8_t) (x >> 4);
                     break;
                 default: /* case 3 */
                     x    = (d3[y >> 24] * 64 + d3[(y >> 16) & 0xff]) * 64 + d3[(y >> 8) & 0xff];
-                    *p++ = (std::uint8_t)(x >> 10);
-                    *p   = (std::uint8_t)(x >> 2);
+                    *p++ = (std::uint8_t) (x >> 10);
+                    *p   = (std::uint8_t) (x >> 2);
                     break;
             }
 

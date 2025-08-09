@@ -38,10 +38,10 @@ namespace webpp::http {
     using string_response_body_communicator = traits::string<TraitsType>;
 
     template <Traits TraitsType>
-    using stream_response_body_communicator = stl::shared_ptr<
-      stl::basic_stringstream<traits::char_type<TraitsType>,
-                              stl::char_traits<traits::char_type<TraitsType>>,
-                              traits::allocator_type_of<TraitsType, traits::char_type<TraitsType>>>>;
+    using stream_response_body_communicator =
+      stl::shared_ptr<stl::basic_stringstream<traits::char_type<TraitsType>,
+                                              stl::char_traits<traits::char_type<TraitsType>>,
+                                              traits::allocator_type_of<TraitsType, traits::char_type<TraitsType>>>>;
 
     /**
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
@@ -63,15 +63,13 @@ namespace webpp::http {
 
       public:
         [[nodiscard]] constexpr stl::streamsize write(byte_type const* data, stl::streamsize const count) {
-            this->insert(this->begin(),
-                         data,
+            this->insert(this->begin(), data,
                          data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return count;
         }
 
         [[nodiscard]] constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
-            count =
-              stl::clamp(count, stl::streamsize{0LL}, static_cast<stl::streamsize>(this->size() - index));
+            count = stl::clamp(count, stl::streamsize{0LL}, static_cast<stl::streamsize>(this->size() - index));
             stl::copy_n(this->begin() + static_cast<difference_type>(index), count, data);
             index += static_cast<stl::size_t>(count);
             return count;
@@ -116,16 +114,13 @@ namespace webpp::http {
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
         using stream_type               = typename stream_communicator_type::element_type;
 
-        using byte_type  = stl::byte; // required by CStreamBasedBodyWriter
+        using byte_type  = stl::byte;                                     // required by CStreamBasedBodyWriter
         using value_type = typename string_communicator_type::value_type; // required by the
                                                                           // TextBasedBodyWriter
 
         // the order of types in this variant must match the order of http::communicator_type enum
         using communicator_storage_type =
-          stl::variant<stl::monostate,
-                       string_communicator_type,
-                       cstream_communicator_type,
-                       stream_communicator_type>;
+          stl::variant<stl::monostate, string_communicator_type, cstream_communicator_type, stream_communicator_type>;
 
 
         static_assert(TextBasedBodyCommunicator<string_communicator_type>,
@@ -150,8 +145,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, body_communicator>)
-        explicit constexpr body_communicator(ET&& etraits)
-          : enable_traits<TraitsType>(stl::forward<ET>(etraits)) {}
+        explicit constexpr body_communicator(ET&& etraits) : enable_traits<TraitsType>(stl::forward<ET>(etraits)) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -264,8 +258,7 @@ namespace webpp::http {
 
         constexpr body_reader& operator=(body_reader const& other) {
             if (this != &other) {
-                this->communicator().template emplace<string_communicator_type>(
-                  other.as_string_communicator());
+                this->communicator().template emplace<string_communicator_type>(other.as_string_communicator());
             }
             return *this;
         }
@@ -299,9 +292,7 @@ namespace webpp::http {
             // have but not required at this point, that's why I check if the c-stream communicator
             // supports it or not)
             if constexpr (SizableBody<cstream_communicator_type>) {
-                if (
-                  auto const* cstream_reader = stl::get_if<cstream_communicator_type>(&this->communicator()))
-                {
+                if (auto const* cstream_reader = stl::get_if<cstream_communicator_type>(&this->communicator())) {
                     return cstream_reader->size();
                 }
             }
@@ -505,7 +496,7 @@ namespace webpp::http {
         using string_char_type  = typename string_communicator_type::value_type;
         using cstream_byte_type = typename cstream_communicator_type::byte_type;
 
-        using byte_type  = stl::byte; // required by CStreamBasedBodyWriter
+        using byte_type  = stl::byte;                                     // required by CStreamBasedBodyWriter
         using value_type = typename string_communicator_type::value_type; // required by the
                                                                           // TextBasedBodyWriter
 
@@ -571,8 +562,7 @@ namespace webpp::http {
                 return writer->write(data, count);
             }
             if (auto* string_writer = stl::get_if<string_communicator_type>(&this->communicator())) {
-                string_writer->append(reinterpret_cast<string_char_type const*>(data),
-                                      static_cast<stl::size_t>(count));
+                string_writer->append(reinterpret_cast<string_char_type const*>(data), static_cast<stl::size_t>(count));
                 return count;
             }
             if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {

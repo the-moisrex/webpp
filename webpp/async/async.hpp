@@ -93,8 +93,7 @@ namespace webpp::async {
         /// calls task()
         template <typename T>
             requires(stl::is_invocable_v<T> && !requires(T task) { task.advance(); })
-        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task)
-          noexcept(stl::is_nothrow_invocable_v<T>) {
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task) noexcept(stl::is_nothrow_invocable_v<T>) {
             using return_type = stl::remove_cvref_t<stl::invoke_result_t<T>>;
             if constexpr (stl::same_as<return_type, bool>) {
                 return stl::invoke(stl::forward<T>(task));
@@ -300,8 +299,7 @@ namespace webpp::async {
     namespace details {
         template <typename T>
         concept BasicTask =
-          stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
-          requires(T task1, T task2) {
+          stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> && requires(T task1, T task2) {
               {
                   connect(task1, task2)
               }; // todo: inspect the returned type
@@ -405,11 +403,10 @@ namespace webpp::async {
      * Event loops are supposed to be run inside an Execution Context (a thread-pool or something).
      */
     template <typename T>
-    concept EventLoop =
-      ExecutionContext<T> && requires(T loop, stl::true_type event, stl::false_type lambda) {
-          loop.on(event, lambda);
-          loop.call(event);
-      };
+    concept EventLoop = ExecutionContext<T> && requires(T loop, stl::true_type event, stl::false_type lambda) {
+        loop.on(event, lambda);
+        loop.call(event);
+    };
 
     /**
      * Thread pool class helps to implement a vector/list of threads and push

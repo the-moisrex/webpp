@@ -53,10 +53,9 @@ namespace webpp::strings {
     constexpr auto join(T&&... strs) {
         stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
-        using str_type                = stl::conditional_t<stl::is_void_v<StringType>,
-                                                           stl::remove_cvref_t<typename best_str_t::type>,
-                                                           StringType>;
-        auto const alloc              = [&]() noexcept {
+        using str_type =
+          stl::conditional_t<stl::is_void_v<StringType>, stl::remove_cvref_t<typename best_str_t::type>, StringType>;
+        auto const alloc = [&]() noexcept {
             if constexpr (!stl::is_void_v<StringType>) {
                 return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
             } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
@@ -84,16 +83,11 @@ namespace webpp::strings {
              } else */
              if constexpr (requires { str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
                  str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-             } else if constexpr (requires { str += lexical::cast<str_type>(stl::forward<T>(strs), alloc); })
-             {
+             } else if constexpr (requires { str += lexical::cast<str_type>(stl::forward<T>(strs), alloc); }) {
                  str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
-             } else if constexpr (
-               requires { str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); })
-             {
+             } else if constexpr (requires { str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
                  str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-             } else if constexpr (
-               requires { fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs)); })
-             {
+             } else if constexpr (requires { fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs)); }) {
                  fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
              } else { // unlikely
                  throw stl::invalid_argument("We're not able to append the specified string");
@@ -197,8 +191,8 @@ namespace webpp::strings {
         if constexpr (istl::Collection<C> && !istl::String<C>) {
             using value_type          = typename C::value_type;
             using default_string_type = stl::remove_cvref_t<StringType>;
-            using string_type = stl::conditional_t<istl::String<value_type>, value_type, default_string_type>;
-            using allocator_type = typename string_type::allocator_type;
+            using string_type         = stl::conditional_t<istl::String<value_type>, value_type, default_string_type>;
+            using allocator_type      = typename string_type::allocator_type;
             string_type str{[&vec] {
                 if constexpr (istl::String<value_type>) {
                     if (vec.size()) {
@@ -244,10 +238,7 @@ namespace webpp::strings {
     template <istl::String StringType = stl::string, typename C, typename... SeparatorTypes>
         requires((!istl::Tuple<SeparatorTypes> && ...))
     constexpr auto join_with(StringType& output, C const& vec, SeparatorTypes&&... separators) {
-        return join_with<StringType, C>(
-          output,
-          vec,
-          stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
+        return join_with<StringType, C>(output, vec, stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
     }
 
     // todo: add join_to

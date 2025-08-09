@@ -83,9 +83,8 @@ namespace webpp::http {
             //            }
 
             http_version_view = str.substr(ascii::size(http_prefix) - 1, 3); // 1.1 and 1.0 are 3 chars
-            if (http_version_view != "1.0" && http_version_view != "1.1")
-            {               // todo: add 2.0 and 0.9 and others as well
-                return 505; // HTTP Version Not Supported
+            if (http_version_view != "1.0" && http_version_view != "1.1") {  // todo: add 2.0 and 0.9 and others as well
+                return 505;                                                  // HTTP Version Not Supported
             }
 
             // str.remove_prefix(CRLF + 2); // move the string_view to the next line

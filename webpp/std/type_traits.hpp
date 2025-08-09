@@ -124,8 +124,7 @@ namespace webpp::istl {
     template <stl::size_t Index, typename First, typename... T>
     [[nodiscard]] constexpr auto nth_of(First&& first, T&&... objs) noexcept {
         static_assert(Index < (sizeof...(T) + 1), "The specified Index is out of range");
-        return ((details::nth_of<Index, First>{.value = stl::forward<First>(first)}) | ... |
-                stl::forward<T>(objs))
+        return ((details::nth_of<Index, First>{.value = stl::forward<First>(first)}) | ... | stl::forward<T>(objs))
           .value;
     }
 
@@ -246,11 +245,7 @@ namespace webpp::istl {
         template <typename... T>
         struct fake_tuple {};
 
-        template <template <typename...> typename T,
-                  typename OldType,
-                  typename NewType,
-                  typename T1,
-                  typename T2>
+        template <template <typename...> typename T, typename OldType, typename NewType, typename T1, typename T2>
         struct param_replacer;
 
         // recursive case (move from T1 tuple to T2 tuple if it's not a match)
@@ -270,8 +265,7 @@ namespace webpp::istl {
                   typename... Heads,
                   typename... Tails>
         struct param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<OldType, Tails...>>
-          : public param_replacer<T, OldType, NewType, fake_tuple<Heads..., NewType>, fake_tuple<Tails...>> {
-        };
+          : public param_replacer<T, OldType, NewType, fake_tuple<Heads..., NewType>, fake_tuple<Tails...>> {};
 
         template <template <typename...> typename T, typename OldType, typename NewType, typename... Heads>
         struct param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<>> {
@@ -297,8 +291,7 @@ namespace webpp::istl {
                   typename This,
                   typename... Tails>
         struct templated_param_replacer<T, OldType, NewType, fake_tuple<Heads...>, fake_tuple<This, Tails...>>
-          : templated_param_replacer<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {
-        };
+          : templated_param_replacer<T, OldType, NewType, fake_tuple<Heads..., This>, fake_tuple<Tails...>> {};
 
         // base case (found the old type)
         template <template <typename...> typename T,
@@ -330,51 +323,42 @@ namespace webpp::istl {
 
 
 
-        template <template <typename...> typename T,
-                  template <typename> typename Replacer,
-                  typename T1,
-                  typename T2>
+        template <template <typename...> typename T, template <typename> typename Replacer, typename T1, typename T2>
         struct parameter_replacer;
 
 // NOLINTBEGIN(bugprone-macro-parentheses)
-#define WEBPP_REMOVE_CVREF(CVREF)                                                                           \
-    template <template <typename...> typename T,                                                            \
-              template <typename> typename Replacer,                                                        \
-              typename... Heads,                                                                            \
-              typename This,                                                                                \
-              typename... Tails>                                                                            \
-    struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<This CVREF, Tails...>>          \
-      : parameter_replacer<                                                                                 \
-          T,                                                                                                \
-          Replacer,                                                                                         \
-          fake_tuple<Heads...,                                                                              \
-                     stl::conditional_t<Replacer<This>::value, typename Replacer<This>::type, This> CVREF>, \
-          fake_tuple<Tails...>> {};                                                                         \
-                                                                                                            \
-                                                                                                            \
-    template <template <typename...> typename T,                                                            \
-              template <typename> typename Replacer,                                                        \
-              typename... Heads,                                                                            \
-              template <typename...> typename This,                                                         \
-              typename... Tails,                                                                            \
-              typename... ThisArgs>                                                                         \
-    struct parameter_replacer<T,                                                                            \
-                              Replacer,                                                                     \
-                              fake_tuple<Heads...>,                                                         \
-                              fake_tuple<This<ThisArgs...> CVREF, Tails...>>                                \
-      : parameter_replacer<                                                                                 \
-          T,                                                                                                \
-          Replacer,                                                                                         \
-          fake_tuple<                                                                                       \
-            Heads...,                                                                                       \
-            stl::conditional_t<                                                                             \
-              Replacer<typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>:: \
-                         type>::value,                                                                      \
-              typename Replacer<                                                                            \
-                typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>:: \
-                type,                                                                                       \
-              typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>     \
-              CVREF>,                                                                                       \
+#define WEBPP_REMOVE_CVREF(CVREF)                                                                                     \
+    template <template <typename...> typename T,                                                                      \
+              template <typename> typename Replacer,                                                                  \
+              typename... Heads,                                                                                      \
+              typename This,                                                                                          \
+              typename... Tails>                                                                                      \
+    struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<This CVREF, Tails...>>                    \
+      : parameter_replacer<                                                                                           \
+          T,                                                                                                          \
+          Replacer,                                                                                                   \
+          fake_tuple<Heads..., stl::conditional_t<Replacer<This>::value, typename Replacer<This>::type, This> CVREF>, \
+          fake_tuple<Tails...>> {};                                                                                   \
+                                                                                                                      \
+                                                                                                                      \
+    template <template <typename...> typename T,                                                                      \
+              template <typename> typename Replacer,                                                                  \
+              typename... Heads,                                                                                      \
+              template <typename...> typename This,                                                                   \
+              typename... Tails,                                                                                      \
+              typename... ThisArgs>                                                                                   \
+    struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<This<ThisArgs...> CVREF, Tails...>>       \
+      : parameter_replacer<                                                                                           \
+          T,                                                                                                          \
+          Replacer,                                                                                                   \
+          fake_tuple<                                                                                                 \
+            Heads...,                                                                                                 \
+            stl::conditional_t<                                                                                       \
+              Replacer<                                                                                               \
+                typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>::value,     \
+              typename Replacer<                                                                                      \
+                typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type>::type,      \
+              typename parameter_replacer<This, Replacer, fake_tuple<>, fake_tuple<ThisArgs...>>::type> CVREF>,       \
           fake_tuple<Tails...>> {};
 
 
@@ -396,8 +380,8 @@ namespace webpp::istl {
 
         template <template <typename...> typename T, template <typename> typename Replacer, typename... Heads>
         struct parameter_replacer<T, Replacer, fake_tuple<Heads...>, fake_tuple<>> {
-            using type = stl::
-              conditional_t<Replacer<T<Heads...>>::value, typename Replacer<T<Heads...>>::type, T<Heads...>>;
+            using type =
+              stl::conditional_t<Replacer<T<Heads...>>::value, typename Replacer<T<Heads...>>::type, T<Heads...>>;
         };
 
 
@@ -415,9 +399,7 @@ namespace webpp::istl {
         };
 
 
-        template <typename T,
-                  template <typename...> typename OldType,
-                  template <typename...> typename NewType>
+        template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
         struct change_templated_parameter;
 
         template <template <typename...> typename T,
@@ -426,8 +408,8 @@ namespace webpp::istl {
                   typename... Types>
         struct change_templated_parameter<T<Types...>, OldType, NewType> {
             using the_type = T<Types...>;
-            using type     = typename details::
-              templated_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
+            using type =
+              typename details::templated_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
         };
 
         ////////////////////////////// replace_parameters //////////////////////////////
@@ -469,25 +451,19 @@ namespace webpp::istl {
 
         ////////////////////////////// recursively_change_templated_parameter //////////////////////////////
 
-        template <template <typename...> typename OldType,
-                  template <typename...> typename NewType,
-                  typename TT>
+        template <template <typename...> typename OldType, template <typename...> typename NewType, typename TT>
         struct recursively_change_templated_parameter_replacer {
             using type                  = void;
             static constexpr bool value = false;
         };
 
-        template <template <typename...> typename OldType,
-                  template <typename...> typename NewType,
-                  typename... Args>
+        template <template <typename...> typename OldType, template <typename...> typename NewType, typename... Args>
         struct recursively_change_templated_parameter_replacer<OldType, NewType, OldType<Args...>> {
             using type                  = NewType<Args...>;
             static constexpr bool value = true;
         };
 
-        template <typename T,
-                  template <typename...> typename OldType,
-                  template <typename...> typename NewType>
+        template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
         struct recursively_change_templated_parameter;
 
         template <template <typename...> typename T,
@@ -497,8 +473,8 @@ namespace webpp::istl {
         struct recursively_change_templated_parameter<T<Types...>, OldType, NewType> {
             template <typename TT>
             struct replacer {
-                using result = recursively_change_templated_parameter_replacer<OldType, NewType, TT>;
-                using type   = typename result::type;
+                using result                = recursively_change_templated_parameter_replacer<OldType, NewType, TT>;
+                using type                  = typename result::type;
                 static constexpr bool value = result::value;
             };
 
@@ -520,15 +496,13 @@ namespace webpp::istl {
      * fixme: doesn't support CVREF
      */
     template <typename T, template <typename...> typename OldType, template <typename...> typename NewType>
-    using replace_templated_parameter =
-      typename details::change_templated_parameter<T, OldType, NewType>::type;
+    using replace_templated_parameter = typename details::change_templated_parameter<T, OldType, NewType>::type;
 
     /**
      * Replace a type parameter in a tuple-like from OldType to NewType recursively
      */
     template <typename T, typename OldType, typename NewType>
-    using recursively_replace_parameter =
-      typename details::recursively_change_parameter<T, OldType, NewType>::type;
+    using recursively_replace_parameter = typename details::recursively_change_parameter<T, OldType, NewType>::type;
 
     /**
      * Replace a templated parameter in a tuple-like from OldType to NewType recursively
@@ -560,8 +534,8 @@ namespace webpp::istl {
 
     /// class tuple_size
     template <template <typename...> typename TupleT, typename... Elements>
-    struct parameter_count_type<TupleT<Elements...>>
-      : public stl::integral_constant<stl::size_t, sizeof...(Elements)> {};
+    struct parameter_count_type<TupleT<Elements...>> : public stl::integral_constant<stl::size_t, sizeof...(Elements)> {
+    };
 
     template <typename T>
     static constexpr stl::size_t parameter_count = parameter_count_type<stl::remove_cvref_t<T>>::value;
@@ -672,9 +646,7 @@ namespace webpp::istl {
           : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
 
         // We're at the end of the line, no Heads left to check
-        template <template <typename...> typename Concept,
-                  typename... Tails,
-                  template <typename...> typename TupleType>
+        template <template <typename...> typename Concept, typename... Tails, template <typename...> typename TupleType>
         struct filter_parameters_impl<Concept, TupleType<>, TupleType<Tails...>, TupleType> {
             using type = TupleType<Tails...>;
         };
@@ -694,9 +666,7 @@ namespace webpp::istl {
     template <template <typename...> typename Concept, typename Tup>
     struct filter_parameters;
 
-    template <template <typename...> typename Concept,
-              typename... Types,
-              template <typename...> typename TupleType>
+    template <template <typename...> typename Concept, typename... Types, template <typename...> typename TupleType>
     struct filter_parameters<Concept, TupleType<Types...>>
       : public details::filter_parameters_impl<Concept, TupleType<Types...>, TupleType<>, TupleType> {};
 
@@ -768,8 +738,7 @@ namespace webpp::istl {
             }
 
             template <typename Tag>
-            constexpr tag operator|(
-              [[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
+            constexpr tag operator|([[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
                 return {};
             }
         };
@@ -786,8 +755,7 @@ namespace webpp::istl {
 
         // replace last type
         template <template <typename...> typename Tt, typename... Replacements>
-        using replace =
-          typename decltype((... | tag<T>{}))::rest::template replace_template<Tt, Replacements...>;
+        using replace = typename decltype((... | tag<T>{}))::rest::template replace_template<Tt, Replacements...>;
 
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
@@ -799,24 +767,19 @@ namespace webpp::istl {
 
         // remove the last types ao there's only N types in the tuple
         template <template <typename...> typename Tt, stl::size_t N>
-        using remove_limit =
-          typename decltype((... | tag<T, fake_tup<>, N>{}))::all::template replace_template<Tt>;
+        using remove_limit = typename decltype((... | tag<T, fake_tup<>, N>{}))::all::template replace_template<Tt>;
 
         // remove the last type if
         template <template <typename...> typename Tt, template <typename> typename Condition>
         using remove_if = stl::conditional_t<Condition<type>::value, remove<Tt>, Tt<T...>>;
 
         // replace last type if
-        template <template <typename...> typename Tt,
-                  template <typename> typename Condition,
-                  typename... Replacements>
+        template <template <typename...> typename Tt, template <typename> typename Condition, typename... Replacements>
         using replace_if = stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T...>>;
 
 
         // replace if exists, add if it doesn't
-        template <template <typename...> typename Tt,
-                  template <typename> typename Condition,
-                  typename... Replacements>
+        template <template <typename...> typename Tt, template <typename> typename Condition, typename... Replacements>
         using put_if =
           stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T..., Replacements...>>;
     };
@@ -846,16 +809,12 @@ namespace webpp::istl {
         using replace = Tt<Replacements...>;
 
         // replace last type if
-        template <template <typename...> typename Tt,
-                  template <typename> typename Condition,
-                  typename... Replacements>
+        template <template <typename...> typename Tt, template <typename> typename Condition, typename... Replacements>
         using replace_if = stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<>>;
 
 
         // replace if exists, add if it doesn't
-        template <template <typename...> typename Tt,
-                  template <typename> typename Condition,
-                  typename... Replacements>
+        template <template <typename...> typename Tt, template <typename> typename Condition, typename... Replacements>
         using put_if = Tt<Replacements...>;
     };
 
@@ -934,9 +893,8 @@ namespace webpp::istl {
         template <template <typename...> typename TupleT, typename First, typename... U>
         struct unique_types<TupleT<First, U...>> {
             using the_rest = typename unique_types<TupleT<U...>>::type;
-            using type     = stl::conditional_t<((!stl::is_same_v<First, U>) && ...),
-                                                typename prepend<the_rest, First>::type,
-                                                the_rest>;
+            using type     = stl::
+              conditional_t<((!stl::is_same_v<First, U>) && ...), typename prepend<the_rest, First>::type, the_rest>;
         };
 
         // the end condition
@@ -998,26 +956,17 @@ namespace webpp::istl {
     } // namespace details
 
     // Repeat Template Type
-    template <stl::size_t N,
-              typename TheType,
-              template <typename...> typename TemplateType,
-              typename... FirstTypes>
+    template <stl::size_t N, typename TheType, template <typename...> typename TemplateType, typename... FirstTypes>
     using repeat_type = details::repeat_type<TemplateType<FirstTypes...>, TheType, N>;
 
-    template <stl::size_t N,
-              typename TheType,
-              template <typename...> typename TemplateType,
-              typename... FirstTypes>
+    template <stl::size_t N, typename TheType, template <typename...> typename TemplateType, typename... FirstTypes>
     using repeat_type_t = typename repeat_type<N, TheType, TemplateType, FirstTypes...>::type;
 
     namespace details {
         /**
          * Get a list of all indexes that `Evaluator<T>::value` is true
          */
-        template <template <typename> typename Evaluator,
-                  stl::size_t From,
-                  typename TypeList,
-                  stl::size_t... Indexes>
+        template <template <typename> typename Evaluator, stl::size_t From, typename TypeList, stl::size_t... Indexes>
         struct indexes_if;
 
         // No more
@@ -1049,9 +998,7 @@ namespace webpp::istl {
         template <template <typename> typename Evaluator, typename T>
         struct indexes_if_of;
 
-        template <template <typename> typename Evaluator,
-                  template <typename...> typename Templ,
-                  typename... T>
+        template <template <typename> typename Evaluator, template <typename...> typename Templ, typename... T>
         struct indexes_if_of<Evaluator, Templ<T...>> : details::indexes_if<Evaluator, 0, type_list<T...>> {};
 
     } // namespace details
@@ -1072,8 +1019,7 @@ namespace webpp::istl {
 
     // still looking
     template <typename T, typename F, typename... R>
-    struct index_of_type<T, F, R...>
-      : stl::integral_constant<stl::size_t, 1 + index_of_type<T, R...>::value> {};
+    struct index_of_type<T, F, R...> : stl::integral_constant<stl::size_t, 1 + index_of_type<T, R...>::value> {};
 
 
 
@@ -1086,17 +1032,14 @@ namespace webpp::istl {
 
     // still looking
     template <auto T, auto F, auto... R>
-    struct index_of_item<T, F, R...>
-      : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
+    struct index_of_item<T, F, R...> : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
 
 
     template <typename T1, typename... T>
     struct integer_sequence_cat;
 
     template <typename Type, Type... I1, Type... I2, typename... Rest>
-    struct integer_sequence_cat<stl::integer_sequence<Type, I1...>,
-                                stl::integer_sequence<Type, I2...>,
-                                Rest...>
+    struct integer_sequence_cat<stl::integer_sequence<Type, I1...>, stl::integer_sequence<Type, I2...>, Rest...>
       : integer_sequence_cat<stl::integer_sequence<Type, I1..., I2...>, Rest...> {};
 
     template <typename Type, Type... I>
@@ -1161,8 +1104,7 @@ namespace webpp::istl {
 
     // rotate args once
     template <typename Callable, typename Arg1, typename... Args>
-        requires(
-          invocable_inorder<Callable, Args..., Arg1>::value && !invocable_inorder<Callable, Args...>::value)
+        requires(invocable_inorder<Callable, Args..., Arg1>::value && !invocable_inorder<Callable, Args...>::value)
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args..., Arg1> {
         using parent_type = invocable_inorder<Callable, Args..., Arg1>;
 
@@ -1177,8 +1119,7 @@ namespace webpp::istl {
     // switch first and second args
     template <typename Callable, typename Arg1, typename Arg2, typename... Args>
         requires(invocable_inorder<Callable, Arg2, Arg1, Args...>::value)
-    struct invocable_inorder<Callable, Arg1, Arg2, Args...>
-      : invocable_inorder<Callable, Arg2, Arg1, Args...> {
+    struct invocable_inorder<Callable, Arg1, Arg2, Args...> : invocable_inorder<Callable, Arg2, Arg1, Args...> {
         using parent_type = invocable_inorder<Callable, Arg2, Arg1, Args...>;
 
         static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args)
@@ -1197,8 +1138,7 @@ namespace webpp::istl {
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args...> {
         using parent_type = invocable_inorder<Callable, Args...>;
 
-        static constexpr decltype(auto) call(Callable callable, Arg1, Args... args)
-          noexcept(parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1, Args... args) noexcept(parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable), stl::forward<Args>(args)...);
         }
     };

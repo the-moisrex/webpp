@@ -43,7 +43,7 @@ namespace webpp::uri::idna {
     template <uri_parsing_options Options, istl::String StrT = stl::string, typename Iter>
     static constexpr domain2ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
         using enum domain2ascii_status;
-        using unicode::normalization_form;
+        using unicode::norm_form;
 
         auto const status = unicode::idna::to_ascii(spos, send, out);
 

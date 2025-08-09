@@ -109,22 +109,19 @@ namespace webpp::http {
             fields_type view;
 
           public:
-            constexpr dynamic_header_fields_provider(
-              dynamic_header_fields_provider const&) noexcept                                   = default;
-            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider&&) noexcept = default;
-            constexpr ~dynamic_header_fields_provider() noexcept                                = default;
+            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider const&) noexcept = default;
+            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider&&) noexcept      = default;
+            constexpr ~dynamic_header_fields_provider() noexcept                                     = default;
             constexpr dynamic_header_fields_provider& operator=(
-              dynamic_header_fields_provider const&) noexcept = default;
-            constexpr dynamic_header_fields_provider& operator=(
-              dynamic_header_fields_provider&&) noexcept = default;
+              dynamic_header_fields_provider const&) noexcept                                              = default;
+            constexpr dynamic_header_fields_provider& operator=(dynamic_header_fields_provider&&) noexcept = default;
 
             template <typename ReqType>
                 requires(HTTPRequestViewifiable<traits_type, ReqType>)
             explicit constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
               : dynamic_header_fields_provider{inp_req.headers.as_view()} {}
 
-            explicit constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept
-              : view{inp_fields} {}
+            explicit constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
 
             [[nodiscard]] constexpr auto begin() const noexcept {
                 return view.begin();

@@ -125,8 +125,7 @@ namespace webpp {
             return str1;
         }
 
-        static constexpr char_type*
-        assign(char_type* str, stl::size_t const count, char_type inp_ch) noexcept {
+        static constexpr char_type* assign(char_type* str, stl::size_t const count, char_type inp_ch) noexcept {
             // NB: Inline stl::fill_n so no recursive dependencies.
             stl::fill_n(str, count, inp_ch);
             return str;

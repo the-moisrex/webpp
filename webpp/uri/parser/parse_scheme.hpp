@@ -413,8 +413,7 @@ namespace webpp::uri {
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
 
-        webpp_static_constexpr auto alnum_plus =
-          details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
+        webpp_static_constexpr auto alnum_plus = details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
 
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
@@ -468,8 +467,7 @@ namespace webpp::uri {
                 case ':':
                     break;
                 [[unlikely]] case '\0':
-                    set_error(ctx.status,
-                              Options.eof_is_valid ? scheme_ended_unexpectedly : invalid_scheme_character);
+                    set_error(ctx.status, Options.eof_is_valid ? scheme_ended_unexpectedly : invalid_scheme_character);
                     return;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':

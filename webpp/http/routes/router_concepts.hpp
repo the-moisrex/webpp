@@ -30,8 +30,7 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept RouteResponse =
-      HTTPResponse<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
+    concept RouteResponse = HTTPResponse<T> || ConvertibleToResponse<T> || Context<T> || stl::same_as<T, bool>;
 
     // C = Context
     template <typename T, typename C>
@@ -117,8 +116,7 @@ namespace webpp::http {
     concept ValveRequiresSetup = requires(RouteType route, Router& router) { route.setup(router); };
 
     template <typename Callable, typename RouterType>
-    static constexpr void setup_route([[maybe_unused]] Callable&&  route,
-                                      [[maybe_unused]] RouterType& router) {
+    static constexpr void setup_route([[maybe_unused]] Callable&& route, [[maybe_unused]] RouterType& router) {
         if constexpr (ValveRequiresSetup<RouterType, Callable>) {
             route.setup(router);
         }

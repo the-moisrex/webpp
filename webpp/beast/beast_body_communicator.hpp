@@ -28,13 +28,12 @@ namespace webpp::beast_proto {
 
         // if you change, remember to sync these types with beast's http_worker's types, I'm not using
         // http_worker_type directly because it's a still an incomplete type at this point.
-        using string_type         = traits::string<traits_type>;
-        using char_allocator_type = traits::string_allocator<traits_type>;
-        using beast_body_type     = string_body_of<string_type>;
-        using beast_request_parser_type =
-          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
-        using request_type = typename beast_request_parser_type::value_type;
-        using request_ptr  = stl::add_pointer_t<request_type>;
+        using string_type               = traits::string<traits_type>;
+        using char_allocator_type       = traits::string_allocator<traits_type>;
+        using beast_body_type           = string_body_of<string_type>;
+        using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
+        using request_type              = typename beast_request_parser_type::value_type;
+        using request_ptr               = stl::add_pointer_t<request_type>;
 
         explicit beast_request_body_communicator(auto&) noexcept {}
 
@@ -46,9 +45,7 @@ namespace webpp::beast_proto {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             stl::size_t const length =
               stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0}, size() - read_position);
-            stl::copy_n(reinterpret_cast<byte_type const*>(request->body().data() + read_position),
-                        length,
-                        data);
+            stl::copy_n(reinterpret_cast<byte_type const*>(request->body().data() + read_position), length, data);
             read_position += length;
             return static_cast<stl::streamsize>(length);
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

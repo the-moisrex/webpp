@@ -73,15 +73,12 @@ namespace webpp::http {
                 return http::status_code::ok;
             }
             if (auto colon = raw_view.find(':'); colon != string_view_type::npos) {
-                if (auto after_spaces = raw_view.find_first_not(OWS, colon + 1);
-                    after_spaces != string_view_type::npos)
+                if (auto after_spaces = raw_view.find_first_not(OWS, colon + 1); after_spaces != string_view_type::npos)
                 {
-                    if (auto CRLF_found = raw_view.find(CRLF, after_spaces + 1);
-                        CRLF_found != string_view_type::npos)
-                    {
-                        header_views.emplace_back(stl::array<string_view_type, 2>{
-                          raw_view.substr(0, colon),
-                          raw_view.substr(after_spaces, CRLF_found - after_spaces)});
+                    if (auto CRLF_found = raw_view.find(CRLF, after_spaces + 1); CRLF_found != string_view_type::npos) {
+                        header_views.emplace_back(
+                          stl::array<string_view_type, 2>{raw_view.substr(0, colon),
+                                                          raw_view.substr(after_spaces, CRLF_found - after_spaces)});
                         return http::status_code::ok; // Good so far
                     }
                 }

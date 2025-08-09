@@ -43,8 +43,7 @@ namespace webpp::http {
         constexpr member_function_valve() noexcept                                        = default;
         constexpr ~member_function_valve() noexcept                                       = default;
 
-        explicit constexpr member_function_valve(member_ptr_type inp_func) noexcept
-          : holder{.mem_ptr = inp_func} {}
+        explicit constexpr member_function_valve(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
 
         using valve_type::operator();
 
@@ -116,12 +115,11 @@ namespace webpp::http {
                 } else {
                     router.logger.error(
                       "DRouter",
-                      fmt::format(
-                        "You have not specified an object with typeid of '{}' in your dynamic router,"
-                        " but you've tried to register a member function pointer of that type in router."
-                        " Try registering your objects before registering the objects in the router"
-                        " to get rid of this error.",
-                        typeid(object_type).name()));
+                      fmt::format("You have not specified an object with typeid of '{}' in your dynamic router,"
+                                  " but you've tried to register a member function pointer of that type in router."
+                                  " Try registering your objects before registering the objects in the router"
+                                  " to get rid of this error.",
+                                  typeid(object_type).name()));
                 }
             }
         }

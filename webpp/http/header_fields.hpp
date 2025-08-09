@@ -167,21 +167,18 @@ namespace webpp::http {
         // using field_allocator_type = traits::allocator_type_of<traits_type, field_type>;
 
       private:
-        using vector_allocator_type =
-          typename stl::allocator_traits<allocator_type>::template rebind_alloc<field_type>;
-        using fields_type = stl::vector<field_type, vector_allocator_type>;
+        using vector_allocator_type = typename stl::allocator_traits<allocator_type>::template rebind_alloc<field_type>;
+        using fields_type           = stl::vector<field_type, vector_allocator_type>;
 
         fields_type fields;
 
       public:
         template <EnabledTraits ET>
             requires(!HTTPHeaderFieldsProvider<ET>)
-        explicit constexpr header_fields_provider(ET& etraits)
-          : fields{get_alloc_for<fields_type>(etraits)} {}
+        explicit constexpr header_fields_provider(ET& etraits) : fields{get_alloc_for<fields_type>(etraits)} {}
 
         template <HTTPHeaderFieldsProvider T>
-            requires(
-              !istl::cvref_as<T, header_fields_provider> && requires(T other) { other.get_allocator(); })
+            requires(!istl::cvref_as<T, header_fields_provider> && requires(T other) { other.get_allocator(); })
         explicit constexpr header_fields_provider(T const& other)
           : fields{other.begin(), other.end(), other.get_allocator()} {}
 
@@ -222,9 +219,8 @@ namespace webpp::http {
             requires(istl::String<string_type> && istl::StringifiableOf<string_type, NameT> &&
                      istl::StringifiableOf<string_type, ValueT>)
         constexpr void emplace(NameT&& name, ValueT value) {
-            fields.emplace_back(
-              istl::stringify_of<string_type>(stl::forward<NameT>(name), get_allocator()),
-              istl::stringify_of<string_type>(stl::forward<ValueT>(value), get_allocator()));
+            fields.emplace_back(istl::stringify_of<string_type>(stl::forward<NameT>(name), get_allocator()),
+                                istl::stringify_of<string_type>(stl::forward<ValueT>(value), get_allocator()));
         }
 
         template <typename NameT, typename ValueT>

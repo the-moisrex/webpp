@@ -129,8 +129,9 @@ namespace webpp::http {
 
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             stl::array<char_type, default_buffer_size> buf;
-            while (stl::streamsize read_size = body.read(reinterpret_cast<cstream_byte_type*>(buf.data()),
-                                                         static_cast<stl::streamsize>(buf.size())))
+            while (
+              stl::streamsize read_size =
+                body.read(reinterpret_cast<cstream_byte_type*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
             {
                 write(buf.data(), read_size);
             }

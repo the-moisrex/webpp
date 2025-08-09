@@ -40,8 +40,7 @@ namespace webpp {
         }
 
         // invalid ipv4
-        constexpr ip_address() noexcept
-          : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
+        constexpr ip_address() noexcept : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <istl::StringViewifiable StrT>
@@ -82,9 +81,8 @@ namespace webpp {
               ipv4{octet1, octet2, octet3, octet4, subnet}
         } {}
 
-        constexpr explicit ip_address(
-          stl::uint32_t const ip,
-          ipv4_octet const    prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        constexpr explicit ip_address(stl::uint32_t const ip,
+                                      ipv4_octet const    prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
               ipv4{ip, prefix}
         } {}
@@ -95,9 +93,8 @@ namespace webpp {
               ipv4{ip_addr, stl::forward<StrT>(subnet)}
         } {}
 
-        explicit constexpr ip_address(
-          ipv4_octets const ip_addr,
-          ipv4_octet const  prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        explicit constexpr ip_address(ipv4_octets const ip_addr,
+                                      ipv4_octet const  prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
               ipv4{ip_addr, prefix}
         } {}

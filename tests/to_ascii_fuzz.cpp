@@ -36,9 +36,9 @@ void to_ascii_fuzz(std::string_view data) {
                                 .UseSTD3ASCIIRules     = true,
                                 .VerifyDnsLength       = true,
                                 .IgnoreInvalidPunycode = true,
-                                .CheckNFC           = false, // todo: enable it after implementation of isNFC
-                                .CheckDotInclusions = true,
-                                .CheckStatusValues  = true}>();
+                                .CheckNFC              = false, // todo: enable it after implementation of isNFC
+                                .CheckDotInclusions    = true,
+                                .CheckStatusValues     = true}>();
 }
 
 register_fuzz(to_ascii_fuzz);

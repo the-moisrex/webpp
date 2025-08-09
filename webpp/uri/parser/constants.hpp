@@ -20,8 +20,8 @@ namespace webpp::uri::details {
     static constexpr auto ALLOWED_CHARACTERS_IN_URI =
       charset(ALPHA<char_type>,
               DIGIT<char_type>,
-              charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
-                                     '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
+              charset<char_type, 20>{
+                ';', ',', '/', '?', ':', '@', '&', '=', '+', '$', '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
     /**
      * This is the character set corresponds to the second part of the "scheme" syntax
      * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -43,8 +43,7 @@ namespace webpp::uri::details {
      * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
      */
     template <istl::CharType char_type>
-    static constexpr auto SUB_DELIMS =
-      charset<char_type, 11>('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
+    static constexpr auto SUB_DELIMS = charset<char_type, 11>('!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=');
 
     /**
      * This is the character set corresponds to the "userinfo" syntax
@@ -99,12 +98,10 @@ namespace webpp::uri::details {
      */
     template <istl::CharType char_type>
     static constexpr auto QUERY_NOT_PCT_ENCODED_WITHOUT_PLUS =
-      charset(UNRESERVED<char_type>,
-              charset('!', '$', '&', '\'', '(', ')', '*', ',', ';', '=', ':', '@', '/', '?'));
+      charset(UNRESERVED<char_type>, charset('!', '$', '&', '\'', '(', ')', '*', ',', ';', '=', ':', '@', '/', '?'));
 
     template <istl::CharType char_type>
-    static constexpr auto LEGAL_PATH_CHARS =
-      charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/'));
+    static constexpr auto LEGAL_PATH_CHARS = charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/'));
 
 
     using ascii_bitmap = bitmap<256U>;

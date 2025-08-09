@@ -97,8 +97,8 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
                     goto the_rest;
                 }
                 auto const new_almost_end = it2end - new_finishline_size;
-                auto       it1_rest = it1 + len + 1; // we found the first one, not it's time for the rest
-                auto       it2_rest = it2 + 1; // we checked the first char above, now it's time for the rest
+                auto       it1_rest       = it1 + len + 1; // we found the first one, not it's time for the rest
+                auto       it2_rest       = it2 + 1; // we checked the first char above, now it's time for the rest
 
                 for (; it1_rest != new_almost_end; it1_rest += simd_size, it2_rest += simd_size) {
                     auto const next_values1_set = simd_type{it1_rest};

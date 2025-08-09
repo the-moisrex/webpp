@@ -67,8 +67,7 @@ namespace webpp::views {
         view_roots_type view_roots; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
         template <typename ET>
-            requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
-                     !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
+            requires(EnabledTraits<stl::remove_cvref_t<ET>> && !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
         explicit constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
           ET&&        et,
           stl::size_t cache_limit = default_cache_limit) noexcept
@@ -136,9 +135,7 @@ namespace webpp::views {
                 if (recursive_search) {
                     fs::recursive_directory_iterator const iter(dir, ec);
                     if (ec) {
-                        this->logger.error(logging_category,
-                                           fmt::format("Cannot read dir {}", dir.string()),
-                                           ec);
+                        this->logger.error(logging_category, fmt::format("Cannot read dir {}", dir.string()), ec);
                         continue;
                     }
                     fs::recursive_directory_iterator       it     = fs::begin(iter);
@@ -252,8 +249,7 @@ namespace webpp::views {
         constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             if (!file) {
-                this->logger.error(logging_category,
-                                   fmt::format("We can't find the specified view {}.", file_request));
+                this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
                 return;
             }
             view_to<ViewType>(out, file.value(), stl::forward<DataType>(data)...);
@@ -278,12 +274,11 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT, typename... DataType>
-            requires(!(sizeof...(DataType) == 1 &&
-                       (stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...)))
+            requires(
+              !(sizeof...(DataType) == 1 && (stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...)))
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, DataType&&... data) {
-            return mustache<StrT>(
-              stl::forward<StrT>(file_request),
-              view::data_view_caster<mustache_data_type>(*this, stl::forward<DataType>(data)...));
+            return mustache<StrT>(stl::forward<StrT>(file_request),
+                                  view::data_view_caster<mustache_data_type>(*this, stl::forward<DataType>(data)...));
         }
 
         template <istl::StringViewifiable StrT>
@@ -308,8 +303,7 @@ namespace webpp::views {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_object<string_type>(*this);
             if (!file) {
-                this->logger.error(logging_category,
-                                   fmt::format("We can't find the specified view {}.", file_request));
+                this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
             auto const ext = file->extension().string();

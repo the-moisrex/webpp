@@ -25,8 +25,8 @@ namespace webpp::http {
      * Checks if the type is a valve type.
      */
     template <typename TraitsType, typename T>
-    concept ValveOf = Traits<TraitsType> &&
-                      (stl::is_invocable_v<T, basic_context<TraitsType>&> || istl::StringViewifiable<T>);
+    concept ValveOf =
+      Traits<TraitsType> && (stl::is_invocable_v<T, basic_context<TraitsType>&> || istl::StringViewifiable<T>);
 
     /// A single valve
     template <typename T>
@@ -200,8 +200,7 @@ namespace webpp::http {
         /// Call the valve, and then set the response if there's any, and then tell me if we should continue
         template <typename C>
             requires istl::cvref_as<C, Callable>
-        [[nodiscard]] static constexpr bool call_set_get(C&& segment, context_type& ctx)
-          noexcept(is_nothrow) {
+        [[nodiscard]] static constexpr bool call_set_get(C&& segment, context_type& ctx) noexcept(is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
                 call(stl::forward<C>(segment), ctx);
                 return true;

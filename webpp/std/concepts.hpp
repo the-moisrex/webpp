@@ -273,8 +273,7 @@ namespace webpp::istl {
         };
 
         template <typename T>
-        struct is_implicitly_default_constructible_safe : is_implicitly_default_constructible_impl<T>::type {
-        };
+        struct is_implicitly_default_constructible_safe : is_implicitly_default_constructible_impl<T>::type {};
 
     } // namespace details
 

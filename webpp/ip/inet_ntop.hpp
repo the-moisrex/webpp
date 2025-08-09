@@ -228,7 +228,7 @@ namespace webpp {
                 }
             } else {
                 // Calculate leading zero nibbles using bit scan operations
-                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const clz                  = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
                 int const leading_zero_nibbles = clz / 4;
                 len                            = 4 - leading_zero_nibbles;
 
@@ -249,8 +249,7 @@ namespace webpp {
             int const groups_before = longest_index;
             int const groups_after  = 8 - (longest_index + longest_count);
             int const sum_before    = prefix_sum[static_cast<stl::size_t>(longest_index)];
-            int const sum_after =
-              prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
+            int const sum_after = prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
             int const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
             int const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
             total_length            = sum_before + sum_after + colons_before + colons_after + 2;

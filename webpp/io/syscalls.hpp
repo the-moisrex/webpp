@@ -26,8 +26,7 @@ namespace webpp::io::inline syscall_operations {
         constexpr decltype(auto) operator()(SyscallOperation, Sched& sched, Args&&... args) const
           noexcept(stl::nothrow_tag_invocable<SyscallOperation, Sched&, Args...>) {
             // a nice error message
-            static_assert(stl::tag_invocable<SyscallOperation, Sched&, Args...>,
-                          "IO operation is not implemented.");
+            static_assert(stl::tag_invocable<SyscallOperation, Sched&, Args...>, "IO operation is not implemented.");
 
             return stl::tag_invoke(SyscallOperation{}, sched, stl::forward<Args>(args)...);
         }

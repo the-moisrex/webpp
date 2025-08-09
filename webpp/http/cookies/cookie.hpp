@@ -103,9 +103,9 @@ namespace webpp::http {
      */
     namespace details {
 
-        static constexpr auto VALID_COOKIE_NAME = charset(
-          ALPHA_DIGIT<>,
-          charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
+        static constexpr auto VALID_COOKIE_NAME =
+          charset(ALPHA_DIGIT<>,
+                  charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
         static constexpr auto VALID_COOKIE_VALUE =
           charset(ALPHA_DIGIT<char>,
@@ -118,9 +118,7 @@ namespace webpp::http {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             ascii::ltrim(str);
-            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
-                equal_pos != string_view_type::npos)
-            {
+            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data()); equal_pos != string_view_type::npos) {
                 // setting the name we found it
                 _name = name_t{str.substr(0, equal_pos)};
 
@@ -135,8 +133,7 @@ namespace webpp::http {
 
         // todo: use tokenizer instead of these shenanigans
         // todo: In the benchmarks, there's an implementation of this that uses the string_tokenizer
-        constexpr void
-        parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
+        constexpr void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
 
             parse_SE_name(str, _name, _valid);

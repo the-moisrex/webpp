@@ -38,10 +38,9 @@ namespace ada::scheme {
     namespace details {
         // for use with is_special and get_special_port
         // Spaces, if present, are removed from URL.
-        constexpr std::string_view is_special_list[] =
-          {"http", " ", "https", "ws", "ftp", "wss", "file", " "};
+        constexpr std::string_view is_special_list[] = {"http", " ", "https", "ws", "ftp", "wss", "file", " "};
         // for use with get_special_port
-        constexpr uint16_t special_ports[] = {80, 0, 443, 80, 21, 443, 0, 0};
+        constexpr uint16_t special_ports[]           = {80, 0, 443, 80, 21, 443, 0, 0};
     } // namespace details
 
     constexpr bool is_special(std::string_view scheme) {

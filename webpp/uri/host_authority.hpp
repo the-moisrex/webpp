@@ -93,9 +93,7 @@ namespace webpp::uri {
                 // This assumption will be overridden if we find a right-bracket.
                 auto ip_addr = hostname;
                 ip_addr.remove_prefix(1);
-                if (auto const ip_end = stl::find(ip_addr.rbegin(), ip_addr.rend(), ']');
-                    ip_end != ip_addr.rend())
-                {
+                if (auto const ip_end = stl::find(ip_addr.rbegin(), ip_addr.rend(), ']'); ip_end != ip_addr.rend()) {
                     ip_addr.remove_suffix(static_cast<stl::size_t>(ip_end - ip_addr.rbegin()) + 1);
                     endpoint.emplace<webpp::ipv6>(ip_addr); // parse and set ipv6
                     status_code            = host_status::valid;
@@ -278,8 +276,7 @@ namespace webpp::uri {
             return {default_domain};
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(
-          stl::uint16_t const rhs_port) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::uint16_t const rhs_port) const noexcept {
             return port() <=> rhs_port;
         }
 
@@ -287,8 +284,7 @@ namespace webpp::uri {
             return *this <=> host_authority{rhs_host};
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(
-          host_authority const& rhs_host) const = default;
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(host_authority const& rhs_host) const = default;
 
         [[nodiscard]] explicit constexpr operator webpp::ipv4() const noexcept {
             return this->ipv4();

@@ -27,9 +27,7 @@ namespace webpp::uri::details {
         }
     }
 
-    template <uri_parsing_options Options   = uri_parsing_options{},
-              bool                IsSpecial = true,
-              ParsingURIContext   CtxT>
+    template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = true, ParsingURIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using details::ascii_bitmap;
@@ -41,16 +39,15 @@ namespace webpp::uri::details {
 
         webpp_static_constexpr ascii_bitmap forbidden_hosts{
           ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
-                                  : FORBIDDEN_HOST_CODE_POINTS,
+            : FORBIDDEN_HOST_CODE_POINTS,
           '%'
         };
 
 
         webpp_static_constexpr ascii_bitmap interesting_characters =
-          !IsSpecial
-            ? forbidden_hosts
-            : (ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
-                                       : forbidden_domains);
+          !IsSpecial ? forbidden_hosts
+                     : (ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
+                                                : forbidden_domains);
 
         auto const authority_begin = ctx.pos;
         auto       host_begin      = authority_begin;
@@ -98,8 +95,7 @@ namespace webpp::uri::details {
                         set_valid(ctx.status, valid_port);
                     } else if constexpr (!Options.parse_port) {
                         // it must not be a port or a credential, so it must be invalid?
-                        set_error(ctx.status,
-                                  IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                        set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
                     } else {
                         // the first colon is the start of the password section
                         if (colon_pos == ctx.end) {
@@ -201,8 +197,7 @@ namespace webpp::uri::details {
                         ignore_character(ctx);
                         continue;
                     } else {
-                        set_error(ctx.status,
-                                  IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                        set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
                         return;
                     }
                 case '@':
@@ -236,9 +231,7 @@ namespace webpp::uri::details {
                         break;
                     }
                     [[fallthrough]];
-                default:
-                    set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
-                    return;
+                default: set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point); return;
             }
             if (must_contain_credentials) {
                 return;

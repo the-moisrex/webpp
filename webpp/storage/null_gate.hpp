@@ -30,12 +30,10 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            constexpr void set([[maybe_unused]] K&&          key,
-                               [[maybe_unused]] V&&          value,
-                               [[maybe_unused]] options_type opts = {}) {}
+            constexpr void
+            set([[maybe_unused]] K&& key, [[maybe_unused]] V&& value, [[maybe_unused]] options_type opts = {}) {}
 
-            constexpr void set_options([[maybe_unused]] key_type const& key,
-                                       [[maybe_unused]] options_type    opts) {}
+            constexpr void set_options([[maybe_unused]] key_type const& key, [[maybe_unused]] options_type opts) {}
 
             template <typename K>
             constexpr void erase([[maybe_unused]] K&& input) {}

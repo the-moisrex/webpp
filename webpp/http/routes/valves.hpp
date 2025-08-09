@@ -30,12 +30,10 @@ namespace webpp::http {
                 if constexpr (istl::template_of_v<forward_valve, callable_type>) {
                     // Prevent double forwarding (flatten the type):
                     //   forward_valve<C2..., forward_valve<C...>>
-                    return rebind_self<forward_valve>(
-                      stl::tuple_cat(routes().as_tuple(), callable.as_tuple()));
+                    return rebind_self<forward_valve>(stl::tuple_cat(routes().as_tuple(), callable.as_tuple()));
                 } else { // append the segment
                     return rebind_self<forward_valve>(
-                      stl::tuple_cat(routes().as_tuple(),
-                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+                      stl::tuple_cat(routes().as_tuple(), stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
                 }
                 // } else if constexpr (is_routes_of<segment_valve>) {
                 //     // forward<segment, ...> = segment<forward, ...>
@@ -127,8 +125,7 @@ namespace webpp::http {
                 if constexpr (istl::template_of_v<segment_valve, seg_type>) {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
-                    return rebind_self<segment_valve>(
-                      stl::tuple_cat(routes().as_tuple(), inp_segment.as_tuple()));
+                    return rebind_self<segment_valve>(stl::tuple_cat(routes().as_tuple(), inp_segment.as_tuple()));
                 } else { // append the segment
                     return rebind_self<segment_valve>(
                       stl::tuple_cat(routes().as_tuple(),
@@ -162,13 +159,11 @@ namespace webpp::http {
         // Convert Custom Contexts into dynamic context
         // For compatibility with the static router
         template <Context CtxT>
-            requires(
-              !stl::is_void_v<Self> &&
-              requires {
-                  typename stl::remove_cvref_t<CtxT>::traits_type;
-                  requires !istl::cvref_as<CtxT,
-                                           basic_context<typename stl::remove_cvref_t<CtxT>::traits_type>>;
-              })
+            requires(!stl::is_void_v<Self> &&
+                     requires {
+                         typename stl::remove_cvref_t<CtxT>::traits_type;
+                         requires !istl::cvref_as<CtxT, basic_context<typename stl::remove_cvref_t<CtxT>::traits_type>>;
+                     })
         [[nodiscard]] constexpr auto operator()(CtxT&& inp_ctx) {
             using traits_type  = typename stl::remove_cvref_t<CtxT>::traits_type;
             using context_type = basic_context<traits_type>;
@@ -234,10 +229,9 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
             using valve_type = Templ<T..., valvified_type<TupT>...>;
             if constexpr (is_self_of<valves_group>) {
-                return self()->replace_route(
-                  ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
-                      return valve_type{valvify(stl::move(stl::get<I>(nexts)))...};
-                  })(stl::index_sequence_for<TupT...>{}));
+                return self()->replace_route(([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
+                    return valve_type{valvify(stl::move(stl::get<I>(nexts)))...};
+                })(stl::index_sequence_for<TupT...>{}));
             } else {
                 return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
                     return valve_type{valvify(stl::move(stl::get<I>(nexts)))...};

@@ -13,9 +13,7 @@ namespace test {
     template <typename CharT>
     [[nodiscard]] constexpr CharT to_lower_copy(CharT inp_char) noexcept {
         constexpr auto diff = static_cast<CharT>('a' - 'A');
-        return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')
-                 ? inp_char + diff
-                 : inp_char;
+        return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z') ? inp_char + diff : inp_char;
     }
 
     template <bool IgnoreSpecialCharacters = true, typename LT, typename RT>

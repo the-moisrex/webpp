@@ -155,8 +155,8 @@ namespace webpp::unicode {
             return NONE;
         }
 
-        auto const chunk         = code_point >> bidi_index::chunk_shift;
-        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::bidi_breakpoint_shift);
+        auto const chunk                      = code_point >> bidi_index::chunk_shift;
+        auto const section_index              = static_cast<stl::uint16_t>(chunk >> details::bidi_breakpoint_shift);
         auto const [starting, ending, offset] = details::bidi_breakpoints[section_index];
         bidi_index const pos =
           chunk < starting || chunk >= ending

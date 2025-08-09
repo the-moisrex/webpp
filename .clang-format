@@ -83,7 +83,7 @@ BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: true
 AllowBreakBeforeNoexceptSpecifier: OnlyWithParen
-ColumnLimit: 110
+ColumnLimit: 120
 CommentPragmas: ((^\s*(todo|TODO|fixme|FIXME|NOLINT|NOLINTBEGIN|NOLINTEND|NOLINTNEXTLINE):.*)|^\s*\/\/)
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 2

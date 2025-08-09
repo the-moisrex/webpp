@@ -124,15 +124,13 @@ namespace webpp {
                 lhs == rhs
             } -> stl::convertible_to<bool>;
         }
-    constexpr bool operator==(ustring_iterator<CPL, CharTL> const& lhs,
-                              ustring_iterator<CPR, CharTR> const& rhs)
+    constexpr bool operator==(ustring_iterator<CPL, CharTL> const& lhs, ustring_iterator<CPR, CharTR> const& rhs)
       noexcept(noexcept(lhs.base() == rhs.base())) {
         return lhs.base() == rhs.base();
     }
 
     template <typename CPL, typename CPR, typename CharTL, typename CharTR>
-    constexpr auto operator<=>(ustring_iterator<CPL, CharTL> const& lhs,
-                               ustring_iterator<CPR, CharTR> const& rhs)
+    constexpr auto operator<=>(ustring_iterator<CPL, CharTL> const& lhs, ustring_iterator<CPR, CharTR> const& rhs)
       noexcept(noexcept(lhs.base() <=> rhs.base())) {
         return lhs.base() <=> rhs.base();
     }

@@ -291,8 +291,7 @@ namespace webpp::stl {
           integral_nonbool<T> || is_int128<T> || same_as<T, max_diff_type> || same_as<T, max_size_type>;
 
         template <typename T>
-        concept is_signed_integer_like =
-          signed_integral<T> || is_signed_int128<T> || same_as<T, max_diff_type>;
+        concept is_signed_integer_like = signed_integral<T> || is_signed_int128<T> || same_as<T, max_diff_type>;
 
         template <class In>
         concept __IndirectlyReadableImpl =
@@ -343,8 +342,8 @@ namespace webpp::stl {
     } && weakly_incrementable<Iter>;
 
     template <typename Sent, typename Iter>
-    concept sentinel_for = semiregular<Sent> && input_or_output_iterator<Iter> &&
-                           details::WeaklyEqualityComparableWith<Sent, Iter>;
+    concept sentinel_for =
+      semiregular<Sent> && input_or_output_iterator<Iter> && details::WeaklyEqualityComparableWith<Sent, Iter>;
 
     template <typename Sent, typename Iter>
     inline constexpr bool disable_sized_sentinel_for = false;
@@ -366,9 +365,9 @@ namespace webpp::stl {
     concept indirectly_writable = requires(_Out&& __o, _Tp&& __t) {
         *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
         *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<iter_reference_t<_Out> const&&>(*__o) = _VSTD::forward<_Tp>(__t); // not required to be
-                                                                                     // equality-preserving
-        const_cast<iter_reference_t<_Out> const&&>(*_VSTD::forward<_Out>(__o)) =
+        const_cast<iter_reference_t<_Out> const &&>(*__o) = _VSTD::forward<_Tp>(__t); // not required to be
+                                                                                      // equality-preserving
+        const_cast<iter_reference_t<_Out> const &&>(*_VSTD::forward<_Out>(__o)) =
           _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
     };
 
@@ -390,33 +389,32 @@ namespace webpp::stl {
 
 
     template <class _Tp, class _Up>
-    concept __partially_ordered_with =
-      requires(__make_const_lvalue_ref<_Tp> __t, __make_const_lvalue_ref<_Up> __u) {
-          {
-              __t < __u
-          } -> details::boolean_testable;
-          {
-              __t > __u
-          } -> details::boolean_testable;
-          {
-              __t <= __u
-          } -> details::boolean_testable;
-          {
-              __t >= __u
-          } -> details::boolean_testable;
-          {
-              __u < __t
-          } -> details::boolean_testable;
-          {
-              __u > __t
-          } -> details::boolean_testable;
-          {
-              __u <= __t
-          } -> details::boolean_testable;
-          {
-              __u >= __t
-          } -> details::boolean_testable;
-      };
+    concept __partially_ordered_with = requires(__make_const_lvalue_ref<_Tp> __t, __make_const_lvalue_ref<_Up> __u) {
+        {
+            __t < __u
+        } -> details::boolean_testable;
+        {
+            __t > __u
+        } -> details::boolean_testable;
+        {
+            __t <= __u
+        } -> details::boolean_testable;
+        {
+            __t >= __u
+        } -> details::boolean_testable;
+        {
+            __u < __t
+        } -> details::boolean_testable;
+        {
+            __u > __t
+        } -> details::boolean_testable;
+        {
+            __u <= __t
+        } -> details::boolean_testable;
+        {
+            __u >= __t
+        } -> details::boolean_testable;
+    };
 
     template <class _Tp>
     concept totally_ordered = equality_comparable<_Tp> && __partially_ordered_with<_Tp, _Tp>;
@@ -430,8 +428,8 @@ namespace webpp::stl {
 
     template <typename Iter>
     concept forward_iterator =
-      input_iterator<Iter> && derived_from<details::iter_concept<Iter>, forward_iterator_tag> &&
-      incrementable<Iter> && sentinel_for<Iter, Iter>;
+      input_iterator<Iter> && derived_from<details::iter_concept<Iter>, forward_iterator_tag> && incrementable<Iter> &&
+      sentinel_for<Iter, Iter>;
 
     template <typename Iter>
     concept bidirectional_iterator =

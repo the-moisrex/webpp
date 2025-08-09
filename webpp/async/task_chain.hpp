@@ -43,8 +43,7 @@ namespace webpp::async {
             requires(stl::is_nothrow_copy_constructible_v<task_type>)
           : task{inp_task} {}
 
-        constexpr dynamic_task& operator=(task_type&& inp_task)
-          noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
+        constexpr dynamic_task& operator=(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
             task = stl::move(inp_task);
             return *this;
         }
@@ -73,8 +72,7 @@ namespace webpp::async {
         task_list_type* tasks;
 
       public:
-        explicit constexpr task_chain_iterator(task_list_type* inp_tasks = nullptr) noexcept
-          : tasks{inp_tasks} {}
+        explicit constexpr task_chain_iterator(task_list_type* inp_tasks = nullptr) noexcept : tasks{inp_tasks} {}
 
         // default implementation for the last two task
         template <Task TaskT1, Task TaskT2>
@@ -139,7 +137,9 @@ namespace webpp::async {
 
       public:
         constexpr task_chain() noexcept = default;
-        explicit constexpr task_chain(tuple_type&& tasks_tup) noexcept : tasks{stl::move(tasks_tup)} {};
+
+        explicit constexpr task_chain(tuple_type&& tasks_tup) noexcept : tasks{stl::move(tasks_tup)} {}
+
         constexpr task_chain(task_chain const&) noexcept            = default;
         constexpr task_chain(task_chain&&) noexcept                 = default;
         constexpr task_chain& operator=(task_chain const&) noexcept = default;
@@ -149,8 +149,7 @@ namespace webpp::async {
 
         template <Task F>
         [[nodiscard]] constexpr auto then(F&& func) && noexcept {
-            return task_chain<T..., F>{
-              stl::tuple_cat(stl::move(tasks), stl::make_tuple(stl::forward<F>(func)))};
+            return task_chain<T..., F>{stl::tuple_cat(stl::move(tasks), stl::make_tuple(stl::forward<F>(func)))};
         }
 
         template <Task F>

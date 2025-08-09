@@ -166,8 +166,7 @@ TEST(DynamicRouter, MuliManglerTest) {
     req.method("GET");
     req.uri("/about");
 
-    EXPECT_EQ(as<std::string>(router(req).body), "<body><body>about page</body></body>")
-      << router.to_string();
+    EXPECT_EQ(as<std::string>(router(req).body), "<body><body>about page</body></body>") << router.to_string();
 }
 
 TEST(DynamicRouter, CacheDeceptionTest) {
@@ -219,9 +218,7 @@ TEST(DynamicRouter, CommonBypassTests) {
     request req{router.get_traits()};
     req.method("GET");
 
-    for (
-      auto const* path_str : {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"})
-    {
+    for (auto const* path_str : {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"}) {
         req.uri(path_str);
         auto parsed_uri = uri::basic_path<stl::string>(path_str);
         parsed_uri.normalize(true);
@@ -469,8 +466,7 @@ struct custom_type {
         return cc;
     }
 
-    friend constexpr custom_callable* tag_invoke([[maybe_unused]] stl::tag_t<valvify> tag,
-                                                 custom_type&                         ct) noexcept {
+    friend constexpr custom_callable* tag_invoke([[maybe_unused]] stl::tag_t<valvify> tag, custom_type& ct) noexcept {
         return ct.get_cc();
     }
 };
@@ -594,8 +590,7 @@ TEST(DynamicRouter, RootRoute) {
     req.uri("/parse-uri?uri=test");
 
     res = router(req);
-    EXPECT_EQ(res.headers.status_code(), status_code::not_found)
-      << stl::to_underlying(res.headers.status_code());
+    EXPECT_EQ(res.headers.status_code(), status_code::not_found) << stl::to_underlying(res.headers.status_code());
 
 
     req.uri("/normal");

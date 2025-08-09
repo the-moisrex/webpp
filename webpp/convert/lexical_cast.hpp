@@ -96,15 +96,12 @@ namespace webpp::lexical {
             } else {
                 static_assert_false(src_t, "We don't know how to convert this type to floating type.");
             }
-        } else if constexpr (
-          requires { Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...}; })
-        {
+        } else if constexpr (requires { Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...}; }) {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-        } else if constexpr (
-          requires {
-              Target{stl::forward<Source>(source),
-                     extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
-          })
+        } else if constexpr (requires {
+                                 Target{stl::forward<Source>(source),
+                                        extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+                             })
         {
             return Target{stl::forward<Source>(source),
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
@@ -127,22 +124,19 @@ namespace webpp::lexical {
                       requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); })
         {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
-        } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> && requires {
-                                 istl::stringify_of<Target>(stl::forward<Source>(source),
-                                                            extract_allocator_or_default(allocs..., source));
-                             })
+        } else if constexpr (
+          istl::StringifiableOfTemplate<Target, src_t> && requires {
+              istl::stringify_of<Target>(stl::forward<Source>(source), extract_allocator_or_default(allocs..., source));
+          })
         {
             auto const the_alloc = extract_allocator_or_default(allocs..., source);
             return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
-        } else if constexpr (
-          requires { Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...}; })
-        {
+        } else if constexpr (requires { Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...}; }) {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-        } else if constexpr (
-          requires {
-              Target{stl::forward<Source>(source),
-                     extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
-          })
+        } else if constexpr (requires {
+                                 Target{stl::forward<Source>(source),
+                                        extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+                             })
         {
             return Target{stl::forward<Source>(source),
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};

@@ -47,11 +47,9 @@ namespace webpp::uri {
         }
 
         template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void next_query(
-          [[maybe_unused]] CtxT&   ctx,
-          BufT&                    key_buffer,
-          BufT&                    value_buffer,
-          typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
+        static constexpr void
+        next_query([[maybe_unused]] CtxT& ctx, BufT& key_buffer, BufT& value_buffer, typename CtxT::iterator& seg_beg)
+          noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_segregated && istl::StringLike<BufT>) {
                 if (!key_buffer.empty() || !value_buffer.empty()) {
                     get_storage<components::queries>(ctx).emplace(key_buffer, value_buffer);

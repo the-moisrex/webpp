@@ -69,13 +69,12 @@ namespace webpp::http {
                 return ascii::trim_copy(a.name()) < ascii::trim_copy(b.name()) || a.domain() < b.domain();
             };
             stl::sort(super::begin(), super::end(), predicate);
-            super::erase(
-              super::begin(),
-              super::begin() +
-                stl::distance(super::begin(),
-                              stl::unique(super::rbegin(), super::rend(), [](auto const& a, auto const& b) {
-                                  return a.same_as(b);
-                              }).base()));
+            super::erase(super::begin(),
+                         super::begin() +
+                           stl::distance(super::begin(),
+                                         stl::unique(super::rbegin(), super::rend(), [](auto const& a, auto const& b) {
+                                             return a.same_as(b);
+                                         }).base()));
         }
     };
 

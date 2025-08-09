@@ -32,8 +32,7 @@ namespace webpp::http {
 
         template <typename... Args>
             requires(stl::is_constructible_v<container, Args...>)
-        explicit constexpr response_headers(Args&&... args) noexcept
-          : container{stl::forward<Args>(args)...} {}
+        explicit constexpr response_headers(Args&&... args) noexcept : container{stl::forward<Args>(args)...} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -92,10 +91,7 @@ namespace webpp::http {
             out.reserve(size);
             for (auto const& field : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                fmt::format_to(stl::back_insert_iterator<string_type>(out),
-                               "{}: {}\r\n",
-                               field.name,
-                               field.value);
+                fmt::format_to(stl::back_insert_iterator<string_type>(out), "{}: {}\r\n", field.name, field.value);
             }
         }
 

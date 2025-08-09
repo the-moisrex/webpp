@@ -33,10 +33,10 @@ namespace webpp {
      * convertible to each other.
      */
     enum struct ip_address_status : stl::uint32_t { // NOLINT(*-enum-size)
-        valid             = 255U,
-        valid_special     = 254U, // valid ip, found the specified special character at the end (prefix, ...)
-        too_little_octets = 253U, // not enough octets
-        too_many_octets   = 252U, // found too many octets
+        valid                = 255U,
+        valid_special        = 254U, // valid ip, found the specified special character at the end (prefix, ...)
+        too_little_octets    = 253U, // not enough octets
+        too_many_octets      = 252U, // found too many octets
         invalid_octet_range  = 251U, // at least one octet is not in range
         invalid_leading_zero = 250U, // the octet is starting with an invalid leading zero
         invalid_character    = 249U, // found a non-standard character

@@ -26,15 +26,10 @@ namespace webpp {
           stl::size_t const ndata) {
             using string_type = StrT;
 
-            z_stream strm =
-              {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
+            z_stream strm = {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
             if (data && ndata > 0) {
-                if (deflateInit2(&strm,
-                                 Z_DEFAULT_COMPRESSION,
-                                 Z_DEFLATED,
-                                 MAX_WBITS + 16,
-                                 8,
-                                 Z_DEFAULT_STRATEGY) != Z_OK)
+                if (
+                  deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK)
                 {
                     // todo: add an error handling way here
                     return string_type{};
@@ -93,8 +88,7 @@ namespace webpp {
             auto decompressed = string_type(full_length * 2, 0);
             bool done         = false;
 
-            z_stream strm =
-              {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
+            z_stream strm  = {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
             strm.next_in   = reinterpret_cast<Bytef z_const *>(data);
             strm.avail_in  = static_cast<uInt>(ndata);
             strm.total_out = 0;

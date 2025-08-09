@@ -11,8 +11,7 @@
 namespace webpp::uri::details {
 
     template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter, typename... ValT>
-    [[nodiscard]] static constexpr bool
-    safely_inc_if(Iter& pos, Iter const& end, CtxT& ctx, ValT... val) noexcept {
+    [[nodiscard]] static constexpr bool safely_inc_if(Iter& pos, Iter const& end, CtxT& ctx, ValT... val) noexcept {
         if constexpr (Options.ignore_tabs_or_newlines) {
             using ctx_type  = CtxT;
             using char_type = typename ctx_type::char_type;

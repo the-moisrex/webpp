@@ -89,15 +89,15 @@ namespace webpp::sql {
         static constexpr bool is_const = stl::is_same_v<statement_type, StmtType>;
         using size_type                = typename statement_type::size_type;
         using difference_type          = size_type;
-        using raw_reference     = stl::add_lvalue_reference_t<value_type>; // ref type without enforcing the
-                                                                           // constness
-        using raw_pointer       = stl::add_pointer_t<value_type>; // pointer type without the constness
-        using const_reference   = stl::add_const_t<raw_reference>;
-        using const_pointer     = stl::add_const_t<raw_pointer>;
-        using reference         = stl::conditional_t<is_const, const_reference, raw_reference>;
-        using pointer           = stl::conditional_t<is_const, const_pointer, raw_pointer>;
-        using iterator_category = stl::forward_iterator_tag;
-        using iterator_concept  = stl::forward_iterator_tag;
+        using raw_reference            = stl::add_lvalue_reference_t<value_type>; // ref type without enforcing the
+                                                                                  // constness
+        using raw_pointer              = stl::add_pointer_t<value_type>;          // pointer type without the constness
+        using const_reference          = stl::add_const_t<raw_reference>;
+        using const_pointer            = stl::add_const_t<raw_pointer>;
+        using reference                = stl::conditional_t<is_const, const_reference, raw_reference>;
+        using pointer                  = stl::conditional_t<is_const, const_pointer, raw_pointer>;
+        using iterator_category        = stl::forward_iterator_tag;
+        using iterator_concept         = stl::forward_iterator_tag;
 
       private:
         stl::optional<value_type> row{};

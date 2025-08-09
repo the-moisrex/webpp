@@ -102,23 +102,22 @@ namespace webpp::http {
      * streams as well.
      */
     template <typename T>
-    concept StreamBasedBodyReader =
-      requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, void*& val) {
-          body >> val;
-          body.rdbuf();
-          body.tellg();
-          body.seekg(0);
-          {
-              body.eof()
-          } -> stl::same_as<bool>;
-          typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
-          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type* data,
-                            stl::streamsize                                                          count) {
-              {
-                  body.readsome(data, count)
-              } -> stl::same_as<stl::streamsize>;
-          };
-      };
+    concept StreamBasedBodyReader = requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, void*& val) {
+        body >> val;
+        body.rdbuf();
+        body.tellg();
+        body.seekg(0);
+        {
+            body.eof()
+        } -> stl::same_as<bool>;
+        typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
+        requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type* data,
+                          stl::streamsize                                                          count) {
+            {
+                body.readsome(data, count)
+            } -> stl::same_as<stl::streamsize>;
+        };
+    };
 
     /**
      * @brief Stream Based Body Reader
@@ -154,8 +153,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept BodyCommunicatorPrimitives =
-      CStreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      CStreamBasedBodyCommunicator<stl::remove_cvref_t<T>> || TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
       StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
 
 
@@ -193,8 +191,8 @@ namespace webpp::http {
      */
     template <typename T>
     concept BodyCommunicator =
-      OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      CallbackBasedBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicatorPrimitives<T>;
+      OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> || CallbackBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      BodyCommunicatorPrimitives<T>;
 
 
     template <typename T>
@@ -227,8 +225,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequestBody =
-      HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type> ||
-      stl::is_void_v<T>;
+      HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type> || stl::is_void_v<T>;
 
 
     /**
@@ -290,8 +287,7 @@ namespace webpp::http {
 
     /// get the type of the deserialized body
     template <typename T, typename BodyType>
-    using deserialized_body_type =
-      stl::tag_invoke_result_t<deserialize_body_tag, stl::type_identity<T>, BodyType>;
+    using deserialized_body_type = stl::tag_invoke_result_t<deserialize_body_tag, stl::type_identity<T>, BodyType>;
 
     /// Check if the type T Deserializable from BodyType
     template <typename T, typename BodyType>
@@ -304,15 +300,15 @@ namespace webpp::http {
         // Customization Point
         template <typename T, typename BodyType>
             requires stl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
-        [[nodiscard]] constexpr T operator()(BodyType&& body) const noexcept(
-          stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
+        [[nodiscard]] constexpr T operator()(BodyType&& body) const
+          noexcept(stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
             return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         template <typename T, typename BodyType>
             requires stl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
-        [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const noexcept(
-          stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
+        [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const
+          noexcept(stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
             return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
@@ -345,15 +341,15 @@ namespace webpp::http {
         // Customization Point
         template <typename T, typename BodyType>
             requires stl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
-        [[nodiscard]] constexpr T operator()(BodyType&& body) const noexcept(
-          stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
+        [[nodiscard]] constexpr T operator()(BodyType&& body) const
+          noexcept(stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
             return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         template <typename T, typename BodyType>
             requires stl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
-        [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const noexcept(
-          stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
+        [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const
+          noexcept(stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
             return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
@@ -404,16 +400,15 @@ namespace webpp::http {
 
     /// Check if the type T Serializable from BodyType
     template <typename T, typename BodyType>
-    concept SerializableBody =
-      stl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
+    concept SerializableBody = stl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
 
     /// Serialize Request Body
     inline constexpr struct serialize_request_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
             requires stl::tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
-        constexpr void operator()(T&& val, BodyType& body) const noexcept(
-          stl::nothrow_tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
+        constexpr void operator()(T&& val, BodyType& body) const
+          noexcept(stl::nothrow_tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
             stl::tag_invoke(*this, stl::forward<T>(val), body);
         }
 
@@ -435,8 +430,8 @@ namespace webpp::http {
         // Customization Point
         template <typename T, typename BodyType>
             requires stl::tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
-        constexpr void operator()(T&& val, BodyType& body) const noexcept(
-          stl::nothrow_tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
+        constexpr void operator()(T&& val, BodyType& body) const
+          noexcept(stl::nothrow_tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
             stl::tag_invoke(*this, stl::forward<T>(val), body);
         }
 

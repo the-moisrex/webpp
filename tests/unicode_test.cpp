@@ -250,10 +250,9 @@ namespace {
 
         string           around       = "[..., ";
         constexpr size_t details_span = 4ULL;
-        for (
-          size_t pos = static_cast<size_t>(max<int64_t>(static_cast<int64_t>(index_pos - details_span), 0LL));
-          pos != min<size_t>(index_pos + details_span, ccc_values.size());
-          ++pos)
+        for (size_t pos = static_cast<size_t>(max<int64_t>(static_cast<int64_t>(index_pos - details_span), 0LL));
+             pos != min<size_t>(index_pos + details_span, ccc_values.size());
+             ++pos)
         {
             if (pos == index_pos) {
                 around += "[";
@@ -516,12 +515,11 @@ namespace {
         } else if (input.size() > 1 && (0b1110'0000U & input[0]) == 0b1100'0000U) {
             codepoint = static_cast<char32_t>(((0b0001'1111U & input[0]) << 6U) | (input[1] & 0b0011'1111U));
         } else if (input.size() > 2 && (0b1111'0000U & input[0]) == 0b1110'0000U) {
-            codepoint = static_cast<char32_t>(((0b0000'1111U & input[0]) << 12U) |
-                                              ((input[1] & 0b0011'1111U) << 6U) | (input[2] & 0b0011'1111U));
-        } else if (input.size() > 3 && (0b1111'1000U & input[0]) == 0b1111'0000U) {
             codepoint = static_cast<char32_t>(
-              ((input[0] & 0b0000'0111U) << 18U) | ((0b0011'1111U & input[1]) << 12U) |
-              ((input[2] & 0b0011'1111U) << 6U) | (0b0011'1111U & input[3]));
+              ((0b0000'1111U & input[0]) << 12U) | ((input[1] & 0b0011'1111U) << 6U) | (input[2] & 0b0011'1111U));
+        } else if (input.size() > 3 && (0b1111'1000U & input[0]) == 0b1111'0000U) {
+            codepoint = static_cast<char32_t>(((input[0] & 0b0000'0111U) << 18U) | ((0b0011'1111U & input[1]) << 12U) |
+                                              ((input[2] & 0b0011'1111U) << 6U) | (0b0011'1111U & input[3]));
         }
 
         return codepoint;
@@ -561,18 +559,15 @@ TEST(Unicode, CanonicalDecompose) {
     //   awk -f gen-canonical-decomposed-tests.awk UnicodeData.txt
     // clang-format on
 
-    static_assert(webpp::stl::same_as<char8_t, webpp::istl::appendable_value_type_t<u8string*>>,
-                  "invalid value type");
+    static_assert(webpp::stl::same_as<char8_t, webpp::istl::appendable_value_type_t<u8string*>>, "invalid value type");
 
     // special
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2FA1D'), U"\x2A600") << desc_decomp_of(U'\xD590');
-    EXPECT_EQ(canonical_decomposed<u8string>(U'\xD590'), utf32_to_utf8(U"\x1112\x1163"))
-      << desc_decomp_of(U'\xD590');
+    EXPECT_EQ(canonical_decomposed<u8string>(U'\xD590'), utf32_to_utf8(U"\x1112\x1163")) << desc_decomp_of(U'\xD590');
     EXPECT_EQ(toNFD(u32string{U'\xD590'}), u32string{U"\x1112\x1163"}) << desc_decomp_of(U'\xD590');
 
     // start
-    EXPECT_EQ(canonical_decomposed<u8string>(U'\0'), utf32_to_utf8(u32string{U"\0", 1}))
-      << desc_decomp_of(U'\0');
+    EXPECT_EQ(canonical_decomposed<u8string>(U'\0'), utf32_to_utf8(u32string{U"\0", 1})) << desc_decomp_of(U'\0');
     EXPECT_EQ(canonical_decomposed<u8string>(U'\1'), utf32_to_utf8(U"\1")) << desc_decomp_of(U'\1');
 
     // Canonical Decomposition start:
@@ -4808,8 +4803,7 @@ TEST(Unicode, DecomposeHangul) {
 
 
     // not hangul
-    EXPECT_EQ(canonical_decomposed<u8string>(U'\x2BA4'), utf32_to_utf8(U"\x2BA4"))
-      << desc_decomp_of(U'\x2BA4');
+    EXPECT_EQ(canonical_decomposed<u8string>(U'\x2BA4'), utf32_to_utf8(U"\x2BA4")) << desc_decomp_of(U'\x2BA4');
 }
 
 namespace {
@@ -6121,21 +6115,16 @@ TEST(Unicode, ComposeStr) {
     EXPECT_EQ(canonical_composed<u32string>(U"\x19da"), U"\x19da");
     EXPECT_EQ(canonical_composed<u32string>(U"\xab60"), U"\xab60");
     EXPECT_EQ(canonical_composed<u32string>(U"\xab60"), U"\xab60");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
-      U"1234567890\u00e41234567890123456789012345678901234567890123456");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
-      U"1234567890\u00e41234567890123456789012345678901234567890123456");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
-      U"1234567890\u00e41234567890123456789012345678901234567890123456");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
-      U"1234567890\u00e41234567890123456789012345678901234567890123456");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
-      U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(canonical_composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
     EXPECT_EQ(canonical_composed<u32string>(U"bu\u0308cher.de"), U"b\u00fccher.de");
     EXPECT_EQ(canonical_composed<u32string>(U"bu\u0308cher.de"), U"b\u00fccher.de");
     EXPECT_EQ(canonical_composed<u32string>(U"bu\u0308cher.de"), U"b\u00fccher.de");
@@ -6204,14 +6193,10 @@ TEST(Unicode, ComposeStr) {
     EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com"),
               U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0dc1\x0dca\x0dbb\x0dd3"), U"\x0dc1\x0dca\x0dbb\x0dd3");
-    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"),
-              U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
-    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"),
-              U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
-    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"),
-              U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x0dc1\x0dca\x200d\x0dbb\x0dd3"),
-              U"\x0dc1\x0dca\x200d\x0dbb\x0dd3");
+    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(canonical_composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x0dc1\x0dca\x200d\x0dbb\x0dd3"), U"\x0dc1\x0dca\x200d\x0dbb\x0dd3");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc"),
               U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc"),
@@ -6278,98 +6263,84 @@ TEST(Unicode, ComposeStr) {
       U"\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df"
       U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302"
       U"\x00dfz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"1."
-                U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
-                U"sssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"1."
+                                            U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                            U"sssssssssssyssssssssssssssss\x0302ssz"),
               U"1."
               U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
               U"sssssss\x015dssz");
-    EXPECT_EQ(canonical_composed<u32string>(
-                U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
-                U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+    EXPECT_EQ(canonical_composed<u32string>(U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                            U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
               U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
               U"sssssssssssssssysssssssssssssss\x015dssz");
     EXPECT_EQ(
@@ -6396,16 +6367,12 @@ TEST(Unicode, ComposeStr) {
       U"\x00dfz");
     EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
               U"\x200cx\x200dn\x200c-\x200d-b\x00df");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"),
-              U"\x200cx\x200dn\x200c-\x200d-bss");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"),
-              U"\x200cx\x200dn\x200c-\x200d-bss");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"),
-              U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
     EXPECT_EQ(canonical_composed<u32string>(U"\x5919"), U"\x5919");
     EXPECT_EQ(canonical_composed<u32string>(U"\x5919"), U"\x5919");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"),
-              U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
     EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
               U"\x200cx\x200dn\x200c-\x200d-b\x00df");
     EXPECT_EQ(canonical_composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
@@ -6428,21 +6395,16 @@ TEST(Unicode, ComposeStr) {
     EXPECT_EQ(canonical_composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
     EXPECT_EQ(canonical_composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
     EXPECT_EQ(canonical_composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
-      U"\u00e41234567890123456789012345678901234567890123456789012345");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
-      U"\u00e41234567890123456789012345678901234567890123456789012345");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
-      U"\u00e41234567890123456789012345678901234567890123456789012345");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
-      U"\u00e41234567890123456789012345678901234567890123456789012345");
-    EXPECT_EQ(
-      canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
-      U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(canonical_composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
     EXPECT_EQ(canonical_composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
     EXPECT_EQ(canonical_composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
     EXPECT_EQ(canonical_composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
@@ -6506,12 +6468,10 @@ TEST(Unicode, ComposeStr) {
     EXPECT_EQ(canonical_composed<u32string>(U"\x0bb9\x200c"), U"\x0bb9\x200c");
     EXPECT_EQ(canonical_composed<u32string>(U"\x200c"), U"\x200c");
     EXPECT_EQ(canonical_composed<u32string>(U"\x200c"), U"\x200c");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"),
-              U"\x0644\x0670\x200c\x06ed\x06ef");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"), U"\x0644\x0670\x200c\x06ed\x06ef");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x06ed\x06ef"), U"\x0644\x0670\x06ed\x06ef");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x06ed\x06ef"), U"\x0644\x0670\x06ed\x06ef");
-    EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"),
-              U"\x0644\x0670\x200c\x06ed\x06ef");
+    EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"), U"\x0644\x0670\x200c\x06ed\x06ef");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x200c\x06ef"), U"\x0644\x0670\x200c\x06ef");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x06ef"), U"\x0644\x0670\x06ef");
     EXPECT_EQ(canonical_composed<u32string>(U"\x0644\x0670\x06ef"), U"\x0644\x0670\x06ef");
@@ -6595,20 +6555,14 @@ TEST(Unicode, ComposedStr2) {
     EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c.\u1da16."),
               U"\ub8f1\u200d\u30368\u200c.\u1da16.");
     EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u30368"), U"\ub8f1\u30368");
-    EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"),
-              U"\ub8f1\u200d\u30368\u200c");
+    EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"), U"\ub8f1\u200d\u30368\u200c");
     EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u30368"), U"\ub8f1\u30368");
-    EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"),
-              U"\ub8f1\u200d\u30368\u200c");
-    EXPECT_EQ(canonical_composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"),
-              U"1.\u4c39\u200d-.\uc6c8");
-    EXPECT_EQ(canonical_composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"),
-              U"1.\u4c39\u200d-.\uc6c8");
+    EXPECT_EQ(canonical_composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"), U"\ub8f1\u200d\u30368\u200c");
+    EXPECT_EQ(canonical_composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"), U"1.\u4c39\u200d-.\uc6c8");
+    EXPECT_EQ(canonical_composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"), U"1.\u4c39\u200d-.\uc6c8");
     EXPECT_EQ(canonical_composed<u32string>(U"\u110b\u116e\u11bf"), U"\uc6c8");
-    EXPECT_EQ(canonical_composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"),
-              U"\ua846.\u2184\u0fb5\ub1ae-");
-    EXPECT_EQ(canonical_composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"),
-              U"\ua846.\u2184\u0fb5\ub1ae-");
+    EXPECT_EQ(canonical_composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"), U"\ua846.\u2184\u0fb5\ub1ae-");
+    EXPECT_EQ(canonical_composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"), U"\ua846.\u2184\u0fb5\ub1ae-");
     EXPECT_EQ(canonical_composed<u32string>(U"\u2184\u0fb5\u1102\u116a\u11c1-"), U"\u2184\u0fb5\ub1ae-");
     EXPECT_EQ(canonical_composed<u32string>(U"\ua9d0\u04cf\u1baa\u08f6.\u1102\u116f\u11bc"),
               U"\ua9d0\u04cf\u1baa\u08f6.\ub235");
@@ -6632,10 +6586,8 @@ TEST(Unicode, ComposedStr2) {
     EXPECT_EQ(canonical_composed<u32string>(U"\u200c\ua5a8.16.3\u1110\u116d\u11a9\u06f3"),
               U"\u200c\ua5a8.16.3\ud212\u06f3");
     EXPECT_EQ(canonical_composed<u32string>(U"3\u1110\u116d\u11a9\u06f3"), U"3\ud212\u06f3");
-    EXPECT_EQ(canonical_composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"),
-              U"\ua5a8.16.3\ud212\u06f3");
-    EXPECT_EQ(canonical_composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"),
-              U"\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(canonical_composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"), U"\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(canonical_composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"), U"\ua5a8.16.3\ud212\u06f3");
     EXPECT_EQ(canonical_composed<u32string>(U"\u1111\u1175\u11bd11"), U"\ud55211");
     EXPECT_EQ(canonical_composed<u32string>(U"\u1110\u1171\u11c2"), U"\ud29b");
     EXPECT_EQ(canonical_composed<u32string>(U"\u1110\u1171\u11c2.\u0716"), U"\ud29b.\u0716");
@@ -6667,10 +6619,8 @@ TEST(Unicode, NoCompose) {
     EXPECT_EQ(canonical_composed(0x925, 0x0020), webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(0, 0), webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(1, 0), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(std::numeric_limits<std::uint32_t>::max(), 0U),
-              webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(0U, std::numeric_limits<std::uint32_t>::max()),
-              webpp::unicode::replacement_char<>);
+    EXPECT_EQ(canonical_composed(std::numeric_limits<std::uint32_t>::max(), 0U), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(canonical_composed(0U, std::numeric_limits<std::uint32_t>::max()), webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(static_cast<char32_t>(-1), 0), webpp::unicode::replacement_char<>);
     EXPECT_NE(canonical_composed(0x594, 0x0020), 0x00A8);
     EXPECT_NE(canonical_composed(0x307, 0x0061), 0x00AA);
@@ -6716,19 +6666,19 @@ namespace {
 
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
-          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str)) << "\n  NFC Answer: "
-          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
+          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str)) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
         EXPECT_EQ(toNFC(str), toNFC(toNFD(str)))
-          << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: "
-          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
+          << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
 
         // toNFD
         EXPECT_EQ(toNFD(str), toNFD(toNFC(str)))
-          << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: "
-          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
+          << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
         EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
-          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str)) << "\n  NFC Answer: "
-          << to_hex(nfc) << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
+          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str)) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
 
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
@@ -6756,11 +6706,10 @@ namespace {
                 if (comp == webpp::unicode::replacement_char<char32_t>) {
                     continue;
                 }
-                report << "\n  Compositions: " << std::hex << std::uppercase << "0x"
-                       << static_cast<std::uint32_t>(lhs) << " + 0x" << static_cast<std::uint32_t>(rhs)
-                       << " = 0x" << static_cast<std::uint32_t>(comp) << " (CCC: " << std::dec
-                       << static_cast<int>(ccc_of(lhs)) << " + " << static_cast<int>(ccc_of(rhs)) << " = "
-                       << static_cast<int>(ccc_of(comp)) << ")";
+                report << "\n  Compositions: " << std::hex << std::uppercase << "0x" << static_cast<std::uint32_t>(lhs)
+                       << " + 0x" << static_cast<std::uint32_t>(rhs) << " = 0x" << static_cast<std::uint32_t>(comp)
+                       << " (CCC: " << std::dec << static_cast<int>(ccc_of(lhs)) << " + "
+                       << static_cast<int>(ccc_of(rhs)) << " = " << static_cast<int>(ccc_of(comp)) << ")";
                 comps.emplace_back(comp);
             }
         }
@@ -6770,11 +6719,10 @@ namespace {
                 if (comp == webpp::unicode::replacement_char<char32_t>) {
                     continue;
                 }
-                report << "\n  Compositions: " << std::hex << std::uppercase << "0x"
-                       << static_cast<std::uint32_t>(lhs) << " + 0x" << static_cast<std::uint32_t>(rhs)
-                       << " = 0x" << static_cast<std::uint32_t>(comp) << " (CCC: " << std::dec
-                       << static_cast<int>(ccc_of(lhs)) << " + " << static_cast<int>(ccc_of(rhs)) << " = "
-                       << static_cast<int>(ccc_of(comp)) << ")";
+                report << "\n  Compositions: " << std::hex << std::uppercase << "0x" << static_cast<std::uint32_t>(lhs)
+                       << " + 0x" << static_cast<std::uint32_t>(rhs) << " = 0x" << static_cast<std::uint32_t>(comp)
+                       << " (CCC: " << std::dec << static_cast<int>(ccc_of(lhs)) << " + "
+                       << static_cast<int>(ccc_of(rhs)) << " = " << static_cast<int>(ccc_of(comp)) << ")";
             }
         }
         return report.str();
@@ -6830,44 +6778,39 @@ TEST(Unicode, NormalizationTests) {
           u16string const nfc16    = utf32_to_utf16(nfc);
           u16string const nfd16    = utf32_to_utf16(nfd);
 
-          EXPECT_EQ(nfd, toNFD(source))
-            << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc)
-            << "\n  line: " << line << "\n  index: " << test_index
-            << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
+          EXPECT_EQ(nfd, toNFD(source)) << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd) << "\n  NFC: "
+                                        << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
+                                        << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfd8, toNFD(source8))
-                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source)
-                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index
+                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd)
+                << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
           EXPECT_EQ(nfc, toNFC(source))
             << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc)
-            << "\n  line: " << line << "\n  Calculated NFD: " << to_hex(toNFD(source)) << "\n  index: "
-            << test_index << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source))
+            << "\n  line: " << line << "\n  Calculated NFD: " << to_hex(toNFD(source)) << "\n  index: " << test_index
+            << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source))
             << report_composition_list(source);
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
-                << "  Source: " << to_hex(source) << "  Source8: " << to_hex(source8)
-                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index
+                << "  Source: " << to_hex(source) << "  Source8: " << to_hex(source8) << "\n  NFD: " << to_hex(nfd)
+                << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
           {
               EXPECT_EQ(nfd16, toNFD(source16))
-                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source16)
-                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index
+                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source16) << "\n  NFD: " << to_hex(nfd)
+                << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
 
               EXPECT_EQ(nfc16, toNFC(source16))
-                << "  Source: " << to_hex(source) << "  Source16: " << to_hex(source16)
-                << "\n  NFD: " << to_hex(nfd) << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index
+                << "  Source: " << to_hex(source) << "  Source16: " << to_hex(source16) << "\n  NFD: " << to_hex(nfd)
+                << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
 
@@ -6943,8 +6886,7 @@ TEST(Unicode, CheckedNextCodePoint) {
     std::u8string str = u8"\xac";
     EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
     EXPECT_EQ(next_code_point_copy<return_negated>(str.begin(), str.end()), -U'\xac');
-    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()),
-              replacement_char<char32_t>);
+    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()), replacement_char<char32_t>);
 
     std::u8string str2 = u8"\xac\xac";
     EXPECT_EQ(next_code_point_copy<return_negated>(str2.begin(), str2.end()), -U'\xac');
@@ -7090,8 +7032,7 @@ TEST(Unicode, FuzzFixes) {
     unicode_fuzz("\x2e\xdd\xa"sv);
 
     unicode_fuzz("\xa\xa\xd9\xd9");
-    unicode_fuzz(
-      "\xa\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\x29\xc4\xa7\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4");
+    unicode_fuzz("\xa\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\x29\xc4\xa7\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4");
     unicode_fuzz("\xa\xff\xff\xff\xff\xff\xff\xff\x8a\x8a\xce\x8a");
     unicode_fuzz("\xcd\xcd\x98\xcd\xcd\xcd\xcd\xcd");
 
@@ -7223,11 +7164,10 @@ TEST(Unicode, FuzzTestFixes3) {
       "\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\x0\xdf\x0\x3"sv);
 
     constexpr webpp::stl::array<char8_t, 69> broken{
-      0x0a, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-      0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-      0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-      0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xc7, 0xbf, 0xbf,
-      0xbf, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x30, 0x40, 0x40, 0x40, 0x40};
+      0x0a, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+      0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+      0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xc7,
+      0xbf, 0xbf, 0xbf, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x30, 0x40, 0x40, 0x40, 0x40};
     unicode_fuzz(webpp::stl::string_view{reinterpret_cast<char const*>(broken.data()), broken.size()});
 
     unicode_fuzz(
@@ -7364,9 +7304,9 @@ TEST(Unicode, UTF8IteratorsTest) {
     using webpp::unicode::checked::utf32_forward_iter;
     using std::string_view_literals::operator""sv;
 
-    auto                             str  = u8"\xF0\xCD\x81\xCC"sv;
-    auto const* const                spos = str.begin();
-    auto const* const                send = str.end();
+    auto                             str   = u8"\xF0\xCD\x81\xCC"sv;
+    auto const* const                spos  = str.begin();
+    auto const* const                send  = str.end();
     auto const*                      sback = spos + 4;
     decompose_iterator const         dbeg{spos, send};
     decompose_iterator const         dend{send, send};

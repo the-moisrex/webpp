@@ -884,9 +884,8 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto const _octets = octets8();
-            return _octets[8] == 0xFD && _octets[15] == 0x80 && (_octets[9] == 0xFFU) &&
-                   (_octets[10] == 0xFFU) && (_octets[11] == 0xFFU) && (_octets[12] == 0xFFU) &&
-                   (_octets[13] == 0xFFU) && (_octets[14] == 0xFFU);
+            return _octets[8] == 0xFD && _octets[15] == 0x80 && (_octets[9] == 0xFFU) && (_octets[10] == 0xFFU) &&
+                   (_octets[11] == 0xFFU) && (_octets[12] == 0xFFU) && (_octets[13] == 0xFFU) && (_octets[14] == 0xFFU);
         }
 
         /**
@@ -1053,7 +1052,7 @@ namespace webpp {
         template <stl::size_t N>
             requires(N <= ipv6_byte_count)
         [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> const inp_octets,
-                                                 stl::size_t const inp_prefix) const noexcept {
+                                                 stl::size_t const                 inp_prefix) const noexcept {
             auto const masked = mask(inp_prefix);
             return stl::equal(inp_octets.data(), inp_octets.data() + N, masked.octets8().data());
         }

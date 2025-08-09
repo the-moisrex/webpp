@@ -10,8 +10,7 @@ namespace webpp::time {
     /**
      * A simple facility to measure time intervals with nanoseconds resolution as the default.
      */
-    template <typename Duration = std::chrono::nanoseconds,
-              typename Clock    = std::chrono::high_resolution_clock>
+    template <typename Duration = std::chrono::nanoseconds, typename Clock = std::chrono::high_resolution_clock>
     struct stopwatch {
         using clock_type = Clock;
         using duration   = Duration;

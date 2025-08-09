@@ -149,16 +149,12 @@ namespace webpp::http {
             /*if constexpr (Segment<seg_type, path_type,
                                   decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
             } else*/
-            if constexpr (
-              stl::is_array_v<seg_type> && stl::is_integral_v<stl::remove_all_extents_t<seg_type>>)
-            {
+            if constexpr (stl::is_array_v<seg_type> && stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
                 // int_type[N] => string_view
                 using char_type     = stl::remove_all_extents_t<seg_type>;
                 using str_view_type = stl::basic_string_view<char_type>;
                 return operator/ <str_view_type>(stl::forward<NewSegType>(next_segment));
-            } else if constexpr (
-              stl::is_pointer_v<seg_type> && stl::is_integral_v<stl::remove_pointer_t<seg_type>>)
-            {
+            } else if constexpr (stl::is_pointer_v<seg_type> && stl::is_integral_v<stl::remove_pointer_t<seg_type>>) {
                 // char* => string_view
                 using char_type = stl::remove_pointer_t<seg_type>;
                 return operator/ <stl::basic_string_view<char_type>>(stl::forward<NewSegType>(next_segment));
@@ -170,8 +166,7 @@ namespace webpp::http {
             } else if constexpr (istl::ComparableToString<seg_type> && stl::is_class_v<seg_type>) {
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
-                return operator/(
-                  details::make_a_path<seg_type>{.segment = stl::forward<NewSegType>(next_segment)});
+                return operator/(details::make_a_path<seg_type>{.segment = stl::forward<NewSegType>(next_segment)});
             } else {
                 // segment
                 using new_path_type  = path<Segments..., NewSegType>;

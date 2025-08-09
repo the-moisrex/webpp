@@ -24,9 +24,7 @@ struct StructuredURITests : testing::Test {
             return SpecifiedTypeParam{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
         } else if constexpr (stl::convertible_to<stl::string::iterator, iterator>) {
             url_text = str;
-            return SpecifiedTypeParam{.beg = url_text.begin(),
-                                      .pos = url_text.begin(),
-                                      .end = url_text.end()};
+            return SpecifiedTypeParam{.beg = url_text.begin(), .pos = url_text.begin(), .end = url_text.end()};
         } else {
             return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
         }
@@ -62,7 +60,7 @@ TYPED_TEST(StructuredURITests, StructuredDomain) {
 }
 
 TYPED_TEST(StructuredURITests, StructuredFragment) {
-    static TypeParam const data{get_one<TypeParam>("this is a fragment", L"this is a fragment")};
+    static TypeParam const               data{get_one<TypeParam>("this is a fragment", L"this is a fragment")};
     uri::basic_fragment<TypeParam> const fragment{data};
     EXPECT_TRUE(fragment.has_value());
     if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {
@@ -144,9 +142,8 @@ TYPED_TEST(StructuredURITests, StructuredURI) {
 }
 
 TYPED_TEST(StructuredURITests, StructuredURIEquality) {
-    static TypeParam const data{get_one<TypeParam>(
-      "HTTPS://example.org/page/one?option=value&opt=val#fragment",
-      L"HtTPS://example.org/page/one?option=value&opt=val#fragment")};
+    static TypeParam const data{get_one<TypeParam>("HTTPS://example.org/page/one?option=value&opt=val#fragment",
+                                                   L"HtTPS://example.org/page/one?option=value&opt=val#fragment")};
 
     uri::basic_uri<TypeParam> const url{data};
     EXPECT_TRUE(url.has_value());
@@ -169,9 +166,8 @@ TYPED_TEST(StructuredURITests, AddDotToPath) {
 }
 
 TYPED_TEST(StructuredURITests, UpdatePassword) {
-    static TypeParam const data{get_one<TypeParam>(
-      "https://username:password@host:8000/path?query#fragment",
-      L"https://username:password@host:8000/path?query#fragment")};
+    static TypeParam const data{get_one<TypeParam>("https://username:password@host:8000/path?query#fragment",
+                                                   L"https://username:password@host:8000/path?query#fragment")};
 
     uri::basic_uri<TypeParam> url{data};
     // EXPECT_TRUE(url);
@@ -184,8 +180,7 @@ TYPED_TEST(StructuredURITests, UpdatePassword) {
 
 // https://github.com/nodejs/node/issues/46755
 TYPED_TEST(StructuredURITests, SchemeChangeParsing) {
-    static TypeParam const data{
-      get_one<TypeParam>("file:///var/log/system.log", L"file:///var/log/system.log")};
+    static TypeParam const data{get_one<TypeParam>("file:///var/log/system.log", L"file:///var/log/system.log")};
 
     uri::basic_uri<TypeParam> url{data};
     url.href(get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0"));
@@ -198,8 +193,7 @@ TYPED_TEST(StructuredURITests, SchemeChangeParsing) {
 }
 
 TYPED_TEST(StructuredURITests, ClearOnSet) {
-    static TypeParam const data{
-      get_one<TypeParam>("https://example.org/about", L"https://example.org/about")};
+    static TypeParam const data{get_one<TypeParam>("https://example.org/about", L"https://example.org/about")};
 
     uri::basic_uri<TypeParam> url{data};
     url = get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0");
@@ -214,12 +208,10 @@ TYPED_TEST(StructuredURITests, ClearOnSet) {
 
 TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized) {
     // https://url.spec.whatwg.org/#serialize-an-integer
-    static TypeParam const data{
-      get_one<TypeParam>("https://example.org:080/about", L"https://example.org:080/about")};
+    static TypeParam const data{get_one<TypeParam>("https://example.org:080/about", L"https://example.org:080/about")};
 
     uri::basic_uri<TypeParam> const url{data};
-    EXPECT_EQ(url.as_string(),
-              get_one<TypeParam>("https://example.org:80/about", L"https://example.org:80/about"));
+    EXPECT_EQ(url.as_string(), get_one<TypeParam>("https://example.org:80/about", L"https://example.org:80/about"));
     EXPECT_EQ(url.port(), 80);
     EXPECT_EQ(url.port(), get_one<TypeParam>("80", L"80"));
 }
@@ -229,8 +221,7 @@ TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized2) {
       get_one<TypeParam>("https://example.org:00000000000/about", L"https://example.org:00000000000/about")};
 
     uri::basic_uri<TypeParam> const url{data};
-    EXPECT_EQ(url.as_string(),
-              get_one<TypeParam>("https://example.org:0/about", L"https://example.org:0/about"));
+    EXPECT_EQ(url.as_string(), get_one<TypeParam>("https://example.org:0/about", L"https://example.org:0/about"));
     EXPECT_EQ(url.port(), 0);
     EXPECT_EQ(url.port(), get_one<TypeParam>("0", L"0"));
 }
@@ -245,18 +236,15 @@ TYPED_TEST(StructuredURITests, OpaquePath) {
 }
 
 TYPED_TEST(StructuredURITests, SpacesTest) {
-    static TypeParam const data{
-      get_one<TypeParam>("http://www.example.com/%37/ /", L"http://www.example.com/%37/ /")};
+    static TypeParam const data{get_one<TypeParam>("http://www.example.com/%37/ /", L"http://www.example.com/%37/ /")};
     uri::basic_uri<TypeParam> url{data};
     EXPECT_TRUE(url.valid());
-    EXPECT_EQ(url.href(),
-              get_one<TypeParam>("http://www.example.com/%37/%20/", L"http://www.example.com/%37/%20/"));
+    EXPECT_EQ(url.href(), get_one<TypeParam>("http://www.example.com/%37/%20/", L"http://www.example.com/%37/%20/"));
     url.href(get_one<TypeParam>("http://www.example.com/  /  /+/", L"http://www.example.com/  /  /+/"));
     EXPECT_TRUE(url.valid());
-    EXPECT_EQ(url.href(),
-              get_one<TypeParam>("http://www.example.com/%20%20/%20%20/+/",
-                                 L"http://www.example.com/%20%20/%20%20/+/"));
-    url =
-      uri::basic_uri<TypeParam>(get_one<TypeParam>("http://www.example.com/", L"http://www.example.com/"));
+    EXPECT_EQ(
+      url.href(),
+      get_one<TypeParam>("http://www.example.com/%20%20/%20%20/+/", L"http://www.example.com/%20%20/%20%20/+/"));
+    url = uri::basic_uri<TypeParam>(get_one<TypeParam>("http://www.example.com/", L"http://www.example.com/"));
     EXPECT_FALSE(url.valid());
 }

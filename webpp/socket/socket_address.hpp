@@ -98,8 +98,7 @@ namespace webpp {
      */
     template <typename Addr = ip_address, typename SocketIPType>
         requires(
-          istl::
-            part_of<SocketIPType, sockaddr, sockaddr_in, sockaddr_in6, in_addr, in6_addr, sockaddr_storage> &&
+          istl::part_of<SocketIPType, sockaddr, sockaddr_in, sockaddr_in6, in_addr, in6_addr, sockaddr_storage> &&
           istl::part_of<Addr, ip_address, ipv4, ipv6>)
     static inline Addr make_addr(SocketIPType const& from_in) noexcept {
         Addr to_ip{};

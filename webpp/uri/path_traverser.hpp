@@ -170,10 +170,10 @@ namespace webpp::uri {
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
-        static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
+        static constexpr auto allowed_chars           = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
       private:
-        slug_type seg;                                                                   // segment
+        slug_type seg;                                                                             // segment
         iterator  beg;
         iterator  pos;
         iterator  fin; // todo: technically it's possible to remove this

@@ -19,8 +19,7 @@ namespace webpp::uri {
     struct domain_labels_splitter {
         using char_type  = typename StrT::value_type;
         using delim_type = stl::basic_string_view<char_type>;
-        using type =
-          strings::splitter<typename StrT::iterator, char_type, delim_type, delim_type, delim_type>;
+        using type       = strings::splitter<typename StrT::iterator, char_type, delim_type, delim_type, delim_type>;
     };
 
     /// IDNA Mapping have already changed the Modifiable strings
@@ -58,8 +57,7 @@ namespace webpp::uri {
           public:
             template <typename... RU>
                 requires(stl::same_as<RU, U> && ...)
-            explicit(false) consteval string_view_array(RU... rest) noexcept
-              : data{static_cast<T>(rest)...} {}
+            explicit(false) consteval string_view_array(RU... rest) noexcept : data{static_cast<T>(rest)...} {}
 
             [[nodiscard]] consteval stl::basic_string_view<T> view() const noexcept {
                 return stl::basic_string_view<T>(data.data(), LENGTH);
@@ -174,8 +172,7 @@ namespace webpp::uri {
             parse(str.begin(), str.end());
         }
 
-        template <istl::StringViewifiable InpStr = string_view_type,
-                  Allocator               AllocT = stl::allocator<char_type>>
+        template <istl::StringViewifiable InpStr = string_view_type, Allocator AllocT = stl::allocator<char_type>>
             requires(is_modifiable && !istl::String<InpStr>)
         explicit constexpr basic_host(InpStr&& inp_str, AllocT inp_alloc = {}) noexcept(is_nothrow)
           : storage{string_type{inp_alloc}},

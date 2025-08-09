@@ -65,15 +65,13 @@ namespace webpp::beast_proto {
         using stream_type      = boost::beast::tcp_stream;
         using string_view_type = traits::string_view<traits_type>;
 
-        using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
-        using beast_request_parser_type =
-          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
+        using beast_request_type        = boost::beast::http::request<beast_body_type, beast_fields_type>;
+        using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
 
         static constexpr auto log_cat = "BeastWorker";
 
 
-        static_assert(http::HTTPRequestHeaders<request_header_type>,
-                      "Mistakes has been made in request headers type.");
+        static_assert(http::HTTPRequestHeaders<request_header_type>, "Mistakes has been made in request headers type.");
         static_assert(http::HTTPRequest<request_type>, "Request type should match HTTPRequest concept.");
 
 
@@ -139,14 +137,12 @@ namespace webpp::beast_proto {
                 using body_char_type = stl::remove_pointer_t<stl::remove_cvref_t<decltype(body.data())>>;
                 static constexpr stl::size_t char_type_size = sizeof(body_char_type);
                 auto const                   body_size      = body.size();
-                auto const                   body_data = static_cast<beast_char_type const*>(body.data());
+                auto const                   body_data      = static_cast<beast_char_type const*>(body.data());
                 if (body_size == 0 || body_data == nullptr) {
                     return;
                 }
-                bres->body().replace(0,
-                                     bres->body().size(),
-                                     body_data,
-                                     body_size * sizeof(beast_char_type) / char_type_size);
+                bres->body()
+                  .replace(0, bres->body().size(), body_data, body_size * sizeof(beast_char_type) / char_type_size);
             }
         }
 
@@ -157,9 +153,8 @@ namespace webpp::beast_proto {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
             stl::array<char, default_buffer_size> static_buf;
-            while (stl::streamsize const read_size =
-                     body.read(reinterpret_cast<byte_type*>(static_buf.data()),
-                               static_cast<stl::streamsize>(static_buf.size())))
+            while (stl::streamsize const read_size = body.read(reinterpret_cast<byte_type*>(static_buf.data()),
+                                                               static_cast<stl::streamsize>(static_buf.size())))
             {
                 bres->body().append(static_buf.data(), static_cast<stl::size_t>(read_size));
             }

@@ -61,8 +61,7 @@ namespace webpp::unicode::idna {
         if ((index & idna_index::use_second_table_mask) != 0) {
             // looking at the boolean-only table (which includes only VALID/DISALLOWED states)
 
-            constexpr auto pack_size =
-              sizeof(typename decltype(details::idna_mappings_bools)::value_type) * CHAR_BIT;
+            constexpr auto pack_size = sizeof(typename decltype(details::idna_mappings_bools)::value_type) * CHAR_BIT;
 
             // the bits in the integer are stored in reverse order, so we don't have to do additional
             // calculations to get the bit that we need.
@@ -83,8 +82,7 @@ namespace webpp::unicode::idna {
      * @returns false if the code point is not allowed to be in a URL
      */
     template <UTF32 CharT = char32_t, istl::Appendable OutStrT = stl::u8string>
-    static constexpr bool map(CharT const code_point, OutStrT& out)
-      noexcept(istl::NothrowAppendable<OutStrT>) {
+    static constexpr bool map(CharT const code_point, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
         using details::disallowed;
         using details::idna_mappings;
         using details::valid;
@@ -239,8 +237,7 @@ namespace webpp::unicode::idna {
     }
 
     template <istl::Appendable OutStrT, istl::StringViewifiable InpStrT>
-    [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out)
-      noexcept(istl::NothrowAppendable<OutStrT>) {
+    [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
         auto const src_view = istl::string_viewify(stl::forward<InpStrT>(src));
         using iterator      = typename decltype(src_view)::iterator;
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
@@ -293,8 +290,7 @@ namespace webpp::unicode::idna {
             case valid: return {"valid"};
             case invalid_code_point: return {"Bad input for punycode was given."};
             case punycode_overflow: return {"Punycode overflow."};
-            case ascii_only_punycode:
-                return {"The ASCII-Only label was unnecessarily encoded into punycode."};
+            case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode."};
             case empty_punycode: return {"Empty punycode-encoded label was found."};
             case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form."};
             case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping."};
@@ -589,9 +585,8 @@ namespace webpp::unicode::idna {
             using stl::to_underlying;
             using inp_char_type = stl::iter_value_t<Iter>;
 
-            auto const cur_len =
-              adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
-            flag_type   flags         = 0U;
+            auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
+            flag_type  flags   = 0U;
             stl::size_t biggest_label = 0U;
             auto        lbeg          = spos;
 
@@ -613,9 +608,8 @@ namespace webpp::unicode::idna {
                 flags |= flag;
 
                 if ((flag & to_underlying(dot)) == to_underlying(dot)) {
-                    biggest_label =
-                      stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
-                    lbeg = spos;
+                    biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
+                    lbeg          = spos;
                 } else if ((flag & to_underlying(non_ascii)) != 0) {
                     auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
 
@@ -670,7 +664,7 @@ namespace webpp::unicode::idna {
         using enum to_ascii_info::flag_types;
         using istl::iter_append;
         using stl::to_underlying;
-        using unicode::normalization_form;
+        using unicode::norm_form;
         using flag_type = to_ascii_info::flag_type;
         using diff_type = stl::iter_difference_t<OIter>;
 
@@ -721,9 +715,9 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             {
                 send = spos;
-                normalize<normalization_form::NFC>(out_beg, out, send); // inplace normalization
+                normalize<norm_form::NFC>(out_beg, out, send); // inplace normalization
             }
-            assert(out <= oend);                                        // we ran out of space.
+            assert(out <= oend);                               // we ran out of space.
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -753,9 +747,7 @@ namespace webpp::unicode::idna {
                     status |= to_underlying(empty_domain_label);
                     break;
                 case to_underlying(ace):
-                    if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
-                        lbeg[3] == '-')
-                    {
+                    if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {
                         // Found xn--.
                         // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
                         // than U+007F), record that there was an error, and continue with the next label.
@@ -798,7 +790,7 @@ namespace webpp::unicode::idna {
                             status |= to_underlying(ascii_only_punycode);
                         }
 
-                        if (!is_normalized<normalization_form::NFC>(lbeg, lend)) [[unlikely]] {
+                        if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
                             status |= to_underlying(non_normalized_punycode);
                         }
 
@@ -864,9 +856,7 @@ namespace webpp::unicode::idna {
             if (accum_length > max_label) [[unlikely]] {
                 status |= to_underlying(too_long_label);
             }
-            if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || *stl::prev(out) != '.'))
-              [[unlikely]]
-            {
+            if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || *stl::prev(out) != '.')) [[unlikely]] {
                 status |= to_underlying(too_long_domain);
             }
         }
@@ -916,9 +906,7 @@ namespace webpp::unicode::idna {
               idna_options            Options = {},
               istl::StringViewifiable StrT,
               typename... Args>
-    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
-      StrT&& src,
-      Args&&... args) {
+    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(StrT&& src, Args&&... args) {
         auto const str = istl::string_viewify(stl::forward<StrT>(src));
         OutStrT    out{stl::forward<Args>(args)...};
         auto const status = to_ascii<Options>(str.begin(), str.end(), out);
@@ -928,22 +916,20 @@ namespace webpp::unicode::idna {
         return stl::unexpected{status};
     }
 
-    [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs,
-                                                   to_ascii_status const      rhs) noexcept {
+    [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
         return lhs == static_cast<to_ascii_status_type>(rhs);
     }
 
     template <istl::String OutStrT>
     [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
-                                                   to_ascii_status const rhs) noexcept {
-        to_ascii_status_type const status =
-          lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
+                                                   to_ascii_status const                               rhs) noexcept {
+        to_ascii_status_type const status = lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
         return status == static_cast<to_ascii_status_type>(rhs);
     }
 
     template <istl::String OutStrT, istl::StringViewifiable StrV>
     [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
-                                                   StrV&& rhs) noexcept {
+                                                   StrV&&                                              rhs) noexcept {
         auto const str = istl::string_viewify(stl::forward<StrV>(rhs));
         if (lhs.has_value()) {
             return lhs.value() == str;
@@ -951,8 +937,7 @@ namespace webpp::unicode::idna {
         return false;
     }
 
-    [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs,
-                                                   to_ascii_status const      rhs) noexcept {
+    [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
         return lhs != static_cast<to_ascii_status_type>(rhs);
     }
 

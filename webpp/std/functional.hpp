@@ -33,11 +33,7 @@ namespace webpp::istl {
         struct allocate_caller {};
 
         // this is the type that gets stored in the allocated places with the allocator
-        template <typename FunctionType,
-                  typename CallableObject,
-                  typename R,
-                  bool IsNoexcept,
-                  typename... Args>
+        template <typename FunctionType, typename CallableObject, typename R, bool IsNoexcept, typename... Args>
         struct functor_object {
             using function_type      = FunctionType;
             using call_type          = R(void*, Args...) noexcept(IsNoexcept);
@@ -47,7 +43,7 @@ namespace webpp::istl {
             using object_type        = stl::decay_t<CallableObject>;
 
             // NOLINTBEGIN(*-non-private-member-variables-in-classes)
-            call_ptr                          caller = FunctionType::template call_stub<CallableObject>;
+            call_ptr                          caller        = FunctionType::template call_stub<CallableObject>;
             action_runner_ptr                 action_runner = run_action<FunctionType, CallableObject>;
             [[no_unique_address]] object_type obj;
             // NOLINTEND(*-non-private-member-variables-in-classes)
@@ -86,9 +82,8 @@ namespace webpp::istl {
             using callable              = stl::decay_t<Callable>;
             using functor_object_type   = typename function_type::template functor_object_type<callable>;
             using function_alloc_traits = typename function_type::alloc_traits;
-            using new_alloc_traits =
-              typename function_alloc_traits::template rebind_traits<functor_object_type>;
-            using alloc_type = typename new_alloc_traits::allocator_type;
+            using new_alloc_traits      = typename function_alloc_traits::template rebind_traits<functor_object_type>;
+            using alloc_type            = typename new_alloc_traits::allocator_type;
 
             switch (action) {
                 using enum details::action_list;
@@ -160,8 +155,7 @@ namespace webpp::istl {
             using function_type   = Function;
 
             template <typename Callable>
-            using functor_object_type =
-              details::functor_object<function_type, Callable, R, IsNoexcept, Args...>;
+            using functor_object_type = details::functor_object<function_type, Callable, R, IsNoexcept, Args...>;
 
             static constexpr bool is_const    = false;
             static constexpr bool is_noexcept = IsNoexcept;
@@ -177,9 +171,7 @@ namespace webpp::istl {
             static constexpr bool is_convertible_v =
               (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable>&, Args...>
                           : stl::is_invocable_v<stl::decay_t<Callable>&, Args...>) and
-              requires {
-                  requires is_safely_convertible_v<stl::invoke_result_t<stl::decay_t<Callable>&, Args...>, R>;
-              };
+              requires { requires is_safely_convertible_v<stl::invoke_result_t<stl::decay_t<Callable>&, Args...>, R>; };
         };
 
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
@@ -198,8 +190,7 @@ namespace webpp::istl {
             using function_type   = Function;
 
             template <typename Callable>
-            using functor_object_type =
-              details::functor_object<function_type, Callable, R, IsNoexcept, Args...>;
+            using functor_object_type = details::functor_object<function_type, Callable, R, IsNoexcept, Args...>;
 
             static constexpr bool is_const    = true;
             static constexpr bool is_noexcept = IsNoexcept;
@@ -216,9 +207,7 @@ namespace webpp::istl {
               (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable> const&, Args...>
                           : stl::is_invocable_v<stl::decay_t<Callable> const&, Args...>) and
               requires {
-                  requires is_safely_convertible_v<
-                    stl::invoke_result_t<stl::decay_t<Callable> const&, Args...>,
-                    R>;
+                  requires is_safely_convertible_v<stl::invoke_result_t<stl::decay_t<Callable> const&, Args...>, R>;
               };
         };
 
@@ -312,8 +301,7 @@ namespace webpp::istl {
 
         template <typename T>
         static constexpr bool compatible_allocator_v =
-          stl::constructible_from<allocator_type, T> ||
-          stl::constructible_from<allocator_type, stl::add_cv_t<T>>;
+          stl::constructible_from<allocator_type, T> || stl::constructible_from<allocator_type, stl::add_cv_t<T>>;
 
       public:
         // nullptr state
@@ -322,8 +310,7 @@ namespace webpp::istl {
                           "The specified allocator is not default constructible.");
         }
 
-        explicit constexpr function(stl::nullptr_t)
-          noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
+        explicit constexpr function(stl::nullptr_t) noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
             static_assert(stl::is_default_constructible_v<allocator_type>,
                           "The specified allocator is not default constructible.");
         }
@@ -352,14 +339,12 @@ namespace webpp::istl {
         // member function
         template <typename Member, typename Object, typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2> &&
-                     requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; })
+                     requires(Member Object::* const mem_ptr) { function{stl::mem_fn(mem_ptr)}; })
         constexpr function(stl::allocator_arg_t,
                            Alloc2 const& input_alloc,
-                           Member Object::*const mem_ptr) //
-          noexcept(stl::is_nothrow_constructible_v<function,
-                                                   stl::allocator_arg_t,
-                                                   Alloc2,
-                                                   decltype(stl::mem_fn(mem_ptr))>)
+                           Member Object::* const mem_ptr) //
+          noexcept(
+            stl::is_nothrow_constructible_v<function, stl::allocator_arg_t, Alloc2, decltype(stl::mem_fn(mem_ptr))>)
           : function{stl::allocator_arg_t{}, input_alloc, stl::mem_fn(mem_ptr)} {}
 
         // copy constructor
@@ -368,16 +353,14 @@ namespace webpp::istl {
             this->clone_from(&other);
         }
 
-        constexpr function(function& other)
-          : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
+        constexpr function(function& other) : alloc{alloc_traits::select_on_container_copy_construction(other.alloc)} {
             this->clone_from(&other);
         }
 
         // kinda copy constructor but with an allocator specified
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, function const& other)
-          : alloc{alloc2} {
+        constexpr function(stl::allocator_arg_t, Alloc2 const& alloc2, function const& other) : alloc{alloc2} {
             this->clone_from(&other);
         }
 
@@ -446,9 +429,7 @@ namespace webpp::istl {
         // almost move ctor with a different allocator
         template <typename Signature2, Allocator Alloc2, Allocator Alloc3>
             requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>>)
-        constexpr function(stl::allocator_arg_t,
-                           Alloc3 const&                  input_alloc,
-                           function<Signature2, Alloc2>&& other)
+        constexpr function(stl::allocator_arg_t, Alloc3 const& input_alloc, function<Signature2, Alloc2>&& other)
           : alloc{input_alloc},
             ptr{other.ptr} {
             // todo: I think we need to disable this constructor
@@ -481,9 +462,9 @@ namespace webpp::istl {
 
         // callable object constructor
         template <typename Callable>
-            requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
-                     !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
-                     stl::is_default_constructible_v<allocator_type>)
+            requires(
+              !stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> && !is_compatible_function_v<Callable> &&
+              is_convertible_v<Callable> && stl::is_default_constructible_v<allocator_type>)
         explicit(false) constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
           : ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));
@@ -573,16 +554,16 @@ namespace webpp::istl {
         }
 
         template <typename Callable>
-            requires(!stl::is_null_pointer_v<Callable> && !is_compatible_function_v<Callable> &&
-                     is_convertible_v<Callable>)
+            requires(
+              !stl::is_null_pointer_v<Callable> && !is_compatible_function_v<Callable> && is_convertible_v<Callable>)
         constexpr function& operator=(Callable&& callee) {
             assign(stl::forward<Callable>(callee));
             return *this;
         }
 
         template <typename Member, typename Object>
-            requires requires(Member Object::*const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
-        constexpr function& operator=(Member Object::*const mem_ptr) noexcept {
+            requires requires(Member Object::* const mem_ptr) { function{stl::mem_fn(mem_ptr)}; }
+        constexpr function& operator=(Member Object::* const mem_ptr) noexcept {
             *this = mem_ptr ? stl::mem_fn(mem_ptr) : nullptr;
             return *this;
         }
@@ -772,9 +753,7 @@ namespace webpp::istl {
 
         [[nodiscard]] inline constexpr stl::size_t functor_size() const noexcept {
             stl::size_t val;
-            (*action_runner())(*this,
-                               static_cast<void*>(stl::addressof(val)),
-                               details::action_list::get_size);
+            (*action_runner())(*this, static_cast<void*>(stl::addressof(val)), details::action_list::get_size);
             return val;
         }
 
@@ -820,8 +799,7 @@ namespace webpp::istl {
             if constexpr (stl::convertible_to<Alloc2, Alloc>) {
                 if constexpr (
                   (stl::is_const_v<Alloc2> && alloc_traits::propagate_on_container_copy_assignment::value) ||
-                  (stl::is_rvalue_reference_v<Alloc2> &&
-                   alloc_traits::propagate_on_container_copy_assignment::value))
+                  (stl::is_rvalue_reference_v<Alloc2> && alloc_traits::propagate_on_container_copy_assignment::value))
                 {
                     if constexpr (!alloc_traits::is_always_equal::value) {
                         if (alloc != alloc2) {

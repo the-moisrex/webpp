@@ -35,8 +35,7 @@ namespace webpp::ascii {
      * remove the first character if exists (only those that is specified in chars)
      */
     template <istl::StringView StrViewT, stl::size_t N = 1>
-    static constexpr void lremove_all(StrViewT&                                 str,
-                                      charset<typename StrViewT::value_type, N> chars) noexcept {
+    static constexpr void lremove_all(StrViewT& str, charset<typename StrViewT::value_type, N> chars) noexcept {
         // todo: possible SIMD usage place
         while (!str.empty() && chars.contains(str[0])) {
             str.remove_prefix(1);
@@ -47,8 +46,7 @@ namespace webpp::ascii {
      * remove the last character if exists (only those that is specified)
      */
     template <istl::StringView StrViewT, stl::size_t N = 1>
-    static constexpr void rremove_all(StrViewT&                                 str,
-                                      charset<typename StrViewT::value_type, N> chars) noexcept {
+    static constexpr void rremove_all(StrViewT& str, charset<typename StrViewT::value_type, N> chars) noexcept {
         // todo: possible SIMD usage place
         while (!str.empty() && chars.contains(str[0])) {
             str.remove_suffix(1);

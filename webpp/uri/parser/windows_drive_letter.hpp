@@ -133,11 +133,9 @@ namespace webpp::uri::details {
     }
 
     template <uri_parsing_options Options, ParsingURIContext CtxT, ParsingOutput OutT>
-    static constexpr void handle_windows_driver_letter(
-      CtxT&                    ctx,
-      OutT&                    out,
-      CtxBufferOf<CtxT> auto&  buffer,
-      typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
+    static constexpr void
+    handle_windows_driver_letter(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
+      noexcept(CtxT::is_nothrow) {
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
         if constexpr (Options.handle_windows_drive_letters) {
@@ -173,9 +171,7 @@ namespace webpp::uri::details {
                                     continue;
                                 }
                                 return;
-                            case '\\':
-                                set_warning(ctx.status, uri_status::reverse_solidus_used);
-                                [[fallthrough]];
+                            case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                             case '/':
                                 if (index == 0) {
                                     continue;

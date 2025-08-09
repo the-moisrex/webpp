@@ -157,8 +157,7 @@ namespace webpp::uri {
         /// @returns should continue parsing or not
         /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
         template <bool IgnoreWhitespaces = true, typename Iter, ParsingURIContext CtxT>
-        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end)
-          noexcept(CtxT::is_nothrow) {
+        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
 
             if (head<IgnoreWhitespaces>(pos, end) == '[') {
@@ -216,13 +215,13 @@ namespace webpp::uri {
 
         using id_type = stl::uint8_t;
 
-        webpp_static_constexpr id_type upper_val   = 0b1U;        // upper case ascii chars
-        webpp_static_constexpr id_type no_ipv4_val = 0b10U;       // invalid IPv4 Characters
-        webpp_static_constexpr id_type no_ipv6_val = 0b100U;      // invalid IPv6 Characters
-        webpp_static_constexpr id_type x_val       = 0b1000U;     // character x
-        webpp_static_constexpr id_type n_val       = 0b1'0000U;   // character n
-        webpp_static_constexpr id_type dash_val    = 0b10'0000U;  // character -
-        webpp_static_constexpr id_type nt_val      = 0b100'0000U; // newlines and tabs
+        webpp_static_constexpr id_type upper_val   = 0b1U;                               // upper case ascii chars
+        webpp_static_constexpr id_type no_ipv4_val = 0b10U;                              // invalid IPv4 Characters
+        webpp_static_constexpr id_type no_ipv6_val = 0b100U;                             // invalid IPv6 Characters
+        webpp_static_constexpr id_type x_val       = 0b1000U;                            // character x
+        webpp_static_constexpr id_type n_val       = 0b1'0000U;                          // character n
+        webpp_static_constexpr id_type dash_val    = 0b10'0000U;                         // character -
+        webpp_static_constexpr id_type nt_val      = 0b100'0000U;                        // newlines and tabs
         webpp_static_constexpr id_type forb_val    = static_cast<id_type>(~0 & ~nt_val); // Forbidden/Unicode
         webpp_static_constexpr id_type xnd_val     = x_val | n_val | dash_val | no_ipv4_val;
         webpp_static_constexpr id_type no_ip_val   = no_ipv4_val | no_ipv6_val;

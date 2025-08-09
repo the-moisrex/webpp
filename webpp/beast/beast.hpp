@@ -40,8 +40,7 @@ namespace webpp {
         using request_body_communicator    = beast_proto::beast_request_body_communicator<protocol_type>;
         using request_headers_type         = http::request_headers<fields_provider>;
         using request_body_type            = http::request_body<traits_type, request_body_communicator>;
-        using request_type =
-          http::simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
+        using request_type  = http::simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
         using response_type = http::simple_response<traits_type>;
 
 
@@ -71,16 +70,15 @@ namespace webpp {
         duration timeout_val{stl::chrono::seconds(3)};
 
         void async_accept() noexcept {
-            acceptor.async_accept(asio::make_strand(io),
-                                  [this](boost::beast::error_code ec, socket_type sock) {
-                                      if (!ec) [[likely]] {
-                                          // todo: start_work may throw errors, deal with them
-                                          thread_workers.start_work(stl::move(sock));
-                                      } else [[unlikely]] {
-                                          this->logger.warning(log_cat, "Accepting error", ec);
-                                      }
-                                      this->async_accept();
-                                  });
+            acceptor.async_accept(asio::make_strand(io), [this](boost::beast::error_code ec, socket_type sock) {
+                if (!ec) [[likely]] {
+                    // todo: start_work may throw errors, deal with them
+                    thread_workers.start_work(stl::move(sock));
+                } else [[unlikely]] {
+                    this->logger.warning(log_cat, "Accepting error", ec);
+                }
+                this->async_accept();
+            });
         }
 
         // call the app
@@ -219,18 +217,14 @@ namespace webpp {
             // open
             acceptor.open(endp.protocol(), err);
             if (err) {
-                this->logger.error(log_cat,
-                                   fmt::format("Cannot open protocol for {}", bound_uri().as_string()),
-                                   err);
+                this->logger.error(log_cat, fmt::format("Cannot open protocol for {}", bound_uri().as_string()), err);
                 return -1;
             }
 
             // Allow address reuse
             acceptor.set_option(asio::socket_base::reuse_address(true), err);
             if (err) {
-                this->logger.error(log_cat,
-                                   fmt::format("Cannot set reuse option on {}", bound_uri().as_string()),
-                                   err);
+                this->logger.error(log_cat, fmt::format("Cannot set reuse option on {}", bound_uri().as_string()), err);
                 return -1;
             }
 
@@ -264,8 +258,7 @@ namespace webpp {
                         try {
                             // run executor in this thread
                             io.run();
-                            this->logger.info(log_cat,
-                                              fmt::format("Thread {} went down peacefully.", io_index));
+                            this->logger.info(log_cat, fmt::format("Thread {} went down peacefully.", io_index));
                         } catch (stl::exception const& err_exc) {
                             this->logger.error(
                               log_cat,
@@ -278,10 +271,9 @@ namespace webpp {
                             // todo: possible data race
                             this->logger.error(
                               log_cat,
-                              fmt::format(
-                                "Unknown server error; restarting io runner; io runner id: {}; tries: {}",
-                                io_index,
-                                tries));
+                              fmt::format("Unknown server error; restarting io runner; io runner id: {}; tries: {}",
+                                          io_index,
+                                          tries));
                         }
                     }
                 };

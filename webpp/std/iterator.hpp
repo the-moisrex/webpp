@@ -91,13 +91,11 @@ namespace webpp::istl {
       };
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
-    concept NothrowAppendableArray =
-      AppendableString<T, ValueType> && stl::is_nothrow_copy_assignable_v<ValueType>;
+    concept NothrowAppendableArray = AppendableString<T, ValueType> && stl::is_nothrow_copy_assignable_v<ValueType>;
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
-    concept Appendable =
-      AppendableString<T, ValueType> || AppendableIterator<stl::remove_pointer_t<T>, ValueType> ||
-      AppendableIterator<T, ValueType>;
+    concept Appendable = AppendableString<T, ValueType> || AppendableIterator<stl::remove_pointer_t<T>, ValueType> ||
+                         AppendableIterator<T, ValueType>;
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept AppendableStorage =
@@ -106,8 +104,7 @@ namespace webpp::istl {
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendable =
-      Appendable<T, ValueType> &&
-      (NothrowAppendableIterator<T, ValueType> || NothrowAppendableArray<T, ValueType>);
+      Appendable<T, ValueType> && (NothrowAppendableIterator<T, ValueType> || NothrowAppendableArray<T, ValueType>);
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendableStorage =

@@ -18,8 +18,8 @@ namespace webpp::tests {
 
     // Concept to check if a type is a character type suitable for basic_string or basic_string_view
     template <typename T>
-    concept CharacterType = std::is_same_v<T, char> || std::is_same_v<T, char8_t> ||
-                            std::is_same_v<T, char16_t> || std::is_same_v<T, char32_t>;
+    concept CharacterType = std::is_same_v<T, char> || std::is_same_v<T, char8_t> || std::is_same_v<T, char16_t> ||
+                            std::is_same_v<T, char32_t>;
 
     // --- Overloads for std::basic_string ---
 
@@ -124,12 +124,12 @@ namespace webpp::tests {
         using webpp::unicode::canonical_decomposed;
         using webpp::unicode::decompose_iterator;
         using webpp::unicode::isNFC;
-        using webpp::unicode::normalization_form;
+        using webpp::unicode::norm_form;
         using webpp::unicode::normalize;
         using webpp::unicode::toNFC;
         using webpp::unicode::toNFD;
         using webpp::unicode::checked::utf32_forward_iter;
-        using enum normalization_form;
+        using enum norm_form;
 
         auto const        length = data.size();
         auto const* const ptr    = data.data();
@@ -183,20 +183,16 @@ namespace webpp::tests {
 
         // we don't use the iterators directly since std::string will try to use distance on it
         stl::string idres;
-        webpp::istl::resize_and_overwrite(
-          idres,
-          data.size() * 4,
-          [&](auto* buf, [[maybe_unused]] stl::size_t max_len) {
-              return stl::copy(dbeg, dend, buf) - buf;
-          });
+        webpp::istl::resize_and_overwrite(idres, data.size() * 4, [&](auto* buf, [[maybe_unused]] stl::size_t max_len) {
+            return stl::copy(dbeg, dend, buf) - buf;
+        });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
         stl::advance(dbeg, dres.size());
-        ASSERT_TRUE(stl::equal(std::reverse_iterator{dbeg},
-                               std::reverse_iterator{dend},
-                               std::next(dres.begin(), dres.size())))
+        ASSERT_TRUE(
+          stl::equal(std::reverse_iterator{dbeg}, std::reverse_iterator{dend}, std::next(dres.begin(), dres.size())))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
@@ -221,8 +217,7 @@ namespace webpp::tests {
         {
             resStringStyle.resize(resStringStyle.size() * 19); // UB if we don't
             auto outptr = resStringStyle.begin();
-            auto endptr =
-              stl::next(resStringStyle.begin(), static_cast<std::string::difference_type>(res.size()));
+            auto endptr = stl::next(resStringStyle.begin(), static_cast<std::string::difference_type>(res.size()));
             normalize<NFC>(outptr, endptr, outptr);
             ASSERT_EQ(outptr - resStringStyle.begin(), res.size()) << to_hex(str);
             resStringStyle.resize(static_cast<stl::size_t>(outptr - resStringStyle.begin()));

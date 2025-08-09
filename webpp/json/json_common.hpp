@@ -77,8 +77,7 @@ namespace webpp::json {
             this->apply([&obj]<typename... ValueType>(field<ValueType>&... fields) {
                 // it's the same as this simple if statement:
                 // if (obj.contains(field.key) field = obj.as<value_type>();
-                (void(obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()))),
-                 ...);
+                (void(obj.contains(fields.key) && ((fields = obj[fields.key].template as<ValueType>()))), ...);
             });
             return *this;
         }

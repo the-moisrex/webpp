@@ -14,8 +14,7 @@ namespace webpp::uri {
 
     /// Serialize port
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void
-    render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
+    static constexpr void render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
@@ -109,8 +108,7 @@ namespace webpp::uri {
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
-        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
-          noexcept(!istl::ModifiableString<NStrT>) {
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
             return out;
@@ -182,8 +180,7 @@ namespace webpp::uri {
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
-                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage,
-                                                                         stl::forward<NStrT>(inp_str));
+                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
             } else {
                 return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
             }

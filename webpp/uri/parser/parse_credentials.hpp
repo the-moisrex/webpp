@@ -57,11 +57,7 @@ namespace webpp::uri {
                     iterator const password_end = atsign_pos;
 
                     clear<components::password>(ctx); // todo: it's optimizable
-                    encode_or_set<components::password>(
-                      ctx,
-                      password_beg,
-                      password_end,
-                      USER_INFO_ENCODE_SET);
+                    encode_or_set<components::password>(ctx, password_beg, password_end, USER_INFO_ENCODE_SET);
                 }
             }
         }

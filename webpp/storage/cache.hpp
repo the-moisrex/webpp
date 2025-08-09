@@ -102,8 +102,7 @@ namespace webpp {
         // Get a reference to the values, the life-time of the returned value becomes the problem in parallel
         // algorithms
         template <CacheKey K>
-            requires(
-              details::CacheStrategyPointerSupport<strategy_type> && stl::is_convertible_v<K, key_type>)
+            requires(details::CacheStrategyPointerSupport<strategy_type> && stl::is_convertible_v<K, key_type>)
         constexpr auto* get_ptr(K&& key) {
             return strategy_type::get_ptr(stl::forward<K>(key));
         }
@@ -117,8 +116,8 @@ namespace webpp {
             if (auto val = strategy_type::get(key); val) {
                 return cache_result_type{*this, stl::forward<K>(key), *val};
             }
-            if constexpr (sizeof...(Args) == 1 &&
-                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
+            if constexpr (
+              sizeof...(Args) == 1 && stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
             {
                 // if args... is value_type itself, no need to copy/move twice
                 set(key, args...);
@@ -139,8 +138,8 @@ namespace webpp {
             if (auto* val = get_ptr(key); val) {
                 return val;
             }
-            if constexpr (sizeof...(Args) == 1 &&
-                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
+            if constexpr (
+              sizeof...(Args) == 1 && stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
             {
                 // if args... is value_type itself, no need to copy/move twice
                 set(key, args...);

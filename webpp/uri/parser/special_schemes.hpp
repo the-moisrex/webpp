@@ -123,8 +123,7 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr bool is_file_scheme(uri_status_type const status) noexcept {
-        return (status & stl::to_underlying(scheme_type::file_scheme)) ==
-               stl::to_underlying(scheme_type::file_scheme);
+        return (status & stl::to_underlying(scheme_type::file_scheme)) == stl::to_underlying(scheme_type::file_scheme);
     }
 
     static constexpr void set_flag(uri_status_type& status, scheme_type const value) noexcept {

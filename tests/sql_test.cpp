@@ -106,8 +106,7 @@ TEST(Database, QueryBuilderTest) {
     auto query = db.table("settings");
     query.select("value");
     query.where("name", "username");
-    EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string())
-      << query.to_string();
+    EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string()) << query.to_string();
 }
 
 TEST(Database, InsertSelectQuery) {
@@ -115,10 +114,9 @@ TEST(Database, InsertSelectQuery) {
 
     sql_database<sqlite> db;
 
-    auto query = db.table("employees")
-                   .insert(db.table("users")
-                             .where("employed", true)
-                             .select("firstname as first_name", "lastname as last_name"));
+    auto query =
+      db.table("employees")
+        .insert(db.table("users").where("employed", true).select("firstname as first_name", "lastname as last_name"));
 
     // the alias is automatically gets added for firstname, but it doesn't get added for lastname because it
     // already has an alias
@@ -133,8 +131,7 @@ TEST(Database, WhereClause) {
 
     auto q1 = db.table("test").select("one", "two", "three").where("four", "question");
 
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' = 'question'")
-      << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' = 'question'") << q1.to_string();
 
 
     q1.where_in("four", 1, 2, 3, 4, 5, 6, 7, 8);
@@ -143,13 +140,11 @@ TEST(Database, WhereClause) {
 
 
     q1.where_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(),
-              "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)")
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' in (1, 2, 3, 4, 'five', 6, 7, 8)")
       << q1.to_string();
 
     q1.where_not_in("four", 1, 2, 3, 4, "five", 6, 7, 8);
-    EXPECT_EQ(q1.to_string(),
-              "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8)")
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8)")
       << q1.to_string();
 
 
@@ -160,12 +155,10 @@ TEST(Database, WhereClause) {
       << q1.to_string();
 
     q1.where_in("six", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3)")
-      << q1.to_string();
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3)") << q1.to_string();
 
     q1.or_where_in("seven", 1, 2, 3);
-    EXPECT_EQ(q1.to_string(),
-              "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)")
+    EXPECT_EQ(q1.to_string(), "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)")
       << q1.to_string();
 }
 
@@ -176,9 +169,8 @@ TEST(Database, UpdateQuery) {
     q["username"] = "moisrex";
     q["password"] = "moisrex loves coding";
     q.update();
-    EXPECT_EQ(
-      q.to_string(),
-      "update 'test' set 'username' = 'moisrex', 'password' = 'moisrex loves coding' where 'user_id' = 12")
+    EXPECT_EQ(q.to_string(),
+              "update 'test' set 'username' = 'moisrex', 'password' = 'moisrex loves coding' where 'user_id' = 12")
       << q.to_string();
 }
 
@@ -197,13 +189,11 @@ TEST(Database, Joins) {
     sql_database<sqlite> db;
 
     auto q = db.table("test").left_join_using("table", "using_condition").where("user_id", 12).select();
-    EXPECT_EQ(q.to_string(),
-              "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12")
+    EXPECT_EQ(q.to_string(), "select * from 'test' left join 'table' using ('using_condition') where 'user_id' = 12")
       << q.to_string();
 
 
     auto q2 = db.table("test").right_join_using("table", "using_condition").where("user_id", 12).select();
-    EXPECT_EQ(q2.to_string(),
-              "select * from 'test' right join 'table' using ('using_condition') where 'user_id' = 12")
+    EXPECT_EQ(q2.to_string(), "select * from 'test' right join 'table' using ('using_condition') where 'user_id' = 12")
       << q2.to_string();
 }

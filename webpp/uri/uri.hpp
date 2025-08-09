@@ -38,10 +38,10 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = clean_out_type::is_modifiable;
         static constexpr bool is_segregated = clean_out_type::is_segregated;
 
-        iterator beg{}; // the beginning of the string, not going to change during parsing
-        iterator pos{}; // current position
-        iterator end{}; // the end of the string
-        out_type out{}; // the output uri components
+        iterator                        beg{}; // the beginning of the string, not going to change during parsing
+        iterator                        pos{}; // current position
+        iterator                        end{}; // the end of the string
+        out_type                        out{}; // the output uri components
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
     };
@@ -107,43 +107,42 @@ namespace webpp::uri {
             m_fragment{alloc} {}
 
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                                            \
-    template <istl::StringLike NStrT = stl::basic_string_view<char_type>>                           \
-    [[nodiscard]] constexpr NStrT field##_view() const noexcept                                     \
-        requires(!is_modifiable)                                                                    \
-    {                                                                                               \
-        return m_##field.template view<NStrT>();                                                    \
-    }                                                                                               \
-                                                                                                    \
-    template <istl::StringLike NStrT = typename decltype(m_##field)::string_type, typename... Args> \
-    [[nodiscard]] constexpr NStrT get_##field(Args&&... args)                                       \
-      const noexcept(!istl::ModifiableString<NStrT>) {                                              \
-        return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                    \
-    }                                                                                               \
-                                                                                                    \
-    constexpr void clear_##field() noexcept {                                                       \
-        m_##field.clear();                                                                          \
-    }                                                                                               \
-                                                                                                    \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {                                     \
-        return m_##field.has_value();                                                               \
-    }                                                                                               \
-                                                                                                    \
-    template <typename Iter = iterator>                                                             \
-    constexpr void set_##field(Iter beg, Iter end) noexcept(is_nothrow) {                           \
-        m_##field.assign(beg, end);                                                                 \
-    }                                                                                               \
-                                                                                                    \
-    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow) {                    \
-        m_##field = stl::move(str);                                                                 \
-    }                                                                                               \
-                                                                                                    \
-    [[nodiscard]] constexpr auto const& field() const noexcept {                                    \
-        return m_##field;                                                                           \
-    }                                                                                               \
-                                                                                                    \
-    [[nodiscard]] constexpr auto& field() noexcept {                                                \
-        return m_##field;                                                                           \
+#define webpp_def(field)                                                                                       \
+    template <istl::StringLike NStrT = stl::basic_string_view<char_type>>                                      \
+    [[nodiscard]] constexpr NStrT field##_view() const noexcept                                                \
+        requires(!is_modifiable)                                                                               \
+    {                                                                                                          \
+        return m_##field.template view<NStrT>();                                                               \
+    }                                                                                                          \
+                                                                                                               \
+    template <istl::StringLike NStrT = typename decltype(m_##field)::string_type, typename... Args>            \
+    [[nodiscard]] constexpr NStrT get_##field(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) { \
+        return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                               \
+    }                                                                                                          \
+                                                                                                               \
+    constexpr void clear_##field() noexcept {                                                                  \
+        m_##field.clear();                                                                                     \
+    }                                                                                                          \
+                                                                                                               \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                                                \
+        return m_##field.has_value();                                                                          \
+    }                                                                                                          \
+                                                                                                               \
+    template <typename Iter = iterator>                                                                        \
+    constexpr void set_##field(Iter beg, Iter end) noexcept(is_nothrow) {                                      \
+        m_##field.assign(beg, end);                                                                            \
+    }                                                                                                          \
+                                                                                                               \
+    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow) {                               \
+        m_##field = stl::move(str);                                                                            \
+    }                                                                                                          \
+                                                                                                               \
+    [[nodiscard]] constexpr auto const& field() const noexcept {                                               \
+        return m_##field;                                                                                      \
+    }                                                                                                          \
+                                                                                                               \
+    [[nodiscard]] constexpr auto& field() noexcept {                                                           \
+        return m_##field;                                                                                      \
     }
 
 
@@ -203,8 +202,7 @@ namespace webpp::uri {
         status_type m_status = stl::to_underlying(uri_status::unparsed);
 
         template <uri_parsing_options Options, typename Iter>
-        constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status)
-          noexcept(is_modifiable) {
+        constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status) noexcept(is_modifiable) {
             using enum uri_status;
 
             parsing_structured_uri_context<components_type*, Iter> ctx{};
@@ -378,9 +376,8 @@ namespace webpp::uri {
         ///            types won't be able to hold decoded/encoded values.
         [[nodiscard]] constexpr size_type size() const noexcept {
             // todo: queries, host, and path's sizes are not string sizes
-            return this->scheme().size() + this->username().size() + this->password().size() +
-                   this->hostname().size() + this->port().size() + this->path().size() +
-                   this->queries().size() + this->fragment().size();
+            return this->scheme().size() + this->username().size() + this->password().size() + this->hostname().size() +
+                   this->port().size() + this->path().size() + this->queries().size() + this->fragment().size();
         }
 
         template <istl::String NStrT = modifiable_string_type>

@@ -82,8 +82,7 @@ namespace webpp {
             }
 
             template <typename K>
-                requires(
-                  details::StorageGatePointerSupport<storage_gate_type> && stl::convertible_to<K, key_type>)
+                requires(details::StorageGatePointerSupport<storage_gate_type> && stl::convertible_to<K, key_type>)
             constexpr auto* get_ptr(K&& key) {
                 // we can't use return type directly in the signature because we're using "value_ptr_type"
                 // which may not be present in every storage gate type.

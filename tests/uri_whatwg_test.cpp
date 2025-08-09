@@ -35,9 +35,7 @@ struct URIWhatwgTest : testing::Test {
             return SpecifiedTypeParam{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
         } else if constexpr (stl::convertible_to<stl::string::iterator, iterator>) {
             url_text = str;
-            return SpecifiedTypeParam{.beg = url_text.begin(),
-                                      .pos = url_text.begin(),
-                                      .end = url_text.end()};
+            return SpecifiedTypeParam{.beg = url_text.begin(), .pos = url_text.begin(), .end = url_text.end()};
         } else {
             return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
         }
@@ -60,9 +58,7 @@ struct URIWhatwgTest : testing::Test {
         using iterator          = typename stl::string_view::const_iterator;
         using base_context_type = uri::parsing_uri_context<stl::uint32_t, iterator>;
 
-        base_context_type origin_context{.beg = base_str.begin(),
-                                         .pos = base_str.begin(),
-                                         .end = base_str.end()};
+        base_context_type origin_context{.beg = base_str.begin(), .pos = base_str.begin(), .end = base_str.end()};
         uri::parse_uri(origin_context);
 
         uri::parse_uri(str, origin_context.out);
@@ -101,9 +97,8 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat2) {
       "\"origin\": \"http://foo:21\",\n    \"protocol\": \"http:\",\n    \"username\": \"user\",\n    "
       "\"password\": \"pass\",\n    \"host\": \"foo:21\",\n    \"hostname\": \"foo\",\n    \"port\": "
       "\"21\",\n    \"pathname\": \"/bar;par\",\n    \"search\": \"?b\",\n    \"hash\": \"#c\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://user:pass@foo:21/bar;par?b#c",
-      "http://example.org/foo/bar");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://user:pass@foo:21/bar;par?b#c", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "user") << details;
@@ -201,8 +196,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat7) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.org\",\n    "
       "\"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": \"/foo/foo.com\",\n    "
       "\"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http:foo.com", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http:foo.com", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -222,8 +216,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat8) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.org\",\n    \"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/foo/:foo.com\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("\t   :foo.com   \n", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("\t   :foo.com   \n", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -262,8 +255,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat10) {
       "\"a: foo.com\",\n    \"origin\": \"null\",\n    \"protocol\": \"a:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \" foo.com\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("a:\t foo.com", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("a:\t foo.com", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "a") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -349,8 +341,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat14) {
       "\"http://f:0/c\",\n    \"origin\": \"http://f:0\",\n    \"protocol\": \"http:\",\n    \"username\": "
       "\"\",\n    \"password\": \"\",\n    \"host\": \"f:0\",\n    \"hostname\": \"f\",\n    \"port\": "
       "\"0\",\n    \"pathname\": \"/c\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:0/c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:0/c", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -390,9 +381,8 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat16) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"f\",\n    "
       "\"hostname\": \"f\",\n    \"port\": \"\",\n    \"pathname\": \"/c\",\n    \"search\": \"\",\n    "
       "\"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://f:00000000000000000000080/c",
-      "http://example.org/foo/bar");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://f:00000000000000000000080/c", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -409,8 +399,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat17) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://f:b/c\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:b/c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:b/c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -419,8 +408,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat18) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://f: /c\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f: /c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f: /c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -431,8 +419,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat19) {
       "\"http://f/c\",\n    \"origin\": \"http://f\",\n    \"protocol\": \"http:\",\n    \"username\": "
       "\"\",\n    \"password\": \"\",\n    \"host\": \"f\",\n    \"hostname\": \"f\",\n    \"port\": \"\",\n "
       "   \"pathname\": \"/c\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:\n/c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:\n/c", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -449,8 +436,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat20) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://f:fifty-two/c\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:fifty-two/c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:fifty-two/c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -459,8 +445,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat21) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://f:999999/c\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:999999/c", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:999999/c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -851,8 +836,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat42) {
       "\"href\": \"http://x/hello\",\n    \"origin\": \"http://x\",\n    \"protocol\": \"http:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"x\",\n    \"hostname\": \"x\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/hello\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("\\\\x\\hello", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("\\\\x\\hello", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -930,8 +914,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat46) {
       "\"href\": \"http://a:b@c:29/d\",\n    \"origin\": \"http://c:29\",\n    \"protocol\": \"http:\",\n    "
       "\"username\": \"a\",\n    \"password\": \"b\",\n    \"host\": \"c:29\",\n    \"hostname\": \"c\",\n   "
       " \"port\": \"29\",\n    \"pathname\": \"/d\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://a:b@c:29/d", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://a:b@c:29/d", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "a") << details;
@@ -991,8 +974,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat49) {
       "\"href\": \"http://:%3A%40c@d:2/\",\n    \"origin\": \"http://d:2\",\n    \"protocol\": \"http:\",\n  "
       "  \"username\": \"\",\n    \"password\": \"%3A%40c\",\n    \"host\": \"d:2\",\n    \"hostname\": "
       "\"d\",\n    \"port\": \"2\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://::@c@d:2", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://::@c@d:2", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1011,8 +993,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat50) {
       "\"href\": \"http://foo.com:b@d/\",\n    \"origin\": \"http://d\",\n    \"protocol\": \"http:\",\n    "
       "\"username\": \"foo.com\",\n    \"password\": \"b\",\n    \"host\": \"d\",\n    \"hostname\": "
       "\"d\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://foo.com:b@d/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://foo.com:b@d/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "foo.com") << details;
@@ -1032,8 +1013,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat51) {
       "   \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"foo.com\",\n    \"hostname\": "
       "\"foo.com\",\n    \"port\": \"\",\n    \"pathname\": \"//@\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://foo.com/\\@", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://foo.com/\\@", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1053,8 +1033,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat52) {
       " \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"foo.com\",\n    \"hostname\": "
       "\"foo.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http:\\\\foo.com\\", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http:\\\\foo.com\\", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1074,9 +1053,8 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat53) {
       "\"http://a\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    "
       "\"host\": \"a\",\n    \"hostname\": \"a\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/b:c/d@foo.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http:\\\\a\\b:c\\d@foo.com\\",
-      "http://example.org/foo/bar");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http:\\\\a\\b:c\\d@foo.com\\", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1114,8 +1092,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat55) {
       "\"foo:/bar.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"foo:\",\n    \"username\": \"\",\n "
       "   \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/bar.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo:/bar.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo:/bar.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1134,8 +1111,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat56) {
       "\"foo://///////\",\n    \"origin\": \"null\",\n    \"protocol\": \"foo:\",\n    \"username\": \"\",\n "
       "   \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"///////\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://///////", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://///////", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1154,8 +1130,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat57) {
       "\"href\": \"foo://///////bar.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"foo:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"///////bar.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://///////bar.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://///////bar.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1174,8 +1149,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat58) {
       "\"foo:////://///\",\n    \"origin\": \"null\",\n    \"protocol\": \"foo:\",\n    \"username\": "
       "\"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n   "
       " \"pathname\": \"//://///\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo:////://///", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo:////://///", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1296,8 +1270,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat64) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.org\",\n    "
       "\"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": \"/foo/[61:24:74]:98\",\n    "
       "\"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("[61:24:74]:98", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("[61:24:74]:98", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1317,8 +1290,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat65) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.org\",\n    \"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/foo/[61:27]/:foo\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http:[61:27]/:foo", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http:[61:27]/:foo", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1335,8 +1307,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat66) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://[1::2]:3:4\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[1::2]:3:4", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[1::2]:3:4", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -1345,8 +1316,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat67) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://2001::1\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://2001::1", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://2001::1", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -1355,8 +1325,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat68) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://2001::1]\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://2001::1]", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://2001::1]", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -1365,8 +1334,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat69) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://2001::1]:80\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://2001::1]:80", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://2001::1]:80", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -1378,8 +1346,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat70) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"[2001::1]\",\n    "
       "\"hostname\": \"[2001::1]\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n  "
       "  \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[2001::1]", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[2001::1]", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1399,8 +1366,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat71) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"[::7f00:1]\",\n    "
       "\"hostname\": \"[::7f00:1]\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n "
       "   \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[::127.0.0.1]", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[::127.0.0.1]", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1417,8 +1383,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat72) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://[::127.0.0.1.]\",\n    \"base\": \"http://example.org/foo/bar\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[::127.0.0.1.]", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[::127.0.0.1.]", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -1430,9 +1395,8 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat73) {
       "\"http://[::d01:4403]\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"[::d01:4403]\",\n    \"hostname\": \"[::d01:4403]\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://[0:0:0:0:0:0:13.1.68.3]",
-      "http://example.org/foo/bar");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://[0:0:0:0:0:0:13.1.68.3]", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1452,8 +1416,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat74) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"[2001::1]\",\n    "
       "\"hostname\": \"[2001::1]\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n  "
       "  \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[2001::1]:80", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[2001::1]:80", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1473,8 +1436,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat75) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.org\",\n    \"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1494,8 +1456,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat76) {
       "\"ftp:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ftp:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ftp:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ftp") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1515,8 +1476,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat77) {
       "\"https:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("https:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("https:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "https") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1556,8 +1516,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat79) {
       "\"href\": \"file:///example.com/\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("file:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("file:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1608,8 +1567,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat84) {
       "\"href\": \"ftps:/example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"ftps:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ftps:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ftps:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ftps") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1628,8 +1586,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat85) {
       "\"href\": \"gopher:/example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"gopher:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("gopher:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("gopher:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "gopher") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1649,8 +1606,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat86) {
       "   \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    \"hostname\": "
       "\"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ws:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ws:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ws") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1670,8 +1626,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat87) {
       "\"wss:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1690,8 +1645,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat88) {
       "\"href\": \"data:/example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"data:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("data:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("data:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "data") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1731,8 +1685,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat90) {
       "\"href\": \"mailto:/example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"mailto:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("mailto:/example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("mailto:/example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "mailto") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1752,8 +1705,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat91) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.org\",\n    \"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/foo/example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1773,8 +1725,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat92) {
       "\"ftp:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ftp:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ftp:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ftp") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1794,8 +1745,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat93) {
       "\"https:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("https:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("https:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "https") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1835,8 +1785,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat95) {
       "\"href\": \"ftps:example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"ftps:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ftps:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ftps:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ftps") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1855,8 +1804,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat96) {
       "\"href\": \"gopher:example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"gopher:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("gopher:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("gopher:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "gopher") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1876,8 +1824,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat97) {
       "   \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    \"hostname\": "
       "\"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ws:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("ws:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ws") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1897,8 +1844,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat98) {
       "\"wss:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1917,8 +1863,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat99) {
       "\"href\": \"data:example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"data:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("data:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("data:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "data") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -1958,8 +1903,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat101) {
       "\"href\": \"mailto:example.com/\",\n    \"origin\": \"null\",\n    \"protocol\": \"mailto:\",\n    "
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"example.com/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("mailto:example.com/", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("mailto:example.com/", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "mailto") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2111,8 +2055,7 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat108) {
       "\"tel:1234567890\",\n    \"origin\": \"null\",\n    \"protocol\": \"tel:\",\n    \"username\": "
       "\"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n   "
       " \"pathname\": \"1234567890\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("tel:1234567890", "http://example.org/foo/bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("tel:1234567890", "http://example.org/foo/bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "tel") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2152,8 +2095,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"href\": \"file:///c:/foo/bar.html\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/c:/foo/bar.html\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("file:c:\\foo\\bar.html", "file:///tmp/mock/path");
+    auto const ctx = this->template parse_from_string<TypeParam>("file:c:\\foo\\bar.html", "file:///tmp/mock/path");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2172,8 +2114,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"href\": \"file:///c:////foo/bar.html\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/c:////foo/bar.html\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("  File:c|////foo\\bar.html", "file:///tmp/mock/path");
+    auto const ctx = this->template parse_from_string<TypeParam>("  File:c|////foo\\bar.html", "file:///tmp/mock/path");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2306,8 +2247,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"file:///foo/bar.txt\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/foo/bar.txt\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("file:///foo/bar.txt", "file:///tmp/mock/path");
+    auto const ctx = this->template parse_from_string<TypeParam>("file:///foo/bar.txt", "file:///tmp/mock/path");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2440,8 +2380,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"file:///\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    "
       "\"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    "
       "\"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("file://localhost/", "file:///tmp/mock/path");
+    auto const ctx = this->template parse_from_string<TypeParam>("file://localhost/", "file:///tmp/mock/path");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2460,8 +2399,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"href\": \"file:///test\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/test\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("file://localhost/test", "file:///tmp/mock/path");
+    auto const ctx = this->template parse_from_string<TypeParam>("file://localhost/test", "file:///tmp/mock/path");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -2781,8 +2719,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"example.com\",\n    "
       "\"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/%2e.bar\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -3156,8 +3093,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
       "  \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com\",\n    \"hostname\": \"example.com\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/%7Ffp3%3Eju%3Dduvgw%3Dd\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -4450,8 +4386,7 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
 
 // 225 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (10)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml10) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml10) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://:b@www.example.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://:b@www.example.com/\",\n    \"origin\": \"http://www.example.com\",\n    \"protocol\": "
@@ -4472,8 +4407,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 226 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (11)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml11) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml11) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:/:@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4483,8 +4417,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 227 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (12)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml12) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml12) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://user@/www.example.com\",\n    \"base\": null,\n    \"failure\": true\n}";
     auto const ctx = this->template parse_from_string<TypeParam>("http://user@/www.example.com");
@@ -4493,8 +4426,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 228 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (13)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml13) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml13) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4504,8 +4436,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 229 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (14)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml14) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml14) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:/@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4515,8 +4446,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 230 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (15)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml15) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml15) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://@/www.example.com\",\n    \"base\": null,\n    \"failure\": true\n}";
     auto const ctx = this->template parse_from_string<TypeParam>("http://@/www.example.com");
@@ -4525,8 +4455,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 231 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (16)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml16) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml16) {
     static constexpr auto details =
       "\n{\n    \"input\": \"https:@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4536,8 +4465,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 232 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (17)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml17) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml17) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:a:b@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4547,8 +4475,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 233 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (18)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml18) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml18) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:/a:b@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4558,8 +4485,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 234 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (19)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml19) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml19) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://a:b@/www.example.com\",\n    \"base\": null,\n    \"failure\": true\n}";
     auto const ctx = this->template parse_from_string<TypeParam>("http://a:b@/www.example.com");
@@ -4568,8 +4494,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 235 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (20)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml20) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml20) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http::@/www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4579,8 +4504,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 236 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (21)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml21) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml21) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:a:@www.example.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://a@www.example.com/\",\n    \"origin\": \"http://www.example.com\",\n    \"protocol\": "
@@ -4601,8 +4525,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 237 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (22)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml22) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml22) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:/a:@www.example.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://a@www.example.com/\",\n    \"origin\": \"http://www.example.com\",\n    \"protocol\": "
@@ -4623,8 +4546,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 238 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (23)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml23) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml23) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://a:@www.example.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://a@www.example.com/\",\n    \"origin\": \"http://www.example.com\",\n    \"protocol\": "
@@ -4645,8 +4567,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 239 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (24)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml24) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml24) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://www.@pple.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://www.@pple.com/\",\n    \"origin\": \"http://pple.com\",\n    \"protocol\": \"http:\",\n    "
@@ -4667,8 +4588,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 240 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (25)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml25) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml25) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:@:www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4678,8 +4598,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 241 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (26)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml26) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml26) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http:/@:www.example.com\",\n    \"base\": null,\n    \"failure\": true,\n    "
       "\"relativeTo\": \"non-opaque-path-base\"\n}";
@@ -4689,8 +4608,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 242 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (27)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml27) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml27) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://@:www.example.com\",\n    \"base\": null,\n    \"failure\": true\n}";
     auto const ctx = this->template parse_from_string<TypeParam>("http://@:www.example.com");
@@ -4699,8 +4617,7 @@ TYPED_TEST(URIWhatwgTest,
 
 // 243 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
 // (28)
-TYPED_TEST(URIWhatwgTest,
-           BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml28) {
+TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlSegmentsUserinfoVsHostHtml28) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://:@www.example.com\",\n    \"base\": null,\n    \"href\": "
       "\"http://www.example.com/\",\n    \"origin\": \"http://www.example.com\",\n    \"protocol\": "
@@ -4847,8 +4764,7 @@ TYPED_TEST(URIWhatwgTest, Others7) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"www.example.com\",\n    "
       "\"hostname\": \"www.example.com\",\n    \"port\": \"\",\n    \"pathname\": \"/test.txt\",\n    "
       "\"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("../test.txt", "http://www.example.com/test");
+    auto const ctx = this->template parse_from_string<TypeParam>("../test.txt", "http://www.example.com/test");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -4868,8 +4784,7 @@ TYPED_TEST(URIWhatwgTest, Others8) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"www.example.com\",\n    \"hostname\": \"www.example.com\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/aaa/test.txt\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("../aaa/test.txt", "http://www.example.com/test");
+    auto const ctx = this->template parse_from_string<TypeParam>("../aaa/test.txt", "http://www.example.com/test");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -4889,8 +4804,7 @@ TYPED_TEST(URIWhatwgTest, Others9) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"www.example.com\",\n    \"hostname\": \"www.example.com\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/test.txt\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("../../test.txt", "http://www.example.com/test");
+    auto const ctx = this->template parse_from_string<TypeParam>("../../test.txt", "http://www.example.com/test");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -4910,8 +4824,7 @@ TYPED_TEST(URIWhatwgTest, Others10) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"www.example.com\",\n    \"hostname\": \"www.example.com\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/%E4%B8%AD/test.txt\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("中/test.txt", "http://www.example.com/test");
+    auto const ctx = this->template parse_from_string<TypeParam>("中/test.txt", "http://www.example.com/test");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -4956,8 +4869,7 @@ TYPED_TEST(URIWhatwgTest, Others12) {
       "\"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"www.example2.com\",\n    \"hostname\": \"www.example2.com\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("//www.example2.com", "http://www.example.com/test");
+    auto const ctx = this->template parse_from_string<TypeParam>("//www.example2.com", "http://www.example.com/test");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -5051,8 +4963,7 @@ TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLower
     static constexpr auto details =
       "\n{\n    \"input\": \"http://example example.com\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://example example.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example example.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5061,8 +4972,7 @@ TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLower
     static constexpr auto details =
       "\n{\n    \"input\": \"http://Goo%20 goo%7C|.com\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://Goo%20 goo%7C|.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://Goo%20 goo%7C|.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5093,17 +5003,15 @@ TYPED_TEST(URIWhatwgTest, U3000IsMappedToU0020SpaceWhichIsDisallowed1) {
 
 // 265 - Other types of space (no-break, zero-width, zero-width-no-break) are name-prepped away to nothing.
 // U+200B, U+2060, and U+FEFF, are ignored (1)
-TYPED_TEST(
-  URIWhatwgTest,
-  OtherTypesOfSpaceNoBreakZeroWidthZeroWidthNoBreakAreNamePreppedAwayToNothingU200bU2060AndUFeffAreIgnored1) {
+TYPED_TEST(URIWhatwgTest,
+           OtherTypesOfSpaceNoBreakZeroWidthZeroWidthNoBreakAreNamePreppedAwayToNothingU200bU2060AndUFeffAreIgnored1) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://GOO​⁠﻿goo.com\",\n    \"base\": \"http://other.com/\",\n    "
       "\"href\": \"http://googoo.com/\",\n    \"origin\": \"http://googoo.com\",\n    \"protocol\": "
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"googoo.com\",\n    "
       "\"hostname\": \"googoo.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n "
       "   \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://GOO​⁠﻿goo.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://GOO​⁠﻿goo.com", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -5145,8 +5053,7 @@ TYPED_TEST(URIWhatwgTest,
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"www.foo.bar.com\",\n    "
       "\"hostname\": \"www.foo.bar.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://www.foo。bar.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://www.foo。bar.com", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -5172,16 +5079,14 @@ TYPED_TEST(URIWhatwgTest, ThisIsTheSameAsPreviousButEscaped1) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://%ef%b7%90zyx.com\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://%ef%b7%90zyx.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://%ef%b7%90zyx.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 270 - U+FFFD (1)
 TYPED_TEST(URIWhatwgTest, UFffd1) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"https://�\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("https://�");
+    static constexpr auto details = "\n{\n    \"input\": \"https://�\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("https://�");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5305,9 +5210,8 @@ TYPED_TEST(URIWhatwgTest, UrlSpecForbidsTheFollowingHttpsWwwW3OrgBugsPublicShowB
     static constexpr auto details =
       "\n{\n    \"input\": \"http://%ef%bc%85%ef%bc%94%ef%bc%91.com\",\n    \"base\": "
       "\"http://other.com/\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://%ef%bc%85%ef%bc%94%ef%bc%91.com",
-      "http://other.com/");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://%ef%bc%85%ef%bc%94%ef%bc%91.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5325,9 +5229,8 @@ TYPED_TEST(URIWhatwgTest, 00InFullwidthShouldFailAlsoAsEscapedUtf8Input2) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://%ef%bc%85%ef%bc%90%ef%bc%90.com\",\n    \"base\": "
       "\"http://other.com/\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://%ef%bc%85%ef%bc%90%ef%bc%90.com",
-      "http://other.com/");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://%ef%bc%85%ef%bc%90%ef%bc%90.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5393,9 +5296,8 @@ TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn
 
 // 287 - Invalid escaped characters should fail and the percents should be escaped.
 // https://www.w3.org/Bugs/Public/show_bug.cgi?id=24191 (1)
-TYPED_TEST(
-  URIWhatwgTest,
-  InvalidEscapedCharactersShouldFailAndThePercentsShouldBeEscapedHttpsWwwW3OrgBugsPublicShowBugCgiId241911) {
+TYPED_TEST(URIWhatwgTest,
+           InvalidEscapedCharactersShouldFailAndThePercentsShouldBeEscapedHttpsWwwW3OrgBugsPublicShowBugCgiId241911) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://%zz%66%a.com\",\n    \"base\": \"http://other.com/\",\n    \"failure\": "
       "true\n}";
@@ -5428,9 +5330,8 @@ TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre1
       "\"http://192.168.0.1\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"192.168.0.1\",\n    \"hostname\": \"192.168.0.1\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://%30%78%63%30%2e%30%32%35%30.01",
-      "http://other.com/");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://%30%78%63%30%2e%30%32%35%30.01", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -5450,9 +5351,8 @@ TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre2
       "\"http://192.168.0.1\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"192.168.0.1\",\n    \"hostname\": \"192.168.0.1\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://%30%78%63%30%2e%30%32%35%30.01%2e",
-      "http://other.com/");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://%30%78%63%30%2e%30%32%35%30.01%2e", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -5478,9 +5378,8 @@ TYPED_TEST(URIWhatwgTest, InvalidEscapingInHostsCausesFailure1) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://%3g%78%63%30%2e%30%32%35%30%2E.01\",\n    \"base\": "
       "\"http://other.com/\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(
-      "http://%3g%78%63%30%2e%30%32%35%30%2E.01",
-      "http://other.com/");
+    auto const ctx =
+      this->template parse_from_string<TypeParam>("http://%3g%78%63%30%2e%30%32%35%30%2E.01", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5489,8 +5388,7 @@ TYPED_TEST(URIWhatwgTest, ASpaceInAHostCausesFailure1) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://192.168.0.1 hello\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://192.168.0.1 hello", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://192.168.0.1 hello", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -5677,8 +5575,7 @@ TYPED_TEST(URIWhatwgTest, MiscUnicode1) {
       "\"protocol\": \"http:\",\n    \"username\": \"foo\",\n    \"password\": \"%F0%9F%92%A9\",\n    "
       "\"host\": \"example.com\",\n    \"hostname\": \"example.com\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/bar\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://foo:💩@example.com/bar", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://foo:💩@example.com/bar", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "foo") << details;
@@ -5833,8 +5730,7 @@ TYPED_TEST(URIWhatwgTest, MultipleInAuthorityState2) {
       " \"username\": \"%40%40\",\n    \"password\": \"\",\n    \"host\": \"example\",\n    \"hostname\": "
       "\"example\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("https://@@@example", "http://doesnotmatter/");
+    auto const ctx = this->template parse_from_string<TypeParam>("https://@@@example", "http://doesnotmatter/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "https") << details;
     EXPECT_EQ(ctx.out.get_username(), "%40%40") << details;
@@ -5854,8 +5750,7 @@ TYPED_TEST(URIWhatwgTest, NonAz09Characters1) {
       "\"protocol\": \"http:\",\n    \"username\": \"%60%7B%7D\",\n    \"password\": \"%60%7B%7D\",\n    "
       "\"host\": \"h\",\n    \"hostname\": \"h\",\n    \"port\": \"\",\n    \"pathname\": \"/%60%7B%7D\",\n  "
       "  \"search\": \"?`{}\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://`{}:`{}@h/`{}?`{}", "http://doesnotmatter/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://`{}:`{}@h/`{}?`{}", "http://doesnotmatter/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "%60%7B%7D") << details;
@@ -5921,8 +5816,7 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase1) {
       "\"http:\",\n    \"username\": \"user\",\n    \"password\": \"\",\n    \"host\": \"example.org\",\n    "
       "\"hostname\": \"example.org\",\n    \"port\": \"\",\n    \"pathname\": \"/some/path\",\n    "
       "\"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("/some/path", "http://user@example.org/smth");
+    auto const ctx = this->template parse_from_string<TypeParam>("/some/path", "http://user@example.org/smth");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "user") << details;
@@ -5962,8 +5856,7 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase3) {
       "\"http://example.org:21\",\n    \"protocol\": \"http:\",\n    \"username\": \"user\",\n    "
       "\"password\": \"pass\",\n    \"host\": \"example.org:21\",\n    \"hostname\": \"example.org\",\n    "
       "\"port\": \"21\",\n    \"pathname\": \"/some/path\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("/some/path", "http://user:pass@example.org:21/smth");
+    auto const ctx = this->template parse_from_string<TypeParam>("/some/path", "http://user:pass@example.org:21/smth");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "user") << details;
@@ -5977,17 +5870,15 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase3) {
 
 // 325 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (1)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes1) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("i", "sc:sd");
+    static constexpr auto details = "\n{\n    \"input\": \"i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 326 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (2)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes2) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"i\",\n    \"base\": \"sc:sd/sd\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("i", "sc:sd/sd");
+    static constexpr auto details = "\n{\n    \"input\": \"i\",\n    \"base\": \"sc:sd/sd\",\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("i", "sc:sd/sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6050,9 +5941,8 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
 
 // 330 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (6)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes6) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"../i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("../i", "sc:sd");
+    static constexpr auto details = "\n{\n    \"input\": \"../i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("../i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6123,9 +6013,8 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
 
 // 335 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (11)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes11) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"/i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("/i", "sc:sd");
+    static constexpr auto details = "\n{\n    \"input\": \"/i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("/i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6196,9 +6085,8 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
 
 // 340 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (16)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes16) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"?i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("?i", "sc:sd");
+    static constexpr auto details = "\n{\n    \"input\": \"?i\",\n    \"base\": \"sc:sd\",\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("?i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6477,9 +6365,8 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts2) {
 
 // 356 - # unknown schemes and their hosts (3)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts3) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://@/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://@/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://@/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://@/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6493,17 +6380,15 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts4) {
 
 // 358 - # unknown schemes and their hosts (5)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts5) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://:/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://:/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://:/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 359 - # unknown schemes and their hosts (6)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts6) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://:12/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://:12/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://:12/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://:12/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6681,33 +6566,29 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints1) {
 
 // 368 - Forbidden host code points (2)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints2) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a b/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a b/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a b/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 369 - Forbidden host code points (3)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints3) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a<b\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a<b");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a<b\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a<b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 370 - Forbidden host code points (4)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints4) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a>b\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a>b");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a>b\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a>b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 371 - Forbidden host code points (5)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints5) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a[b/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a[b/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a[b/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a[b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -6721,25 +6602,22 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints6) {
 
 // 373 - Forbidden host code points (7)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints7) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a]b/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a]b/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a]b/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a]b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 374 - Forbidden host code points (8)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints8) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a^b\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a^b");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a^b\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a^b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 375 - Forbidden host code points (9)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints9) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"sc://a|b/\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("sc://a|b/");
+    static constexpr auto details = "\n{\n    \"input\": \"sc://a|b/\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("sc://a|b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -7662,8 +7540,7 @@ TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage1) {
       "\"\",\n    \"host\": \"127.0.0.1:10100\",\n    \"hostname\": \"127.0.0.1\",\n    \"port\": "
       "\"10100\",\n    \"pathname\": \"/relative_import.html\",\n    \"search\": \"\",\n    \"hash\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://127.0.0.1:10100/relative_import.html");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://127.0.0.1:10100/relative_import.html");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -8017,8 +7894,7 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103175) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"192.168.257.com\",\n    "
       "\"hostname\": \"192.168.257.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://192.168.257.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://192.168.257.com", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -8147,8 +8023,7 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031712) {
       "\"http:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"10000000000.com\",\n    "
       "\"hostname\": \"10000000000.com\",\n    \"port\": \"\",\n    \"pathname\": \"/\",\n    \"search\": "
       "\"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://10000000000.com", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://10000000000.com", "http://other.com/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -8223,8 +8098,7 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031717) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://256.256.256.256\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://256.256.256.256", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://256.256.256.256", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -8404,8 +8278,7 @@ TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomW
     EXPECT_EQ(ctx.out.get_password(), "") << details;
     EXPECT_EQ(ctx.out.get_hostname(), "") << details;
     EXPECT_EQ(ctx.out.get_port(), "") << details;
-    EXPECT_EQ(ctx.out.get_path(),
-              "/C:/Users/Domenic/Dropbox/GitHub/tmpvar/jsdom/test/level2/html/files/pix/submit.gif")
+    EXPECT_EQ(ctx.out.get_path(), "/C:/Users/Domenic/Dropbox/GitHub/tmpvar/jsdom/test/level2/html/files/pix/submit.gif")
       << details;
     EXPECT_EQ(ctx.out.get_queries(), "") << details;
     EXPECT_EQ(ctx.out.get_fragment(), "") << details;
@@ -9973,8 +9846,7 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests2) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://[0:1:2:3:4:5:6:7:8]\",\n    \"base\": \"http://example.net/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://[0:1:2:3:4:5:6:7:8]", "http://example.net/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://[0:1:2:3:4:5:6:7:8]", "http://example.net/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -10037,17 +9909,15 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests9) {
 
 // 610 - # Empty host (1)
 TYPED_TEST(URIWhatwgTest, EmptyHost1) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"http://?\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("http://?");
+    static constexpr auto details = "\n{\n    \"input\": \"http://?\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("http://?");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
 // 611 - # Empty host (2)
 TYPED_TEST(URIWhatwgTest, EmptyHost2) {
-    static constexpr auto details =
-      "\n{\n    \"input\": \"http://#\",\n    \"base\": null,\n    \"failure\": true\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("http://#");
+    static constexpr auto details = "\n{\n    \"input\": \"http://#\",\n    \"base\": null,\n    \"failure\": true\n}";
+    auto const            ctx     = this->template parse_from_string<TypeParam>("http://#");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -10056,8 +9926,7 @@ TYPED_TEST(URIWhatwgTest, PortOverflow232811) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://f:4294967377/c\",\n    \"base\": \"http://example.org/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://f:4294967377/c", "http://example.org/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://f:4294967377/c", "http://example.org/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -10278,8 +10147,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests11) {
       "\"protocol\": \"tftp:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"foobar.com\",\n    \"hostname\": \"foobar.com\",\n    \"port\": \"\",\n    \"pathname\": "
       "\"/someconfig;mode=netascii\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("tftp://foobar.com/someconfig;mode=netascii");
+    auto const ctx = this->template parse_from_string<TypeParam>("tftp://foobar.com/someconfig;mode=netascii");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "tftp") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -10339,8 +10207,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests14) {
       "\"protocol\": \"redis:\",\n    \"username\": \"foo\",\n    \"password\": \"bar\",\n    \"host\": "
       "\"somehost:6379\",\n    \"hostname\": \"somehost\",\n    \"port\": \"6379\",\n    \"pathname\": "
       "\"/0\",\n    \"search\": \"?baz=bam&qux=baz\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("redis://foo:bar@somehost:6379/0?baz=bam&qux=baz");
+    auto const ctx = this->template parse_from_string<TypeParam>("redis://foo:bar@somehost:6379/0?baz=bam&qux=baz");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "redis") << details;
     EXPECT_EQ(ctx.out.get_username(), "foo") << details;
@@ -10420,8 +10287,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests18) {
       "\"protocol\": \"dns:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"fw.example.org:9999\",\n    \"hostname\": \"fw.example.org\",\n    \"port\": \"9999\",\n    "
       "\"pathname\": \"/foo.bar.org\",\n    \"search\": \"?type=TXT\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("dns://fw.example.org:9999/foo.bar.org?type=TXT");
+    auto const ctx = this->template parse_from_string<TypeParam>("dns://fw.example.org:9999/foo.bar.org?type=TXT");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "dns") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -10441,8 +10307,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests19) {
       "\"protocol\": \"ldap:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"localhost:389\",\n    \"hostname\": \"localhost\",\n    \"port\": \"389\",\n    \"pathname\": "
       "\"/ou=People,o=JNDITutorial\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("ldap://localhost:389/ou=People,o=JNDITutorial");
+    auto const ctx = this->template parse_from_string<TypeParam>("ldap://localhost:389/ou=People,o=JNDITutorial");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "ldap") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11563,8 +11428,7 @@ TYPED_TEST(URIWhatwgTest, FirstSchemeCharNotAllowedHttpsGithubComWhatwgUrlIssues
       "\"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/some/dir/10.0.0.7:8080/foo.html\",\n    \"search\": \"\",\n    "
       "\"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("10.0.0.7:8080/foo.html", "file:///some/dir/bar.html");
+    auto const ctx = this->template parse_from_string<TypeParam>("10.0.0.7:8080/foo.html", "file:///some/dir/bar.html");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11583,8 +11447,7 @@ TYPED_TEST(URIWhatwgTest, SubsequentSchemeCharsNotAllowed1) {
       "\"file:///some/dir/a!@$*=/foo.html\",\n    \"protocol\": \"file:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/some/dir/a!@$*=/foo.html\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("a!@$*=/foo.html", "file:///some/dir/bar.html");
+    auto const ctx = this->template parse_from_string<TypeParam>("a!@$*=/foo.html", "file:///some/dir/bar.html");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "file") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11725,8 +11588,7 @@ TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSuperse
       "\"password\": \"\",\n    \"pathname\": \"cannot-be-a-base-url-%00%01%1F%1E~%7F%C2%80\",\n    "
       "\"port\": \"\",\n    \"protocol\": \"non-special:\",\n    \"search\": \"\",\n    \"username\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("non-special:cannot-be-a-base-url-\0~");
+    auto const ctx = this->template parse_from_string<TypeParam>("non-special:cannot-be-a-base-url-\0~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "non-special") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11781,8 +11643,7 @@ TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSuperse
       "\"https://user:pass%5B%7F@foo/bar\",\n    \"origin\": \"https://foo\",\n    \"password\": "
       "\"pass%5B%7F\",\n    \"pathname\": \"/bar\",\n    \"port\": \"\",\n    \"protocol\": \"https:\",\n    "
       "\"search\": \"\",\n    \"username\": \"user\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("https://user:pass[@foo/bar", "http://example.org");
+    auto const ctx = this->template parse_from_string<TypeParam>("https://user:pass[@foo/bar", "http://example.org");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "https") << details;
     EXPECT_EQ(ctx.out.get_username(), "user") << details;
@@ -11803,12 +11664,10 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets1) {
       "\"null\",\n    \"password\": \"\",\n    \"pathname\": \"/\",\n    \"port\": \"\",\n    \"protocol\": "
       "\"foo:\",\n    \"search\": \"\",\n    \"username\": "
       "\"%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo:// !\"$%&'()*+,-.;<=>@[\\]^_`{|}~@host/");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo:// !\"$%&'()*+,-.;<=>@[\\]^_`{|}~@host/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
-    EXPECT_EQ(ctx.out.get_username(), "%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~")
-      << details;
+    EXPECT_EQ(ctx.out.get_username(), "%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~") << details;
     EXPECT_EQ(ctx.out.get_password(), "") << details;
     EXPECT_EQ(ctx.out.get_hostname(), "host") << details;
     EXPECT_EQ(ctx.out.get_port(), "") << details;
@@ -11847,13 +11706,11 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets3) {
       "\"null\",\n    \"password\": \"%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~\",\n    "
       "\"pathname\": \"/\",\n    \"port\": \"\",\n    \"protocol\": \"foo:\",\n    \"search\": \"\",\n    "
       "\"username\": \"joe\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://joe: !\"$%&'()*+,-.:;<=>@[\\]^_`{|}~@host/");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://joe: !\"$%&'()*+,-.:;<=>@[\\]^_`{|}~@host/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "joe") << details;
-    EXPECT_EQ(ctx.out.get_password(), "%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~")
-      << details;
+    EXPECT_EQ(ctx.out.get_password(), "%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5C%5D%5E_%60%7B%7C%7D~") << details;
     EXPECT_EQ(ctx.out.get_hostname(), "host") << details;
     EXPECT_EQ(ctx.out.get_port(), "") << details;
     EXPECT_EQ(ctx.out.get_path(), "/") << details;
@@ -11870,13 +11727,11 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets4) {
       "\"wss://host\",\n    \"password\": \"%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~\",\n "
       "   \"pathname\": \"/\",\n    \"port\": \"\",\n    \"protocol\": \"wss:\",\n    \"search\": \"\",\n    "
       "\"username\": \"joe\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss://joe: !\"$%&'()*+,-.:;<=>@[]^_`{|}~@host/");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss://joe: !\"$%&'()*+,-.:;<=>@[]^_`{|}~@host/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "joe") << details;
-    EXPECT_EQ(ctx.out.get_password(), "%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~")
-      << details;
+    EXPECT_EQ(ctx.out.get_password(), "%20!%22$%&'()*+,-.%3A%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~") << details;
     EXPECT_EQ(ctx.out.get_hostname(), "host") << details;
     EXPECT_EQ(ctx.out.get_port(), "") << details;
     EXPECT_EQ(ctx.out.get_path(), "/") << details;
@@ -11932,8 +11787,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets7) {
       "\"foo://host/%20!%22$%&'()*+,-./:;%3C=%3E@[\\\\]^_%60%7B|%7D~\",\n    \"origin\": \"null\",\n    "
       "\"password\": \"\",\n    \"pathname\": \"/%20!%22$%&'()*+,-./:;%3C=%3E@[\\\\]^_%60%7B|%7D~\",\n    "
       "\"port\": \"\",\n    \"protocol\": \"foo:\",\n    \"search\": \"\",\n    \"username\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11955,8 +11809,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets8) {
       "\"wss://host/%20!%22$%&'()*+,-./:;%3C=%3E@[/]^_%60%7B|%7D~\",\n    \"origin\": \"wss://host\",\n    "
       "\"password\": \"\",\n    \"pathname\": \"/%20!%22$%&'()*+,-./:;%3C=%3E@[/]^_%60%7B|%7D~\",\n    "
       "\"port\": \"\",\n    \"protocol\": \"wss:\",\n    \"search\": \"\",\n    \"username\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss://host/ !\"$%&'()*+,-./:;<=>@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -11978,8 +11831,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets9) {
       "\"foo://host/dir/?%20!%22$%&'()*+,-./:;%3C=%3E?@[\\\\]^_`{|}~\",\n    \"origin\": \"null\",\n    "
       "\"password\": \"\",\n    \"pathname\": \"/dir/\",\n    \"port\": \"\",\n    \"protocol\": \"foo:\",\n "
       "   \"search\": \"?%20!%22$%&'()*+,-./:;%3C=%3E?@[\\\\]^_`{|}~\",\n    \"username\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://host/dir/? !\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://host/dir/? !\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12002,8 +11854,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets10) {
       "   \"password\": \"\",\n    \"pathname\": \"/dir/\",\n    \"port\": \"\",\n    \"protocol\": "
       "\"wss:\",\n    \"search\": \"?%20!%22$%&%27()*+,-./:;%3C=%3E?@[\\\\]^_`{|}~\",\n    \"username\": "
       "\"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss://host/dir/? !\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss://host/dir/? !\"$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12026,8 +11877,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets11) {
       "\"foo://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\\\\]^_%60{|}~\",\n    \"origin\": \"null\",\n    "
       "\"password\": \"\",\n    \"pathname\": \"/dir/\",\n    \"port\": \"\",\n    \"protocol\": \"foo:\",\n "
       "   \"search\": \"\",\n    \"username\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("foo://host/dir/# !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("foo://host/dir/# !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "foo") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12048,8 +11898,7 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets12) {
       "\"wss://host/dir/#%20!%22#$%&'()*+,-./:;%3C=%3E?@[\\\\]^_%60{|}~\",\n    \"origin\": "
       "\"wss://host\",\n    \"password\": \"\",\n    \"pathname\": \"/dir/\",\n    \"port\": \"\",\n    "
       "\"protocol\": \"wss:\",\n    \"search\": \"\",\n    \"username\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("wss://host/dir/# !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
+    auto const ctx = this->template parse_from_string<TypeParam>("wss://host/dir/# !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "wss") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12194,8 +12043,7 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv45) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://256.256.256.256.256\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://256.256.256.256.256", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://256.256.256.256.256", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -12204,8 +12052,7 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv46) {
     static constexpr auto details =
       "\n{\n    \"input\": \"http://256.256.256.256.256.\",\n    \"base\": \"http://other.com/\",\n    "
       "\"failure\": true\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("http://256.256.256.256.256.", "http://other.com/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://256.256.256.256.256.", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
 }
 
@@ -12820,8 +12667,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"data:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("data://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("data://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "data") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12903,8 +12749,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"javascript:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("javascript://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("javascript://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "javascript") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -12986,8 +12831,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"mailto:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("mailto://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("mailto://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "mailto") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13069,8 +12913,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"intent:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("intent://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("intent://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "intent") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13152,8 +12995,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"urn:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("urn://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("urn://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "urn") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13235,8 +13077,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"turn:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("turn://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("turn://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "turn") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13318,8 +13159,7 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
       "\"protocol\": \"stun:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": "
       "\"example.com:8080\",\n    \"hostname\": \"example.com\",\n    \"port\": \"8080\",\n    \"pathname\": "
       "\"/pathname\",\n    \"search\": \"?search\",\n    \"hash\": \"#hash\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("stun://example.com:8080/pathname?search#hash");
+    auto const ctx = this->template parse_from_string<TypeParam>("stun://example.com:8080/pathname?search#hash");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "stun") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13476,8 +13316,7 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes3) {
       "\"http://example.org/path\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"example.org\",\n    \"hostname\": \"example.org\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/path\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("///example.org/path", "http://example.org/");
+    auto const ctx = this->template parse_from_string<TypeParam>("///example.org/path", "http://example.org/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13496,8 +13335,7 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes4) {
       "\"href\": \"http://example.org/path\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"example.org\",\n    \"hostname\": \"example.org\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/path\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("///example.org/../path", "http://example.org/");
+    auto const ctx = this->template parse_from_string<TypeParam>("///example.org/../path", "http://example.org/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13516,8 +13354,7 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes5) {
       "\"http://example.org/\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    \"password\": "
       "\"\",\n    \"host\": \"example.org\",\n    \"hostname\": \"example.org\",\n    \"port\": \"\",\n    "
       "\"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("///example.org/../../", "http://example.org/");
+    auto const ctx = this->template parse_from_string<TypeParam>("///example.org/../../", "http://example.org/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;
@@ -13576,8 +13413,7 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes8) {
       "\"href\": \"http://example.org/path\",\n    \"protocol\": \"http:\",\n    \"username\": \"\",\n    "
       "\"password\": \"\",\n    \"host\": \"example.org\",\n    \"hostname\": \"example.org\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"/path\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx =
-      this->template parse_from_string<TypeParam>("/\\/\\//example.org/../path", "http://example.org/");
+    auto const ctx = this->template parse_from_string<TypeParam>("/\\/\\//example.org/../path", "http://example.org/");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(ctx.out.get_scheme(), "http") << details;
     EXPECT_EQ(ctx.out.get_username(), "") << details;

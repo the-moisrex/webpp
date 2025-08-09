@@ -41,9 +41,8 @@ namespace webpp::beast_proto {
         using beast_request_ref  = beast_request_type&;
         using beast_request_ptr  = beast_request_type*;
 
-        using beast_request_parser_type =
-          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
-        using beast_parser_ref = stl::add_lvalue_reference_t<beast_request_parser_type>;
+        using beast_request_parser_type = boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
+        using beast_parser_ref          = stl::add_lvalue_reference_t<beast_request_parser_type>;
 
         using super = common_http_request_type;
 
@@ -56,8 +55,7 @@ namespace webpp::beast_proto {
 
         template <typename StrT>
         constexpr string_type stringify(StrT&& str) const noexcept {
-            return istl::stringify_of<string_type>(stl::forward<StrT>(str),
-                                                   get_alloc_for<string_type>(*this));
+            return istl::stringify_of<string_type>(stl::forward<StrT>(str), get_alloc_for<string_type>(*this));
         }
 
       protected:

@@ -20,8 +20,8 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool whitespace(istl::CharType auto inp_char) noexcept {
         // todo: do we need '\v'?
-        return inp_char == ' ' || inp_char == '\n' || inp_char == '\r' || inp_char == '\t' ||
-               inp_char == '\f' || inp_char == '\v';
+        return inp_char == ' ' || inp_char == '\n' || inp_char == '\r' || inp_char == '\t' || inp_char == '\f' ||
+               inp_char == '\v';
     }
 
     /**

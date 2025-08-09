@@ -49,8 +49,7 @@ namespace webpp {
      * @return A timeval.
      */
     template <typename Rep, typename Period>
-    [[nodiscard]] static constexpr timeval to_timeval(
-      std::chrono::duration<Rep, Period> const& dur) noexcept {
+    [[nodiscard]] static constexpr timeval to_timeval(std::chrono::duration<Rep, Period> const& dur) noexcept {
         return to_timeval(std::chrono::duration_cast<std::chrono::microseconds>(dur));
     }
 
@@ -72,8 +71,7 @@ namespace webpp {
      */
     template <typename Clock = std::chrono::system_clock>
     [[nodiscard]] static constexpr typename Clock::time_point to_timepoint(timeval const& tv) noexcept {
-        return
-          typename Clock::time_point{std::chrono::duration_cast<typename Clock::duration>(to_duration(tv))};
+        return typename Clock::time_point{std::chrono::duration_cast<typename Clock::duration>(to_duration(tv))};
     }
 
 

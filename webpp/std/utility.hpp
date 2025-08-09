@@ -19,8 +19,7 @@ namespace webpp::istl {
      *  @return The parameter cast to a non-reference value.
      */
     template <typename T>
-    [[nodiscard]] constexpr stl::remove_reference_t<T> deref(
-      T&& inp_type) noexcept { // NOLINT(*-missing-std-forward)
+    [[nodiscard]] constexpr stl::remove_reference_t<T> deref(T&& inp_type) noexcept { // NOLINT(*-missing-std-forward)
         return static_cast<stl::remove_reference_t<T>>(inp_type);
     }
 
@@ -40,16 +39,14 @@ namespace webpp::istl {
      * The opposite of std::move; it's convert rvalue references into lvalue references.
      */
     template <typename T>
-    [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(
-      T&& obj) noexcept { // NOLINT(*-missing-std-forward)
+    [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(T&& obj) noexcept { // NOLINT(*-missing-std-forward)
         return static_cast<stl::remove_cvref_t<T>&>(obj);
     }
 
     namespace details {
         template <typename IntegerT, IntegerT Start, IntegerT End, IntegerT... I>
         struct integer_range_inclusive_maker
-          : integer_range_inclusive_maker<IntegerT, End >= Start ? Start + 1 : Start - 1, End, I..., Start> {
-        };
+          : integer_range_inclusive_maker<IntegerT, End >= Start ? Start + 1 : Start - 1, End, I..., Start> {};
 
         // last element is not ignored
         template <typename IntegerT, IntegerT End, IntegerT... I>
@@ -87,13 +84,11 @@ namespace webpp::istl {
 
     /// Make integer range inclusively [Start, End].
     template <typename IntegerT, IntegerT Start, IntegerT End>
-    using make_integer_inclusive_range =
-      typename details::integer_range_inclusive_maker<IntegerT, Start, End>::type;
+    using make_integer_inclusive_range = typename details::integer_range_inclusive_maker<IntegerT, Start, End>::type;
 
     /// Make index range inclusively [Start, End].
     template <stl::size_t Start, stl::size_t End>
-    using make_index_inclusive_range =
-      typename details::integer_range_inclusive_maker<stl::size_t, Start, End>::type;
+    using make_index_inclusive_range = typename details::integer_range_inclusive_maker<stl::size_t, Start, End>::type;
 
     /// Make integer range non-inclusively [Start, End).
     template <typename IntegerT, IntegerT Start, IntegerT End>

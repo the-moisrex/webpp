@@ -26,8 +26,7 @@ TEST(Cookie, ResponseCookiesCreation) {
 }
 
 TEST(Cookie, SetCookieHeaderParsing) {
-    res_cookie_t const c{
-      "_HFID=hfid:86715526; httponly; expires=Fri, 21 Jan 2022 16:08:20 GMT; secure; path=/;"};
+    res_cookie_t const c{"_HFID=hfid:86715526; httponly; expires=Fri, 21 Jan 2022 16:08:20 GMT; secure; path=/;"};
     EXPECT_EQ(c.name(), "_HFID");
     EXPECT_EQ(c.value(), "hfid:86715526");
     EXPECT_EQ(c.path(), "/");

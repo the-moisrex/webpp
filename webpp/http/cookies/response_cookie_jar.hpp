@@ -14,8 +14,7 @@ namespace webpp::http {
               istl::String StringType =
                 stl::basic_string<char, stl::char_traits<char>, rebind_allocator<Allocator, char>>>
     struct response_cookie_jar
-      : public basic_cookie_jar<response_cookie<StringType>,
-                                rebind_allocator<Allocator, response_cookie<StringType>>> {
+      : public basic_cookie_jar<response_cookie<StringType>, rebind_allocator<Allocator, response_cookie<StringType>>> {
         using allocator_type  = rebind_allocator<Allocator, response_cookie<StringType>>;
         using string_type     = StringType;
         using cookie_type     = response_cookie<string_type>;
@@ -70,8 +69,7 @@ namespace webpp::http {
 
       public:
         template <typename... Args>
-        explicit constexpr response_cookie_jar(Args&&... args)
-          noexcept(noexcept(super(stl::forward<Args>(args)...)))
+        explicit constexpr response_cookie_jar(Args&&... args) noexcept(noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
         template <typename Iter>

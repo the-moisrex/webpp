@@ -91,9 +91,9 @@ namespace webpp::istl {
     template <typename StrT, typename Strifiable>
         requires(StringifiableOf<StrT, Strifiable>)
     [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
-        if constexpr (String<Strifiable> &&
-                      (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
-                       stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) )
+        if constexpr (
+          String<Strifiable> && (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
+                                 stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) )
         {
             return stl::forward<Strifiable>(str);
         } else if constexpr (requires { StrT{str, allocator}; }) {

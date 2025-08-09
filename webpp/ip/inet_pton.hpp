@@ -20,10 +20,8 @@ namespace webpp {
         switch (status) {
             using enum inet_pton4_status;
             case valid: return {"Valid IPv4 address"};
-            case valid_special:
-                return {"Valid IPv4 address, also found the specified special character at the end"};
-            case too_little_octets:
-                return {"The IPv4 doesn't have enough octets; it should contain exactly 4 octets"};
+            case valid_special: return {"Valid IPv4 address, also found the specified special character at the end"};
+            case too_little_octets: return {"The IPv4 doesn't have enough octets; it should contain exactly 4 octets"};
             case invalid_octet_range: return {"At least one of the IPv4 octets is of an invalid range"};
             case too_many_octets: return {"The IPv4 has too many octets; it should contain exactly 4 octets"};
             case invalid_leading_zero: return {"The IPv4's octet started with a zero which is not valid"};
@@ -41,8 +39,7 @@ namespace webpp {
         switch (status) {
             using enum inet_pton6_status;
             case valid: return {"Valid IPv6 address"};
-            case valid_special:
-                return {"Valid IPv6 address, also found the specified special character at the end"};
+            case valid_special: return {"Valid IPv6 address, also found the specified special character at the end"};
             case invalid_octet_range: return {"At least one of the IPv6 octets is of an invalid range."};
             case invalid_colon_usage: return {"The colon is used in the wrong place in IPv6"};
             case bad_ending: return {"The IPv6 ended unexpectedly"};
@@ -153,12 +150,8 @@ namespace webpp {
      * Parse IPv4 + prefix
      */
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
-    static constexpr inet_pton4_status inet_pton4(
-      Iter&         src,
-      CIter         end,
-      stl::uint8_t* out,
-      stl::uint8_t& prefix,
-      CharT         prefix_character = '/') noexcept {
+    static constexpr inet_pton4_status
+    inet_pton4(Iter& src, CIter end, stl::uint8_t* out, stl::uint8_t& prefix, CharT prefix_character = '/') noexcept {
         using enum inet_pton4_status;
         auto const res = inet_pton4(src, end, out, prefix_character);
         if (res == valid_special && *src == prefix_character) {
@@ -323,12 +316,8 @@ namespace webpp {
      * Parse a ipv6 + prefix
      */
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
-    [[nodiscard]] static constexpr inet_pton6_status inet_pton6(
-      Iter&         src,
-      CIter         end,
-      stl::uint8_t* out,
-      stl::uint8_t& prefix,
-      CharT         prefix_character = '/') noexcept {
+    [[nodiscard]] static constexpr inet_pton6_status
+    inet_pton6(Iter& src, CIter end, stl::uint8_t* out, stl::uint8_t& prefix, CharT prefix_character = '/') noexcept {
         using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
         if (res == valid_special && *src == prefix_character) {

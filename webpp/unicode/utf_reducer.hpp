@@ -38,9 +38,7 @@ namespace webpp::unicode {
         constexpr ~utf_range_marker() noexcept                         = default;
 
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
-        explicit constexpr utf_range_marker(IterT inp_beg, IterT inp_end) noexcept
-          : beginp{inp_beg},
-            endp{inp_end} {
+        explicit constexpr utf_range_marker(IterT inp_beg, IterT inp_end) noexcept : beginp{inp_beg}, endp{inp_end} {
             assert(beginp < endp);
         }
 
@@ -225,8 +223,7 @@ namespace webpp::unicode {
 
         /// Move a piece of the hole
         template <typename IterableT>
-        constexpr void
-        split_move(size_type const length, difference_type const diff, IterableT& iters) noexcept {
+        constexpr void split_move(size_type const length, difference_type const diff, IterableT& iters) noexcept {
             assert(length != 0);
             assert(length <= size());
             assert(!empty());
@@ -323,8 +320,7 @@ namespace webpp::unicode {
 
         template <typename IterableT>
         constexpr void append_code_point(IterT start, IterT str_end, IterableT& iters) noexcept {
-            auto const end =
-              stl::next(start, checked::code_point_length<IterT, difference_type>(start, str_end));
+            auto const       end = stl::next(start, checked::code_point_length<IterT, difference_type>(start, str_end));
             utf_range_marker other(start, end);
             this->append(other, iters);
         }
@@ -462,8 +458,7 @@ namespace webpp::unicode {
         }
 
         /// The number of code units required to set this new code point
-        [[nodiscard]] constexpr stl::int_fast8_t required_code_units(value_type const inp_cp)
-          noexcept(is_nothrow) {
+        [[nodiscard]] constexpr stl::int_fast8_t required_code_units(value_type const inp_cp) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 return 1; // always
             } else {
@@ -490,10 +485,8 @@ namespace webpp::unicode {
 
         /// Pin Act: Change position to another pin location
         template <stl::size_t OPinIndex>
-        constexpr pin_type& operator=(
-          pin_type<OPinIndex, PinCount, IterT, CodePointT> const& other) noexcept {
-            static_assert(OPinIndex < PinCount,
-                          "You cannot go back; these are forward-only set of constructs.");
+        constexpr pin_type& operator=(pin_type<OPinIndex, PinCount, IterT, CodePointT> const& other) noexcept {
+            static_assert(OPinIndex < PinCount, "You cannot go back; these are forward-only set of constructs.");
             static_assert(OPinIndex != PinIndex, "Self-assignment is probably a mistake.");
 
             assert(other.iter() >= iter());
@@ -639,9 +632,8 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr void set_inplace(value_type            code_point,
-                                   difference_type const cur_len,
-                                   difference_type const new_len) noexcept(is_nothrow) {
+        constexpr void set_inplace(value_type code_point, difference_type const cur_len, difference_type const new_len)
+          noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
                 *iter() = code_point;
             } else {
@@ -673,8 +665,7 @@ namespace webpp::unicode {
                 }
 
                 auto const new_len = utf_length_from<unit_type, stl::int_fast8_t>(code_point);
-                auto const cur_len =
-                  checked::code_point_length<iterator, difference_type>(iter(), reducer->end());
+                auto const cur_len = checked::code_point_length<iterator, difference_type>(iter(), reducer->end());
                 set_inplace(code_point, cur_len, new_len);
             }
         }
@@ -696,8 +687,7 @@ namespace webpp::unicode {
                     return;
                 }
 
-                auto const cur_len =
-                  checked::code_point_length<iterator, stl::int_fast8_t>(iter(), reducer->end());
+                auto const cur_len  = checked::code_point_length<iterator, stl::int_fast8_t>(iter(), reducer->end());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
 
@@ -733,8 +723,8 @@ namespace webpp::unicode {
                     if (hole.begin() > iter()) {
                         hole.move_mark(static_cast<difference_type>(-old_diff));
                     }
-                    (static_cast<void>(holes.begin() > iter() &&
-                                       (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
+                    (static_cast<void>(
+                       holes.begin() > iter() && (holes.move_mark(static_cast<difference_type>(-old_diff)), true)),
                      ...);
                 }
             }
@@ -753,8 +743,7 @@ namespace webpp::unicode {
 
         /// Pin Act: Set
         template <stl::size_t PinIndex2, typename Iter2>
-        constexpr void set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
-          noexcept(is_nothrow) {
+        constexpr void set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr) noexcept(is_nothrow) {
             set(other_ptr.iter());
         }
     };
@@ -794,8 +783,7 @@ namespace webpp::unicode {
           };
 
         static_assert(pin_count != 0, "This class is useless where you don't need the pins.");
-        static_assert(stl::random_access_iterator<iterator>,
-                      "Iterator must at least be a random access iterator");
+        static_assert(stl::random_access_iterator<iterator>, "Iterator must at least be a random access iterator");
 
       private:
         template <std::size_t, std::size_t, typename, UTF32>
@@ -946,34 +934,22 @@ namespace webpp::unicode {
         }
     };
 
-    template <std::size_t PinIndex1,
-              std::size_t PinIndex2,
-              std::size_t PinCount,
-              typename IterT,
-              typename CodePointT>
-    [[nodiscard]] static constexpr auto operator-(pin_type<PinIndex1, PinCount, IterT, CodePointT> const& lhs,
-                                                  pin_type<PinIndex2, PinCount, IterT, CodePointT> const& rhs)
-      noexcept(noexcept(lhs.iter() - rhs.iter())) {
+    template <std::size_t PinIndex1, std::size_t PinIndex2, std::size_t PinCount, typename IterT, typename CodePointT>
+    [[nodiscard]] static constexpr auto operator-(
+      pin_type<PinIndex1, PinCount, IterT, CodePointT> const& lhs,
+      pin_type<PinIndex2, PinCount, IterT, CodePointT> const& rhs) noexcept(noexcept(lhs.iter() - rhs.iter())) {
         using difference_type = typename pin_type<PinIndex1, PinCount, IterT, CodePointT>::difference_type;
         return static_cast<difference_type>(lhs.iter() - rhs.iter());
     }
 
-    template <std::size_t PinIndex,
-              std::size_t PinCount,
-              typename IterT,
-              typename CodePointT,
-              typename RIterT>
+    template <std::size_t PinIndex, std::size_t PinCount, typename IterT, typename CodePointT, typename RIterT>
     [[nodiscard]] static constexpr auto operator-(pin_type<PinIndex, PinCount, IterT, CodePointT> const& lhs,
                                                   RIterT rhs_iter) noexcept(noexcept(lhs.iter() - rhs_iter)) {
         using difference_type = typename pin_type<PinIndex, PinCount, IterT, CodePointT>::difference_type;
         return static_cast<difference_type>(lhs.iter() - rhs_iter);
     }
 
-    template <typename LIterT,
-              std::size_t PinIndex,
-              std::size_t PinCount,
-              typename IterT,
-              typename CodePointT>
+    template <typename LIterT, std::size_t PinIndex, std::size_t PinCount, typename IterT, typename CodePointT>
     [[nodiscard]] static constexpr auto operator-(
       LIterT                                                 lhs_iter,
       pin_type<PinIndex, PinCount, IterT, CodePointT> const& rhs) noexcept(noexcept(lhs_iter - rhs.iter())) {

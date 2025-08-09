@@ -73,8 +73,7 @@ namespace webpp::unicode {
         using const_reference = element_type const&;
         // using const_pointer   = unicode_ptr<const_storage_unit_type>;
 
-        using element_ptr =
-          stl::add_pointer_t<stl::conditional_t<is_storage_const, element_type const, element_type>>;
+        using element_ptr = stl::add_pointer_t<stl::conditional_t<is_storage_const, element_type const, element_type>>;
         using const_element_ptr = stl::add_const_t<element_ptr>;
 
 
@@ -88,8 +87,7 @@ namespace webpp::unicode {
         constexpr unicode_ptr() = default;
 
         template <typename T>
-            requires(
-              sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
+            requires(sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
         explicit constexpr unicode_ptr(T* inp_ptr) noexcept : start{reinterpret_cast<pointer>(inp_ptr)} {}
 
         explicit constexpr unicode_ptr(pointer inp_ptr) noexcept : start{inp_ptr} {}
@@ -224,10 +222,8 @@ namespace webpp::unicode {
         char_type value; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename C>
-            requires(
-              details::is_value<stl::remove_cvref_t<C>> && !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
-        constexpr explicit(false) storage_unit(C inp_char) noexcept
-          : value(static_cast<char_type>(inp_char)) {}
+            requires(details::is_value<stl::remove_cvref_t<C>> && !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
+        constexpr explicit(false) storage_unit(C inp_char) noexcept : value(static_cast<char_type>(inp_char)) {}
 
         constexpr explicit(false) storage_unit(char_type val) noexcept : value(val) {}
 

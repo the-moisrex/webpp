@@ -18,8 +18,7 @@ namespace webpp::http {
      * This concept is what the underlying Protocols expect to see in a response's header from apps.
      */
     template <typename T>
-    concept HTTPHeaders =
-      requires(stl::remove_cvref_t<T> headers) { typename stl::remove_cvref_t<T>::field_type; };
+    concept HTTPHeaders = requires(stl::remove_cvref_t<T> headers) { typename stl::remove_cvref_t<T>::field_type; };
 
     template <typename T>
     concept HTTPRequestHeaders =
@@ -72,8 +71,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequestHeaderFieldsOwner =
-      HTTPRequestHeaderFieldsProvider<T> &&
-      requires(T obj, typename T::name_type name, typename T::value_type value) {
+      HTTPRequestHeaderFieldsProvider<T> && requires(T obj, typename T::name_type name, typename T::value_type value) {
           obj.emplace(name, value);
 
           // an example is implemented in "header_fields_provider" in request_headers.hpp file
@@ -82,8 +80,7 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPResponseHeaderFieldsOwner =
-      HTTPResponseHeaderFieldsProvider<T> &&
-      requires(T obj, typename T::name_type name, typename T::value_type value) {
+      HTTPResponseHeaderFieldsProvider<T> && requires(T obj, typename T::name_type name, typename T::value_type value) {
           obj.emplace(name, value);
 
           // an example is implemented in "header_fields_provider" in request_headers.hpp file
@@ -146,8 +143,8 @@ namespace webpp::http {
 
         template <typename T>
         concept good_response_types =
-          HTTPResponse<stl::remove_cvref_t<T>> || stl::is_void_v<T> || stl::same_as<T, bool> ||
-          stl::is_integral_v<T> || istl::StringViewifiable<T>;
+          HTTPResponse<stl::remove_cvref_t<T>> || stl::is_void_v<T> || stl::same_as<T, bool> || stl::is_integral_v<T> ||
+          istl::StringViewifiable<T>;
 
         template <typename T>
         struct is_optional_of_response {
@@ -192,8 +189,7 @@ namespace webpp::http {
     ////////////////////////////// Protocols //////////////////////////////
 
     template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest =
-      Application<App> && HTTPRequest<ReqType> && stl::invocable<App, ReqType>;
+    concept ApplicationAcceptingRequest = Application<App> && HTTPRequest<ReqType> && stl::invocable<App, ReqType>;
 
 
     /**
@@ -273,8 +269,7 @@ namespace webpp::http {
     template <typename T, typename BodyType, typename... NotThese>
     concept HTTPConvertibleBody =
       istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
-      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> &&
-      HTTPGenerallyDeserializableBody<T, BodyType>;
+      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> && HTTPGenerallyDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 

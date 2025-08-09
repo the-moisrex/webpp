@@ -95,10 +95,8 @@ namespace webpp::sql {
         }
 
         void execute(std::string_view const sql, istl::String auto& errmsg) noexcept {
-            char* err; // NOLINT(*-init-variables)
-            if (int const res_rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
-                res_rc != SQLITE_OK)
-            {
+            char* err;             // NOLINT(*-init-variables)
+            if (int const res_rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err); res_rc != SQLITE_OK) {
                 errmsg += err;
                 sqlite3_free(err); // we have copied it
             }

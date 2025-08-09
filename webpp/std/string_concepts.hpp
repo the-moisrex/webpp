@@ -122,10 +122,10 @@ namespace webpp::istl {
      * Get the underlying allocator_type
      */
     template <typename T, typename DefaultAllocator = stl::allocator<char_type_of_t<T>>>
-    using allocator_type_of = lazy_conditional_t<
-      details::has_allocator_type<T>,
-      templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
-      lazy_type<DefaultAllocator>>;
+    using allocator_type_of =
+      lazy_conditional_t<details::has_allocator_type<T>,
+                         templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
+                         lazy_type<DefaultAllocator>>;
 
     template <typename T>
     struct char_traits_type_of {

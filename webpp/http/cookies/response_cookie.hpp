@@ -55,12 +55,12 @@ namespace webpp::http {
         using comment_t          = string_type;
         using version_t          = cookie_version;
 
-        using attrs_t = stl::unordered_map<
-          string_type,
-          string_type,
-          stl::hash<string_type>,
-          stl::equal_to<string_type>,
-          rebind_allocator<string_allocator_type, stl::pair<string_type const, string_type>>>;
+        using attrs_t =
+          stl::unordered_map<string_type,
+                             string_type,
+                             stl::hash<string_type>,
+                             stl::equal_to<string_type>,
+                             rebind_allocator<string_allocator_type, stl::pair<string_type const, string_type>>>;
 
 
         static constexpr max_age_t MAX_AGE_EXISTENCE_VALUE = stl::numeric_limits<max_age_t>::min();
@@ -163,12 +163,11 @@ namespace webpp::http {
                         if (ascii::iequals_sl(key, "expires")) {
                             using char_traits_type = typename value_t::traits_type;
                             using string_char_type = typename value_t::value_type;
-                            using stream_type      = stl::
-                              basic_istringstream<string_char_type, char_traits_type, string_allocator_type>;
+                            using stream_type =
+                              stl::basic_istringstream<string_char_type, char_traits_type, string_allocator_type>;
 
-                            stream_type inp_stream{
-                              istl::stringify_of<string_type>(value, this->get_allocator())};
-                            expires_t new_expires;
+                            stream_type inp_stream{istl::stringify_of<string_type>(value, this->get_allocator())};
+                            expires_t   new_expires;
 #ifdef WEBPP_UTC_CLOCK_SUPPORTED
                             // todo: use std::chrono::parse, maybe? when it gets implemented
                             stl::chrono::from_stream(inp_stream, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
@@ -572,11 +571,10 @@ namespace webpp::http {
         //        }
 
         [[nodiscard]] constexpr bool operator==(response_cookie const& c) const noexcept {
-            return _name == c._name && _value == c._value && _prefix == c._prefix &&
-                   _priority == c._priority && _version == c._version && _encrypted == c._encrypted &&
-                   _secure == c._secure && _http_only == c._http_only && _same_site == c._same_site &&
-                   _comment == c._comment && _expires == c._expires && _path == c._path &&
-                   _domain == c._domain && attrs == c.attrs;
+            return _name == c._name && _value == c._value && _prefix == c._prefix && _priority == c._priority &&
+                   _version == c._version && _encrypted == c._encrypted && _secure == c._secure &&
+                   _http_only == c._http_only && _same_site == c._same_site && _comment == c._comment &&
+                   _expires == c._expires && _path == c._path && _domain == c._domain && attrs == c.attrs;
         }
 
         [[nodiscard]] constexpr bool operator!=(response_cookie const& c) const noexcept {

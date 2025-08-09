@@ -19,8 +19,7 @@ namespace webpp {
         using enum integer_casting_errors;
         switch (err) {
             case invalid_character: return {"Invalid character found"};
-            case invalid_base:
-                return {"The specified string contains characters that are not in the valid base"};
+            case invalid_base: return {"The specified string contains characters that are not in the valid base"};
         }
         return {}; // to get rid of warnings; it's 2023 for God sake!
     }
@@ -35,8 +34,7 @@ namespace webpp {
               T                       base     = 10,
               error_handling_strategy strategy = error_handling_strategy::assume_safe,
               istl::StringViewifiable StrT     = stl::string_view>
-    constexpr expected_strategy_t<strategy, T, integer_casting_errors> to(StrT&& _str)
-      noexcept(is_noexcept(strategy)) {
+    constexpr expected_strategy_t<strategy, T, integer_casting_errors> to(StrT&& _str) noexcept(is_noexcept(strategy)) {
         /**
          * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
@@ -56,8 +54,7 @@ namespace webpp {
             if constexpr (base <= 10) {
                 if constexpr (strategy == error_handling_strategy::throw_errors) {
                     if (cur_ch < '0' || cur_ch > '9') {
-                        throw stl::invalid_argument(
-                          to_string(integer_casting_errors::invalid_character).data());
+                        throw stl::invalid_argument(to_string(integer_casting_errors::invalid_character).data());
                     }
                 } else if constexpr (strategy == error_handling_strategy::use_expected) {
                     if (cur_ch < '0' || cur_ch > '9') {

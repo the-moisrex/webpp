@@ -127,8 +127,8 @@ namespace webpp {
 /// Attention: DO NOT call (specially `extern`) functions with side effects inside this
 #if (WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)) && defined(CXX23)
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
-#elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \
-  defined(_MSC_VER) || defined(__ICC)
+#elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || defined(_MSC_VER) || \
+  defined(__ICC)
 #    if defined(__clang__)
   // fixme: clang can use __bultin_assume, but it gives a warning, so I'm disabling it for clang
 #        define webpp_assume_func(...)

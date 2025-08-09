@@ -105,8 +105,7 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-forwarding-reference-overload)
         template <istl::StringViewifiable T, typename InpAlloc = allocator_type>
             requires(!istl::cvref_as<T, basic_path>)
-        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) noexcept(is_nothrow)
-          : storage{alloc} {
+        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) noexcept(is_nothrow) : storage{alloc} {
             parse(stl::forward<T>(str));
         }
 
@@ -118,8 +117,7 @@ namespace webpp::uri {
         }
 
         template <istl::String T>
-            requires(
-              !istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
+            requires(!istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
         explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
             parse(stl::forward<T>(str));
         }
@@ -277,8 +275,7 @@ namespace webpp::uri {
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
          * Refer to uri_normalize_benchmark for more related algorithms of this
          */
-        constexpr void remove_dot_segments(bool const remove_leading,
-                                           bool const remove_empty_segments = false) {
+        constexpr void remove_dot_segments(bool const remove_leading, bool const remove_empty_segments = false) {
             if (storage.empty()) {
                 return;
             }
@@ -376,8 +373,7 @@ namespace webpp::uri {
         /// Equality check.
         /// https://url.spec.whatwg.org/#url-equivalence
         /// https://url.spec.whatwg.org/#url-path-serializer
-        template <uri_parsing_options     Options = {},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_parsing_options Options = {}, istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             return *this == clone<Options>(stl::forward<NStrT>(inp_str));
         }

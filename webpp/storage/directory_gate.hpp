@@ -195,17 +195,15 @@ namespace webpp {
             stl::optional<bundle_type> deserialize_file(string_view_type data) {
                 auto const end_key_index = data.find_first_of('\n');
                 if (end_key_index == string_type::npos) {
-                    this->logger.error(
-                      DIR_GATE_CAT,
-                      "Cache data is invalid. Cannot find the key name inside the cache file.");
+                    this->logger.error(DIR_GATE_CAT,
+                                       "Cache data is invalid. Cannot find the key name inside the cache file.");
                     return stl::nullopt;
                 }
 
                 auto const end_options_index = data.find_first_of('\n', end_key_index + 1);
                 if (end_options_index == string_type::npos) {
-                    this->logger.error(
-                      DIR_GATE_CAT,
-                      "Cache data is invalid. Cannot find the options inside the cache file.");
+                    this->logger.error(DIR_GATE_CAT,
+                                       "Cache data is invalid. Cannot find the options inside the cache file.");
                     return stl::nullopt;
                 }
                 string_view_type key_str = data.substr(0, end_key_index);
@@ -217,7 +215,7 @@ namespace webpp {
                       data.substr(end_key_index + 1, end_options_index - (end_key_index + 1)),
                       *this);
                 } else {
-                    auto opts_str = data.substr(end_key_index + 1, end_options_index - (end_key_index + 1));
+                    auto        opts_str     = data.substr(end_key_index + 1, end_options_index - (end_key_index + 1));
                     string_type decoded_opts = object::make_object<string_type>(*this);
                     if (base64::decode(opts_str, decoded_opts)) {
                         opts = lexical::cast<options_type>(decoded_opts, *this);
@@ -232,10 +230,9 @@ namespace webpp {
                     // todo
                 }
 
-                return bundle_type{
-                  .key     = lexical::cast<key_type>(key_str, *this),
-                  .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), *this),
-                  .options = opts};
+                return bundle_type{.key     = lexical::cast<key_type>(key_str, *this),
+                                   .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), *this),
+                                   .options = opts};
             }
 
             void set_temp_dir() {
@@ -357,8 +354,7 @@ namespace webpp {
                 //  - extension
                 //  - hashed name
                 //  - directory cache version
-                return (path.extension() == gate_opts.extension) &&
-                       (path.stem().string().starts_with(hashed_name)) &&
+                return (path.extension() == gate_opts.extension) && (path.stem().string().starts_with(hashed_name)) &&
                        (path.stem().string().ends_with(directory_gate_version));
             }
 
@@ -372,8 +368,7 @@ namespace webpp {
                 if (file::read_to(filepath, result)) {
                     return deserialize_file(result);
                 }
-                this->logger.error(DIR_GATE_CAT,
-                                   fmt::format("Cannot read the cache file {}", filepath.string()));
+                this->logger.error(DIR_GATE_CAT, fmt::format("Cannot read the cache file {}", filepath.string()));
                 return stl::nullopt;
             }
 
@@ -414,10 +409,9 @@ namespace webpp {
                 auto const      key_file = key_path(key);
                 stl::filesystem::remove(key_file, err);
                 if (err) {
-                    this->logger.error(
-                      DIR_GATE_CAT,
-                      fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
-                      err);
+                    this->logger.error(DIR_GATE_CAT,
+                                       fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
+                                       err);
                     return false;
                 }
                 return true;

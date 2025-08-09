@@ -89,8 +89,7 @@ TEST(IPv6Tests, Validation) {
         EXPECT_EQ(ipv6(ipv6(_ip).string()), ipv6(_ip))
           << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).string() << "\nlong ip: " << ipv6(_ip).string()
           << "\nshort long ip: " << ipv6(ipv6(_ip).string()).string();
-        EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
-          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
+        EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip))) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
         EXPECT_TRUE(ipv6(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
     }
 
@@ -175,13 +174,8 @@ TEST(IPv6Tests, IP2NTest) {
       "::01",
       "::"};
 
-    static constexpr stl::string_view invalid_ipv6s[]{
-      "2001:0gb8:85a3:0000:0000:8a2e:0370:7334",
-      "2001:db8:1234:5678",
-      "2001:db8:1",
-      ":01",
-      ":::",
-      ":"};
+    static constexpr stl::string_view
+      invalid_ipv6s[]{"2001:0gb8:85a3:0000:0000:8a2e:0370:7334", "2001:db8:1234:5678", "2001:db8:1", ":01", ":::", ":"};
     stl::uint8_t ip_octets[16]{};
 
     for (auto const& _ip : valid_ipv6s) {
@@ -360,10 +354,7 @@ TEST(IPv6Tests, PrefixesTest) {
             ip_prefixed += '/';
             ip_prefixed += prefix;
             ipv6 const ip6{ip_prefixed};
-            EXPECT_FALSE(ip6.is_valid())
-              << _ip << "\n"
-              << ip_prefixed << "\n"
-              << static_cast<int>(ip6.prefix());
+            EXPECT_FALSE(ip6.is_valid()) << _ip << "\n" << ip_prefixed << "\n" << static_cast<int>(ip6.prefix());
         }
     }
 }

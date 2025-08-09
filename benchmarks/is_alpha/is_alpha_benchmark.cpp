@@ -72,9 +72,8 @@ bool is_alpha_arithmetic3(char c) {
 }
 
 bool is_alpha_arithmetic2(char c) {
-    static constexpr uint64_t t =
-      0b1111'1111'1111'1111'1111'1111'1100'0000'1111'1111'1111'1111'1111'1111'1100'0000;
-    auto const count = c - 'A';
+    static constexpr uint64_t t     = 0b1111'1111'1111'1111'1111'1111'1100'0000'1111'1111'1111'1111'1111'1111'1100'0000;
+    auto const                count = c - 'A';
     return ((t & (uint64_t(1) << count)) >> count) == 0;
 }
 

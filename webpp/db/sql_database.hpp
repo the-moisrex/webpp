@@ -100,8 +100,7 @@ namespace webpp::sql {
         using keywords              = sql_lowercase_keywords<char_type>;
 
         template <typename T>
-        static constexpr bool supports_string_view =
-          driver_type::template supports_string_view<stl::remove_cvref_t<T>>;
+        static constexpr bool supports_string_view = driver_type::template supports_string_view<stl::remove_cvref_t<T>>;
 
         inline driver_type& driver() noexcept {
             return *static_cast<driver_type*>(this);

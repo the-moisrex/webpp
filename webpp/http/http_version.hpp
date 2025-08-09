@@ -131,8 +131,7 @@ namespace webpp::http {
         using array_type = stl::array<version, N>;
 
         template <typename... T>
-        explicit constexpr version_list(T&&... versions) noexcept
-          : array_type{stl::forward<T>(versions)...} {}
+        explicit constexpr version_list(T&&... versions) noexcept : array_type{stl::forward<T>(versions)...} {}
 
         [[nodiscard]] constexpr bool include_version(version ver) noexcept {
             for (auto const& v : *this) {

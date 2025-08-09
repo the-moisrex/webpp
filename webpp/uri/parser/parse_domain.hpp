@@ -37,8 +37,7 @@ namespace webpp::uri {
             case valid_punycode: return {"Valid unicode domain name which contains punycode"};
             case invalid_character: return {"Found an invalid character in the domain name"};
             case too_long: return {"The domain is too long, max allowed character is 255"};
-            case subdomain_too_long:
-                return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
+            case subdomain_too_long: return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
             case dot_at_end:
                 return {
                   "The domain ended unexpectedly; "
@@ -86,13 +85,14 @@ namespace webpp::uri {
         bool has_punycode    = false;
         auto subdomain_start = pos;
         while (pos != end) {
-            if (*pos == static_cast<char_type>('x') && end - pos > 4 &&
-                *++pos == static_cast<char_type>('n') && *++pos == static_cast<char_type>('-') &&
-                *++pos == static_cast<char_type>('-'))
+            if (*pos == static_cast<char_type>('x') && end - pos > 4 && *++pos == static_cast<char_type>('n') &&
+                *++pos == static_cast<char_type>('-') && *++pos == static_cast<char_type>('-'))
             {
                 has_punycode = true;
-                pos = charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}}
-                        .find_first_not_in(pos, end);
+                pos =
+                  charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}}.find_first_not_in(
+                    pos,
+                    end);
                 continue;
             }
 

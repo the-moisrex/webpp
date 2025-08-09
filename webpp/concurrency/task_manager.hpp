@@ -87,8 +87,8 @@ namespace webpp {
         using allocator_type = stl::remove_cvref_t<AllocType>;
 
       private:
-        unsigned                            _count{stl::thread::hardware_concurrency()};
-        stl::vector<stl::thread, AllocType> _threads;
+        unsigned                                                        _count{stl::thread::hardware_concurrency()};
+        stl::vector<stl::thread, AllocType>                             _threads;
         stl::vector<notification_queue<allocator_type>, allocator_type> _q{_count};
         stl::atomic<unsigned>                                           _index{0};
 

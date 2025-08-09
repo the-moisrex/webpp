@@ -40,8 +40,7 @@ namespace webpp::uri::details {
 
     /// call this when encoding/decoding is done
     template <components Comp, ParsingURIContext CtxT>
-    static constexpr void
-    set_component_value(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end)
+    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end)
       noexcept(CtxT::is_nothrow) {
         webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
         webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
@@ -52,8 +51,7 @@ namespace webpp::uri::details {
     }
 
     template <components Comp, ParsingURIContext CtxT>
-    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg)
-      noexcept(CtxT::is_nothrow) {
+    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg) noexcept(CtxT::is_nothrow) {
         set_component_value<Comp>(ctx, beg, ctx.pos);
     }
 
@@ -144,14 +142,10 @@ namespace webpp::uri::details {
      * @returns successful until the end (== didn't find any invalid chars)
      */
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-    [[nodiscard]] static constexpr bool
-    decode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] static constexpr bool decode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars)
+      noexcept(CtxT::is_nothrow) {
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
-            return decode_uri_component<uri_encoding_policy::encode_chars>(
-              ctx.pos,
-              ctx.end,
-              buffer,
-              policy_chars);
+            return decode_uri_component<uri_encoding_policy::encode_chars>(ctx.pos, ctx.end, buffer, policy_chars);
         } else {
             ctx.pos = policy_chars.find_first_in(ctx.pos, ctx.end);
             return ctx.pos == ctx.end;
@@ -161,17 +155,12 @@ namespace webpp::uri::details {
     /// Convert to lowercase and also decode
     /// @returns true when we reach the end
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-    [[nodiscard]] static constexpr bool
-    decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] static constexpr bool decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars)
+      noexcept(CtxT::is_nothrow) {
         using char_type = typename CtxT::char_type;
         if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
             while (ctx.pos != ctx.end) {
-                if (decode_uri_component<uri_encoding_policy::encode_chars>(
-                      ctx.pos,
-                      ctx.end,
-                      buffer,
-                      policy_chars))
-                {
+                if (decode_uri_component<uri_encoding_policy::encode_chars>(ctx.pos, ctx.end, buffer, policy_chars)) {
                     return true;
                 }
                 webpp_static_constexpr char_type diff = 'a' - 'A';
@@ -258,8 +247,7 @@ namespace webpp::uri::details {
     }
 
     template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-    static constexpr void
-    append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
+    static constexpr void append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
         if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
             append_to(buffer, inp_char);
         }

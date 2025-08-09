@@ -52,17 +52,16 @@ namespace webpp::http {
 
     template <typename Route, typename... Args>
     concept is_callable_route = requires(stl::remove_cvref_t<Route> route) {
-        requires requires(Args... args) { route(args...); } ||
-                   requires(stl::add_lvalue_reference_t<Args>... args) { route(args...); } ||
-                   requires(stl::remove_cvref_t<Args>... args) { route(args...); };
+        requires requires(Args... args) { route(args...); } || requires(stl::add_lvalue_reference_t<Args>... args) {
+            route(args...);
+        } || requires(stl::remove_cvref_t<Args>... args) { route(args...); };
     };
 
     template <typename Route, typename... Args>
     concept is_nothrow_callable_route =
       stl::is_nothrow_invocable_v<stl::decay_t<Route>, stl::remove_cvref_t<Args>...> ||
       stl::is_nothrow_invocable_v<stl::decay_t<Route>, Args...> ||
-      stl::is_nothrow_invocable_v<stl::decay_t<Route>,
-                                  stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
+      stl::is_nothrow_invocable_v<stl::decay_t<Route>, stl::add_lvalue_reference_t<stl::remove_cvref_t<Args>>...>;
 
     namespace details {
 
@@ -79,24 +78,18 @@ namespace webpp::http {
                     try {
                         callable(stl::forward<Args>(args)...);
                     } catch (stl::exception const& ex) {
-                        ctx.logger.error(route_log_cat,
-                                         "Error happened calling a route that returns void.",
-                                         ex);
+                        ctx.logger.error(route_log_cat, "Error happened calling a route that returns void.", ex);
                     } catch (...) {
-                        ctx.logger.error(route_log_cat,
-                                         "Unknown error happened calling a route that returns void.");
+                        ctx.logger.error(route_log_cat, "Unknown error happened calling a route that returns void.");
                     }
                 } else if constexpr (stl::same_as<return_type, bool>) {
                     try {
                         return callable(stl::forward<Args>(args)...);
                     } catch (stl::exception const& ex) {
-                        ctx.logger.error(route_log_cat,
-                                         "Error happened calling a route that returns bool.",
-                                         ex);
+                        ctx.logger.error(route_log_cat, "Error happened calling a route that returns bool.", ex);
                         return false;
                     } catch (...) {
-                        ctx.logger.error(route_log_cat,
-                                         "Unknown error happened calling a route that returns bool.");
+                        ctx.logger.error(route_log_cat, "Unknown error happened calling a route that returns bool.");
                         return false;
                     }
                 } else if constexpr (istl::Optional<return_type>) {
@@ -109,9 +102,8 @@ namespace webpp::http {
                         // return 500 error on failure hoping the response type supports it
                         return typename return_type::value_type{http::status_code::internal_server_error};
                     } catch (...) {
-                        ctx.logger.error(
-                          route_log_cat,
-                          "Unknown error happened calling a route that returns optional value.");
+                        ctx.logger.error(route_log_cat,
+                                         "Unknown error happened calling a route that returns optional value.");
                         // return 500 error on failure hoping the response type supports it
                         return typename return_type::value_type{http::status_code::internal_server_error};
                     }
@@ -129,9 +121,8 @@ namespace webpp::http {
                 }
 
             } else {
-                return ctx.error(
-                  http::status_code::internal_server_error,
-                  stl::invalid_argument("The specified route is not valid. We're not able to call it."));
+                return ctx.error(http::status_code::internal_server_error,
+                                 stl::invalid_argument("The specified route is not valid. We're not able to call it."));
             }
         }
 
@@ -235,11 +226,8 @@ namespace webpp::http {
     /**
      * todo: should we convert router to a tuple like I did with the path class?
      */
-    template <typename RouteType     = void,
-              logical_operators Op   = logical_operators::none,
-              typename NextRouteType = void>
-    struct route
-      : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
+    template <typename RouteType = void, logical_operators Op = logical_operators::none, typename NextRouteType = void>
+    struct route : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
         using route_type                      = stl::remove_cvref_t<RouteType>;
         using next_route_type                 = stl::remove_cvref_t<NextRouteType>;
         static constexpr logical_operators op = Op;
@@ -370,9 +358,7 @@ namespace webpp::http {
         template <Context CtxT, HTTPRequest ReqT>
         constexpr auto call_this_route(CtxT&& ctx, ReqT&& req) const noexcept {
             if constexpr (is_route_valid) {
-                return call_route(static_cast<super_t>(*this),
-                                  stl::forward<CtxT>(ctx),
-                                  stl::forward<ReqT>(req));
+                return call_route(static_cast<super_t>(*this), stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
             } else {
                 static_assert_false(CtxT, "This route cannot be called.");
             }
@@ -405,9 +391,7 @@ namespace webpp::http {
                 using mem_func_ptr_t = istl::member_function_pointer_traits<rt>;
                 using app_type       = typename mem_func_ptr_t::type;
                 return set_next<logical_operators::none>(
-                  route_with_router_pointer<app_type,
-                                            stl::remove_cvref<RouteT>,
-                                            mem_func_ptr_t::is_noexcept>{});
+                  route_with_router_pointer<app_type, stl::remove_cvref<RouteT>, mem_func_ptr_t::is_noexcept>{});
             } else /*if constexpr (PotentialRoute<rt, switched_context_type<fake_context_type>>)*/ {
                 return set_next<logical_operators::none>(stl::forward<RouteT>(new_route));
                 // } else {

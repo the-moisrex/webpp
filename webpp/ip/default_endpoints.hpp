@@ -29,15 +29,13 @@ namespace webpp {
      * Return Standard Endpoints and limit them based on the specified arguments.
      * This is a little utility to quickly get the endpoints that you need your server to start binding to.
      */
-    [[nodiscard]] consteval auto
-    standard_endpoints(ip_endpoint::protocol proto, auto ip, stl::uint16_t port) noexcept {
+    [[nodiscard]] consteval auto standard_endpoints(ip_endpoint::protocol proto, auto ip, stl::uint16_t port) noexcept {
         return stl::array{
           ip_endpoint{proto, ip, port}
         };
     }
 
-    [[nodiscard]] consteval auto standard_endpoints(ip_endpoint::protocol proto,
-                                                    IPAddress auto&&... ip) noexcept {
+    [[nodiscard]] consteval auto standard_endpoints(ip_endpoint::protocol proto, IPAddress auto&&... ip) noexcept {
         return stl::array<ip_endpoint, sizeof...(ip) * 2>{
           ip_endpoint{proto, ip,  default_http_port}
           ...,
@@ -99,14 +97,8 @@ namespace webpp {
 
     namespace tcp {
         // http port
-        static constexpr ip_endpoint ipv4_localhost_http_endpoint{
-          ip_endpoint::tcp,
-          ipv4_localhost,
-          default_http_port};
-        static constexpr ip_endpoint ipv6_localhost_http_endpoint{
-          ip_endpoint::tcp,
-          ipv6_localhost,
-          default_http_port};
+        static constexpr ip_endpoint ipv4_localhost_http_endpoint{ip_endpoint::tcp, ipv4_localhost, default_http_port};
+        static constexpr ip_endpoint ipv6_localhost_http_endpoint{ip_endpoint::tcp, ipv6_localhost, default_http_port};
 
         // https port
         static constexpr ip_endpoint ipv4_localhost_https_endpoint{
@@ -127,10 +119,8 @@ namespace webpp {
         static constexpr ip_endpoint ipv4_all_https_endpoint{ip_endpoint::tcp, ipv4_all, default_https_port};
 
 
-        static constexpr ip_endpoint_array<2> ipv6_all_endpoint{ipv6_all_https_endpoint,
-                                                                ipv6_all_http_endpoint};
-        static constexpr ip_endpoint_array<2> ipv4_all_endpoint{ipv4_all_https_endpoint,
-                                                                ipv4_all_http_endpoint};
+        static constexpr ip_endpoint_array<2> ipv6_all_endpoint{ipv6_all_https_endpoint, ipv6_all_http_endpoint};
+        static constexpr ip_endpoint_array<2> ipv4_all_endpoint{ipv4_all_https_endpoint, ipv4_all_http_endpoint};
         static constexpr ip_endpoint_array<4> all_endpoint{
           ipv4_all_https_endpoint,
           ipv4_all_http_endpoint,
@@ -151,14 +141,8 @@ namespace webpp {
 
     namespace udp {
         // http port
-        static constexpr ip_endpoint ipv4_localhost_http_endpoint{
-          ip_endpoint::udp,
-          ipv4_localhost,
-          default_http_port};
-        static constexpr ip_endpoint ipv6_localhost_http_endpoint{
-          ip_endpoint::udp,
-          ipv6_localhost,
-          default_http_port};
+        static constexpr ip_endpoint ipv4_localhost_http_endpoint{ip_endpoint::udp, ipv4_localhost, default_http_port};
+        static constexpr ip_endpoint ipv6_localhost_http_endpoint{ip_endpoint::udp, ipv6_localhost, default_http_port};
 
         // https port
         static constexpr ip_endpoint ipv4_localhost_https_endpoint{
@@ -179,10 +163,8 @@ namespace webpp {
         static constexpr ip_endpoint ipv4_all_https_endpoint{ip_endpoint::udp, ipv4_all, default_https_port};
 
 
-        static constexpr ip_endpoint_array<2> ipv6_all_endpoint{ipv6_all_https_endpoint,
-                                                                ipv6_all_http_endpoint};
-        static constexpr ip_endpoint_array<2> ipv4_all_endpoint{ipv4_all_https_endpoint,
-                                                                ipv4_all_http_endpoint};
+        static constexpr ip_endpoint_array<2> ipv6_all_endpoint{ipv6_all_https_endpoint, ipv6_all_http_endpoint};
+        static constexpr ip_endpoint_array<2> ipv4_all_endpoint{ipv4_all_https_endpoint, ipv4_all_http_endpoint};
         static constexpr ip_endpoint_array<4> all_endpoint{
           ipv4_all_https_endpoint,
           ipv4_all_http_endpoint,

@@ -15,9 +15,8 @@ namespace webpp {
 
     // todo: check this, it's old
     template <typename T>
-    concept Extension =
-      stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
-      stl::is_move_constructible_v<T> && !stl::is_integral_v<T>;
+    concept Extension = stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
+                        stl::is_move_constructible_v<T> && !stl::is_integral_v<T>;
 
     template <typename TraitsType, typename T>
     concept MotherExtension = Extension<T> && requires { typename T::template type<TraitsType>; };
@@ -31,8 +30,7 @@ namespace webpp {
       requires { typename ExtensionDescriptorType::template mid_level_extensie_type<Args...>; };
 
     template <typename ExtensionDescriptorType, typename... Args>
-    concept HasFinalExtensie =
-      requires { typename ExtensionDescriptorType::template final_extensie_type<Args...>; };
+    concept HasFinalExtensie = requires { typename ExtensionDescriptorType::template final_extensie_type<Args...>; };
 
     template <typename T>
     concept HasDependencies = requires { typename T::dependencies; };
@@ -111,8 +109,9 @@ namespace webpp {
         // with 2 or more kids
         template <Traits TraitsType, typename Mother, typename FirstKid, typename... Kids>
         struct children_inherited<TraitsType, Mother, FirstKid, Kids...> {
-            using type = typename FirstKid::
-              template type<TraitsType, typename children_inherited<TraitsType, Mother, Kids...>::type>;
+            using type =
+              typename FirstKid::template type<TraitsType,
+                                               typename children_inherited<TraitsType, Mother, Kids...>::type>;
             //  struct type : public vctor<typename Kids::template type<TraitsType,
             //  vctor<Mother>>>... {
             //      template <typename... Args>
@@ -140,8 +139,8 @@ namespace webpp {
 
             // the "First" needs to go before the "deps" because we order matters here
             // the children_inherited will inherit each of them in reverse order, so ...
-            using type = istl::
-              merge_parameters<extension_pack<First>, deps_with_deps, typename dependencies<E...>::type>;
+            using type =
+              istl::merge_parameters<extension_pack<First>, deps_with_deps, typename dependencies<E...>::type>;
         };
 
         template <typename First, typename... E>
@@ -239,10 +238,7 @@ namespace webpp {
                                 // append the individual lonely extensions in the big epack
                                 ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>::type>;
 
-        template <typename RootExtensionPack,
-                  typename TraitsType,
-                  typename ExtensieDescriptor,
-                  typename... ExtraArgs>
+        template <typename RootExtensionPack, typename TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         struct mid_level_extractor {
             using mother_pack = istl::unique_parameters<typename merge_extensions<
               RootExtensionPack,
@@ -254,38 +250,26 @@ namespace webpp {
 
             template <typename T>
             struct extractor {
-                using type = typename T::template mid_level_extensie_type<RootExtensionPack,
-                                                                          TraitsType,
-                                                                          applied_mother_pack,
-                                                                          ExtraArgs...>;
+                using type = typename T::
+                  template mid_level_extensie_type<RootExtensionPack, TraitsType, applied_mother_pack, ExtraArgs...>;
             };
 
             // if we have a mid-level extensie type:
             //    - Okay, pass the "mother pack" to the "mid-level extensie"
             // if not:
             //    - The just use the "mother pack" as the extensie type
-            using type =
-              istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor,
-                                                           RootExtensionPack,
-                                                           TraitsType,
-                                                           applied_mother_pack,
-                                                           ExtraArgs...>,
-                                       istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-                                       istl::lazy_type<applied_mother_pack>>;
+            using type = istl::lazy_conditional_t<
+              HasMidLevelExtensie<ExtensieDescriptor, RootExtensionPack, TraitsType, applied_mother_pack, ExtraArgs...>,
+              istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+              istl::lazy_type<applied_mother_pack>>;
         };
 
         // Mid-Level extensie type
-        template <typename RootExtensionPack,
-                  Traits TraitsType,
-                  typename ExtensieDescriptor,
-                  typename... ExtraArgs>
+        template <typename RootExtensionPack, Traits TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         using mid_level_extensie_type =
           typename mid_level_extractor<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
 
-        template <typename RootExtensionPack,
-                  typename TraitsType,
-                  typename ExtensieDescriptor,
-                  typename... ExtraArgs>
+        template <typename RootExtensionPack, typename TraitsType, typename ExtensieDescriptor, typename... ExtraArgs>
         struct final_extensie_extractor {
             // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the
             // final extensie)
@@ -308,8 +292,8 @@ namespace webpp {
 
             template <typename T>
             struct extractor {
-                using type = typename T::
-                  template final_extensie_type<RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>;
+                using type =
+                  typename T::template final_extensie_type<RootExtensionPack, TraitsType, mother_pack, ExtraArgs...>;
             };
 
             // if we have a final extensie type:
@@ -336,8 +320,7 @@ namespace webpp {
         // This type does not handle the dependencies
         template <Traits TraitsType>
         using mother_extensions =
-          istl::filter_parameters_t<details::is_mother_condition<TraitsType>::template type,
-                                    include_dependencies>;
+          istl::filter_parameters_t<details::is_mother_condition<TraitsType>::template type, include_dependencies>;
 
         // This type does not handle the dependencies
         template <Traits TraitsType, typename Parent>
@@ -420,8 +403,7 @@ namespace webpp {
 
 
     template <typename T>
-    concept ExtensionDescriptor =
-      requires { typename T::template related_extension_pack<empty_extension_pack>; };
+    concept ExtensionDescriptor = requires { typename T::template related_extension_pack<empty_extension_pack>; };
 
     namespace details {
 

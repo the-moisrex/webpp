@@ -162,18 +162,11 @@ namespace webpp::views {
                 constexpr auto convert(T&& val, ET const& etraits) const {
                     using value_type = stl::remove_cvref_t<T>;
                     if constexpr (
-                      istl::one_of<string_type,
-                                   bool,
-                                   lambda_type,
-                                   partial_type,
-                                   list_type,
-                                   variant_type,
-                                   value_type>)
+                      istl::one_of<string_type, bool, lambda_type, partial_type, list_type, variant_type, value_type>)
                     {
                         return stl::forward<T>(val);
                     } else {
-                        return lexical::cast<string_type>(stl::forward<T>(val),
-                                                          get_alloc_for<string_type>(etraits));
+                        return lexical::cast<string_type>(stl::forward<T>(val), get_alloc_for<string_type>(etraits));
                     }
                 }
 
@@ -188,8 +181,8 @@ namespace webpp::views {
                 template <EnabledTraits ET, typename StrT, typename T>
                 constexpr variable(ET&& etraits, stl::pair<StrT, T> input)
                   : variant_type{convert(stl::move(input.second), etraits)},
-                    key_value{istl::stringify_of<string_type>(stl::move(input.first),
-                                                              get_allocator<char_type>(etraits))} {}
+                    key_value{
+                      istl::stringify_of<string_type>(stl::move(input.first), get_allocator<char_type>(etraits))} {}
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
                     return istl::string_viewify_of<string_view_type>(key_value);
@@ -394,8 +387,7 @@ namespace webpp::views {
             }
             // process x.y-like name
             auto names = object::make_object<stl::vector<string_view_type>>(*this); // todo: use local alloc
-            strings::splitter<typename string_view_type::iterator, char_type>(name, char_type{'.'})
-              .split(names);
+            strings::splitter<typename string_view_type::iterator, char_type>(name, char_type{'.'}).split(names);
             for (auto const* item : items) {
                 auto* var = item;
                 for (auto const& n : names) {
@@ -633,9 +625,9 @@ namespace webpp::views {
         using partial_type  = typename settings::partial_type;
 
 
-        using render_handler = istl::function<
-          void(string_view_type),
-          traits::allocator_type_of<traits_type, stl::byte>>; // todo: see if we need this handler
+        using render_handler =
+          istl::function<void(string_view_type),
+                         traits::allocator_type_of<traits_type, stl::byte>>; // todo: see if we need this handler
         using renderer_type = basic_renderer<traits_type>;
 
         static constexpr auto MUSTACHE_CAT = "MustacheView";
@@ -732,9 +724,7 @@ namespace webpp::views {
                       out += stl::forward<ContentT>(content);
                   },
                   context);
-            } else if constexpr (
-              stl::same_as<DT, data_type> || (istl::Collection<DT> && !istl::String<data_type>) )
-            {
+            } else if constexpr (stl::same_as<DT, data_type> || (istl::Collection<DT> && !istl::String<data_type>) ) {
                 auto data_vec = object::make_object<data_type>(*this);
                 data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),
@@ -775,14 +765,12 @@ namespace webpp::views {
             bool current_delimiter_is_brace{delim_set.is_default()};
 
             // originally, I used a local allocator here
-            using sections_type =
-              stl::vector<component_type*, traits::allocator_type_of<traits_type, component_type*>>;
+            using sections_type = stl::vector<component_type*, traits::allocator_type_of<traits_type, component_type*>>;
             using section_starts_type =
               stl::vector<string_size_type, traits::allocator_type_of<traits_type, string_size_type>>;
 
-            auto sections = object::make_object<sections_type>(
-              *this,
-              stl::initializer_list<component_type*>{&root_component});
+            auto sections =
+              object::make_object<sections_type>(*this, stl::initializer_list<component_type*>{&root_component});
             auto section_starts = object::make_object<section_starts_type>(*this);
 
             auto             current_text          = object::make_object<string_type>(*this);
@@ -846,17 +834,15 @@ namespace webpp::views {
 
                 // Find the next tag end delimiter
                 string_size_type tag_contents_location{tag_location_start + delim_set.begin.size()};
-                bool const       tag_is_unescaped_var{
-                  current_delimiter_is_brace && tag_location_start != (input_size - 2) &&
-                  input.at(tag_contents_location) == delim_set.begin.at(0)};
+                bool const tag_is_unescaped_var{current_delimiter_is_brace && tag_location_start != (input_size - 2) &&
+                                                input.at(tag_contents_location) == delim_set.begin.at(0)};
                 string_view_type const current_tag_delimiter_end{
                   tag_is_unescaped_var ? brace_delimiter_end_unescaped : delim_set.end};
                 auto const current_tag_delimiter_end_size = current_tag_delimiter_end.size();
                 if (tag_is_unescaped_var) {
                     ++tag_contents_location;
                 }
-                string_size_type const tag_location_end{
-                  input.find(current_tag_delimiter_end, tag_contents_location)};
+                string_size_type const tag_location_end{input.find(current_tag_delimiter_end, tag_contents_location)};
                 if (tag_location_end == string_view_type::npos) {
                     streamstring oss;
                     oss << "Unclosed tag at " << tag_location_start;
@@ -900,9 +886,9 @@ namespace webpp::views {
                         error_msg.assign(oss.str());
                         return;
                     }
-                    sections.back()->tag.section_text = string_type{
-                      input.substr(section_starts.back(), tag_location_start - section_starts.back()),
-                      get_alloc_for<string_type>(*this)};
+                    sections.back()->tag.section_text =
+                      string_type{input.substr(section_starts.back(), tag_location_start - section_starts.back()),
+                                  get_alloc_for<string_type>(*this)};
                     sections.pop_back();
                     section_starts.pop_back();
                 }
@@ -945,9 +931,8 @@ namespace webpp::views {
             return true;
         }
 
-        [[nodiscard]] constexpr bool parse_set_delimiter_tag(
-          string_view_type            contents,
-          delimiter_set<traits_type>& delimiter_set) const {
+        [[nodiscard]] constexpr bool parse_set_delimiter_tag(string_view_type            contents,
+                                                             delimiter_set<traits_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             constexpr stl::size_t smallest_legal_tag_size = 5;
             if (contents.size() < smallest_legal_tag_size) {
@@ -1022,9 +1007,8 @@ namespace webpp::views {
             return out;
         }
 
-        constexpr void render(render_handler const&          handler,
-                              context_internal<traits_type>& ctx,
-                              bool const                     root_renderer = true) {
+        constexpr void
+        render(render_handler const& handler, context_internal<traits_type>& ctx, bool const root_renderer = true) {
             root_component.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             });
@@ -1050,10 +1034,8 @@ namespace webpp::views {
             line_buffer.clear();
         }
 
-        constexpr walk_control_type render_component(
-          render_handler const&          handler,
-          context_internal<traits_type>& ctx,
-          component_type&                comp) {
+        constexpr walk_control_type
+        render_component(render_handler const& handler, context_internal<traits_type>& ctx, component_type& comp) {
             if (comp.is_text()) {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx.line_buffer, &comp);
@@ -1103,8 +1085,7 @@ namespace webpp::views {
                 case partial:
                     var = ctx.ctx->get_partial(tag.name);
                     if (var != nullptr && (var->is_partial() || var->is_string())) {
-                        auto const& partial_result =
-                          var->is_partial() ? var->partial_value()() : var->string_value();
+                        auto const&   partial_result = var->is_partial() ? var->partial_value()() : var->string_value();
                         mustache_view tmpl{this->get_traits()};
                         tmpl.scheme(partial_result);
                         if (!tmpl.is_valid()) {
@@ -1143,10 +1124,9 @@ namespace webpp::views {
           details::render_lambda_escape  escape,
           string_view_type               text,
           bool                           parse_with_same_context) {
-            auto render = [this, &ctx, parse_with_same_context, escape](string_view_type txt,
-                                                                        bool escaped) -> string_type {
-                auto const process_template =
-                  [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
+            auto render =
+              [this, &ctx, parse_with_same_context, escape](string_view_type txt, bool escaped) -> string_type {
+                auto const process_template = [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                     if (!tmpl.is_valid()) {
                         error_msg = tmpl.error_message();
                         return {};

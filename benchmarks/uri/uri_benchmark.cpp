@@ -58,8 +58,7 @@ namespace v1 {
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
               typename Iter              = char*,
               typename ConstIter         = char const*>
-    [[nodiscard]] bool
-    decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
+    [[nodiscard]] bool decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
         using char_type = istl::char_type_of_t<Iter>;
 
         static_assert(stl::same_as<char_type, istl::char_type_of_t<ConstIter>>,

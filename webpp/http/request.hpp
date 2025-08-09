@@ -33,8 +33,7 @@ namespace webpp::http {
         using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
 
-        static_assert(HTTPRequestHeaders<headers_type>,
-                      "Something is wrong with the request's headers type.");
+        static_assert(HTTPRequestHeaders<headers_type>, "Something is wrong with the request's headers type.");
         static_assert(HTTPRequestBody<body_type>, "Something is wrong with the request's body type.");
 
 
@@ -51,8 +50,8 @@ namespace webpp::http {
             body{inp_server} {}
 
         template <typename ReqT>
-            requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
-                     EnabledTraits<ReqT> && !istl::cvref_as<ReqT, common_http_request>)
+            requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> && EnabledTraits<ReqT> &&
+                     !istl::cvref_as<ReqT, common_http_request>)
         constexpr explicit common_http_request(ReqT& inp_req)
           : etraits{inp_req},
             headers{inp_req.headers},
@@ -192,10 +191,9 @@ namespace webpp::http {
           UStrT&&             url        = "/",
           http::version const ver        = http::http_2_0)
           : common_request_type{inp_etraits},
-            requested_uri{
-              istl::stringify_of<string_type>(stl::forward<UStrT>(url), get_alloc_for<string_type>(*this))},
-            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method),
-                                                             get_alloc_for<string_type>(*this))},
+            requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url), get_alloc_for<string_type>(*this))},
+            requested_method{
+              istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method), get_alloc_for<string_type>(*this))},
             request_version{ver} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -219,8 +217,7 @@ namespace webpp::http {
         template <typename T>
             requires(istl::StringifiableOf<string_type, T>)
         constexpr basic_request& uri(T&& str) {
-            requested_uri =
-              istl::stringify_of<string_type>(stl::forward<T>(str), requested_uri.get_allocator());
+            requested_uri = istl::stringify_of<string_type>(stl::forward<T>(str), requested_uri.get_allocator());
             return *this;
         }
 
@@ -231,8 +228,7 @@ namespace webpp::http {
         template <typename T>
             requires(istl::StringifiableOf<string_type, T>)
         constexpr basic_request& method(T&& str) {
-            requested_method =
-              istl::stringify_of<string_type>(stl::forward<T>(str), requested_method.get_allocator());
+            requested_method = istl::stringify_of<string_type>(stl::forward<T>(str), requested_method.get_allocator());
             return *this;
         }
 
@@ -246,8 +242,7 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr bool empty() const noexcept {
-            return this->heeaders.empty() && this->body.empty() && requested_uri.empty() &&
-                   requested_method.empty();
+            return this->heeaders.empty() && this->body.empty() && requested_uri.empty() && requested_method.empty();
         }
     };
 

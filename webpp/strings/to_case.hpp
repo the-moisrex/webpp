@@ -28,9 +28,7 @@ namespace webpp::ascii {
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_upper_copy(CharT inp_char) noexcept {
         webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
-        return inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z')
-                 ? inp_char - diff
-                 : inp_char;
+        return inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z') ? inp_char - diff : inp_char;
     }
 
     template <istl::CharType CharT>
@@ -51,9 +49,7 @@ namespace webpp::ascii {
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_lower_copy(CharT inp_char) noexcept {
         webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
-        return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')
-                 ? inp_char + diff
-                 : inp_char;
+        return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z') ? inp_char + diff : inp_char;
     }
 
     template <istl::CharType CharT>

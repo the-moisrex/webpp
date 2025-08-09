@@ -33,10 +33,7 @@ namespace webpp::http {
         value_type      m_value;
 
       public:
-        constexpr header_field_reference(
-          container_type& inp_container,
-          name_type       inp_name,
-          value_type      inp_val)
+        constexpr header_field_reference(container_type& inp_container, name_type inp_name, value_type inp_val)
           : container{&inp_container},
             m_name{stl::move(inp_name)},
             m_value{stl::move(inp_val)} {}
@@ -100,8 +97,7 @@ namespace webpp::http {
         using Container::Container;
 
         template <HTTPHeadersHolder H>
-        explicit constexpr headers_container(H& holder)
-          noexcept(stl::is_nothrow_constructible_v<Container, H&>)
+        explicit constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
           : Container{holder.headers} {}
 
         template <EnabledTraits ET>
@@ -196,14 +192,12 @@ namespace webpp::http {
 
         template <typename VT>
         constexpr void set(name_type name, VT&& new_value) {
-            set(stl::move(name),
-                lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
+            set(stl::move(name), lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
         }
 
         template <typename NT>
         constexpr void set(NT&& name, value_type new_value) {
-            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
-                stl::move(new_value));
+            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()), stl::move(new_value));
         }
 
         template <typename NT, typename VT>

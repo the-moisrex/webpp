@@ -49,8 +49,7 @@ TEST(URITests, Creation) {
     url.host("eg2.com");
     EXPECT_TRUE(url.has_host());
     EXPECT_TRUE(url.has_path());
-    EXPECT_EQ(url.host_raw(), "eg2.com")
-      << "host is: " << url.host_raw() << "\nsize: " << url.host_raw().size();
+    EXPECT_EQ(url.host_raw(), "eg2.com") << "host is: " << url.host_raw() << "\nsize: " << url.host_raw().size();
     EXPECT_EQ(url.string(), "//eg2.com/folder/file") << "str is: " << url.string();
     url.scheme("https:");
     url.scheme("https:");
@@ -113,8 +112,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_EQ(url.host_raw(), "[::1]") << "host: " << url.host_raw();
     EXPECT_EQ(url.port_uint16(), 8080);
     EXPECT_EQ(url.port(), "8080");
-    EXPECT_TRUE(std::holds_alternative<ipv6>(url.host_structured()))
-      << "index: " << url.host_structured().index();
+    EXPECT_TRUE(std::holds_alternative<ipv6>(url.host_structured())) << "index: " << url.host_structured().index();
     url.clear_path();
     EXPECT_EQ(url.string(), "//[::1]:8080/?name=value&name2=value2#str");
 }
@@ -162,8 +160,7 @@ TEST(URITests, WieredURIs) {
         EXPECT_TRUE(view.is_valid()) << "\turi: " << _uri << "\n\tscheme: " << view.scheme()
                                      << "\n\thost raw: " << view.host_raw() << "\n\thost: " << view.host()
                                      << "\n\tpath: " << view.path_raw() << "\n\tquery: " << view.queries_raw()
-                                     << "\n\tuser info: " << view.user_info()
-                                     << "\n\rerrors: " << view.error_string();
+                                     << "\n\tuser info: " << view.user_info() << "\n\rerrors: " << view.error_string();
     }
 
     uri_string const not_port{"http://username:password@domain.tld/path/file.ext"};
@@ -1301,13 +1298,7 @@ TEST(UriTests, ToString) {
        true, "foobar",
        true, "ch2",
        "http://bob@www.example.com:0?foobar#ch2"                                                                                               },
-      {"http",
-       "bob", "www.example.com",
-       true,    0,
-       {},
-       true, "foobar",
-       true,    "",
-       "http://bob@www.example.com:0?foobar#"                                                                                                  },
+      {"http", "bob", "www.example.com",  true,    0,              {},  true, "foobar",  true,    "",    "http://bob@www.example.com:0?foobar#"},
       {    "",    "",     "example.com", false,    0,              {},  true,    "bar", false,    "",                       "//example.com?bar"},
       {    "",    "",     "example.com", false,    0,              {},  true,       "", false,    "",                          "//example.com?"},
       {    "",    "",     "example.com", false,    0,              {}, false,       "", false,    "",                           "//example.com"},
@@ -1368,7 +1359,7 @@ TEST(UriTests, ToString) {
        true, "c 2",
        "http://bob@www.example.com:8080/abc/def?foobar#c%202"                                                                                  },
       {"http",
-       "bob", "ሴ.example.com",
+       "bob",   "ሴ.example.com",
        true, 8080,
        {"", "abc", "def"},
        true, "foobar",

@@ -283,9 +283,8 @@ namespace webpp::charset_v1 {
     charset(CharT const (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
 
     template <istl::CharType CharT = char, stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charset(charset<CharT, N1> const&,
-            charset<CharT, N2> const&,
-            charset<CharT, N> const&...) -> charset<CharT, N1 + N2 + (0 + ... + N)>;
+    charset(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
+      -> charset<CharT, N1 + N2 + (0 + ... + N)>;
 
     // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
@@ -380,9 +379,7 @@ namespace webpp::charset_v1 {
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
             requires(N1 <= N && N2 <= N && (... && (NN <= N)))
-        consteval charmap(charmap<N1> const& set1,
-                          charmap<N2> const& set2,
-                          charmap<NN> const&... c_sets) noexcept
+        consteval charmap(charmap<N1> const& set1, charmap<N2> const& set2, charmap<NN> const&... c_sets) noexcept
           : super{} // init with false values
         {
             webpp_set_at(set1, *this);
@@ -407,8 +404,7 @@ namespace webpp::charset_v1 {
         }
 
         template <stl::size_t N1, typename... CharT>
-        consteval charmap(charmap<N1> const& set1, CharT... c_set) noexcept
-          : charmap{set1, charmap{c_set...}} {}
+        consteval charmap(charmap<N1> const& set1, CharT... c_set) noexcept : charmap{set1, charmap{c_set...}} {}
 
         /**
          * This method checks to see if the given character
@@ -516,13 +512,11 @@ namespace webpp::charset_v1 {
     charmap(CharT const (&... str)[N]) -> charmap<stl::max(N...) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charmap(charmap<N1> const&,
-            charmap<N2> const&,
-            charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
+    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
 
 
-    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative
-                                                                        // chars)
+    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>;          // Half Table (excluding negative
+                                                                                 // chars)
     using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
 
     template <stl::size_t N>

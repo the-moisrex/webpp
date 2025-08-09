@@ -108,8 +108,7 @@ namespace webpp {
          * There can be multiple reasons why it's not bind-able.
          */
         [[nodiscard]] bool is_bindable() const noexcept {
-            return this->is_valid() &&
-                   basic_socket{as_address(), static_cast<int>(proto), 0, port_num}.is_valid();
+            return this->is_valid() && basic_socket{as_address(), static_cast<int>(proto), 0, port_num}.is_valid();
         }
 
       private:

@@ -67,9 +67,8 @@ namespace webpp::io {
     template <typename Callback = void (*)(io_result), typename Allocator = stl::allocator<Callback>>
         requires(stl::is_invocable_v<Callback, io_result>)
     struct basic_io_uring_service {
-        using callback_type = Callback;
-        using allocator_type =
-          typename stl::allocator_traits<Allocator>::template rebind_alloc<callback_type>;
+        using callback_type       = Callback;
+        using allocator_type      = typename stl::allocator_traits<Allocator>::template rebind_alloc<callback_type>;
         using buffer_manager_type = buffer_manager<allocator_type>;
         using buffer_type         = typename buffer_manager_type::buffer_type;
         using scheduler_type      = io_uring_scheduler<basic_io_uring_service>;
@@ -84,16 +83,13 @@ namespace webpp::io {
 
         /// check if the callback is nullable, if it is, we don't need to use std::optional
         static constexpr bool nullable_callback =
-          stl::constructible_from<callback_type, stl::nullptr_t> &&
-          stl::is_convertible_v<callback_type, bool>;
+          stl::constructible_from<callback_type, stl::nullptr_t> && stl::is_convertible_v<callback_type, bool>;
 
         static constexpr bool is_callback_nothrow = stl::is_nothrow_invocable_v<callback_type, io_result>;
 
       private:
         using rvalue_callback =
-          stl::conditional_t<stl::is_trivially_copy_constructible_v<callback_type>,
-                             callback_type,
-                             callback_type&&>;
+          stl::conditional_t<stl::is_trivially_copy_constructible_v<callback_type>, callback_type, callback_type&&>;
 
         [[nodiscard]] constexpr bool error_on_res(stl::integral auto           ret,
                                                   io_uring_service_state const err_cat) noexcept {
@@ -131,13 +127,12 @@ namespace webpp::io {
           noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : alloc{inp_alloc},
             params{inp_params} {
-            static_cast<void>(error_on_res(io_uring_queue_init_params(entries, &ring, &params),
-                                           io_uring_service_state::init_failure));
+            static_cast<void>(
+              error_on_res(io_uring_queue_init_params(entries, &ring, &params), io_uring_service_state::init_failure));
         }
 
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        explicit basic_io_uring_service(unsigned         entries   = default_entries_value,
-                                        Allocator const& inp_alloc = {})
+        explicit basic_io_uring_service(unsigned entries = default_entries_value, Allocator const& inp_alloc = {})
           noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : basic_io_uring_service{entries, {}, inp_alloc} {}
 
@@ -407,8 +402,7 @@ namespace webpp::io {
 
 
     template <typename Allocator = stl::allocator<stl::byte>>
-    using managed_io_uring_service =
-      basic_io_uring_service<istl::function<void(io_result), Allocator>, Allocator>;
+    using managed_io_uring_service = basic_io_uring_service<istl::function<void(io_result), Allocator>, Allocator>;
 
 } // namespace webpp::io
 

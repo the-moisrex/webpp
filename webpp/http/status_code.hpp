@@ -341,11 +341,7 @@ struct std::formatter<webpp::http::status_code, char> {
 
     template <typename FormatContext>
     constexpr auto format(webpp::http::status_code const status, FormatContext& ctx) const {
-        return std::format_to(
-          ctx.out(),
-          "{} {}",
-          webpp::stl::to_underlying(status),
-          status_code_reason_phrase(status));
+        return std::format_to(ctx.out(), "{} {}", webpp::stl::to_underlying(status), status_code_reason_phrase(status));
     }
 };
 #endif

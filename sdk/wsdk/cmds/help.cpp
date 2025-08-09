@@ -32,16 +32,14 @@ command_status webpp::sdk::help_cmd(command_options options) {
         } else if (help_token == "root-commands") {
             helps |= stl::to_underlying(root_commands);
         } else {
-            options.logger().error(log_cat,
-                                   stl::format("We don't have help documentation for '{}'.", help_token));
+            options.logger().error(log_cat, stl::format("We don't have help documentation for '{}'.", help_token));
         }
     }
 
     try {
         // define each help command and its corresponding function to call
-        static constexpr stl::array<stl::pair<available_helps, command_status (*)(command_options&)>, 1>
-          actions{
-            stl::pair{root_commands, &help_root_commands}  // 1
+        static constexpr stl::array<stl::pair<available_helps, command_status (*)(command_options&)>, 1> actions{
+          stl::pair{root_commands, &help_root_commands}  // 1
         };
         while (helps != 0x0) {
             // print all of them
@@ -61,8 +59,7 @@ command_status webpp::sdk::help_cmd(command_options options) {
             }
         }
     } catch (...) {
-        options.logger().error(log_cat,
-                               "unexpected error happened while preparing the help documents for you.");
+        options.logger().error(log_cat, "unexpected error happened while preparing the help documents for you.");
         std::rethrow_exception(std::current_exception());
     }
 

@@ -98,14 +98,13 @@ namespace webpp {
 
 #undef WEBPP_DEFINE_OPERATOR
 
-#define WEBPP_DEFINE_OPERATOR(op, alt_op)                                                      \
-    template <stl::uint8_t NewCounts, stl::integral NewType>                                   \
-        requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)                 \
-    [[nodiscard]] constexpr basic_version op(basic_version<NewCounts, NewType> const& new_val) \
-      const noexcept {                                                                         \
-        basic_version val{*this};                                                              \
-        val.alt_op(new_val);                                                                   \
-        return val;                                                                            \
+#define WEBPP_DEFINE_OPERATOR(op, alt_op)                                                                       \
+    template <stl::uint8_t NewCounts, stl::integral NewType>                                                    \
+        requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)                                  \
+    [[nodiscard]] constexpr basic_version op(basic_version<NewCounts, NewType> const& new_val) const noexcept { \
+        basic_version val{*this};                                                                               \
+        val.alt_op(new_val);                                                                                    \
+        return val;                                                                                             \
     }
 
 
@@ -245,8 +244,7 @@ namespace webpp {
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
             requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
-        [[nodiscard]] constexpr bool operator==(
-          basic_version<NewCounts, NewType> const& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
             for (auto iter = other.begin(); auto const& item : *this) {
                 if (item != static_cast<integer_type>(*iter++)) {
                     return false;

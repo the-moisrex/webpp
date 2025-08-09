@@ -104,8 +104,7 @@ namespace webpp {
         struct substring {
             template <class... Args>
             static constexpr auto parse(std::tuple<Args...> const& t) {
-                return String::instance.template section<str_begin, (format_begin - 1)>() +
-                       std::get<index>(t);
+                return String::instance.template section<str_begin, (format_begin - 1)>() + std::get<index>(t);
             }
         };
 
@@ -133,10 +132,7 @@ namespace webpp {
         struct sublist {
             template <size_t str_begin, size_t format_begin, size_t end, size_t index>
             using push_format =
-              sublist<(max < index ? index : max),
-                      end,
-                      Args...,
-                      substring<str_begin, format_begin, end, index>>;
+              sublist<(max < index ? index : max), end, Args..., substring<str_begin, format_begin, end, index>>;
 
             static constexpr size_t size = sizeof...(Args);
             static constexpr size_t Max  = max;
@@ -163,13 +159,12 @@ namespace webpp {
                     }
                 } else {
                     if constexpr (c == '}') {
-                        return parser<
-                          false,
-                          I + 1,
-                          I + 1,
-                          I + 1,
-                          Index + (is_number<NB, I>() ? 0 : 1),
-                          typename Results::template push_format<B, NB, I, get_index<NB, I, Index>()>>();
+                        return parser<false,
+                                      I + 1,
+                                      I + 1,
+                                      I + 1,
+                                      Index + (is_number<NB, I>() ? 0 : 1),
+                                      typename Results::template push_format<B, NB, I, get_index<NB, I, Index>()>>();
                     } else if constexpr (!" 0123456789"_s.contains(c)) {
                         return parser<false, B, B, I + 1, Index, Results>();
                     } else {
@@ -189,8 +184,7 @@ namespace webpp {
       public:
         template <class... Args>
         constexpr auto operator()(Args... args) const {
-            static_assert((... && is_compile_string<Args>::value),
-                          "All argument must be compile-time strings");
+            static_assert((... && is_compile_string<Args>::value), "All argument must be compile-time strings");
             static_assert(sizeof...(Args) >= formats.Max, "Not enough arguments");
             return apply_args(formats, std::forward_as_tuple(args...));
         }

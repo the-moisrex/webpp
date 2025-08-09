@@ -36,9 +36,7 @@ struct IDNATests : testing::Test {
             return SpecifiedTypeParam{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
         } else if constexpr (stl::convertible_to<stl::string::iterator, iterator>) {
             url_text = str;
-            return SpecifiedTypeParam{.beg = url_text.begin(),
-                                      .pos = url_text.begin(),
-                                      .end = url_text.end()};
+            return SpecifiedTypeParam{.beg = url_text.begin(), .pos = url_text.begin(), .end = url_text.end()};
         } else {
             return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
         }
@@ -992,8 +990,7 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     // German capital sharp S (ẞ)
     EXPECT_EQ(to_ascii<u8string>("\xe1\xba\x9e"), u8"xn--zca")
       << "German capital sharp S should convert to expected Punycode";
-    EXPECT_EQ(to_ascii<string>(U"\u1E9E"), "xn--zca")
-      << "German capital sharp S should convert to expected Punycode";
+    EXPECT_EQ(to_ascii<string>(U"\u1E9E"), "xn--zca") << "German capital sharp S should convert to expected Punycode";
 
     // Replacement character (U+FFFD)
     EXPECT_EQ(to_ascii<string>("\xef\xbf\xbd.com").value(), ".com")

@@ -39,17 +39,14 @@ namespace webpp {
         // wrapped version of AllocType after the "rebind".
         template <typename T>
         struct rebind {
-            using other =
-              ustring_allocator_wrapper<typename parent_allocator_traits::template rebind_alloc<T>>;
+            using other = ustring_allocator_wrapper<typename parent_allocator_traits::template rebind_alloc<T>>;
         };
 
         using AllocType::AllocType;
     };
 
-    template <unicode::StorageUnit CharT     = unicode::storage_unit<>,
-              Allocator            AllocType = stl::allocator<CharT>>
-    struct ustring
-      : stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>> {
+    template <unicode::StorageUnit CharT = unicode::storage_unit<>, Allocator AllocType = stl::allocator<CharT>>
+    struct ustring : stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>> {
         using basic_string_type =
           stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>;
 
@@ -62,15 +59,13 @@ namespace webpp {
         using char_traits_type = typename basic_string_type::traits_type;
 
 
-        static_assert(unicode::is_storage_unit_v<value_type>,
-                      "The specified value type is not a ustring storage unit");
+        static_assert(unicode::is_storage_unit_v<value_type>, "The specified value type is not a ustring storage unit");
 
         template <typename T>
         static constexpr bool same_size_unit = sizeof(T) == sizeof(unit_type);
 
         // ctor
-        using stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>::
-          basic_string;
+        using stl::basic_string<CharT, unicode_char_traits<CharT>, ustring_allocator_wrapper<AllocType>>::basic_string;
 
         template <typename NewCharT>
             requires(same_size_unit<NewCharT>) // both are the same size
@@ -89,8 +84,7 @@ namespace webpp {
         */
 
         template <typename NewCharT>
-            requires(
-              same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
+            requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
         constexpr auto operator<=>(NewCharT const* val) noexcept {
             return *this <=> reinterpret_cast<value_type const*>(val);
         }
@@ -111,9 +105,8 @@ namespace webpp {
         using value_type        = typename basic_string_type::value_type;
         using allocator_type    = typename basic_string_type::allocator_type;
         using char_traits_type  = typename basic_string_type::traits_type;
-        return stl::operator== <value_type, char_traits_type, allocator_type>(
-          lhs.basic_string(),
-          reinterpret_cast<value_type const*>(val));
+        return stl::operator==
+          <value_type, char_traits_type, allocator_type>(lhs.basic_string(), reinterpret_cast<value_type const*>(val));
     }
 
     template <Allocator AllocT = stl::allocator<unicode::utf8_storage_unit>>

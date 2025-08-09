@@ -24,8 +24,7 @@ namespace webpp::io {
 
         template <istl::StringViewifiable StrT>
             requires(!stl::is_constructible_v<str_v, StrT>)
-        explicit constexpr basic_path_view(
-          StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
+        explicit constexpr basic_path_view(StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
           : stl::basic_string_view<CharT>{istl::string_viewify_of<str_v>(stl::forward<StrT>(inp_path))} {}
 
         explicit constexpr basic_path_view(stl::filesystem::path const& inp_path) noexcept
@@ -66,11 +65,11 @@ namespace webpp::io {
 
         def readonly  = OS_VALUE(O_RDONLY, _O_RDONLY);
         def writeonly = OS_VALUE(O_WRONLY, _O_WRONLY);
-        def readwrite = OS_VALUE(O_RDWR, _O_RDWR);                   // read and write
-        def create    = OS_VALUE(O_CREAT, _O_CREAT);                 // create the file if it doesn't exist
-        def trunc     = OS_VALUE(O_TRUNC, _O_TRUNC);                 // clear the file's content first
-        def append    = OS_VALUE(O_APPEND, _O_APPEND);               // append to the end of the file
-        def direct    = OS_VALUE(O_DIRECT, FILE_FLAG_WRITE_THROUGH); // direct access to file; no cache
+        def readwrite = OS_VALUE(O_RDWR, _O_RDWR);                              // read and write
+        def create    = OS_VALUE(O_CREAT, _O_CREAT);                            // create the file if it doesn't exist
+        def trunc     = OS_VALUE(O_TRUNC, _O_TRUNC);                            // clear the file's content first
+        def append    = OS_VALUE(O_APPEND, _O_APPEND);                          // append to the end of the file
+        def direct    = OS_VALUE(O_DIRECT, FILE_FLAG_WRITE_THROUGH);            // direct access to file; no cache
         def temporary = OS_VALUE(O_CREAT | O_TMPFILE, _O_CREAT | _O_TEMPORARY); // temp file
 
         // posix only flags:
@@ -85,9 +84,8 @@ namespace webpp::io {
         def shortlived = OS_VALUE(0, _O_CREAT | _O_SHORT_LIVED);
 
         // NOLINTBEGIN(*-signed-bitwise)
-        def invalid =
-          ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct & ~temporary &
-          ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random & ~shortlived;
+        def invalid = ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct & ~temporary &
+                      ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random & ~shortlived;
         // NOLINTEND(*-signed-bitwise)
 #undef def
 

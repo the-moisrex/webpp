@@ -134,8 +134,8 @@ TEST(SocketTest, AddressOfNonBoundSocket) {
     EXPECT_TRUE(zero_addr.is_valid());
     EXPECT_TRUE(zero_addr.operator ipv4().is_zero());
     EXPECT_FALSE(zero_addr.operator ipv4().is_valid()); // family of zero_addr is AF_UNSPEC
-    EXPECT_NE(sock.address(), zero_addr)
-      << ip_address{sock.address()}.status_string() << " != " << ip_address{zero_addr}.status_string();
+    EXPECT_NE(sock.address(), zero_addr) << ip_address{sock.address()}.status_string()
+                                         << " != " << ip_address{zero_addr}.status_string();
 }
 
 TEST(SocketTest, AddressOfBoundSocket) {

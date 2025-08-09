@@ -64,8 +64,7 @@ namespace webpp::http {
         string_type      output;
 
       public:
-        explicit encoded_word(istl::StringViewifiable auto&& _input,
-                              allocator_type const&          alloc = allocator_type{})
+        explicit encoded_word(istl::StringViewifiable auto&& _input, allocator_type const& alloc = allocator_type{})
           : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
             output(alloc) {}
 
@@ -99,8 +98,7 @@ namespace webpp::http {
      * Returns the encoded string, or the original string if it
      * consists only of ASCII characters.
      */
-    static std::string
-    encodeWord(std::string const& text, std::string const& charset = "UTF-8", char encoding = 'q');
+    static std::string encodeWord(std::string const& text, std::string const& charset = "UTF-8", char encoding = 'q');
 
     /*
      * Decodes a string containing encoded-word's according to the rules specified in

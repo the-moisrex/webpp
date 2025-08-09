@@ -76,9 +76,8 @@ namespace webpp::strings {
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
                     finish_pos = stl::min(spltr->string_size(), spltr->find(delim, finish_pos));
                 } else if constexpr (istl::StringViewifiable<DT>) {
-                    finish_pos =
-                      stl::min(spltr->string_size(),
-                               spltr->find(istl::string_viewify_of<string_view_type>(delim), finish_pos));
+                    finish_pos = stl::min(spltr->string_size(),
+                                          spltr->find(istl::string_viewify_of<string_view_type>(delim), finish_pos));
                     // todo: add array support
                     // todo: add functor support
                 } else {
@@ -164,12 +163,9 @@ namespace webpp::strings {
         template <istl::StringViewifiable StrV = string_view_type>
             requires(!istl::StringLike<StrV>)
         constexpr explicit splitter(StrV str_val, DelimT&&... delims_input) noexcept
-          : splitter{istl::string_viewify(stl::forward<StrV>(str_val)),
-                     stl::forward<DelimT>(delims_input)...} {}
+          : splitter{istl::string_viewify(stl::forward<StrV>(str_val)), stl::forward<DelimT>(delims_input)...} {}
 
-        constexpr explicit splitter(src_iterator inp_beg,
-                                    src_iterator inp_end,
-                                    DelimT&&... delims_input) noexcept
+        constexpr explicit splitter(src_iterator inp_beg, src_iterator inp_end, DelimT&&... delims_input) noexcept
           : beg{inp_beg},
             endp{inp_end},
             delims{stl::forward<DelimT>(delims_input)...} {}
@@ -203,16 +199,15 @@ namespace webpp::strings {
         constexpr void split_array(Arr& data) const noexcept {
             constexpr auto array_size = stl::tuple_size_v<Arr>;
             ([&, this]<stl::size_t... I>(stl::index_sequence<I...>) {
-                auto pos_finder =
-                  [this, last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {
-                      constexpr auto delim_index  = stl::clamp(Index, 0UL, delim_count - 1UL);
-                      auto const     delim         = get<delim_index>(delims);
-                      auto const     pos            = this->find(delim, last_pos) - last_pos;
-                      auto const     ret            = substr(last_pos, pos);
-                      last_pos                     += pos;
-                      last_pos                   += ascii::size(delim);
-                      return ret;
-                  };
+                auto pos_finder = [this, last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {
+                    constexpr auto delim_index  = stl::clamp(Index, 0UL, delim_count - 1UL);
+                    auto const     delim        = get<delim_index>(delims);
+                    auto const     pos          = this->find(delim, last_pos) - last_pos;
+                    auto const     ret          = substr(last_pos, pos);
+                    last_pos                   += pos;
+                    last_pos                   += ascii::size(delim);
+                    return ret;
+                };
                 ((data[I] = pos_finder(istl::value_holder<I>{})), ...); // call the func
             })(stl::make_index_sequence<array_size>());
         }

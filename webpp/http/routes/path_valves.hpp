@@ -27,8 +27,7 @@ namespace webpp::http {
      */
     template <typename... CallableSegments>
     struct segment_valve : valve<segment_valve<CallableSegments...>>, stl::tuple<CallableSegments...> {
-        static_assert((true && ... && !istl::StringLiteral<CallableSegments>),
-                      "Callables should not be strings");
+        static_assert((true && ... && !istl::StringLiteral<CallableSegments>), "Callables should not be strings");
         using valve_type = valve<segment_valve<CallableSegments...>>;
         using tuple_type = stl::tuple<CallableSegments...>;
 
@@ -38,8 +37,7 @@ namespace webpp::http {
 
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        explicit constexpr segment_valve(Args&&... args)
-          noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr segment_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : tuple_type{stl::forward<Args>(args)...} {}
 
         constexpr segment_valve(segment_valve const&)                     = default;
@@ -55,8 +53,7 @@ namespace webpp::http {
             using context_type = basic_context<TraitsType>;
             return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
-                  return (
-                    valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
+                  return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
               },
               as_tuple());
         }

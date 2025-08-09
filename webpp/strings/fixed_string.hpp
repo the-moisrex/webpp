@@ -18,8 +18,7 @@ namespace webpp::istl {
 #    include <utility>
 
 #    if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201'911L)))
-#        warning \
-          "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
+#        warning "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
 #    else
 #        define FIXED_STRING_SUPPORT
 #    endif
@@ -89,32 +88,32 @@ namespace webpp {
                     switch (info.length) {
                         case 6:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 5:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 4:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 3:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 2:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 1:
@@ -144,32 +143,32 @@ namespace webpp {
                     switch (info.length) {
                         case 6:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 5:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 4:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 3:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 2:
                             if (++i < N) {
-                                info.value = (info.value << 6) |
-                                             value_of_trailing_utf8_code_point(input[i], correct_flag);
+                                info.value =
+                                  (info.value << 6) | value_of_trailing_utf8_code_point(input[i], correct_flag);
                             }
                             [[fallthrough]];
                         case 1:

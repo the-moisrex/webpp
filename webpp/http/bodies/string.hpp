@@ -70,15 +70,13 @@ namespace webpp::http {
                 return this->response_body(result);
             }
 
-            this->logger.error("Response/File",
-                               fmt::format("Cannot load the specified file: {}", filepath.string()));
+            this->logger.error("Response/File", fmt::format("Cannot load the specified file: {}", filepath.string()));
             // todo: retry feature
             if constexpr (context_type::is_debug()) {
                 return this->error(http::status_code::internal_server_error);
             } else {
-                return this->error(
-                  http::status_code::internal_server_error,
-                  fmt::format("We're not able to load the specified file: {}", filepath.string()));
+                return this->error(http::status_code::internal_server_error,
+                                   fmt::format("We're not able to load the specified file: {}", filepath.string()));
             }
         }
     };
@@ -105,8 +103,7 @@ namespace webpp::http {
             if constexpr (SizableBody<body_type>) {
                 str.resize(str.size() + body.size());
                 if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
-                    static_cast<void>(
-                      body.read(str.data() + str_size, stl::numeric_limits<stl::streamsize>::max()));
+                    static_cast<void>(body.read(str.data() + str_size, stl::numeric_limits<stl::streamsize>::max()));
                 } else {
                     auto* byte_data = reinterpret_cast<byte_type*>(str.data() + str_size);
                     static_cast<void>(body.read(byte_data, stl::numeric_limits<stl::streamsize>::max()));
@@ -208,9 +205,8 @@ namespace webpp::http {
                     static_assert_false(T, "Can't convert non-text-based body types to string view types.");
                 }
             } else {
-                static_assert_false(
-                  T,
-                  "We don't know how to get the string out of the body and append it to the string.");
+                static_assert_false(T,
+                                    "We don't know how to get the string out of the body and append it to the string.");
             }
         }
 
@@ -239,12 +235,9 @@ namespace webpp::http {
                            [[maybe_unused]] stl::type_identity<T> type_ident,
                            BodyType&&                             body) {
         using type = T;
-        if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>)
-        {
+        if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>) {
             return istl::stringify_of<type>(stl::forward<BodyType>(body), get_alloc_for<type>(body));
-        } else if constexpr (
-          istl::String<type> && EnabledTraits<BodyType> && traits::has_alloc_for<BodyType, type>)
-        {
+        } else if constexpr (istl::String<type> && EnabledTraits<BodyType> && traits::has_alloc_for<BodyType, type>) {
             type str{get_alloc_for<type>(body)};
             details::deserialize_body_impl(str, stl::forward<BodyType>(body));
             return str;

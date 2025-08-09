@@ -31,8 +31,7 @@ namespace webpp::io {
       file_options           options     = file_options::readwrite | file_options::create,
       stl::filesystem::perms permissions = stl::filesystem::perms::unknown) noexcept {
         if constexpr (
-          syscall_tag::
-            is_supported<syscall_open, Sched, basic_path_view<CharT>, file_options, stl::filesystem::perms>)
+          syscall_tag::is_supported<syscall_open, Sched, basic_path_view<CharT>, file_options, stl::filesystem::perms>)
         {
             return syscall(io, syscall_open{}, file_path, options, permissions);
         } else {
@@ -61,10 +60,9 @@ namespace webpp::io {
     }
 
     [[nodiscard]] file_handle open(IOService auto& io) noexcept {
-        return open(
-          io,
-          {},
-          file_options::readwrite | file_options::trunc | file_options::create | file_options::temporary);
+        return open(io,
+                    {},
+                    file_options::readwrite | file_options::trunc | file_options::create | file_options::temporary);
     }
 
 } // namespace webpp::io

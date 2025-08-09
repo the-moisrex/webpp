@@ -816,9 +816,9 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
     static_assert(
       istl::details::is_specialization_of_mem_fun_ref_v<member_function_ref<void(int&)>, member_function_ref>,
       "It should be");
-    static_assert(!istl::details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<decltype(ddd)>,
-                                                                     member_function_ref>,
-                  "It should not be");
+    static_assert(
+      !istl::details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<decltype(ddd)>, member_function_ref>,
+      "It should not be");
 
 
     function_ref<void (*)(int&)> const ref0 = ddd;

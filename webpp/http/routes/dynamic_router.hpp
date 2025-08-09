@@ -24,15 +24,15 @@ namespace webpp::http {
      */
     template <Traits TraitsType>
     struct basic_dynamic_router : enable_traits<TraitsType>, valve<void> {
-        using valve_type         = valve<void>;
-        using traits_type        = TraitsType;
-        using etraits            = enable_traits<traits_type>;
-        using route_type         = dynamic_route<traits_type>;
-        using dynamic_route_type = istl::dynamic<route_type, traits::allocator_type_of<traits_type>>;
-        using vector_allocator   = traits::allocator_type_of<traits_type, dynamic_route_type>;
-        using string_type        = traits::string<traits_type>;
-        using string_view_type   = traits::string_view<traits_type>;
-        using objects_type       = stl::vector<stl::any, traits::allocator_type_of<traits_type, stl::any>>;
+        using valve_type             = valve<void>;
+        using traits_type            = TraitsType;
+        using etraits                = enable_traits<traits_type>;
+        using route_type             = dynamic_route<traits_type>;
+        using dynamic_route_type     = istl::dynamic<route_type, traits::allocator_type_of<traits_type>>;
+        using vector_allocator       = traits::allocator_type_of<traits_type, dynamic_route_type>;
+        using string_type            = traits::string<traits_type>;
+        using string_view_type       = traits::string_view<traits_type>;
+        using objects_type           = stl::vector<stl::any, traits::allocator_type_of<traits_type, stl::any>>;
         using objects_allocator_type = typename objects_type::allocator_type;
         using routes_type            = stl::vector<dynamic_route_type, vector_allocator>;
         using response_type          = basic_response<traits_type>;
@@ -96,8 +96,7 @@ namespace webpp::http {
             using callable_type  = stl::remove_cvref_t<C>;
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
-            auto& route =
-              routes.emplace_back(stl::type_identity<new_route_type>{}, stl::forward<C>(callable));
+            auto& route = routes.emplace_back(stl::type_identity<new_route_type>{}, stl::forward<C>(callable));
             route->setup(*this);
             return *this;
         }

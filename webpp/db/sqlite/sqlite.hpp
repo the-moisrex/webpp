@@ -24,8 +24,7 @@ namespace webpp::sql {
         using blob_type       = stl::vector<char, traits::allocator_type_of<traits_type, char>>;
 
         template <typename T>
-        static constexpr bool supports_string_view =
-          istl::StringView<T> && stl::same_as<istl::char_type_of_t<T>, char>;
+        static constexpr bool supports_string_view = istl::StringView<T> && stl::same_as<istl::char_type_of_t<T>, char>;
 
         static_assert(supports_string_view<stl::string_view>, "It should support standard string views");
 

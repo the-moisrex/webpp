@@ -55,8 +55,7 @@ namespace webpp::uri {
      * This is the output type that the URI parser will be able to put the results of components into.
      */
     template <typename T>
-    concept ParsingOutput =
-      istl::StringLike<T> || SegregatedOutput<T> || istl::cvref_as<T, istl::nothing_type>;
+    concept ParsingOutput = istl::StringLike<T> || SegregatedOutput<T> || istl::cvref_as<T, istl::nothing_type>;
 
 
     template <typename SegType = stl::uint32_t, typename Iter = char const*>
@@ -212,8 +211,8 @@ namespace webpp::uri {
 
       private:
         constexpr void clean_authority_end() noexcept {
-            if (authority_start == omitted && password_start == omitted && port_start == omitted &&
-                host_start == omitted)
+            if (
+              authority_start == omitted && password_start == omitted && port_start == omitted && host_start == omitted)
             {
                 authority_end = omitted;
             }
@@ -303,9 +302,7 @@ namespace webpp::uri {
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT view(seg_type beg, seg_type size) const noexcept {
             using str_iterator = typename StrT::const_iterator;
-            if constexpr (
-              !stl::same_as<str_iterator, iterator> && requires { StrT{uri_beg.base() + beg, size}; })
-            {
+            if constexpr (!stl::same_as<str_iterator, iterator> && requires { StrT{uri_beg.base() + beg, size}; }) {
                 return StrT{uri_beg.base() + beg, size};
             } else {
                 return StrT{uri_beg + beg, size};
@@ -330,8 +327,7 @@ namespace webpp::uri {
             if (authority_start == omitted) {
                 return {};
             }
-            return view<StrT>(authority_start,
-                              stl::min(password_start - 1, host_start - 1) - authority_start);
+            return view<StrT>(authority_start, stl::min(password_start - 1, host_start - 1) - authority_start);
         }
 
         template <istl::StringLike StrT = stl::string_view>
@@ -348,8 +344,7 @@ namespace webpp::uri {
             if (host_start == omitted) {
                 return {};
             }
-            return view<StrT>(host_start,
-                              stl::min(stl::min(port_start - 1, authority_end), size()) - host_start);
+            return view<StrT>(host_start, stl::min(stl::min(port_start - 1, authority_end), size()) - host_start);
         }
 
         template <istl::StringLike StrT = stl::string_view>
@@ -365,9 +360,8 @@ namespace webpp::uri {
             if (authority_end == omitted) {
                 return {};
             }
-            return view<StrT>(
-              authority_end,
-              stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) - authority_end);
+            return view<StrT>(authority_end,
+                              stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) - authority_end);
         }
 
         template <istl::StringLike StrT = stl::string_view>
@@ -702,10 +696,10 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = clean_out_type::is_modifiable;
         static constexpr bool is_segregated = clean_out_type::is_segregated;
 
-        iterator beg{}; // the beginning of the string, not going to change during parsing
-        iterator pos{}; // current position
-        iterator end{}; // the end of the string
-        out_type out{}; // the output uri components
+        iterator                        beg{}; // the beginning of the string, not going to change during parsing
+        iterator                        pos{}; // current position
+        iterator                        end{}; // the end of the string
+        out_type                        out{}; // the output uri components
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
     };
@@ -757,14 +751,9 @@ namespace webpp::uri {
     /**
      * Same as parsing_uri_component, but the output is only one single component
      */
-    template <components Comp,
-              typename OutType,
-              typename Iter,
-              typename BaseSegType = void,
-              typename BaseIter    = void>
+    template <components Comp, typename OutType, typename Iter, typename BaseSegType = void, typename BaseIter = void>
         requires(stl::is_pointer_v<OutType> && !stl::integral<OutType>)
-    struct parsing_uri_component_context
-      : details::extract_types_from_out_type<stl::remove_pointer_t<OutType>> {
+    struct parsing_uri_component_context : details::extract_types_from_out_type<stl::remove_pointer_t<OutType>> {
         using base_seg_type = BaseSegType;
         using out_type      = OutType;
         using seg_type      = OutType;
@@ -780,13 +769,13 @@ namespace webpp::uri {
         static constexpr bool       is_nothrow    = stl::is_nothrow_copy_assignable_v<out_container_type>;
         static constexpr bool       has_base_uri  = !stl::is_void_v<BaseSegType>;
         static constexpr bool       is_segregated = SegregatedOutput<out_container_type>;
-        static constexpr bool       is_modifiable = istl::ModifiableString<out_container_type> ||
-                                              details::ModifiableVectorOfStrings<out_container_type>;
+        static constexpr bool       is_modifiable =
+          istl::ModifiableString<out_container_type> || details::ModifiableVectorOfStrings<out_container_type>;
 
-        iterator beg{}; // the beginning of the string, not going to change during parsing
-        iterator pos{};
-        iterator end{};
-        out_type out{}; // it's a pointer to string, string_view, vector, or a map
+        iterator                        beg{}; // the beginning of the string, not going to change during parsing
+        iterator                        pos{};
+        iterator                        end{};
+        out_type                        out{}; // it's a pointer to string, string_view, vector, or a map
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
     };
@@ -800,9 +789,9 @@ namespace webpp::uri {
     using parsing_uri_context_view = parsing_uri_context_string<stl::basic_string_view<CharT>>;
 
     template <istl::StringLike StrT = stl::string, typename Allocator = typename StrT::allocator_type>
-    using parsing_uri_context_segregated = parsing_uri_context<
-      stl::vector<StrT, typename stl::allocator_traits<Allocator>::template rebind_alloc<StrT>>,
-      istl::map_of_strings<StrT, Allocator>>;
+    using parsing_uri_context_segregated =
+      parsing_uri_context<stl::vector<StrT, typename stl::allocator_traits<Allocator>::template rebind_alloc<StrT>>,
+                          istl::map_of_strings<StrT, Allocator>>;
 
     template <typename Allocator = stl::allocator<char>>
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;

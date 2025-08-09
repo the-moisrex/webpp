@@ -59,11 +59,10 @@ namespace webpp {
 
         explicit constexpr enable_owner_traits(logger_ref logger_obj) noexcept : logger{logger_obj} {}
 
-        constexpr enable_owner_traits()
-          noexcept(stl::is_nothrow_default_constructible_v<logger_type>)   = default;
-        constexpr enable_owner_traits(enable_owner_traits const&) noexcept = default;
-        constexpr enable_owner_traits(enable_owner_traits&&) noexcept      = default;
-        constexpr ~enable_owner_traits()                                   = default;
+        constexpr enable_owner_traits() noexcept(stl::is_nothrow_default_constructible_v<logger_type>) = default;
+        constexpr enable_owner_traits(enable_owner_traits const&) noexcept                             = default;
+        constexpr enable_owner_traits(enable_owner_traits&&) noexcept                                  = default;
+        constexpr ~enable_owner_traits()                                                               = default;
 
         constexpr enable_owner_traits& operator=(enable_owner_traits const& rhs) {
             if (this != &rhs) {
@@ -305,17 +304,17 @@ namespace webpp {
 
         /// pass a general allocator as the first argument
         template <typename... Args>
-            requires(!stl::is_constructible_v<T, etraits, Args...> &&
-                     requires {
-                         typename T::allocator_type;
-                         requires stl::is_constructible_v<T, typename T::allocator_type const&, Args...>;
+            requires(
+              !stl::is_constructible_v<T, etraits, Args...> &&
+              requires {
+                  typename T::allocator_type;
+                  requires stl::is_constructible_v<T, typename T::allocator_type const&, Args...>;
 
-                         // allocators are convertible to each other
-                         requires stl::convertible_to<
-                           typename T::allocator_type,
-                           typename etraits::template allocator_type<
-                             typename stl::allocator_traits<typename T::allocator_type>::value_type>>;
-                     })
+                  // allocators are convertible to each other
+                  requires stl::convertible_to<typename T::allocator_type,
+                                               typename etraits::template allocator_type<typename stl::allocator_traits<
+                                                 typename T::allocator_type>::value_type>>;
+              })
         explicit constexpr enable_traits_for(Args&&... args)
           noexcept(stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
           : T{get_alloc_for<T>(et), stl::forward<Args>(args)...} {}
@@ -334,8 +333,7 @@ namespace webpp {
         requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
                    stl::same_as<T, enable_owner_traits<typename T::traits_type>> || requires {
                        typename T::enabled_type;
-                       requires stl::
-                         same_as<T, enable_traits_with<typename T::traits_type, typename T::enabled_type>>;
+                       requires stl::same_as<T, enable_traits_with<typename T::traits_type, typename T::enabled_type>>;
                    };
     };
 

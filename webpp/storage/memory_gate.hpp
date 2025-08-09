@@ -58,8 +58,7 @@ namespace webpp {
 
             template <typename K, typename V>
             constexpr void set(K&& key, V&& value, options_type opts = {}) {
-                map.insert_or_assign(stl::forward<K>(key),
-                                     mapped_type{stl::move(opts), stl::forward<V>(value)});
+                map.insert_or_assign(stl::forward<K>(key), mapped_type{stl::move(opts), stl::forward<V>(value)});
             }
 
             constexpr void set_options(key_type const& key, options_type const& opts) {

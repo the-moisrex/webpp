@@ -106,8 +106,7 @@ namespace webpp::uri {
 
         /// Remove the current segment in a path
         template <uri_parsing_options Options, ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void
-        clear_segment(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg) noexcept {
+        static constexpr void clear_segment(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg) noexcept {
             using ctx_type = CtxT;
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                 buffer->clear();
@@ -128,9 +127,8 @@ namespace webpp::uri {
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_parsing_options Options, ParsingURIContext CtxT>
             requires(!Options.handle_dots_in_paths)
-        static constexpr bool handle_dots_in_paths(
-          [[maybe_unused]] CtxT&                    ctx,
-          [[maybe_unused]] typename CtxT::iterator& seg_beg) noexcept {
+        static constexpr bool handle_dots_in_paths([[maybe_unused]] CtxT&                    ctx,
+                                                   [[maybe_unused]] typename CtxT::iterator& seg_beg) noexcept {
             return false;
         }
 

@@ -71,8 +71,7 @@ TEST(String, Join) {
     stl::string      two   = "two ";
     stl::string_view three = "three";
     auto const       res   = join(one, two, three, " four");
-    static_assert(
-      stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
+    static_assert(stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
     EXPECT_EQ(res, "one two three four");
 
     EXPECT_EQ(join(stl::string("one, "), 1, 2), "one, 12");
@@ -85,8 +84,7 @@ TEST(String, JoinWith) {
     stl::vector<stl::string> strings;
     istl::emplace(strings, one, two, three, "four");
     auto const res = join_with(strings, ' ');
-    static_assert(
-      stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
+    static_assert(stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);
     EXPECT_EQ(res, "one two three four");
 
     using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;

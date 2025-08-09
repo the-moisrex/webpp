@@ -58,9 +58,7 @@ namespace webpp::istl {
         static constexpr bool value = false;
     };
 
-    template <template <typename> typename Concept,
-              typename... Types,
-              template <typename...> typename TupleType>
+    template <template <typename> typename Concept, typename... Types, template <typename...> typename TupleType>
     struct is_tuple_of<Concept, TupleType<Types...>> {
         static constexpr bool value = (Concept<Types>::value && ...);
     };
@@ -109,8 +107,7 @@ namespace webpp::istl {
      * The types that don't exists in the args, will be default constructed.
      */
     template <Tuple TupleT, typename... T>
-        requires(
-          (tuple_contains<TupleT, stl::remove_cvref_t<T>>::value && ...)) // check if the types are okay
+        requires((tuple_contains<TupleT, stl::remove_cvref_t<T>>::value && ...)) // check if the types are okay
     [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) {
         // this uses the TupleT's tuple-like type; std::tuple<T...>;
         using no_order_tuple = typename rebind_parameters<TupleT, stl::remove_cvref_t<T>...>::type;
@@ -166,8 +163,7 @@ namespace webpp::istl {
                          Func                                             inp_func,
                          [[maybe_unused]] stl::index_sequence<indices...> indeces) {
         static_cast<void>(stl::initializer_list<int>{
-          (stl::get<indices + From>(inp_tup2) = inp_func(stl::forward_like<T1>(get<indices>(inp_tup1))),
-           0)...});
+          (stl::get<indices + From>(inp_tup2) = inp_func(stl::forward_like<T1>(get<indices>(inp_tup1))), 0)...});
     }
 
     template <stl::size_t From, stl::size_t To, typename T1, typename T2, typename Func>
@@ -180,10 +176,8 @@ namespace webpp::istl {
     }
 
     template <stl::size_t... Indeces, typename Tup, typename Func>
-    [[nodiscard]] static constexpr auto tuple_transform(
-      Tup&&                                            inp_tup1,
-      Func                                             inp_func,
-      [[maybe_unused]] stl::index_sequence<Indeces...> inp_indeces) {
+    [[nodiscard]] static constexpr auto
+    tuple_transform(Tup&& inp_tup1, Func inp_func, [[maybe_unused]] stl::index_sequence<Indeces...> inp_indeces) {
         return stl::tuple{(inp_func(stl::forward_like<Tup>(get<Indeces>(inp_tup1))), ...)};
     }
 
@@ -234,19 +228,16 @@ namespace webpp::istl {
         template <typename... TT>
         using ituple_template = ituple<TT...>;
 
-        using last         = last_type<T...>;
-        using options      = stl::conditional_t<is_ituple_options<typename last::type>::value,
-                                                typename last::type,
-                                                default_ituple_options<>>;
+        using last    = last_type<T...>;
+        using options = stl::
+          conditional_t<is_ituple_options<typename last::type>::value, typename last::type, default_ituple_options<>>;
         using this_tuple   = typename last_type<T...>::template remove_if<stl::tuple, is_ituple_options>;
         using default_type = typename options::default_type;
         static constexpr stl::size_t native_tuple_size = stl::tuple_size_v<this_tuple>;
-        static constexpr stl::size_t tuple_size =
-          native_tuple_size + is_ituple_options<typename last::type>::size;
+        static constexpr stl::size_t tuple_size = native_tuple_size + is_ituple_options<typename last::type>::size;
 
         template <typename NewOpts>
-        using replace_options =
-          typename last_type<T...>::template put_if<ituple_template, is_ituple_options, NewOpts>;
+        using replace_options = typename last_type<T...>::template put_if<ituple_template, is_ituple_options, NewOpts>;
 
         template <stl::size_t NewSize>
         using restructured_type = stl::conditional_t<
@@ -283,8 +274,7 @@ namespace webpp::istl {
         template <stl::size_t NewSize>
         [[nodiscard]] auto structured() const noexcept {
             if constexpr (NewSize > native_tuple_size) {
-                return replace_options<typename options::template resize<NewSize - native_tuple_size>>{
-                  as_tuple()};
+                return replace_options<typename options::template resize<NewSize - native_tuple_size>>{as_tuple()};
             } else if constexpr (NewSize < native_tuple_size) {
                 return typename last_type<T...>::template remove_limit<ituple, NewSize>{as_tuple()};
             } else {
@@ -371,10 +361,9 @@ namespace webpp::istl {
         explicit constexpr ituple_iterator(Iter&& iter) : Iter{stl::move(iter)} {}
 
         // value type is an ituple
-        using value_type =
-          typename ituplify<typename Iter::value_type>::type::template restructured_type<OptsT::size>;
-        using reference        = value_type&;
-        using pointer          = value_type*;
+        using value_type = typename ituplify<typename Iter::value_type>::type::template restructured_type<OptsT::size>;
+        using reference  = value_type&;
+        using pointer    = value_type*;
         using native_reference = typename Iter::reference;
 
         static constexpr bool is_nothing = stl::is_same_v<value_type, typename OptsT::default_type>;
@@ -491,9 +480,7 @@ namespace webpp::istl {
     constexpr void adjacent_apply(Tuple&& tup, FuncT&& func) {
         using tuple_type = stl::remove_cvref_t<Tuple>;
         ([&]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
-            ((func(stl::forward_like<Tuple>(stl::get<I>(tup)),
-                   stl::forward_like<Tuple>(stl::get<I + 1>(tup)))),
-             ...);
+            ((func(stl::forward_like<Tuple>(stl::get<I>(tup)), stl::forward_like<Tuple>(stl::get<I + 1>(tup)))), ...);
         })(stl::make_index_sequence<stl::tuple_size_v<tuple_type> - 1>{});
     }
 
@@ -557,23 +544,16 @@ namespace webpp::istl {
         return {get<I>(tup)...};
     }
 
-    template <stl::size_t Start = 0,
-              stl::size_t End   = Start,
-              template <typename...> typename TupTempl,
-              typename... T>
-    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...> const& tup) noexcept(
-      noexcept(sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
+    template <stl::size_t Start = 0, stl::size_t End = Start, template <typename...> typename TupTempl, typename... T>
+    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...> const& tup)
+      noexcept(noexcept(sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
         return sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
     }
 
-    template <stl::size_t Start = 0,
-              stl::size_t End   = Start,
-              template <typename...> typename TupTempl,
-              typename... T>
-    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(noexcept(
-      sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
-        return sub_tuple(stl::move(tup),
-                         make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
+    template <stl::size_t Start = 0, stl::size_t End = Start, template <typename...> typename TupTempl, typename... T>
+    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(
+      noexcept(sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
+        return sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
     }
 
     template <stl::size_t From, stl::size_t To, Tuple T>
@@ -616,8 +596,7 @@ namespace webpp::istl {
      * Re-Order the tuple's element based on the specified index_sequence
      */
     template <typename Tup, stl::size_t... I>
-    [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&&                                      tup,
-                                                        [[maybe_unused]] stl::index_sequence<I...> indeces) {
+    [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&& tup, [[maybe_unused]] stl::index_sequence<I...> indeces) {
         return stl::make_tuple(stl::forward_like<Tup>(get<I>(tup))...);
     }
 
@@ -626,9 +605,8 @@ namespace webpp::istl {
         static constexpr void
         for_each_impl(F&& inp_func, TupleT&& tup, [[maybe_unused]] stl::index_sequence<Indices...> indeces) {
             using swallow = int[]; // NOLINT(*-avoid-c-arrays)
-            static_cast<void>(swallow{
-              1,
-              (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...});
+            static_cast<void>(
+              swallow{1, (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...});
         }
     } // namespace details
 
@@ -672,8 +650,7 @@ namespace std {
     };
 
     template <class... T>
-    struct tuple_size<webpp::istl::ituple<T...>>
-      : integral_constant<size_t, webpp::istl::ituple<T...>::tuple_size> {};
+    struct tuple_size<webpp::istl::ituple<T...>> : integral_constant<size_t, webpp::istl::ituple<T...>::tuple_size> {};
 } // namespace std
 
 #endif // WEBPP_TUPLE_H

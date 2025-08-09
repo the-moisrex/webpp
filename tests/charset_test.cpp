@@ -11,7 +11,7 @@ inline constexpr auto LOWER_ALPHA_MAP = charmap_range<'a', 'z'>();
 inline constexpr auto UPPER_ALPHA_MAP = charmap_range<'A', 'Z'>();
 inline constexpr auto ALPHA_MAP       = charmap(LOWER_ALPHA_MAP, UPPER_ALPHA_MAP);
 inline constexpr auto DIGIT_MAP       = charmap_range<'0', '9'>();
-inline constexpr auto HEXDIG_MAP = charmap(DIGIT_MAP, charmap_range<'A', 'F'>(), charmap_range<'a', 'f'>());
+inline constexpr auto HEXDIG_MAP      = charmap(DIGIT_MAP, charmap_range<'A', 'F'>(), charmap_range<'a', 'f'>());
 inline constexpr auto ALPHA_DIGIT_MAP = charmap{ALPHA_MAP, DIGIT_MAP};
 
 
@@ -76,24 +76,22 @@ TEST(CharsetTest, CategorizationTest) {
  *                        ; any VCHAR, except delimiters
  **/
 static constexpr bool token_char_map[256]{
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, true,  false, true,  true,  true,  true,  true,  false, false, true,  true,  false,
-  true,  true,  false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false,
-  false, false, false, false, false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-  true,  false, false, false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-  true,  true,  true,  false, true,  false, true,  false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-  false};
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, true,  false, true,  true,  true,  true,  true,  false, false, true,  true,  false, true,  true,  false,
+  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false, false, false, false,
+  false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false, true,  true,
+  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, true,  false, true,  false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+  false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 
 static constexpr charmap_full token_charmap{
   ALPHA<>,

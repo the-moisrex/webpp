@@ -30,8 +30,7 @@ namespace webpp::uri {
 
       public:
         template <typename... Args>
-        explicit constexpr basic_domain(Args&&... args)
-          noexcept(stl::is_nothrow_constructible_v<storage_type, Args...>)
+        explicit constexpr basic_domain(Args&&... args) noexcept(stl::is_nothrow_constructible_v<storage_type, Args...>)
           : storage{stl::forward<Args>(args)...},
             status{parse_domain_name(storage.begin(), storage.end())} {}
 
@@ -51,8 +50,7 @@ namespace webpp::uri {
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
-                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage,
-                                                                         stl::forward<NStrT>(inp_str));
+                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
             } else {
                 return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
             }
@@ -62,8 +60,7 @@ namespace webpp::uri {
             return storage == other.storage && status == other.status;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(
-          basic_domain const& other) const noexcept = default;
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(basic_domain const& other) const noexcept = default;
 
         /// Top-Level-Domain
         template <istl::StringLike StrT = storage_type>

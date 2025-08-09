@@ -117,9 +117,9 @@ using only_arith_long =
 
 static_assert(is_same_v<only_int, tuple<int>>, "remove bug");
 static_assert(is_same_v<only_arith, tuple<int, double, short>>, "remove bug");
-static_assert(is_same_v<only_arith_long,
-                        tuple<int, unsigned, unsigned short, long, long long, unsigned long, double, short>>,
-              "remove bug");
+static_assert(
+  is_same_v<only_arith_long, tuple<int, unsigned, unsigned short, long, long long, unsigned long, double, short>>,
+  "remove bug");
 static_assert(is_same_v<only_ints, tuple<int, short>>, "remove if bug");
 
 using one_int = typename last_type<int, double, int, string>::template remove_limit<tuple, 1>;
@@ -181,9 +181,8 @@ struct iterable_type {
 TEST(TypeTraits, ITupleIteratorTest) {
     iterable_type<ituple> vecs;
 
-    static_assert(
-      is_same_v<remove_cvref_t<decltype(*vecs.begin())>, ituple<int, double, default_ituple_options<0>>>,
-      "should return ituple no matter what");
+    static_assert(is_same_v<remove_cvref_t<decltype(*vecs.begin())>, ituple<int, double, default_ituple_options<0>>>,
+                  "should return ituple no matter what");
 
     int    i = 0;
     double d = 1.0;
@@ -242,16 +241,12 @@ TEST(TypeTraits, InvocableInOrder) {
     EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, one)>, two, one, one>));
     EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, two)>, two, one, one>));
     EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, two, three)>, two, three, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(four, one, two, three)>, two, four, three, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(four, two, three, one)>, two, four, three, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(two, four, three, one)>, two, four, three, one>));
     EXPECT_TRUE(
-      static_cast<bool>(invocable_inorder_v<function<void(four, one, two, three)>, two, four, three, one>));
-    EXPECT_TRUE(
-      static_cast<bool>(invocable_inorder_v<function<void(four, two, three, one)>, two, four, three, one>));
-    EXPECT_TRUE(
-      static_cast<bool>(invocable_inorder_v<function<void(two, four, three, one)>, two, four, three, one>));
-    EXPECT_TRUE(static_cast<bool>(
-      invocable_inorder_v<function<void(two, two, three, one)>, two, four, two, three, one>));
-    EXPECT_TRUE(
-      static_cast<bool>(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
+      static_cast<bool>(invocable_inorder_v<function<void(two, two, three, one)>, two, four, two, three, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
     EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<void(two, four, two, one), two, four, two, one>));
     EXPECT_FALSE(static_cast<bool>(invocable_inorder_v<void(two, two, four), two, two, one>));
     EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<void(two, two const&, four), two, two&, one, four&>));
@@ -286,20 +281,18 @@ using is_one = is_same<T, one>;
 
 TEST(TypeTraits, IndexesIfTest) {
     EXPECT_TRUE(static_cast<bool>(same_as<indexes_if<is_one, two, one, three>, index_sequence<1>>));
-    EXPECT_TRUE(static_cast<bool>(
-      same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
-    EXPECT_TRUE(static_cast<bool>(
-      same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
+    EXPECT_TRUE(
+      static_cast<bool>(same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
+    EXPECT_TRUE(
+      static_cast<bool>(same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
 }
 
 TEST(TypeTraits, RmoeveUnsignedTest) {
     EXPECT_TRUE(static_cast<bool>(same_as<char, remove_unsigned_t<char>>));
     EXPECT_TRUE(static_cast<bool>(same_as<char, remove_unsigned_t<unsigned char>>));
     EXPECT_TRUE(static_cast<bool>(same_as<char volatile, remove_unsigned_t<unsigned char volatile>>));
-    EXPECT_TRUE(
-      static_cast<bool>(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
-    EXPECT_TRUE(
-      static_cast<bool>(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
 }
 
 struct expl_type {

@@ -90,35 +90,35 @@ namespace webpp {
             ip       = 0,     // Dummy protocol for TCP.
             icmp     = 1,     // Internet Control Message Protocol.
             igmp     = 2,     // Internet Group Management Protocol.
-            rfcomm   = 3,  // WIN32 - The Bluetooth Radio Frequency Communications (Bluetooth RFCOMM) protocol
-            ipip     = 4,  // IPIP tunnels (older KA9Q tunnels use 94).
-            tcp      = 6,  // Transmission Control Protocol.
-            egp      = 8,  // Exterior Gateway Protocol.
-            pup      = 12, // PUP protocol.
-            udp      = 17, // User Datagram Protocol.
-            idp      = 22, // XNS IDP protocol.
-            tp       = 29, // SO Transport Protocol Class 4.
-            dccp     = 33, // Datagram Congestion Control Protocol.
-            ipv6     = 41, // IPv6 header.
-            rsvp     = 46, // Reservation Protocol.
-            gre      = 47, // General Routing Encapsulation.
-            esp      = 50, // encapsulating security payload.
-            ah       = 51, // authentication header.
-            icmpv6   = 58, // WIN32 - The Internet Control Message Protocol Version 6 (ICMPv6).
-            mtp      = 92, // Multicast Transport Protocol.
-            beetph   = 94, // IP option pseudo header for BEET.
-            encap    = 98, // Encapsulation Header.
-            pim      = 103, // Protocol Independent Multicast.
-            comp     = 108, // Compression Header Protocol.
-            rm       = 113, // WIN32 - The PGM protocol for reliable multicast.
-            l2tp     = 115, // Layer 2 Tunnelling Protocol.
-            sctp     = 132, // Stream Control Transmission Protocol.
-            udplite  = 136, // UDP-Lite protocol.
-            mpls     = 137, // MPLS in IP.
-            ethernet = 143, // Ethernet-within-IPv6 Encapsulation.
-            raw      = 255, // Raw IP packets.
-            mptcp    = 262, // Multipath TCP connection.
-            max             // just to indicate the max value
+            rfcomm   = 3,     // WIN32 - The Bluetooth Radio Frequency Communications (Bluetooth RFCOMM) protocol
+            ipip     = 4,     // IPIP tunnels (older KA9Q tunnels use 94).
+            tcp      = 6,     // Transmission Control Protocol.
+            egp      = 8,     // Exterior Gateway Protocol.
+            pup      = 12,    // PUP protocol.
+            udp      = 17,    // User Datagram Protocol.
+            idp      = 22,    // XNS IDP protocol.
+            tp       = 29,    // SO Transport Protocol Class 4.
+            dccp     = 33,    // Datagram Congestion Control Protocol.
+            ipv6     = 41,    // IPv6 header.
+            rsvp     = 46,    // Reservation Protocol.
+            gre      = 47,    // General Routing Encapsulation.
+            esp      = 50,    // encapsulating security payload.
+            ah       = 51,    // authentication header.
+            icmpv6   = 58,    // WIN32 - The Internet Control Message Protocol Version 6 (ICMPv6).
+            mtp      = 92,    // Multicast Transport Protocol.
+            beetph   = 94,    // IP option pseudo header for BEET.
+            encap    = 98,    // Encapsulation Header.
+            pim      = 103,   // Protocol Independent Multicast.
+            comp     = 108,   // Compression Header Protocol.
+            rm       = 113,   // WIN32 - The PGM protocol for reliable multicast.
+            l2tp     = 115,   // Layer 2 Tunnelling Protocol.
+            sctp     = 132,   // Stream Control Transmission Protocol.
+            udplite  = 136,   // UDP-Lite protocol.
+            mpls     = 137,   // MPLS in IP.
+            ethernet = 143,   // Ethernet-within-IPv6 Encapsulation.
+            raw      = 255,   // Raw IP packets.
+            mptcp    = 262,   // Multipath TCP connection.
+            max               // just to indicate the max value
         };
     };
 
@@ -161,17 +161,12 @@ namespace webpp {
         basic_socket(int const domain, int const type, ipproto_type const protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
-        basic_socket(ip_address const   addr,
-                     int const          type,
-                     ipproto_type const protocol = ipproto::ip) noexcept
+        basic_socket(ip_address const addr, int const type, ipproto_type const protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(),
-                addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol)
-                                : invalid_handle_value)} {}
+                addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol) : invalid_handle_value)} {
+        }
 
-        basic_socket(ip_address const   addr,
-                     int const          type,
-                     ipproto_type const protocol,
-                     in_port_t const    port) noexcept
+        basic_socket(ip_address const addr, int const type, ipproto_type const protocol, in_port_t const port) noexcept
           : basic_socket{addr, type, protocol} {
             if (is_valid()) {
                 this->bind(addr, port);
@@ -336,9 +331,7 @@ namespace webpp {
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv4 const          ip_addr,
-                    stl::uint16_t const port,
-                    int const           queue_size = default_queue_size) noexcept {
+        bool listen(ipv4 const ip_addr, stl::uint16_t const port, int const queue_size = default_queue_size) noexcept {
             return bind(ip_addr, port) && listen(queue_size);
         }
 
@@ -349,9 +342,7 @@ namespace webpp {
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv6 const&         ip_addr,
-                    stl::uint16_t const port,
-                    int const           queue_size = default_queue_size) noexcept {
+        bool listen(ipv6 const& ip_addr, stl::uint16_t const port, int const queue_size = default_queue_size) noexcept {
             return bind(ip_addr, port) && listen(queue_size);
         }
 

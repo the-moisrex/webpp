@@ -28,10 +28,8 @@ struct custom_body_type {
     }
 };
 
-static_assert(SerializableBody<custom_body_type, body_type>,
-              "custom body is not serializable but it should be.");
-static_assert(DeserializableBody<stl::string_view, body_type>,
-              "string view is not deserializable but it should be.");
+static_assert(SerializableBody<custom_body_type, body_type>, "custom body is not serializable but it should be.");
+static_assert(DeserializableBody<stl::string_view, body_type>, "string view is not deserializable but it should be.");
 static_assert(DeserializableBody<char const*, body_type>, "c-string is not deserializable but it should be.");
 
 TEST(Body, CustomBodyTypeSerializerTest) {
@@ -146,9 +144,7 @@ TEST(Body, BodyCStreamToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
-    {
+    while (auto res = body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
         str2.append(buf.data(), static_cast<stl::size_t>(res));
     }
     EXPECT_EQ(str, str2);
@@ -203,9 +199,7 @@ TEST(Body, BodyCrossTalkTextToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
-    {
+    while (auto res = body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
         str2.append(buf.data(), static_cast<stl::size_t>(res)); // res is always zero to not create a loop!!!
     }
     EXPECT_EQ(str, str2);
@@ -219,9 +213,7 @@ TEST(Body, BodyCrossTalkStreamToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
-    {
+    while (auto res = body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
         str2.append(buf.data(), static_cast<stl::size_t>(res));
     }
     EXPECT_EQ(str, str2);

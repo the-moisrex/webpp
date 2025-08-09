@@ -56,8 +56,8 @@ namespace webpp::istl {
 
     /// Get the basic_string_view<...> type based on std::basic_string<...> template parameters
     template <typename T>
-    using string_view_type_of = stl::
-      conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>, char_traits_type_of_t<T>>>;
+    using string_view_type_of =
+      stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>, char_traits_type_of_t<T>>>;
 
     namespace details {
         template <typename StrViewType, typename T>
@@ -87,8 +87,7 @@ namespace webpp::istl {
       details::StringViewifiableOf<stl::remove_cvref_t<StrViewType>, stl::remove_cvref_t<T>>;
 
     template <template <typename...> typename StrViewType, typename T>
-    concept StringViewifiableOfTemplate =
-      StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
+    concept StringViewifiableOfTemplate = StringViewifiableOf<details::string_view::deduced_type<StrViewType, T>, T>;
 
     template <typename T>
     concept StringViewifiable = StringViewifiableOf<string_view_type_of<T>, T>;

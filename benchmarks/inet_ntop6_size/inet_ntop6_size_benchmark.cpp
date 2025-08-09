@@ -154,8 +154,8 @@ namespace v1 {
         }
 
         // Early IPv4-mapped check (optimized)
-        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 &&
-            groups[5] == 0xffff)
+        if (
+          groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 && groups[5] == 0xffff)
         {
             return 7 + inet_ntop4_size(src + 12);
         }
@@ -392,8 +392,8 @@ namespace v4 {
         }
 
         // Early IPv4-mapped check
-        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 &&
-            groups[5] == 0xffff)
+        if (
+          groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 && groups[5] == 0xffff)
         {
             return 7 + inet_ntop4_size(src + 12);
         }
@@ -426,9 +426,8 @@ namespace v4 {
             for (int i = longest_start + longest_run; i < 8; ++i) {
                 size += hex_group_size(groups[i]);
             }
-            size +=
-              (longest_start > 0 ? longest_start - 1 : 0) +
-              (8 - (longest_start + longest_run) > 0 ? 8 - (longest_start + longest_run) - 1 : 0); // Colons
+            size += (longest_start > 0 ? longest_start - 1 : 0) +
+                    (8 - (longest_start + longest_run) > 0 ? 8 - (longest_start + longest_run) - 1 : 0); // Colons
         } else {
             for (int i = 0; i < 8; ++i) {
                 size += hex_group_size(groups[i]);
@@ -474,8 +473,8 @@ namespace v5 {
         }
 
         // Early IPv4-mapped check
-        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 &&
-            groups[5] == 0xffff)
+        if (
+          groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 && groups[5] == 0xffff)
         {
             return 7 + inet_ntop4_size(src + 12);
         }
@@ -508,9 +507,8 @@ namespace v5 {
             for (int i = longest_start + longest_run; i < 8; ++i) {
                 size += hex_group_size(groups[i]);
             }
-            size +=
-              (longest_start > 0 ? longest_start - 1 : 0) +
-              (8 - (longest_start + longest_run) > 0 ? 8 - (longest_start + longest_run) - 1 : 0); // Colons
+            size += (longest_start > 0 ? longest_start - 1 : 0) +
+                    (8 - (longest_start + longest_run) > 0 ? 8 - (longest_start + longest_run) - 1 : 0); // Colons
         } else {
             for (int i = 0; i < 8; ++i) {
                 size += hex_group_size(groups[i]);
@@ -544,8 +542,8 @@ namespace v6 {
         }
 
         // Early IPv4-mapped check
-        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 &&
-            groups[5] == 0xffff)
+        if (
+          groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 && groups[5] == 0xffff)
         {
             return 7 + inet_ntop4_size(src + 12);
         }
@@ -616,13 +614,13 @@ namespace v7 {
 
         stl::uint16_t groups[8];
         for (int i = 0; i < 8; ++i) {
-            groups[i] = std::byteswap(
-              static_cast<stl::uint16_t>(src[2 * i] | (static_cast<stl::uint16_t>(src[2 * i + 1]) << 8)));
+            groups[i] =
+              std::byteswap(static_cast<stl::uint16_t>(src[2 * i] | (static_cast<stl::uint16_t>(src[2 * i + 1]) << 8)));
         }
 
         // Early IPv4-mapped check (optimized)
-        if (groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 &&
-            groups[5] == 0xffff)
+        if (
+          groups[0] == 0 && groups[1] == 0 && groups[2] == 0 && groups[3] == 0 && groups[4] == 0 && groups[5] == 0xffff)
         {
             return 7 + inet_ntop4_size(src + 12);
         }
@@ -816,16 +814,16 @@ namespace v10 {
 
         stl::size_t                  total_length = 0;
         stl::array<stl::size_t, 8>   group_lengths; // Store group lengths for compression adjustment
-        stl::array<stl::uint16_t, 8> group_vals; // Store group values for zero run detection (optional - can
-                                                 // be recalculated)
+        stl::array<stl::uint16_t, 8> group_vals;    // Store group values for zero run detection (optional - can
+                                                    // be recalculated)
 
         int longest_run_index = -1;
         int longest_run_count = 0;
         int current_run_count = 0;
 
         for (int i = 0; i < 8; ++i) {
-            stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
-            group_vals[i] = group_val; // Store for later zero-run check (if needed - can optimize out)
+            stl::uint16_t group_val  = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
+            group_vals[i]            = group_val; // Store for later zero-run check (if needed - can optimize out)
             stl::size_t group_length = 4;
 
             if (group_val == 0) {
@@ -897,10 +895,10 @@ namespace v11 {
             return 1; // Still need a branch for zero case
         }
 
-        stl::size_t length = 4;
-        length -= (group_val < 0x1000); // Subtract 1 if less than 0x1000 (boolean true/false becomes 1/0)
-        length -= (group_val < 0x0100); // Subtract 1 if less than 0x0100
-        length -= (group_val < 0x0010); // Subtract 1 if less than 0x0010
+        stl::size_t length  = 4;
+        length             -= (group_val < 0x1000); // Subtract 1 if less than 0x1000 (boolean true/false becomes 1/0)
+        length             -= (group_val < 0x0100); // Subtract 1 if less than 0x0100
+        length             -= (group_val < 0x0010); // Subtract 1 if less than 0x0010
         return length;
     }
 
@@ -1002,9 +1000,9 @@ namespace v12 {
             stl::uint16_t group_val = (static_cast<stl::uint16_t>(src[2 * i]) << 8) | src[2 * i + 1];
             group_vals[i]           = group_val;
 
-            stl::size_t group_length = branchless_group_length_v3(group_val); // Use truly branchless version!
-            group_lengths[i]         = group_length;
-            total_length += group_length;
+            stl::size_t group_length  = branchless_group_length_v3(group_val); // Use truly branchless version!
+            group_lengths[i]          = group_length;
+            total_length             += group_length;
 
             if (group_val == 0) {
                 current_run_count++;
@@ -1070,8 +1068,7 @@ namespace v13 {
         int                        current_run   = 0;
 
         for (int i = 0; i < 8; ++i) {
-            stl::uint16_t const group_val =
-              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::uint16_t const group_val = (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
 
             if (group_val == 0) {
                 len[i] = 1;
@@ -1096,8 +1093,8 @@ namespace v13 {
 
 
         // Check for IPv4-mapped case (::ffff:x.x.x.x)
-        if (longest_index == 0 && longest_count == 5 &&
-            ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
+        if (
+          longest_index == 0 && longest_count == 5 && ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
         {
             return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
         }
@@ -1139,9 +1136,8 @@ namespace v14 {
         // Step 1: Compute length for each group and prefix sum
         // Step 2: Find the longest run of zero groups
         for (int i = 0; i < 8; ++i) {
-            stl::uint16_t const group_val =
-              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
-            stl::size_t len = 1;
+            stl::uint16_t const group_val = (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::size_t         len       = 1;
 
             if (group_val == 0) {
                 current_run++;
@@ -1153,7 +1149,7 @@ namespace v14 {
                 }
             } else {
                 // Calculate leading zero nibbles using bit scan operations
-                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const clz                  = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
                 int const leading_zero_nibbles = clz / 4;
                 len                            = 4 - leading_zero_nibbles;
 
@@ -1164,8 +1160,8 @@ namespace v14 {
 
 
         // Check for IPv4-mapped case (::ffff:x.x.x.x)
-        if (longest_index == 0 && longest_count == 5 &&
-            ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
+        if (
+          longest_index == 0 && longest_count == 5 && ((static_cast<stl::uint16_t>(src[10]) << 8U) | src[11]) == 0xFFFF)
         {
             return 7 + inet_ntop4_size(src + 12); // "::ffff:" + IPv4
         }
@@ -1360,9 +1356,8 @@ namespace badV17 {
             }
 
             // Process individual group
-            stl::uint16_t const group_val =
-              (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
-            stl::size_t len = 1;
+            stl::uint16_t const group_val = (static_cast<stl::uint16_t>(src[2U * i]) << 8U) | src[(2U * i) + 1U];
+            stl::size_t         len       = 1;
 
             if (group_val == 0) {
                 current_run++;
@@ -1440,7 +1435,7 @@ namespace v18 {
                 }
             } else {
                 // Calculate leading zero nibbles using bit scan operations
-                int const clz = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
+                int const clz                  = stl::countl_zero(static_cast<stl::uint32_t>(group_val) << 16U);
                 int const leading_zero_nibbles = clz / 4;
                 len                            = 4 - leading_zero_nibbles;
 
@@ -1461,8 +1456,7 @@ namespace v18 {
             int const groups_before = longest_index;
             int const groups_after  = 8 - (longest_index + longest_count);
             int const sum_before    = prefix_sum[static_cast<stl::size_t>(longest_index)];
-            int const sum_after =
-              prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
+            int const sum_after = prefix_sum[8] - prefix_sum[static_cast<stl::size_t>(longest_index + longest_count)];
             int const colons_before = (groups_before > 0) ? (groups_before - 1) : 0;
             int const colons_after  = (groups_after > 0) ? (groups_after - 1) : 0;
             total_length            = sum_before + sum_after + colons_before + colons_after + 2;

@@ -68,19 +68,19 @@ namespace webpp::http {
         };
 
         static constexpr bool allow_unknown_algos = options.allow_unknown_algorithms;
-        using encoding_type = stl::conditional_t<allow_unknown_algos, str_v, encoding_types>;
+        using encoding_type                       = stl::conditional_t<allow_unknown_algos, str_v, encoding_types>;
 
         struct compression_algo_type {
             encoding_type encoding;
             float         quality = 1.0f; // between 0 and 1
-                                  // up to three decimal digits (but 1 or 2 is the max for some browsers)
-                                  // default: 1
-                                  // https://developer.mozilla.org/en-US/docs/Glossary/Quality_values
+                                          // up to three decimal digits (but 1 or 2 is the max for some browsers)
+                                          // default: 1
+                                          // https://developer.mozilla.org/en-US/docs/Glossary/Quality_values
         };
 
-        using allowed_encodings_type = stl::vector<
-          compression_algo_type,
-          typename stl::allocator_traits<allocator_type>::template rebind_alloc<compression_algo_type>>;
+        using allowed_encodings_type =
+          stl::vector<compression_algo_type,
+                      typename stl::allocator_traits<allocator_type>::template rebind_alloc<compression_algo_type>>;
 
         // ctor
         explicit constexpr basic_accept_encoding(auto&&... args) noexcept
@@ -140,8 +140,7 @@ namespace webpp::http {
                 if (qvalue[0] == '1') {
                     if (str_v("1.000").starts_with(qvalue)) {
                         if constexpr (allow_unknown_algos) {
-                            _allowed_encodings.push_back(
-                              compression_algo_type{.encoding = encoding, .quality = 1.0});
+                            _allowed_encodings.push_back(compression_algo_type{.encoding = encoding, .quality = 1.0});
                         } else {
                             _allowed_encodings.push_back(
                               compression_algo_type{.encoding = to_known_algo(encoding), .quality = 1.0f});
@@ -179,8 +178,7 @@ namespace webpp::http {
                 }
                 if (qval != 0) {
                     if constexpr (allow_unknown_algos) {
-                        _allowed_encodings.push_back(
-                          compression_algo_type{.encoding = encoding, .quality = qval});
+                        _allowed_encodings.push_back(compression_algo_type{.encoding = encoding, .quality = qval});
                     } else {
                         _allowed_encodings.push_back(
                           compression_algo_type{.encoding = to_known_algo(encoding), .quality = qval});
@@ -287,15 +285,10 @@ namespace webpp::http {
             if (!_is_valid) { // it's not allowed if the string is not a valid accept-encoding header value
                 return _allowed_encodings.cend();
             }
-            return stl::find_if(
-              _allowed_encodings.cbegin(),
-              _allowed_encodings.cend(),
-              [&](auto&& item) noexcept {
-                  return (ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(
-                            item.encoding,
-                            str) ||
-                          ...);
-              });
+            return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [&](auto&& item) noexcept {
+                return (
+                  ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding, str) || ...);
+            });
         }
 
         template <encoding_types Type>
@@ -320,11 +313,9 @@ namespace webpp::http {
                     return _allowed_encodings.cend();
                 }
             } else {
-                return stl::find_if(_allowed_encodings.cbegin(),
-                                    _allowed_encodings.cend(),
-                                    [](auto&& item) noexcept {
-                                        return item.encoding == Type;
-                                    });
+                return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [](auto&& item) noexcept {
+                    return item.encoding == Type;
+                });
             }
         }
 

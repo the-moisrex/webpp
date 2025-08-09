@@ -6,8 +6,7 @@
 using namespace webpp::sdk;
 using webpp::stl::shared_ptr;
 
-proj_imprinter::proj_imprinter(std::shared_ptr<progress_bars>   inp_bars,
-                               std::shared_ptr<command_options> inp_opts)
+proj_imprinter::proj_imprinter(std::shared_ptr<progress_bars> inp_bars, std::shared_ptr<command_options> inp_opts)
   : bars{stl::move(inp_bars)},
     options{stl::move(inp_opts)} {}
 

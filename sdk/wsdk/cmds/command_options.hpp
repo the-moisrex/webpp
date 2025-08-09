@@ -49,10 +49,9 @@ namespace webpp::sdk {
     struct command_options {
         using tokenizer_type = string_tokenizer<>;
 
-        explicit command_options(
-          stl::string_view const       command,
-          stl::shared_ptr<output_port> inp_out    = stl::make_shared<stdout_output_port>(),
-          dynamic_logger               inp_logger = {})
+        explicit command_options(stl::string_view const       command,
+                                 stl::shared_ptr<output_port> inp_out    = stl::make_shared<stdout_output_port>(),
+                                 dynamic_logger               inp_logger = {})
           : m_tokenizer{command},
             m_output{stl::move(inp_out)},
             m_logger{stl::move(inp_logger)} {}

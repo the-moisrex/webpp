@@ -81,9 +81,8 @@ namespace webpp {
 
         /// default impl: return the allocator itself
         template <typename T>
-        [[nodiscard]] friend constexpr decltype(auto) tag_invoke(
-          [[maybe_unused]] construct_allocator_from_type tag,
-          T&&                                            alloc) noexcept {
+        [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] construct_allocator_from_type tag,
+                                                                 T&& alloc) noexcept {
             return stl::forward<T>(alloc);
         }
 
@@ -139,8 +138,8 @@ namespace webpp {
     template <typename T, AllocatorDescriptor Desc>
     struct resource_type_of {
         // for a general allocator descriptor, just return the allocator type
-        using type = stl::tag_invoke_result_t<construct_allocator_from_type,
-                                              decltype(Desc::template construct_allocator<T>())>;
+        using type =
+          stl::tag_invoke_result_t<construct_allocator_from_type, decltype(Desc::template construct_allocator<T>())>;
     };
 
     template <typename T, AllocatorDescriptor Desc>

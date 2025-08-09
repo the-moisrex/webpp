@@ -25,9 +25,8 @@ namespace webpp::http {
     class request_headers : public headers_container<FieldsProviderType> {
         using fields_provider_type = headers_container<FieldsProviderType>;
 
-        static_assert(
-          HTTPRequestHeaderFieldsProvider<fields_provider_type>,
-          "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
+        static_assert(HTTPRequestHeaderFieldsProvider<fields_provider_type>,
+                      "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
       public:
         using field_type = typename fields_provider_type::field_type;

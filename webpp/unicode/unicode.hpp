@@ -37,8 +37,7 @@ namespace webpp::unicode {
     static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x1'0000U >> 10U);
 
     template <UTF32 u32 = char32_t>
-    static constexpr u32 surrogate_offset =
-      0x1'0000 - (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
+    static constexpr u32 surrogate_offset = 0x1'0000 - (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
 
     /**
      * This character is used to replace an unknown, unrecognized, or unrepresentable character in a text.
@@ -239,14 +238,13 @@ namespace webpp::unicode {
         // from glib/gutf8.c
         // NOLINTBEGIN(*-avoid-c-arrays)
         static constexpr stl::array<stl::uint8_t, 256> utf8_skip{
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
         // NOLINTEND(*-avoid-c-arrays)
     } // namespace details
 
@@ -608,12 +606,10 @@ namespace webpp::unicode {
         }
 
         template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
-        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from)
-          noexcept(istl::NothrowAppendable<Iter>) {
+        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from) noexcept(istl::NothrowAppendable<Iter>) {
             using char_type     = istl::appendable_value_type_t<Iter>;
             using src_char_type = stl::iter_value_t<stl::remove_cvref_t<Iter2>>;
-            static_assert(sizeof(char_type) == sizeof(src_char_type),
-                          "Character types need to have the same size.");
+            static_assert(sizeof(char_type) == sizeof(src_char_type), "Character types need to have the same size.");
             if constexpr (UTF8<char_type>) {
                 auto const size = static_cast<stl::size_t>(details::utf8_skip[*from]);
                 webpp_assume(size <= 6);
@@ -670,8 +666,7 @@ namespace webpp::unicode {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
                 using unsigned_type = stl::make_unsigned_t<char_type>;
-                auto const len =
-                  static_cast<difference_type>(details::utf8_skip[static_cast<unsigned_type>(*pos)]);
+                auto const len = static_cast<difference_type>(details::utf8_skip[static_cast<unsigned_type>(*pos)]);
                 if (end - pos < len) {
                     ++pos;
                     return false;
@@ -938,8 +933,7 @@ namespace webpp::unicode {
                   stl::integral         SizeT = istl::size_type_of_t<StrT>,
                   stl::forward_iterator Iter  = char32_t const*,
                   stl::forward_iterator EIter = Iter>
-        static constexpr SizeT append(StrT& out, Iter& src, EIter end)
-          noexcept(istl::NothrowAppendable<StrT>) {
+        static constexpr SizeT append(StrT& out, Iter& src, EIter end) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::char_traits_type_of_t<StrT>;
             using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
@@ -966,8 +960,7 @@ namespace webpp::unicode {
     namespace checked {
 
         template <typename Ptr, stl::integral CharT = char32_t>
-        [[nodiscard(
-          "Use unicode::unchecked::append if the input codepoint is always valid.")]] static constexpr bool
+        [[nodiscard("Use unicode::unchecked::append if the input codepoint is always valid.")]] static constexpr bool
         append(Ptr& out, CharT code_point) noexcept {
             if (!is_code_point_valid(code_point)) {
                 return false;
@@ -1013,14 +1006,13 @@ namespace webpp::unicode {
                         if (pos == end) [[unlikely]] {
                             break;
                         }
-                        auto const cu2 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        error       |= (cu1 & 0xFC00) != 0xD800;
-                        error       |= (cu2 & 0xFC00) != 0xDC00;
-                        code_point  &= 0x3FF;
-                        code_point <<= 10U;
-                        code_point  |= cu2 & 0x3FF;
-                        code_point  += 0x1'0000;
+                        auto const cu2   = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        error           |= (cu1 & 0xFC00) != 0xD800;
+                        error           |= (cu2 & 0xFC00) != 0xDC00;
+                        code_point      &= 0x3FF;
+                        code_point     <<= 10U;
+                        code_point      |= cu2 & 0x3FF;
+                        code_point      += 0x1'0000;
                     }
                     if (error || is_surrogate(code_point)) [[unlikely]] {
                         if (requires_2_units) {
@@ -1031,8 +1023,7 @@ namespace webpp::unicode {
                     }
                     return code_point;
                 } else if constexpr (UTF8<char_type>) {
-                    auto const len =
-                      required_length_of<char_type, difference_type>(static_cast<char_type>(cu1));
+                    auto const len = required_length_of<char_type, difference_type>(static_cast<char_type>(cu1));
                     if constexpr (stl::random_access_iterator<Iter>) {
                         if (end - pos < len - 1) [[unlikely]] {
                             break;
@@ -1050,13 +1041,12 @@ namespace webpp::unicode {
                                     break;
                                 }
                             }
-                            auto const cu2 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                            bool error   = (cu1 & 0b1110'0000) != 0b1100'0000;
-                            error       |= (cu2 & 0b1100'0000) != 0b1000'0000;
-                            code_point  &= 0b0001'1111;
-                            code_point <<= 6U;
-                            code_point  |= cu2 & 0b0011'1111;
+                            auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool       error   = (cu1 & 0b1110'0000) != 0b1100'0000;
+                            error             |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            code_point        &= 0b0001'1111;
+                            code_point       <<= 6U;
+                            code_point        |= cu2 & 0b0011'1111;
                             if (error || code_point < 0x80 || 0x7FF < code_point) [[unlikely]] {
                                 --pos;
                                 code_point = cu1;
@@ -1070,22 +1060,20 @@ namespace webpp::unicode {
                                     break;
                                 }
                             }
-                            auto const cu2 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             if constexpr (!stl::random_access_iterator<Iter>) {
                                 if (pos == end) [[unlikely]] {
                                     break;
                                 }
                             }
-                            auto const cu3 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                            bool error   = (cu1 & 0b1111'0000) != 0b1110'0000;
-                            error       |= (cu2 & 0b1100'0000) != 0b1000'0000;
-                            error       |= (cu3 & 0b1100'0000) != 0b1000'0000;
-                            code_point  &= 0b0000'1111;
-                            code_point <<= 12U;
-                            code_point  |= (cu2 & 0b0011'1111) << 6U;
-                            code_point  |= cu3 & 0b0011'1111;
+                            auto const cu3     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool       error   = (cu1 & 0b1111'0000) != 0b1110'0000;
+                            error             |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            error             |= (cu3 & 0b1100'0000) != 0b1000'0000;
+                            code_point        &= 0b0000'1111;
+                            code_point       <<= 12U;
+                            code_point        |= (cu2 & 0b0011'1111) << 6U;
+                            code_point        |= cu3 & 0b0011'1111;
                             if (error || code_point < 0x800 || 0xFFFF < code_point ||
                                 (0xD7FF < code_point && code_point < 0xE000)) [[unlikely]]
                             {
@@ -1101,31 +1089,28 @@ namespace webpp::unicode {
                                     break;
                                 }
                             }
-                            auto const cu2 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             if constexpr (!stl::random_access_iterator<Iter>) {
                                 if (pos == end) [[unlikely]] {
                                     break;
                                 }
                             }
-                            auto const cu3 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            auto const cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                             if constexpr (!stl::random_access_iterator<Iter>) {
                                 if (pos == end) [[unlikely]] {
                                     break;
                                 }
                             }
-                            auto const cu4 =
-                              static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                            bool error   = (cu1 & 0b1111'0000) != 0b1111'0000;
-                            error         |= (cu2 & 0b1100'0000) != 0b1000'0000;
-                            error         |= (cu3 & 0b1100'0000) != 0b1000'0000;
-                            error         |= (cu4 & 0b1100'0000) != 0b1000'0000;
-                            code_point    &= 0b0000'0111;
-                            code_point <<= 18U;
-                            code_point    |= (cu2 & 0b0011'1111) << 12U;
-                            code_point    |= (cu3 & 0b0011'1111) << 6U;
-                            code_point    |= cu4 & 0b0011'1111;
+                            auto const cu4     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                            bool       error   = (cu1 & 0b1111'0000) != 0b1111'0000;
+                            error             |= (cu2 & 0b1100'0000) != 0b1000'0000;
+                            error             |= (cu3 & 0b1100'0000) != 0b1000'0000;
+                            error             |= (cu4 & 0b1100'0000) != 0b1000'0000;
+                            code_point        &= 0b0000'0111;
+                            code_point       <<= 18U;
+                            code_point        |= (cu2 & 0b0011'1111) << 12U;
+                            code_point        |= (cu3 & 0b0011'1111) << 6U;
+                            code_point        |= cu4 & 0b0011'1111;
                             if (error || code_point <= 0xFFFF || 0x10'FFFF < code_point) [[unlikely]] {
                                 stl::advance(pos, -3);
                                 code_point = cu1;
@@ -1163,9 +1148,7 @@ namespace webpp::unicode {
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
                   stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType next_code_point_copy(
-          Iter        pos,
-          Iter const& end) noexcept {
+        [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, Iter const& end) noexcept {
             return next_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
         }
 
@@ -1229,13 +1212,12 @@ namespace webpp::unicode {
                         if (pos == beg) [[unlikely]] {
                             break;
                         }
-                        auto const cu1 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
-                        error      |= (cu1 & 0xFC00) != 0xD800;
+                        auto const cu1  = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                        error          |= (cu1 & 0xFC00) != 0xD800;
                         // error      |= (cu2 & 0xFC00) != 0xDC00;
-                        code_point &= 0x3FF;
-                        code_point |= (cu1 & 0x3FF) << 10U;
-                        code_point += 0x1'0000;
+                        code_point     &= 0x3FF;
+                        code_point     |= (cu1 & 0x3FF) << 10U;
+                        code_point     += 0x1'0000;
                     }
 
                     if (error || is_surrogate(code_point)) [[unlikely]] {
@@ -1269,17 +1251,17 @@ namespace webpp::unicode {
                             if (pos == before_beg) {
                                 break;
                             }
-                            cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
                             if (pos == before_beg) {
                                 break;
                             }
-                            cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu2 & 0b1100'0000) >> 2U;
                             if (pos == before_beg) {
                                 break;
                             }
-                            cu1 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            cu1         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= cu1 & 0b1100'0000;
                             break;
                         }
@@ -1309,12 +1291,12 @@ namespace webpp::unicode {
                             if (pos == before_beg) {
                                 break;
                             }
-                            cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
                             if (pos == before_beg) {
                                 break;
                             }
-                            cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                            cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu2 & 0b1100'0000) >> 2U;
                             break;
                         }
@@ -1348,9 +1330,8 @@ namespace webpp::unicode {
                             code_point &= 0b0011'1111U;
                             code_point |= (cu3 & 0b0011'1111) << 6U;
                             code_point |= (cu2 & 0b0000'1111) << 12U;
-                            if ((cu2 & 0b1111'0000) != 0b1110'0000 || code_point < 0x800 ||
-                                0xFFFF < code_point || (0xD7FF < code_point && code_point < 0xE000))
-                              [[unlikely]]
+                            if ((cu2 & 0b1111'0000) != 0b1110'0000 || code_point < 0x800 || 0xFFFF < code_point ||
+                                (0xD7FF < code_point && code_point < 0xE000)) [[unlikely]]
                             {
                                 stl::advance(pos, 2);
                                 code_point = cu_last;
@@ -1363,8 +1344,8 @@ namespace webpp::unicode {
                             code_point |= (cu3 & 0b0011'1111) << 6U;
                             code_point |= (cu2 & 0b0011'1111) << 12U;
                             code_point |= (cu1 & 0b0000'0111) << 18U;
-                            if ((cu1 & 0b1111'0000) != 0b1111'0000 || code_point <= 0xFFFF ||
-                                0x10'FFFF < code_point) [[unlikely]]
+                            if ((cu1 & 0b1111'0000) != 0b1111'0000 || code_point <= 0xFFFF || 0x10'FFFF < code_point)
+                              [[unlikely]]
                             {
                                 stl::advance(pos, 3);
                                 code_point = cu_last;
@@ -1401,9 +1382,7 @@ namespace webpp::unicode {
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
                   stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(
-          Iter        pos,
-          Iter const& end) noexcept {
+        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos, Iter const& end) noexcept {
             return prev_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
         }
 
@@ -1489,16 +1468,14 @@ namespace webpp::unicode {
         }
 
         template <stl::random_access_iterator OIterT = stl::u8string::iterator, UTF CharT = char32_t>
-        static constexpr void
-        insert_at(OIterT out, OIterT const oend, stl::size_t index, CharT val) noexcept {
+        static constexpr void insert_at(OIterT out, OIterT const oend, stl::size_t index, CharT val) noexcept {
             insert(out, oend, index, val);
         }
 
         /**
          * UTF-32 Bidirectional Iterator
          */
-        template <stl::bidirectional_iterator Iter,
-                  error_handling              ErrorHandling = error_handling::return_unchanged>
+        template <stl::bidirectional_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
         struct utf32_bidi_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = char32_t;
@@ -1739,9 +1716,7 @@ namespace webpp::unicode {
             Iter send{};
 
           public:
-            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept
-              : pos{inp_pos},
-                send{inp_end} {}
+            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept : pos{inp_pos}, send{inp_end} {}
 
             constexpr utf32_forward_iter()                                         = default;
             constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;

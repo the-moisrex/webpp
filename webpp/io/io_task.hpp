@@ -72,8 +72,7 @@ namespace webpp::io {
             io_task<T> get_return_object() noexcept;
 
             void unhandled_exception() noexcept {
-                ::new (static_cast<void*>(std::addressof(excep_ptr)))
-                  std::exception_ptr(std::current_exception());
+                ::new (static_cast<void*>(std::addressof(excep_ptr))) std::exception_ptr(std::current_exception());
                 res_type_val = result_type::exception;
             }
 
@@ -117,8 +116,7 @@ namespace webpp::io {
                                Allocator&                            allocator,
                                [[maybe_unused]] ARGS&... args) {
                 // Round up sz to next multiple of Allocator alignment
-                std::size_t const allocatorOffset =
-                  (inp_size + alignof(Allocator) - 1U) & ~(alignof(Allocator) - 1U);
+                std::size_t const allocatorOffset = (inp_size + alignof(Allocator) - 1U) & ~(alignof(Allocator) - 1U);
 
                 // Call onto allocator to allocate space for coroutine frame.
                 void* ptr = allocator.allocate(allocatorOffset + sizeof(Allocator));
@@ -228,8 +226,7 @@ namespace webpp::io {
         struct awaitable_base {
             stl::coroutine_handle<promise_type> coro_handle;
 
-            explicit awaitable_base(stl::coroutine_handle<promise_type> coroutine) noexcept
-              : coro_handle(coroutine) {}
+            explicit awaitable_base(stl::coroutine_handle<promise_type> coroutine) noexcept : coro_handle(coroutine) {}
 
             [[nodiscard]] bool await_ready() const noexcept {
                 return !coro_handle || coro_handle.done();

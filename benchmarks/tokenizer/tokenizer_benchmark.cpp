@@ -7,9 +7,9 @@
 using namespace std;
 
 
-static constexpr auto VALID_COOKIE_NAME = webpp::charset(
-  webpp::ALPHA_DIGIT<>,
-  webpp::charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
+static constexpr auto VALID_COOKIE_NAME =
+  webpp::charset(webpp::ALPHA_DIGIT<>,
+                 webpp::charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
 
 static constexpr auto VALID_COOKIE_VALUE = webpp::charset(
@@ -23,12 +23,8 @@ namespace v1 {
     using namespace webpp;
 
     template <typename ErrorType>
-    constexpr void parse_SE_pair(
-      istl::StringView auto& str,
-      auto&                  name,
-      auto&                  value,
-      ErrorType&             err,
-      ErrorType              err_value) noexcept {
+    constexpr void
+    parse_SE_pair(istl::StringView auto& str, auto& name, auto& value, ErrorType& err, ErrorType err_value) noexcept {
         using namespace webpp::benchmark::v1;
         string_tokenizer tok{str};
         tok.skip(OWS);
@@ -44,9 +40,7 @@ namespace v1 {
         using name_t           = stl::remove_cvref_t<decltype(_name)>;
         using string_view_type = stl::remove_cvref_t<decltype(str)>;
         ascii::ltrim(str);
-        if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
-            equal_pos != string_view_type::npos)
-        {
+        if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data()); equal_pos != string_view_type::npos) {
             // setting the name we found it
             _name = name_t{str.substr(0, equal_pos)};
 
@@ -59,8 +53,7 @@ namespace v1 {
         }
     }
 
-    constexpr void
-    parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
+    constexpr void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
         using string_view_type = stl::remove_cvref_t<decltype(str)>;
 
         parse_SE_name(str, _name, _valid);
@@ -118,12 +111,8 @@ namespace v2 {
     using namespace webpp;
 
     template <typename ErrorType>
-    constexpr void parse_SE_pair(
-      istl::StringView auto& str,
-      auto&                  name,
-      auto&                  value,
-      ErrorType&             err,
-      ErrorType              err_value) noexcept {
+    constexpr void
+    parse_SE_pair(istl::StringView auto& str, auto& name, auto& value, ErrorType& err, ErrorType err_value) noexcept {
         using namespace webpp::benchmark::v2;
         string_tokenizer tok{str};
         tok.skip(OWS);

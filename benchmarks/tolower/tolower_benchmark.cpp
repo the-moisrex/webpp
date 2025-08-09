@@ -73,8 +73,7 @@ constexpr auto to_lower2(auto&& c) noexcept {
         case 'W':
         case 'X':
         case 'Y':
-        case 'Z':
-            return static_cast<char_type>(static_cast<char_type>(c) - static_cast<char_type>('A' - 'a'));
+        case 'Z': return static_cast<char_type>(static_cast<char_type>(c) - static_cast<char_type>('A' - 'a'));
         default: return static_cast<char_type>(c);
     }
 }
@@ -840,8 +839,7 @@ void to_lower_simd_utopia_optimized(auto& str) noexcept {
     simd_type simd_it;
     for (; it < simd_end; it += simd_size) {
         simd_it.copy_from(it, element_aligned);
-        auto const simd_it_mask =
-          min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
+        auto const simd_it_mask = min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
 
         simd_it += min(simd_it_mask, one) * diff;
         simd_it.copy_to(it, element_aligned);
@@ -888,8 +886,7 @@ void to_lower_simd_utopia3(auto& str) noexcept {
     simd_type simd_it;
     for (; it < simd_end; it += simd_size) {
         simd_it.copy_from(it, element_aligned);
-        auto const simd_it_mask =
-          min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
+        auto const simd_it_mask = min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
 
         simd_it += min(min(simd_it_mask, one_vector) << diff_bit_width, diff_vector);
         simd_it.copy_to(it, element_aligned);

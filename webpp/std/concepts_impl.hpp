@@ -99,9 +99,8 @@ namespace webpp::stl {
     //    .... If A and B are both rvalue reference types, C is well-formed, and
     //    is_convertible_v<A, C> && is_convertible_v<B, C> is true, then COMMON-REF(A, B) is C.
     template <class Ap, class Bp, class Xp, class Yp>
-        requires requires {
-            typename __common_ref_C<Xp, Yp>;
-        } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> && is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
+        requires requires { typename __common_ref_C<Xp, Yp>; } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> &&
+                 is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
     struct __common_ref<Ap&&, Bp&&, Xp, Yp> {
         using __type = __common_ref_C<Xp, Yp>;
     };
@@ -114,8 +113,7 @@ namespace webpp::stl {
     //    ... If A is an rvalue reference and B is an lvalue reference and D is well-formed and
     //    is_convertible_v<A, D> is true, then COMMON-REF(A, B) is D.
     template <class Ap, class Bp, class Xp, class Yp>
-        requires requires { typename __common_ref_D<Xp, Yp>; } &&
-                 is_convertible_v<Ap&&, __common_ref_D<Xp, Yp>>
+        requires requires { typename __common_ref_D<Xp, Yp>; } && is_convertible_v<Ap&&, __common_ref_D<Xp, Yp>>
     struct __common_ref<Ap&&, Bp&, Xp, Yp> {
         using __type = __common_ref_D<Xp, Yp>;
     };
@@ -209,8 +207,7 @@ namespace webpp::stl {
     //            any, as `common_reference_t<C, Rest...>`.
     template <class Tp, class Up, class _Vp, class... _Rest>
         requires requires { typename common_reference_t<Tp, Up>; }
-    struct common_reference<Tp, Up, _Vp, _Rest...>
-      : common_reference<common_reference_t<Tp, Up>, _Vp, _Rest...> {};
+    struct common_reference<Tp, Up, _Vp, _Rest...> : common_reference<common_reference_t<Tp, Up>, _Vp, _Rest...> {};
 
     // bullet 5 - Otherwise, there shall be no member `type`.
     template <class...>
@@ -254,9 +251,8 @@ namespace webpp::stl {
 
     template <class T>
     concept copy_constructible =
-      move_constructible<T> && constructible_from<T, T&> && convertible_to<T&, T> &&
-      constructible_from<T, T const&> && convertible_to<T const&, T> && constructible_from<T, T const> &&
-      convertible_to<T const, T>;
+      move_constructible<T> && constructible_from<T, T&> && convertible_to<T&, T> && constructible_from<T, T const&> &&
+      convertible_to<T const&, T> && constructible_from<T, T const> && convertible_to<T const, T>;
 
     template <class T>
     concept default_initializable =
@@ -266,8 +262,8 @@ namespace webpp::stl {
     template <class T, class U>
 
     concept common_reference_with =
-      same_as<common_reference_t<T, U>, common_reference_t<U, T>> &&
-      convertible_to<T, common_reference_t<T, U>> && convertible_to<U, common_reference_t<T, U>>;
+      same_as<common_reference_t<T, U>, common_reference_t<U, T>> && convertible_to<T, common_reference_t<T, U>> &&
+      convertible_to<U, common_reference_t<T, U>>;
 
     namespace details {
         template <class B>

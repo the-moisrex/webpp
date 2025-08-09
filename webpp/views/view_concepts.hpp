@@ -60,9 +60,7 @@ namespace webpp::views {
 
 
         // render with the data passed to it
-        requires requires(typename T::string_type&     out,
-                          typename T::string_view_type sv,
-                          typename T::data_type        dt) {
+        requires requires(typename T::string_type& out, typename T::string_view_type sv, typename T::data_type dt) {
             view.scheme(sv); // reparse, and change the scheme
             view.render(out, dt);
             {

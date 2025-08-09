@@ -29,8 +29,7 @@ namespace webpp::http {
 
             template <Context CtxT>
                 requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-            explicit constexpr common_context_methods(CtxT const& ctx) noexcept
-              : common_context_methods{ctx.request} {}
+            explicit constexpr common_context_methods(CtxT const& ctx) noexcept : common_context_methods{ctx.request} {}
 
             constexpr common_context_methods(common_context_methods&& ctx) noexcept        = default;
             constexpr common_context_methods(common_context_methods const& ctx) noexcept   = default;
@@ -87,8 +86,7 @@ namespace webpp::http {
              *
              * @return An HTTP response with the error message.
              */
-            [[nodiscard]] constexpr HTTPResponse auto error(
-              http::status_code_type error_code) const noexcept {
+            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
                 using str_t = traits::string<traits_type>;
                 str_t msg{get_alloc_for<str_t>(*this)};
                 fmt::format_to(stl::back_inserter(msg),

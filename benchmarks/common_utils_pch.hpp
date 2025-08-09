@@ -33,9 +33,7 @@ static std::u8string str8_generator(std::size_t size = 10'000) {
         char32_t const code_point = distribution(generator);
 
         // Skip invalid or non-characters
-        if (
-          (code_point >= 0xD800 && code_point <= 0xDFFF) || (code_point == 0xFFFE) || (code_point == 0xFFFF))
-        {
+        if ((code_point >= 0xD800 && code_point <= 0xDFFF) || (code_point == 0xFFFE) || (code_point == 0xFFFF)) {
             --i; // Decrement i to try again
             continue;
         }
@@ -74,9 +72,7 @@ static std::u32string str32_generator(std::size_t size = 10'000) {
         char32_t const code_point = distribution(generator);
 
         // Skip invalid or non-characters
-        if (
-          (code_point >= 0xD800 && code_point <= 0xDFFF) || (code_point == 0xFFFE) || (code_point == 0xFFFF))
-        {
+        if ((code_point >= 0xD800 && code_point <= 0xDFFF) || (code_point == 0xFFFE) || (code_point == 0xFFFF)) {
             --i; // Decrement i to try again
             continue;
         }

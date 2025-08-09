@@ -81,14 +81,12 @@ namespace webpp::http {
     }
 
     // trim from start (copying)
-    [[nodiscard]] static inline auto ltrim_copy_lws(istl::Stringifiable auto&& s,
-                                                    auto const&                allocator) noexcept {
+    [[nodiscard]] static inline auto ltrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
         return ascii::ltrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
     }
 
     // trim from end (copying)
-    [[nodiscard]] static inline auto rtrim_copy_lws(istl::Stringifiable auto&& s,
-                                                    auto const&                allocator) noexcept {
+    [[nodiscard]] static inline auto rtrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
         return ascii::rtrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
     }
 

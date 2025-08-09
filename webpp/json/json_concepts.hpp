@@ -31,13 +31,9 @@ namespace webpp::json {
     template <typename T>
     concept JSONCommon = requires(T val) {
 
-#define AS_METHOD(name, type)   \
-    {                           \
-        val.template is<type>() \
-    } -> stl::same_as<bool>;    \
-    {                           \
-        val.is_##name()         \
-    } -> stl::same_as<bool>;
+#define AS_METHOD(name, type)                      \
+    {val.template is<type>()}->stl::same_as<bool>; \
+    {val.is_##name()}->stl::same_as<bool>;
         AS_METHOD(bool, bool)
         // AS_METHOD(char, char)
         // todo: add char8_t
@@ -196,13 +192,9 @@ namespace webpp::json {
         } -> istl::String;
 
         // todo: add default value as<...> functions
-#define AS_METHOD(name, type)   \
-    {                           \
-        val.template as<type>() \
-    } -> stl::same_as<type>;    \
-    {                           \
-        val.as_##name()         \
-    } -> stl::same_as<type>;
+#define AS_METHOD(name, type)                      \
+    {val.template as<type>()}->stl::same_as<type>; \
+    {val.as_##name()}->stl::same_as<type>;
 
         AS_METHOD(bool, bool)
         // AS_METHOD(char, char)
@@ -223,8 +215,7 @@ namespace webpp::json {
     };
 
     template <typename T>
-    concept PotentialJSONValue =
-      JSONValue<T> || JSONString<T> || JSONNumber<T> || JSONArray<T> || JSONObject<T>;
+    concept PotentialJSONValue = JSONValue<T> || JSONString<T> || JSONNumber<T> || JSONArray<T> || JSONObject<T>;
 
     /**
      * JSON Document will contain a JSON Document

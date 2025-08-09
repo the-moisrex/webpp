@@ -69,13 +69,11 @@ namespace webpp::io {
 
     template <typename Allocator = stl::allocator<buffer<>>>
     struct buffer_manager {
-        using buffer_allocator_type =
-          typename stl::allocator_traits<Allocator>::template rebind_alloc<stl::byte>;
-        using buffer_type    = buffer<buffer_allocator_type>;
-        using allocator_type = stl::allocator_traits<Allocator>::template rebind_alloc<buffer_type>;
+        using buffer_allocator_type = typename stl::allocator_traits<Allocator>::template rebind_alloc<stl::byte>;
+        using buffer_type           = buffer<buffer_allocator_type>;
+        using allocator_type        = stl::allocator_traits<Allocator>::template rebind_alloc<buffer_type>;
 
-        explicit constexpr buffer_manager(allocator_type const& inp_alloc = {}) noexcept
-          : buffers{inp_alloc} {}
+        explicit constexpr buffer_manager(allocator_type const& inp_alloc = {}) noexcept : buffers{inp_alloc} {}
 
         buffer_type& new_buffer(stl::size_t len) {
             return buffers.emplace_back(len, buffers.get_allocator());

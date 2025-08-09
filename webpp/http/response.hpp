@@ -39,8 +39,8 @@ namespace webpp::http {
         // NOLINTBEGIN(*-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_response>) // It's not a copy/move
-        explicit constexpr common_http_response(ET&& etraits) noexcept(
-          stl::is_nothrow_constructible_v<headers_type, ET> && stl::is_nothrow_constructible_v<body_type, ET>)
+        explicit constexpr common_http_response(ET&& etraits)
+          noexcept(stl::is_nothrow_constructible_v<headers_type, ET> && stl::is_nothrow_constructible_v<body_type, ET>)
           : headers{etraits},
             body{etraits} {}
 
@@ -231,9 +231,8 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType>
-    using simple_response =
-      common_http_response<response_headers<header_fields_provider<header_field_of<TraitsType>>>,
-                           response_body<TraitsType>>;
+    using simple_response = common_http_response<response_headers<header_fields_provider<header_field_of<TraitsType>>>,
+                                                 response_body<TraitsType>>;
 
     template <Traits TraitsType = default_dynamic_traits>
     struct basic_response : public simple_response<TraitsType> {
@@ -256,8 +255,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!HTTPResponse<ET> && !istl::cvref_as<basic_response, ET>)
-        explicit constexpr basic_response(ET&& etraits)
-          : common_http_response_type{stl::forward<ET>(etraits)} {}
+        explicit constexpr basic_response(ET&& etraits) : common_http_response_type{stl::forward<ET>(etraits)} {}
 
         template <HTTPResponse ResT>
             requires(!istl::cvref_as<basic_response, ResT>)

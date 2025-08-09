@@ -210,8 +210,8 @@ namespace webpp::json::rapidjson {
         struct generic_member_iterator
           : stl::remove_pointer_t<RapidJSONIterator>,
             allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<
-              decltype(stl::declval<typename stl::remove_cvref_t<
-                         typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
+              decltype(stl::declval<
+                         typename stl::remove_cvref_t<typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
                          .name)>::AllocatorType>> {
             using traits_type                 = TraitsType;
             using base_type                   = stl::remove_pointer_t<RapidJSONIterator>;
@@ -228,12 +228,11 @@ namespace webpp::json::rapidjson {
               stl::conditional_t<stl::is_const_v<rapidjson_value_type>,
                                  stl::add_cv_t<rapidjson_member_value_type>,
                                  stl::add_lvalue_reference_t<rapidjson_member_value_type>>;
-            using allocator_holder_type =
-              allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<
-                decltype(stl::declval<typename stl::remove_cvref_t<
-                           typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
-                           .name)>::AllocatorType>>;
-            using allocator_type = typename allocator_holder_type::allocator_type;
+            using allocator_holder_type = allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<
+              decltype(stl::declval<
+                         typename stl::remove_cvref_t<typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
+                         .name)>::AllocatorType>>;
+            using allocator_type        = typename allocator_holder_type::allocator_type;
 
             using item_type = generic_value<traits_type, rapidjson_member_value_type_auto>;
 
@@ -396,13 +395,12 @@ namespace webpp::json::rapidjson {
           public:
             // finding the rapidjson's ValueType even if the ValueType is a ::rapidjson::Document type or a
             // ::rapidjson::GenericObject
-            static constexpr bool has_ref =
-              !stl::same_as<ValueContainer, stl::remove_cvref_t<ValueContainer>>;
-            using container_type = ValueContainer;
-            using value_type     = istl::lazy_conditional_t<
-                  (requires { typename stl::remove_cvref_t<ValueContainer>::ValueType; }),
-                  istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueContainer>>,
-                  istl::lazy_type<stl::remove_cvref_t<ValueContainer>>>;
+            static constexpr bool has_ref = !stl::same_as<ValueContainer, stl::remove_cvref_t<ValueContainer>>;
+            using container_type          = ValueContainer;
+            using value_type              = istl::lazy_conditional_t<
+                           (requires { typename stl::remove_cvref_t<ValueContainer>::ValueType; }),
+                           istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueContainer>>,
+                           istl::lazy_type<stl::remove_cvref_t<ValueContainer>>>;
 
             static_assert(
               requires { typename value_type::Object; },
@@ -459,20 +457,18 @@ namespace webpp::json::rapidjson {
                         auto obj = this->as_object();
                         ((obj[field.key] = field.value()), ...);
                     });
-                } else if constexpr (JSONArray<T> || stl::is_array_v<T> ||
-                                     istl::is_specialization_of_array_v<T> || istl::Collection<T>)
+                } else if constexpr (
+                  JSONArray<T> || stl::is_array_v<T> || istl::is_specialization_of_array_v<T> || istl::Collection<T>)
                 {
                     rapidjson_value_type data{::rapidjson::kArrayType};
                     for (auto&& item : val) {
                         using item_type = stl::remove_cvref_t<decltype(item)>;
                         if constexpr (requires { rapidjson_value_type{item}; }) {
-                            data.PushBack(rapidjson_value_type{item}.Move(),
-                                          this->get_allocator().native_alloc());
+                            data.PushBack(rapidjson_value_type{item}.Move(), this->get_allocator().native_alloc());
                         } else if constexpr (istl::StringViewifiable<item_type>) {
                             auto const item_view = istl::string_viewify(stl::move(item));
                             auto const item_ref  = ::rapidjson::StringRef(item_view.data(), item_view.size());
-                            data.PushBack(rapidjson_value_type{item_ref}.Move(),
-                                          this->get_allocator().native_alloc());
+                            data.PushBack(rapidjson_value_type{item_ref}.Move(), this->get_allocator().native_alloc());
                         }
                     }
                     val_handle = data.Move();
@@ -630,8 +626,7 @@ namespace webpp::json::rapidjson {
 
             explicit(false) constexpr generic_array(rapidjson_value_type& arr) : arr_handle{arr.GetArray()} {}
 
-            explicit(false) constexpr generic_array(rapidjson_value_type const& arr)
-              : arr_handle{arr.GetArray()} {}
+            explicit(false) constexpr generic_array(rapidjson_value_type const& arr) : arr_handle{arr.GetArray()} {}
 
             [[nodiscard]] constexpr stl::size_t size() const {
                 return arr_handle.Size();
@@ -721,15 +716,14 @@ namespace webpp::json::rapidjson {
             using rapidjson_object_type      = ObjectType;
             using rapidjson_plain_value_type = typename rapidjson_object_type::PlainType;
             using traits_type                = TraitsType;
-            using value_type =
-              generic_value<traits_type, stl::add_lvalue_reference_t<rapidjson_plain_value_type>>;
+            using value_type = generic_value<traits_type, stl::add_lvalue_reference_t<rapidjson_plain_value_type>>;
             using string_view_type                = traits::string_view<traits_type>;
             using rapidjson_member_iterator       = typename rapidjson_object_type::MemberIterator;
             using rapidjson_const_member_iterator = typename rapidjson_object_type::ConstMemberIterator;
-            using iterator_type       = generic_member_iterator<traits_type, rapidjson_member_iterator>;
+            using iterator_type                   = generic_member_iterator<traits_type, rapidjson_member_iterator>;
             using const_iterator_type = generic_member_iterator<traits_type, rapidjson_const_member_iterator>;
-            using allocator_holder_type = allocator_holder<
-              rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>>;
+            using allocator_holder_type =
+              allocator_holder<rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>>;
             using allocator_type = typename allocator_holder_type::allocator_type;
 
             // todo: add more optimization for reference and const reference and move
@@ -746,9 +740,8 @@ namespace webpp::json::rapidjson {
                     return value_type{obj_handle[key_value], this->get_allocator()};
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
-                    auto const key_view =
-                      istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
-                    auto const key_ref = ::rapidjson::StringRef(key_view.data(), key_view.size());
+                    auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
+                    auto const key_ref  = ::rapidjson::StringRef(key_view.data(), key_view.size());
                     if (!contains(key_ref)) {
                         obj_handle.AddMember(rapidjson_plain_value_type{key_ref},
                                              rapidjson_plain_value_type{},
@@ -968,10 +961,10 @@ namespace webpp::json::rapidjson {
         using rapidjson_document_type  = ::rapidjson::Document;
         using rapidjson_value_type     = typename rapidjson_document_type::ValueType;
         using rapidjson_allocator_type = typename rapidjson_document_type::AllocatorType;
-        using object_type = details::generic_object<traits_type, typename rapidjson_value_type::Object>;
-        using array_type  = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
-        using generic_value_type = details::generic_value<traits_type, rapidjson_document_type>;
-        using allocator_type     = typename rapidjson_document_type::AllocatorType;
+        using object_type              = details::generic_object<traits_type, typename rapidjson_value_type::Object>;
+        using array_type               = details::generic_array<traits_type, typename rapidjson_value_type::Array>;
+        using generic_value_type       = details::generic_value<traits_type, rapidjson_document_type>;
+        using allocator_type           = typename rapidjson_document_type::AllocatorType;
 
         using generic_value_type::operator=;
 

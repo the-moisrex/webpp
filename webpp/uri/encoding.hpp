@@ -17,12 +17,10 @@ namespace webpp::uri {
     };
 
     template <istl::String OutT>
-    static constexpr void encode_uri_component_set_capacity(typename OutT::size_type const input_size,
-                                                            OutT&                          output) {
+    static constexpr void encode_uri_component_set_capacity(typename OutT::size_type const input_size, OutT& output) {
         // 1.5 is a somewhat educated guess, if you have better guess, let us know.
         // todo: see if this is necessary/performant
-        auto const new_capacity =
-          output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5);
+        auto const new_capacity = output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5);
         if (output.capacity() < new_capacity) {
             output.reserve(new_capacity);
         }
@@ -33,8 +31,7 @@ namespace webpp::uri {
         encode_uri_component_set_capacity(end - pos, output);
     }
 
-    static constexpr void encode_uri_component_set_capacity(istl::StringView auto str,
-                                                            istl::String auto&    output) {
+    static constexpr void encode_uri_component_set_capacity(istl::StringView auto str, istl::String auto& output) {
         encode_uri_component_set_capacity(str.size(), output);
     }
 
@@ -149,8 +146,7 @@ namespace webpp::uri {
 
     /// encode one character and add it to the output
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT>
-    static constexpr void
-    encode_uri_component(CharT inp_char, istl::String auto& output, CharSet auto const& chars) {
+    static constexpr void encode_uri_component(CharT inp_char, istl::String auto& output, CharSet auto const& chars) {
         using char_type   = CharT;
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
@@ -170,9 +166,7 @@ namespace webpp::uri {
         output += ascii::to_percent_hex<char_type>(inp_char);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              istl::CharType      CharT,
-              istl::String        OutStrT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT, istl::String OutStrT>
     static constexpr bool encode_uri_component(
       CharT               inp_char,
       OutStrT&            output,

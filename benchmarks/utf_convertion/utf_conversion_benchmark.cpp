@@ -181,13 +181,12 @@ namespace v2 {
                         }
                         return cu1;
                     case 2: {
-                        auto const cu2 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        bool error   = (cu1 & 0b1110'0000U) != 0b1100'0000U;
-                        error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                        code_point  &= 0b0001'1111U;
-                        code_point <<= 6U;
-                        code_point  |= cu2 & 0b0011'1111U;
+                        auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        bool       error   = (cu1 & 0b1110'0000U) != 0b1100'0000U;
+                        error             |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                        code_point        &= 0b0001'1111U;
+                        code_point       <<= 6U;
+                        code_point        |= cu2 & 0b0011'1111U;
                         if (error || code_point < 0x80 || 0x7ff < code_point) [[unlikely]] {
                             --pos;
                             code_point = cu1;
@@ -196,17 +195,15 @@ namespace v2 {
                         return code_point;
                     }
                     case 3: {
-                        auto const cu2 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        auto const cu3 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        bool error   = (cu1 & 0b1111'0000U) != 0b1110'0000U;
-                        error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                        error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
-                        code_point  &= 0b0000'1111U;
-                        code_point <<= 12U;
-                        code_point  |= (cu2 & 0b0011'1111U) << 6U;
-                        code_point  |= cu3 & 0b0011'1111U;
+                        auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        auto const cu3     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        bool       error   = (cu1 & 0b1111'0000U) != 0b1110'0000U;
+                        error             |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                        error             |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
+                        code_point        &= 0b0000'1111U;
+                        code_point       <<= 12U;
+                        code_point        |= (cu2 & 0b0011'1111U) << 6U;
+                        code_point        |= cu3 & 0b0011'1111U;
                         if (error || code_point < 0x800U || 0xFFFFU < code_point ||
                             (0xD7FFU < code_point && code_point < 0xE000U)) [[unlikely]]
                         {
@@ -217,21 +214,18 @@ namespace v2 {
                         return code_point;
                     }
                     case 4: {
-                        auto const cu2 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        auto const cu3 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        auto const cu4 =
-                          static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        bool error   = (cu1 & 0b1111'0000) != 0b1111'0000;
-                        error       |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
-                        error       |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
-                        error       |= (cu4 & 0b1100'0000U) != 0b1000'0000U;
-                        code_point  &= 0b0000'0111U;
-                        code_point <<= 18U;
-                        code_point  |= (cu2 & 0b0011'1111U) << 12U;
-                        code_point  |= (cu3 & 0b0011'1111U) << 6U;
-                        code_point  |= cu4 & 0b0011'1111U;
+                        auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        auto const cu3     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        auto const cu4     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        bool       error   = (cu1 & 0b1111'0000) != 0b1111'0000;
+                        error             |= (cu2 & 0b1100'0000U) != 0b1000'0000U;
+                        error             |= (cu3 & 0b1100'0000U) != 0b1000'0000U;
+                        error             |= (cu4 & 0b1100'0000U) != 0b1000'0000U;
+                        code_point        &= 0b0000'0111U;
+                        code_point       <<= 18U;
+                        code_point        |= (cu2 & 0b0011'1111U) << 12U;
+                        code_point        |= (cu3 & 0b0011'1111U) << 6U;
+                        code_point        |= cu4 & 0b0011'1111U;
                         if (error || code_point <= 0xFFFFU || 0x10'FFFFU < code_point) [[unlikely]] {
                             stl::advance(pos, -3);
                             code_point = cu1;
@@ -350,8 +344,8 @@ namespace other_impl {
                     return 0;
                 }
                 // range check
-                uint32_t cp = (cu1 & 0b0000'1111) << 12 | (ptr[pos + 1] & 0b0011'1111) << 6 |
-                              (ptr[pos + 2] & 0b0011'1111);
+                uint32_t cp =
+                  (cu1 & 0b0000'1111) << 12 | (ptr[pos + 1] & 0b0011'1111) << 6 | (ptr[pos + 2] & 0b0011'1111);
                 if (cp < 0x800 || 0xffff < cp || (0xd7ff < cp && cp < 0xe000)) {
                     return 0;
                 }

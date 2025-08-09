@@ -118,9 +118,7 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_parsing_options Options = standard_uri_parsing_options,
-              typename Iter,
-              ParsingURIContext CtxT>
+    template <uri_parsing_options Options = standard_uri_parsing_options, typename Iter, ParsingURIContext CtxT>
     static constexpr bool parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
@@ -229,9 +227,7 @@ namespace webpp::uri::details {
         }
 
         // the last octet can fill multiple octets
-        if constexpr (
-          Options.allow_multiple_trailing_empty_ipv4_octets || Options.allow_trailing_empty_ipv4_octet)
-        {
+        if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets || Options.allow_trailing_empty_ipv4_octet) {
             for (; octets != 5; ++octets) {
                 *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
                 octet  &= ~(0xFFULL << static_cast<stl::uint64_t>((4 - octets) * 8));
@@ -278,9 +274,7 @@ namespace webpp::uri::details {
                     if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
                         istl::deptr(ctx.out).set_hostname(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
-                    } else if constexpr (
-                      requires { get_component<components::host>(ctx).assign(ipv6_bytes); })
-                    {
+                    } else if constexpr (requires { get_component<components::host>(ctx).assign(ipv6_bytes); }) {
                         get_component<components::host>(ctx).assign(ipv6_bytes);
                         set_flag(ctx.status, has_non_empty_host);
                     } else {
@@ -314,8 +308,7 @@ namespace webpp::uri::details {
                 set_error(ctx.status, ipv6_unclosed);
                 return false;
             default:
-                set_error(ctx.status,
-                          static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
+                set_error(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
                 return false;
         }
         return true;

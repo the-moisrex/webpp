@@ -51,9 +51,7 @@ command_status command_manager::run_command(string_view cmd_str) {
         }
         this->logger.error(
           log_cat,
-          format("The string '{}' in the specified command '{}' is not a valid root command.",
-                 root_cmd_str,
-                 cmd_str));
+          format("The string '{}' in the specified command '{}' is not a valid root command.", root_cmd_str, cmd_str));
         return invalid_command;
     }
 

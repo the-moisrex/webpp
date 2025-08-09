@@ -14,8 +14,7 @@ namespace using_memmove {
      *
      * @returns status of the parsing
      **/
-    static constexpr inet_pton6_status
-    inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
+    static constexpr inet_pton6_status inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
         using enum inet_pton6_status;
 
         stl::uint8_t* colonp = nullptr;
@@ -148,11 +147,8 @@ namespace using_memmove {
         return inet_pton6(src, src_endp, out);
     }
 
-    static constexpr inet_pton6_status inet_pton6(
-      char const* const& inp_src,
-      char const*        src_endp,
-      stl::uint8_t*      out,
-      stl::uint8_t&      prefix) noexcept {
+    static constexpr inet_pton6_status
+    inet_pton6(char const* const& inp_src, char const* src_endp, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         char const* src = inp_src;
         return inet_pton6(src, src_endp, out, prefix);
     }
@@ -171,8 +167,7 @@ namespace manual_algorithm {
      *
      * @returns status of the parsing
      **/
-    static constexpr inet_pton6_status
-    inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
+    static constexpr inet_pton6_status inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
         using enum inet_pton6_status;
 
         stl::uint8_t* colonp = nullptr;
@@ -315,11 +310,8 @@ namespace manual_algorithm {
         return inet_pton6(src, src_endp, out);
     }
 
-    static constexpr inet_pton6_status inet_pton6(
-      char const* const& inp_src,
-      char const*        src_endp,
-      stl::uint8_t*      out,
-      stl::uint8_t&      prefix) noexcept {
+    static constexpr inet_pton6_status
+    inet_pton6(char const* const& inp_src, char const* src_endp, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         char const* src = inp_src;
         return inet_pton6(src, src_endp, out, prefix);
     }

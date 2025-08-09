@@ -101,13 +101,12 @@ namespace ada_v1 {
             memcpy(&word, view.data() + i, sizeof(word));
             // performance: on little-endian systems (most systems), this next line is
             // free.
-            word          = swap_bytes_if_big_endian(word);
-            uint64_t xor1 = word ^ mask1;
-            uint64_t xor2 = word ^ mask2;
-            uint64_t xor4 = word ^ mask4;
-            uint64_t xor5 = word ^ mask5;
-            uint64_t is_match =
-              has_zero_byte(xor1) | has_zero_byte(xor2) | has_zero_byte(xor4) | has_zero_byte(xor5);
+            word              = swap_bytes_if_big_endian(word);
+            uint64_t xor1     = word ^ mask1;
+            uint64_t xor2     = word ^ mask2;
+            uint64_t xor4     = word ^ mask4;
+            uint64_t xor5     = word ^ mask5;
+            uint64_t is_match = has_zero_byte(xor1) | has_zero_byte(xor2) | has_zero_byte(xor4) | has_zero_byte(xor5);
             if (is_match) {
                 return size_t(i + index_of_first_set_byte(is_match));
             }
@@ -119,13 +118,12 @@ namespace ada_v1 {
             memcpy(&word, view.data() + i, view.size() - i);
             // performance: on little-endian systems (most systems), this next line is
             // free.
-            word          = swap_bytes_if_big_endian(word);
-            uint64_t xor1 = word ^ mask1;
-            uint64_t xor2 = word ^ mask2;
-            uint64_t xor4 = word ^ mask4;
-            uint64_t xor5 = word ^ mask5;
-            uint64_t is_match =
-              has_zero_byte(xor1) | has_zero_byte(xor2) | has_zero_byte(xor4) | has_zero_byte(xor5);
+            word              = swap_bytes_if_big_endian(word);
+            uint64_t xor1     = word ^ mask1;
+            uint64_t xor2     = word ^ mask2;
+            uint64_t xor4     = word ^ mask4;
+            uint64_t xor5     = word ^ mask5;
+            uint64_t is_match = has_zero_byte(xor1) | has_zero_byte(xor2) | has_zero_byte(xor4) | has_zero_byte(xor5);
             if (is_match) {
                 return size_t(i + index_of_first_set_byte(is_match));
             }

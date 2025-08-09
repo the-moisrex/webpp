@@ -494,9 +494,7 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
-            if constexpr (
-              stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
-            {
+            if constexpr (stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max())) {
                 if (character < 0 || static_cast<stl::uint16_t>(character) > N) {
                     return false;
                 }
@@ -595,8 +593,7 @@ namespace webpp {
     charmap(CharT const (&... str)[N]) -> charmap<stl::max({N...}) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...)
-      -> charmap<stl::max({N1, N2, N...})>;
+    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
 
 
     // Half Table (excluding negative chars)
@@ -625,8 +622,7 @@ namespace webpp {
 
         template <stl::size_t N1, stl::size_t... NN>
             requires((N1 <= N) && ((NN <= N) && ...)) // todo
-        explicit consteval bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept
-          : bitset_type{set1} {
+        explicit consteval bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept : bitset_type{set1} {
             ((*this |= sets), ...);
         }
 
@@ -636,8 +632,7 @@ namespace webpp {
         }
 
         template <istl::CharType... CharT>
-        explicit consteval bitmap(bitmap<N> const& inp_bitmap, CharT... chars) noexcept
-          : bitset_type{inp_bitmap} {
+        explicit consteval bitmap(bitmap<N> const& inp_bitmap, CharT... chars) noexcept : bitset_type{inp_bitmap} {
             (this->set(static_cast<stl::size_t>(chars)), ...);
         }
 
@@ -674,9 +669,7 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
-            if constexpr (
-              stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
-            {
+            if constexpr (stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max())) {
                 if (character < 0 || static_cast<stl::size_t>(character) > N) {
                     return false;
                 }
@@ -793,8 +786,8 @@ namespace webpp {
     template <typename T, stl::size_t N, typename... CharSetsT>
     [[nodiscard]] static consteval auto categorize(cat<CharSetsT, T> const&... sets) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
-        using flag_type = typename stl::
-          conditional_t<stl::is_enum_v<T>, stl::underlying_type<T>, stl::type_identity<T>>::type;
+        using flag_type =
+          typename stl::conditional_t<stl::is_enum_v<T>, stl::underlying_type<T>, stl::type_identity<T>>::type;
         stl::array<flag_type, N> data{};
         auto const               value_of = [](auto value) {
             if constexpr (stl::is_enum_v<T>) {
@@ -863,8 +856,7 @@ namespace webpp {
     }
 
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr T
-    or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
+    [[nodiscard]] static constexpr T or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         T res{};
         for (;; ++pos) {
@@ -891,9 +883,8 @@ namespace webpp {
 
     template <istl::CharType CharT, stl::size_t N>
     [[nodiscard]] static consteval auto inverse(charset<CharT, N> const& set) noexcept {
-        static_assert(
-          sizeof(CharT) <= sizeof(stl::uint8_t),
-          "Too big of a size, you're probably didn't want this; try specifying the length manually.");
+        static_assert(sizeof(CharT) <= sizeof(stl::uint8_t),
+                      "Too big of a size, you're probably didn't want this; try specifying the length manually.");
         return inverse<stl::numeric_limits<CharT>::max()>(set);
     }
 

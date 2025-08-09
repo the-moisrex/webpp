@@ -31,11 +31,10 @@ struct S : std::vector<std::string> { // I know, I know
             return stl::find(this->begin(), this->end(), name...) != this->end();
         } else if constexpr (sizeof...(NameType) > 1) {
             stl::tuple tup{(static_cast<void>(name), false)...}; // fill with "false" values
-            auto const names = stl::forward_as_tuple<NameType...>(name...);
-            auto const filler =
-              [&]<stl::size_t... I>(auto const& field, stl::index_sequence<I...>) constexpr noexcept {
-                  ((field == stl::get<I>(names) && (stl::get<I>(tup) == true)), ...);
-              };
+            auto const names  = stl::forward_as_tuple<NameType...>(name...);
+            auto const filler = [&]<stl::size_t... I>(auto const& field, stl::index_sequence<I...>) constexpr noexcept {
+                ((field == stl::get<I>(names) && (stl::get<I>(tup) == true)), ...);
+            };
             for (auto const& field : *this) {
                 filler(field, stl::make_index_sequence<sizeof...(NameType)>{});
             }

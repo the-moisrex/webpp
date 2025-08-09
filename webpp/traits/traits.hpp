@@ -116,8 +116,8 @@ namespace webpp {
         using string_allocator = allocator_type_of<TT, char_type<TT>>;
 
         template <Traits TT, Allocator AllocType = string_allocator<TT>>
-        using string = typename TT::template string<
-          typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type<TT>>>;
+        using string =
+          typename TT::template string<typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type<TT>>>;
 
         template <Traits TT>
         using logger = typename TT::logger_type;
@@ -129,8 +129,7 @@ namespace webpp {
               requires stl::convertible_to<allocator_type_of<TT>, typename T::allocator_type>;
           }) || (EnabledTraits<TT> && requires {
               typename T::allocator_type;
-              requires stl::convertible_to<allocator_type_of<typename TT::traits_type>,
-                                           typename T::allocator_type>;
+              requires stl::convertible_to<allocator_type_of<typename TT::traits_type>, typename T::allocator_type>;
           });
 
     } // namespace traits

@@ -233,12 +233,7 @@ namespace webpp::fastcgi {
         uint8_t reserved[3] = {};
 
         void app_status(uint32_t const status_code) noexcept {
-            split_pieces<uint32_t, uint8_t>(
-              status_code,
-              app_status_b3,
-              app_status_b2,
-              app_status_b1,
-              app_status_b0);
+            split_pieces<uint32_t, uint8_t>(status_code, app_status_b3, app_status_b2, app_status_b1, app_status_b0);
         }
 
         [[nodiscard]] uint32_t app_status() const noexcept {
@@ -267,12 +262,8 @@ namespace webpp::fastcgi {
         uint8_t padding[padding_length] = {};
 
       public:
-        constexpr management_reply(char const (&_name)[NAME_LENGTH],
-                                   char const (&_value)[VALUE_LENGTH]) noexcept
-          : _header{record_type::get_values_result,
-                    0u,
-                    real_name_length + real_value_length,
-                    padding_length} {
+        constexpr management_reply(char const (&_name)[NAME_LENGTH], char const (&_value)[VALUE_LENGTH]) noexcept
+          : _header{record_type::get_values_result, 0u, real_name_length + real_value_length, padding_length} {
             stl::copy_n(_name, real_name_length, name);
             stl::copy_n(_value, real_value_length, value);
         }

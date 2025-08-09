@@ -45,8 +45,7 @@ namespace webpp::async {
 
         /// Since only the run loop itself should be allowed to initialize the scheduler, it's a private
         /// constructor to prevent anyone from misusing this class
-        explicit constexpr run_loop_scheduler(run_loop_type& inp_loop) noexcept
-          : loop{stl::addressof(inp_loop)} {}
+        explicit constexpr run_loop_scheduler(run_loop_type& inp_loop) noexcept : loop{stl::addressof(inp_loop)} {}
 
         run_loop_type* loop;
     };

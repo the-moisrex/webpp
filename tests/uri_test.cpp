@@ -23,8 +23,8 @@ static_assert(std::ranges::input_range<uri::uri_status_iterator>, "Input range")
 #endif
 
 TEST(URIHelperTests, IIEquals) {
-    EXPECT_TRUE(uri::iiequals<uri::details::TABS_OR_NEWLINES<char>>("\t\th\tel\rlo world\t.\n",
-                                                                    "hello wor\t\t\t\t\tl\nd."));
+    EXPECT_TRUE(
+      uri::iiequals<uri::details::TABS_OR_NEWLINES<char>>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
 }
 
 using Types =
@@ -52,9 +52,7 @@ struct URITests : testing::Test {
             return SpecifiedTypeParam{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
         } else if constexpr (stl::convertible_to<stl::string::iterator, iterator>) {
             url_text = str;
-            return SpecifiedTypeParam{.beg = url_text.begin(),
-                                      .pos = url_text.begin(),
-                                      .end = url_text.end()};
+            return SpecifiedTypeParam{.beg = url_text.begin(), .pos = url_text.begin(), .end = url_text.end()};
         } else {
             return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
         }
@@ -196,8 +194,7 @@ TYPED_TEST(URITests, URIStatusIterator) {
 
     int index = 0;
     for (auto const item : uri::uri_status_iterator{status}) {
-        EXPECT_TRUE(
-          item == uri::uri_status::missing_following_solidus || item == uri::uri_status::invalid_character)
+        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus || item == uri::uri_status::invalid_character)
           << "Index: " << index << "\n"
           << "Value: " << stl::to_underlying(item) << "\n"
           << "Original: " << original << "\n"
@@ -235,8 +232,8 @@ TYPED_TEST(URITests, URIStatusIteratorWithValue) {
 
     int index = 0;
     for (auto const item : uri::uri_status_iterator{status}) {
-        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
-                    item == uri::uri_status::invalid_character || item == uri::uri_status::valid_queries)
+        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus || item == uri::uri_status::invalid_character ||
+                    item == uri::uri_status::valid_queries)
           << "Index: " << index << "\n"
           << "Value: " << stl::to_underlying(item) << "\n"
           << "Original: " << original << "\n"
@@ -294,8 +291,7 @@ TYPED_TEST(URITests, PercentEncodeDecodePointer) {
 }
 
 TYPED_TEST(URITests, BasicURIParsing) {
-    constexpr stl::string_view str =
-      "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
+    constexpr stl::string_view str = "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -303,8 +299,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::uri_status::has_credentials, uri::get_warning(context.status))
       << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "https");
     EXPECT_EQ(context.out.get_hostname(), "example.com");
     EXPECT_EQ(context.out.get_username(), "username");
@@ -352,9 +347,7 @@ TYPED_TEST(URITests, InvalidSchemes) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
 
-        EXPECT_TRUE(uri::has_error(context.status))
-          << to_string(uri::get_value(context.status)) << "\n"
-          << str;
+        EXPECT_TRUE(uri::has_error(context.status)) << to_string(uri::get_value(context.status)) << "\n" << str;
     }
 }
 
@@ -383,9 +376,7 @@ TYPED_TEST(URITests, ValidSchemes) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_scheme(context);
 
-        EXPECT_FALSE(uri::has_error(context.status))
-          << to_string(uri::get_value(context.status)) << "\n"
-          << str;
+        EXPECT_FALSE(uri::has_error(context.status)) << to_string(uri::get_value(context.status)) << "\n" << str;
     }
 }
 
@@ -421,8 +412,7 @@ TYPED_TEST(URITests, OpaqueHostParser) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "urn");
     EXPECT_EQ(context.out.get_hostname(), "this");
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
@@ -437,8 +427,7 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::uri_status::invalid_character, uri::get_warning(context.status))
       << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "urn");
     EXPECT_EQ(context.out.get_hostname(), "th%is");
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
@@ -461,8 +450,7 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "ldap");
     EXPECT_EQ(context.out.get_hostname(), "[2001:db8::7]");
     EXPECT_EQ(context.out.get_path(), "/c=GB");
@@ -476,8 +464,7 @@ TYPED_TEST(URITests, OpaqueHostWithCredentials) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "ldap");
     EXPECT_EQ(context.out.get_hostname(), "[2001:db8::7]");
     EXPECT_EQ(context.out.get_username(), "username");
@@ -494,8 +481,7 @@ TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "ldap");
     EXPECT_EQ(context.out.get_fragment(), "one");
 }
@@ -507,8 +493,7 @@ TYPED_TEST(URITests, IPv4AsHost) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "https");
     EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
     EXPECT_EQ(context.out.get_path(), "/page/one");
@@ -532,8 +517,7 @@ TYPED_TEST(URITests, PathDot) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "/one");
     } else {
@@ -552,8 +536,7 @@ TYPED_TEST(URITests, PathDotNormalized) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_path(), "/one");
 }
 
@@ -564,8 +547,7 @@ TYPED_TEST(URITests, SkipDotButNotSlash) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "/page/");
     } else {
@@ -581,8 +563,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "//three//");
     } else {
@@ -601,17 +582,14 @@ TYPED_TEST(URITests, Percent2ECheck) {
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
       << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
-        EXPECT_EQ(
-          context.out.get_path(),
-          "//zero/three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+        EXPECT_EQ(context.out.get_path(),
+                  "//zero/three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
     } else {
-        EXPECT_EQ(
-          context.out.get_path(),
-          "/..//./zero/one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
-          "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+        EXPECT_EQ(context.out.get_path(),
+                  "/..//./zero/one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
+                  "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
     }
 }
 
@@ -621,8 +599,7 @@ TYPED_TEST(URITests, BackingUpOnEmptySegments) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "//");
     } else {
@@ -636,8 +613,7 @@ TYPED_TEST(URITests, LastEmptySegment) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "//a/");
     } else {
@@ -651,8 +627,7 @@ TYPED_TEST(URITests, PercentDecodingInDomains) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_hostname(), "www.ex!ample.com");
     } else {
@@ -670,8 +645,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
       << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
-      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(context.out.get_path(), "//three/");
     } else {
@@ -878,9 +852,7 @@ TYPED_TEST(URITests, HostMissing) {
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
-        EXPECT_FALSE(uri::is_valid(context.status))
-          << str << "\n"
-          << to_string(uri::get_value(context.status));
+        EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::host_missing)
           << str << "\n"
           << to_string(uri::get_value(context.status));
@@ -930,9 +902,7 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
-        EXPECT_TRUE(uri::is_valid(context.status))
-          << str << "\n"
-          << to_string(uri::get_value(context.status));
+        EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
         if constexpr (TypeParam::is_modifiable) {
             EXPECT_EQ(context.out.get_hostname(), "127.0.0.1") << str;
         }
@@ -1172,27 +1142,24 @@ TYPED_TEST(URITests, ToLowered) {
 TYPED_TEST(URITests, NormalHostIPv4) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv4s[]{
-      "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",
-      "203.0.113.3",     "10.0.0.4",        "172.16.0.5",      "192.168.0.6",     "127.0.0.7",
-      "169.254.0.8",     "224.0.0.9",       "239.255.255.10",  "128.0.0.11",      "191.255.255.12",
-      "223.255.255.13",  "240.0.0.14",      "255.255.255.15",  "1.2.3.4",         "5.6.7.8",
-      "9.10.11.12",      "13.14.15.16",     "17.18.19.20",     "21.22.23.24",     "25.26.27.28",
-      "29.30.31.32",     "33.34.35.36",     "37.38.39.40",     "41.42.43.44",     "45.46.47.48",
-      "49.50.51.52",     "53.54.55.56",     "57.58.59.60",     "61.62.63.64",     "65.66.67.68",
-      "69.70.71.72",     "73.74.75.76",     "77.78.79.80",     "81.82.83.84",     "85.86.87.88",
-      "89.90.91.92",     "93.94.95.96",     "97.98.99.100",    "101.102.103.104", "105.106.107.108",
-      "109.110.111.112", "113.114.115.116", "117.118.119.120", "121.122.123.124", "125.126.127.128",
-      "129.130.131.132", "133.134.135.136", "137.138.139.140", "141.142.143.144", "145.146.147.148",
-      "149.150.151.152", "153.154.155.156", "157.158.159.160", "161.162.163.164", "165.166.167.168",
-      "169.170.171.172", "173.174.175.176", "177.178.179.180", "181.182.183.184", "185.186.187.188",
-      "189.190.191.192", "193.194.195.196", "197.198.199.200", "201.202.203.204", "205.206.207.208",
-      "209.210.211.212", "213.214.215.216", "217.218.219.220", "221.222.223.224", "225.226.227.228",
-      "229.230.231.232", "233.234.235.236", "237.238.239.240", "241.242.243.244", "245.246.247.248",
-      "249.250.251.252", "253.254.255.0",   "255.254.253.0",   "1.254.253.0",     "255.1.253.0",
-      "255.254.1.0",     "255.254.253.1",   "1.1.253.0",       "255.1.1.0",       "255.254.1.1",
-      "1.254.1.0",       "1.1.1.0",         "255.255.1.0",     "255.255.254.0",   "255.255.255.1",
-      "255.255.254.1",   "255.254.255.1",   "254.255.255.1",   "255.1.255.0",     "1.255.254.0",
-      "1.254.255.0",     "254.1.255.0",     "254.255.1.0",
+      "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",    "203.0.113.3",
+      "10.0.0.4",        "172.16.0.5",      "192.168.0.6",     "127.0.0.7",       "169.254.0.8",     "224.0.0.9",
+      "239.255.255.10",  "128.0.0.11",      "191.255.255.12",  "223.255.255.13",  "240.0.0.14",      "255.255.255.15",
+      "1.2.3.4",         "5.6.7.8",         "9.10.11.12",      "13.14.15.16",     "17.18.19.20",     "21.22.23.24",
+      "25.26.27.28",     "29.30.31.32",     "33.34.35.36",     "37.38.39.40",     "41.42.43.44",     "45.46.47.48",
+      "49.50.51.52",     "53.54.55.56",     "57.58.59.60",     "61.62.63.64",     "65.66.67.68",     "69.70.71.72",
+      "73.74.75.76",     "77.78.79.80",     "81.82.83.84",     "85.86.87.88",     "89.90.91.92",     "93.94.95.96",
+      "97.98.99.100",    "101.102.103.104", "105.106.107.108", "109.110.111.112", "113.114.115.116", "117.118.119.120",
+      "121.122.123.124", "125.126.127.128", "129.130.131.132", "133.134.135.136", "137.138.139.140", "141.142.143.144",
+      "145.146.147.148", "149.150.151.152", "153.154.155.156", "157.158.159.160", "161.162.163.164", "165.166.167.168",
+      "169.170.171.172", "173.174.175.176", "177.178.179.180", "181.182.183.184", "185.186.187.188", "189.190.191.192",
+      "193.194.195.196", "197.198.199.200", "201.202.203.204", "205.206.207.208", "209.210.211.212", "213.214.215.216",
+      "217.218.219.220", "221.222.223.224", "225.226.227.228", "229.230.231.232", "233.234.235.236", "237.238.239.240",
+      "241.242.243.244", "245.246.247.248", "249.250.251.252", "253.254.255.0",   "255.254.253.0",   "1.254.253.0",
+      "255.1.253.0",     "255.254.1.0",     "255.254.253.1",   "1.1.253.0",       "255.1.1.0",       "255.254.1.1",
+      "1.254.1.0",       "1.1.1.0",         "255.255.1.0",     "255.255.254.0",   "255.255.255.1",   "255.255.254.1",
+      "255.254.255.1",   "254.255.255.1",   "255.1.255.0",     "1.255.254.0",     "1.254.255.0",     "254.1.255.0",
+      "254.255.1.0",
     };
 
     static constexpr stl::string_view invalid_ipv4s[]{
@@ -1205,35 +1172,27 @@ TYPED_TEST(URITests, NormalHostIPv4) {
     stl::uint8_t ip_octets[4]{};
 
     for (auto const& _ip : valid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
-          _ip.begin(),
-          _ip.end(),
-          ip_octets,
-          context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_TRUE(should_continue) << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0])
-                                     << "." << static_cast<int>(ip_octets[1]) << "."
-                                     << static_cast<int>(ip_octets[2]) << "."
+        EXPECT_TRUE(should_continue) << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
+                                     << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
                                      << static_cast<int>(ip_octets[3]);
-        EXPECT_EQ(ipv4{_ip}, ip_octets)
-          << "Expected IP: " << ipv4{_ip}.string() << "\n"
-          << "Parsed IP: " << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
-          << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
+        EXPECT_EQ(ipv4{_ip}, ip_octets) << "Expected IP: " << ipv4{_ip}.string() << "\n"
+                                        << "Parsed IP: " << static_cast<int>(ip_octets[0]) << "."
+                                        << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2])
+                                        << "." << static_cast<int>(ip_octets[3]);
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
-          _ip.begin(),
-          _ip.end(),
-          ip_octets,
-          context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_FALSE(should_continue)
-          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
-          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
-          << static_cast<int>(ip_octets[3]);
+        EXPECT_FALSE(should_continue) << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
+                                      << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+                                      << static_cast<int>(ip_octets[3]);
     }
     // NOLINTEND(*-avoid-c-arrays)
 }
@@ -1382,17 +1341,13 @@ TYPED_TEST(URITests, AbormalHostIPv4Loose) {
     stl::uint8_t ip_octets[4]{};
 
     for (auto const& [_ip, expected_ip] : valid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
-          _ip.begin(),
-          _ip.end(),
-          ip_octets,
-          context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_TRUE(should_continue)
-          << "Original IP String: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
-          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
-          << static_cast<int>(ip_octets[3]);
+        EXPECT_TRUE(should_continue) << "Original IP String: " << _ip << "\nParsed IP: "
+                                     << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+                                     << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
         EXPECT_EQ(expected_ip, ip_octets)
           << "Original IP String: " << _ip << "\n"
           << "Expected IP: " << expected_ip.string() << "\n"
@@ -1401,14 +1356,12 @@ TYPED_TEST(URITests, AbormalHostIPv4Loose) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context = this->template get_context<TypeParam>(_ip);
-        bool const should_continue =
-          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context         = this->template get_context<TypeParam>(_ip);
+        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_FALSE(should_continue)
-          << "Original IP String: '" << _ip << "'\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
-          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
-          << static_cast<int>(ip_octets[3]);
+        EXPECT_FALSE(should_continue) << "Original IP String: '" << _ip << "'\nParsed IP: "
+                                      << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+                                      << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
     }
     // NOLINTEND(*-avoid-c-arrays)
 }
@@ -1588,14 +1541,12 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     stl::uint8_t ip_octets[4]{};
 
     for (auto const& [_ip, expected_ip] : valid_ipv4s) {
-        auto       context = this->template get_context<TypeParam>(_ip);
-        bool const should_continue =
-          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context         = this->template get_context<TypeParam>(_ip);
+        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_TRUE(should_continue)
-          << "Original IP String: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
-          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
-          << static_cast<int>(ip_octets[3]);
+        EXPECT_TRUE(should_continue) << "Original IP String: " << _ip << "\nParsed IP: "
+                                     << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+                                     << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
         EXPECT_EQ(expected_ip, ip_octets)
           << "Original IP String: " << _ip << "\n"
           << "Expected IP: " << expected_ip.string() << "\n"
@@ -1604,14 +1555,12 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context = this->template get_context<TypeParam>(_ip);
-        bool const should_continue =
-          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context         = this->template get_context<TypeParam>(_ip);
+        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
 
-        EXPECT_FALSE(should_continue)
-          << "Original IP String: '" << _ip << "'\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
-          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
-          << static_cast<int>(ip_octets[3]);
+        EXPECT_FALSE(should_continue) << "Original IP String: '" << _ip << "'\nParsed IP: "
+                                      << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+                                      << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
     }
     // NOLINTEND(*-avoid-c-arrays)
 }
@@ -1621,16 +1570,12 @@ TYPED_TEST(URITests, EmptyIPv4) {
     stl::uint8_t               ip_octets[4]{};
     constexpr stl::string_view _ip = "192.168.1.";
 
-    auto       context         = this->template get_context<TypeParam>(_ip);
-    bool const should_continue = uri::details::parse_host_ipv4<uri::strict_uri_parsing_options>(
-      _ip.begin(),
-      _ip.end(),
-      ip_octets,
-      context);
+    auto       context = this->template get_context<TypeParam>(_ip);
+    bool const should_continue =
+      uri::details::parse_host_ipv4<uri::strict_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
-    EXPECT_FALSE(should_continue) << "Original IP String: " << _ip
-                                  << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
-                                  << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2])
+    EXPECT_FALSE(should_continue) << "Original IP String: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0])
+                                  << "." << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2])
                                   << "." << static_cast<int>(ip_octets[3]);
 
     EXPECT_FALSE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
@@ -1701,14 +1646,12 @@ TYPED_TEST(URITests, SpecialDots) {
 TYPED_TEST(URITests, EmptyHostNotAllowed) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://username:password@:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
-    EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::host_missing))
-      << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx.status));
 
 
     auto const ctx2 = this->template parse_from_string<TypeParam>("http://username@/");
     EXPECT_FALSE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
-    EXPECT_TRUE(uri::has_error(ctx2.status, uri::uri_status::host_missing))
-      << to_string(uri::get_value(ctx2.status));
+    EXPECT_TRUE(uri::has_error(ctx2.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx2.status));
 }
 
 TYPED_TEST(URITests, StupidSchemes) {

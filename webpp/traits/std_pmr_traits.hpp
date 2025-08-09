@@ -34,8 +34,7 @@ namespace webpp {
             [[nodiscard]] friend stl::pmr::polymorphic_allocator<T> tag_invoke(
               [[maybe_unused]] stl::tag_t<construct_allocator_from> tag,
               resource_wrapper&                                     self) noexcept {
-                return stl::pmr::polymorphic_allocator<T>{
-                  static_cast<stl::pmr::memory_resource*>(&self.resource)};
+                return stl::pmr::polymorphic_allocator<T>{static_cast<stl::pmr::memory_resource*>(&self.resource)};
             }
         };
 
@@ -82,8 +81,7 @@ namespace webpp {
         //     }
         // };
 
-        static_assert(GeneralAllocatorDescriptor<allocator_descriptor>,
-                      "Wrong Descriptions for allocator descriptor");
+        static_assert(GeneralAllocatorDescriptor<allocator_descriptor>, "Wrong Descriptions for allocator descriptor");
 
         template <typename AllocT>
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;

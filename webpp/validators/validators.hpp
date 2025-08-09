@@ -38,8 +38,7 @@ namespace webpp::is {
      * @brief check if the container contains value
      */
     template <typename T>
-    [[nodiscard]] constexpr bool contains(stl::initializer_list<T> const& container,
-                                          T const&                        value) noexcept {
+    [[nodiscard]] constexpr bool contains(stl::initializer_list<T> const& container, T const& value) noexcept {
         return stl::find(stl::cbegin(container), stl::cend(container), value) != stl::cend(container);
     }
 
@@ -47,8 +46,7 @@ namespace webpp::is {
      * @brief check if the container contains key
      */
     template <template <class, class...> class Container, class T1, class... Args>
-    [[nodiscard]] constexpr bool contains_key(Container<T1, Args...> const& container,
-                                              T1 const&                     key) noexcept {
+    [[nodiscard]] constexpr bool contains_key(Container<T1, Args...> const& container, T1 const& key) noexcept {
         return container.find(key) != stl::end(container);
     }
 
@@ -56,8 +54,7 @@ namespace webpp::is {
      * @brief check if the container contains the value
      */
     template <template <class, class, class...> class Container, class T1, class T2, class... Args>
-    [[nodiscard]] constexpr bool contains_value(Container<T1, T2, Args...> const& container,
-                                                T2 const&                         value) noexcept {
+    [[nodiscard]] constexpr bool contains_value(Container<T1, T2, Args...> const& container, T2 const& value) noexcept {
         for (auto pair : container) {
             if (pair.second == value) {
                 return true;
@@ -65,7 +62,6 @@ namespace webpp::is {
         }
         return false;
     }
-
 
     // [[nodiscard]] constexpr bool FQDN(istl::StringViewifiable auto&& _str) noexcept;
 
@@ -166,8 +162,7 @@ namespace webpp::is {
          * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986),
          * leaving out "pct-encoded".
          */
-        constexpr auto PCHAR_NOT_PCT_ENCODED =
-          charset(UNRESERVED, SUB_DELIMS, charset<char_type, 2>{':', '@'});
+        constexpr auto PCHAR_NOT_PCT_ENCODED = charset(UNRESERVED, SUB_DELIMS, charset<char_type, 2>{':', '@'});
 
         /**
          * This is the character set corresponds to the "query" syntax
@@ -658,10 +653,9 @@ namespace webpp::is {
           "yellow green",
           "zombie green"};
 
-        auto pos =
-          stl::lower_bound(stl::cbegin(names), stl::end(names), str, [](auto const& lhs, auto const& rhs) {
-              return lhs < rhs;
-          });
+        auto pos = stl::lower_bound(stl::cbegin(names), stl::end(names), str, [](auto const& lhs, auto const& rhs) {
+            return lhs < rhs;
+        });
         return pos != stl::end(names) && *pos == str;
     }
 

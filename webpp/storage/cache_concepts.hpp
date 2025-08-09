@@ -19,8 +19,8 @@ namespace webpp {
     concept CacheOptions = !stl::is_void_v<T> && stl::is_copy_assignable_v<T>;
 
     template <typename K>
-    concept CacheFileKey = CacheKey<K> && lexical::CastableTo<K, stl::string> &&
-                           lexical::CastableTo<stl::string, K> && requires(K key) { stl::hash<K>{}(key); };
+    concept CacheFileKey = CacheKey<K> && lexical::CastableTo<K, stl::string> && lexical::CastableTo<stl::string, K> &&
+                           requires(K key) { stl::hash<K>{}(key); };
 
     template <typename V>
     concept CacheFileValue =

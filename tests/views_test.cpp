@@ -66,8 +66,7 @@ TYPED_TEST(TheViews, ViewManagerTest) {
     auto data = object::make_object<typename TestFixture::data_type>(etraits);
     data.emplace_back(etraits, "name", "moisrex");
     auto const res = man.mustache("assets/hello-world", data);
-    EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
-                                     << roots;
+    EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
 }
 
 TYPED_TEST(TheViews, MustacheViewPartials) {
@@ -105,7 +104,5 @@ TYPED_TEST(TheViews, FileView) {
     }
 
     auto const res = man.file("assets/hello-world.mustache");
-    EXPECT_EQ(res, "Hello, {{name}}")
-      << "Check out the logs, it shouldn't be empty if the file was found.\n"
-      << roots;
+    EXPECT_EQ(res, "Hello, {{name}}") << "Check out the logs, it shouldn't be empty if the file was found.\n" << roots;
 }

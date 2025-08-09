@@ -35,9 +35,9 @@ namespace webpp::http {
 
         constexpr valve_traverser(context_ref inp_ctx) noexcept : ctx{&inp_ctx} {}
 
-        constexpr valve_traverser(valve_traverser const&)            = delete; // stopping accidental copying
-        constexpr valve_traverser(valve_traverser&&) noexcept        = default;
-        constexpr valve_traverser& operator=(valve_traverser const&) = delete;
+        constexpr valve_traverser(valve_traverser const&)                = delete; // stopping accidental copying
+        constexpr valve_traverser(valve_traverser&&) noexcept            = default;
+        constexpr valve_traverser& operator=(valve_traverser const&)     = delete;
         constexpr valve_traverser& operator=(valve_traverser&&) noexcept = default;
         constexpr ~valve_traverser()                                     = default;
 

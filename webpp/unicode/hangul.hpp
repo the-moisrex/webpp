@@ -164,9 +164,7 @@ namespace webpp::unicode {
     /**
      * Hangul decompose length based on the character type
      */
-    template <typename CharT              = char32_t,
-              typename CodePointT         = char32_t,
-              stl::unsigned_integral RetT = stl::size_t>
+    template <typename CharT = char32_t, typename CodePointT = char32_t, stl::unsigned_integral RetT = stl::size_t>
         requires(sizeof(CodePointT) >= sizeof(char32_t))
     [[nodiscard]] static constexpr RetT hangul_decompose_length(CodePointT const code_point) noexcept {
         if constexpr (UTF8<CharT>) {
@@ -191,8 +189,7 @@ namespace webpp::unicode {
      *
      * @returns decomposed_hangul which contains all the parts of a hangul decomposed code point
      */
-    [[nodiscard]] static constexpr decomposed_hangul_code_point decomposed_hangul(
-      char32_t const code_point) noexcept {
+    [[nodiscard]] static constexpr decomposed_hangul_code_point decomposed_hangul(char32_t const code_point) noexcept {
         auto const pos = code_point - hangul_syllable_base;
 
         // Calculating the indices:
@@ -205,8 +202,7 @@ namespace webpp::unicode {
           .leading  = static_cast<char32_t>(hangul_leading_base + leading_pos),
           .vowel    = static_cast<char32_t>(hangul_vowel_base + vowel_pos),
           .trailing = static_cast<char32_t>(
-            trailing_pos != 0 ? hangul_trailing_base + trailing_pos
-                              : decomposed_hangul_code_point::invalid_trailing),
+            trailing_pos != 0 ? hangul_trailing_base + trailing_pos : decomposed_hangul_code_point::invalid_trailing),
         };
     }
 
@@ -262,10 +258,9 @@ namespace webpp::unicode {
         }
 
         // LV characters are the first in each "T block", so use this check to avoid combining LVT with T.
-        if (
-          is_hangul_code_point(lhs) &&
-          (lhs - static_cast<CharT>(hangul_syllable_base)) % static_cast<CharT>(hangul_trailing_count) == 0 &&
-          is_hangul_trailing(rhs))
+        if (is_hangul_code_point(lhs) &&
+            (lhs - static_cast<CharT>(hangul_syllable_base)) % static_cast<CharT>(hangul_trailing_count) == 0 &&
+            is_hangul_trailing(rhs))
         {
             return static_cast<CharT>(lhs + rhs - static_cast<CharT>(hangul_trailing_base));
         }

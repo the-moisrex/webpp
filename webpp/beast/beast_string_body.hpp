@@ -102,8 +102,7 @@ namespace webpp::beast_proto {
             using const_buffers_type = asio::const_buffer;
 
             template <bool isRequest, class Fields>
-            explicit writer(boost::beast::http::header<isRequest, Fields> const&, value_type const& b)
-              : body_ptr(&b) {}
+            explicit writer(boost::beast::http::header<isRequest, Fields> const&, value_type const& b) : body_ptr(&b) {}
 
             void init(boost::beast::error_code& ec) {
                 ec = {};

@@ -36,8 +36,7 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
     static inline void ltrim(StrViewType& str, CS whitespaces = standard_whitespaces) noexcept {
-        str.remove_prefix(
-          stl::min(str.find_first_not_of(whitespaces.data(), 0, whitespaces.size()), str.size()));
+        str.remove_prefix(stl::min(str.find_first_not_of(whitespaces.data(), 0, whitespaces.size()), str.size()));
     }
 
     template <istl::StringView StrViewType, CharSet CS = decltype(standard_whitespaces)>
@@ -58,8 +57,7 @@ namespace webpp::ascii {
 
     // trim from start (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto ltrim_copy(StrViewType&& inp_str,
-                                                CS            whitespaces = standard_whitespaces) noexcept {
+    [[nodiscard]] static inline auto ltrim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
         ltrim(str, whitespaces);
         return str;
@@ -67,8 +65,7 @@ namespace webpp::ascii {
 
     // trim from end (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto rtrim_copy(StrViewType&& inp_str,
-                                                CS            whitespaces = standard_whitespaces) noexcept {
+    [[nodiscard]] static inline auto rtrim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
         rtrim(str, whitespaces);
         return str;
@@ -76,8 +73,7 @@ namespace webpp::ascii {
 
     // trim from both ends (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
-    [[nodiscard]] static inline auto trim_copy(StrViewType&& inp_str,
-                                               CS            whitespaces = standard_whitespaces) noexcept {
+    [[nodiscard]] static inline auto trim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
         auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
         trim(str, whitespaces);
         return str;

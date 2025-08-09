@@ -70,71 +70,57 @@ namespace webpp {
             }
         }
 
-#define WEBPP_LOGGER_SHORTCUT(logging_name)                                                               \
-                                                                                                          \
-    template <istl::StringViewifiable DetStrT>                                                            \
-    void logging_name(DetStrT&& details) const noexcept {                                                 \
-        log(details::logging_type::logging_name, default_category_name, stl::forward<DetStrT>(details));  \
-    }                                                                                                     \
-                                                                                                          \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
-    void logging_name(CatStrT&& category, DetStrT&& details) const noexcept {                             \
-        log(details::logging_type::logging_name,                                                          \
-            stl::forward<CatStrT>(category),                                                              \
-            stl::forward<DetStrT>(details));                                                              \
-    }                                                                                                     \
-                                                                                                          \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
-    void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {  \
-        if constexpr (!is_debug) {                                                                        \
-            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
-                                      istl::string_viewify(category).size();                              \
-            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
-            auto new_details = fmt::format(                                                               \
-              "{2}\n{1: >{0}}error message: {3}",                                                         \
-              stl::move(space_count),                                                                     \
-              "",                                                                                         \
-              old_details,                                                                                \
-              ec.message());                                                                              \
-            log(details::logging_type::logging_name,                                                      \
-                stl::forward<CatStrT>(category),                                                          \
-                stl::move(new_details));                                                                  \
-        }                                                                                                 \
-    }                                                                                                     \
-                                                                                                          \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
-    void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {   \
-        if constexpr (!is_debug) {                                                                        \
-            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
-                                      istl::string_viewify(category).size();                              \
-            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
-            auto new_details = fmt::format(                                                               \
-              "{2}\n{1: >{0}}error message: {3}",                                                         \
-              stl::move(space_count),                                                                     \
-              "",                                                                                         \
-              old_details,                                                                                \
-              ex.what());                                                                                 \
-            log(details::logging_type::logging_name,                                                      \
-                stl::forward<CatStrT>(category),                                                          \
-                stl::move(new_details));                                                                  \
-        }                                                                                                 \
-    }                                                                                                     \
-                                                                                                          \
-    template <istl::StringViewifiable StrT>                                                               \
-    void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                         \
-        logging_name(default_category_name, stl::forward<StrT>(details), ec);                             \
-    }                                                                                                     \
-                                                                                                          \
-    template <istl::StringViewifiable StrT>                                                               \
-    void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                          \
-        logging_name(default_category_name, stl::forward<StrT>(details), ex);                             \
-    }                                                                                                     \
-                                                                                                          \
-    template <typename... OptsT>                                                                          \
-    void logging_name(if_debug_tag, OptsT&&... opts) const noexcept {                                     \
-        if constexpr (is_debug) {                                                                         \
-            this->logging_name(stl::forward<OptsT>(opts)...);                                             \
-        }                                                                                                 \
+#define WEBPP_LOGGER_SHORTCUT(logging_name)                                                                           \
+                                                                                                                      \
+    template <istl::StringViewifiable DetStrT>                                                                        \
+    void logging_name(DetStrT&& details) const noexcept {                                                             \
+        log(details::logging_type::logging_name, default_category_name, stl::forward<DetStrT>(details));              \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+    void logging_name(CatStrT&& category, DetStrT&& details) const noexcept {                                         \
+        log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::forward<DetStrT>(details));    \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {              \
+        if constexpr (!is_debug) {                                                                                    \
+            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
+                                      istl::string_viewify(category).size();                                          \
+            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                                  \
+            auto new_details =                                                                                        \
+              fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ec.message()); \
+            log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \
+        }                                                                                                             \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {               \
+        if constexpr (!is_debug) {                                                                                    \
+            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
+                                      istl::string_viewify(category).size();                                          \
+            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                                  \
+            auto new_details =                                                                                        \
+              fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ex.what());    \
+            log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \
+        }                                                                                                             \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable StrT>                                                                           \
+    void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                                     \
+        logging_name(default_category_name, stl::forward<StrT>(details), ec);                                         \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable StrT>                                                                           \
+    void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                                      \
+        logging_name(default_category_name, stl::forward<StrT>(details), ex);                                         \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <typename... OptsT>                                                                                      \
+    void logging_name(if_debug_tag, OptsT&&... opts) const noexcept {                                                 \
+        if constexpr (is_debug) {                                                                                     \
+            this->logging_name(stl::forward<OptsT>(opts)...);                                                         \
+        }                                                                                                             \
     }
 
 

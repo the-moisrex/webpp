@@ -261,8 +261,8 @@ namespace webpp::uri {
 
         // API errors:
         setting_hostname_on_opaque_path = error_bit | 23U,
-        scheme_setter_invalid_input = error_bit | 24U, // This indication of failure is used exclusively by
-                                                       // the Location object’s protocol setter.
+        scheme_setter_invalid_input     = error_bit | 24U, // This indication of failure is used exclusively by
+                                                           // the Location object’s protocol setter.
         hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
 
         // flags:
@@ -302,8 +302,7 @@ namespace webpp::uri {
                 return {
                   "Valid scheme that should be followed by an authority "
                   "(a host optionally with username and password or port)."};
-            case valid_file_host:
-                return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
+            case valid_file_host: return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
             case valid_authority_end:
                 return {
@@ -329,8 +328,7 @@ namespace webpp::uri {
 
 
                 // domain-specific errors:
-            case subdomain_too_long:
-                return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
+            case subdomain_too_long: return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
             case dot_at_end:
                 return {
                   "The domain ended unexpectedly; "
@@ -428,8 +426,7 @@ namespace webpp::uri {
                 return {
                   "The URI is using backslash instead of a forward slash; "
                   "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus"};
-            case windows_drive_letter_used:
-                return {"Windows Drive Letters is being used inside the 'file:' scheme."};
+            case windows_drive_letter_used: return {"Windows Drive Letters is being used inside the 'file:' scheme."};
             case windows_drive_letter_in_relative_url:
                 return {
                   "The URI is relative, starts with Windows Drive Letter, "
@@ -459,8 +456,7 @@ namespace webpp::uri {
                 return {
                   "You cannot set the hostname on a URL that has an opaque path; "
                   "more info: https://url.spec.whatwg.org/#dom-url-hostname"};
-            case scheme_setter_invalid_input:
-                return {"Tried to set an scheme that starts by invalid character."};
+            case scheme_setter_invalid_input: return {"Tried to set an scheme that starts by invalid character."};
             case hostname_type_mismatch:
                 return {
                   "Hostname type mismatch; the new hostname is not the same type as the old one; for "
@@ -495,8 +491,7 @@ namespace webpp::uri {
         return has_warnings(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_warning(uri_status_type const status,
-                                                    uri_status const      warning) noexcept {
+    [[nodiscard]] static constexpr bool has_warning(uri_status_type const status, uri_status const warning) noexcept {
         return (status & stl::to_underlying(warning)) == stl::to_underlying(warning);
     }
 
@@ -527,8 +522,7 @@ namespace webpp::uri {
         return get_value(status) == expected_err;
     }
 
-    [[nodiscard]] static constexpr bool has_error(uri_status const status,
-                                                  uri_status const expected_err) noexcept {
+    [[nodiscard]] static constexpr bool has_error(uri_status const status, uri_status const expected_err) noexcept {
         return has_error(stl::to_underlying(status), expected_err);
     }
 
@@ -570,8 +564,7 @@ namespace webpp::uri {
         return status & (flags_mask | warnings_mask);
     }
 
-    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status,
-                                                 uri_status const      flag) noexcept {
+    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status, uri_status const flag) noexcept {
         return (status & stl::to_underlying(flag)) != 0;
     }
 
@@ -712,8 +705,7 @@ namespace webpp::uri {
         return {status};
     }
 
-    [[nodiscard]] static constexpr uri_status_iterator end(
-      [[maybe_unused]] uri_status_iterator iter) noexcept {
+    [[nodiscard]] static constexpr uri_status_iterator end([[maybe_unused]] uri_status_iterator iter) noexcept {
         return {};
     }
 

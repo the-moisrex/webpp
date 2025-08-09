@@ -9,7 +9,6 @@
 using webpp::sdk::command_status;
 using webpp::sdk::create_project;
 
-
 // One template
 struct project_template {
     std::string_view name; // template name

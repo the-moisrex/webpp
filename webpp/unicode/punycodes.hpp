@@ -107,8 +107,7 @@ namespace webpp::unicode::idna {
     template <punycode_options            Options = {},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>
-    [[nodiscard]] static constexpr punycode_status
-    punycode_encode(IterT const spos, IterT const send, OIterT &out)
+    [[nodiscard]] static constexpr punycode_status punycode_encode(IterT const spos, IterT const send, OIterT &out)
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
         using enum checked::error_handling;
@@ -213,8 +212,7 @@ namespace webpp::unicode::idna {
                         q_val = (q_val - t_val) / (Options.base - t_val);
                     }
                     iter_append(out, encode_digit<char_type>(q_val));
-                    bias =
-                      adapt(delta, static_cast<punycode_uint>(handled_len + 1), handled_len == basics_len);
+                    bias  = adapt(delta, static_cast<punycode_uint>(handled_len + 1), handled_len == basics_len);
                     delta = 0;
                     ++handled_len;
                 }
@@ -355,9 +353,7 @@ namespace webpp::unicode::idna {
 
     /// Same as punycode_to, but it returns the resulting string; this function ignores the status of the
     /// conversions, so you may not use this function for serious work.
-    template <istl::String            OutStrT = std::string,
-              istl::StringViewifiable StrVT   = stl::string_view,
-              typename... Args>
+    template <istl::String OutStrT = std::string, istl::StringViewifiable StrVT = stl::string_view, typename... Args>
     [[nodiscard]] static constexpr OutStrT punycode_of(StrVT &&src, Args &&...args) {
         auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
         using char_type     = istl::char_type_of_t<decltype(src_view)>;
@@ -368,9 +364,7 @@ namespace webpp::unicode::idna {
 
     /// Same as to_unicode, but it returns the resulting string; this function ignores the status of the
     /// conversions, so you may not use this function for serious work.
-    template <istl::String            OutStrT = std::string,
-              istl::StringViewifiable StrVT   = stl::string_view,
-              typename... Args>
+    template <istl::String OutStrT = std::string, istl::StringViewifiable StrVT = stl::string_view, typename... Args>
     [[nodiscard]] static constexpr OutStrT unicode_of(StrVT &&src, Args &&...args) {
         auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
         using char_type     = istl::char_type_of_t<decltype(src_view)>;

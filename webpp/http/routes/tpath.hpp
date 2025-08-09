@@ -48,8 +48,7 @@ namespace webpp::http {
                 case '}':
                     // check if we are in a curly braces
                     if (curly_start != templ_end) {
-                        stl::string_view const key{colon + 1,
-                                                   static_cast<stl::string_view::size_type>(c - colon - 1)};
+                        stl::string_view const key{colon + 1, static_cast<stl::string_view::size_type>(c - colon - 1)};
 
                         // find _ in "{var}_" inside path
                         // this doesn't take the / in account

@@ -98,8 +98,7 @@ namespace webpp::http {
         }
 
         template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
-        constexpr HTTPResponse decltype(auto)
-        basic_next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
+        constexpr HTTPResponse decltype(auto) basic_next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using result_type = stl::remove_cvref_t<ResT>;
 
             constexpr auto next_route_index = Index + 1;
@@ -127,9 +126,8 @@ namespace webpp::http {
             } else if constexpr (Context<result_type>) {
                 // context switching
                 if constexpr (is_last_route) {
-                    ctx.logger.warning(
-                      "Router",
-                      "Router got Context Switching action on the last route. 404 will be returned.");
+                    ctx.logger.warning("Router",
+                                       "Router got Context Switching action on the last route. 404 will be returned.");
                 }
 
                 // calling the next route will return 404 error
@@ -197,10 +195,9 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(status_code::not_found);
                 } else {
-                    return basic_next_route<Index>(
-                      handle_primary_results(call_route(route, ctx, req), ctx, req),
-                      ctx,
-                      req);
+                    return basic_next_route<Index>(handle_primary_results(call_route(route, ctx, req), ctx, req),
+                                                   ctx,
+                                                   req);
                 }
             }
         }
@@ -241,8 +238,8 @@ namespace webpp::http {
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
 
     template <typename... RouteType>
-        requires(sizeof...(RouteType) > 0 &&
-                 !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
+        requires(
+          sizeof...(RouteType) > 0 && !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
     router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
 
 

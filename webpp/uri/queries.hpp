@@ -15,8 +15,7 @@ namespace webpp::uri {
      * Storage type can be string-like (not-structured)
      */
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void
-    render_queries(StorageType const& storage, StrT& out, bool const add_separators = false)
+    static constexpr void render_queries(StorageType const& storage, StrT& out, bool const add_separators = false)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
@@ -48,8 +47,7 @@ namespace webpp::uri {
      * @tparam StringType String or String View type used as the storage type
      * @tparam AllocType Allocator type
      */
-    template <istl::StringLike StringType = stl::string,
-              Allocator        AllocType  = allocator_type_from_t<StringType>>
+    template <istl::StringLike StringType = stl::string, Allocator AllocType = allocator_type_from_t<StringType>>
     struct basic_queries
       : stl::map<StringType,
                  StringType,
@@ -89,8 +87,7 @@ namespace webpp::uri {
 
         template <typename... Args>
             requires requires(Args... args) { map_type{stl::forward<Args>(args)...}; }
-        explicit constexpr basic_queries(Args&&... args)
-          noexcept(noexcept(map_type(stl::forward<Args>(args)...)))
+        explicit constexpr basic_queries(Args&&... args) noexcept(noexcept(map_type(stl::forward<Args>(args)...)))
           : map_type{stl::forward<Args>(args)...} {}
 
         /**
@@ -176,8 +173,8 @@ namespace webpp::uri {
                     str.remove_prefix(1);
                 }
                 auto const value = str.substr(0, str.find_first_of('&'));
-                if (auto const res = storage_ref().find(name);
-                    name.empty() || res == this->end() || res->second != value)
+                if (
+                  auto const res = storage_ref().find(name); name.empty() || res == this->end() || res->second != value)
                 {
                     return false;
                 }

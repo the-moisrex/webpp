@@ -36,8 +36,7 @@ namespace webpp::sql {
                 default:
                     err_msg += "bind value returned unexpected value: ";
                     err_msg += stl::to_string(result); // todo: use our own version of this function call
-                    err_msg +=
-                      "; check https://www.sqlite.org/c3ref/bind_blob.html for more info about this error.";
+                    err_msg += "; check https://www.sqlite.org/c3ref/bind_blob.html for more info about this error.";
                     break;
             }
         }
@@ -136,8 +135,7 @@ namespace webpp::sql {
                 check_bind_result(sqlite3_bind_double(stmt, index, static_cast<double>(val)), err_msg);
             } else if constexpr (stl::integral<type>) {
                 if constexpr (sizeof(type) >= 64) {
-                    check_bind_result(sqlite3_bind_int64(stmt, index, static_cast<sqlite3_int64>(val)),
-                                      err_msg);
+                    check_bind_result(sqlite3_bind_int64(stmt, index, static_cast<sqlite3_int64>(val)), err_msg);
                 } else {
                     check_bind_result(sqlite3_bind_int(stmt, index, static_cast<int>(val)), err_msg);
                 }
@@ -160,11 +158,7 @@ namespace webpp::sql {
                       err_msg);
                 } else if constexpr (value_size == 16) { // utf-16
                     check_bind_result(
-                      sqlite3_bind_text16(stmt,
-                                          index,
-                                          static_cast<int>(val.size()),
-                                          val.size(),
-                                          SQLITE_STATIC),
+                      sqlite3_bind_text16(stmt, index, static_cast<int>(val.size()), val.size(), SQLITE_STATIC),
                       err_msg);
                 } else { // normal string
                     check_bind_result(
