@@ -405,12 +405,13 @@ namespace webpp::istl {
         template <typename NT>
         using rebind_alloc_type = typename rebind_alloc_traits<NT>::allocator_type;
 
-        /// only derrived classes
+        /// only derived classes
         template <typename NT>
         static constexpr bool derived_type =
-          !stl::constructible_from<value_type, NT> && stl::is_base_of_v<value_type, stl::remove_cvref_t<NT>>;
+          istl::is_complete_v<stl::remove_cvref_t<NT>> && !stl::constructible_from<value_type, NT> &&
+          stl::is_base_of_v<value_type, stl::remove_cvref_t<NT>>;
 
-        /// check if the specified type is a "dynamic" type (ourself)
+        /// check if the specified type is a "dynamic" type (ourselves)
         template <typename NT>
         static constexpr bool is_derived_dynamic = requires {
             typename stl::remove_cvref_t<NT>::value_type;
