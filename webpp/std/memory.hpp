@@ -426,8 +426,15 @@ namespace webpp::istl {
 
         /// all types that we can put instead of T
         template <typename NT>
-        static constexpr bool compatible_type =
-          /*stl::convertible_to<NT, T> ||*/ istl::cvref_as<T, NT> || derived_type<NT> || stl::constructible_from<T, NT>;
+        static constexpr bool compatible_type = [] {
+            if constexpr (!istl::is_complete_v<stl::remove_cvref_t<NT>>) {
+                // For incomplete types, we can only check constructible_from
+                return stl::constructible_from<T, NT>;
+            } else {
+                return /*stl::convertible_to<NT, T> ||*/ istl::cvref_as<T, NT> || derived_type<NT> ||
+                       stl::constructible_from<T, NT>;
+            }
+        }();
 
         // alloc needs to be before the ptr because it is required for constructing the ptr
         [[no_unique_address]] allocator_type alloc;
