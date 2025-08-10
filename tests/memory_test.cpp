@@ -40,12 +40,16 @@ TYPED_TEST(MemoryTest, Concepts) {
 
     using inc_alloc_type = traits::allocator_type_of<TypeParam, incomplete_class>;
     using inc_dync_type  = istl::dynamic<incomplete_class, inc_alloc_type>;
+
+// Skip these tests on older compilers that have issues with incomplete types
+#    if __cplusplus >= 202'002L && (!defined(__GLIBCXX__) || __GLIBCXX__ > 20'230'000)
     static_assert(stl::is_copy_assignable_v<inc_dync_type>, "It should be copyable");
     static_assert(stl::is_copy_constructible_v<inc_dync_type>, "It should be copyable");
     static_assert(stl::copyable<inc_dync_type>, "It should be copyable");
     static_assert(stl::movable<inc_dync_type>, "It should be movable");
     static_assert(istl::implicitly_default_constructible<inc_dync_type>, "It should be constructible");
     static_assert(!istl::explicitly_default_constructible<inc_dync_type>, "It should be constructible only implicitly");
+#    endif
 }
 
 // TYPED_TEST(MemoryTest, LocalAllocTest) {
