@@ -445,9 +445,10 @@ namespace webpp::unicode {
             }
         }
 
-        template <stl::bidirectional_iterator Iter          = char8_t const*,
-                  stl::bidirectional_iterator EIter         = Iter,
-                  UTF32                       CodePointType = char32_t>
+        template <stl::bidirectional_iterator Iter = char8_t const*,
+                  typename EIter                   = Iter,
+                  UTF32 CodePointType              = char32_t>
+            requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
             using code_point_type    = CodePointType;
             using char_type          = stl::iter_value_t<Iter>;
@@ -522,9 +523,10 @@ namespace webpp::unicode {
             return next_code_point<Iter, CodePointType>(pos);
         }
 
-        template <stl::bidirectional_iterator Iter  = char8_t const*,
-                  stl::bidirectional_iterator EIter = Iter,
-                  typename CodePointType            = char32_t>
+        template <stl::bidirectional_iterator Iter = char8_t const*,
+                  typename EIter                   = Iter,
+                  typename CodePointType           = char32_t>
+            requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
             return next_code_point<Iter, EIter, CodePointType>(pos, end);
         }
@@ -932,7 +934,8 @@ namespace webpp::unicode {
         template <istl::Appendable      StrT,
                   stl::integral         SizeT = istl::size_type_of_t<StrT>,
                   stl::forward_iterator Iter  = char32_t const*,
-                  stl::forward_iterator EIter = Iter>
+                  typename EIter              = Iter>
+            requires stl::sentinel_for<EIter, Iter>
         static constexpr SizeT append(StrT& out, Iter& src, EIter end) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::char_traits_type_of_t<StrT>;
             using src_char_type = stl::iter_value_t<Iter>;
@@ -979,8 +982,10 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
+                  stl::bidirectional_iterator Iter          = char8_t const*,
+                  typename EIter                            = char32_t const*>
+            requires(stl::sentinel_for<EIter, Iter>)
+        [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter const& end) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
             using char_type          = stl::iter_value_t<Iter>;
@@ -1147,16 +1152,19 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, Iter const& end) noexcept {
-            return next_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
+                  stl::bidirectional_iterator Iter          = char8_t const*,
+                  typename EIter                            = Iter>
+            requires stl::sentinel_for<EIter, Iter>
+        [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter const& end) noexcept {
+            return next_code_point<ErrorHandling, CodePointType, Iter, EIter>(pos, end);
         }
 
-        template <stl::bidirectional_iterator Iter = char8_t*>
-        [[nodiscard]] static constexpr bool next_char(Iter& pos, Iter const& end) noexcept {
+        template <stl::bidirectional_iterator Iter = char8_t*, typename EIter = Iter>
+            requires stl::sentinel_for<EIter, Iter>
+        [[nodiscard]] static constexpr bool next_char(Iter& pos, EIter const& end) noexcept {
             using enum error_handling;
             // todo: is there a way to optimize this?
-            static_cast<void>(next_code_point<return_negated, stl::int32_t, Iter>(pos, end));
+            static_cast<void>(next_code_point<return_negated, stl::int32_t, Iter, EIter>(pos, end));
             return pos != end;
         }
 
@@ -1184,8 +1192,10 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, Iter const& beg) noexcept {
+                  stl::bidirectional_iterator Iter          = char8_t const*,
+                  typename EIter                            = Iter>
+            requires stl::sentinel_for<EIter, Iter>
+        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, EIter const& beg) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
             using char_type          = stl::iter_value_t<Iter>;
@@ -1381,16 +1391,21 @@ namespace webpp::unicode {
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*>
-        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos, Iter const& end) noexcept {
-            return prev_code_point<ErrorHandling, CodePointType, Iter>(pos, end);
+                  stl::bidirectional_iterator Iter          = char8_t const*,
+                  typename EIter                            = Iter>
+            requires stl::sentinel_for<EIter, Iter>
+        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos, EIter const& end) noexcept {
+            return prev_code_point<ErrorHandling, CodePointType, Iter, EIter>(pos, end);
         }
 
         /// Length of Code Units in current Code Point:
         ///   Safely check the length of the current code point that the iterator is pointing to even if
         ///   the values are not a valid code point (upon which we return the length of 1).
-        template <stl::bidirectional_iterator Iter = char8_t const*, stl::integral SizeT = stl::size_t>
-        [[nodiscard]] static constexpr SizeT code_point_length(Iter pos, Iter const& end) noexcept {
+        template <stl::integral               SizeT = stl::size_t,
+                  stl::bidirectional_iterator Iter  = char8_t const*,
+                  typename EIter                    = Iter>
+            requires stl::sentinel_for<EIter, Iter>
+        [[nodiscard]] static constexpr SizeT code_point_length(Iter pos, EIter const& end) noexcept {
             using value_type = stl::iter_value_t<Iter>;
             if (pos == end) {
                 return 0;
@@ -1475,7 +1490,10 @@ namespace webpp::unicode {
         /**
          * UTF-32 Bidirectional Iterator
          */
-        template <stl::bidirectional_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
+        template <stl::bidirectional_iterator Iter,
+                  typename EIter               = stl::default_sentinel_t,
+                  error_handling ErrorHandling = error_handling::return_unchanged>
+            requires std::sentinel_for<EIter, Iter>
         struct [[nodiscard]] utf32_bidi_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = char32_t;
@@ -1487,14 +1505,14 @@ namespace webpp::unicode {
             using iterator_concept  = stl::bidirectional_iterator_tag;
 
           private:
-            Iter       beg{};
-            Iter       cur{};
-            Iter       pos{};
-            Iter       send{};
-            value_type code_point{};
+            [[no_unique_address]] Iter  beg{};
+            [[no_unique_address]] Iter  cur{};
+            [[no_unique_address]] Iter  pos{};
+            [[no_unique_address]] EIter send{};
+            value_type                  code_point{};
 
           public:
-            explicit constexpr utf32_bidi_iter(Iter inp_pos, Iter inp_end) noexcept
+            explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
               : beg{inp_pos},
                 cur{inp_pos},
                 pos{inp_pos},
@@ -1547,6 +1565,10 @@ namespace webpp::unicode {
                 return cur == other.cur;
             }
 
+            [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
+            }
+
             [[nodiscard]] constexpr bool at_end() const noexcept {
                 return cur == send;
             }
@@ -1559,9 +1581,9 @@ namespace webpp::unicode {
         /**
          * UTF-32 Specialization of bidirectional UTF iterator wrapper.
          */
-        template <stl::bidirectional_iterator Iter, error_handling ErrorHandling>
-            requires(UTF32<stl::iter_value_t<Iter>>)
-        struct [[nodiscard]] utf32_bidi_iter<Iter, ErrorHandling> {
+        template <stl::bidirectional_iterator Iter, typename EIter, error_handling ErrorHandling>
+            requires(UTF32<stl::iter_value_t<Iter>> && stl::sentinel_for<EIter, Iter>)
+        struct [[nodiscard]] utf32_bidi_iter<Iter, EIter, ErrorHandling> {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = stl::iter_value_t<Iter>;
             using traits            = stl::iterator_traits<Iter>;
@@ -1572,12 +1594,12 @@ namespace webpp::unicode {
             using iterator_concept  = stl::bidirectional_iterator_tag;
 
           private:
-            Iter beg{};
-            Iter pos{};
-            Iter send{};
+            [[no_unique_address]] Iter  beg{};
+            [[no_unique_address]] Iter  pos{};
+            [[no_unique_address]] EIter send{};
 
           public:
-            explicit constexpr utf32_bidi_iter(Iter inp_pos, Iter inp_end) noexcept
+            explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
               : beg{inp_pos},
                 pos{inp_pos},
                 send{inp_end} {}
@@ -1621,6 +1643,10 @@ namespace webpp::unicode {
                 return pos == other.pos;
             }
 
+            [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
+            }
+
             [[nodiscard]] constexpr bool at_end() const noexcept {
                 return pos == send;
             }
@@ -1634,7 +1660,10 @@ namespace webpp::unicode {
          * UTF-32 Forward Iterator Wrapper.
          * Input Iterator may be UTF-8 or UTF-16.
          */
-        template <stl::forward_iterator Iter, error_handling ErrorHandling = error_handling::return_unchanged>
+        template <stl::forward_iterator Iter,
+                  typename EIter               = stl::default_sentinel_t,
+                  error_handling ErrorHandling = error_handling::return_unchanged>
+            requires stl::sentinel_for<EIter, Iter>
         struct [[nodiscard]] utf32_forward_iter {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = char32_t;
@@ -1646,13 +1675,13 @@ namespace webpp::unicode {
             using iterator_concept  = stl::forward_iterator_tag;
 
           private:
-            Iter       cur{};
-            Iter       pos{};
-            Iter       send{};
-            value_type code_point{};
+            [[no_unique_address]] Iter  cur{};
+            [[no_unique_address]] Iter  pos{};
+            [[no_unique_address]] EIter send{};
+            value_type                  code_point{};
 
           public:
-            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept
+            explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept
               : cur{inp_pos},
                 pos{inp_pos},
                 send{inp_end} {
@@ -1691,6 +1720,10 @@ namespace webpp::unicode {
                 return cur == other.cur;
             }
 
+            [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
+            }
+
             [[nodiscard]] constexpr bool at_end() const noexcept {
                 return cur == send;
             }
@@ -1699,9 +1732,9 @@ namespace webpp::unicode {
         /**
          * UTF-32 Specialization of the above UTF forward iterator
          */
-        template <stl::forward_iterator Iter, error_handling ErrorHandling>
-            requires(UTF32<stl::iter_value_t<Iter>>)
-        struct [[nodiscard]] utf32_forward_iter<Iter, ErrorHandling> {
+        template <stl::forward_iterator Iter, typename EIter, error_handling ErrorHandling>
+            requires(UTF32<stl::iter_value_t<Iter>> && stl::sentinel_for<EIter, Iter>)
+        struct [[nodiscard]] utf32_forward_iter<Iter, EIter, ErrorHandling> {
             using difference_type   = stl::iter_difference_t<Iter>;
             using value_type        = stl::iter_value_t<Iter>;
             using traits            = stl::iterator_traits<Iter>;
@@ -1712,11 +1745,11 @@ namespace webpp::unicode {
             using iterator_concept  = stl::forward_iterator_tag;
 
           private:
-            Iter pos{};
-            Iter send{};
+            [[no_unique_address]] Iter  pos{};
+            [[no_unique_address]] EIter send{};
 
           public:
-            explicit constexpr utf32_forward_iter(Iter inp_pos, Iter inp_end) noexcept : pos{inp_pos}, send{inp_end} {}
+            explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept : pos{inp_pos}, send{inp_end} {}
 
             constexpr utf32_forward_iter()                                         = default;
             constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;
@@ -1743,6 +1776,10 @@ namespace webpp::unicode {
 
             [[nodiscard]] constexpr bool operator==(utf32_forward_iter const& other) const noexcept {
                 return pos == other.pos;
+            }
+
+            [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {

@@ -65,7 +65,7 @@ namespace webpp::unicode {
         /// str_end is the end of the string and has nothing to do with the hole's end
         constexpr void mark_code_point(IterT const& cp_beg, IterT const& str_end) noexcept {
             beginp = cp_beg;
-            endp   = stl::next(beginp, checked::code_point_length<IterT, difference_type>(cp_beg, str_end));
+            endp   = stl::next(beginp, checked::code_point_length<difference_type>(cp_beg, str_end));
             assert(beginp < endp);
         }
 
@@ -320,7 +320,7 @@ namespace webpp::unicode {
 
         template <typename IterableT>
         constexpr void append_code_point(IterT start, IterT str_end, IterableT& iters) noexcept {
-            auto const       end = stl::next(start, checked::code_point_length<IterT, difference_type>(start, str_end));
+            auto const       end = stl::next(start, checked::code_point_length<difference_type>(start, str_end));
             utf_range_marker other(start, end);
             this->append(other, iters);
         }
@@ -447,10 +447,9 @@ namespace webpp::unicode {
                 auto             iter_cpy = istl::deref(iter());
                 while (count <= cp_len) {
                     assert(iter_cpy <= reducer->endptr);
-                    auto const cur_len =
-                      checked::code_point_length<iterator, stl::int_fast8_t>(iter_cpy, reducer->end());
-                    iter_cpy += cur_len;
-                    count    += cur_len;
+                    auto const cur_len  = checked::code_point_length<stl::int_fast8_t>(iter_cpy, reducer->end());
+                    iter_cpy           += cur_len;
+                    count              += cur_len;
                 }
                 webpp_assume(count <= 6);
                 return count;
@@ -665,7 +664,7 @@ namespace webpp::unicode {
                 }
 
                 auto const new_len = utf_length_from<unit_type, stl::int_fast8_t>(code_point);
-                auto const cur_len = checked::code_point_length<iterator, difference_type>(iter(), reducer->end());
+                auto const cur_len = checked::code_point_length<difference_type>(iter(), reducer->end());
                 set_inplace(code_point, cur_len, new_len);
             }
         }
@@ -687,7 +686,7 @@ namespace webpp::unicode {
                     return;
                 }
 
-                auto const cur_len  = checked::code_point_length<iterator, stl::int_fast8_t>(iter(), reducer->end());
+                auto const cur_len  = checked::code_point_length<stl::int_fast8_t>(iter(), reducer->end());
                 auto const new_len  = utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_code_point);
                 auto const old_diff = cur_len - new_len;
 
@@ -734,7 +733,7 @@ namespace webpp::unicode {
         constexpr void fallback_hole(utf_range_marker<iterator>& lhs, utf_range_marker<iterator>& rhs)
           noexcept(is_nothrow) {
             if constexpr (!UTF32<unit_type>) {
-                auto const cur_len = checked::code_point_length<iterator, size_type>(iter(), reducer->end());
+                auto const cur_len = checked::code_point_length<size_type>(iter(), reducer->end());
                 if (lhs.has_overlaps(iter(), cur_len)) {
                     lhs.mark(stl::move(rhs));
                 }

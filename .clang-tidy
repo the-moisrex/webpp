@@ -31,10 +31,11 @@ Checks: >
     -fuchsia-default-arguments-declarations,
   linuxkernel-*,
   -*-easily-swappable-parameters,
+  -*-named-parameter,
 CheckOptions:
-  - key:   readability-function-cognitive-complexity.Threshold
+  - key: readability-function-cognitive-complexity.Threshold
     value: 50 # default is 25
-  - key:   readability-function-cognitive-complexity.IgnoreMacros
+  - key: readability-function-cognitive-complexity.IgnoreMacros
     value: true # default is false
 InheritParentConfig: false
 HeaderFileExtensions:

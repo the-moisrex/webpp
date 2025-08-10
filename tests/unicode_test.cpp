@@ -7310,9 +7310,9 @@ TEST(Unicode, UTF8IteratorsTest) {
     auto const*                      sback = spos + 4;
     decompose_iterator const         dbeg{spos, send};
     decompose_iterator const         dend{send, send};
-    utf32_bidi_iter const            ubeg{dbeg, dend};
-    utf32_bidi_iter                  upos{dbeg, dend};
-    [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
+    utf32_bidi_iter const            ubeg{dbeg, std::default_sentinel};
+    utf32_bidi_iter                  upos{dbeg, std::default_sentinel};
+    [[maybe_unused]] utf32_bidi_iter uend{dend, std::default_sentinel};
 
     EXPECT_EQ(prev_code_point(sback, spos), 0xCC);
     EXPECT_EQ(prev_code_point(sback, spos), 0x341); // \xCD\x81
@@ -7327,6 +7327,7 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_NE(upos, uend);
     EXPECT_EQ(*upos, 0x300);
     ++upos;
+    EXPECT_EQ(upos, std::default_sentinel);
     EXPECT_EQ(upos, uend);
     --upos;
     EXPECT_EQ(*upos, 0x300);
@@ -7337,6 +7338,7 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_NE(upos, ubeg);
     --upos;
     EXPECT_EQ(*upos, 0xF0);
+    EXPECT_EQ(*ubeg, 0xF0);
     EXPECT_EQ(upos, ubeg);
 }
 

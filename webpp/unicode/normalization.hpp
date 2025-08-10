@@ -944,6 +944,10 @@ namespace webpp::unicode {
         [[nodiscard]] constexpr bool operator==(decompose_iterator const& other) const noexcept {
             return cur == other.cur;
         }
+
+        [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept {
+            return cur == send;
+        }
     };
 
 

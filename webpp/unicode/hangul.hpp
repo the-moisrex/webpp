@@ -210,7 +210,6 @@ namespace webpp::unicode {
      * Append the decomposed Hangul code point to the output
      * This function does not check if the inputted code point is Hangul or not.
      *
-     * @tparam CharT     char type
      * @tparam StrOrIter Can be a string/string-view/iterator/vector<CharT>/...
      */
     template <istl::Appendable StrOrIter>
