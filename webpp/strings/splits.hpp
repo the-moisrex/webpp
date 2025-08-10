@@ -131,7 +131,7 @@ namespace webpp::strings {
      */
     template <stl::random_access_iterator IterT = char const*, Delimiter... DelimT>
         requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
-    struct splitter {
+    struct [[nodiscard]] splitter {
         static constexpr auto delim_count = sizeof...(DelimT);
 
         using src_iterator            = IterT;
