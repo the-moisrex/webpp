@@ -130,6 +130,7 @@ namespace webpp::tests {
         using webpp::unicode::toNFD;
         using webpp::unicode::checked::utf32_forward_iter;
         using enum norm_form;
+        using diff_type = std::iter_difference_t<std::string::iterator>;
 
         auto const        length = data.size();
         auto const* const ptr    = data.data();
@@ -191,8 +192,9 @@ namespace webpp::tests {
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
         stl::advance(dbeg, dres.size());
-        ASSERT_TRUE(
-          stl::equal(std::reverse_iterator{dbeg}, std::reverse_iterator{dend}, std::next(dres.begin(), dres.size())))
+        ASSERT_TRUE(stl::equal(std::reverse_iterator{dbeg},
+                               std::reverse_iterator{dend},
+                               std::next(dres.begin(), static_cast<diff_type>(dres.size()))))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
 
