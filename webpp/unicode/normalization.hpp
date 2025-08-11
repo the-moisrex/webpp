@@ -397,6 +397,88 @@ namespace webpp::unicode {
         return len; // UTF-8 Length regardless of the output type.
     }
 
+    template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter, typename SEIter = SIter>
+        requires stl::sentinel_for<SEIter, SIter>
+    static constexpr stl::size_t canonical_decompose_prev_to(Iter& out, SIter& spos, SIter const sbeg)
+      noexcept(istl::NothrowAppendable<Iter>) {
+        using details::decomp_breakpoints;
+        using details::decomp_common_pos;
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using unchecked::append;
+        using enum checked::error_handling;
+
+        assert(spos != sbeg);
+        auto       beg        = istl::deref(spos);
+        auto const code_point = checked::prev_code_point<return_unchanged>(spos, sbeg);
+
+        // Not mapped
+        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_decomps) [[unlikely]] {
+        //     return append<Iter, SizeT>(out, code_point);
+        // }
+
+        // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
+        if (is_hangul_code_point(code_point)) {
+            return decompose_hangul<Iter>(out, code_point);
+        }
+
+        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
+        auto const chunk         = code_point >> decomp_index::chunk_shift;
+        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
+        if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
+            stl::size_t clen = 0;
+            for (;;) {
+                clen += append<Iter>(out, *--beg);
+                if (beg == spos) {
+                    break;
+                }
+            }
+            return clen;
+        }
+        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+        decomp_index const code =
+          chunk < starting || chunk >= ending
+            ? decomp_common_pos
+            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+
+        // Not mapped at all, that means the code point is mapped to itself.
+        if (code.max_length == 0) {
+            stl::size_t clen = 0;
+            for (;;) {
+                clen += append<Iter>(out, *--beg);
+                if (beg == spos) {
+                    break;
+                }
+            }
+            return clen;
+        }
+
+        auto const* const start_ptr = decomp_ptr(code, code_point);
+        auto const*       ptr       = start_ptr;
+        auto const* const end_ptr   = start_ptr + code.max_length;
+        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
+
+        webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
+        while (*ptr != u8'\0' && ptr != end_ptr) {
+            append<Iter>(out, ptr);
+        }
+        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
+
+        auto const len = static_cast<stl::size_t>(ptr - start_ptr);
+        if (len == 0) {
+            stl::size_t clen = 0;
+            for (;;) {
+                clen += append<Iter>(out, *--beg);
+                if (beg == spos) {
+                    break;
+                }
+            }
+            return clen;
+        }
+        return len; // UTF-8 Length regardless of the output type.
+    }
+
     /**
      * Go to the first Code Point that requires Decomposition.
      */
@@ -910,16 +992,9 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             --index;
             if (index < 0) {
-                nxt                   = cur;
-                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, beg);
-                if (code_point == max_utf32<char32_t>) {
-                    buf[0] = *nxt;
-                    len    = 1;
-                    index  = 0;
-                    return *this;
-                }
+                nxt          = cur;
                 auto cur_buf = buf.data();
-                canonical_decompose_to(cur_buf, code_point);
+                canonical_decompose_prev_to(cur_buf, cur, beg);
                 len   = static_cast<stl::int8_t>(cur_buf - buf.data());
                 index = stl::max<stl::int8_t>(len - 1, 0);
             }

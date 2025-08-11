@@ -7280,51 +7280,33 @@ TEST(Unicode, UTF32IteratorsTest) {
     [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
 
     // Go forward
-    EXPECT_EQ(*upos, 0xF0);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);
-    ++upos;
-    EXPECT_EQ(*upos, 0x301);
-    ++upos;
-    EXPECT_EQ(*upos, 0x81);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);  // 0xCC Decomposed
-    ++upos;
+    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0x49);
+    EXPECT_EQ(*upos++, 0x301);
+    EXPECT_EQ(*upos++, 0x81);
+    EXPECT_EQ(*upos++, 0x49);  // 0xCC Decomposed
     EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
-    ++upos;
+    EXPECT_EQ(*upos++, 0x300); // 0xCC Decomposed
     EXPECT_EQ(upos, uend);
 
     // Go back
-    --upos;
-    EXPECT_EQ(*upos, 0x300);
-    --upos;
-    EXPECT_EQ(*upos, 0x49);
-    --upos;
-    EXPECT_EQ(*upos, 0x81);
-    --upos;
-    EXPECT_EQ(*upos, 0x301);
-    --upos;
-    EXPECT_EQ(*upos, 0x49);
+    EXPECT_EQ(*--upos, 0x300);
+    EXPECT_EQ(*--upos, 0x49);
+    EXPECT_EQ(*--upos, 0x81);
+    EXPECT_EQ(*--upos, 0x301);
+    EXPECT_EQ(*--upos, 0x49);
     EXPECT_NE(upos, ubeg);
-    --upos;
-    EXPECT_EQ(*upos, 0xF0);
+    EXPECT_EQ(*--upos, 0xF0);
     EXPECT_EQ(upos, ubeg);
 
     // Go forward again
-    EXPECT_EQ(*upos, 0xF0);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);
-    ++upos;
-    EXPECT_EQ(*upos, 0x301);
-    ++upos;
-    EXPECT_EQ(*upos, 0x81);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);  // 0xCC Decomposed
-    ++upos;
+    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0x49);
+    EXPECT_EQ(*upos++, 0x301);
+    EXPECT_EQ(*upos++, 0x81);
+    EXPECT_EQ(*upos++, 0x49);  // 0xCC Decomposed
     EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
-    ++upos;
+    EXPECT_EQ(*upos++, 0x300); // 0xCC Decomposed
     EXPECT_EQ(upos, uend);
 }
 

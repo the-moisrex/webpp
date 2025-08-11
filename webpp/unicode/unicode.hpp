@@ -993,7 +993,6 @@ namespace webpp::unicode {
             using difference_type    = stl::iter_difference_t<Iter>;
 
             if (pos == end) {
-                ++pos;
                 return static_cast<code_point_type>(0); // return \0 if we're at the end already
             }
 
@@ -1172,7 +1171,7 @@ namespace webpp::unicode {
         namespace details {
             static constexpr stl::array<stl::uint8_t, 256> utf8_magic_lengths{
               // std::array<uint8_t, 256> lens;
-              // lens.fill(0);
+              // lens.fill(1);
               // for (uint8_t cp = 0; cp != 0xFF; ++cp) {
               //     lens[(cp & ~0b11) | 0b00]               = 1;
               //     lens[(cp & ~0b11) | 0b01]               = 1;
@@ -1180,14 +1179,14 @@ namespace webpp::unicode {
               //     lens[(cp & ~0b11'1111) | 0b11'1010]     = 3;
               //     lens[(cp & ~0b1111'1111) | 0b1110'1010] = 4;
               // }
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 2, 0,
-              1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 4, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 3, 0, 1, 1, 2,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,
+              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 2,
             };
         } // namespace details
 
@@ -1203,8 +1202,7 @@ namespace webpp::unicode {
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
             if (pos == beg) {
-                --pos;
-                return static_cast<code_point_type>(0);
+                return static_cast<code_point_type>(*pos);
             }
 
             // Last Code Unit of the code point:
@@ -1248,6 +1246,9 @@ namespace webpp::unicode {
                     // 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
 
                     if (code_point >> 6U != 0b10) [[likely]] {
+                        if (code_point >> 6U == 0b11) [[unlikely]] {
+                            break;         // invalid code point requires throwing error correctly
+                        }
                         return code_point; // 1 byte
                     }
 
@@ -1257,24 +1258,23 @@ namespace webpp::unicode {
                     stl::uint8_t      length;        // NOLINT(*-init-variables)
                     if constexpr (!stl::random_access_iterator<Iter>) {
                         // To make support for bidirectional iterators that are not random iterators
-                        auto const prebeg = stl::prev(beg);
-                        stl::int8_t bytes_checked = 4;
+                        stl::int8_t units = 4;
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
-                            if (pos == prebeg) {
-                                bytes_checked = 1;
+                            if (pos == beg) {
+                                units = 1;
                                 break;
                             }
                             cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
-                            if (pos == prebeg) {
-                                bytes_checked = 2;
+                            if (pos == beg) {
+                                units = 2;
                                 break;
                             }
                             cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu2 & 0b1100'0000) >> 2U;
-                            if (pos == prebeg) {
-                                bytes_checked = 3;
+                            if (pos == beg) {
+                                units = 3;
                                 break;
                             }
                             cu1         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1285,7 +1285,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        stl::advance(pos, bytes_checked - length);
+                        stl::advance(pos, units - length);
                     } else if (pos - beg >= 3) {
                         cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1301,18 +1301,17 @@ namespace webpp::unicode {
 
                         stl::advance(pos, 4 - length);
                     } else {
-                        stl::int8_t bytes_checked = 3;
-                        auto const prebeg = stl::prev(beg);
+                        stl::int8_t units = 3;
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
-                            if (pos == prebeg) {
-                                bytes_checked = 1;
+                            if (pos == beg) {
+                                units = 1;
                                 break;
                             }
                             cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
-                            if (pos == prebeg) {
-                                bytes_checked = 2;
+                            if (pos == beg) {
+                                units = 2;
                                 break;
                             }
                             cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1322,7 +1321,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        stl::advance(pos, bytes_checked - length);
+                        stl::advance(pos, units - length);
                     }
 
                     switch (length) {
