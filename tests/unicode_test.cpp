@@ -7372,8 +7372,8 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_EQ(*--upos, 0x301);
     EXPECT_NE(upos, ubeg);
     EXPECT_EQ(*--upos, 0xF0);
-    EXPECT_EQ(*ubeg, 0xF0);
     EXPECT_EQ(upos, ubeg);
+    EXPECT_EQ(upos, webpp::istl::begin_sentinel);
 
     // Going forward again
     EXPECT_EQ(*upos++, 0xF0);

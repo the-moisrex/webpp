@@ -1258,19 +1258,23 @@ namespace webpp::unicode {
                     if constexpr (!stl::random_access_iterator<Iter>) {
                         // To make support for bidirectional iterators that are not random iterators
                         auto const prebeg = stl::prev(beg);
+                        stl::int8_t bytes_checked = 4;
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == prebeg) {
+                                bytes_checked = 1;
                                 break;
                             }
                             cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
                             if (pos == prebeg) {
+                                bytes_checked = 2;
                                 break;
                             }
                             cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu2 & 0b1100'0000) >> 2U;
                             if (pos == prebeg) {
+                                bytes_checked = 3;
                                 break;
                             }
                             cu1         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1281,7 +1285,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        stl::advance(pos, 4 - length);
+                        stl::advance(pos, bytes_checked - length);
                     } else if (pos - beg >= 3) {
                         cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1297,15 +1301,18 @@ namespace webpp::unicode {
 
                         stl::advance(pos, 4 - length);
                     } else {
+                        stl::int8_t bytes_checked = 3;
                         auto const prebeg = stl::prev(beg);
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == prebeg) {
+                                bytes_checked = 1;
                                 break;
                             }
                             cu3         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                             magic_code |= (cu3 & 0b1100'0000) >> 4U;
                             if (pos == prebeg) {
+                                bytes_checked = 2;
                                 break;
                             }
                             cu2         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1315,7 +1322,7 @@ namespace webpp::unicode {
                         // NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
                         length = details::utf8_magic_lengths[magic_code];
 
-                        stl::advance(pos, 3 - length);
+                        stl::advance(pos, bytes_checked - length);
                     }
 
                     switch (length) {
