@@ -16,6 +16,42 @@
 
 namespace webpp::istl {
 
+    /**
+     * Same idea as std::default_sentinel in the standard library, but this sentinel will define the one before the
+     * beginning (not the beginning itself).
+     *
+     * The usage is to use it in the operator==(prebeg_sentinel_t) when the those fat iterators already have access
+     * to the beginning of the iterator.
+     *
+     * This allows for the wrapper iterators that they themselves need to access to the beginning of the iterator (to
+     * allow for bidirectional movements), to not have to store a fat iterator, and the current fat iterator at the same
+     * time.
+     */
+    static constexpr struct prebeg_sentinel_t {
+        /// Return the std::prev(beg) or prebeg_sentinel itself based on if the IterT supports it or not.
+        template <typename IterT>
+        [[nodiscard]] constexpr auto operator()(IterT const& beg) const noexcept;
+    } prebeg_sentinel;
+
+    template <typename T>
+    concept supports_prebeg_sentinel = requires(T iter) {
+        {
+            iter == prebeg_sentinel
+        } -> std::same_as<bool>;
+    };
+
+    template <typename IterT>
+    constexpr auto prebeg_sentinel_t::operator()(IterT const& beg) const noexcept {
+        if constexpr (supports_prebeg_sentinel<IterT>) {
+            return *this;
+        } else {
+            return stl::prev(beg);
+        }
+    }
+
+    template <typename IterT>
+    using prebeg_iterator = stl::conditional_t<supports_prebeg_sentinel<IterT>, prebeg_sentinel_t, IterT>;
+
     template <typename T>
     concept Iterable = requires(T iter) {
         {

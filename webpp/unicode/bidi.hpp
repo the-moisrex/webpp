@@ -218,6 +218,7 @@ namespace webpp::unicode {
         //     Bidi property NSM.
 
         auto          pos      = beg;
+        auto const    prebeg   = istl::prebeg_sentinel(beg);
         char32_t      last_cp  = 0;
         auto const    first_cp = checked::next_code_point<return_zero_char>(pos, endp);
         auto const    first    = to_underlying(direction_of(first_cp));
@@ -263,7 +264,7 @@ namespace webpp::unicode {
             // 6. It ends with (semi-regex): (L|EN)NSM*
             if ((last & bidi_mask(L, EN)) != 0) [[unlikely]] {
                 for (;;) {
-                    last_cp = checked::prev_code_point<return_zero_char>(pos, endp);
+                    last_cp = checked::prev_code_point<return_zero_char>(pos, prebeg);
                     if (last_cp == 0) [[unlikely]] {
                         valid = false;
                         break;
@@ -283,7 +284,7 @@ namespace webpp::unicode {
             if ((last & bidi_mask(R, AL, EN, AN)) != 0) {
                 // For Example, Every Dhivehi word ends with a combining mark (NSM)
                 for (;;) {
-                    last_cp = checked::prev_code_point<return_zero_char>(pos, endp);
+                    last_cp = checked::prev_code_point<return_zero_char>(pos, prebeg);
                     if (last_cp == 0) [[unlikely]] {
                         valid = false;
                         break;

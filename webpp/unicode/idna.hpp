@@ -313,6 +313,7 @@ namespace webpp::unicode::idna {
         using enum joiner_type;
 
         auto     spos       = sbeg;
+        auto const prebeg     = istl::prebeg_sentinel(sbeg);
         char32_t code_point = 0;
         for (;;) {
             code_point = checked::next_code_point<return_unchanged>(spos, send);
@@ -329,7 +330,7 @@ namespace webpp::unicode::idna {
                     // ZERO WIDTH NON-JOINER
                     bool       is_valid  = false;
                     auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, send);
+                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, prebeg);
 
                     // ccc_of(0) is not gonna be Virama, so we don't need to check for it
                     if (is_ccc_of(before_cp, ccc_props::Virama)) {
@@ -337,7 +338,7 @@ namespace webpp::unicode::idna {
                     }
 
                     for (;;) {
-                        auto const cur_cp = checked::prev_code_point<return_unchanged>(pos, sbeg);
+                        auto const cur_cp = checked::prev_code_point<return_unchanged>(pos, prebeg);
                         if (cur_cp == 0) {
                             break;
                         }
@@ -378,7 +379,7 @@ namespace webpp::unicode::idna {
                     // a virama), to control the required display of such conjuncts.
                 case U'\x200D': { // ZERO WIDTH JOINER
                     auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, send);
+                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, prebeg);
                     // ccc_of(0) is not gonna be Virama, so we don't need to check
                     if (!is_ccc_of(before_cp, ccc_props::Virama)) {
                         return false;

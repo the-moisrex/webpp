@@ -158,8 +158,9 @@ namespace webpp::unicode {
      *       No                    ccc(A) < ccc(B)
      *       Yes                   ccc(A) > ccc(B)
      */
-    template <stl::indirectly_swappable Iter = char8_t*>
-    static constexpr void canonical_reorder(Iter start, Iter const& end)
+    template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
+        requires stl::sentinel_for<EIter, Iter>
+    static constexpr void canonical_reorder(Iter start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using checked::next_code_point;
         using checked::prev_code_point;
@@ -170,7 +171,8 @@ namespace webpp::unicode {
             return;
         }
 
-        auto pos = start;
+        auto       pos    = start;
+        auto const prebeg = istl::prebeg_sentinel(start);
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
@@ -186,9 +188,9 @@ namespace webpp::unicode {
             }
 
             // todo: instead of swapping code points, use one single rotate or move_backward
-            while (back_pos != start) {
+            while (back_pos != prebeg) {
                 auto       prev    = back_pos;
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, prebeg);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -202,8 +204,9 @@ namespace webpp::unicode {
      * Check if the string is canonically ordered (will be when it has run through
      * the canonical_reorder function).
      */
-    template <stl::bidirectional_iterator Iter>
-    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter start, Iter const end) noexcept {
+    template <stl::bidirectional_iterator Iter, typename EIter>
+        requires stl::sentinel_for<EIter, Iter>
+    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter start, EIter const end) noexcept {
         using checked::next_code_point;
         using checked::prev_code_point;
         using enum checked::error_handling;
@@ -212,7 +215,8 @@ namespace webpp::unicode {
             return true;
         }
 
-        auto pos = start;
+        auto       pos    = start;
+        auto const prebeg = istl::prebeg_sentinel(start);
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
@@ -227,9 +231,9 @@ namespace webpp::unicode {
                 continue; // Skip non-combining characters (starter code points)
             }
 
-            while (back_pos != start) {
+            while (back_pos != prebeg) {
                 auto       prev    = back_pos;
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, prebeg);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -853,17 +857,17 @@ namespace webpp::unicode {
         using iterator_concept  = stl::bidirectional_iterator_tag;
 
       private:
-        Iter                         beg{};
-        Iter                         cur{};
-        Iter                         pos{};
-        Iter                         send{};
-        stl::int8_t                  index = 0;
-        stl::int8_t                  len   = 0;
-        decomposed_array<value_type> buf{};
+        [[no_unique_address]] istl::prebeg_iterator<Iter> prebeg{};
+        [[no_unique_address]] Iter                        cur{};
+        [[no_unique_address]] Iter                        pos{};
+        [[no_unique_address]] EIter                       send{};
+        stl::int8_t                                       index = 0;
+        stl::int8_t                                       len   = 0;
+        decomposed_array<value_type>                      buf{};
 
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, EIter inp_end) noexcept
-          : beg{inp_pos},
+          : prebeg{istl::prebeg_sentinel(inp_pos)},
             cur{inp_pos},
             pos{inp_pos},
             send{inp_end} {
@@ -909,7 +913,7 @@ namespace webpp::unicode {
             --index;
             if (index < 0) {
                 pos                   = cur;
-                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, beg);
+                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, prebeg);
                 if (code_point == max_utf32<char32_t>) {
                     buf[0] = *pos;
                     len    = 1;
@@ -954,6 +958,10 @@ namespace webpp::unicode {
             requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
         {
             return cur == send;
+        }
+
+        [[nodiscard]] constexpr bool operator==(istl::prebeg_sentinel_t) const noexcept {
+            return cur == prebeg;
         }
     };
 
