@@ -7318,6 +7318,7 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_EQ(prev_code_point(sback, spos), 0x341); // \xCD\x81
     EXPECT_EQ(prev_code_point(sback, spos), 0xF0);
 
+    // Going forward
     EXPECT_EQ(*upos, 0xF0);
     ++upos;
     EXPECT_EQ(*upos, 0x301);
@@ -7329,6 +7330,8 @@ TEST(Unicode, UTF8IteratorsTest) {
     ++upos;
     EXPECT_EQ(upos, std::default_sentinel);
     EXPECT_EQ(upos, uend);
+
+    // Going back
     --upos;
     EXPECT_EQ(*upos, 0x300);
     --upos;
@@ -7339,7 +7342,21 @@ TEST(Unicode, UTF8IteratorsTest) {
     --upos;
     EXPECT_EQ(*upos, 0xF0);
     EXPECT_EQ(*ubeg, 0xF0);
+    EXPECT_EQ(upos, webpp::istl::prebeg_sentinel);
     EXPECT_EQ(upos, ubeg);
+
+    // Going forward again
+    EXPECT_EQ(*upos, 0xF0);
+    ++upos;
+    EXPECT_EQ(*upos, 0x301);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);
+    ++upos;
+    EXPECT_NE(upos, uend);
+    EXPECT_EQ(*upos, 0x300);
+    ++upos;
+    EXPECT_EQ(upos, std::default_sentinel);
+    EXPECT_EQ(upos, uend);
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -20,8 +20,9 @@ namespace webpp::istl {
      * Same idea as std::default_sentinel in the standard library, but this sentinel will define the one before the
      * beginning (not the beginning itself).
      *
-     * The usage is to use it in the operator==(prebeg_sentinel_t) when the those fat iterators already have access
-     * to the beginning of the iterator.
+     * The usage is to use it in the operator==(prebeg_sentinel_t) of a fat iterator that already has access
+     * to the beginning, but a wrapper iterator also needs that, but we don't want the wrapper iterator to also
+     * hold a new fat iterator for storing the beginning as well while the fat iterator itself has that.
      *
      * This allows for the wrapper iterators that they themselves need to access to the beginning of the iterator (to
      * allow for bidirectional movements), to not have to store a fat iterator, and the current fat iterator at the same
