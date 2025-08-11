@@ -31,27 +31,35 @@ namespace webpp::istl {
     static constexpr struct prebeg_sentinel_t {
         /// Return the std::prev(beg) or prebeg_sentinel itself based on if the IterT supports it or not.
         template <typename IterT>
-        [[nodiscard]] constexpr auto operator()(IterT const& beg) const noexcept;
+        [[nodiscard]] constexpr auto operator()(IterT const& beg) const noexcept {
+            if constexpr (stl::sentinel_for<IterT, prebeg_sentinel_t>) {
+                return *this;
+            } else {
+                return stl::prev(beg);
+            }
+        }
     } prebeg_sentinel;
 
-    template <typename T>
-    concept supports_prebeg_sentinel = requires(T iter) {
-        {
-            iter == prebeg_sentinel
-        } -> std::same_as<bool>;
-    };
-
     template <typename IterT>
-    constexpr auto prebeg_sentinel_t::operator()(IterT const& beg) const noexcept {
-        if constexpr (supports_prebeg_sentinel<IterT>) {
-            return *this;
-        } else {
-            return stl::prev(beg);
+    using prebeg_iterator = stl::conditional_t<stl::sentinel_for<IterT, prebeg_sentinel_t>, prebeg_sentinel_t, IterT>;
+
+    /**
+     * This is a "begin sentinel".
+     */
+    static constexpr struct begin_sentinel_t {
+        /// Return the beg or begin_sentinel itself based on if the IterT supports it or not.
+        template <typename IterT>
+        [[nodiscard]] constexpr decltype(auto) operator()(IterT const& beg) const noexcept {
+            if constexpr (stl::sentinel_for<IterT, begin_sentinel_t>) {
+                return *this;
+            } else {
+                return beg;
+            }
         }
-    }
+    } begin_sentinel;
 
     template <typename IterT>
-    using prebeg_iterator = stl::conditional_t<supports_prebeg_sentinel<IterT>, prebeg_sentinel_t, IterT>;
+    using begin_iterator = stl::conditional_t<stl::sentinel_for<IterT, begin_sentinel_t>, begin_sentinel_t, IterT>;
 
     template <typename T>
     concept Iterable = requires(T iter) {

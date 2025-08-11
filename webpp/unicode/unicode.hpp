@@ -993,6 +993,7 @@ namespace webpp::unicode {
             using difference_type    = stl::iter_difference_t<Iter>;
 
             if (pos == end) {
+                ++pos;
                 return static_cast<code_point_type>(0); // return \0 if we're at the end already
             }
 
@@ -1195,13 +1196,14 @@ namespace webpp::unicode {
                   stl::bidirectional_iterator Iter          = char8_t const*,
                   typename EIter                            = Iter>
             requires stl::sentinel_for<EIter, Iter>
-        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, EIter const& prebeg) noexcept {
+        [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos, EIter const& beg) noexcept {
             using enum error_handling;
             using code_point_type    = CodePointType;
             using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
 
-            if (pos == prebeg) {
+            if (pos == beg) {
+                --pos;
                 return static_cast<code_point_type>(0);
             }
 
@@ -1219,12 +1221,12 @@ namespace webpp::unicode {
                     auto const cu2              = cu_last;
                     bool const requires_2_units = (cu2 & 0xFC00) == 0xDC00;
                     if (requires_2_units) {
-                        if (pos == prebeg) [[unlikely]] {
+                        if (pos == beg) [[unlikely]] {
                             break;
                         }
                         auto const cu1  = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         error          |= (cu1 & 0xFC00) != 0xD800;
-                        // error      |= (cu2 & 0xFC00) != 0xDC00;
+                        // error       |= (cu2 & 0xFC00) != 0xDC00;
                         code_point     &= 0x3FF;
                         code_point     |= (cu1 & 0x3FF) << 10U;
                         code_point     += 0x1'0000;
@@ -1255,8 +1257,9 @@ namespace webpp::unicode {
                     stl::uint8_t      length;        // NOLINT(*-init-variables)
                     if constexpr (!stl::random_access_iterator<Iter>) {
                         // To make support for bidirectional iterators that are not random iterators
+                        auto const prebeg = stl::prev(beg);
                         for (;;) {
-                            magic_code            |= (cu4 & 0b1100'0000) >> 6U;
+                            magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == prebeg) {
                                 break;
                             }
@@ -1279,7 +1282,7 @@ namespace webpp::unicode {
                         length = details::utf8_magic_lengths[magic_code];
 
                         stl::advance(pos, 4 - length);
-                    } else if (pos - prebeg >= 3) {
+                    } else if (pos - beg >= 3) {
                         cu3 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu2 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
                         cu1 = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
@@ -1294,8 +1297,9 @@ namespace webpp::unicode {
 
                         stl::advance(pos, 4 - length);
                     } else {
+                        auto const prebeg = stl::prev(beg);
                         for (;;) {
-                            magic_code            |= (cu4 & 0b1100'0000) >> 6U;
+                            magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == prebeg) {
                                 break;
                             }
@@ -1392,8 +1396,8 @@ namespace webpp::unicode {
                   stl::bidirectional_iterator Iter          = char8_t const*,
                   typename EIter                            = Iter>
             requires stl::sentinel_for<EIter, Iter>
-        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos, EIter const& prebeg) noexcept {
-            return prev_code_point<ErrorHandling, CodePointType, Iter, EIter>(pos, prebeg);
+        [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos, EIter const& beg) noexcept {
+            return prev_code_point<ErrorHandling, CodePointType, Iter, EIter>(pos, beg);
         }
 
         /// Length of Code Units in current Code Point:
@@ -1503,23 +1507,23 @@ namespace webpp::unicode {
             using iterator_concept  = stl::bidirectional_iterator_tag;
 
           private:
-            [[no_unique_address]] istl::prebeg_iterator<Iter> prebeg{};
-            [[no_unique_address]] Iter                        cur{};
-            [[no_unique_address]] Iter                        pos{};
-            [[no_unique_address]] EIter                       send{};
-            value_type                                        code_point{};
+            [[no_unique_address]] istl::begin_iterator<Iter> beg{};
+            [[no_unique_address]] Iter                       lpos{}; // lower-bound of the Unicode code point
+            [[no_unique_address]] Iter                       upos{}; // upper-bound of the Unicode code point
+            [[no_unique_address]] EIter                      send{};
+            value_type                                       code_point{};
 
           public:
             explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
-              : prebeg{istl::prebeg_sentinel(inp_pos)},
-                cur{inp_pos},
-                pos{inp_pos},
+              : beg{istl::begin_sentinel(inp_pos)},
+                lpos{inp_pos},
+                upos{inp_pos},
                 send{inp_end} {
                 using enum error_handling;
-                if (pos == send) {
+                if (upos == send) {
                     return;
                 }
-                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+                code_point = checked::next_code_point<ErrorHandling, value_type>(upos, send);
             }
 
             constexpr utf32_bidi_iter()                                      = default;
@@ -1531,15 +1535,15 @@ namespace webpp::unicode {
 
             constexpr utf32_bidi_iter& operator++() noexcept {
                 using enum error_handling;
-                cur        = pos;
-                code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+                lpos       = upos;
+                code_point = checked::next_code_point<ErrorHandling, value_type>(upos, send);
                 return *this;
             }
 
             constexpr utf32_bidi_iter& operator--() noexcept {
                 using enum error_handling;
-                pos        = cur;
-                code_point = checked::prev_code_point<ErrorHandling, value_type>(cur, prebeg);
+                upos       = lpos;
+                code_point = checked::prev_code_point<ErrorHandling, value_type>(lpos, beg);
                 return *this;
             }
 
@@ -1560,7 +1564,7 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool operator==(utf32_bidi_iter const& other) const noexcept {
-                return cur == other.cur;
+                return lpos == other.lpos;
             }
 
             [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
@@ -1573,16 +1577,12 @@ namespace webpp::unicode {
                 return at_end();
             }
 
-            [[nodiscard]] constexpr bool operator==(istl::prebeg_sentinel_t) const noexcept {
-                return cur == prebeg;
+            [[nodiscard]] constexpr bool operator==(istl::begin_sentinel_t) const noexcept {
+                return lpos == beg;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
-                return cur == send;
-            }
-
-            [[nodiscard]] constexpr bool at_start() const noexcept {
-                return cur == prebeg;
+                return lpos == send;
             }
         };
 
@@ -1602,14 +1602,14 @@ namespace webpp::unicode {
             using iterator_concept  = stl::bidirectional_iterator_tag;
 
           private:
-            // todo: do we need prebeg in this specialization?
-            [[no_unique_address]] istl::prebeg_iterator<Iter> prebeg{};
-            [[no_unique_address]] Iter                        pos{};
-            [[no_unique_address]] EIter                       send{};
+            // todo: do we need beg in this specialization?
+            [[no_unique_address]] istl::begin_iterator<Iter> beg{};
+            [[no_unique_address]] Iter                       pos{};
+            [[no_unique_address]] EIter                      send{};
 
           public:
             explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
-              : prebeg{istl::prebeg_sentinel(inp_pos)},
+              : beg{istl::begin_sentinel(inp_pos)},
                 pos{inp_pos},
                 send{inp_end} {}
 
@@ -1662,8 +1662,8 @@ namespace webpp::unicode {
                 return at_end();
             }
 
-            [[nodiscard]] constexpr bool operator==(istl::prebeg_sentinel_t) const noexcept {
-                return pos == prebeg;
+            [[nodiscard]] constexpr bool operator==(istl::begin_sentinel_t) const noexcept {
+                return pos == beg;
             }
 
             [[nodiscard]] constexpr bool at_end() const noexcept {
@@ -1671,7 +1671,7 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool at_start() const noexcept {
-                return pos == prebeg;
+                return pos == beg;
             }
         };
 

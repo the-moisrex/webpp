@@ -6784,7 +6784,7 @@ TEST(Unicode, NormalizationTests) {
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfd8, toNFD(source8))
-                << "  Source: " << to_hex(source) << "  Source: " << to_hex(source) << "\n  NFD: " << to_hex(nfd)
+                << "  Source: " << to_hex(source) << "\n  Source8: " << to_hex(source8) << "\n  NFD: " << to_hex(nfd)
                 << "\n  NFC: " << to_hex(nfc) << "\n  line: " << line << "\n  index: " << test_index
                 << "\n  Decomposed: " << to_hex(canonical_decomposed<std::u32string>(source));
           }
@@ -7266,6 +7266,7 @@ TEST(Unicode, UTF32IteratorsTest) {
     utf32_bidi_iter                  upos{dbeg, dend};
     [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
 
+    // Go forward
     EXPECT_EQ(*upos, 0xF0);
     ++upos;
     EXPECT_EQ(*upos, 0x49);
@@ -7280,6 +7281,8 @@ TEST(Unicode, UTF32IteratorsTest) {
     EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
     ++upos;
     EXPECT_EQ(upos, uend);
+
+    // Go back
     --upos;
     EXPECT_EQ(*upos, 0x300);
     --upos;
@@ -7294,6 +7297,22 @@ TEST(Unicode, UTF32IteratorsTest) {
     --upos;
     EXPECT_EQ(*upos, 0xF0);
     EXPECT_EQ(upos, ubeg);
+
+    // Go forward again
+    EXPECT_EQ(*upos, 0xF0);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);
+    ++upos;
+    EXPECT_EQ(*upos, 0x301);
+    ++upos;
+    EXPECT_EQ(*upos, 0x81);
+    ++upos;
+    EXPECT_EQ(*upos, 0x49);  // 0xCC Decomposed
+    ++upos;
+    EXPECT_NE(upos, uend);
+    EXPECT_EQ(*upos, 0x300); // 0xCC Decomposed
+    ++upos;
+    EXPECT_EQ(upos, uend);
 }
 
 TEST(Unicode, UTF8IteratorsTest) {
@@ -7314,47 +7333,46 @@ TEST(Unicode, UTF8IteratorsTest) {
     utf32_bidi_iter                  upos{dbeg, std::default_sentinel};
     [[maybe_unused]] utf32_bidi_iter uend{dend, std::default_sentinel};
 
+    utf32_bidi_iter npos{spos, send};
+    EXPECT_EQ(*npos++, 0xF0);
+    EXPECT_EQ(*npos++, 0x341); // \xCD\x81
+    EXPECT_EQ(*npos++, 0xCC);
+    EXPECT_EQ(npos, std::default_sentinel);
+    EXPECT_EQ(*--npos, 0xCC);
+    EXPECT_EQ(*--npos, 0x341); // \xCD\x81
+    EXPECT_EQ(*--npos, 0xF0);
+    EXPECT_EQ(npos, webpp::istl::begin_sentinel);
+
     EXPECT_EQ(prev_code_point(sback, spos), 0xCC);
     EXPECT_EQ(prev_code_point(sback, spos), 0x341); // \xCD\x81
+    EXPECT_EQ(sback, spos + 1);
     EXPECT_EQ(prev_code_point(sback, spos), 0xF0);
+    EXPECT_EQ(sback, spos);
 
     // Going forward
-    EXPECT_EQ(*upos, 0xF0);
-    ++upos;
-    EXPECT_EQ(*upos, 0x301);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);
-    ++upos;
+    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0x301);
+    EXPECT_EQ(*upos++, 0x49);
     EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos, 0x300);
-    ++upos;
+    EXPECT_EQ(*upos++, 0x300);
     EXPECT_EQ(upos, std::default_sentinel);
     EXPECT_EQ(upos, uend);
 
     // Going back
-    --upos;
-    EXPECT_EQ(*upos, 0x300);
-    --upos;
-    EXPECT_EQ(*upos, 0x49);
-    --upos;
-    EXPECT_EQ(*upos, 0x301);
+    EXPECT_EQ(*--upos, 0x300);
+    EXPECT_EQ(*--upos, 0x49);
+    EXPECT_EQ(*--upos, 0x301);
     EXPECT_NE(upos, ubeg);
-    --upos;
-    EXPECT_EQ(*upos, 0xF0);
+    EXPECT_EQ(*--upos, 0xF0);
     EXPECT_EQ(*ubeg, 0xF0);
-    EXPECT_EQ(upos, webpp::istl::prebeg_sentinel);
     EXPECT_EQ(upos, ubeg);
 
     // Going forward again
-    EXPECT_EQ(*upos, 0xF0);
-    ++upos;
-    EXPECT_EQ(*upos, 0x301);
-    ++upos;
-    EXPECT_EQ(*upos, 0x49);
-    ++upos;
+    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0x301);
+    EXPECT_EQ(*upos++, 0x49);
     EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos, 0x300);
-    ++upos;
+    EXPECT_EQ(*upos++, 0x300);
     EXPECT_EQ(upos, std::default_sentinel);
     EXPECT_EQ(upos, uend);
 }

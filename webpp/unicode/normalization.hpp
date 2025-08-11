@@ -171,8 +171,7 @@ namespace webpp::unicode {
             return;
         }
 
-        auto       pos    = start;
-        auto const prebeg = istl::prebeg_sentinel(start);
+        auto pos = start;
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
@@ -188,9 +187,9 @@ namespace webpp::unicode {
             }
 
             // todo: instead of swapping code points, use one single rotate or move_backward
-            while (back_pos != prebeg) {
+            while (back_pos != start) {
                 auto       prev    = back_pos;
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, prebeg);
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -215,8 +214,7 @@ namespace webpp::unicode {
             return true;
         }
 
-        auto       pos    = start;
-        auto const prebeg = istl::prebeg_sentinel(start);
+        auto pos = start;
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = pos;
@@ -231,9 +229,9 @@ namespace webpp::unicode {
                 continue; // Skip non-combining characters (starter code points)
             }
 
-            while (back_pos != prebeg) {
+            while (back_pos != start) {
                 auto       prev    = back_pos;
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, prebeg);
+                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -857,26 +855,26 @@ namespace webpp::unicode {
         using iterator_concept  = stl::bidirectional_iterator_tag;
 
       private:
-        [[no_unique_address]] istl::prebeg_iterator<Iter> prebeg{};
-        [[no_unique_address]] Iter                        cur{};
-        [[no_unique_address]] Iter                        pos{};
-        [[no_unique_address]] EIter                       send{};
-        stl::int8_t                                       index = 0;
-        stl::int8_t                                       len   = 0;
-        decomposed_array<value_type>                      buf{};
+        [[no_unique_address]] istl::begin_iterator<Iter> beg{};
+        [[no_unique_address]] Iter                       cur{};
+        [[no_unique_address]] Iter                       nxt{};
+        [[no_unique_address]] EIter                      send{};
+        stl::int8_t                                      index = 0;
+        stl::int8_t                                      len   = 0;
+        decomposed_array<value_type>                     buf{};
 
       public:
         explicit constexpr decompose_iterator(Iter inp_pos, EIter inp_end) noexcept
-          : prebeg{istl::prebeg_sentinel(inp_pos)},
+          : beg{istl::begin_sentinel(inp_pos)},
             cur{inp_pos},
-            pos{inp_pos},
+            nxt{inp_pos},
             send{inp_end} {
             using enum checked::error_handling;
-            if (pos == send) {
+            if (nxt == send) {
                 return;
             }
             auto cur_buf = buf.data();
-            canonical_decompose_to(cur_buf, pos, send);
+            canonical_decompose_to(cur_buf, nxt, send);
             len = static_cast<stl::int8_t>(cur_buf - buf.data());
             assert(len >= 0 && static_cast<stl::size_t>(len) <= buf.size());
         }
@@ -894,12 +892,12 @@ namespace webpp::unicode {
             ++index;
             if (index >= len) {
                 index = 0;
-                cur   = pos;
-                if (send == pos) {
+                cur   = nxt;
+                if (send == nxt) {
                     len = 0;
                 } else {
                     auto cur_buf = buf.data();
-                    canonical_decompose_to(cur_buf, pos, send);
+                    canonical_decompose_to(cur_buf, nxt, send);
                     len = static_cast<stl::int8_t>(cur_buf - buf.data());
                 }
             }
@@ -912,10 +910,10 @@ namespace webpp::unicode {
             using enum checked::error_handling;
             --index;
             if (index < 0) {
-                pos                   = cur;
-                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, prebeg);
+                nxt                   = cur;
+                auto const code_point = checked::prev_code_point<return_max_utf32>(cur, beg);
                 if (code_point == max_utf32<char32_t>) {
-                    buf[0] = *pos;
+                    buf[0] = *nxt;
                     len    = 1;
                     index  = 0;
                     return *this;
@@ -960,8 +958,8 @@ namespace webpp::unicode {
             return cur == send;
         }
 
-        [[nodiscard]] constexpr bool operator==(istl::prebeg_sentinel_t) const noexcept {
-            return cur == prebeg;
+        [[nodiscard]] constexpr bool operator==(istl::begin_sentinel_t) const noexcept {
+            return cur == beg;
         }
     };
 
