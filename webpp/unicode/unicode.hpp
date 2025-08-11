@@ -1569,6 +1569,12 @@ namespace webpp::unicode {
                 return at_end();
             }
 
+            [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+                requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
+            {
+                return at_end();
+            }
+
             [[nodiscard]] constexpr bool at_end() const noexcept {
                 return cur == send;
             }
@@ -1644,6 +1650,12 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
+            }
+
+            [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+                requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
+            {
                 return at_end();
             }
 
@@ -1724,6 +1736,12 @@ namespace webpp::unicode {
                 return at_end();
             }
 
+            [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+                requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
+            {
+                return at_end();
+            }
+
             [[nodiscard]] constexpr bool at_end() const noexcept {
                 return cur == send;
             }
@@ -1779,6 +1797,12 @@ namespace webpp::unicode {
             }
 
             [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+                return at_end();
+            }
+
+            [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+                requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
+            {
                 return at_end();
             }
 

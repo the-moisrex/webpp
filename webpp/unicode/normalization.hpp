@@ -322,7 +322,8 @@ namespace webpp::unicode {
      * This function is not the same as taking char32_t as input since bad UTF-8 code units that have
      * been turned into UTF-32 will not go back to being UTF-8 the same way they came in.
      */
-    template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter>
+    template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter, typename SEIter = SIter>
+        requires stl::sentinel_for<SEIter, SIter>
     static constexpr stl::size_t canonical_decompose_to(Iter& out, SIter& spos, SIter const send)
       noexcept(istl::NothrowAppendable<Iter>) {
         using details::decomp_breakpoints;
@@ -839,7 +840,8 @@ namespace webpp::unicode {
      * This is not the most performant way of doing this, so use it in slow paths of your code.
      * This allocates NOTHING.
      */
-    template <stl::bidirectional_iterator Iter>
+    template <stl::bidirectional_iterator Iter, typename EIter = stl::default_sentinel_t>
+        requires stl::sentinel_for<EIter, Iter>
     struct decompose_iterator {
         using difference_type   = stl::iter_difference_t<Iter>;
         using value_type        = stl::iter_value_t<Iter>;
@@ -849,7 +851,6 @@ namespace webpp::unicode {
         using const_reference   = value_type const&;
         using iterator_category = stl::bidirectional_iterator_tag;
         using iterator_concept  = stl::bidirectional_iterator_tag;
-
 
       private:
         Iter                         beg{};
@@ -861,7 +862,7 @@ namespace webpp::unicode {
         decomposed_array<value_type> buf{};
 
       public:
-        explicit constexpr decompose_iterator(Iter inp_pos, Iter inp_end) noexcept
+        explicit constexpr decompose_iterator(Iter inp_pos, EIter inp_end) noexcept
           : beg{inp_pos},
             cur{inp_pos},
             pos{inp_pos},
@@ -945,7 +946,13 @@ namespace webpp::unicode {
             return cur == other.cur;
         }
 
-        [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept {
+        [[nodiscard]] constexpr bool operator==(EIter const&) const noexcept {
+            return cur == send;
+        }
+
+        [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+            requires(!stl::convertible_to<EIter, stl::default_sentinel_t>)
+        {
             return cur == send;
         }
     };
