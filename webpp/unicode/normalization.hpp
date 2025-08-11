@@ -160,7 +160,7 @@ namespace webpp::unicode {
      */
     template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    static constexpr void canonical_reorder(Iter start, EIter const& end)
+    static constexpr void canonical_reorder(Iter const start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using checked::next_code_point;
         using checked::prev_code_point;
@@ -171,24 +171,24 @@ namespace webpp::unicode {
             return;
         }
 
-        auto pos = start;
+        auto pos = istl::deref(start);
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
-            auto       back_pos = pos;
+            auto       back_pos = istl::deref(pos);
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip the next code point as well, the next one is never going to be swapped with this one
-                if (!checked::next_char<Iter>(pos, end)) {
+                if (pos == end) {
                     break;
                 }
-
+                checked::next_char<Iter>(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
 
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
-                auto       prev    = back_pos;
+                auto       prev    = istl::deref(back_pos);
                 auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
@@ -205,7 +205,7 @@ namespace webpp::unicode {
      */
     template <stl::bidirectional_iterator Iter, typename EIter>
         requires stl::sentinel_for<EIter, Iter>
-    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter start, EIter const end) noexcept {
+    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter const start, EIter const end) noexcept {
         using checked::next_code_point;
         using checked::prev_code_point;
         using enum checked::error_handling;
@@ -214,23 +214,23 @@ namespace webpp::unicode {
             return true;
         }
 
-        auto pos = start;
+        auto pos = istl::deref(start);
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
-            auto       back_pos = pos;
+            auto       back_pos = istl::deref(pos);
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 // skip the next code point as well, the next one is never going to be swapped with this one
-                if (!checked::next_char<Iter>(pos, end)) {
+                if (pos == end) {
                     break;
                 }
-
+                checked::next_char<Iter>(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
 
             while (back_pos != start) {
-                auto       prev    = back_pos;
+                auto       prev    = istl::deref(back_pos);
                 auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
@@ -1022,6 +1022,10 @@ namespace webpp::unicode {
         using stl::to_underlying;
         using enum quick_check_state;
         using enum checked::error_handling;
+
+        if (spos == send) {
+            return YES;
+        }
 
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);

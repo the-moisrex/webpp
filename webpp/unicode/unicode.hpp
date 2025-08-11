@@ -1162,7 +1162,7 @@ namespace webpp::unicode {
 
         template <stl::bidirectional_iterator Iter = char8_t*, typename EIter = Iter>
             requires stl::sentinel_for<EIter, Iter>
-        [[nodiscard]] static constexpr bool next_char(Iter& pos, EIter const& end) noexcept {
+        static constexpr bool next_char(Iter& pos, EIter const& end) noexcept {
             using enum error_handling;
             // todo: is there a way to optimize this?
             static_cast<void>(next_code_point<return_negated, stl::int32_t, Iter, EIter>(pos, end));
