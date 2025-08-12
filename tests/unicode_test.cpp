@@ -7261,6 +7261,17 @@ TEST(Unicode, FuzzFixes6) {
     unicode_fuzz("\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xB8\xCC\x0A"sv);
 }
 
+TEST(Unicode, FuzzFixes7) {
+    using webpp::tests::unicode_fuzz;
+    using std::string_view_literals::operator""sv;
+
+    unicode_fuzz("\x0A\xB8\xCC\xCC\xCC\xCC\xCC\xB8\xC0\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8"sv);
+
+    unicode_fuzz("\xCC\xCC\xCC\xCC\xCC\xAD\xCC\xCC\xCC\xCC\xCC\x0A\x0A"sv);
+    unicode_fuzz("\xCC\x24\xCC\xCC\xCC\xAD\xCC\xCC\xCC\xCC\xCC\x0A\x0A"sv);
+    unicode_fuzz("\xCC\x24\xB0\xCC\xCC\xAD\xCC\xCC\xCC\xCC\xCC\x0A\x0A"sv);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;

@@ -17,10 +17,10 @@
 namespace webpp::istl {
 
     /**
-     * Same idea as std::default_sentinel in the standard library, but this sentinel will define the one before the
-     * beginning (not the beginning itself).
+     * Same idea as std::default_sentinel in the standard library, but this sentinel will define the
+     * beginning (the beginning itself and not the one before the beginning).
      *
-     * The usage is to use it in the operator==(prebeg_sentinel_t) of a fat iterator that already has access
+     * The usage is to use it in the operator==(begin_sentinel_t) of a fat iterator that already has access
      * to the beginning, but a wrapper iterator also needs that, but we don't want the wrapper iterator to also
      * hold a new fat iterator for storing the beginning as well while the fat iterator itself has that.
      *
@@ -28,26 +28,8 @@ namespace webpp::istl {
      * allow for bidirectional movements), to not have to store a fat iterator, and the current fat iterator at the same
      * time.
      */
-    static constexpr struct prebeg_sentinel_t {
-        /// Return the std::prev(beg) or prebeg_sentinel itself based on if the IterT supports it or not.
-        template <typename IterT>
-        [[nodiscard]] constexpr auto operator()(IterT const& beg) const noexcept {
-            if constexpr (stl::sentinel_for<prebeg_sentinel_t, IterT>) {
-                return *this;
-            } else {
-                return stl::prev(beg);
-            }
-        }
-    } prebeg_sentinel;
-
-    template <typename IterT>
-    using prebeg_iterator = stl::conditional_t<stl::sentinel_for<prebeg_sentinel_t, IterT>, prebeg_sentinel_t, IterT>;
-
-    /**
-     * This is a "begin sentinel".
-     */
     static constexpr struct begin_sentinel_t {
-        /// Return the beg or begin_sentinel itself based on if the IterT supports it or not.
+        /// Return the 'beg' or begin_sentinel itself based on if the IterT supports it or not.
         template <typename IterT>
         [[nodiscard]] constexpr decltype(auto) operator()(IterT const& beg) const noexcept {
             if constexpr (stl::sentinel_for<begin_sentinel_t, IterT>) {
