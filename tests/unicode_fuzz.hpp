@@ -173,6 +173,10 @@ namespace webpp::tests {
         EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
           << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str));
 
+        auto ordered_str = str;
+        unicode::canonical_reorder(ordered_str);
+        EXPECT_TRUE(unicode::is_canonically_ordered(ordered_str.begin(), ordered_str.end()));
+
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
