@@ -1140,7 +1140,6 @@ namespace webpp::unicode {
     }
 
     [[nodiscard]] static constexpr bool is_composable(char32_t const lhs, char32_t const rhs) noexcept {
-        using unicode::max_utf32;
         return canonical_composed<max_utf32<char32_t>>(lhs, rhs) != max_utf32<char32_t>;
     }
 
@@ -1151,11 +1150,7 @@ namespace webpp::unicode {
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
     [[nodiscard]] static constexpr bool
     is_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
-        using checked::next_code_point;
-        using checked::next_code_point_copy;
         using checked::utf32_forward_iter;
-        using istl::deref;
-        using enum checked::error_handling;
 
         utf32_forward_iter rep_pin{spos, send};
         utf32_forward_iter cp1_pin{spos, send};
@@ -1205,7 +1200,6 @@ namespace webpp::unicode {
     template <norm_form Form = norm_form::NFC, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const send) noexcept {
         using enum norm_form;
-        using enum checked::error_handling;
         if constexpr (gibberish == Form) {
             static_assert_false(
               Iter,

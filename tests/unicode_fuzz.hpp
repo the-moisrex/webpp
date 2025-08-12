@@ -119,6 +119,77 @@ namespace webpp::tests {
 
     // NOLINTEND(*)
 
+
+    void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
+        using webpp::tests::to_hex;
+        using webpp::unicode::toNFC;
+        using webpp::unicode::toNFD;
+
+        // toNFC
+        EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
+          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str)) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd);
+        EXPECT_EQ(toNFC(str), toNFC(toNFD(str)))
+          << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd);
+
+        // toNFD
+        EXPECT_EQ(toNFD(str), toNFD(toNFC(str)))
+          << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd);
+        EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
+          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str)) << "\n  NFC Answer: " << to_hex(nfc)
+          << "\n  NFD Answer: " << to_hex(nfd);
+
+        // toNFKC
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
+
+        // toNFKD
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
+    }
+
+    void check_idempotent(auto const& str) {
+        using webpp::tests::to_hex;
+        using webpp::unicode::toNFC;
+        using webpp::unicode::toNFD;
+
+        // toNFC
+        EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
+          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str));
+        EXPECT_EQ(toNFC(str), toNFC(toNFD(str))) << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str);
+
+        // toNFD
+        EXPECT_EQ(toNFD(str), toNFD(toNFC(str))) << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str);
+        EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
+          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str));
+
+        // toNFKC
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
+
+        // toNFKD
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
+    }
+
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
         using webpp::unicode::canonical_decomposed;
@@ -168,6 +239,7 @@ namespace webpp::tests {
         auto const dres8  = canonical_decomposed<std::u8string>(str8);
         auto const dres16 = canonical_decomposed<std::u16string>(str16);
         auto const dres32 = canonical_decomposed<std::u32string>(str32);
+        check_idempotent(str);
         if (!str8.empty()) {
             if (length / 2 != 0) {
                 ASSERT_NE(dres16.size(), 0) << to_hex(str);

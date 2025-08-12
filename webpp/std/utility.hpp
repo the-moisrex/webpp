@@ -10,6 +10,14 @@
 
 namespace webpp::istl {
 
+    static constexpr struct [[nodiscard]] basic_noop {
+        constexpr void operator()(auto&&...) const noexcept {}
+
+        constexpr basic_noop& operator=(auto&&) noexcept {
+            return *this;
+        }
+
+    } noop;
 
     /**
      *  @brief  Convert a rvalue or lvalue to a value

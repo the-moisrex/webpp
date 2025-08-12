@@ -6659,44 +6659,6 @@ namespace {
         return result;
     }
 
-    void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
-        using webpp::tests::to_hex;
-        using webpp::unicode::toNFC;
-        using webpp::unicode::toNFD;
-
-        // toNFC
-        EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
-          << "  Src: " << to_hex(str) << "\n  NFC Layer 1: " << to_hex(toNFC(str)) << "\n  NFC Answer: " << to_hex(nfc)
-          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
-        EXPECT_EQ(toNFC(str), toNFC(toNFD(str)))
-          << "  NFD: " << to_hex(toNFD(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
-          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
-
-        // toNFD
-        EXPECT_EQ(toNFD(str), toNFD(toNFC(str)))
-          << "  NFC: " << to_hex(toNFC(str)) << "\n  Source: " << to_hex(str) << "\n  NFC Answer: " << to_hex(nfc)
-          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
-        EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
-          << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str)) << "\n  NFC Answer: " << to_hex(nfc)
-          << "\n  NFD Answer: " << to_hex(nfd) << "\n  index: " << test_index;
-
-        // toNFKC
-        // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
-        // EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
-        // EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
-        // EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
-        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
-        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
-
-        // toNFKD
-        // EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
-        // EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
-        // EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
-        // EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
-        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
-        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
-    }
-
     std::string report_composition_list(std::u32string_view str) {
         std::ostringstream    report;
         std::vector<char32_t> comps;
@@ -6821,10 +6783,10 @@ TEST(Unicode, NormalizationTests) {
               EXPECT_TRUE(std::equal(dbeg, dend, dres.begin()));
           }
 
-          check_idempotent(source, nfc, nfd);
+          webpp::tests::check_idempotent(source, nfc, nfd);
 
           if constexpr (enable_utf8_composition_tests) {
-              check_idempotent(source8, nfc, nfd);
+              webpp::tests::check_idempotent(source8, nfc, nfd);
           }
 
           ++test_index;
@@ -6835,7 +6797,7 @@ TEST(Unicode, NormalizationTests) {
     EXPECT_EQ(toNFC<std::u32string>(U"\x61\x5ae\x300\x302\x315\x62"), U"\xe0\x5ae\x302\x315\x62");
     EXPECT_EQ(canonical_decomposed<u32string>(U'\u1e0a'), U"D\x307") << "Ḋ";
     EXPECT_EQ(canonical_decomposed<u32string>(u32string_view{U"\x1e0a"}), U"D\x307") << "Ḋ";
-    check_idempotent(u32string{U"\u00b5"}, u32string{}, u32string{});
+    webpp::tests::check_idempotent(u32string{U"\u00b5"}, u32string{}, u32string{});
 
 
     std::filesystem::path const cur_file   = __FILE__;

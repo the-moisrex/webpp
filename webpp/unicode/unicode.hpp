@@ -1325,13 +1325,10 @@ namespace webpp::unicode {
                     }
 
                     switch (length) {
-                        [[unlikely]] case 0: {
+                        [[unlikely]] case 0:
                             code_point = cu_last;
                             break;
-                        }
-                        case 1: {
-                            return code_point;
-                        }
+                        case 1: return code_point;
                         case 2: {
                             code_point &= 0b0011'1111U;
                             code_point |= (cu3 & 0b0001'1111) << 6U;

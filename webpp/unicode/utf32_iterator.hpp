@@ -214,20 +214,16 @@ namespace webpp::unicode::checked {
 
       private:
         [[no_unique_address]] Iter  cur{};
-        [[no_unique_address]] Iter  pos{};
         [[no_unique_address]] EIter send{};
         value_type                  code_point{};
 
       public:
-        explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept
-          : cur{inp_pos},
-            pos{inp_pos},
-            send{inp_end} {
+        explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept : cur{inp_pos}, send{inp_end} {
             using enum error_handling;
-            if (pos == send) {
+            if (cur == send) {
                 return;
             }
-            code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            code_point = checked::next_code_point_copy<ErrorHandling, value_type>(cur, send);
         }
 
         constexpr utf32_forward_iter()                                         = default;
@@ -239,12 +235,12 @@ namespace webpp::unicode::checked {
 
         constexpr utf32_forward_iter& operator++() noexcept {
             using enum error_handling;
-            cur        = pos;
-            code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            stl::advance(cur, utf_length_from<stl::iter_value_t<Iter>>(code_point));
+            code_point = checked::next_code_point_copy<ErrorHandling, value_type>(cur, send);
             return *this;
         }
 
-        constexpr const_reference operator*() const noexcept {
+        [[nodiscard]] constexpr const_reference operator*() const noexcept {
             return code_point;
         }
 
