@@ -7239,6 +7239,7 @@ TEST(Unicode, FuzzFixes6Explicit) {
     using std::string_view_literals::operator""sv;
 
     EXPECT_TRUE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
+    EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
 }
 
 TEST(Unicode, UTF32IteratorsTest) {

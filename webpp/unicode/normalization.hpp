@@ -236,7 +236,10 @@ namespace webpp::unicode {
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
-                [[unlikely]] { return false; }
+                if (*back_pos != *prev) [[unlikely]] {
+                    return false;
+                }
+                back_pos = prev;
             }
         }
         return true;
