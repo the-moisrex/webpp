@@ -176,6 +176,9 @@ namespace webpp::tests {
         auto ordered_str = str;
         unicode::canonical_reorder(ordered_str);
         EXPECT_TRUE(unicode::is_canonically_ordered(ordered_str.begin(), ordered_str.end()));
+        auto ordered_str2 = ordered_str;
+        unicode::canonical_reorder(ordered_str2);
+        EXPECT_EQ(ordered_str, ordered_str2);
 
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));

@@ -758,7 +758,8 @@ namespace webpp::unicode {
      */
     template <stl::integral               SizeT = stl::size_t,
               stl::random_access_iterator Iter  = char32_t*,
-              stl::random_access_iterator EIter = char32_t const* const>
+              typename EIter                    = char32_t const* const>
+        requires stl::sentinel_for<EIter, Iter>
     [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT canonical_compose(
       Iter& ptr,
       EIter end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
@@ -1147,24 +1148,20 @@ namespace webpp::unicode {
     }
 
     /**
-     * Check if the source would become the second pair of iterators.
+     * Check if the source would become the second pair of iterators after composition.
      */
     template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
     [[nodiscard]] static constexpr bool
     is_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
-        using checked::utf32_forward_iter;
+        checked::utf32_forward_iter cp1_pin{spos, send};
+        checked::utf32_forward_iter rep_cpin{cpos, cend};
 
-        utf32_forward_iter rep_pin{spos, send};
-        utf32_forward_iter cp1_pin{spos, send};
-        utf32_forward_iter cp2_pin{spos, send};
-        utf32_forward_iter rep_cpin{cpos, cend};
-
-        for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_pin, ++rep_cpin) {
+        bool is_valid = true;
+        for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_cpin) {
             auto       cp1         = *cp1_pin;
             auto const starter_ccp = *rep_cpin;
-            cp2_pin                = cp1_pin;
-            ++cp2_pin;
+            auto       cp2_pin     = stl::next(cp1_pin);
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -1177,20 +1174,13 @@ namespace webpp::unicode {
                 if (ccc == 0) [[likely]] {
                     break;
                 }
-                prev_ccc = ccc;
-
-                ++rep_pin;
-                ++rep_cpin;
-                if (*rep_cpin != cp2) [[unlikely]] {
-                    return false;
-                }
+                prev_ccc  = ccc;
+                is_valid &= *++rep_cpin == cp2;
             }
-
-            if (starter_ccp != cp1) [[unlikely]] {
-                return false;
-            }
+            is_valid &= starter_ccp == cp1;
         }
-        return true;
+        is_valid &= rep_cpin.at_end();
+        return is_valid;
     }
 
     /**
