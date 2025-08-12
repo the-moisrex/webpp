@@ -49,6 +49,7 @@ set(ALL_SOURCES_SHORT
 
         unicode/unicode_concepts.hpp
         unicode/unicode.hpp
+        unicode/utf32_iterator.hpp
         unicode/unicode_ptr.hpp
         unicode/utf_reducer.hpp
         unicode/unicode_char_traits.hpp

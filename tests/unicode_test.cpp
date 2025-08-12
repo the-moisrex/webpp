@@ -7272,6 +7272,13 @@ TEST(Unicode, FuzzFixes7) {
     unicode_fuzz("\xCC\x24\xB0\xCC\xCC\xAD\xCC\xCC\xCC\xCC\xCC\x0A\x0A"sv);
 }
 
+TEST(Unicode, FuzzFixes6Explicit) {
+    using webpp::unicode::isNFC;
+    using std::string_view_literals::operator""sv;
+
+    EXPECT_TRUE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;

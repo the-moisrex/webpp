@@ -112,6 +112,7 @@
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
+#include "./utf32_iterator.hpp"
 #include "./utf_reducer.hpp"
 
 #include <cassert>
@@ -1146,9 +1147,10 @@ namespace webpp::unicode {
     /**
      * Check if the source would become the second pair of iterators.
      */
-    template <stl::forward_iterator Iter, stl::forward_iterator CIter>
+    template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
+        requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
     [[nodiscard]] static constexpr bool
-    is_composable_to(Iter spos, Iter const send, CIter cpos, CIter const cend) noexcept {
+    is_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
         using checked::next_code_point;
         using checked::next_code_point_copy;
         using checked::utf32_forward_iter;
@@ -1248,8 +1250,8 @@ namespace webpp::unicode {
 
             // Slow path:
             decompose_iterator const dbeg{spos, send};
-            decompose_iterator const dend{send, send};
-            return is_canonically_ordered(dbeg, dend) && is_composable_to(dbeg, dend, spos, send);
+            return is_canonically_ordered(dbeg, stl::default_sentinel) &&
+                   is_composable_to(dbeg, stl::default_sentinel, spos, send);
         } else {
             // todo: NFKC and NFKD
             static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");
