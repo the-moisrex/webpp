@@ -121,9 +121,9 @@ namespace webpp::tests {
 
 
     void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
-        using webpp::tests::to_hex;
-        using webpp::unicode::toNFC;
-        using webpp::unicode::toNFD;
+        using tests::to_hex;
+        using unicode::toNFC;
+        using unicode::toNFD;
 
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
@@ -159,9 +159,9 @@ namespace webpp::tests {
     }
 
     void check_idempotent(auto const& str) {
-        using webpp::tests::to_hex;
-        using webpp::unicode::toNFC;
-        using webpp::unicode::toNFD;
+        using tests::to_hex;
+        using unicode::toNFC;
+        using unicode::toNFD;
 
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
@@ -176,6 +176,10 @@ namespace webpp::tests {
         auto ordered_str = str;
         unicode::canonical_reorder(ordered_str);
         EXPECT_TRUE(unicode::is_canonically_ordered(ordered_str.begin(), ordered_str.end()));
+        if (ordered_str != str) {
+            EXPECT_FALSE(unicode::is_canonically_ordered(str.begin(), str.end()))
+              << "  Src: " << to_hex(str) << "\n  Ordered: " << to_hex(ordered_str);
+        }
         auto ordered_str2 = ordered_str;
         unicode::canonical_reorder(ordered_str2);
         EXPECT_EQ(ordered_str, ordered_str2);
@@ -199,14 +203,14 @@ namespace webpp::tests {
 
     // NOLINTBEGIN(*-pro-type-reinterpret-cast)
     static void unicode_fuzz(std::string_view data) {
-        using webpp::unicode::canonical_decomposed;
-        using webpp::unicode::decompose_iterator;
-        using webpp::unicode::isNFC;
-        using webpp::unicode::norm_form;
-        using webpp::unicode::normalize;
-        using webpp::unicode::toNFC;
-        using webpp::unicode::toNFD;
-        using webpp::unicode::checked::utf32_forward_iter;
+        using unicode::canonical_decomposed;
+        using unicode::decompose_iterator;
+        using unicode::isNFC;
+        using unicode::norm_form;
+        using unicode::normalize;
+        using unicode::toNFC;
+        using unicode::toNFD;
+        using unicode::checked::utf32_forward_iter;
         using enum norm_form;
         using diff_type = std::iter_difference_t<std::string::iterator>;
 

@@ -9,6 +9,7 @@
       <file path="$PROJECT_DIR$/.ccls-cache" />
       <file path="$PROJECT_DIR$/build-dev-clang" />
       <file path="$PROJECT_DIR$/build-dev-gcc" />
+      <file path="$PROJECT_DIR$/build-release" />
     </excludeRoots>
   </component>
   <component name="MarkdownSettingsMigration">
