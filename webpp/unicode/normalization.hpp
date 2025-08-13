@@ -179,10 +179,10 @@ namespace webpp::unicode {
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
-                // skip the next code point as well, the next one is never going to be swapped with this one
                 if (pos == end) {
                     break;
                 }
+                // skip the next code point as well, the next one is never going to be swapped with this one
                 checked::next_char<Iter>(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
