@@ -6743,11 +6743,20 @@ TEST(Unicode, FuzzFixes) {
     using webpp::unicode::toNFD;
     using std::string_view_literals::operator""sv;
 
+    // In JavaScript, you can verify this using this:
+    // @code
+    //   String.prototype.toNFC = function() {
+    //      return Buffer.from(this.split("").map(a => a.charCodeAt(0))).toString('utf-8').normalize('NFC');
+    //   };
+    //   String.prototype.isNFC = function() {
+    //      return this.toNFC() == this;
+    //   };
+    // @endcode
     EXPECT_EQ(u"", toNFC<std::u16string>(u""));
-    EXPECT_EQ("\xac", toNFC<std::string>("\xac"));
-    EXPECT_EQ("\x90\xe", toNFC<std::string>("\x90\xe"));
-    EXPECT_EQ("\xa\x8a", toNFC<std::string>("\xa\x8a"));
-    EXPECT_EQ("\xb6\x4a", toNFC<std::string>("\xb6\x4a"));
+    EXPECT_EQ("�", toNFC<std::string>("\xac"));
+    EXPECT_EQ("�\x0E", toNFC<std::string>("\x90\xe"));
+    EXPECT_EQ("\n�", toNFC<std::string>("\xa\x8a"));
+    EXPECT_EQ("�J", toNFC<std::string>("\xb6\x4a"));
     EXPECT_EQ(U"\xa\xc0", toNFC<std::u32string>(U"\xa\xc0"));
     EXPECT_EQ(U"\xce", toNFC<std::u32string>(U"\xce"));
     EXPECT_EQ(U"\xce", toNFC<std::u32string>(U"\xce"));
@@ -7125,23 +7134,30 @@ TEST(Unicode, FuzzFixes6Explicit) {
     using std::string_literals::operator""s;
     using webpp::unicode::is_canonically_ordered;
 
-    EXPECT_TRUE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
-    EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
+    EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
+    EXPECT_FALSE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
 
     EXPECT_FALSE(isNFC("\xF0\xCD\x81\xCC"sv));
-    EXPECT_EQ("\xF0\xCD\x81\xCC"sv, toNFC("\xF0\xCD\x81\xCC"s));
+    EXPECT_EQ("�́�"sv, toNFC("\xF0\xCD\x81\xCC"s));
     EXPECT_FALSE(isNFC("\xF0\xCC\x81\x49\xCC\x80"sv));
-    EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
 
-    EXPECT_TRUE(isNFC(
+    EXPECT_FALSE(isNFC(
       "\n\x1\0\0\xFF\xDF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0"sv));
     auto const aaa =
       "\n\x1\0\0\xFF\xDF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0"s;
-    EXPECT_EQ(toNFC(aaa), aaa);
+    EXPECT_NE(toNFC(aaa), aaa);
+}
 
-    EXPECT_EQ(toNFC("\xFF"s), "\xFF"sv);
+TEST(Unicode, FuzzFixes7Explicit) {
+    using webpp::unicode::toNFC;
+    using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
+
+    EXPECT_EQ(toNFC("\xFF"s), "\xEF\xBF\xBD"sv);
     EXPECT_EQ(toNFC(U"\xFF"s), U"\xFF"sv);
     EXPECT_EQ(toNFC(u"\xFF"s), u"\xFF"sv);
+
+    EXPECT_EQ(toNFC(u8"\xD6\xEB\x8C\x8C\x8C\xCC\x8C\x8C"s), u8"�댌�̌�"sv);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
@@ -7201,7 +7217,7 @@ TEST(Unicode, UTF8IteratorsTest) {
     using webpp::unicode::checked::utf32_forward_iter;
     using std::string_view_literals::operator""sv;
 
-    auto                             str   = u8"\xF0\xCD\x81\xCC"sv;
+    auto                             str   = u8"\xF0\xCD\x81\xCC"sv; // �́�
     auto const* const                spos  = str.begin();
     auto const* const                send  = str.end();
     auto const*                      sback = spos + 4;
@@ -7212,13 +7228,13 @@ TEST(Unicode, UTF8IteratorsTest) {
     [[maybe_unused]] utf32_bidi_iter uend{dend, std::default_sentinel};
 
     utf32_bidi_iter npos{spos, send};
-    EXPECT_EQ(*npos++, 0xF0);
+    EXPECT_EQ(*npos++, 0xFFFD);
     EXPECT_EQ(*npos++, 0x341); // \xCD\x81
-    EXPECT_EQ(*npos++, 0xCC);
+    EXPECT_EQ(*npos++, 0xFFFD);
     EXPECT_EQ(npos, std::default_sentinel);
-    EXPECT_EQ(*--npos, 0xCC);
+    EXPECT_EQ(*--npos, 0xFFFD);
     EXPECT_EQ(*--npos, 0x341); // \xCD\x81
-    EXPECT_EQ(*--npos, 0xF0);
+    EXPECT_EQ(*--npos, 0xFFFD);
     EXPECT_EQ(npos, webpp::istl::begin_sentinel);
 
     EXPECT_EQ(prev_code_point(sback, spos), 0xCC);
@@ -7228,29 +7244,23 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_EQ(sback, spos);
 
     // Going forward
-    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0xFFFD);
     EXPECT_EQ(*upos++, 0x301);
-    EXPECT_EQ(*upos++, 0x49);
-    EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos++, 0x300);
-    EXPECT_EQ(upos, std::default_sentinel);
+    EXPECT_EQ(*upos++, 0xFFFD);
     EXPECT_EQ(upos, uend);
+    EXPECT_EQ(upos, std::default_sentinel);
 
     // Going back
-    EXPECT_EQ(*--upos, 0x300);
-    EXPECT_EQ(*--upos, 0x49);
+    EXPECT_EQ(*--upos, 0xFFFD);
     EXPECT_EQ(*--upos, 0x301);
-    EXPECT_NE(upos, ubeg);
-    EXPECT_EQ(*--upos, 0xF0);
+    EXPECT_EQ(*--upos, 0xFFFD);
     EXPECT_EQ(upos, ubeg);
     EXPECT_EQ(upos, webpp::istl::begin_sentinel);
 
     // Going forward again
-    EXPECT_EQ(*upos++, 0xF0);
+    EXPECT_EQ(*upos++, 0xFFFD);
     EXPECT_EQ(*upos++, 0x301);
-    EXPECT_EQ(*upos++, 0x49);
-    EXPECT_NE(upos, uend);
-    EXPECT_EQ(*upos++, 0x300);
+    EXPECT_EQ(*upos++, 0xFFFD);
     EXPECT_EQ(upos, std::default_sentinel);
     EXPECT_EQ(upos, uend);
 }

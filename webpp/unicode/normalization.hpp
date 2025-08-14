@@ -168,6 +168,8 @@ namespace webpp::unicode {
         using unchecked::swap_code_points;
         using enum checked::error_handling;
 
+        // using replacement character here in this function does not change the length of the string.
+
         if (start == end) {
             return;
         }
@@ -190,7 +192,7 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto       prev    = istl::deref(back_pos);
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto const prev_cp = prev_code_point<return_replacement_char, char32_t, Iter>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -232,7 +234,7 @@ namespace webpp::unicode {
 
             while (back_pos != start) {
                 auto       prev     = istl::deref(back_pos);
-                auto const prev_cp  = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto const prev_cp  = prev_code_point<return_replacement_char, char32_t, Iter>(prev, start);
                 auto const prev_ccc = ccc_of(prev_cp);
                 if (prev_ccc <= ccc) {
                     break;
@@ -334,162 +336,30 @@ namespace webpp::unicode {
         requires stl::sentinel_for<SEIter, SIter>
     static constexpr stl::size_t canonical_decompose_to(Iter& out, SIter& spos, SIter const send)
       noexcept(istl::NothrowAppendable<Iter>) {
-        using details::decomp_breakpoints;
-        using details::decomp_common_pos;
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_values;
-        using unchecked::append;
         using enum checked::error_handling;
 
         assert(spos != send);
-        auto       beg        = istl::deref(spos);
-        auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
-
-        // Not mapped
-        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_decomps) [[unlikely]] {
-        //     return append<Iter, SizeT>(out, code_point);
-        // }
-
-        // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
-        if (is_hangul_code_point(code_point)) {
-            return decompose_hangul<Iter>(out, code_point);
-        }
-
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
-        auto const chunk         = code_point >> decomp_index::chunk_shift;
-        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
-        if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
-            stl::size_t clen = 0;
-            for (; beg != spos; ++beg) {
-                clen += append<Iter>(out, *beg);
-            }
-            return clen;
-        }
-        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
-        decomp_index const code =
-          chunk < starting || chunk >= ending
-            ? decomp_common_pos
-            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
-
-        // Not mapped at all, that means the code point is mapped to itself.
-        if (code.max_length == 0) {
-            stl::size_t clen = 0;
-            for (; beg != spos; ++beg) {
-                clen += append<Iter>(out, *beg);
-            }
-            return clen;
-        }
-
-        auto const* const start_ptr = decomp_ptr(code, code_point);
-        auto const*       ptr       = start_ptr;
-        auto const* const end_ptr   = start_ptr + code.max_length;
-        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
-
-        webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
-        while (*ptr != u8'\0' && ptr != end_ptr) {
-            append<Iter>(out, ptr);
-        }
-        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
-
-        auto const len = static_cast<stl::size_t>(ptr - start_ptr);
-        if (len == 0) {
-            stl::size_t clen = 0;
-            for (; beg != spos; ++beg) {
-                clen += append<Iter>(out, *beg);
-            }
-            return clen;
-        }
-        return len; // UTF-8 Length regardless of the output type.
+        auto const code_point = checked::next_code_point<return_replacement_char>(spos, send);
+        return canonical_decompose_to(out, code_point);
     }
 
     template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter, typename SEIter = SIter>
         requires stl::sentinel_for<SEIter, SIter>
     static constexpr stl::size_t canonical_decompose_prev_to(Iter& out, SIter& spos, SIter const sbeg)
       noexcept(istl::NothrowAppendable<Iter>) {
-        using details::decomp_breakpoints;
-        using details::decomp_common_pos;
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_values;
-        using unchecked::append;
         using enum checked::error_handling;
 
-        assert(spos != sbeg);
         auto       beg        = istl::deref(spos);
-        auto const code_point = checked::prev_code_point<return_unchanged>(spos, sbeg);
-
-        // Not mapped
-        // if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_decomps) [[unlikely]] {
-        //     return append<Iter, SizeT>(out, code_point);
-        // }
-
-        // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
-        if (is_hangul_code_point(code_point)) {
-            return decompose_hangul<Iter>(out, code_point);
-        }
-
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
-        auto const chunk         = code_point >> decomp_index::chunk_shift;
-        auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
-        if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
-            stl::size_t clen = 0;
-            for (;;) {
-                clen += append<Iter>(out, *--beg);
-                if (beg == spos) {
-                    break;
-                }
-            }
-            return clen;
-        }
-        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
-        decomp_index const code =
-          chunk < starting || chunk >= ending
-            ? decomp_common_pos
-            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
-
-        // Not mapped at all, that means the code point is mapped to itself.
-        if (code.max_length == 0) {
-            stl::size_t clen = 0;
-            for (;;) {
-                clen += append<Iter>(out, *--beg);
-                if (beg == spos) {
-                    break;
-                }
-            }
-            return clen;
-        }
-
-        auto const* const start_ptr = decomp_ptr(code, code_point);
-        auto const*       ptr       = start_ptr;
-        auto const* const end_ptr   = start_ptr + code.max_length;
-        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
-
-        webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
-        while (*ptr != u8'\0' && ptr != end_ptr) {
-            append<Iter>(out, ptr);
-        }
-        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
-
-        auto const len = static_cast<stl::size_t>(ptr - start_ptr);
-        if (len == 0) {
-            stl::size_t clen = 0;
-            for (;;) {
-                clen += append<Iter>(out, *--beg);
-                if (beg == spos) {
-                    break;
-                }
-            }
-            return clen;
-        }
-        return len; // UTF-8 Length regardless of the output type.
+        auto const code_point = checked::prev_code_point<return_replacement_char>(spos, sbeg);
+        return canonical_decompose_to(out, code_point);
     }
 
     /**
      * Go to the first Code Point that requires Decomposition.
      */
-    template <stl::forward_iterator Iter>
-    static constexpr void skip_to_decomp(Iter& spos, Iter const send) noexcept {
+    template <stl::forward_iterator Iter, typename EIter = Iter>
+        requires stl::sentinel_for<EIter, Iter>
+    static constexpr void skip_to_decomp(Iter& spos, EIter const send) noexcept {
         using details::decomp_breakpoints;
         using details::decomp_common_pos;
         using details::decomp_index;
@@ -499,9 +369,10 @@ namespace webpp::unicode {
 
 
         for (auto pos = spos; pos != send; spos = pos) {
-            auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
+            auto const code_point = checked::next_code_point<return_negated>(pos, send);
 
-            if (is_hangul_code_point(code_point)) {
+            // we'll consider replacement character as a special one.
+            if (static_cast<stl::int32_t>(code_point) < 0 || is_hangul_code_point(code_point)) {
                 break;
             }
 
@@ -958,7 +829,6 @@ namespace webpp::unicode {
             cur{inp_pos},
             nxt{inp_pos},
             send{inp_end} {
-            using enum checked::error_handling;
             if (nxt == send) {
                 return;
             }
@@ -976,7 +846,6 @@ namespace webpp::unicode {
         constexpr ~decompose_iterator() noexcept                               = default;
 
         constexpr decompose_iterator& operator++() noexcept {
-            using enum checked::error_handling;
             // todo: we can optimize?
             ++index;
             if (index >= len) {
@@ -1112,7 +981,10 @@ namespace webpp::unicode {
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
         for (;;) {
-            auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
+            auto const code_point = checked::next_code_point<return_negated>(spos, send);
+            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                return NO;
+            }
             if (spos == send) {
                 break;
             }
@@ -1180,7 +1052,7 @@ namespace webpp::unicode {
                 if (ccc == 0) [[likely]] {
                     break;
                 }
-                prev_ccc  = ccc;
+                prev_ccc = ccc;
                 ++rep_cpin;
                 is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
             }
@@ -1200,6 +1072,8 @@ namespace webpp::unicode {
     template <norm_form Form = norm_form::NFC, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const send) noexcept {
         using enum norm_form;
+        using enum quick_check_state;
+
         if constexpr (gibberish == Form) {
             static_assert_false(
               Iter,
@@ -1214,14 +1088,9 @@ namespace webpp::unicode {
             // fast and compact table for implementing isNFD(x) by using the value 255 to represent
             // NFKC_QC=No.
             if constexpr (!details::exclude_NFD) {
-                return quick_check<NFD>(spos, send) == quick_check_state::YES;
-            } else {
-                if (is_decomposable(spos, send)) [[unlikely]] {
-                    return false;
-                }
-                if (!is_canonically_ordered(spos, send)) [[unlikely]] {
-                    return false;
-                }
+                return quick_check<NFD>(spos, send) == YES;
+            } else if (is_decomposable(spos, send) || !is_canonically_ordered(spos, send)) [[unlikely]] {
+                return false;
             }
         } else if constexpr (NFC == Form) {
             // https://www.unicode.org/reports/tr15/tr15-54.html#NFC_QC_Optimization
@@ -1234,11 +1103,11 @@ namespace webpp::unicode {
 
             auto const qc_val = quick_check<NFC>(spos, send);
             switch (qc_val) {
-                [[likely]] case quick_check_state::YES:
+                [[likely]] case YES:
                     return true;
-                [[unlikely]] case quick_check_state::NO:
+                [[unlikely]] case NO:
                     return false;
-                case quick_check_state::MAYBE: break;
+                case MAYBE: break;
                 default: assert(false); stl::unreachable();
             }
 

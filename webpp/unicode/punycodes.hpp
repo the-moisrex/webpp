@@ -141,7 +141,7 @@ namespace webpp::unicode::idna {
                 ++handled_len;
                 ++pos;
             } else {
-                auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
+                auto const code_point = checked::next_code_point<return_replacement_char>(pos, send);
                 if (code_point == 0) {
                     break;
                 }
@@ -162,7 +162,7 @@ namespace webpp::unicode::idna {
             // Find the next larger non-ascii code point:
             punycode_uint max_m = max_legal_utf32<punycode_uint>;
             for (auto pos = spos;;) {
-                auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
+                auto const code_point = checked::next_code_point<return_replacement_char>(pos, send);
                 if (code_point == 0) {
                     break;
                 }
@@ -182,7 +182,7 @@ namespace webpp::unicode::idna {
             n_val  = max_m;
 
             for (auto pos = spos;;) {
-                auto const code_point = checked::next_code_point<return_unchanged>(pos, send);
+                auto const code_point = checked::next_code_point<return_replacement_char>(pos, send);
                 if (code_point == 0) {
                     break;
                 }

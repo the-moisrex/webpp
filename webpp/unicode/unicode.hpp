@@ -1003,7 +1003,10 @@ namespace webpp::unicode {
             for (;;) {
                 // double casting to make sure negative values can't come out of it
                 if constexpr (UTF32<char_type>) {
-                    return cu1;
+                    if (!is_code_point_valid(code_point)) [[unlikely]] {
+                        break;
+                    }
+                    return code_point;
                 } else if constexpr (UTF16<char_type>) {
                     bool const requires_2_units = (cu1 & 0xFC00) == 0xD800;
                     bool       error            = false;
@@ -1372,6 +1375,9 @@ namespace webpp::unicode {
                     }
                 } else {
                     // UTF-32 is trivial
+                    if (!is_code_point_valid(code_point)) [[unlikely]] {
+                        break;
+                    }
                     return code_point;
                 }
                 break;

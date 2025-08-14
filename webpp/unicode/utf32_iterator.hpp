@@ -13,7 +13,7 @@ namespace webpp::unicode::checked {
      */
     template <stl::bidirectional_iterator Iter,
               typename EIter               = stl::default_sentinel_t,
-              error_handling ErrorHandling = error_handling::return_unchanged>
+              error_handling ErrorHandling = error_handling::return_replacement_char>
         requires std::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_bidi_iter {
         using difference_type   = stl::iter_difference_t<Iter>;
@@ -200,7 +200,7 @@ namespace webpp::unicode::checked {
      */
     template <stl::forward_iterator Iter,
               typename EIter               = stl::default_sentinel_t,
-              error_handling ErrorHandling = error_handling::return_unchanged>
+              error_handling ErrorHandling = error_handling::return_replacement_char>
         requires stl::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_forward_iter {
         using difference_type   = stl::iter_difference_t<Iter>;
