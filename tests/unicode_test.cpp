@@ -411,142 +411,13 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(ccc_of(0x0328), 202) << desc_ccc_of(0x0328);
 }
 
-namespace old_impl {
-    using webpp::istl::Appendable;
-    using webpp::istl::appendable_value_type_t;
-    using webpp::istl::iter_append;
-    using webpp::istl::NothrowAppendable;
-    using webpp::istl::size_type_of_t;
-    using webpp::stl::integral;
-    using webpp::stl::make_unsigned_t;
-    using webpp::unicode::max_bmp;
-    using webpp::unicode::UTF16;
-    using webpp::unicode::UTF32;
-    using webpp::unicode::UTF8;
-
-    namespace {
-        /**
-         * Append a code point to a string
-         * "out" can be an iterator/pointer or a string
-         */
-        template <Appendable StrT, integral SizeT = size_type_of_t<StrT>, typename CharT = char32_t>
-        SizeT append(StrT& out, CharT code_point) noexcept(NothrowAppendable<StrT>) {
-            using char_type = appendable_value_type_t<StrT>;
-            using uchar_t   = make_unsigned_t<CharT>;
-            auto const ccp  = static_cast<uint32_t>(code_point);
-            if constexpr (UTF8<char_type>) {
-                if (ccp < 0x80U) { // one octet
-                    iter_append(out, ccp);
-                    return 1U;
-                }
-                if (ccp < 0x800) {                                   // two octets
-                    iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
-                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
-                    return 2U;
-                }
-                if (ccp < 0x1'0000U) {                               // three octets
-                    iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
-                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
-                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
-                    return 3U;
-                }
-                // four octets
-                iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
-                iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
-                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
-                iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
-                return 4U;
-            } else if constexpr (UTF16<char_type>) {
-                if (ccp <= max_bmp<char_type>) {
-                    iter_append(out, ccp); // normal case
-                    return 1U;
-                }
-                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
-                iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
-                return 2U;
-            } else { // for char32_t or others
-                iter_append(out, ccp);
-                return 1U;
-            }
-        }
-    } // namespace
-} // namespace old_impl
-
-namespace {
-    std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
-        std::u8string utf8_str;
-        utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
-
-        std::u8string test_str;
-        for (char32_t const code_point : utf32_str) {
-            old_impl::append(test_str, code_point);
-            if (!webpp::unicode::checked::append(utf8_str, code_point)) {
-                throw webpp::stl::invalid_argument("Invalid code point");
-            }
-
-            EXPECT_EQ(utf8_str, test_str);
-        }
-
-        return utf8_str;
-    }
-
-    std::u16string utf32_to_utf16(std::u32string const& utf32_str) {
-        std::u16string utf16_str;
-        utf16_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
-
-        std::u16string test_str;
-        for (char32_t const code_point : utf32_str) {
-            old_impl::append(test_str, code_point);
-            if (!webpp::unicode::checked::append(utf16_str, code_point)) {
-                throw webpp::stl::invalid_argument("Invalid code point");
-            }
-
-            EXPECT_EQ(utf16_str, test_str);
-        }
-
-        return utf16_str;
-    }
-
-    constexpr char32_t utf8_to_utf32(std::u8string_view const input) {
-        char32_t codepoint = 0;
-
-        if (!input.empty() && (0b1000'0000U & input[0]) == 0b0000'0000U) {
-            codepoint = static_cast<unsigned char>(input[0]);
-        } else if (input.size() > 1 && (0b1110'0000U & input[0]) == 0b1100'0000U) {
-            codepoint = static_cast<char32_t>(((0b0001'1111U & input[0]) << 6U) | (input[1] & 0b0011'1111U));
-        } else if (input.size() > 2 && (0b1111'0000U & input[0]) == 0b1110'0000U) {
-            codepoint = static_cast<char32_t>(
-              ((0b0000'1111U & input[0]) << 12U) | ((input[1] & 0b0011'1111U) << 6U) | (input[2] & 0b0011'1111U));
-        } else if (input.size() > 3 && (0b1111'1000U & input[0]) == 0b1111'0000U) {
-            codepoint = static_cast<char32_t>(((input[0] & 0b0000'0111U) << 18U) | ((0b0011'1111U & input[1]) << 12U) |
-                                              ((input[2] & 0b0011'1111U) << 6U) | (0b0011'1111U & input[3]));
-        }
-
-        return codepoint;
-    }
-
-    std::u32string utf8_to_utf32(std::u8string const& utf8_str) {
-        std::u32string utf32_str;
-        utf32_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
-
-        for (auto pos = utf8_str.begin(); pos != utf8_str.end();) {
-            auto const impl_copy = webpp::unicode::unchecked::next_code_point_copy(pos, utf8_str.end());
-            auto const impl2     = utf8_to_utf32(webpp::stl::u8string_view{pos, utf8_str.end()});
-            webpp::unicode::unchecked::append(utf32_str, pos);
-
-            EXPECT_EQ(utf32_str.back(), impl2);
-            EXPECT_EQ(impl_copy, impl2);
-        }
-
-        return utf32_str;
-    }
-} // namespace
-
 // Use this command to get the decomposed and its mapped values:
 // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/{gsub(/<[^>]*>/, "", $6); if($6 != "") print $1 ": " $6}' UnicodeData.txt
 TEST(Unicode, CanonicalDecompose) {
+    using webpp::tests::utf32_to_utf8;
     using webpp::unicode::canonical_decomposed;
     using webpp::unicode::toNFD;
+
     // clang-format off
     // Get more examples with these commands:
     //  All decompositions:
@@ -2657,6 +2528,8 @@ TEST(Unicode, CanonicalDecompose) {
 }
 
 TEST(Unicode, DecomposeInplace) {
+    using webpp::tests::utf32_to_utf8;
+
     auto const test_decomp = [](u32string const& inp_str, u32string const& inp_res) {
         auto str = inp_str;
         webpp::unicode::canonical_decompose(str);
@@ -4763,6 +4636,8 @@ TEST(Unicode, DecomposeInplace) {
 }
 
 TEST(Unicode, DecomposeUTF32) {
+    using webpp::tests::utf32_to_utf8;
+    using webpp::tests::utf8_to_utf32;
     // clang-format off
     // Get more examples with these commands:
     //  Canonical-only decompositions:
@@ -4792,6 +4667,8 @@ TEST(Unicode, DecomposeUTF32) {
 }
 
 TEST(Unicode, DecomposeHangul) {
+    using webpp::tests::utf32_to_utf8;
+
     EXPECT_EQ(canonical_decomposed<u8string>(static_cast<char32_t>(webpp::unicode::hangul_syllable_base)),
               utf32_to_utf8(U"\x1100\x1161"))
       << desc_decomp_of(static_cast<char32_t>(webpp::unicode::hangul_syllable_base));
@@ -4973,6 +4850,9 @@ TEST(Unicode, PrevCodePoint32) {
 }
 
 TEST(Unicode, SortMarkTest) {
+    using webpp::tests::utf32_to_utf8;
+    using webpp::tests::utf8_to_utf32;
+
     // a + <U+0308> + <U+0328> ( diaeresis + ogonek) -> canonicalOrdering reorders the accents!
     u8string  str  = u8"a\xcc\x88\xcc\xa8";
     u32string str2 = utf8_to_utf32(str);
@@ -6061,6 +5941,7 @@ TEST(Unicode, CanonicalComposeSpecial) {
 TEST(Unicode, ComposeStr) {
     using std::u32string;
     using std::u8string;
+    using webpp::tests::utf32_to_utf8;
     using webpp::unicode::canonical_compose;
     using webpp::unicode::canonical_composed;
 
@@ -6714,6 +6595,8 @@ TEST(Unicode, NormalizationTests) {
     using std::u8string;
     using std::u8string_view;
     using webpp::tests::to_hex;
+    using webpp::tests::utf32_to_utf16;
+    using webpp::tests::utf32_to_utf8;
     using webpp::unicode::canonical_composed;
     using webpp::unicode::canonical_decomposed;
     using webpp::unicode::decompose_iterator;
@@ -6996,15 +6879,15 @@ TEST(Unicode, FuzzFixes) {
       "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
       "\xFF\xFF\xDF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
       "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"sv);
-    unicode_fuzz("\xa\xdf");
+    unicode_fuzz("\xa\xdf"sv);
     unicode_fuzz("\xa\xdd\xdd\xdd\xdd\xdd\xdd\xdd"sv);
     unicode_fuzz("\xa\xdf\xff\xff\xff"sv);
     unicode_fuzz("\x2e\xdd\xa"sv);
 
-    unicode_fuzz("\xa\xa\xd9\xd9");
-    unicode_fuzz("\xa\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\x29\xc4\xa7\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4");
-    unicode_fuzz("\xa\xff\xff\xff\xff\xff\xff\xff\x8a\x8a\xce\x8a");
-    unicode_fuzz("\xcd\xcd\x98\xcd\xcd\xcd\xcd\xcd");
+    unicode_fuzz("\xa\xa\xd9\xd9"sv);
+    unicode_fuzz("\xa\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\x29\xc4\xa7\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4"sv);
+    unicode_fuzz("\xa\xff\xff\xff\xff\xff\xff\xff\x8a\x8a\xce\x8a"sv);
+    unicode_fuzz("\xcd\xcd\x98\xcd\xcd\xcd\xcd\xcd"sv);
 
     unicode_fuzz("\x0\xd8"sv);
     unicode_fuzz("\x0A\x2D\x29\x00\x20\x00"sv);
@@ -7080,18 +6963,18 @@ TEST(Unicode, FuzzFixes4) {
     using webpp::tests::unicode_fuzz;
     using std::string_view_literals::operator""sv;
 
-    unicode_fuzz("\x80");
-    unicode_fuzz("\x03\x03\x03\x80");
-    unicode_fuzz("\x03\x03\x03\x0A");
-    unicode_fuzz("\x03\x0A");
-    unicode_fuzz("\x0A");
+    unicode_fuzz("\x80"sv);
+    unicode_fuzz("\x03\x03\x03\x80"sv);
+    unicode_fuzz("\x03\x03\x03\x0A"sv);
+    unicode_fuzz("\x03\x0A"sv);
+    unicode_fuzz("\x0A"sv);
     unicode_fuzz(
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x80\x00\x00\x00\x03\x03\x03\x03"
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x30\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
       "\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
-      "\x03\x03\x0A");
+      "\x03\x03\x0A"sv);
     unicode_fuzz(
       "\012\001\000\000\000\000\000\377\377\337\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
@@ -7158,10 +7041,10 @@ TEST(Unicode, FuzzTestFixes3) {
       "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82"
       "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1"
       "\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE"
-      "\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82";
+      "\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82"sv;
     webpp::stl::u32string_view const u32big =
       U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82"
-      U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82";
+      U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82"sv;
 
     auto const u32bigger = canonical_decomposed<u32string>(u32big);
     EXPECT_EQ(u32bigger.size(), u32big.size() * 4U);

@@ -204,7 +204,7 @@ namespace webpp::unicode {
      * Check if the string is canonically ordered (will be when it has run through
      * the canonical_reorder function).
      */
-    template <stl::bidirectional_iterator Iter, typename EIter>
+    template <stl::bidirectional_iterator Iter, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
     [[nodiscard]] static constexpr bool is_canonically_ordered(Iter const start, EIter const end) noexcept {
         using checked::next_code_point;
@@ -247,8 +247,8 @@ namespace webpp::unicode {
 
     template <istl::String StrT = stl::u32string>
     static constexpr void canonically_reorder(StrT& out)
-      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<typename stl::remove_cvref_t<StrT>::iterator>>) {
-        canonically_reorder(stl::begin(out), stl::end(out));
+      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<istl::iter_of_t<StrT>>>) {
+        canonically_reorder<istl::iter_of_t<StrT>>(stl::begin(out), stl::end(out));
     }
 
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)

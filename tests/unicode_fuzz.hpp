@@ -11,6 +11,137 @@
 namespace webpp::tests {
 
     // NOLINTBEGIN(*)
+    namespace old_impl {
+        using webpp::istl::Appendable;
+        using webpp::istl::appendable_value_type_t;
+        using webpp::istl::iter_append;
+        using webpp::istl::NothrowAppendable;
+        using webpp::istl::size_type_of_t;
+        using webpp::stl::integral;
+        using webpp::stl::make_unsigned_t;
+        using webpp::unicode::max_bmp;
+        using webpp::unicode::UTF16;
+        using webpp::unicode::UTF32;
+        using webpp::unicode::UTF8;
+
+        /**
+         * Append a code point to a string
+         * "out" can be an iterator/pointer or a string
+         */
+        template <Appendable StrT, integral SizeT = size_type_of_t<StrT>, typename CharT = char32_t>
+        SizeT append(StrT& out, CharT code_point) noexcept(NothrowAppendable<StrT>) {
+            using char_type = appendable_value_type_t<StrT>;
+            using uchar_t   = make_unsigned_t<CharT>;
+            auto const ccp  = static_cast<uint32_t>(code_point);
+            if constexpr (UTF8<char_type>) {
+                if (ccp < 0x80U) { // one octet
+                    iter_append(out, ccp);
+                    return 1U;
+                }
+                if (ccp < 0x800) {                                   // two octets
+                    iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 2U;
+                }
+                if (ccp < 0x1'0000U) {                               // three octets
+                    iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
+                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 3U;
+                }
+                // four octets
+                iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
+                iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
+                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
+                iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
+                return 4U;
+            } else if constexpr (UTF16<char_type>) {
+                if (ccp <= max_bmp<char_type>) {
+                    iter_append(out, ccp); // normal case
+                    return 1U;
+                }
+                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
+                iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
+                return 2U;
+            } else { // for char32_t or others
+                iter_append(out, ccp);
+                return 1U;
+            }
+        }
+    } // namespace old_impl
+
+    std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
+        std::u8string utf8_str;
+        utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+        std::u8string test_str;
+        for (char32_t const code_point : utf32_str) {
+            old_impl::append(test_str, code_point);
+            if (!webpp::unicode::checked::append(utf8_str, code_point)) {
+                throw webpp::stl::invalid_argument("Invalid code point");
+            }
+
+            EXPECT_EQ(utf8_str, test_str);
+        }
+
+        return utf8_str;
+    }
+
+    std::u16string utf32_to_utf16(std::u32string const& utf32_str) {
+        std::u16string utf16_str;
+        utf16_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+        std::u16string test_str;
+        for (char32_t const code_point : utf32_str) {
+            old_impl::append(test_str, code_point);
+            if (!webpp::unicode::checked::append(utf16_str, code_point)) {
+                throw webpp::stl::invalid_argument("Invalid code point");
+            }
+
+            EXPECT_EQ(utf16_str, test_str);
+        }
+
+        return utf16_str;
+    }
+
+    template <typename CharT>
+        requires istl::part_of<CharT, char, char8_t>
+    constexpr char32_t utf8_to_utf32(std::basic_string_view<CharT> const input) {
+        char32_t codepoint = 0;
+
+        if (!input.empty() && (0b1000'0000U & input[0]) == 0b0000'0000U) {
+            codepoint = static_cast<unsigned char>(input[0]);
+        } else if (input.size() > 1 && (0b1110'0000U & input[0]) == 0b1100'0000U) {
+            codepoint = static_cast<char32_t>(((0b0001'1111U & input[0]) << 6U) | (input[1] & 0b0011'1111U));
+        } else if (input.size() > 2 && (0b1111'0000U & input[0]) == 0b1110'0000U) {
+            codepoint = static_cast<char32_t>(
+              ((0b0000'1111U & input[0]) << 12U) | ((input[1] & 0b0011'1111U) << 6U) | (input[2] & 0b0011'1111U));
+        } else if (input.size() > 3 && (0b1111'1000U & input[0]) == 0b1111'0000U) {
+            codepoint = static_cast<char32_t>(((input[0] & 0b0000'0111U) << 18U) | ((0b0011'1111U & input[1]) << 12U) |
+                                              ((input[2] & 0b0011'1111U) << 6U) | (0b0011'1111U & input[3]));
+        }
+
+        return codepoint;
+    }
+
+    template <typename CharT>
+        requires istl::part_of<CharT, char, char8_t>
+    std::u32string utf8_to_utf32(std::basic_string<CharT> const& utf8_str) {
+        std::u32string utf32_str;
+        utf32_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+        for (auto pos = utf8_str.begin(); pos != utf8_str.end();) {
+            auto const impl_copy = webpp::unicode::checked::next_code_point(pos, utf8_str.end());
+            // auto const impl2     = utf8_to_utf32(webpp::stl::basic_string_view<CharT>{pos, utf8_str.end()});
+            utf32_str.push_back(impl_copy);
+
+            // EXPECT_EQ(utf32_str.back(), impl2);
+            // EXPECT_EQ(impl_copy, impl2);
+        }
+
+        return utf32_str;
+    }
+
     // Helper function to convert a single byte to hex
     inline std::string byteToHex(auto byte) {
         return fmt::format("{:02X}", static_cast<stl::uint8_t>(byte));
@@ -200,6 +331,53 @@ namespace webpp::tests {
         auto ordered_str2 = ordered_str;
         unicode::canonically_reorder(ordered_str2);
         EXPECT_EQ(ordered_str, ordered_str2);
+
+        // Test UTF-X to std::u32string conversion, canonical reorder, and back conversion
+        // Convert input string to UTF-32
+        std::u32string utf32_str;
+
+        // Handle different input types
+        if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::string>) {
+            utf32_str = utf8_to_utf32(str);
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u8string>) {
+            utf32_str = utf8_to_utf32(str);
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u16string>) {
+            utf32_str = utf16_to_utf32(str);
+        } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u32string>) {
+            utf32_str = str;
+        } else {
+            // For string views, convert through appropriate function
+            if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::string_view>) {
+                utf32_str = utf8_to_utf32(str);
+            } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u8string_view>) {
+                utf32_str = utf8_to_utf32(str);
+            } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u16string_view>) {
+                utf32_str = utf16_to_utf32(str);
+            } else if constexpr (std::is_same_v<std::decay_t<decltype(str)>, std::u32string_view>) {
+                utf32_str = std::u32string{str};
+            }
+        }
+
+        // Make a copy for comparison
+        auto utf32_copy = utf32_str;
+
+        // Apply canonical reorder to the copy
+        canonical_reorder_simple(utf32_copy);
+
+        // Check if the result matches what the official functions produce
+        auto official_reordered = utf32_str;
+        unicode::canonically_reorder(official_reordered);
+
+        // Convert back to original type for comparison
+        EXPECT_EQ(utf32_copy, official_reordered)
+          << "  UTF-32: " << to_hex(utf32_str) << "\n  Simple reordered: " << to_hex(utf32_copy)
+          << "\n  Official reordered: " << to_hex(official_reordered);
+
+        // Check ordering status
+        EXPECT_TRUE(unicode::is_canonically_ordered(utf32_copy.begin(), utf32_copy.end()))
+          << "  UTF-32: " << to_hex(utf32_str);
+        EXPECT_TRUE(unicode::is_canonically_ordered(official_reordered.begin(), official_reordered.end()))
+          << "  UTF-32: " << to_hex(official_reordered);
 
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
