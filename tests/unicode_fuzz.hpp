@@ -120,6 +120,23 @@ namespace webpp::tests {
     // NOLINTEND(*)
 
 
+
+    void canonical_reorder_simple(std::u32string& input) {
+        for (stl::size_t idx = 1; idx < input.size(); idx++) {
+            auto const ccc = unicode::ccc_of(input[idx]);
+            if (ccc == 0) {
+                continue;
+            }
+            auto const cur     = input[idx];
+            auto       prev_id = idx;
+            while (prev_id != 0 && unicode::ccc_of(input[prev_id - 1]) > ccc) {
+                input[prev_id] = input[prev_id - 1];
+                prev_id--;
+            }
+            input[prev_id] = cur;
+        }
+    }
+
     void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
         using tests::to_hex;
         using unicode::toNFC;
@@ -174,14 +191,14 @@ namespace webpp::tests {
           << "  Src: " << to_hex(str) << "\n  NFD Layer 1: " << to_hex(toNFD(str));
 
         auto ordered_str = str;
-        unicode::canonical_reorder(ordered_str);
+        unicode::canonically_reorder(ordered_str);
         EXPECT_TRUE(unicode::is_canonically_ordered(ordered_str.begin(), ordered_str.end()));
         if (ordered_str != str) {
             EXPECT_FALSE(unicode::is_canonically_ordered(str.begin(), str.end()))
               << "  Src: " << to_hex(str) << "\n  Ordered: " << to_hex(ordered_str);
         }
         auto ordered_str2 = ordered_str;
-        unicode::canonical_reorder(ordered_str2);
+        unicode::canonically_reorder(ordered_str2);
         EXPECT_EQ(ordered_str, ordered_str2);
 
         // toNFKC

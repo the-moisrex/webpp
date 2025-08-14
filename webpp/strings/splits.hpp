@@ -274,7 +274,7 @@ namespace webpp::strings {
 
     template <typename T, typename... DelimT>
         requires(sizeof...(DelimT) > 0)
-    splitter(T&&, DelimT&&...) -> splitter<istl::iterator_type_of_t<T>, DelimT...>;
+    splitter(T&&, DelimT&&...) -> splitter<istl::iter_of_t<T>, DelimT...>;
 
     template <stl::random_access_iterator T, typename... DelimT>
         requires(sizeof...(DelimT) > 0)

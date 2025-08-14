@@ -4976,7 +4976,7 @@ TEST(Unicode, SortMarkTest) {
     // a + <U+0308> + <U+0328> ( diaeresis + ogonek) -> canonicalOrdering reorders the accents!
     u8string  str  = u8"a\xcc\x88\xcc\xa8";
     u32string str2 = utf8_to_utf32(str);
-    webpp::unicode::canonical_reorder(str.begin(), str.end());
+    webpp::unicode::canonically_reorder(str.begin(), str.end());
     sort_marks(str2);
     EXPECT_EQ(utf8_to_utf32(str), str2);
     EXPECT_EQ(str, utf32_to_utf8(str2));
@@ -4984,7 +4984,7 @@ TEST(Unicode, SortMarkTest) {
     auto test_sorting = [](u32string bad_u32, u32string const& good_u32) {
         u8string       bad  = utf32_to_utf8(bad_u32);
         u8string const good = utf32_to_utf8(good_u32);
-        webpp::unicode::canonical_reorder(bad.begin(), bad.end());
+        webpp::unicode::canonically_reorder(bad.begin(), bad.end());
         sort_marks(bad_u32);
         EXPECT_EQ(utf8_to_utf32(bad), bad_u32);
         EXPECT_EQ(bad, utf32_to_utf8(bad_u32));

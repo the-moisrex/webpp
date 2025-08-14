@@ -161,7 +161,7 @@ namespace webpp::unicode {
      */
     template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    static constexpr void canonical_reorder(Iter const start, EIter const& end)
+    static constexpr void canonically_reorder(Iter const start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using checked::next_code_point;
         using checked::prev_code_point;
@@ -222,10 +222,10 @@ namespace webpp::unicode {
             auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
-                // skip the next code point as well, the next one is never going to be swapped with this one
                 if (pos == end) {
                     break;
                 }
+                // skip the next code point as well, the next one is never going to be swapped with this one
                 checked::next_char<Iter>(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
@@ -246,10 +246,9 @@ namespace webpp::unicode {
     }
 
     template <istl::String StrT = stl::u32string>
-    static constexpr void canonical_reorder(StrT& out)
+    static constexpr void canonically_reorder(StrT& out)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<typename stl::remove_cvref_t<StrT>::iterator>>) {
-        using iterator_type = typename stl::remove_cvref_t<StrT>::iterator;
-        canonical_reorder<iterator_type>(stl::begin(out), stl::end(out));
+        canonically_reorder(stl::begin(out), stl::end(out));
     }
 
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
@@ -860,10 +859,10 @@ namespace webpp::unicode {
               "gibberish is not it.");
         } else if constexpr (norm_form::NFD == Form) {
             canonical_decompose(out);
-            canonical_reorder(out);
+            canonically_reorder(out);
         } else if constexpr (norm_form::NFC == Form) {
             canonical_decompose(out);
-            canonical_reorder(out);
+            canonically_reorder(out);
             canonical_compose(out);
         } else {
             // todo: NFKC and NFKD
@@ -890,7 +889,7 @@ namespace webpp::unicode {
         } else if constexpr (norm_form::NFD == Form) {
             if constexpr (istl::String<StrT>) {
                 canonical_decompose(spos, send, out);
-                canonical_reorder(out);
+                canonically_reorder(out);
             } else {
                 stl::random_access_iterator auto const obeg = out;
                 canonical_decompose(spos, send, out);
@@ -906,14 +905,14 @@ namespace webpp::unicode {
             // https://www.unicode.org/faq/normalization.html
             if constexpr (istl::String<StrT>) {
                 canonical_decompose(spos, send, out);
-                canonical_reorder(out);
+                canonically_reorder(out);
                 canonical_compose(out);
             } else {
                 using diff_type                       = stl::iter_difference_t<StrT>;
                 stl::random_access_iterator auto obeg = out;
                 canonical_decompose(spos, send, out);
                 stl::random_access_iterator auto const oend = out;
-                canonical_reorder(obeg, oend);
+                canonically_reorder(obeg, oend);
                 out = stl::next(obeg, static_cast<diff_type>(canonical_compose(obeg, oend)));
             }
         } else {
