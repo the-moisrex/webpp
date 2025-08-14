@@ -231,8 +231,8 @@ namespace webpp::unicode {
             }
 
             while (back_pos != start) {
-                auto       prev    = istl::deref(back_pos);
-                auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
+                auto       prev     = istl::deref(back_pos);
+                auto const prev_cp  = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
                 auto const prev_ccc = ccc_of(prev_cp);
                 if (prev_ccc <= ccc) {
                     break;
@@ -1150,7 +1150,8 @@ namespace webpp::unicode {
     }
 
     /**
-     * Check if the source would become the second pair of iterators after composition.
+     * Check if composing the decomposed string (spos/send) would result in the original string (cpos/cend).
+     * This is used to verify that a string is in NFC form.
      */
     template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
@@ -1161,7 +1162,7 @@ namespace webpp::unicode {
 
         bool is_valid = true;
         for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_cpin) {
-            if (rep_cpin.at_end()) {
+            if (rep_cpin.at_end()) [[unlikely]] {
                 return false;
             }
             auto       cp1         = *cp1_pin;

@@ -401,6 +401,7 @@ namespace webpp::tests {
         using unicode::canonical_decomposed;
         using unicode::decompose_iterator;
         using unicode::isNFC;
+        using unicode::isNFD;
         using unicode::norm_form;
         using unicode::normalize;
         using unicode::toNFC;
@@ -484,6 +485,14 @@ namespace webpp::tests {
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 
+        ASSERT_TRUE(isNFD(toNFD(std::basic_string{str})));
+        if (isNFD(str.begin(), str.end())) {
+            ASSERT_EQ(toNFD(std::basic_string{str}), str);
+        }
+
+        if (isNFC(str.begin(), str.end())) {
+            ASSERT_EQ(toNFC(std::basic_string{str}), str);
+        }
 
         std::string resStringStyle;
         normalize<NFC>(str.begin(), str.end(), resStringStyle);

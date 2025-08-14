@@ -7087,9 +7087,6 @@ TEST(Unicode, FuzzFixes6) {
     using std::string_view_literals::operator""sv;
 
     unicode_fuzz("\xF0\xCD\x81\xCC"sv);
-    unicode_fuzz("\xF0\xCD\x81\xCC"sv);
-    unicode_fuzz("\xF0\xCD\x81\xCC"sv);
-    unicode_fuzz("\xF0\xCD\x81\xCC"sv);
     unicode_fuzz("\x3B\x18\x03\xD8\x03\x03\x03\x0A\x18\x18"sv);
 
     unicode_fuzz(
@@ -7121,12 +7118,20 @@ TEST(Unicode, FuzzFixes7) {
 }
 
 TEST(Unicode, FuzzFixes6Explicit) {
+    using webpp::stl::string;
     using webpp::unicode::isNFC;
+    using webpp::unicode::toNFC;
     using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
     using webpp::unicode::is_canonically_ordered;
 
     EXPECT_TRUE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
     EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
+
+    EXPECT_FALSE(isNFC("\xF0\xCD\x81\xCC"sv));
+    EXPECT_EQ("\xF0\xCD\x81\xCC"sv, toNFC("\xF0\xCD\x81\xCC"s));
+    EXPECT_FALSE(isNFC("\xF0\xCC\x81\x49\xCC\x80"sv));
+    EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
