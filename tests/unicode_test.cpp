@@ -6749,7 +6749,7 @@ TEST(Unicode, FuzzFixes) {
     //      return Buffer.from(this.split("").map(a => a.charCodeAt(0))).toString('utf-8').normalize('NFC');
     //   };
     //   String.prototype.isNFC = function() {
-    //      return this.toNFC() == this;
+    //      return this.toNFC() == Buffer.from(this.split("").map(a => a.charCodeAt(0))).toString('utf-8');
     //   };
     // @endcode
     EXPECT_EQ(u"", toNFC<std::u16string>(u""));
@@ -7140,6 +7140,20 @@ TEST(Unicode, FuzzFixes6Explicit) {
     EXPECT_FALSE(isNFC("\xF0\xCD\x81\xCC"sv));
     EXPECT_EQ("�́�"sv, toNFC("\xF0\xCD\x81\xCC"s));
     EXPECT_FALSE(isNFC("\xF0\xCC\x81\x49\xCC\x80"sv));
+
+    EXPECT_FALSE(isNFC(u8"\xEF\xBF\xBD;\x3\x3\x3\x3\x3\x3"sv));
+    EXPECT_FALSE(isNFC(u8"�;\x03\x03\x03\x03\x03\x03"sv));
+    EXPECT_FALSE(isNFC(u8"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv));
+    EXPECT_FALSE(isNFC(u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv));
+    EXPECT_FALSE(isNFC(U"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv));
+
+    EXPECT_EQ(toNFC(U"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"s),
+              U"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv);
+    EXPECT_EQ(toNFC(u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"s),
+              u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv);
+    EXPECT_EQ(toNFC(u8"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"s),
+              u8"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv);
+
 
     EXPECT_FALSE(isNFC(
       "\n\x1\0\0\xFF\xDF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0"sv));

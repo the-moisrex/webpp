@@ -1261,7 +1261,7 @@ namespace webpp::unicode {
                     stl::uint8_t      length;        // NOLINT(*-init-variables)
                     if constexpr (!stl::random_access_iterator<Iter>) {
                         // To make support for bidirectional iterators that are not random iterators
-                        stl::int8_t units = 4;
+                        stl::uint8_t units = 4;
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == beg) {
@@ -1304,7 +1304,7 @@ namespace webpp::unicode {
 
                         stl::advance(pos, 4 - length);
                     } else {
-                        stl::int8_t units = 3;
+                        stl::uint8_t units = 3;
                         for (;;) {
                             magic_code |= (cu4 & 0b1100'0000) >> 6U;
                             if (pos == beg) {
@@ -1331,7 +1331,11 @@ namespace webpp::unicode {
                         [[unlikely]] case 0:
                             code_point = cu_last;
                             break;
-                        case 1: return code_point;
+                        case 1:
+                            if (code_point >= 128U) [[unlikely]] {
+                                break;
+                            }
+                            return code_point;
                         case 2: {
                             code_point &= 0b0011'1111U;
                             code_point |= (cu3 & 0b0001'1111) << 6U;
