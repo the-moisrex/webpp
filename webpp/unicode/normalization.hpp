@@ -1161,6 +1161,9 @@ namespace webpp::unicode {
 
         bool is_valid = true;
         for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_cpin) {
+            if (rep_cpin.at_end()) {
+                return false;
+            }
             auto       cp1         = *cp1_pin;
             auto const starter_ccp = *rep_cpin;
             auto       cp2_pin     = stl::next(cp1_pin);
@@ -1177,7 +1180,8 @@ namespace webpp::unicode {
                     break;
                 }
                 prev_ccc  = ccc;
-                is_valid &= *++rep_cpin == cp2;
+                ++rep_cpin;
+                is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
             }
             is_valid &= starter_ccp == cp1;
         }
