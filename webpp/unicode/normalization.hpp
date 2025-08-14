@@ -233,10 +233,13 @@ namespace webpp::unicode {
             while (back_pos != start) {
                 auto       prev    = istl::deref(back_pos);
                 auto const prev_cp = prev_code_point<return_unchanged, char32_t, Iter>(prev, start);
-                if (ccc_of(prev_cp) <= ccc) {
+                auto const prev_ccc = ccc_of(prev_cp);
+                if (prev_ccc <= ccc) {
                     break;
                 }
-                if (*back_pos != *prev) [[unlikely]] {
+                // If we reach here, we have a reordering pair: prev_ccc > ccc > 0
+                // This means the sequence is not in canonical order
+                if (prev_ccc > ccc) [[unlikely]] {
                     return false;
                 }
                 back_pos = prev;
