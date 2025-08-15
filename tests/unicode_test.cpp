@@ -7321,6 +7321,23 @@ TEST(Unicode, FuzzFixes10) {
     EXPECT_EQ(toNFC("*.\xCC\x93"s), "*.\xCC\x93"sv);
 }
 
+TEST(Unicode, FuzzFixes11) {
+    using webpp::stl::string;
+    using webpp::unicode::isNFC;
+    using webpp::unicode::toNFC;
+    using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::is_canonically_ordered;
+
+    unicode_fuzz("\x30\x02\x30\x03"sv);
+    unicode_fuzz("\xED\xFC\xFF\xFF"sv);
+    unicode_fuzz("\xF5\xFC\xFF\xFF"sv);
+    unicode_fuzz("\xF6\xFC\xFF\xFF"sv);
+    unicode_fuzz("\xFC\xFC\xFF\xFF"sv);
+    unicode_fuzz("\xFF\xFC\xFF\xFF"sv);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;

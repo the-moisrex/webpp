@@ -1023,6 +1023,7 @@ namespace webpp::unicode {
         checked::utf32_forward_iter cp1_pin{spos, send};
         checked::utf32_forward_iter rep_cpin{cpos, cend};
 
+        // I'm not bailing out early and using is_valid because I want to put less branches on the path that gives true
         bool is_valid = true;
         for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_cpin) {
             if (rep_cpin.at_end()) [[unlikely]] {
