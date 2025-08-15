@@ -972,19 +972,12 @@ namespace webpp::unicode {
         using enum quick_check_state;
         using enum checked::error_handling;
 
-        if (spos == send) {
-            return YES;
-        }
-
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
-        for (;;) {
+        while (spos != send) {
             auto const code_point = checked::next_code_point<return_negated>(spos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
                 return NO;
-            }
-            if (spos == send) {
-                break;
             }
             auto const info    = qc_ccc_of(code_point);
             auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);

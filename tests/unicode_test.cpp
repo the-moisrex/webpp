@@ -7209,6 +7209,118 @@ TEST(Unicode, FuzzFixes8) {
     unicode_fuzz("\xF5\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x64\xFF\xFF\x3B\xFF\xFF"sv);
 }
 
+TEST(Unicode, FuzzFixes9) {
+    using webpp::stl::string;
+    using webpp::unicode::isNFC;
+    using webpp::unicode::toNFC;
+    using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::is_canonically_ordered;
+
+    unicode_fuzz("\n\xC3\x8D"sv);
+    unicode_fuzz("\n\x3\xE7\x9D\x80"sv);
+    unicode_fuzz("\n1\xE7\x9D\x80"sv);
+    unicode_fuzz("::\xE7\xA3\x8C"sv);
+    unicode_fuzz(":\n\xE7\xA3\x8C"sv);
+    unicode_fuzz("\n\n\xE7\x9D\x80"sv);
+    unicode_fuzz("\n\n\xE7\x9D\x80"sv);
+    unicode_fuzz("\n\n\xE7\x9D\x80"sv);
+    unicode_fuzz(":)\xE7\x9D\x80"sv);
+    unicode_fuzz("2\n\xE7\x9D\x80"sv);
+    unicode_fuzz("\n\n\xE7\x9B\xB4"sv);
+    unicode_fuzz(":)\xE7\x9D\x80"sv);
+    unicode_fuzz("\n1\xE7\x9D\x80"sv);
+    unicode_fuzz("\n1\xEF\xAA\xAA"sv);
+    unicode_fuzz("\x4\x2\xEF\xAA\xAA"sv);
+    unicode_fuzz("\x4\x2\xEF\xAA\xA8"sv);
+    unicode_fuzz("\n\n\xEF\xAA\xAA"sv);
+
+    unicode_fuzz("\n\xCD\x81"sv);
+    unicode_fuzz("\n\xCD\x81"sv);
+    unicode_fuzz("'\xCD\x81"sv);
+    unicode_fuzz("\v\xCC\x81"sv);
+    unicode_fuzz("\xCC\x81"sv);
+    unicode_fuzz("1\xCC\x81"sv);
+    unicode_fuzz("\0\xCC\x81"sv);
+    unicode_fuzz("\xCC\x81\0\0"sv);
+    unicode_fuzz("\x81"sv);
+
+    unicode_fuzz("*.\xCC\x93"sv);
+    unicode_fuzz("*.\xCD\x83"sv);
+    unicode_fuzz(".\xCC\x93"sv);
+    unicode_fuzz(".\xCD\x83"sv);
+    unicode_fuzz(".`\xCC\x80"sv);
+    unicode_fuzz(".`\xCC\x93"sv);
+    unicode_fuzz(".`\xCD\x80"sv);
+    unicode_fuzz(".`\xCD\x83"sv);
+    unicode_fuzz(".l\xCC\x80"sv);
+    unicode_fuzz(".l\xCD\x80"sv);
+    unicode_fuzz(".~\xCC\x80"sv);
+    unicode_fuzz(".~\xCD\x80"sv);
+    unicode_fuzz("1\n\xC2\xB7"sv);
+    unicode_fuzz("1\n\xCE\x87"sv);
+    unicode_fuzz("?`\xCC\x80"sv);
+    unicode_fuzz("?`\xCD\x80"sv);
+    unicode_fuzz("\n.\xCC\x93"sv);
+    unicode_fuzz("\n.\xCD\x83"sv);
+    unicode_fuzz("\n/\xCC\x93"sv);
+    unicode_fuzz("\n/\xCD\x83"sv);
+    unicode_fuzz("\n>\xCC\x93"sv);
+    unicode_fuzz("\n>\xCD\x83"sv);
+    unicode_fuzz("\n\n\xC2\xB7"sv);
+    unicode_fuzz("\n\n\xCC\x80"sv);
+    unicode_fuzz("\n\n\xCC\x93"sv);
+    unicode_fuzz("\n\n\xCD\x80"sv);
+    unicode_fuzz("\n\n\xCD\x83"sv);
+    unicode_fuzz("\n\n\xCE\x87"sv);
+    unicode_fuzz("\n\xC2\xB7"sv);
+    unicode_fuzz("\n\xCE\x87"sv);
+    unicode_fuzz("\n`\xCC\x80"sv);
+    unicode_fuzz("\n`\xCD\x80"sv);
+    unicode_fuzz("\nk\xCC\x80"sv);
+    unicode_fuzz("\nk\xCD\x80"sv);
+    unicode_fuzz("\v\n\xCC\x80"sv);
+    unicode_fuzz("\v\n\xCD\x80"sv);
+    unicode_fuzz("\v`\xCC\x80"sv);
+    unicode_fuzz("\v`\xCD\x80"sv);
+    unicode_fuzz("\x1A`\xCC\x80"sv);
+    unicode_fuzz("\x1A`\xCD\x80"sv);
+    unicode_fuzz("\x1`\xCC\x80"sv);
+    unicode_fuzz("\x1`\xCD\x80"sv);
+    unicode_fuzz("\x2\n\xC2\xB7"sv);
+    unicode_fuzz("\x2\n\xCE\x87"sv);
+    unicode_fuzz("\xC2\xB7"sv);
+    unicode_fuzz("\xCC\x80"sv);
+    unicode_fuzz("\xCC\x88\xCC\x81"sv);
+    unicode_fuzz("\xCD\x80"sv);
+    unicode_fuzz("\xCD\x84"sv);
+    unicode_fuzz("\xCE\x87"sv);
+    unicode_fuzz("`\xCC\x80"sv);
+    unicode_fuzz("`\xCD\x80"sv);
+    unicode_fuzz("``\xCC\x80"sv);
+    unicode_fuzz("``\xCD\x80"sv);
+}
+
+TEST(Unicode, FuzzFixes10) {
+    using webpp::stl::string;
+    using webpp::stl::u32string;
+    using webpp::unicode::isNFC;
+    using webpp::unicode::toNFC;
+    using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::is_canonically_ordered;
+
+    EXPECT_FALSE(isNFC("\xCD\x80"sv));       // this is U'\x340'
+    EXPECT_EQ(toNFC(U"\x340"s), U"\x300"sv); // U'\x300'
+    EXPECT_EQ(canonical_decomposed<u32string>(0xCD), U"\x49\x301"sv);
+    EXPECT_EQ(canonical_decomposed<u32string>(0xCC), U"\x49\x300"sv);
+
+    EXPECT_TRUE(isNFC("*.\xCC\x93"sv));
+    EXPECT_EQ(toNFC("*.\xCC\x93"s), "*.\xCC\x93"sv);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;
