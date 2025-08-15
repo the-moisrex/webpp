@@ -625,7 +625,7 @@ namespace webpp::unicode {
                 return size;
             } else if constexpr (UTF16<char_type>) {
                 istl::iter_append(ito, *from++);
-                if (!(*ito < trail_surrogate_min<char_type> || *ito > trail_surrogate_max<char_type>) ) {
+                if (is_trail_surrogate(*ito)) {
                     istl::iter_append(ito, *from++);
                     return 2U;
                 }
@@ -653,7 +653,7 @@ namespace webpp::unicode {
                 pos                  += details::utf8_skip[static_cast<unsigned_type>(*pos)];
             } else if constexpr (UTF16<char_type>) {
                 ++pos;
-                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
+                if (is_trail_surrogate(*pos)) {
                     ++pos;
                 }
             } else {
@@ -680,7 +680,7 @@ namespace webpp::unicode {
                 stl::advance(pos, len);
             } else if constexpr (UTF16<char_type>) {
                 ++pos;
-                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
+                if (is_trail_surrogate(*pos)) {
                     if (pos == end) {
                         return false;
                     }
@@ -750,7 +750,7 @@ namespace webpp::unicode {
                 --pos;
             } else if constexpr (UTF16<char_type>) {
                 --pos;
-                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
+                if (is_trail_surrogate(*pos)) {
                     --pos;
                 }
             } else {
@@ -1013,14 +1013,14 @@ namespace webpp::unicode {
                     return code_point;
                 } else if constexpr (UTF16<char_type>) {
                     bool const is_leading_surrogate = (cu1 & 0xFC00) == 0xD800;
-                    bool       error            = false;
+                    bool       error                = false;
                     if (is_leading_surrogate) {
                         if (pos == end) [[unlikely]] {
                             break;
                         }
-                        auto const cu2   = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        error           |= (cu1 & 0xFC00) != 0xD800;
-                        error           |= (cu2 & 0xFC00) != 0xDC00;
+                        auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        error             |= (cu1 & 0xFC00) != 0xD800;
+                        error             |= (cu2 & 0xFC00) != 0xDC00;
                         auto const lead   = cu1 & 0x3FF;
                         auto const trail  = cu2 & 0x3FF;
                         code_point        = (lead << 10U) + trail + 0x1'0000;
@@ -1221,7 +1221,7 @@ namespace webpp::unicode {
                     // byte1            | byte2            |
                     // 0xxxxxxxxxxxxxxx |                  |
                     // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
-                    bool       error            = false;
+                    bool       error              = false;
                     auto const trail              = cu_last; // This is the trailing surrogate we encountered
                     bool const is_trail_surrogate = (trail & 0xFC00) == 0xDC00;
                     if (is_trail_surrogate) {
