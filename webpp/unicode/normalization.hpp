@@ -579,7 +579,7 @@ namespace webpp::unicode {
 
     /**
      * Compose 2 code points into one
-     * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
+     * Attention: You could return 0xFFFD (replacement character) or 0 if they're not valid inputs
      */
     template <char32_t Error = replacement_char<char32_t>>
     [[nodiscard]] static constexpr char32_t canonical_composed(char32_t const lhs, char32_t const rhs) noexcept {
@@ -596,7 +596,6 @@ namespace webpp::unicode {
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
 
-        // early bailout:
         // todo: use -1 as invalid values for cp2 instead of 0 to eliminate the necessity of cp2 == 0 comparison
         if (cp2 == 0 || cp2 != rhs) {
             auto const hangul = compose_hangul(lhs, rhs);
@@ -611,9 +610,9 @@ namespace webpp::unicode {
 
         bool error  = !is_code_point_valid(lhs);
         error      |= !is_code_point_valid(rhs);
-
-        // Invalid code points are visible with 0
-        error |= static_cast<std::uint8_t>(lhs) != cp1_mask;
+        error       |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
+        error       |= lhs == 0;
+        error       |= rhs == 0;
         if (error) [[unlikely]] {
             return Error;
         }
@@ -648,8 +647,8 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<max_utf32<char32_t>>(cp1, cp2);
-                if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
+                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                if (prev_ccc < ccc && replaced_cp != U'\0') {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
                     hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
@@ -1017,7 +1016,7 @@ namespace webpp::unicode {
     }
 
     [[nodiscard]] static constexpr bool is_composable(char32_t const lhs, char32_t const rhs) noexcept {
-        return canonical_composed<max_utf32<char32_t>>(lhs, rhs) != max_utf32<char32_t>;
+        return canonical_composed<U'\0'>(lhs, rhs) != U'\0';
     }
 
     /**
@@ -1042,8 +1041,8 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<max_utf32<char32_t>>(cp1, cp2);
-                if (prev_ccc < ccc && replaced_cp != max_utf32<char32_t>) {
+                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                if (prev_ccc < ccc && replaced_cp != U'\0') {
                     // found a composition
                     cp1 = replaced_cp;
                     continue;
