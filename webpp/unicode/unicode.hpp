@@ -401,15 +401,15 @@ namespace webpp::unicode {
             // double casting to make sure negative values can't come out of it
             auto val = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
             if constexpr (UTF16<char_type>) {
+                // Check if it's a leading surrogate (0xD800-0xDBFF)
                 if ((val & 0xFC00U) == 0xD800U) {
-                    // we have two chars
-                    val  &= 0x3FFU;
-                    val <<= 10U;
-                    val  |= static_cast<code_point_type>(*pos++) & 0x3FFU;
-                    val  += 0x1'0000U;
+                    // we have two code units (surrogate pair)
+                    auto const lead  = val & 0x3FFU;
+                    auto const trail = static_cast<code_point_type>(*pos++) & 0x3FFU;
+                    val              = (lead << 10U) + trail + 0x1'0000U;
                     return val;
                 }
-                return val; // this is the only char
+                return val; // this is a single code unit
             } else if constexpr (UTF8<char_type>) {
                 if ((val & 0b1000'0000U) == 0) {
                     // we have one char
@@ -543,16 +543,20 @@ namespace webpp::unicode {
                 // 0xxxxxxxxxxxxxxx |                  |
                 // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
 
-                if ((val & 0xFC00U) != 0b1101'1100'0000'0000U) {
-                    return val; // 1 byte
+                // When going backwards, we encounter the trailing surrogate first
+                // If it's not a trailing surrogate, then it's a single code unit
+                if ((val & 0xFC00U) != 0xDC00U) {
+                    return val; // 1 code unit
                 }
 
-                // not it has to be 2 bytes, let's fix the Unicode residuals first:
-                val &= 0x3FFU;
-                val += 0x1'0000U;
+                // It's a trailing surrogate, so we need to get the leading surrogate
+                auto const trail = val & 0x3FFU;
 
-                // now let's add the second byte:
-                val |= (static_cast<code_point_type>(*--pos) & 0x3FFU) << 10U;
+                // Move to the previous code unit (the leading surrogate)
+                auto const lead = static_cast<code_point_type>(*--pos) & 0x3FFU;
+
+                // Reconstruct the full code point
+                val = (lead << 10U) + trail + 0x1'0000U;
 
                 return val;
             } else if constexpr (UTF8<char_type>) {
@@ -1008,22 +1012,21 @@ namespace webpp::unicode {
                     }
                     return code_point;
                 } else if constexpr (UTF16<char_type>) {
-                    bool const requires_2_units = (cu1 & 0xFC00) == 0xD800;
+                    bool const is_leading_surrogate = (cu1 & 0xFC00) == 0xD800;
                     bool       error            = false;
-                    if (requires_2_units) {
+                    if (is_leading_surrogate) {
                         if (pos == end) [[unlikely]] {
                             break;
                         }
                         auto const cu2   = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
                         error           |= (cu1 & 0xFC00) != 0xD800;
                         error           |= (cu2 & 0xFC00) != 0xDC00;
-                        code_point      &= 0x3FF;
-                        code_point     <<= 10U;
-                        code_point      |= cu2 & 0x3FF;
-                        code_point      += 0x1'0000;
+                        auto const lead   = cu1 & 0x3FF;
+                        auto const trail  = cu2 & 0x3FF;
+                        code_point        = (lead << 10U) + trail + 0x1'0000;
                     }
                     if (error || is_surrogate(code_point)) [[unlikely]] {
-                        if (requires_2_units) {
+                        if (is_leading_surrogate) {
                             --pos;
                         }
                         code_point = cu1;
@@ -1219,22 +1222,22 @@ namespace webpp::unicode {
                     // 0xxxxxxxxxxxxxxx |                  |
                     // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
                     bool       error            = false;
-                    auto const cu2              = cu_last;
-                    bool const requires_2_units = (cu2 & 0xFC00) == 0xDC00;
-                    if (requires_2_units) {
+                    auto const trail              = cu_last; // This is the trailing surrogate we encountered
+                    bool const is_trail_surrogate = (trail & 0xFC00) == 0xDC00;
+                    if (is_trail_surrogate) {
                         if (pos == beg) [[unlikely]] {
                             break;
                         }
-                        auto const cu1  = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
-                        error          |= (cu1 & 0xFC00) != 0xD800;
-                        // error       |= (cu2 & 0xFC00) != 0xDC00;
-                        code_point     &= 0x3FF;
-                        code_point     |= (cu1 & 0x3FF) << 10U;
-                        code_point     += 0x1'0000;
+                        auto const lead         = static_cast<code_point_type>(static_cast<unsigned_char_type>(*--pos));
+                        error                  |= (lead & 0xFC00) != 0xD800;
+                        error                  |= (trail & 0xFC00) != 0xDC00;
+                        auto const lead_value   = lead & 0x3FF;
+                        auto const trail_value  = trail & 0x3FF;
+                        code_point              = (lead_value << 10U) + trail_value + 0x1'0000;
                     }
 
                     if (error || is_surrogate(code_point)) [[unlikely]] {
-                        if (requires_2_units) {
+                        if (is_trail_surrogate) {
                             ++pos;
                         }
                         code_point = cu_last;

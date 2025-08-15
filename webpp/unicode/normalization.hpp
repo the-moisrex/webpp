@@ -349,7 +349,6 @@ namespace webpp::unicode {
       noexcept(istl::NothrowAppendable<Iter>) {
         using enum checked::error_handling;
 
-        auto       beg        = istl::deref(spos);
         auto const code_point = checked::prev_code_point<return_replacement_char>(spos, sbeg);
         return canonical_decompose_to(out, code_point);
     }
