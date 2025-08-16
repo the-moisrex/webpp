@@ -7336,6 +7336,34 @@ TEST(Unicode, FuzzFixes11) {
     unicode_fuzz("\xF6\xFC\xFF\xFF"sv);
     unicode_fuzz("\xFC\xFC\xFF\xFF"sv);
     unicode_fuzz("\xFF\xFC\xFF\xFF"sv);
+
+    // UTF-16 bugs:
+    unicode_fuzz("\x00\x02\x00\x03"sv);
+    unicode_fuzz("\x00\x03\x00\x04"sv);
+    unicode_fuzz("\x00\x03\x00\xD1"sv);
+    unicode_fuzz("\x00\x03\x54\xBB"sv);
+    unicode_fuzz("\x01\x03\x0A\x01"sv);
+    unicode_fuzz("\x02\x02\x02\x03"sv);
+    unicode_fuzz("\x02\x03\x02\x02"sv);
+    unicode_fuzz("\x03\x02\x00\x03"sv);
+    unicode_fuzz("\x03\x03\xC3\xC0"sv);
+    unicode_fuzz("\x03\x03\xC3\xC8"sv);
+    unicode_fuzz("\x0A\x01\x00\x03"sv);
+    unicode_fuzz("\x0A\x01\x0A\x03"sv);
+    unicode_fuzz("\x0A\x03\x00\xC7"sv);
+    unicode_fuzz("\x0A\x03\x24\xCD"sv);
+    unicode_fuzz("\x0A\x03\x8A\x03"sv);
+    unicode_fuzz("\x0A\xB3\x0A\x03"sv);
+    unicode_fuzz("\x3D\xC7\x00\x03"sv);
+    unicode_fuzz("\x3F\xCD\x00\x03"sv);
+    unicode_fuzz("\x54\x01\x0A\x03"sv);
+    unicode_fuzz("\x99\xBE\x0A\x03"sv);
+    unicode_fuzz("\xAB\xBE\x00\x03"sv);
+    unicode_fuzz("\xB2\xB2\x03\x03"sv);
+    unicode_fuzz("\xBB\x11\x21\xCE"sv);
+    unicode_fuzz("\xC0\x00\x0A\x03"sv);
+    unicode_fuzz("\xD6\x0C\x00\x04"sv);
+    unicode_fuzz("\xFF\xB0\x08\x03"sv);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {

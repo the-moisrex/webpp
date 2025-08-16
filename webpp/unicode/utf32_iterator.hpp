@@ -125,7 +125,7 @@ namespace webpp::unicode::checked {
           : beg{istl::begin_sentinel(inp_pos)},
             pos{inp_pos},
             send{inp_end},
-            code_point(checked::next_code_point<ErrorHandling, value_type>(pos, send)) {}
+            code_point{pos != send ? checked::validate_code_point<ErrorHandling>(*pos) : 0} {}
 
         constexpr utf32_bidi_iter()                                      = default;
         constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
@@ -135,12 +135,12 @@ namespace webpp::unicode::checked {
         constexpr ~utf32_bidi_iter() noexcept                            = default;
 
         constexpr utf32_bidi_iter& operator++() noexcept {
-            code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            code_point = checked::validate_code_point<ErrorHandling>(*++pos);
             return *this;
         }
 
         constexpr utf32_bidi_iter& operator--() noexcept {
-            code_point = checked::prev_code_point<ErrorHandling, value_type>(pos, beg);
+            code_point = checked::validate_code_point<ErrorHandling>(*--pos);
             return *this;
         }
 

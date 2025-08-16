@@ -984,6 +984,30 @@ namespace webpp::unicode {
             return_max_utf32        = 4,
         };
 
+        template <error_handling ErrorHandling, UTF32 CodePointType>
+        [[nodiscard]] static constexpr CodePointType to_error(CodePointType const code_point) noexcept {
+            using enum error_handling;
+            if constexpr (ErrorHandling == return_replacement_char) {
+                return replacement_char<CodePointType>;
+            } else if constexpr (ErrorHandling == return_max_utf32) {
+                return max_utf32<CodePointType>;
+            } else if constexpr (ErrorHandling == return_negated) {
+                // static_assert(stl::is_signed_v<code_point_type>,
+                //             "The code point type should support negative values if you want us to return"
+                //             "negative values as errors.");
+                return code_point > 0 ? -code_point : code_point;
+            } else if constexpr (ErrorHandling == return_zero_char) {
+                return static_cast<CodePointType>(0);
+            } else {
+                return code_point;
+            }
+        }
+
+        template <error_handling ErrorHandling, UTF32 CodePointType>
+        [[nodiscard]] static constexpr CodePointType validate_code_point(CodePointType const code_point) noexcept {
+            return is_code_point_valid(code_point) ? code_point : to_error<ErrorHandling>(code_point);
+        }
+
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
                   UTF32                       CodePointType = char32_t,
                   stl::bidirectional_iterator Iter          = char8_t const*,
@@ -1140,20 +1164,7 @@ namespace webpp::unicode {
             }
 
             // handle errors:
-            if constexpr (ErrorHandling == return_replacement_char) {
-                return replacement_char<code_point_type>;
-            } else if constexpr (ErrorHandling == return_max_utf32) {
-                return max_utf32<code_point_type>;
-            } else if constexpr (ErrorHandling == return_negated) {
-                // static_assert(stl::is_signed_v<code_point_type>,
-                //             "The code point type should support negative values if you want us to return"
-                //             "negative values as errors.");
-                return code_point > 0 ? -code_point : code_point;
-            } else if constexpr (ErrorHandling == return_zero_char) {
-                return static_cast<code_point_type>(0);
-            } else {
-                return code_point;
-            }
+            return to_error<ErrorHandling>(code_point);
         }
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
@@ -1391,20 +1402,7 @@ namespace webpp::unicode {
             }
 
             // handle errors:
-            if constexpr (ErrorHandling == return_replacement_char) {
-                return replacement_char<code_point_type>;
-            } else if constexpr (ErrorHandling == return_max_utf32) {
-                return max_utf32<code_point_type>;
-            } else if constexpr (ErrorHandling == return_negated) {
-                // static_assert(stl::is_signed_v<code_point_type>,
-                //             "The code point type should support negative values if you want us to return"
-                //             "negative values as errors.");
-                return code_point > 0 ? -code_point : code_point;
-            } else if constexpr (ErrorHandling == return_zero_char) {
-                return static_cast<code_point_type>(0);
-            } else {
-                return code_point;
-            }
+            return to_error<ErrorHandling>(code_point);
         }
 
         template <error_handling              ErrorHandling = error_handling::return_unchanged,
