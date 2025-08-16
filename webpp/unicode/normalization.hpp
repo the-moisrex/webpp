@@ -826,7 +826,7 @@ namespace webpp::unicode {
           : beg{istl::begin_sentinel(inp_pos)},
             cur{inp_pos},
             nxt{inp_pos},
-            send{inp_end} {
+            send{stl::move(inp_end)} {
             if (nxt == send) {
                 return;
             }
@@ -1031,7 +1031,8 @@ namespace webpp::unicode {
             }
             auto       cp1         = *cp1_pin;
             auto const starter_ccp = *rep_cpin;
-            auto       cp2_pin     = stl::next(cp1_pin);
+            auto       cp2_pin     = istl::deref(cp1_pin);
+            ++cp2_pin;
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));

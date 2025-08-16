@@ -27,17 +27,17 @@ namespace webpp::unicode::checked {
 
       private:
         [[no_unique_address]] istl::begin_iterator<Iter> beg{};
-        [[no_unique_address]] Iter                       lpos{}; // lower-bound of the Unicode code point
-        [[no_unique_address]] Iter                       upos{}; // upper-bound of the Unicode code point
-        [[no_unique_address]] EIter                      send{};
+        [[no_unique_address]] stl::remove_cvref_t<Iter>  lpos{}; // lower-bound of the Unicode code point
+        [[no_unique_address]] stl::remove_cvref_t<Iter>  upos{}; // upper-bound of the Unicode code point
+        [[no_unique_address]] stl::remove_cvref_t<EIter> send{};
         value_type                                       code_point{};
 
       public:
         explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
           : beg{istl::begin_sentinel(inp_pos)},
-            lpos{inp_pos},
-            upos{inp_pos},
-            send{inp_end},
+            lpos{stl::move(inp_pos)},
+            upos{stl::move(inp_pos)},
+            send{stl::move(inp_end)},
             code_point{checked::next_code_point<ErrorHandling, value_type>(upos, send)} {}
 
         constexpr utf32_bidi_iter()                                      = default;
@@ -116,15 +116,15 @@ namespace webpp::unicode::checked {
       private:
         // todo: do we need beg in this specialization?
         [[no_unique_address]] istl::begin_iterator<Iter> beg{};
-        [[no_unique_address]] Iter                       pos{};
-        [[no_unique_address]] EIter                      send{};
+        [[no_unique_address]] stl::remove_cvref_t<Iter>  pos{};
+        [[no_unique_address]] stl::remove_cvref_t<EIter> send{};
         value_type                                       code_point{};
 
       public:
         explicit constexpr utf32_bidi_iter(Iter inp_pos, EIter inp_end) noexcept
           : beg{istl::begin_sentinel(inp_pos)},
             pos{inp_pos},
-            send{inp_end},
+            send{stl::move(inp_end)},
             code_point{pos != send ? checked::validate_code_point<ErrorHandling>(*pos) : 0} {}
 
         constexpr utf32_bidi_iter()                                      = default;
@@ -205,14 +205,14 @@ namespace webpp::unicode::checked {
         using iterator_concept  = stl::forward_iterator_tag;
 
       private:
-        [[no_unique_address]] Iter  pos{};
-        [[no_unique_address]] EIter send{};
-        value_type                  code_point{};
+        [[no_unique_address]] stl::remove_cvref_t<Iter>  pos{};
+        [[no_unique_address]] stl::remove_cvref_t<EIter> send{};
+        value_type                                       code_point{};
 
       public:
         explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept
-          : pos{inp_pos},
-            send{inp_end},
+          : pos{stl::move(inp_pos)},
+            send{stl::move(inp_end)},
             code_point{checked::next_code_point_copy<ErrorHandling, value_type>(pos, send)} {}
 
         constexpr utf32_forward_iter()                                         = default;
@@ -223,7 +223,8 @@ namespace webpp::unicode::checked {
         constexpr ~utf32_forward_iter() noexcept                               = default;
 
         constexpr utf32_forward_iter& operator++() noexcept {
-            code_point = checked::next_code_point<ErrorHandling, value_type>(pos, send);
+            stl::advance(pos, utf_length_from<stl::iter_value_t<Iter>>(code_point));
+            code_point = checked::next_code_point_copy<ErrorHandling, value_type>(pos, send);
             return *this;
         }
 
