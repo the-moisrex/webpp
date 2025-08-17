@@ -14,7 +14,7 @@
 #endif
 
 namespace webpp::stl {
-    using namespace ::std;
+    using namespace ::std; // NOLINT(*-using-namespace)
 } // namespace webpp::stl
 
 #endif // WEBPP_STD_STD_H

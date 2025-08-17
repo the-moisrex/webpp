@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <iterator>
+#include <ranges>
 
 #if !__cpp_lib_concepts
 #    include "./iterator_impl.hpp"
@@ -64,50 +65,6 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    struct iter_of {
-        using type = stl::remove_cvref_t<decltype(stl::begin(stl::declval<stl::remove_pointer_t<T>>()))>;
-    };
-
-    template <typename T>
-        requires stl::input_or_output_iterator<T>
-    struct iter_of<T> {
-        using type = T;
-    };
-
-    template <typename T>
-        requires requires { typename T::iterator; }
-    struct iter_of<T> {
-        using type = typename T::iterator;
-    };
-
-    // Specialization for arrays
-    template <typename T, stl::size_t N>
-    struct iter_of<T[N]> { // NOLINT(*-avoid-c-arrays)
-        using type = T*;
-    };
-
-    // Specialization for const arrays
-    template <typename T, stl::size_t N>
-    struct iter_of<T const[N]> { // NOLINT(*-avoid-c-arrays)
-        using type = T const*;
-    };
-
-    // Specialization for const arrays ref
-    template <typename T, stl::size_t N>
-    struct iter_of<T const (&)[N]> { // NOLINT(*-avoid-c-arrays)
-        using type = T const*;
-    };
-
-    template <typename T>
-    struct iter_of<T&> : iter_of<std::remove_reference_t<T>> {};
-
-    template <typename T>
-    struct iter_of<T const> : iter_of<std::remove_const_t<T>> {};
-
-    template <typename T>
-    using iter_of_t = typename iter_of<T>::type;
-
-    template <typename T>
     struct appendable_value_type {
         using type = istl::char_type_of_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>;
     };
@@ -150,7 +107,8 @@ namespace webpp::istl {
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept AppendableStorage =
-      Appendable<T, ValueType> || (Iterable<T> && Appendable<iter_of_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>>);
+      Appendable<T, ValueType> ||
+      (Iterable<T> && Appendable<stl::ranges::iterator_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>>);
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendable =
@@ -158,8 +116,9 @@ namespace webpp::istl {
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendableStorage =
-      AppendableStorage<T, ValueType> && NothrowIterable<iter_of_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>> &&
-      NothrowAppendable<iter_of_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>, ValueType>;
+      AppendableStorage<T, ValueType> &&
+      NothrowIterable<stl::ranges::iterator_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>> &&
+      NothrowAppendable<stl::ranges::iterator_t<stl::remove_pointer_t<stl::remove_cvref_t<T>>>, ValueType>;
 
     /**
      * Append

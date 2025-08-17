@@ -245,8 +245,8 @@ namespace webpp::unicode {
 
     template <istl::String StrT = stl::u32string>
     static constexpr void canonically_reorder(StrT& out)
-      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<istl::iter_of_t<StrT>>>) {
-        canonically_reorder<istl::iter_of_t<StrT>>(stl::begin(out), stl::end(out));
+      noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<stl::ranges::iterator_t<StrT>>>) {
+        canonically_reorder<stl::ranges::iterator_t<StrT>>(stl::begin(out), stl::end(out));
     }
 
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
