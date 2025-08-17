@@ -7366,6 +7366,25 @@ TEST(Unicode, FuzzFixes11) {
     unicode_fuzz("\xFF\xB0\x08\x03"sv);
 }
 
+TEST(Unicode, FuzzFixes12) {
+    using webpp::stl::string;
+    using webpp::unicode::isNFC;
+    using webpp::unicode::toNFC;
+    using std::string_view_literals::operator""sv;
+    using std::string_literals::operator""s;
+    using webpp::tests::unicode_fuzz;
+    using webpp::unicode::is_canonically_ordered;
+
+    unicode_fuzz("\x30\x02\x30\x03"sv); // \x0230\x0330 in UTF-16
+    unicode_fuzz("\x00\x04\x2D\x03"sv);
+    unicode_fuzz("\x02\x02\x2D\x03"sv);
+    unicode_fuzz("\x03\x01\x2D\x03"sv);
+    unicode_fuzz("\x0A\x01\x28\x03"sv);
+    unicode_fuzz("\x0A\x02\x26\x03"sv);
+    unicode_fuzz("\x26\x02\x26\x03"sv);
+    unicode_fuzz("\xC8\x00\x2E\x03"sv);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::decompose_iterator;

@@ -116,8 +116,6 @@
 #include "./utf_reducer.hpp"
 
 #include <cassert>
-#include <cstdint>
-#include <iterator>
 
 namespace webpp::unicode {
     /**
@@ -178,7 +176,7 @@ namespace webpp::unicode {
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = istl::deref(pos);
-            auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+            auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 if (pos == end) {
@@ -192,7 +190,7 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto       prev    = istl::deref(back_pos);
-                auto const prev_cp = prev_code_point<return_replacement_char, char32_t, Iter>(prev, start);
+                auto const prev_cp = prev_code_point<return_replacement_char>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -221,7 +219,7 @@ namespace webpp::unicode {
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             auto       back_pos = istl::deref(pos);
-            auto       cur_cp   = next_code_point<return_replacement_char, char32_t, Iter>(pos, end);
+            auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 if (pos == end) {
@@ -234,7 +232,7 @@ namespace webpp::unicode {
 
             while (back_pos != start) {
                 auto       prev     = istl::deref(back_pos);
-                auto const prev_cp  = prev_code_point<return_replacement_char, char32_t, Iter>(prev, start);
+                auto const prev_cp  = prev_code_point<return_replacement_char>(prev, start);
                 auto const prev_ccc = ccc_of(prev_cp);
                 if (prev_ccc <= ccc) {
                     break;
@@ -846,7 +844,7 @@ namespace webpp::unicode {
         constexpr decompose_iterator& operator++() noexcept {
             // todo: we can optimize?
             ++index;
-            if (index >= len) {
+            if (index == len) {
                 index = 0;
                 cur   = nxt;
                 if (send == nxt) {
@@ -863,7 +861,6 @@ namespace webpp::unicode {
         }
 
         constexpr decompose_iterator& operator--() noexcept {
-            using enum checked::error_handling;
             --index;
             if (index < 0) {
                 nxt          = cur;
