@@ -237,12 +237,7 @@ namespace webpp::unicode {
                 if (prev_ccc <= ccc) {
                     break;
                 }
-                // If we reach here, we have a reordering pair: prev_ccc > ccc > 0
-                // This means the sequence is not in canonical order
-                if (prev_ccc > ccc) [[unlikely]] {
-                    return false;
-                }
-                back_pos = prev;
+                [[unlikely]] { return false; }
             }
         }
         return true;
@@ -314,7 +309,7 @@ namespace webpp::unicode {
 
         webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
         while (*ptr != u8'\0' && ptr != end_ptr) {
-            append<Iter>(out, ptr);
+            append<Iter>(out, ptr); // append increments ptr
         }
         webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
 
@@ -364,7 +359,8 @@ namespace webpp::unicode {
         using stl::swap;
         using enum checked::error_handling;
 
-
+        // The spos is periodically moved because we don't want spos to point to
+        // invalid code points at any time.
         for (auto pos = spos; pos != send; spos = pos) {
             auto const code_point = checked::next_code_point<return_negated>(pos, send);
 
@@ -608,9 +604,9 @@ namespace webpp::unicode {
 
         bool error  = !is_code_point_valid(lhs);
         error      |= !is_code_point_valid(rhs);
-        error       |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
-        error       |= lhs == 0;
-        error       |= rhs == 0;
+        error      |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
+        error      |= lhs == 0;
+        error      |= rhs == 0;
         if (error) [[unlikely]] {
             return Error;
         }
