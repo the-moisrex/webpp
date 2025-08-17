@@ -180,7 +180,7 @@ namespace webpp::unicode::idna {
         using istl::iter_append_range;
         using enum checked::error_handling;
         using inp_char_type = stl::iter_value_t<Iter>;
-        using out_iter_type = stl::ranges::iterator_t<OutStrT>;
+        using out_iter_type = istl::iter_of_t<OutStrT>;
 
         if constexpr (stl::same_as<Iter, OutStrT>) {
             // no inplace mapping

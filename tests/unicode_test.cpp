@@ -7394,14 +7394,14 @@ TEST(Unicode, UTF32IteratorsTest) {
 
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
-    auto                             str  = U"\xF0\xCD\x81\xCC"sv;
-    auto const* const                spos = str.begin();
-    auto const* const                send = str.end();
-    decompose_iterator const         dbeg{spos, send};
-    decompose_iterator const         dend{send, send};
-    utf32_bidi_iter const            ubeg{dbeg, dend};
-    utf32_bidi_iter                  upos{dbeg, dend};
-    [[maybe_unused]] utf32_bidi_iter uend{dend, dend};
+    auto                     str  = U"\xF0\xCD\x81\xCC"sv;
+    auto const* const        spos = str.begin();
+    auto const* const        send = str.end();
+    decompose_iterator const dbeg{spos, send};
+    decompose_iterator const dend{send, send};
+    utf32_bidi_iter const    ubeg{dbeg, dend};
+    utf32_bidi_iter          upos{dbeg, dend};
+    utf32_bidi_iter const    uend{dend, dend};
 
     // Go forward
     EXPECT_EQ(*upos++, 0xF0);
@@ -7442,15 +7442,15 @@ TEST(Unicode, UTF8IteratorsTest) {
     using webpp::unicode::checked::utf32_forward_iter;
     using std::string_view_literals::operator""sv;
 
-    auto                             str   = u8"\xF0\xCD\x81\xCC"sv; // �́�
-    auto const* const                spos  = str.begin();
-    auto const* const                send  = str.end();
-    auto const*                      sback = spos + 4;
-    decompose_iterator const         dbeg{spos, send};
-    decompose_iterator const         dend{send, send};
-    utf32_bidi_iter const            ubeg{dbeg, std::default_sentinel};
-    utf32_bidi_iter                  upos{dbeg, std::default_sentinel};
-    [[maybe_unused]] utf32_bidi_iter uend{dend, std::default_sentinel};
+    auto                     str   = u8"\xF0\xCD\x81\xCC"sv; // �́�
+    auto const* const        spos  = str.begin();
+    auto const* const        send  = str.end();
+    auto const*              sback = spos + 4;
+    decompose_iterator const dbeg{spos, send};
+    decompose_iterator const dend{send, send};
+    utf32_bidi_iter const    ubeg{dbeg, std::default_sentinel};
+    utf32_bidi_iter          upos{dbeg, std::default_sentinel};
+    utf32_bidi_iter const    uend{dend, std::default_sentinel};
 
     utf32_bidi_iter npos{spos, send};
     EXPECT_EQ(*npos++, 0xFFFD);

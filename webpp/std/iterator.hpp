@@ -79,6 +79,19 @@ namespace webpp::istl {
     template <typename T>
     using appendable_value_type_t = typename appendable_value_type<T>::type;
 
+    template <typename T>
+    struct iter_of {
+        using type = stl::ranges::iterator_t<T>;
+    };
+
+    template <stl::input_iterator T>
+    struct iter_of<T> {
+        using type = T;
+    };
+
+    template <typename T>
+    using iter_of_t = typename iter_of<T>::type;
+
     template <typename Iter, typename ValueType = appendable_value_type_t<Iter>>
     concept AppendableIterator =
       stl::forward_iterator<stl::remove_cvref_t<Iter>> && stl::is_copy_assignable_v<ValueType> &&
