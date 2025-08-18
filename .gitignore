@@ -12,6 +12,11 @@ CMakeLists.txt.user.*
 *~
 **/*~
 
+# AI stuff
+GEMINI.md
+QWEN.md
+CLAUDE.md
+
 # CMake Build directories
 build-*/
 build/
