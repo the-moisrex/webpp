@@ -1099,8 +1099,7 @@ namespace webpp::unicode {
 
             // Slow path:
             decompose_iterator const dbeg{spos, send};
-            return is_canonically_ordered(dbeg, stl::default_sentinel) &&
-                   is_composable_to(dbeg, stl::default_sentinel, spos, send);
+            return is_composable_to(dbeg, stl::default_sentinel, spos, send);
         } else {
             // todo: NFKC and NFKD
             static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");

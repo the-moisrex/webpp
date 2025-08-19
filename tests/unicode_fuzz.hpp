@@ -461,17 +461,20 @@ namespace webpp::tests {
         decompose_iterator       dbeg{str.begin(), str.end()};
         decompose_iterator const dend{str.end(), str.end()};
 
-        decompose_iterator       dbeg16{str16.begin(), str16.end()};
-        decompose_iterator const dend16{str16.end(), str16.end()};
+        decompose_iterator const dbeg16{str16.begin(), str16.end()};
 
         // we don't use the iterators directly since std::string will try to use distance on it
-        stl::string idres;
+        stl::string    idres;
         stl::u16string idres16;
         istl::resize_and_overwrite(idres, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
             return stl::copy(dbeg, dend, buf) - buf;
         });
         istl::resize_and_overwrite(idres16, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
-            return stl::copy(dbeg16, dend16, buf) - buf;
+            auto cptr = buf;
+            for (auto it = dbeg16; it != std::default_sentinel; ++it) {
+                *cptr++ = *it;
+            }
+            return cptr - buf;
         });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
@@ -526,6 +529,18 @@ namespace webpp::tests {
             std::string out = "one two three. ";
             normalize<NFC>(str.begin(), str.end(), out);
             EXPECT_EQ(out, "one two three. " + res) << to_hex(res);
+        }
+
+        {
+            if (res == str) {
+                EXPECT_TRUE(isNFC(str));
+            }
+            if (res16 == str16) {
+                EXPECT_TRUE(isNFC(str16));
+            }
+            if (res32 == str32) {
+                EXPECT_TRUE(isNFC(str32));
+            }
         }
 
 
