@@ -7398,6 +7398,8 @@ TEST(Unicode, FuzzFixes13) {
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\x2D\x01\x30\x03"sv);
     unicode_fuzz("\x2D\x01\x30\x03"sv);
+
+    unicode_fuzz("\x27\xD9\x94\x0A"sv);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
