@@ -7404,6 +7404,9 @@ TEST(Unicode, FuzzFixes13) {
     // This should not happen?
     // U+0027 (APOSTROPHE) + U+0654 (ARABIC HAMZA ABOVE) → U+0623 (ARABIC LETTER ALEF WITH HAMZA ABOVE)
     EXPECT_NE(canonical_composed(0x27, 0x654), 0x0623);
+
+    unicode_fuzz("\x27\xD9\x93"sv);
+    unicode_fuzz("\x99\x1F\x00\x03"sv);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
