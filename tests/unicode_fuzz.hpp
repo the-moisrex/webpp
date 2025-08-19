@@ -461,10 +461,17 @@ namespace webpp::tests {
         decompose_iterator       dbeg{str.begin(), str.end()};
         decompose_iterator const dend{str.end(), str.end()};
 
+        decompose_iterator       dbeg16{str16.begin(), str16.end()};
+        decompose_iterator const dend16{str16.end(), str16.end()};
+
         // we don't use the iterators directly since std::string will try to use distance on it
         stl::string idres;
-        webpp::istl::resize_and_overwrite(idres, data.size() * 4, [&](auto* buf, [[maybe_unused]] stl::size_t max_len) {
+        stl::u16string idres16;
+        istl::resize_and_overwrite(idres, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
             return stl::copy(dbeg, dend, buf) - buf;
+        });
+        istl::resize_and_overwrite(idres16, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
+            return stl::copy(dbeg16, dend16, buf) - buf;
         });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
@@ -481,7 +488,8 @@ namespace webpp::tests {
           << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
           << "\nNFD: " << to_hex(toNFD<std::string>(str));
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
-          << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16);
+          << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16)
+          << "\nDecomposed     : " << to_hex(dres16) << "\nDecomposed Iter: " << to_hex(idres16);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 
