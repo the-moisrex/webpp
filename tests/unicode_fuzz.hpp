@@ -532,15 +532,15 @@ namespace webpp::tests {
         }
 
         {
-            if (res == str) {
-                EXPECT_TRUE(isNFC(str));
-            }
-            if (res16 == str16) {
-                EXPECT_TRUE(isNFC(str16));
-            }
-            if (res32 == str32) {
-                EXPECT_TRUE(isNFC(str32));
-            }
+            // Check if isNFC is not giving false positives:
+            EXPECT_EQ(isNFC(str), res == str)
+              << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
+              << "\nNFD: " << to_hex(toNFD<std::string>(str));
+            EXPECT_EQ(isNFC(str16), res16 == str16)
+              << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16)
+              << "\nDecomposed     : " << to_hex(dres16) << "\nDecomposed Iter: " << to_hex(idres16);
+            EXPECT_EQ(isNFC(str32), res32 == str32)
+              << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
         }
 
 

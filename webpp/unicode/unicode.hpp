@@ -995,7 +995,8 @@ namespace webpp::unicode {
                 // static_assert(stl::is_signed_v<code_point_type>,
                 //             "The code point type should support negative values if you want us to return"
                 //             "negative values as errors.");
-                return code_point > 0 ? -code_point : code_point;
+                auto const icp = static_cast<stl::int32_t>(code_point);
+                return static_cast<CodePointType>(icp > 0 ? -icp : icp);
             } else if constexpr (ErrorHandling == return_zero_char) {
                 return static_cast<CodePointType>(0);
             } else {
