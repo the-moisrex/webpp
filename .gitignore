@@ -17,6 +17,9 @@ GEMINI.md
 QWEN.md
 CLAUDE.md
 
+# Some weird script
+.flagged
+
 # CMake Build directories
 build-*/
 build/
