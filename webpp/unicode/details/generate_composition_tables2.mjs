@@ -6,12 +6,13 @@
  */
 
 import * as path from "node:path";
-import * as readme from "./readme.mjs";
-import { getReadme } from "./readme.mjs";
-import * as UnicodeData from "./UnicodeData.mjs";
-import { fillEmpty, runClangFormat, writePieces } from "./utils.mjs";
+
 import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
+import * as readme from "./readme.mjs";
+import {getReadme} from "./readme.mjs";
+import * as UnicodeData from "./UnicodeData.mjs";
 import {getCanonicalDecompositions} from "./UnicodeData.mjs";
+import {fillEmpty, runClangFormat, writePieces} from "./utils.mjs";
 
 const outFile = `composition_tables.hpp`;
 
@@ -27,11 +28,20 @@ const start = async () => {
 
 class CP1 {
     #codePoint;
+    #mask;
     #replacement;
+
     constructor(codePoint = 0, replacement = 0) {
-        this.#codePoint = Number(codePoint) & 0xFF;
+        this.#codePoint = Number(codePoint);
+        this.#mask = Number(codePoint) & 0xFF;
         this.#replacement = replacement;
     }
+
+    get codePoint() { return this.#codePoint; }
+
+    get mask() { return this.#mask; }
+
+    get replacement() { return this.#replacement; }
 
     static typeSize() {
         return 32;
@@ -59,8 +69,27 @@ class CP1 {
         `;
     }
 
+    /**
+     * @param cp2 CP2
+     */
+    hasConflicts(cp2) {
+        // const pos = cp2.position + (Number(this.#codePoint) % cp2.rem);
+        for (let cp = 0; cp < 0x0010FFFF; cp += cp2.rem) {
+            // We found a code point that will have the same mask as this one, and that will cause that code
+            // point to have the same composition result as this code point.
+            if (cp === this.#codePoint) {
+                continue;
+            }
+            if ((cp & 0xFF) === this.#mask) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     render() {
-        return `{0x${this.#codePoint.toString(16).toUpperCase()}U, 0x${this.#replacement.toString(16).toUpperCase()}U}`;
+        return `{0x${this.#mask.toString(16).toUpperCase()}U, 0x${
+            this.#replacement.toString(16).toUpperCase()}U}`;
     }
 }
 
@@ -68,6 +97,7 @@ class CP2 {
     #codePoint;
     #cp1Pos = 0;
     #rem = 1;
+
     constructor(codePoint = 0) {
         // this.#codePoint = Number(codePoint) & 0xff;
         this.#codePoint = codePoint;
@@ -131,15 +161,13 @@ class CP2 {
 
 class CompTable {
     // these numbers are educated guesses from other projects, they're not that important!
-    lastCP1 = 0n;
-    lastCP2 = 0n;
+    // lastCP1 = 0n;
+    // lastCP2 = 0n;
     cp1s = [];
     cp2s = [];
 
-    cp2sMask = 0n;
+    // cp2sMask = 0n;
     cp2sRem = 0;
-
-    constructor() {}
 
     async load() {
         // const info = await UnicodeData.maxCPs();
@@ -186,7 +214,7 @@ class CompTable {
                 cp2.setRem(cp1sRaw.length);
                 nextRem: for (; ; cp2.nextRem()) {
                     const cp1sTemp = {};
-                    for (const { cp1: cp1Raw, codePoint: replacement } of cp1Vals) {
+                    for (const {cp1 : cp1Raw, codePoint : replacement} of cp1Vals) {
                         const cp1 = new CP1(cp1Raw, replacement);
                         const pos = cp2.position + (Number(cp1Raw) % cp2.rem);
                         if (pos in cp1sTemp) {
@@ -197,6 +225,10 @@ class CompTable {
                             //     cp2.position,
                             //     cp1Raw,
                             // );
+                            continue nextRem;
+                        }
+                        if (cp1.hasConflicts(cp2)) {
+                            console.log("Conflict in CP1 Mask detected:", cp1.codePoint, cp1.replacement);
                             continue nextRem;
                         }
                         cp1sTemp[pos] = cp1;

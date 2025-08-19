@@ -7392,6 +7392,7 @@ TEST(Unicode, FuzzFixes13) {
     using std::string_view_literals::operator""sv;
     using std::string_literals::operator""s;
     using webpp::tests::unicode_fuzz;
+    using webpp::unicode::canonical_composed;
     using webpp::unicode::is_canonically_ordered;
 
     unicode_fuzz("\xFF\x00\x23\x03"sv);
@@ -7400,6 +7401,9 @@ TEST(Unicode, FuzzFixes13) {
     unicode_fuzz("\x2D\x01\x30\x03"sv);
 
     unicode_fuzz("\x27\xD9\x94\x0A"sv);
+    // This should not happen?
+    // U+0027 (APOSTROPHE) + U+0654 (ARABIC HAMZA ABOVE) → U+0623 (ARABIC LETTER ALEF WITH HAMZA ABOVE)
+    EXPECT_NE(canonical_composed(0x27, 0x654), 0x0623);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {

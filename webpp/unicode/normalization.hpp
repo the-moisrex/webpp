@@ -605,8 +605,8 @@ namespace webpp::unicode {
         bool error  = !is_code_point_valid(lhs);
         error      |= !is_code_point_valid(rhs);
         error      |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
-        error      |= lhs == 0;
-        error      |= rhs == 0;
+        // error      |= lhs == 0;
+        // error      |= rhs == 0;
         if (error) [[unlikely]] {
             return Error;
         }
