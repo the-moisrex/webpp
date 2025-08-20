@@ -7394,6 +7394,7 @@ TEST(Unicode, FuzzFixes13) {
     using webpp::tests::unicode_fuzz;
     using webpp::unicode::canonical_composed;
     using webpp::unicode::is_canonically_ordered;
+    using webpp::unicode::is_composable_to;
 
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\xFF\x00\x23\x03"sv);
@@ -7407,6 +7408,13 @@ TEST(Unicode, FuzzFixes13) {
 
     unicode_fuzz("\x27\xD9\x93"sv);
     unicode_fuzz("\x99\x1F\x00\x03"sv);
+
+    {
+        EXPECT_FALSE(isNFC(u"\x012D\x0330"sv)); // Decomposed (not ordered): \x0069\x0306\x0330
+        constexpr auto decomposed = u"\x0069\x0306\x0330"sv;
+        constexpr auto composed   = u"\x1E2D\x0306"sv;
+        EXPECT_TRUE(is_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+    }
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
