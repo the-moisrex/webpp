@@ -12,33 +12,69 @@
 #include <limits>
 #include <string>
 
+using std::int64_t;
+using std::max;
+using std::min;
+using std::size_t;
+using std::string;
+using std::to_string;
 using webpp::fmt::format;
-using webpp::stl::int64_t;
-using webpp::stl::max;
-using webpp::stl::min;
-using webpp::stl::size_t;
-using webpp::stl::string;
-using webpp::stl::to_string;
-using webpp::stl::u16string;
-using webpp::stl::u32string;
-using webpp::stl::u8string;
 using webpp::unicode::canonical_decomposed;
 using webpp::unicode::ccc_of;
+using webpp::unicode::isNFC;
 using webpp::unicode::max_bmp;
 using webpp::unicode::max_legal_utf32;
+using webpp::unicode::toNFC;
 using webpp::unicode::checked::append;
+using webpp::unicode::checked::next_code_point;
+using webpp::unicode::checked::prev_code_point;
 using webpp::unicode::unchecked::next_char;
 using webpp::unicode::unchecked::next_char_copy;
 using webpp::unicode::unchecked::prev_char_copy;
 using webpp::unicode::unchecked::prev_code_point;
 using webpp::unicode::unchecked::swap_code_points;
+using std::string_view_literals::operator""sv;
+using std::string_literals::operator""s;
+using std::u16string;
+using std::u32string;
+using std::u32string_view;
+using std::u8string;
+using std::u8string_view;
+using webpp::tests::to_hex;
+using webpp::tests::unicode_fuzz;
+using webpp::tests::utf32_to_utf16;
+using webpp::tests::utf32_to_utf8;
+using webpp::tests::utf8_to_utf32;
+using webpp::unicode::canonical_compose;
+using webpp::unicode::canonical_composed;
+using webpp::unicode::canonical_decomposed;
+using webpp::unicode::compose_hangul;
+using webpp::unicode::decompose_iterator;
+using webpp::unicode::is_canonically_ordered;
+using webpp::unicode::is_code_unit_start;
+using webpp::unicode::is_composable_to;
+using webpp::unicode::replacement_char;
+using webpp::unicode::toNFC;
+using webpp::unicode::toNFD;
+using webpp::unicode::checked::next_code_point_copy;
+using webpp::unicode::details::ccc_index;
+using webpp::unicode::details::ccc_indices;
+using webpp::unicode::details::ccc_values;
+using webpp::unicode::details::decomp_index;
+using webpp::unicode::details::decomp_indices;
+using webpp::unicode::details::decomp_values;
+using webpp::unicode::details::trailing_mapped_decomps;
+using webpp::unicode::details::trailing_zero_cccs;
+using enum webpp::unicode::checked::error_handling;
+using webpp::unicode::checked::utf32_bidi_iter;
+using webpp::unicode::checked::utf32_forward_iter;
+
 
 static constexpr bool enable_utf8_composition_tests = true;
 
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
 
 TEST(UnicodeAlgos, UnitStart) {
-    using webpp::unicode::is_code_unit_start;
     EXPECT_TRUE(is_code_unit_start(u'a'));
     EXPECT_TRUE(is_code_unit_start(u'\0'));
     EXPECT_TRUE(is_code_unit_start(U'\0'));
@@ -226,10 +262,6 @@ namespace {
 
     template <typename CharT = char32_t>
     string desc_ccc_of(CharT const code_point) {
-        using webpp::unicode::details::ccc_index;
-        using webpp::unicode::details::ccc_indices;
-        using webpp::unicode::details::ccc_values;
-        using webpp::unicode::details::trailing_zero_cccs;
         if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
             return "Definite Zero";
         }
@@ -288,10 +320,6 @@ result: {}
 
     template <typename CharT = char32_t>
     string desc_decomp_of(CharT const code_point) {
-        using webpp::unicode::details::decomp_index;
-        using webpp::unicode::details::decomp_indices;
-        using webpp::unicode::details::decomp_values;
-        using webpp::unicode::details::trailing_mapped_decomps;
         if (code_point >= static_cast<CharT>(trailing_mapped_decomps)) [[unlikely]] {
             return "Definite Zero";
         }
@@ -326,8 +354,6 @@ result: {}
 } // namespace
 
 TEST(Unicode, getCcc) {
-    using webpp::unicode::ccc_of;
-
     // clang-format off
     // Command to get samples:
     // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ { if ($4 != 0) { print "EXPECT_EQ(unicode::ccc_of(0x" $1 "), " $4 ") << desc_ccc_of(0x" $1 ");"; } }' UnicodeData.txt | sort -R | head
@@ -414,10 +440,6 @@ TEST(Unicode, getCcc) {
 // Use this command to get the decomposed and its mapped values:
 // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/{gsub(/<[^>]*>/, "", $6); if($6 != "") print $1 ": " $6}' UnicodeData.txt
 TEST(Unicode, CanonicalDecompose) {
-    using webpp::tests::utf32_to_utf8;
-    using webpp::unicode::canonical_decomposed;
-    using webpp::unicode::toNFD;
-
     // clang-format off
     // Get more examples with these commands:
     //  All decompositions:
@@ -2528,8 +2550,6 @@ TEST(Unicode, CanonicalDecompose) {
 }
 
 TEST(Unicode, DecomposeInplace) {
-    using webpp::tests::utf32_to_utf8;
-
     auto const test_decomp = [](u32string const& inp_str, u32string const& inp_res) {
         auto str = inp_str;
         webpp::unicode::canonical_decompose(str);
@@ -4636,8 +4656,6 @@ TEST(Unicode, DecomposeInplace) {
 }
 
 TEST(Unicode, DecomposeUTF32) {
-    using webpp::tests::utf32_to_utf8;
-    using webpp::tests::utf8_to_utf32;
     // clang-format off
     // Get more examples with these commands:
     //  Canonical-only decompositions:
@@ -4667,8 +4685,6 @@ TEST(Unicode, DecomposeUTF32) {
 }
 
 TEST(Unicode, DecomposeHangul) {
-    using webpp::tests::utf32_to_utf8;
-
     EXPECT_EQ(canonical_decomposed<u8string>(static_cast<char32_t>(webpp::unicode::hangul_syllable_base)),
               utf32_to_utf8(U"\x1100\x1161"))
       << desc_decomp_of(static_cast<char32_t>(webpp::unicode::hangul_syllable_base));
@@ -4850,9 +4866,6 @@ TEST(Unicode, PrevCodePoint32) {
 }
 
 TEST(Unicode, SortMarkTest) {
-    using webpp::tests::utf32_to_utf8;
-    using webpp::tests::utf8_to_utf32;
-
     // a + <U+0308> + <U+0328> ( diaeresis + ogonek) -> canonicalOrdering reorders the accents!
     u8string  str  = u8"a\xcc\x88\xcc\xa8";
     u32string str2 = utf8_to_utf32(str);
@@ -4914,7 +4927,6 @@ TEST(Unicode, Compose) {
     //                                                         }}')#)"
     //
     // clang-format on
-    using webpp::unicode::canonical_composed;
 
     // specials:
     EXPECT_EQ(canonical_composed(70'375, 43'456), webpp::unicode::replacement_char<char32_t>);
@@ -5890,8 +5902,6 @@ TEST(Unicode, UTFLeadingCodeUnitsTest) {
 }
 
 TEST(Unicode, CanonicalComposeSpecial) {
-    using webpp::unicode::toNFC;
-    using webpp::unicode::toNFD;
     if constexpr (enable_utf8_composition_tests) {
         EXPECT_EQ(u8"\xa\xa", toNFD<std::u8string>(u8"\xa\xa"));
         EXPECT_EQ(U"\xa\xa", toNFD<std::u32string>(U"\xa\xa"));
@@ -5939,12 +5949,6 @@ TEST(Unicode, CanonicalComposeSpecial) {
 }
 
 TEST(Unicode, ComposeStr) {
-    using std::u32string;
-    using std::u8string;
-    using webpp::tests::utf32_to_utf8;
-    using webpp::unicode::canonical_compose;
-    using webpp::unicode::canonical_composed;
-
     EXPECT_EQ(canonical_composed('a', 0x0300), U'\x00e0');
     EXPECT_EQ(canonical_composed(1488, 776), webpp::unicode::replacement_char<char32_t>);
     EXPECT_EQ(canonical_composed(111, 0x03'08bb), webpp::unicode::replacement_char<char32_t>);
@@ -6412,9 +6416,6 @@ TEST(Unicode, ComposeStr) {
 }
 
 TEST(Unicode, ComposedStr2) {
-    using webpp::unicode::canonical_composed;
-    using webpp::unicode::compose_hangul;
-
     EXPECT_EQ(canonical_composed(canonical_composed(0x1100, 0x1173), 0x11B2), 0xAE03);
 
     EXPECT_EQ(canonical_composed<u32string>(U"\u200c\u1100\u1173\u11b2.\u69b6-"), U"\u200c\uae03.\u69b6-");
@@ -6486,17 +6487,12 @@ TEST(Unicode, ComposedStr2) {
 }
 
 TEST(Unicode, HangulCompose) {
-    using webpp::unicode::canonical_composed;
-    using webpp::unicode::compose_hangul;
-
     EXPECT_EQ(canonical_composed(0xAC00, 0x11A8), 0xAC01) << compose_hangul(0xAC00, 0x11A8); // 가 + ᆨ = 각
     EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC1C, 0x11B2); // 개 + ᆲ = 갥
     EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC24, 0x11B2); // 개 + ᆲ = 갧
 }
 
 TEST(Unicode, NoCompose) {
-    using webpp::unicode::canonical_composed;
-
     EXPECT_EQ(canonical_composed(0x925, 0x0020), webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(0, 0), webpp::unicode::replacement_char<>);
     EXPECT_EQ(canonical_composed(1, 0), webpp::unicode::replacement_char<>);
@@ -6573,10 +6569,6 @@ namespace {
 } // namespace
 
 TEST(Unicode, SpacialNormalization16) {
-    using std::u16string;
-    using webpp::unicode::toNFC;
-    using webpp::unicode::toNFD;
-
     ASSERT_TRUE(webpp::unicode::is_code_unit_start(static_cast<char16_t>(0xFC00)));
     EXPECT_EQ(u"ﰀ", toNFC<std::u16string>(u"ﰀ"));
     EXPECT_EQ(u"\x7280", toNFC<std::u16string>(u"\xd87e\xdd24"));
@@ -6590,18 +6582,6 @@ TEST(Unicode, SpacialNormalization16) {
 }
 
 TEST(Unicode, NormalizationTests) {
-    using std::u32string;
-    using std::u32string_view;
-    using std::u8string;
-    using std::u8string_view;
-    using webpp::tests::to_hex;
-    using webpp::tests::utf32_to_utf16;
-    using webpp::tests::utf32_to_utf8;
-    using webpp::unicode::canonical_composed;
-    using webpp::unicode::canonical_decomposed;
-    using webpp::unicode::decompose_iterator;
-    using webpp::unicode::toNFC;
-    using webpp::unicode::toNFD;
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
 
 
@@ -6724,10 +6704,6 @@ TEST(Unicode, NormalizationTests) {
 }
 
 TEST(Unicode, CheckedNextCodePoint) {
-    using webpp::unicode::replacement_char;
-    using webpp::unicode::checked::next_code_point_copy;
-    using enum webpp::unicode::checked::error_handling;
-
     std::u8string str = u8"\xac";
     EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
     EXPECT_EQ(next_code_point_copy<return_negated>(str.begin(), str.end()), -U'\xac');
@@ -6738,11 +6714,6 @@ TEST(Unicode, CheckedNextCodePoint) {
 }
 
 TEST(Unicode, FuzzFixes) {
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::toNFC;
-    using webpp::unicode::toNFD;
-    using std::string_view_literals::operator""sv;
-
     // In JavaScript, you can verify this using this:
     // @code
     //   String.prototype.toNFC = function() {
@@ -6937,9 +6908,6 @@ TEST(Unicode, FuzzFixes) {
 }
 
 TEST(Unicode, FuzzFixes2) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\xed\x94\x81\xed\xa"sv);
     unicode_fuzz("\xec\xac\x98\xec\xa"sv);
     unicode_fuzz("쬘ì\n"sv);
@@ -6957,9 +6925,6 @@ TEST(Unicode, FuzzFixes2) {
 }
 
 TEST(Unicode, FuzzFixes3) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\x0A\x2D\x29\x00\x20\x00"sv);
     unicode_fuzz("\x2E\xDD\x0A"sv);
     unicode_fuzz("\x0A\x0A\xD9\xD9"sv);
@@ -6969,9 +6934,6 @@ TEST(Unicode, FuzzFixes3) {
 }
 
 TEST(Unicode, FuzzFixes4) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\x80"sv);
     unicode_fuzz("\x03\x03\x03\x80"sv);
     unicode_fuzz("\x03\x03\x03\x0A"sv);
@@ -6993,13 +6955,6 @@ TEST(Unicode, FuzzFixes4) {
 }
 
 TEST(Unicode, FuzzTestFixes3) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-    using webpp::stl::u32string;
-    using webpp::unicode::canonical_composed;
-    using webpp::unicode::canonical_decomposed;
-    using webpp::unicode::replacement_char;
-
     EXPECT_EQ(canonical_composed(0xffff'ff74, 0x30c), replacement_char<char32_t>);
 
     unicode_fuzz("\xed\x96\x96\xd6\x96"sv);
@@ -7067,9 +7022,6 @@ TEST(Unicode, FuzzTestFixes3) {
 }
 
 TEST(Unicode, FuzzFixes5) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\xCC\x8A\xCC"sv);
     unicode_fuzz("\xCC\x82\xCC"sv);
     unicode_fuzz("\xCD\x84\xCD"sv);
@@ -7092,9 +7044,6 @@ TEST(Unicode, FuzzFixes5) {
 }
 
 TEST(Unicode, FuzzFixes6) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\xF0\xCD\x81\xCC"sv);
     unicode_fuzz("\x3B\x18\x03\xD8\x03\x03\x03\x0A\x18\x18"sv);
 
@@ -7113,9 +7062,6 @@ TEST(Unicode, FuzzFixes6) {
 }
 
 TEST(Unicode, FuzzFixes7) {
-    using webpp::tests::unicode_fuzz;
-    using std::string_view_literals::operator""sv;
-
     unicode_fuzz("\x0A\xB8\xCC\xCC\xCC\xCC\xCC\xB8\xC0\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8\xB8"sv);
 
     unicode_fuzz("\xCC\xCC\xCC\xCC\xCC\xAD\xCC\xCC\xCC\xCC\xCC\x0A\x0A"sv);
@@ -7127,13 +7073,6 @@ TEST(Unicode, FuzzFixes7) {
 }
 
 TEST(Unicode, FuzzFixes6Explicit) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::unicode::is_canonically_ordered;
-
     EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
     EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
 
@@ -7165,10 +7104,6 @@ TEST(Unicode, FuzzFixes6Explicit) {
 }
 
 TEST(Unicode, FuzzFixes7Explicit) {
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-
     EXPECT_EQ(toNFC("\xFF"s), "\xEF\xBF\xBD"sv);
     EXPECT_EQ(toNFC(U"\xFF"s), U"\xFF"sv);
     EXPECT_EQ(toNFC(u"\xFF"s), u"\xFF"sv);
@@ -7177,14 +7112,6 @@ TEST(Unicode, FuzzFixes7Explicit) {
 }
 
 TEST(Unicode, FuzzFixes8) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::is_canonically_ordered;
-
     EXPECT_NE(toNFC("\0\xCC\x8A"s), "\0"sv);
     EXPECT_NE(toNFC("\0\xCC\x8A"s), "\0\0"sv);
     EXPECT_NE(toNFC("\0\0\0\0\0\0\xCC\x8A"s), "\0\0\0\0\0\0"sv);
@@ -7210,14 +7137,6 @@ TEST(Unicode, FuzzFixes8) {
 }
 
 TEST(Unicode, FuzzFixes9) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::is_canonically_ordered;
-
     unicode_fuzz("\n\xC3\x8D"sv);
     unicode_fuzz("\n\x3\xE7\x9D\x80"sv);
     unicode_fuzz("\n1\xE7\x9D\x80"sv);
@@ -7303,15 +7222,6 @@ TEST(Unicode, FuzzFixes9) {
 }
 
 TEST(Unicode, FuzzFixes10) {
-    using webpp::stl::string;
-    using webpp::stl::u32string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::is_canonically_ordered;
-
     EXPECT_FALSE(isNFC("\xCD\x80"sv));       // this is U'\x340'
     EXPECT_EQ(toNFC(U"\x340"s), U"\x300"sv); // U'\x300'
     EXPECT_EQ(canonical_decomposed<u32string>(0xCD), U"\x49\x301"sv);
@@ -7322,14 +7232,6 @@ TEST(Unicode, FuzzFixes10) {
 }
 
 TEST(Unicode, FuzzFixes11) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::is_canonically_ordered;
-
     unicode_fuzz("\x30\x02\x30\x03"sv);
     unicode_fuzz("\xED\xFC\xFF\xFF"sv);
     unicode_fuzz("\xF5\xFC\xFF\xFF"sv);
@@ -7367,14 +7269,6 @@ TEST(Unicode, FuzzFixes11) {
 }
 
 TEST(Unicode, FuzzFixes12) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::is_canonically_ordered;
-
     unicode_fuzz("\x30\x02\x30\x03"sv); // \x0230\x0330 in UTF-16
     unicode_fuzz("\x00\x04\x2D\x03"sv);
     unicode_fuzz("\x02\x02\x2D\x03"sv);
@@ -7386,16 +7280,6 @@ TEST(Unicode, FuzzFixes12) {
 }
 
 TEST(Unicode, FuzzFixes13) {
-    using webpp::stl::string;
-    using webpp::unicode::isNFC;
-    using webpp::unicode::toNFC;
-    using std::string_view_literals::operator""sv;
-    using std::string_literals::operator""s;
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::canonical_composed;
-    using webpp::unicode::is_canonically_ordered;
-    using webpp::unicode::is_composable_to;
-
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\x2D\x01\x30\x03"sv);
@@ -7418,12 +7302,6 @@ TEST(Unicode, FuzzFixes13) {
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::decompose_iterator;
-    using webpp::unicode::checked::utf32_bidi_iter;
-    using webpp::unicode::checked::utf32_forward_iter;
-    using std::string_view_literals::operator""sv;
-
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
     auto                     str  = U"\xF0\xCD\x81\xCC"sv;
@@ -7467,13 +7345,6 @@ TEST(Unicode, UTF32IteratorsTest) {
 }
 
 TEST(Unicode, UTF8IteratorsTest) {
-    using webpp::tests::unicode_fuzz;
-    using webpp::unicode::decompose_iterator;
-    using webpp::unicode::checked::prev_code_point;
-    using webpp::unicode::checked::utf32_bidi_iter;
-    using webpp::unicode::checked::utf32_forward_iter;
-    using std::string_view_literals::operator""sv;
-
     auto                     str   = u8"\xF0\xCD\x81\xCC"sv; // �́�
     auto const* const        spos  = str.begin();
     auto const* const        send  = str.end();
