@@ -905,6 +905,100 @@ namespace webpp::unicode {
         }
     };
 
+    template <stl::forward_iterator Iter, typename EIter = stl::default_sentinel_t>
+        requires(stl::sentinel_for<EIter, Iter>)
+    struct combining_marks_iterator {
+        using difference_type   = stl::iter_difference_t<Iter>;
+        using value_type        = stl::iter_value_t<Iter>;
+        using traits            = stl::iterator_traits<Iter>;
+        using pointer           = typename traits::pointer;
+        using reference         = value_type&;
+        using const_reference   = value_type const&;
+        using iterator_category = stl::forward_iterator_tag;
+        using iterator_concept  = stl::forward_iterator_tag;
+
+        static_assert(UTF32<value_type>,
+                      "Reordered iterator only works with UTF-32 iterators. Try wrapping that iterator.");
+
+      private:
+        [[no_unique_address]] Iter  beg{};
+        [[no_unique_address]] Iter  cur{};
+        [[no_unique_address]] EIter endp{};
+        std::size_t                 index    = 0;
+        std::uint8_t                prev_ccc = 0;
+
+        constexpr void next() noexcept {
+            Iter         pos      = beg;
+            std::uint8_t smallest = 255;
+            for (;;) {
+                auto const ccc = ccc_of(*pos);
+                if (ccc > prev_ccc && ccc < smallest) {
+                    smallest = ccc;
+                    cur      = pos;
+                }
+
+                // quit on first starter code point
+                if (ccc == 0 || ++pos == endp) {
+                    if (smallest == 255) {
+                        cur = pos; // endp
+                    }
+                    break;
+                }
+            }
+            prev_ccc = smallest;
+        }
+
+      public:
+        explicit constexpr combining_marks_iterator(Iter inp_pos, EIter inp_end = EIter{}) noexcept
+          : beg{inp_pos},
+            cur{inp_pos},
+            endp{inp_end} {
+            next();
+        }
+
+        constexpr combining_marks_iterator()                                               = default;
+        constexpr combining_marks_iterator(combining_marks_iterator const&)                = default;
+        constexpr combining_marks_iterator(combining_marks_iterator&&) noexcept            = default;
+        constexpr combining_marks_iterator& operator=(combining_marks_iterator const&)     = default;
+        constexpr combining_marks_iterator& operator=(combining_marks_iterator&&) noexcept = default;
+        constexpr ~combining_marks_iterator() noexcept                                     = default;
+
+        constexpr combining_marks_iterator& operator++() noexcept {
+            if (cur == endp) {
+                return *this;
+            }
+            ++index;
+            next();
+            return *this;
+        }
+
+        constexpr const_reference operator*() const noexcept {
+            return *cur;
+        }
+
+        [[nodiscard]] constexpr combining_marks_iterator operator++(int) noexcept {
+            auto const res = combining_marks_iterator{*this};
+            operator++();
+            return res;
+        }
+
+        [[nodiscard]] constexpr bool operator==(combining_marks_iterator const& other) const noexcept {
+            return cur == other.cur;
+        }
+
+        [[nodiscard]] constexpr bool operator==(Iter const& other) const noexcept {
+            return cur == other;
+        }
+
+        [[nodiscard]] constexpr bool operator==(EIter const& other) const noexcept {
+            return cur == other;
+        }
+
+        [[nodiscard]] constexpr bool at_end() const noexcept {
+            return cur == endp;
+        }
+    };
+
 
     /**
      * QC (Quick Check) states
@@ -1008,6 +1102,8 @@ namespace webpp::unicode {
     /**
      * Check if composing the decomposed string (spos/send) would result in the original string (cpos/cend).
      * This is used to verify that a string is in NFC form.
+     *
+     * Attention: this function requires the input to be canonically ordered and decomposed (== NFD).
      */
     template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
@@ -1018,14 +1114,16 @@ namespace webpp::unicode {
 
         // I'm not bailing out early and using is_valid because I want to put less branches on the path that gives true
         bool is_valid = true;
-        for (; !cp1_pin.at_end(); ++cp1_pin, ++rep_cpin) {
+        while (!cp1_pin.at_end()) {
             if (rep_cpin.at_end()) [[unlikely]] {
                 return false;
             }
+
             auto       cp1         = *cp1_pin;
             auto const starter_ccp = *rep_cpin;
-            auto       cp2_pin     = istl::deref(cp1_pin);
-            ++cp2_pin;
+            ++cp1_pin;
+
+            auto cp2_pin = istl::deref(cp1_pin);
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -1043,6 +1141,56 @@ namespace webpp::unicode {
                 is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
             }
             is_valid &= starter_ccp == cp1;
+            ++rep_cpin;
+        }
+        is_valid &= rep_cpin.at_end();
+        return is_valid;
+    }
+
+    /**
+     * Check if composing the decomposed string (spos/send) would result in the original string (cpos/cend).
+     * This is used to verify that a string is in NFC form.
+     */
+    template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
+        requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
+    [[nodiscard]] static constexpr bool
+    is_reordered_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
+        using checked::next_code_point;
+        using checked::prev_code_point;
+        using enum checked::error_handling;
+
+        checked::utf32_forward_iter cp1_pin{spos, send};
+        checked::utf32_forward_iter rep_cpin{cpos, cend};
+
+        bool is_valid = true;
+        while (!cp1_pin.at_end()) {
+            if (rep_cpin.at_end()) [[unlikely]] {
+                return false;
+            }
+
+            auto       cp1         = *cp1_pin;
+            auto const starter_ccp = *rep_cpin;
+            ++cp1_pin;
+
+            combining_marks_iterator cp2_pin{cp1_pin, send};
+            for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
+                auto const cp2         = *cp2_pin;
+                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
+                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                if (prev_ccc < ccc && replaced_cp != U'\0') {
+                    // found a composition
+                    cp1 = replaced_cp;
+                    continue;
+                }
+                if (ccc == 0) [[likely]] {
+                    break;
+                }
+                prev_ccc = ccc;
+                ++rep_cpin;
+                is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
+            }
+            is_valid &= starter_ccp == cp1;
+            ++rep_cpin;
         }
         is_valid &= rep_cpin.at_end();
         return is_valid;
@@ -1099,7 +1247,7 @@ namespace webpp::unicode {
 
             // Slow path:
             decompose_iterator const dbeg{spos, send};
-            return is_composable_to(dbeg, stl::default_sentinel, spos, send);
+            return is_reordered_composable_to(dbeg, stl::default_sentinel, spos, send);
         } else {
             // todo: NFKC and NFKD
             static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");

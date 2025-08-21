@@ -223,8 +223,11 @@ namespace webpp::unicode::checked {
         constexpr ~utf32_forward_iter() noexcept                               = default;
 
         constexpr utf32_forward_iter& operator++() noexcept {
-            stl::advance(pos, utf_length_from<stl::iter_value_t<Iter>>(code_point));
-            code_point = checked::next_code_point_copy<ErrorHandling, value_type>(pos, send);
+            if (checked::next_char(pos, send)) {
+                code_point = checked::next_code_point_copy<ErrorHandling, value_type>(pos, send);
+            } else {
+                code_point = U'\0';
+            }
             return *this;
         }
 

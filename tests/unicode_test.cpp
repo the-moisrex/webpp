@@ -66,6 +66,7 @@ using webpp::unicode::details::decomp_values;
 using webpp::unicode::details::trailing_mapped_decomps;
 using webpp::unicode::details::trailing_zero_cccs;
 using enum webpp::unicode::checked::error_handling;
+using webpp::unicode::is_reordered_composable_to;
 using webpp::unicode::checked::utf32_bidi_iter;
 using webpp::unicode::checked::utf32_forward_iter;
 
@@ -7280,6 +7281,18 @@ TEST(Unicode, FuzzFixes12) {
 }
 
 TEST(Unicode, FuzzFixes13) {
+    {
+        constexpr auto                           decomposed = u"\x0069\x0306\x0330"sv;
+        constexpr auto                           composed   = u"\x1E2D\x0306"sv;
+        utf32_forward_iter const                 fiter{std::next(decomposed.begin()), decomposed.end()};
+        webpp::unicode::combining_marks_iterator iter{fiter};
+        EXPECT_EQ(*iter++, U'\x0330');
+        EXPECT_EQ(*iter++, U'\x0306');
+        EXPECT_EQ(iter, std::default_sentinel);
+        EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+        EXPECT_FALSE(isNFC(u"\x012D\x0330"sv)); // Decomposed (not ordered): \x0069\x0306\x0330
+    }
+
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\xFF\x00\x23\x03"sv);
     unicode_fuzz("\x2D\x01\x30\x03"sv);
@@ -7292,13 +7305,6 @@ TEST(Unicode, FuzzFixes13) {
 
     unicode_fuzz("\x27\xD9\x93"sv);
     unicode_fuzz("\x99\x1F\x00\x03"sv);
-
-    {
-        EXPECT_FALSE(isNFC(u"\x012D\x0330"sv)); // Decomposed (not ordered): \x0069\x0306\x0330
-        constexpr auto decomposed = u"\x0069\x0306\x0330"sv;
-        constexpr auto composed   = u"\x1E2D\x0306"sv;
-        EXPECT_TRUE(is_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
-    }
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
