@@ -7284,8 +7284,9 @@ TEST(Unicode, FuzzFixes13) {
     {
         constexpr auto                           decomposed = u"\x0069\x0306\x0330"sv;
         constexpr auto                           composed   = u"\x1E2D\x0306"sv;
-        utf32_forward_iter const                 fiter{std::next(decomposed.begin()), decomposed.end()};
-        webpp::unicode::combining_marks_iterator iter{fiter};
+        utf32_forward_iter const                        fiter{decomposed.begin(), decomposed.end()};
+        webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+        EXPECT_EQ(*iter++, U'\x0069');
         EXPECT_EQ(*iter++, U'\x0330');
         EXPECT_EQ(*iter++, U'\x0306');
         EXPECT_EQ(iter, std::default_sentinel);

@@ -104,6 +104,32 @@ namespace webpp::tests {
         return utf16_str;
     }
 
+    constexpr std::u32string utf16_to_utf32(std::u16string const input) {
+        std::u32string out;
+        out.reserve(input.length() * 2);
+        unicode::checked::utf32_forward_iter iter(input.begin(), input.end());
+        for (; iter != input.end(); ++iter) {
+            auto const code_point = *iter;
+            if (!webpp::unicode::checked::append(out, code_point)) {
+                throw webpp::stl::invalid_argument("Invalid code point");
+            }
+        }
+        return out;
+    }
+
+    constexpr std::string utf16_to_str(std::u16string const input) {
+        std::string out;
+        out.reserve(input.length() * 2);
+        unicode::checked::utf32_forward_iter iter(input.begin(), input.end());
+        for (; iter != input.end(); ++iter) {
+            auto const code_point = *iter;
+            if (!webpp::unicode::checked::append(out, code_point)) {
+                throw webpp::stl::invalid_argument("Invalid code point");
+            }
+        }
+        return out;
+    }
+
     template <typename CharT>
         requires istl::part_of<CharT, char, char8_t>
     constexpr char32_t utf8_to_utf32(std::basic_string_view<CharT> const input) {
@@ -306,6 +332,16 @@ namespace webpp::tests {
         // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
     }
 
+    std::string all_cccs(auto const& str) {
+        using webpp::unicode::ccc_of;
+        std::string out;
+        for (auto const code_point : str) {
+            out += std::to_string(ccc_of(code_point));
+            out += " ";
+        }
+        return out;
+    }
+
     void check_idempotent(auto const& str) {
         using tests::to_hex;
         using unicode::toNFC;
@@ -492,7 +528,9 @@ namespace webpp::tests {
           << "\nNFD: " << to_hex(toNFD<std::string>(str));
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
           << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16)
-          << "\nDecomposed     : " << to_hex(dres16) << "\nDecomposed Iter: " << to_hex(idres16);
+          << "\nDecomposed     : " << to_hex(dres16) << "\nDecomposed Iter: " << to_hex(idres16)
+          << "\nccc            : " << all_cccs(idres16)
+          << "\nsorted         : " << to_hex(unicode::canonically_reordered(idres16));
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 

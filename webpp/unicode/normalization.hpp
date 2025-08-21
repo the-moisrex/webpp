@@ -249,6 +249,12 @@ namespace webpp::unicode {
         canonically_reorder<stl::ranges::iterator_t<StrT>>(stl::begin(out), stl::end(out));
     }
 
+    template <istl::String StrT = stl::u32string>
+    [[nodiscard]] static constexpr StrT canonically_reordered(StrT out) {
+        canonically_reorder<stl::ranges::iterator_t<StrT>>(stl::begin(out), stl::end(out));
+        return out;
+    }
+
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
     template <UTF CharT = char8_t>
     static constexpr auto max_decomposed_length =
@@ -907,7 +913,7 @@ namespace webpp::unicode {
 
     template <stl::forward_iterator Iter, typename EIter = stl::default_sentinel_t>
         requires(stl::sentinel_for<EIter, Iter>)
-    struct combining_marks_iterator {
+    struct sorted_combining_marks_iterator {
         using difference_type   = stl::iter_difference_t<Iter>;
         using value_type        = stl::iter_value_t<Iter>;
         using traits            = stl::iterator_traits<Iter>;
@@ -930,9 +936,9 @@ namespace webpp::unicode {
         constexpr void next() noexcept {
             Iter         pos      = beg;
             std::uint8_t smallest = 255;
-            for (;;) {
+            for (std::size_t cur_index = 0;;) {
                 auto const ccc = ccc_of(*pos);
-                if (ccc > prev_ccc && ccc < smallest) {
+                if (ccc < smallest && ++cur_index >= index && ccc > prev_ccc) {
                     smallest = ccc;
                     cur      = pos;
                 }
@@ -949,21 +955,21 @@ namespace webpp::unicode {
         }
 
       public:
-        explicit constexpr combining_marks_iterator(Iter inp_pos, EIter inp_end = EIter{}) noexcept
+        explicit constexpr sorted_combining_marks_iterator(Iter inp_pos, EIter inp_end = EIter{}) noexcept
           : beg{inp_pos},
             cur{inp_pos},
             endp{inp_end} {
             next();
         }
 
-        constexpr combining_marks_iterator()                                               = default;
-        constexpr combining_marks_iterator(combining_marks_iterator const&)                = default;
-        constexpr combining_marks_iterator(combining_marks_iterator&&) noexcept            = default;
-        constexpr combining_marks_iterator& operator=(combining_marks_iterator const&)     = default;
-        constexpr combining_marks_iterator& operator=(combining_marks_iterator&&) noexcept = default;
-        constexpr ~combining_marks_iterator() noexcept                                     = default;
+        constexpr sorted_combining_marks_iterator()                                                      = default;
+        constexpr sorted_combining_marks_iterator(sorted_combining_marks_iterator const&)                = default;
+        constexpr sorted_combining_marks_iterator(sorted_combining_marks_iterator&&) noexcept            = default;
+        constexpr sorted_combining_marks_iterator& operator=(sorted_combining_marks_iterator const&)     = default;
+        constexpr sorted_combining_marks_iterator& operator=(sorted_combining_marks_iterator&&) noexcept = default;
+        constexpr ~sorted_combining_marks_iterator() noexcept                                            = default;
 
-        constexpr combining_marks_iterator& operator++() noexcept {
+        constexpr sorted_combining_marks_iterator& operator++() noexcept {
             if (cur == endp) {
                 return *this;
             }
@@ -976,13 +982,13 @@ namespace webpp::unicode {
             return *cur;
         }
 
-        [[nodiscard]] constexpr combining_marks_iterator operator++(int) noexcept {
-            auto const res = combining_marks_iterator{*this};
+        [[nodiscard]] constexpr sorted_combining_marks_iterator operator++(int) noexcept {
+            auto const res = sorted_combining_marks_iterator{*this};
             operator++();
             return res;
         }
 
-        [[nodiscard]] constexpr bool operator==(combining_marks_iterator const& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(sorted_combining_marks_iterator const& other) const noexcept {
             return cur == other.cur;
         }
 
@@ -1172,7 +1178,7 @@ namespace webpp::unicode {
             auto const starter_ccp = *rep_cpin;
             ++cp1_pin;
 
-            combining_marks_iterator cp2_pin{cp1_pin, send};
+            sorted_combining_marks_iterator cp2_pin{cp1_pin, send};
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
