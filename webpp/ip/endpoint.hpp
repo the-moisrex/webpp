@@ -13,23 +13,23 @@
 namespace webpp {
 
     template <typename T>
-    concept Endpoint = requires(stl::remove_cvref_t<T> ep) {
+    concept Endpoint = requires(stl::remove_cvref_t<T> endpoint) {
         requires stl::destructible<stl::remove_cvref_t<T>>;
         requires stl::derived_from<stl::remove_cvref_t<T>, ip_address>;
 
         // it should be noexcept, even if you have to use "try-catch"
         {
-            ep.is_bindable()
+            endpoint.is_bindable()
         } noexcept -> stl::same_as<bool>;
 
         {
-            ep.is_tcp()
+            endpoint.is_tcp()
         } noexcept -> stl::same_as<bool>;
         {
-            ep.is_udp()
+            endpoint.is_udp()
         } noexcept -> stl::same_as<bool>;
         {
-            ep.port()
+            endpoint.port()
         } noexcept -> stl::same_as<stl::uint16_t>;
     };
 

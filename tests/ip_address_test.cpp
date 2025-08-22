@@ -63,6 +63,6 @@ TEST(IPAddressTests, Equality) {
 TEST(IPAddressTests, Methods) {
     ip_address addr{"::0fff:1/127"};
     EXPECT_TRUE(addr.is_valid());
-    EXPECT_EQ(addr.prefix(), 127u);
+    EXPECT_EQ(addr.prefix(), 127U);
     EXPECT_EQ(addr.status(), ip_address_status::valid);
 }

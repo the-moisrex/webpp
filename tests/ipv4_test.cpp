@@ -172,8 +172,8 @@ TEST(IPv4Tests, InetP2NValidation) {
 
 
         // test the sizes:
-        pure_ipv4 ip{_ip};
-        EXPECT_EQ(ip.string().size(), ip.size());
+        pure_ipv4 ip4{_ip};
+        EXPECT_EQ(ip4.string().size(), ip4.size());
     }
 
     for (auto const& _ip : invalid_ipv4s) {

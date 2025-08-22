@@ -202,7 +202,6 @@ set(ALL_SOURCES_SHORT
         uri/scheme.hpp
         uri/uri.hpp
         uri/uri_status.hpp
-        uri/uri_string.hpp
 
         crypto/base64.hpp
         crypto/base64_url.hpp
@@ -223,7 +222,6 @@ set(ALL_SOURCES_SHORT
         http/routes/path_valves.hpp
         http/routes/router_concepts.hpp
         http/routes/static_router.hpp
-        http/routes/tpath.hpp
         http/routes/valve_traits.hpp
         http/routes/valves.hpp
 
