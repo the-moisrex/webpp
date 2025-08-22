@@ -8,6 +8,8 @@
 
 namespace webpp::unicode {
 
+    static constexpr std::uint8_t max_canonical_combining_classes = 255;
+
     /**
      * Get CCC (Canonical Combining Class) and QC (Quick Check) info of the inputted Code Point
      */
@@ -31,8 +33,6 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
-    static constexpr std::uint8_t max_canonical_combining_classes = 255;
-
     /// Canonical Combining Class
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(char32_t const code_point) noexcept {
         // NOLINTNEXTLINE(*-magic-numbers)
@@ -53,7 +53,7 @@ namespace webpp::unicode {
      * enclosing mark, or format control character that can start a grapheme cluster[1].
      *
      * Combining characters are code points that are typically rendered by applying them to the preceding
-     * character. They include nonspacing marks, spacing marks, and enclosing marks[1].
+     * character. They include non-spacing marks, spacing marks, and enclosing marks[1].
      *
      * A grapheme cluster is a sequence of one or more Unicode code points that represent a single
      * grapheme-like unit. It consists of a base character (starter) followed by zero or more combining
@@ -237,27 +237,34 @@ namespace webpp::unicode {
         [[no_unique_address]] Iter  beg{};
         [[no_unique_address]] Iter  cur{};
         [[no_unique_address]] EIter endp{};
-        std::size_t                 index    = 0;
-        std::uint8_t                prev_ccc = 0;
+        stl::size_t                 index    = 0;
+        stl::uint8_t                prev_ccc = 0;
 
         constexpr void next() noexcept {
             Iter         pos      = beg;
-            std::uint8_t smallest = max_canonical_combining_classes;
-            for (std::size_t cur_index = 0;;) {
+            stl::uint8_t smallest   = max_canonical_combining_classes;
+            std::size_t  order_step = 0;
+            smallest                = smallest == 0 ? max_canonical_combining_classes : smallest;
+            for (; pos != endp; ++pos) {
                 auto const ccc = ccc_of(*pos);
-                if (ccc < smallest && ++cur_index >= index && ccc > prev_ccc) {
+                if (ccc > smallest) {
+                    continue;
+                }
+                if (ccc >= prev_ccc && order_step > index) {
+                    ++order_step;
                     smallest = ccc;
                     cur      = pos;
-                }
-
-                // quit on first starter code point
-                if (ccc == 0 || ++pos == endp) {
-                    if (smallest == max_canonical_combining_classes) {
-                        cur = pos; // endp
-                    }
+                } else if (ccc == 0 && order_step <= index) {
+                    ++order_step;
+                    smallest = 0;
+                    cur      = pos;
                     break;
                 }
             }
+            if (smallest == max_canonical_combining_classes) {
+                cur = pos; // endp
+            }
+            index    = order_step;
             prev_ccc = smallest;
         }
 
@@ -280,7 +287,6 @@ namespace webpp::unicode {
             if (cur == endp) {
                 return *this;
             }
-            ++index;
             next();
             return *this;
         }
