@@ -697,7 +697,6 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
                 let [cp1, cp2] = maps[codePoint];
                 cp2 = cp2 || 0;
                 const merged = (cp1 + (cp1 >> 2)) * cp2;
-                // console.log("Size: ", cp1.toString(2).length + cp2.toString(2).length);
                 if (cps.includes(merged)) {
                     console.log(
                         "Conflict: ",

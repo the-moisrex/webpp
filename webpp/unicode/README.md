@@ -2,19 +2,19 @@
 
 ### Standards:
 
-| Name                        | Standard                                                     | Usage                                                               | Version | Date       |
-|-----------------------------|--------------------------------------------------------------|---------------------------------------------------------------------|---------|------------|
-| Unicode Normalization Forms | [UTX #15](https://www.unicode.org/reports/tr15/tr15-54.html) | [IDNA](../uri/idna/README.md) (which is used in URL implementation) | 15.1.0  | 2023-08-12 |
-| IDNA                        | UTS #46                                                      | Refer to [IDNA](../uri/idna/README.md)                              |         |            |
+| Name                        | Standard                                                     | Usage | Version | Date       |
+|-----------------------------|--------------------------------------------------------------|-------|---------|------------|
+| Unicode Normalization Forms | [UTX #15](https://www.unicode.org/reports/tr15/tr15-54.html) |       | 15.1.0  | 2023-08-12 |
+| IDNA                        | UTS #46                                                      |       |         |            |
 
 **Please**: if there's a [new version](https://www.unicode.org/versions/latest/) of these documents, notify us or help
 us update the codes to the latest versions.
 
-More info about unicode: W3C's [Character Model for the World Wide Web: String Matching](https://www.w3.org/TR/charmod-norm/)
+More info about Unicode: W3C's [Character Model for the World Wide Web: String Matching](https://www.w3.org/TR/charmod-norm/)
 
 ## Unicode General Category
 
-Each unicode code point belongs to a category (look at Section [*4.5 General
+Each Unicode code point belongs to a category (look at Section [*4.5 General
 Category* of the Unicode Standard](http://www.unicode.org/versions/Unicode15.0.0/ch04.pdf#G124142))
 
 | Category | Subcategory | Description                         |
@@ -25,7 +25,7 @@ Category* of the Unicode Standard](http://www.unicode.org/versions/Unicode15.0.0
 | L        | Lm          | Letter, modifier                    |
 | L        | Lo          | Letter, other                       |
 |          |             |                                     |
-| M        | Mn          | Mark, nonspacing                    |
+| M        | Mn          | Mark, non-spacing                   |
 | M        | Mc          | Mark, spacing combining             |
 | M        | Me          | Mark, enclosing                     |
 |          |             |                                     |

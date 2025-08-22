@@ -5,13 +5,13 @@
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
 import * as path from "node:path";
-import { genSimpleIndexAddenda } from "./modifiers.mjs";
+import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
-import { getReadme } from "./readme.mjs";
-import { TablePairs } from "./table.mjs";
+import {getReadme} from "./readme.mjs";
+import {TablePairs} from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {fillEmptyObject, runClangFormat, runCmd, uint32, uint7, uint16, uint8, writePieces, uint6, uint5, uint4} from "./utils.mjs";
-import { getQCs, getQuickChecks } from "./DerivedNormalizationProps.mjs";
+import {fillEmptyObject, runClangFormat, runCmd, uint32, uint16, uint8, writePieces, uint6} from "./utils.mjs";
+import {getQCs, getQuickChecks} from "./DerivedNormalizationProps.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 const embedQuickCheckTables = true;
@@ -23,7 +23,7 @@ const start = async () => {
 
     const cccsTables = new CCCTables();
     if (embedQuickCheckTables) {
-        const qcs = fillEmptyObject(await getQuickChecks(), 0b0) ;
+        const qcs = fillEmptyObject(await getQuickChecks(), 0b0);
         let data = [];
         for (const codePointStr in qcs) {
             const codePoint = parseInt(codePointStr);
@@ -72,7 +72,7 @@ These values are calculated and individually represent actual CCC values, but th
 valid order by themselves, and they only make sense if they're being used in conjunction with
 the "ccc_indices" table.
         `,
-        map: !embedQuickCheckTables ? undefined : (vals, info) => {
+        map: !embedQuickCheckTables ? undefined : (vals /*, info */) => {
             let res = Array.isArray(vals) ? vals : [];
             for (let i = 0; i !== vals.length; ++i) {
                 const code = vals[i];
@@ -86,7 +86,7 @@ the "ccc_indices" table.
                     res[i] = ccc;
                     continue;
                 }
-                res[i] = `${ccc} | 0x${qcCode.toString(16).toUpperCase()}U << 8U`;
+                res[i] = `${ccc}U | 0x${qcCode.toString(16).toUpperCase()}U << 8U`;
             }
             return res;
         }
@@ -149,7 +149,7 @@ the "ccc_indices" table.
         );
         if (undefinedIndex !== -1) {
             throw new Error(
-                `Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`,
+                `Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.tables.data}`,
             );
         }
 
@@ -204,7 +204,7 @@ const createTableFile = async (table) => {
  * 
  * ${!embedQuickCheckTables ? '' : `Quick Check values are embedded in CCC values in these tables, which grows the tables.`}
  * ${!embedQuickCheckTables || !excludeDecompositionOnly ? '' : `NFD Quick Check values are excluded in these tables.`}
- * ${!embedQuickCheckTables || !excludeKompatibility ? '' : `Kompatibility values like NFKC and NFKD Quick Check values are excluded in these tables.`}
+ * ${!embedQuickCheckTables || !excludeKompatibility ? '' : `Compatibility values like NFKC and NFKD Quick Check values are excluded in these tables.`}
  */
 
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP

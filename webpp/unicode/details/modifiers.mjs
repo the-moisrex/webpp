@@ -166,10 +166,18 @@ export class Addendum {
 
     renderShift(type, shiftName = "", maskName = "") {
         if (this.leftShift === 0n) {
-            return `static_cast<${type}>(${this.name})`;
+            if (this.typeString === type) {
+                return this.name;
+            } else {
+                return `static_cast<${type}>(${this.name})`;
+            }
         } else {
             const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
-            return `(static_cast<${type}>(${this.name}) << ${shift})`;
+            if (this.typeString === type) {
+                return `(${this.name} << ${shift})`;
+            } else {
+                return `(static_cast<${type}>(${this.name}) << ${shift})`;
+            }
         }
     }
 }
@@ -522,10 +530,15 @@ ${addenda.length <= 1 ? "" : `
 `}
 
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
+            ${addenda.length === 1 ? `
+            return ${addenda.map((addendum) => addendum.renderShift(this.STLTypeString, "_shift", "_mask"))
+            .join("")};
+            ` : `
             return static_cast<${this.STLTypeString}>(${addenda
             .reverse()
-            .map((addendum) => addendum.renderShift(this.STLTypeString, "_shift", "_mask"),)
+            .map((addendum) => addendum.renderShift(this.STLTypeString, "_shift", "_mask"))
             .join(" | ")});
+            `}
         }
         `}
 
@@ -1076,7 +1089,7 @@ export const genSimpleIndexAddenda = (name = "index", type = uint8) => {
     return addenda;
 };
 
-// This Addenda, contains a pos, and a boolean table choice.
+// These Addenda, contains a pos, and a boolean table choice.
 export const genSimpleTwoTableIndexAddenda = (name = "index", type = uint8) => {
     const addenda = new Addenda(name, genSimpleTwoTableAddendaPack(type), {
         modify: function (table, modifier, range, pos) {

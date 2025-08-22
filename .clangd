@@ -1,7 +1,7 @@
 # If:
 #    PathMatch: webpp/.*
 CompileFlags:
-  Add: [-std=c++23, -I./, -W, -Wall, -Wextra, -Wpedantic, -Wno-unused-variable,-Wno-infinite-recursion,-Werror=implicit-function-declaration,-Wshadow,-Wno-shadow-field-in-constructor-modified,-Wno-shadow-ivar,-Wuninitialized,-Wunused-label,-Wunused-lambda-capture]
+  Add: [-std=c++23, --limit-references, --header-insertion=never, --limit-results, -I./, -W, -Wall, -Wextra, -Wpedantic, -Wno-unused-variable,-Wno-infinite-recursion,-Werror=implicit-function-declaration,-Wshadow,-Wno-shadow-field-in-constructor-modified,-Wno-shadow-ivar,-Wuninitialized,-Wunused-label,-Wunused-lambda-capture]
   CompilationDatabase: ./cmake-build-clang
 Index:
   Background: Build

@@ -370,7 +370,7 @@ class MapTable extends TableTraits {
     /// Split lengths that are bigger than 127 because
     /// we only have 7bits of storage for the "length"
     ///
-    /// This only happens once for the `ignored` as of unicode 15.1.0
+    /// This only happens once for the `ignored` as of Unicode 15.1.0
     splitIfNeeded(start, end, mappedTo) {
         const length = end - start;
         if (length > this.lengthLimit) {

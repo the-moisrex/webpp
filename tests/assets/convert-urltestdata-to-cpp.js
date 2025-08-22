@@ -126,7 +126,8 @@ struct URIWhatwgTest : testing::Test {
 
 TYPED_TEST_SUITE(URIWhatwgTest, Types);
 
-
+// Too much noise for the IDE
+#ifndef __CLION_IDE__
 
 `
 
@@ -309,6 +310,11 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   ++index;
   ++testNum;
 }
+
+result += `
+#endif // __CLION_IDE__
+`;
+
 
 const line =
     readline.createInterface({input : process.stdin, output : process.stdout});

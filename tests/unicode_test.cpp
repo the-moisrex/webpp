@@ -466,6 +466,7 @@ TEST(Unicode, CanonicalDecompose) {
 
     // Canonical Decomposition start:
     // clang-format off
+#ifndef __CLION_IDE__
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F8CF'), U"\x6691") << desc_decomp_of(U'\x2F8CF');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F87C'), U"\x5D43") << desc_decomp_of(U'\x2F87C');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F83B'), U"\x5406") << desc_decomp_of(U'\x2F83B');
@@ -2548,6 +2549,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F87B'), U"\x21DE4") << desc_decomp_of(U'\x2F87B');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F83A'), U"\x53F1") << desc_decomp_of(U'\x2F83A');
     // clang-format on
+#endif
 }
 
 TEST(Unicode, DecomposeInplace) {

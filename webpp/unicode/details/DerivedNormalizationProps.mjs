@@ -49,7 +49,7 @@ export const isDeprecated = (property) => {
 }
 
 export const defaultValueOf = (property) => {
-    // Checkout the @missing values int he text file.
+    // Checkout the @missing values in the text file.
     switch (property) {
         case props.Quick_Check:
         case props.NFC_Quick_Check:

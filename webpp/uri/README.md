@@ -8,7 +8,6 @@ In this directory you can find URI related algorithms and structures.
 |-----------------------------|--------------------------------------------------------------------------------------------------------|---------------------------|---------|---------------|
 | WHATWG's URL Standard       | [URL Standard](https://url.spec.whatwg.org/commit-snapshots/1c3e6ed5995938fb082e50dcc4fccef1b7413bd4/) | Router, HTML Headers, ... |         | 25 March 2024 |
 | Unicode Normalization Forms | Read [unicode / README](../unicode/README.md)                                                          |                           |         |               |
-| IDNA                        | Read [idna / README](./idna/README.md)                                                                 |                           |         |               |
 
 **Please**: if there's a new version of these documents, notify us or help us update the codes to the latest versions.
 
