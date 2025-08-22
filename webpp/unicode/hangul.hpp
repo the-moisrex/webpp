@@ -7,8 +7,6 @@
 #include "../std/iterator.hpp"
 #include "./unicode.hpp"
 
-#include <cstddef>
-#include <cstdint>
 
 namespace webpp::unicode {
 

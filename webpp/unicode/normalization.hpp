@@ -60,7 +60,7 @@
  * NFKC: Characters are decomposed by compatibility, then re-composed by canonical equivalence
  *       "ﬁ" (U+FB01) -> "f" (U+0066) + "i" (U+0069) -> "f" (U+0066) + "i" (U+0069)
  *
- * "NFC" is preffered: https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html
+ * "NFC" is preferred: https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html
  *
  *
  * Terms:
@@ -1061,15 +1061,15 @@ namespace webpp::unicode {
     }
 
     /// Check the Normalization Form
-    template <stl::forward_iterator Iter>
-    [[nodiscard]] static constexpr norm_form normalization_form_of(
-      [[maybe_unused]] Iter start,
-      [[maybe_unused]] Iter end) noexcept {
-        using enum norm_form;
-        // todo
-        static_assert_false(Iter, "Not yet implemented.");
-        return gibberish;
-    }
+    // template <stl::forward_iterator Iter>
+    // [[nodiscard]] static constexpr norm_form normalization_form_of(
+    //   [[maybe_unused]] Iter start,
+    //   [[maybe_unused]] Iter end) noexcept {
+    //     using enum norm_form;
+    //     // todo
+    //     static_assert_false(Iter, "Not yet implemented.");
+    //     return gibberish;
+    // }
 
     template <stl::forward_iterator Iter>
     [[nodiscard]] static constexpr bool isNFC(Iter start, Iter end) noexcept {
