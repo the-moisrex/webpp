@@ -251,7 +251,7 @@ namespace webpp::unicode {
         bool                valid = true;
 
         // we don't need to check other things, the first rule will make sure it's not valid otherwise
-        bool const is_rtl = (first != to_underlying(L));
+        bool const is_rtl = first != to_underlying(L);
 
         // 1. The first character must be L, R, or AL:
         valid &= (first & bidi_mask(L, R, AL)) != 0;

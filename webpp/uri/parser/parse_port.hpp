@@ -88,7 +88,7 @@ namespace webpp::uri {
         }
 
         // ignoring the leading zeros
-        while (beg != (ctx.pos - 1) && *beg == '0') [[unlikely]] {
+        while (beg != ctx.pos - 1 && *beg == '0') [[unlikely]] {
             ++beg;
         }
 

@@ -425,7 +425,7 @@ namespace webpp::uri {
 
         template <istl::String NStrT = modifiable_string_type>
         [[nodiscard]] constexpr NStrT href() const {
-            return this->template as_string<NStrT>();
+            return this->as_string<NStrT>();
         }
 
         template <uri_parsing_options     Options = uri_parsing_options{},

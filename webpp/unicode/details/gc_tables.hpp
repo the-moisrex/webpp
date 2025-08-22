@@ -74,6 +74,7 @@
 
 namespace webpp::unicode {
 
+    // NOLINTBEGIN(*-missing-parentheses)
     /// Giving aliases to known values:
     /// Can be re-generating using:
     /// curl --silent https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt | grep -oE
@@ -159,6 +160,7 @@ namespace webpp::unicode {
         Space_Separator       = 227U,
         Zs                    = 7U * 32U + 3U,
     };
+    // NOLINTEND(*-missing-parentheses)
 
 
 } // namespace webpp::unicode

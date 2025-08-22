@@ -88,11 +88,11 @@ namespace webpp::unicode::idna {
         delta                = first_time ? delta / Options.damp : delta / 2;
         delta               += delta / num_points;
         punycode_uint k_val  = 0;
-        while (delta > ((Options.base - Options.tmin) * Options.tmax) / 2) {
+        while (delta > (Options.base - Options.tmin) * Options.tmax / 2) {
             delta /= Options.base - Options.tmin;
             k_val += Options.base;
         }
-        return k_val + (((Options.base - Options.tmin + 1) * delta) / (delta + Options.skew));
+        return k_val + ((Options.base - Options.tmin + 1) * delta / (delta + Options.skew));
     }
 
     /**
@@ -125,7 +125,7 @@ namespace webpp::unicode::idna {
             // Inplace encoding is not allowed.
             assert(!(out >= spos && out < send));
             // assert(out < (spos - src_length * 3) || out >= send);
-            assert(out < (spos - src_length) || out >= send);
+            assert(out < spos - src_length || out >= send);
         }
 
         punycode_uint n_val       = Options.initial_n;

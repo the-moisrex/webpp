@@ -12,7 +12,7 @@
 
 namespace webpp::uri {
 
-    enum struct host_status {
+    enum struct host_status : stl::uint8_t {
         // todo: do we need to match the values to uri_status values?
         valid,              // valid but no port
         valid_with_port,    // valid + has port
@@ -308,14 +308,14 @@ namespace webpp::uri {
                 status_code = host_status::invalid_host;
                 return;
             }
-            int value = 0;
+            stl::int32_t value = 0;
             auto [_, ec]{std::from_chars(port_ptr, port_end, value)};
 
             if (ec == std::errc::invalid_argument || ec == std::errc::result_out_of_range) {
                 status_code = host_status::invalid_port;
                 return;
             }
-            if (value < 0 || value > max_port_number) {
+            if (value < 0 || value > static_cast<stl::int32_t>(max_port_number)) {
                 status_code = host_status::invalid_port;
                 return;
             }

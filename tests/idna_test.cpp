@@ -983,7 +983,7 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_FALSE(to_ascii("\376\001\001"));
     EXPECT_FALSE(to_ascii("\341\012"));
 
-    constexpr array<char, 9> buffer = {'x', 'n', '-', '-', 'z', 'c', 'a', char{-1}, '\0'};
+    constexpr array buffer = {'x', 'n', '-', '-', 'z', 'c', 'a', char{-1}, '\0'};
     EXPECT_FALSE(to_ascii(string_view{buffer.data(), buffer.size()}));
     EXPECT_FALSE(to_ascii("xn--zcaش"));
 

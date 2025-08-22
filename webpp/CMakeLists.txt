@@ -2,239 +2,234 @@ set(ALL_SOURCES_SHORT
         common/meta.hpp
         common/os.hpp
 
-        webpp.hpp
         version.hpp
+        webpp.hpp
 
-        views/view_concepts.hpp
-        views/html.hpp
-        views/view_manager.hpp
         views/data_view_caster.hpp
-        views/mustache_view.hpp
         views/file_view.hpp
+        views/html.hpp
         views/json_view.hpp
+        views/mustache_view.hpp
+        views/view_concepts.hpp
+        views/view_manager.hpp
 
         configs/config_concepts.hpp
         configs/constants.hpp
 
         libs/asio.hpp
-        libs/ioring.hpp
         libs/brotli.hpp
-        libs/eve.hpp
         libs/cryptopp.hpp
-        libs/zlib.hpp
+        libs/eve.hpp
         libs/fmt.hpp
-        libs/sqlite.hpp
+        libs/ioring.hpp
         libs/modp_b64/modp_b64.hpp
         libs/modp_b64/modp_b64_data.hpp
+        libs/sqlite.hpp
+        libs/zlib.hpp
 
         extensions/extension.hpp
         extensions/extension_wrapper.hpp
 
-        strings/istring.hpp
-        strings/fixed_string.hpp
-        strings/to_case.hpp
-        strings/iequals.hpp
-        strings/trim.hpp
-        strings/string_tokenizer.hpp
-        strings/validators.hpp
-        strings/charset.hpp
-        strings/parser_utils.hpp
-        strings/splits.hpp
-        strings/strings_concepts.hpp
         strings/append.hpp
-        strings/size.hpp
-        strings/join.hpp
+        strings/charset.hpp
+        strings/fixed_string.hpp
         strings/hex.hpp
+        strings/iequals.hpp
+        strings/istring.hpp
+        strings/join.hpp
+        strings/parser_utils.hpp
         strings/peek.hpp
+        strings/size.hpp
+        strings/splits.hpp
+        strings/string_tokenizer.hpp
+        strings/strings_concepts.hpp
+        strings/to_case.hpp
+        strings/trim.hpp
+        strings/validators.hpp
 
-        unicode/unicode_concepts.hpp
-        unicode/unicode.hpp
-        unicode/utf32_iterator.hpp
-        unicode/unicode_ptr.hpp
-        unicode/utf_reducer.hpp
-        unicode/unicode_char_traits.hpp
-        unicode/ustring.hpp
-        unicode/ustring_view.hpp
-        unicode/ustring_iterator.hpp
-        unicode/normalization.hpp
-        unicode/ccc.hpp
-        unicode/hangul.hpp
-        unicode/idna.hpp
-        unicode/bidi.hpp
-        unicode/joiners.hpp
-        unicode/general_category.hpp
-        unicode/punycodes.hpp
-        unicode/details/ccc_tables.hpp
-        unicode/details/gc_tables.hpp
         unicode/details/bidi_tables.hpp
-        unicode/details/joiners_tables.hpp
-        unicode/details/idna_mapping_tables.hpp
+        unicode/details/ccc_tables.hpp
         unicode/details/composition_tables.hpp
         unicode/details/decomposition_tables.hpp
+        unicode/details/gc_tables.hpp
+        unicode/details/idna_mapping_tables.hpp
+        unicode/details/joiners_tables.hpp
+        unicode/bidi.hpp
+        unicode/ccc.hpp
+        unicode/general_category.hpp
+        unicode/hangul.hpp
+        unicode/idna.hpp
+        unicode/joiners.hpp
+        unicode/normalization.hpp
+        unicode/punycodes.hpp
+        unicode/unicode.hpp
+        unicode/unicode_concepts.hpp
+        unicode/utf32_iterator.hpp
+        unicode/utf_reducer.hpp
 
-        traits/traits.hpp
         traits/enable_traits.hpp
-        traits/std_traits.hpp
         traits/std_pmr_traits.hpp
+        traits/std_traits.hpp
+        traits/traits.hpp
 
-        std/types.hpp
-        std/function_ref.hpp
-        std/filesystem.hpp
-        std/coroutine.hpp
-        std/functional.hpp
-        std/enum.hpp
         std/algorithm.hpp
         std/array.hpp
-        std/executor.hpp
-        std/format.hpp
-        std/internet.hpp
-        std/io_context.hpp
-        std/map.hpp
-        std/net.hpp
-        std/netfwd.hpp
-        std/set.hpp
-        std/std.hpp
-        std/string.hpp
-        std/string_view.hpp
-        std/string_like.hpp
-        std/string_concepts.hpp
-        std/timer.hpp
-        std/tuple.hpp
-        std/unordered_map.hpp
-        std/unordered_set.hpp
-        std/vector.hpp
-        std/optional.hpp
-        std/chrono.hpp
-        std/iterator.hpp
-        std/iterator_impl.hpp
-        std/concepts_impl.hpp
-        std/type_traits.hpp
-        std/string_concepts.hpp
-        std/collection.hpp
-        std/expected.hpp
-        std/expected_impl.hpp
-        std/memory.hpp
-        std/memory_resource.hpp
-        std/span.hpp
-        std/ranges.hpp
-        std/tag_invoke.hpp
-        std/utility.hpp
-        std/concepts.hpp
         std/bit.hpp
         std/cassert.hpp
+        std/chrono.hpp
+        std/collection.hpp
+        std/concepts.hpp
+        std/concepts_impl.hpp
+        std/coroutine.hpp
+        std/enum.hpp
+        std/executor.hpp
+        std/expected.hpp
+        std/expected_impl.hpp
+        std/filesystem.hpp
+        std/format.hpp
+        std/function_ref.hpp
+        std/functional.hpp
+        std/internet.hpp
+        std/io_context.hpp
+        std/iterator.hpp
+        std/iterator_impl.hpp
+        std/map.hpp
+        std/memory.hpp
+        std/memory_resource.hpp
+        std/net.hpp
+        std/netfwd.hpp
+        std/optional.hpp
+        std/ranges.hpp
+        std/set.hpp
+        std/span.hpp
+        std/std.hpp
+        std/string.hpp
+        std/string_concepts.hpp
+        std/string_concepts.hpp
+        std/string_like.hpp
+        std/string_view.hpp
+        std/tag_invoke.hpp
+        std/timer.hpp
+        std/tuple.hpp
+        std/type_traits.hpp
+        std/types.hpp
+        std/unordered_map.hpp
+        std/unordered_set.hpp
+        std/utility.hpp
+        std/vector.hpp
 
+        io/buffer.hpp
+        io/file_handle.hpp
+        io/file_options.hpp
         io/io_concepts.hpp
+        io/io_result.hpp
         io/io_task.hpp
+        io/io_uring/io_uring.hpp
         io/open.hpp
         io/read.hpp
-        io/file_handle.hpp
-        io/io_result.hpp
-        io/file_options.hpp
-        io/buffer.hpp
         io/syscalls.hpp
-        io/io_uring/io_uring.hpp
 
         async/async.hpp
         async/run_loop.hpp
         async/task_chain.hpp
 
-        socket/socket.hpp
-        socket/os.hpp
-        socket/socket_address.hpp
         socket/host_bytes.hpp
+        socket/os.hpp
+        socket/socket.hpp
+        socket/socket_address.hpp
 
-        time/stopwatch.hpp
         time/convert.hpp
+        time/stopwatch.hpp
 
-        validators/validators.hpp
         validators/email.hpp
+        validators/validators.hpp
 
         convert/casts.hpp
         convert/lexical_cast.hpp
 
+        utils/bits.hpp
         utils/const_list.hpp
         utils/debounce.hpp
-        utils/version.hpp
         utils/error_handling.hpp
-        utils/bits.hpp
+        utils/version.hpp
 
         memory/allocator_concepts.hpp
         memory/allocators.hpp
         memory/available_memory.hpp
+        memory/memory_pages.hpp
         memory/object.hpp
         memory/stack.hpp
-        memory/memory_pages.hpp
 
+        ip/default_endpoints.hpp
+        ip/endpoint.hpp
         ip/inet_ntop.hpp
         ip/inet_pton.hpp
-        ip/ipv4.hpp
-        ip/ipv6.hpp
         ip/ip.hpp
         ip/ip_address.hpp
-        ip/endpoint.hpp
         ip/ip_validators.hpp
-        ip/default_endpoints.hpp
+        ip/ipv4.hpp
+        ip/ipv6.hpp
 
-        uri/parser/constants.hpp
-        uri/parser/parse_uri.hpp
-        uri/parser/parse_scheme.hpp
-        uri/parser/parse_authority.hpp
-        uri/parser/parse_authority_pieces.hpp
-        uri/parser/parse_credentials.hpp
-        uri/parser/parse_host.hpp
-        uri/parser/parse_domain.hpp
-        uri/parser/parse_port.hpp
-        uri/parser/parse_path.hpp
-        uri/parser/parse_fragment.hpp
-        uri/parser/iiequals.hpp
-        uri/parser/uri_helpers.hpp
-        uri/parser/windows_drive_letter.hpp
-        uri/parser/uri_components.hpp
-        uri/parser/uri_components_encoding.hpp
-        uri/parser/special_schemes.hpp
-        uri/parser/host_ip.hpp
-        uri/uri_status.hpp
-        uri/encoding.hpp
         uri/credentials.hpp
+        uri/domain.hpp
+        uri/encoding.hpp
         uri/fragment.hpp
         uri/host.hpp
         uri/host_authority.hpp
+        uri/idna_to_ascii.hpp
+        uri/parser/constants.hpp
+        uri/parser/host_ip.hpp
+        uri/parser/iiequals.hpp
+        uri/parser/parse_authority.hpp
+        uri/parser/parse_authority_pieces.hpp
+        uri/parser/parse_credentials.hpp
+        uri/parser/parse_domain.hpp
+        uri/parser/parse_fragment.hpp
+        uri/parser/parse_host.hpp
+        uri/parser/parse_path.hpp
+        uri/parser/parse_port.hpp
+        uri/parser/parse_scheme.hpp
+        uri/parser/parse_uri.hpp
+        uri/parser/special_schemes.hpp
+        uri/parser/uri_components.hpp
+        uri/parser/uri_components_encoding.hpp
+        uri/parser/uri_helpers.hpp
+        uri/parser/windows_drive_letter.hpp
         uri/path.hpp
         uri/path_traverser.hpp
         uri/port.hpp
         uri/queries.hpp
         uri/scheme.hpp
         uri/uri.hpp
+        uri/uri_status.hpp
         uri/uri_string.hpp
-        uri/domain.hpp
-        uri/idna_to_ascii.hpp
 
         crypto/base64.hpp
         crypto/base64_url.hpp
         crypto/brotli.hpp
-        crypto/gzip.hpp
         crypto/encoded_word.hpp
+        crypto/gzip.hpp
 
-        http/routes/dynamic_router.hpp
-        http/routes/dynamic_route.hpp
-        http/routes/static_router.hpp
-        http/routes/router_concepts.hpp
-        http/routes/valves.hpp
-        http/routes/valve_traits.hpp
-        http/routes/logical_valves.hpp
-        http/routes/grouping_valves.hpp
-        http/routes/member_function_valves.hpp
-        http/routes/path_valves.hpp
-        http/routes/methods.hpp
-        http/routes/path.hpp
-        http/routes/tpath.hpp
         http/routes/context.hpp
-        http/routes/number.hpp
         http/routes/disabler.hpp
+        http/routes/dynamic_route.hpp
+        http/routes/dynamic_router.hpp
+        http/routes/grouping_valves.hpp
+        http/routes/logical_valves.hpp
+        http/routes/member_function_valves.hpp
+        http/routes/methods.hpp
+        http/routes/number.hpp
+        http/routes/path.hpp
+        http/routes/path_valves.hpp
+        http/routes/router_concepts.hpp
+        http/routes/static_router.hpp
+        http/routes/tpath.hpp
+        http/routes/valve_traits.hpp
+        http/routes/valves.hpp
 
+        http/bodies/file.hpp
         http/bodies/json.hpp
         http/bodies/string.hpp
-        http/bodies/file.hpp
 
         cgi/cgi.hpp
         cgi/cgi_request.hpp
@@ -246,102 +241,102 @@ set(ALL_SOURCES_SHORT
         hub/self_hosted_session_manager.hpp
 
         fcgi/fcgi.hpp
-        fcgi/fcgi_request.hpp
-        fcgi/fcgi_protocols.hpp
         fcgi/fcgi_manager.hpp
+        fcgi/fcgi_protocols.hpp
+        fcgi/fcgi_request.hpp
 
         beast/beast.hpp
+        beast/beast_body_communicator.hpp
         beast/beast_request.hpp
         beast/beast_server.hpp
-        beast/beast_body_communicator.hpp
         beast/beast_string_body.hpp
 
         http/protocol/common_http_protocol.hpp
 
-        http/response_body.hpp
+        http/app_wrapper.hpp
         http/body.hpp
-        http/server.hpp
-        http/request_view.hpp
-        http/request_body.hpp
+        http/body_concepts.hpp
         http/header_fields.hpp
         http/headers.hpp
-        http/request_headers.hpp
-        http/response_headers.hpp
-        http/http_concepts.hpp
-        http/body_concepts.hpp
-        http/response.hpp
-        http/app_wrapper.hpp
         http/http.hpp
-        http/mime_types.hpp
-        http/status_code.hpp
+        http/http_concepts.hpp
         http/http_version.hpp
-        http/verbs.hpp
+        http/mime_types.hpp
         http/request.hpp
+        http/request_body.hpp
+        http/request_headers.hpp
+        http/request_view.hpp
+        http/response.hpp
+        http/response_body.hpp
+        http/response_headers.hpp
+        http/server.hpp
+        http/status_code.hpp
+        http/verbs.hpp
 
         application/application_concepts.hpp
 
         http/codec/common.hpp
-        http/codec/request_parser.hpp
         http/codec/http_lexer.hpp
+        http/codec/request_parser.hpp
         http/codec/tokens.hpp
 
-        http/headers/header_concepts.hpp
+        http/headers/accept.hpp
         http/headers/accept_encoding.hpp
+        http/headers/allow.hpp
         http/headers/content_encoding.hpp
         http/headers/content_type.hpp
+        http/headers/header_concepts.hpp
         http/headers/keep_alive.hpp
-        http/headers/accept.hpp
-        http/headers/allow.hpp
 
         http/cookies/cookie.hpp
-        http/cookies/request_cookie.hpp
-        http/cookies/response_cookie.hpp
-        http/cookies/cookie_jar.hpp
-        http/cookies/request_cookie_jar.hpp
-        http/cookies/response_cookie_jar.hpp
-        http/cookies/cookies_concepts.hpp
         http/cookies/cookie_extensions.hpp
+        http/cookies/cookie_jar.hpp
+        http/cookies/cookies_concepts.hpp
+        http/cookies/request_cookie.hpp
+        http/cookies/request_cookie_jar.hpp
+        http/cookies/response_cookie.hpp
+        http/cookies/response_cookie_jar.hpp
 
+        logs/default_logger.hpp
+        logs/dynamic_logger.hpp
         logs/log_concepts.hpp
         logs/spdlog_logger.hpp
         logs/std_logger.hpp
-        logs/default_logger.hpp
-        logs/dynamic_logger.hpp
         logs/void_logger.hpp
 
         concurrency/atomic_counter.hpp
         concurrency/task_manager.hpp
         concurrency/thread_pool.hpp
 
-        json/json_concepts.hpp
         json/defaultjson.hpp
         json/json_common.hpp
+        json/json_concepts.hpp
         json/rapidjson.hpp
 
-        db/sql_concepts.hpp
-        db/sql_database.hpp
-        db/sql_statement.hpp
-        db/sql_row.hpp
+        db/query_builder.hpp
         db/sql_cell.hpp
         db/sql_column.hpp
-        db/query_builder.hpp
+        db/sql_concepts.hpp
+        db/sql_database.hpp
+        db/sql_row.hpp
+        db/sql_statement.hpp
         db/sqlite/sqlite.hpp
         db/sqlite/sqlite_connection.hpp
-        db/sqlite/sqlite_statement.hpp
         db/sqlite/sqlite_grammar.hpp
+        db/sqlite/sqlite_statement.hpp
 
-        storage/file.hpp
-        storage/embedded_file.hpp
         storage/cache.hpp
         storage/cache_concepts.hpp
-        storage/lru_cache.hpp
-        storage/null_gate.hpp
-        storage/file_gate.hpp
         storage/directory_gate.hpp
+        storage/embedded_file.hpp
+        storage/file.hpp
+        storage/file_gate.hpp
+        storage/lru_cache.hpp
         storage/memory_gate.hpp
         storage/non_evicting_cache.hpp
+        storage/null_gate.hpp
         storage/unified_caches.hpp
-        )
+)
 
 set(ALL_SOURCES "")
 foreach (source ${ALL_SOURCES_SHORT})

@@ -102,7 +102,7 @@ namespace webpp::uri {
                     sum += value.size();
                 }
                 return sum;
-            }() + (this->size() * 2) - 2;
+            }() + this->size() * 2 - 2;
         }
 
         /**

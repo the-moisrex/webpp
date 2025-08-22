@@ -137,9 +137,9 @@ namespace webpp::unicode {
     // NOLINTBEGIN(*-avoid-nested-conditional-operator)
     template <UTF CharT = char8_t>
     static constexpr auto max_decomposed_length =
-      UTF32<CharT> ? details::decomp_index::max_utf32_mapped_length
-                   : (UTF16<CharT> ? details::decomp_index::max_utf16_mapped_length
-                                   : details::decomp_index::max_utf8_mapped_length);
+      UTF32<CharT>   ? details::decomp_index::max_utf32_mapped_length
+      : UTF16<CharT> ? details::decomp_index::max_utf16_mapped_length
+                     : details::decomp_index::max_utf8_mapped_length;
     // NOLINTEND(*-avoid-nested-conditional-operator)
 
     template <UTF CharT = char8_t>

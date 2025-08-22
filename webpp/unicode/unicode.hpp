@@ -160,7 +160,7 @@ namespace webpp::unicode {
 
     template <typename octet_type>
     [[nodiscard]] static constexpr bool is_trail(octet_type oct) noexcept {
-        return (mask8(oct) >> 6) == 0x2;
+        return mask8(oct) >> 6 == 0x2;
     }
 
     template <typename u16>
@@ -650,7 +650,7 @@ namespace webpp::unicode {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
                 using unsigned_type  = stl::make_unsigned_t<char_type>;
-                pos                  += details::utf8_skip[static_cast<unsigned_type>(*pos)];
+                pos                 += details::utf8_skip[static_cast<unsigned_type>(*pos)];
             } else if constexpr (UTF16<char_type>) {
                 ++pos;
                 if (is_trail_surrogate(*pos)) {
@@ -875,14 +875,14 @@ namespace webpp::unicode {
                     if (code_point & 0xFF80U) {
                         if (code_point & 0xF800U) {
                             // UCS-2 = U+0800 - U+FFFF -> UTF-8 (3 bytes)
-                            iter_append(out, 0xE0U | (code_point >> 12U));
+                            iter_append(out, 0xE0U | code_point >> 12U);
                             iter_append(out, 0x80U | ((code_point >> 6U) & 0x3FU));
                             iter_append(out, 0x80U | (code_point & 0x3FU));
                             return 3U;
                         }
 
                         // UCS-2 = U+0080 - U+07FF -> UTF-8 (2 bytes)
-                        iter_append(out, 0xC0U | (code_point >> 6U));
+                        iter_append(out, 0xC0U | code_point >> 6U);
                         iter_append(out, 0x80U | (code_point & 0x3FU));
                         return 2U;
                     }
@@ -1043,9 +1043,9 @@ namespace webpp::unicode {
                         if (pos == end) [[unlikely]] {
                             break;
                         }
-                        auto const cu2     = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
-                        error             |= (cu1 & 0xFC00) != 0xD800;
-                        error             |= (cu2 & 0xFC00) != 0xDC00;
+                        auto const cu2    = static_cast<code_point_type>(static_cast<unsigned_char_type>(*pos++));
+                        error            |= (cu1 & 0xFC00) != 0xD800;
+                        error            |= (cu2 & 0xFC00) != 0xDC00;
                         auto const lead   = cu1 & 0x3FF;
                         auto const trail  = cu2 & 0x3FF;
                         code_point        = (lead << 10U) + trail + 0x1'0000;

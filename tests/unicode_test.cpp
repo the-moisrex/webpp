@@ -17,6 +17,7 @@ using std::max;
 using std::min;
 using std::size_t;
 using std::string;
+using std::string_view;
 using std::to_string;
 using webpp::fmt::format;
 using webpp::unicode::canonical_decomposed;
@@ -264,7 +265,7 @@ namespace {
     template <typename CharT = char32_t>
     string desc_ccc_of(CharT const code_point) {
         if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
-            return "Definite Zero";
+            return {"Definite Zero"};
         }
         auto const code_point_range = static_cast<size_t>(code_point) >> ccc_index::chunk_shift;
         auto const remaining_pos    = static_cast<size_t>(code_point) & ccc_index::chunk_mask;
@@ -322,7 +323,7 @@ result: {}
     template <typename CharT = char32_t>
     string desc_decomp_of(CharT const code_point) {
         if (code_point >= static_cast<CharT>(trailing_mapped_decomps)) [[unlikely]] {
-            return "Definite Zero";
+            return {"Definite Zero"};
         }
         auto const code_point_range = static_cast<size_t>(code_point) >> decomp_index::chunk_shift;
         auto const remaining_pos    = static_cast<size_t>(code_point) & decomp_index::chunk_mask;
@@ -456,6 +457,7 @@ TEST(Unicode, CanonicalDecompose) {
     static_assert(webpp::stl::same_as<char8_t, webpp::istl::appendable_value_type_t<u8string*>>, "invalid value type");
 
     // special
+#ifndef __CLION_IDE__
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2FA1D'), U"\x2A600") << desc_decomp_of(U'\xD590');
     EXPECT_EQ(canonical_decomposed<u8string>(U'\xD590'), utf32_to_utf8(U"\x1112\x1163")) << desc_decomp_of(U'\xD590');
     EXPECT_EQ(toNFD(u32string{U'\xD590'}), u32string{U"\x1112\x1163"}) << desc_decomp_of(U'\xD590');
@@ -466,7 +468,6 @@ TEST(Unicode, CanonicalDecompose) {
 
     // Canonical Decomposition start:
     // clang-format off
-#ifndef __CLION_IDE__
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F8CF'), U"\x6691") << desc_decomp_of(U'\x2F8CF');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F87C'), U"\x5D43") << desc_decomp_of(U'\x2F87C');
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F83B'), U"\x5406") << desc_decomp_of(U'\x2F83B');
@@ -2575,6 +2576,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x10A2", U"\x10A2");
 
     // awk -f gen-canonical-decompose-tests.awk UnicodeData.txt
+#ifndef __CLION_IDE__
     test_decomp(U"\x2F8CF", U"\x6691");
     test_decomp(U"\x2F87C", U"\x5D43");
     test_decomp(U"\x2F83B", U"\x5406");
@@ -4656,6 +4658,7 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x2F8CE", U"\x3B19");
     test_decomp(U"\x2F87B", U"\x21DE4");
     test_decomp(U"\x2F83A", U"\x53F1");
+#endif // __CLION_IDE__
 }
 
 TEST(Unicode, DecomposeUTF32) {
@@ -4940,6 +4943,7 @@ TEST(Unicode, Compose) {
     EXPECT_EQ(canonical_composed(0x308, 0x301), webpp::unicode::replacement_char<char32_t>);
 
     // clang-format off
+#ifndef __CLION_IDE__
     EXPECT_EQ(canonical_composed(0x0041, 0x0300), 0x00C0) << "  Line: 00C0;LATIN CAPITAL LETTER A WITH GRAVE;Lu;0;L;0041 0300;;;;N;LATIN CAPITAL LETTER A GRAVE;;;00E0;";
     EXPECT_EQ(canonical_composed(0x0041, 0x0301), 0x00C1) << "  Line: 00C1;LATIN CAPITAL LETTER A WITH ACUTE;Lu;0;L;0041 0301;;;;N;LATIN CAPITAL LETTER A ACUTE;;;00E1;";
     EXPECT_EQ(canonical_composed(0x0041, 0x0302), 0x00C2) << "  Line: 00C2;LATIN CAPITAL LETTER A WITH CIRCUMFLEX;Lu;0;L;0041 0302;;;;N;LATIN CAPITAL LETTER A CIRCUMFLEX;;;00E2;";
@@ -5881,6 +5885,7 @@ TEST(Unicode, Compose) {
     EXPECT_EQ(canonical_composed(0x115B8, 0x115AF), 0x115BA) << "  Line: 115BA;SIDDHAM VOWEL SIGN O;Mc;0;L;115B8 115AF;;;;N;;;;;";
     EXPECT_EQ(canonical_composed(0x115B9, 0x115AF), 0x115BB) << "  Line: 115BB;SIDDHAM VOWEL SIGN AU;Mc;0;L;115B9 115AF;;;;N;;;;;";
     EXPECT_EQ(canonical_composed(0x11935, 0x11930), 0x11938) << "  Line: 11938;DIVES AKURU VOWEL SIGN O;Mc;0;L;11935 11930;;;;N;;;;;";
+#endif // __CLION_IDE__
     // clang-format on
 }
 
@@ -6526,7 +6531,7 @@ TEST(Unicode, NoCompose) {
 
 namespace {
 
-    int test_index = 0;
+    int test_index = 0; // NOLINT(*-avoid-non-const-global-variables)
 
     std::u32string convertToU32String(std::string const& hexString) {
         std::u32string     result;
@@ -6763,7 +6768,7 @@ TEST(Unicode, FuzzFixes) {
       "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"
       "\377\377\377\377\377\377\377\377\377\377\006\377\377\377\377\377\377"sv);
     {
-        auto const str16 =
+        constexpr auto str16 =
           U"\x303\x303\x303\x303\x303\x303\x303\x303\x8003\x00\x330\x303\x303\x303\x303\x303\x303\x303\x303\x303"
           U"\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303"
           U"\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303\x303"
@@ -6988,7 +6993,7 @@ TEST(Unicode, FuzzTestFixes3) {
       0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
       0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xc7,
       0xbf, 0xbf, 0xbf, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x30, 0x40, 0x40, 0x40, 0x40};
-    unicode_fuzz(webpp::stl::string_view{reinterpret_cast<char const*>(broken.data()), broken.size()});
+    unicode_fuzz(string_view{reinterpret_cast<char const*>(broken.data()), broken.size()});
 
     unicode_fuzz(
       "\x1c\xa\xa\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3\xd3"
@@ -7004,12 +7009,12 @@ TEST(Unicode, FuzzTestFixes3) {
       "\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab\xab"sv);
 
 
-    webpp::stl::string_view const big =
+    constexpr auto big =
       "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82"
       "\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1"
       "\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE"
       "\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82\xE1\xBE\x82"sv;
-    webpp::stl::u32string_view const u32big =
+    constexpr auto u32big =
       U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82"
       U"\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82\x1F82"sv;
 
@@ -7284,9 +7289,9 @@ TEST(Unicode, FuzzFixes12) {
 
 TEST(Unicode, FuzzFixes13) {
     {
-        constexpr auto                           decomposed = u"\x0069\x0306\x0330"sv;
-        constexpr auto                           composed   = u"\x1E2D\x0306"sv;
-        utf32_forward_iter const                        fiter{decomposed.begin(), decomposed.end()};
+        constexpr auto                                  decomposed = u"\x0069\x0306\x0330"sv;
+        constexpr auto                                  composed   = u"\x1E2D\x0306"sv;
+        constexpr utf32_forward_iter                    fiter{decomposed.begin(), decomposed.end()};
         webpp::unicode::sorted_combining_marks_iterator iter{fiter};
         EXPECT_EQ(*iter++, U'\x0069');
         EXPECT_EQ(*iter++, U'\x0330');

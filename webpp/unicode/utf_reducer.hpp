@@ -879,9 +879,9 @@ namespace webpp::unicode {
         /// Usage:
         ///   auto [pin1, pin2, pin3] = reducer.pins();
         [[nodiscard]] constexpr auto pins() noexcept {
-            return ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
+            return [&]<stl::size_t... I>(stl::index_sequence<I...>) {
                 return stl::make_tuple(pin<I>()...);
-            })(stl::make_index_sequence<PinCount>{});
+            }(stl::make_index_sequence<PinCount>{});
         }
 
         [[nodiscard]] constexpr iterator begin() const noexcept {

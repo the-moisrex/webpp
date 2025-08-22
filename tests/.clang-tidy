@@ -32,7 +32,12 @@ Checks: >
   linuxkernel-*,
   -*-easily-swappable-parameters,
   -*-named-parameter,
-  -*-struct-pack-align,
+  -*-using-namespace,
+  -*-qualified-auto,
+  -*-pro-bounds-pointer-arithmetic,
+  -*-magic-numbers,
+  -*-pro-type-reinterpret-cast,
+  -*-const-correctness,
 CheckOptions:
   - key: readability-function-cognitive-complexity.Threshold
     value: 50 # default is 25

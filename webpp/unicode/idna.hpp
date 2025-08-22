@@ -67,7 +67,7 @@ namespace webpp::unicode::idna {
             // calculations to get the bit that we need.
             auto const          bpos       = pos / pack_size;
             auto const          remaining  = pos % pack_size;
-            stl::uint16_t const status_bit = 0b1U & (details::idna_mappings_bools[bpos] >> remaining);
+            stl::uint16_t const status_bit = 0b1U & details::idna_mappings_bools[bpos] >> remaining;
 
             // if it's 1, it'll become valid, otherwise it'll stay disallowed
             return disallowed | status_bit;

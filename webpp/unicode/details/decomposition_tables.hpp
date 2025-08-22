@@ -88,15 +88,14 @@ namespace webpp::unicode::details {
          */
         explicit(false) consteval decomp_index(std::uint32_t const value) noexcept :
           pos{static_cast<std::uint16_t>(value >> pos_shift)},
-          max_length{static_cast<char8_t>((value & max_length_mask))} {}
+          max_length{static_cast<char8_t>(value & max_length_mask)} {}
 
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
         explicit consteval decomp_index(std::uint16_t const inp_pos, char8_t const inp_max_length) noexcept :
           pos{inp_pos}, max_length{inp_max_length} {}
 
         [[nodiscard]] constexpr std::uint32_t value() const noexcept {
-            return static_cast<std::uint32_t>(
-              static_cast<std::uint32_t>(max_length) | (static_cast<std::uint32_t>(pos) << pos_shift));
+            return static_cast<std::uint32_t>(max_length) | static_cast<std::uint32_t>(pos) << pos_shift;
         }
 
         static constexpr std::uint16_t chunk_mask  = 0x3FU;

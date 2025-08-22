@@ -11,16 +11,16 @@ namespace webpp::unicode {
     concept UTFCharType = stl::integral<T>;
 
     template <typename T>
-    concept UTF8 = UTFCharType<T> && (sizeof(T) == sizeof(char8_t));
+    concept UTF8 = UTFCharType<T> && sizeof(T) == sizeof(char8_t);
 
     template <typename T>
-    concept UTF16 = UTFCharType<T> && (sizeof(T) == sizeof(char16_t));
+    concept UTF16 = UTFCharType<T> && sizeof(T) == sizeof(char16_t);
 
     template <typename T>
-    concept WChar = UTFCharType<T> && (sizeof(T) >= sizeof(wchar_t));
+    concept WChar = UTFCharType<T> && sizeof(T) >= sizeof(wchar_t);
 
     template <typename T>
-    concept UTF32 = UTFCharType<T> && (sizeof(T) >= sizeof(char32_t));
+    concept UTF32 = UTFCharType<T> && sizeof(T) >= sizeof(char32_t);
 
     template <typename T>
     concept UTF = UTF8<T> || UTF16<T> || UTF32<T>;

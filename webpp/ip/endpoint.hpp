@@ -59,7 +59,7 @@ namespace webpp {
      *            which is read from the database; like some typical blogging websites that each username
      *            has a sub-domain for him/herself.
      */
-    struct ip_endpoint : public ip_address {
+    struct ip_endpoint : ip_address {
         enum protocol {
             tcp = SOCK_STREAM,
             udp = SOCK_DGRAM

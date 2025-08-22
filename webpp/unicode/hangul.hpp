@@ -177,8 +177,8 @@ namespace webpp::unicode {
     struct decomposed_hangul_code_point {
         static constexpr char32_t invalid_trailing = hangul_trailing_base;
 
-        char32_t leading;
-        char32_t vowel;
+        char32_t leading{};
+        char32_t vowel{};
         char32_t trailing = invalid_trailing;
     };
 
@@ -194,7 +194,7 @@ namespace webpp::unicode {
 
         // Calculating the indices:
         auto const leading_pos  = pos / hangul_block_count;
-        auto const vowel_pos    = (pos % hangul_block_count) / hangul_trailing_count;
+        auto const vowel_pos    = pos % hangul_block_count / hangul_trailing_count;
         auto const trailing_pos = pos % hangul_trailing_count;
 
         // Calculating the values:
@@ -251,8 +251,8 @@ namespace webpp::unicode {
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
             auto const leading_pos       = lhs - static_cast<CharT>(hangul_leading_base);
             auto const vowel_pos         = rhs - static_cast<CharT>(hangul_vowel_base);
-            auto const leading_vowel_pos = (leading_pos * static_cast<CharT>(hangul_block_count)) +
-                                           (vowel_pos * static_cast<CharT>(hangul_trailing_count));
+            auto const leading_vowel_pos = leading_pos * static_cast<CharT>(hangul_block_count) +
+                                           vowel_pos * static_cast<CharT>(hangul_trailing_count);
             return static_cast<CharT>(hangul_syllable_base) + leading_vowel_pos;
         }
 

@@ -68,7 +68,7 @@ namespace webpp::unicode::details {
           pos{static_cast<std::uint16_t>(value)} {}
 
         [[nodiscard]] constexpr std::uint16_t value() const noexcept {
-            return static_cast<std::uint16_t>(static_cast<std::uint16_t>(pos));
+            return pos;
         }
 
         static constexpr std::uint16_t chunk_mask  = 0x1FU;

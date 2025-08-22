@@ -242,10 +242,12 @@ const createTableFile = async (table) => {
 
 namespace webpp::unicode {
 
+    // NOLINTBEGIN(*-missing-parentheses)
     /// Giving aliases to known values:
     /// Can be re-generating using:
     /// curl --silent https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt | grep -oE '[^#]+' | awk 'BEGIN{FS=";"; i=0; print "enum struct general_category : std::uint8_t {"; } {gsub(/ */, "", $1); gsub(/ */, "", $3); gsub(/ */, "", $2); if ($1 == "gc") {print "  " $3 " = " i ",\\n  " $2 " = " i ",\\n"; i=i+1; }} END { print "};"; }'
     ${renderEnum("general_category", makeGCEnum(await getGeneralCategories()), "std::uint8_t")}
+    // NOLINTEND(*-missing-parentheses)
 
 }
 

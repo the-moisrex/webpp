@@ -81,10 +81,10 @@ namespace webpp {
               ipv4{octet1, octet2, octet3, octet4, subnet}
         } {}
 
-        constexpr explicit ip_address(stl::uint32_t const ip,
+        constexpr explicit ip_address(stl::uint32_t const ip_int,
                                       ipv4_octet const    prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
-              ipv4{ip, prefix}
+              ipv4{ip_int, prefix}
         } {}
 
         template <istl::StringViewifiable StrT>
@@ -149,19 +149,20 @@ namespace webpp {
             return is_v4() && as_v4() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(ipv6 const ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(ipv6 const& ip_addr) const noexcept {
             return is_v6() && as_v6() == ip_addr;
         }
 
         template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
+        [[nodiscard]] constexpr bool operator==(StrT&& ip_str) const noexcept {
             // this implementation works too, but it's not "noexcept":
             //   *this == address{stl::forward<StrT>(ip)};
-            ip_address const addr{stl::forward<StrT>(ip)};
+            ip_address const addr{stl::forward<StrT>(ip_str)};
             if (addr.index() == index()) {
                 if (auto const* ip4 = get_if<ipv4>(&as_variant())) {
                     return *ip4 == addr.as_v4();
-                } else if (auto const* ip6 = get_if<ipv6>(&as_variant())) {
+                }
+                if (auto const* ip6 = get_if<ipv6>(&as_variant())) {
                     return *ip6 == addr.as_v6();
                 }
             }
@@ -175,7 +176,7 @@ namespace webpp {
             return as_v4() <=> ip_addr;
         }
 
-        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv6 ip_addr) const noexcept {
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv6 const& ip_addr) const noexcept {
             if (!is_v6()) {
                 return stl::partial_ordering::unordered;
             }
@@ -202,12 +203,11 @@ namespace webpp {
 
         // Run the specified function/lambda with the right pick
         template <typename Func>
-        constexpr auto pick(Func&& func) const noexcept(noexcept(func(ipv4{})) && noexcept(func(ipv6{}))) {
-            if (auto* ip_addr_v4 = get_if<ipv4>(&as_variant())) {
-                return func(*ip_addr_v4);
-            } else {
-                return func(get<ipv6>(as_variant()));
+        constexpr decltype(auto) pick(Func&& func) const noexcept(noexcept(func(ipv4{})) && noexcept(func(ipv6{}))) {
+            if (auto const* ip_addr_v4 = get_if<ipv4>(&as_variant())) {
+                return stl::forward<Func>(func)(*ip_addr_v4);
             }
+            return stl::forward<Func>(func)(get<ipv6>(as_variant()));
         }
 
         [[nodiscard]] constexpr ipv4 const& as_v4() const {
@@ -292,7 +292,7 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
-            return pick([](auto&& ip_addr) constexpr noexcept -> stl::uint8_t {
+            return pick([](auto&& ip_addr) constexpr noexcept {
                 return ip_addr.prefix();
             });
         }

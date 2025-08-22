@@ -35,7 +35,7 @@ TEST(IPv4Tests, FreeFunctions) {
 
 TEST(IPv4Tests, Creation) {
     constexpr ipv4 one{192, 168, 2, 1};
-    ipv4 const     two("192.168.2.1");
+    constexpr ipv4 two("192.168.2.1");
     EXPECT_EQ(one, two) << "one is: " << one.string() << "; two is: " << two.string();
     EXPECT_EQ(one.integer(), two.integer());
     EXPECT_EQ(one.string(), two.string());
@@ -43,7 +43,7 @@ TEST(IPv4Tests, Creation) {
 }
 
 TEST(IPv4Tests, Methods) {
-    ipv4 const ip_addr{192, 168, 1, 1};
+    constexpr ipv4 ip_addr{192, 168, 1, 1};
     EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{
       {192, 168, 0, 0},
       16
@@ -79,7 +79,7 @@ TEST(IPv4Tests, Validation) {
     };
 
     for (auto const& _ip : valid_ipv4s) {
-        EXPECT_TRUE(static_cast<bool>(is::ipv4(_ip)));
+        EXPECT_TRUE(is::ipv4(_ip));
         EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         EXPECT_TRUE(is::ipv4(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         ipv4 const ip_addr{_ip};
@@ -118,7 +118,7 @@ TEST(IPv4Tests, CIDR) {
 }
 
 TEST(IPv4Tests, ToString) {
-    ipv4 const  ip_addr{192, 168, 1, 1};
+    constexpr ipv4 ip_addr{192, 168, 1, 1};
     stl::string str{"ip is: "};
     ip_addr.to_string(str);
     EXPECT_EQ(str, "ip is: 192.168.1.1");
@@ -203,7 +203,7 @@ TEST(IPv4Tests, StartsWith) {
 TEST(IPv4Tests, PureIpv4) {
     EXPECT_TRUE(pure_ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
 
-    pure_ipv4 const ip_addr{192, 168, 1, 1};
+    constexpr pure_ipv4 ip_addr{192, 168, 1, 1};
     stl::string     str{"ip is: "};
     ip_addr.to_string(str);
     EXPECT_EQ(str, "ip is: 192.168.1.1");

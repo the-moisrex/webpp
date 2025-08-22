@@ -255,7 +255,7 @@ TEST(DomainsTest, InValidity) {
 }
 
 TEST(DomainsTest, SubDomainTooLongError) {
-    std::string str = "";
+    std::string str;
     for (int i = 0; i <= 64; ++i) {
         str += 'd';
     }

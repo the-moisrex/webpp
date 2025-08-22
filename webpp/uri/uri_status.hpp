@@ -266,8 +266,8 @@ namespace webpp::uri {
         hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
 
         // flags:
-        special_scheme     = flags_bit >> 0U,                       // scheme is http/https/ws/wss/ftp/file
-        file_scheme        = (flags_bit >> 0U) | (flags_bit >> 1U), // file is also special
+        special_scheme     = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
+        file_scheme        = flags_bit >> 0U | flags_bit >> 1U, // file is also special
         has_non_null_port  = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
         has_non_empty_host = flags_bit >> 3U, // the URI has a non-empty host
     };

@@ -132,8 +132,8 @@ TYPED_TEST(URITests, PathFromString) {
 // }
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
-    constexpr stl::string_view      str = "http://";
-    uri::parsing_uri_context_view<> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
+    constexpr stl::string_view    str = "http://";
+    uri::parsing_uri_context_view context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
     auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
@@ -381,7 +381,7 @@ TYPED_TEST(URITests, ValidSchemes) {
 }
 
 TYPED_TEST(URITests, PathIteratorTest) {
-    uri::path_iterator<default_traits> iter{"/page/one"};
+    uri::path_iterator iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
     EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
@@ -392,10 +392,10 @@ TYPED_TEST(URITests, PathIteratorTest) {
 }
 
 TYPED_TEST(URITests, PathTraverser) {
-    uri::basic_path<stl::string> the_path;
+    uri::basic_path<> the_path;
     EXPECT_TRUE(the_path.parse(stl::string_view{"/page/one"}));
     EXPECT_EQ(the_path.size(), 3);
-    uri::path_traverser<stl::string> iter{the_path};
+    uri::path_traverser iter{the_path};
     EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
     EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
     EXPECT_TRUE(iter.at_end());
@@ -528,7 +528,7 @@ TYPED_TEST(URITests, PathDot) {
 TYPED_TEST(URITests, PathDotNormalized) {
     stl::string const str = "https://127.0.0.1/./one";
 
-    uri::parsing_uri_context_string<stl::string> context{
+    uri::parsing_uri_context_string context{
       .beg = str.begin(),
       .pos = str.begin(),
       .end = str.end(),

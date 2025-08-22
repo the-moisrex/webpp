@@ -45,9 +45,9 @@ namespace webpp::uri::details {
 
 
         webpp_static_constexpr ascii_bitmap interesting_characters =
-          !IsSpecial ? forbidden_hosts
-                     : (ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
-                                                : forbidden_domains);
+          !IsSpecial                ? forbidden_hosts
+          : ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
+                                    : forbidden_domains;
 
         auto const authority_begin = ctx.pos;
         auto       host_begin      = authority_begin;

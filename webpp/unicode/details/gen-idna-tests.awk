@@ -4,25 +4,25 @@
 #  awk -f gen-idna-tests.awk IdnaMappingTable.txt
 
 BEGIN{
-    FS = ";";
-    OF = ";";
+    FS = ";"
+    OF = ";"
 
     for (i = 0; i < 10; i++) {
-        decv[i] = i;
+        decv[i] = i
     }
-    decv["a"] = 10; decv["b"] = 11; decv["c"] = 12;
-    decv["d"] = 13; decv["e"] = 14; decv["f"] = 15;
-    decv["A"] = 10; decv["B"] = 11; decv["C"] = 12;
-    decv["D"] = 13; decv["E"] = 14; decv["F"] = 15;
+    decv["a"] = 10; decv["b"] = 11; decv["c"] = 12
+    decv["d"] = 13; decv["e"] = 14; decv["f"] = 15
+    decv["A"] = 10; decv["B"] = 11; decv["C"] = 12
+    decv["D"] = 13; decv["E"] = 14; decv["F"] = 15
 }
 
 function hex(x) {
-    value = 0;
-    n = length(x);
+    value = 0
+    n = length(x)
     for (i = 1; i <= n; i++) {
-        value = value * 16 + decv[substr(x, i, 1)];
+        value = value * 16 + decv[substr(x, i, 1)]
     }
-    return value;
+    return value
 }
 
 
@@ -46,13 +46,13 @@ function hex(x) {
     if (status != "") {
         for (code_point = start; code_point <= end; code_point += tenPercent) {
             if (status == "disallowed" || status == "valid") {
-                print "    EXPECT_EQ(status_of(" code_point "), " status ");";
+                print "    EXPECT_EQ(status_of(" code_point "), " status ");"
             } else if (status == "deviation") {
-                print "    EXPECT_EQ(status_of(" code_point "), valid); // " status;
+                print "    EXPECT_EQ(status_of(" code_point "), valid); // " status
             } else {
-                gsub(/\s+$/, "", repl);
-                gsub(/\s+/, "\\x", repl);
-                print "    EXPECT_EQ(mapped<std::u32string>(" code_point "), U\"" repl "\"); // " status;
+                gsub(/\s+$/, "", repl)
+                gsub(/\s+/, "\\x", repl)
+                print "    EXPECT_EQ(mapped<std::u32string>(" code_point "), U\"" repl "\"); // " status
             }
         }
     }

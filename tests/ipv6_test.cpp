@@ -16,20 +16,20 @@ TEST(IPv6Tests, ConstEvalCraetion) {
 }
 
 TEST(IPv6Tests, Creation) {
-    ipv6 const ip1{"::"};
+    constexpr ipv6 ip1{"::"};
     EXPECT_TRUE(ip1.is_valid());
     EXPECT_TRUE(ip1.is_unspecified());
 
-    ipv6 const ip2{"::1"};
+    constexpr ipv6 ip2{"::1"};
     EXPECT_FALSE(ip2.is_unspecified());
     EXPECT_TRUE(ip2.is_valid());
     EXPECT_FALSE(ip2.has_prefix());
 
-    ipv6 const ip3("fe00::1");
+    constexpr ipv6 ip3("fe00::1");
     EXPECT_TRUE(ip3.is_valid());
     EXPECT_FALSE(ip3.is_unspecified());
 
-    ipv6 const ip4("2001:db8:0:85a3::ac1f:8001");
+    constexpr ipv6 ip4("2001:db8:0:85a3::ac1f:8001");
     EXPECT_TRUE(ip4.is_valid());
     EXPECT_EQ("2001:db8:0:85a3::ac1f:8001", ip4.string());
     EXPECT_EQ("2001:0db8:0000:85a3:0000:0000:ac1f:8001", ip4.expanded_string());
@@ -89,7 +89,7 @@ TEST(IPv6Tests, Validation) {
         EXPECT_EQ(ipv6(ipv6(_ip).string()), ipv6(_ip))
           << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).string() << "\nlong ip: " << ipv6(_ip).string()
           << "\nshort long ip: " << ipv6(ipv6(_ip).string()).string();
-        EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip))) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
+        EXPECT_TRUE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
         EXPECT_TRUE(ipv6(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
     }
 
@@ -336,7 +336,7 @@ TEST(IPv6Tests, IPv4MappedDeprecated) {
 }
 
 TEST(IPv6Tests, PrefixesTest) {
-    stl::array<int, 7> const              valid_prefixes{0, 1, 2, 10, 99, 100, 128};
+    stl::array const              valid_prefixes{0, 1, 2, 10, 99, 100, 128};
     stl::array<stl::string_view, 7> const invalid_prefixes{"00", "01", "2a", "129", "-1", "001", "259"};
 
     for (auto _ip : some_valid_ipv6s) {
@@ -382,19 +382,19 @@ TEST(IPv6Tests, StartsWith) {
 }
 
 TEST(IPv6Tests, ConversionTest) {
-    auto const ip_addr = ipv6::create("10::ffff:127.0.0.1");
+    constexpr auto ip_addr = ipv6::create("10::ffff:127.0.0.1");
     EXPECT_EQ(ipv6{ip_addr.octets16()}, ip_addr);
     EXPECT_EQ(ipv6{ip_addr.octets32()}, ip_addr);
     EXPECT_EQ(ipv6{ip_addr.octets64()}, ip_addr);
 }
 
 TEST(IPv6Tests, PureIpv6) {
-    auto const ip_addr = pure_ipv6::create("10::ffff:127.0.0.1");
+    constexpr auto ip_addr = pure_ipv6::create("10::ffff:127.0.0.1");
     EXPECT_EQ(pure_ipv6{ip_addr.octets16()}, ip_addr);
     EXPECT_EQ(pure_ipv6{ip_addr.octets32()}, ip_addr);
     EXPECT_EQ(pure_ipv6{ip_addr.octets64()}, ip_addr);
 
-    pure_ipv6 const ip_addr2{"::1"};
+    constexpr pure_ipv6 ip_addr2{"::1"};
     stl::string     str{"ip is: "};
     ip_addr2.to_string(str);
     EXPECT_EQ(str, "ip is: ::1");

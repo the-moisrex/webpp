@@ -98,7 +98,7 @@ namespace webpp::uri {
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
     template <istl::String StrT = stl::string, istl::StringView StrViewT = istl::string_view_type_of<StrT>>
-    struct uri_string : public allocator_holder<typename stl::remove_cvref_t<StrT>::allocator_type> {
+    struct uri_string : allocator_holder<typename stl::remove_cvref_t<StrT>::allocator_type> {
         using specified_string_type      = StrT;
         using specified_string_view_type = StrViewT;
         using string_type                = stl::remove_cvref_t<StrT>;
@@ -386,7 +386,7 @@ namespace webpp::uri {
          * Remove the cache and make sure calling the functions will cause
          * re-parsing the uri.
          */
-        inline constexpr void unparse() const noexcept {
+        constexpr void unparse() const noexcept {
             scheme_end = authority_start = user_info_end = port_start = authority_end = query_start = fragment_start =
               string_view_type::npos;
             errors.reset();
