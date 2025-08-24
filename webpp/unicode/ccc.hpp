@@ -234,38 +234,84 @@ namespace webpp::unicode {
                       "Reordered iterator only works with UTF-32 iterators. Try wrapping that iterator.");
 
       private:
+        enum struct state_type : stl::uint8_t {
+            process, // We don't know what's what!
+            random,  // We have to search
+            sorted,  // It's already sorted
+            rotate,  // It's half sorted, we need to rotate
+        } state = state_type::process;
         [[no_unique_address]] Iter  beg{};
         [[no_unique_address]] Iter  cur{};
+        [[no_unique_address]] Iter  nxt{};
         [[no_unique_address]] EIter endp{};
-        stl::size_t                 index    = 0;
-        stl::uint8_t                prev_ccc = 0;
 
-        constexpr void next() noexcept {
-            Iter         pos      = beg;
-            stl::uint8_t smallest   = max_canonical_combining_classes;
-            std::size_t  order_step = 0;
-            smallest                = smallest == 0 ? max_canonical_combining_classes : smallest;
-            for (; pos != endp; ++pos) {
-                auto const ccc = ccc_of(*pos);
-                if (ccc > smallest) {
-                    continue;
-                }
-                if (ccc >= prev_ccc && order_step > index) {
-                    ++order_step;
-                    smallest = ccc;
-                    cur      = pos;
-                } else if (ccc == 0 && order_step <= index) {
-                    ++order_step;
-                    smallest = 0;
-                    cur      = pos;
+        /// The meaning of this is state-dependent
+        ///   - rotate: length
+        ///   - random: last CCC
+        stl::ptrdiff_t val = 0;
+
+        constexpr void find_state() noexcept {
+            auto pccc = 0;
+            state     = state_type::sorted;
+            val       = 0;
+            beg       = cur;
+            for (; nxt != endp; ++nxt, ++val) {
+                auto const ccc = ccc_of(*nxt);
+                if (ccc == 0) {
                     break;
                 }
+                if (ccc < pccc) {
+                    switch (state) {
+                        case state_type::sorted: state = state_type::rotate; break;
+                        case state_type::process:
+                        case state_type::rotate: state = state_type::random; return;
+                        case state_type::random: stl::unreachable();
+                    }
+                }
+                pccc = ccc;
             }
-            if (smallest == max_canonical_combining_classes) {
-                cur = pos; // endp
+        }
+
+        constexpr void search_next() noexcept {
+            auto const pccc     = static_cast<stl::uint8_t>(val);
+            auto       smallest = pccc;
+            nxt                 = beg;
+            for (; nxt != endp; ++nxt) {
+                auto const ccc = ccc_of(*nxt);
+                if (ccc == 0) {
+                    break;
+                }
+                if (ccc > pccc && ccc < smallest) {
+                    smallest = ccc;
+                    cur      = nxt;
+                    val      = ccc;
+                }
             }
-            index    = order_step;
-            prev_ccc = smallest;
+            if (smallest == pccc) { // Next Code Point is a starter Code Point
+                cur = nxt;
+                find_state();
+            }
+        }
+
+        constexpr void next() noexcept {
+            switch (state) {
+                case state_type::random: search_next(); break;
+                case state_type::sorted:
+                    if (++cur == nxt) {
+                        find_state();
+                    }
+                    break;
+                case state_type::rotate:
+                    if (--val == 0) {
+                        cur = nxt;
+                        find_state();
+                    }
+                    if (++cur == nxt) {
+                        cur = beg;
+                    }
+                    break;
+                case state_type::process: stl::unreachable();
+            }
         }
 
       public:
@@ -273,7 +319,7 @@ namespace webpp::unicode {
           : beg{inp_pos},
             cur{inp_pos},
             endp{inp_end} {
-            next();
+            find_state();
         }
 
         constexpr sorted_combining_marks_iterator()                                                      = default;
@@ -284,10 +330,9 @@ namespace webpp::unicode {
         constexpr ~sorted_combining_marks_iterator() noexcept                                            = default;
 
         constexpr sorted_combining_marks_iterator& operator++() noexcept {
-            if (cur == endp) {
-                return *this;
+            if (cur != endp) {
+                next();
             }
-            next();
             return *this;
         }
 
