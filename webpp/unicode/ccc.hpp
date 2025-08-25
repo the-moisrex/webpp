@@ -256,27 +256,31 @@ namespace webpp::unicode {
             val       = 0;
             beg       = cur;
             nxt       = beg;
+            stl::uint8_t smallest = max_canonical_combining_classes;
             for (; nxt != endp; ++nxt) {
                 ++val;
                 auto const ccc = ccc_of(*nxt);
                 if (ccc == 0) {
                     break;
                 }
-                if (ccc <= pccc) {
-                    switch (state) {
-                        case state_type::sorted:
-                            if (ccc == pccc) { // It's already sorted
-                                break;
-                            }
+                switch (state) {
+                    case state_type::sorted:
+                        if (ccc < pccc) {
                             cur   = nxt;
                             state = state_type::rotate;
-                            break;
-                        case state_type::process:
-                        case state_type::rotate: state = state_type::random; return;
-                        case state_type::random: stl::unreachable();
-                    }
+                        }
+                        break;
+                    case state_type::process:
+                    case state_type::rotate:
+                        if (ccc <= pccc || ccc <= smallest) {
+                            state = state_type::random;
+                            return;
+                        }
+                        break;
+                    case state_type::random: stl::unreachable();
                 }
                 pccc = ccc;
+                smallest = stl::min(ccc, smallest);
             }
         }
 

@@ -7316,11 +7316,11 @@ TEST(Unicode, FuzzFixes13) {
 }
 
 TEST(Unicode, FuzzFixes14) {
-    constexpr auto               decomposed = u"\x0041\x030A\x0303\x0303\x0303\x0303\x0303\x033B\x0303"sv;
-    constexpr auto               composed   = u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv;
-    constexpr auto               sorted     = u"\x0041\x033B\x030A\x0303\x0303\x0303\x0303\x0303\x0303"sv;
-    constexpr utf32_forward_iter fiter{decomposed.begin(), decomposed.end()};
-    utf32_forward_iter           sorted32{sorted.begin(), sorted.end()};
+    constexpr auto     decomposed = u"\x0041\x030A\x0303\x0303\x0303\x0303\x0303\x033B\x0303"sv;
+    constexpr auto     composed   = u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv;
+    constexpr auto     sorted     = u"\x0041\x033B\x030A\x0303\x0303\x0303\x0303\x0303\x0303"sv;
+    utf32_forward_iter fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
     EXPECT_EQ(*iter++, *sorted32++); // 2
