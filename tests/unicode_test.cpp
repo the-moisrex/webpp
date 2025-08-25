@@ -7315,6 +7315,26 @@ TEST(Unicode, FuzzFixes13) {
     unicode_fuzz("\x99\x1F\x00\x03"sv);
 }
 
+TEST(Unicode, FuzzFixes14) {
+    constexpr auto               decomposed = u"\x0041\x030A\x0303\x0303\x0303\x0303\x0303\x033B\x0303"sv;
+    constexpr auto               composed   = u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv;
+    constexpr auto               sorted     = u"\x0041\x033B\x030A\x0303\x0303\x0303\x0303\x0303\x0303"sv;
+    constexpr utf32_forward_iter fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter           sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_EQ(*iter++, *sorted32++); // 5
+    EXPECT_EQ(*iter++, *sorted32++); // 6
+    EXPECT_EQ(*iter++, *sorted32++); // 7
+    EXPECT_EQ(*iter++, *sorted32++); // 8
+    EXPECT_EQ(*iter++, *sorted32++); // 9
+    EXPECT_EQ(iter, std::default_sentinel);
+    EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE

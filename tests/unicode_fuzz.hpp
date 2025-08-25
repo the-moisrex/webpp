@@ -523,11 +523,16 @@ namespace webpp::tests {
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
         stl::u32string                                  sorted2;
+        stl::u16string                                  sorted16;
         webpp::unicode::checked::utf32_forward_iter     fiter{idres16.begin(), idres16.end()};
         webpp::unicode::sorted_combining_marks_iterator iter{fiter};
         for (; iter != std::default_sentinel; ++iter) {
-            sorted2.push_back(*iter);
+            auto const cur_cp = *iter;
+            sorted2.push_back(cur_cp);
+            static_cast<void>(webpp::unicode::checked::append(sorted16, cur_cp));
         }
+
+        EXPECT_EQ(sorted16, unicode::canonically_reordered(idres16));
 
         ASSERT_TRUE(isNFC(res.begin(), res.end()))
           << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
