@@ -262,9 +262,12 @@ namespace webpp::unicode {
                 if (ccc == 0) {
                     break;
                 }
-                if (ccc < pccc) {
+                if (ccc <= pccc) {
                     switch (state) {
                         case state_type::sorted:
+                            if (ccc == pccc) { // It's already sorted
+                                break;
+                            }
                             cur   = nxt;
                             state = state_type::rotate;
                             break;
