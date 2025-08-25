@@ -522,6 +522,12 @@ namespace webpp::tests {
                                std::next(dres.begin(), static_cast<diff_type>(dres.size()))))
           << "Src: " << to_hex(data) << "\nNFD: " << to_hex(dres) << "\nBad NFD: " << to_hex(idres);
 
+        stl::u32string                                  sorted2;
+        webpp::unicode::checked::utf32_forward_iter     fiter{idres16.begin(), idres16.end()};
+        webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+        for (; iter != std::default_sentinel; ++iter) {
+            sorted2.push_back(*iter);
+        }
 
         ASSERT_TRUE(isNFC(res.begin(), res.end()))
           << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
@@ -529,8 +535,8 @@ namespace webpp::tests {
         ASSERT_TRUE(isNFC(res16.begin(), res16.end()))
           << "Src: " << to_hex(data) << "\nSrc16: " << to_hex(str16) << "\nNFC: " << to_hex(res16)
           << "\nDecomposed     : " << to_hex(dres16) << "\nDecomposed Iter: " << to_hex(idres16)
-          << "\nccc            : " << all_cccs(idres16)
-          << "\nsorted         : " << to_hex(unicode::canonically_reordered(idres16));
+          << "\nccc            : " << all_cccs(idres16) << "\nsorted         : "
+          << to_hex(unicode::canonically_reordered(idres16)) << "\nsorted2        : " << to_hex(sorted2);
         ASSERT_TRUE(isNFC(res32.begin(), res32.end()))
           << "Src: " << to_hex(data) << "\nSrc32: " << to_hex(str32) << "\nNFC: " << to_hex(res32);
 

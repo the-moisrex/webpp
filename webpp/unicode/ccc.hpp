@@ -255,14 +255,19 @@ namespace webpp::unicode {
             state     = state_type::sorted;
             val       = 0;
             beg       = cur;
-            for (; nxt != endp; ++nxt, ++val) {
+            nxt       = beg;
+            for (; nxt != endp; ++nxt) {
+                ++val;
                 auto const ccc = ccc_of(*nxt);
                 if (ccc == 0) {
                     break;
                 }
                 if (ccc < pccc) {
                     switch (state) {
-                        case state_type::sorted: state = state_type::rotate; break;
+                        case state_type::sorted:
+                            cur   = nxt;
+                            state = state_type::rotate;
+                            break;
                         case state_type::process:
                         case state_type::rotate: state = state_type::random; return;
                         case state_type::random: stl::unreachable();
@@ -297,7 +302,8 @@ namespace webpp::unicode {
             switch (state) {
                 case state_type::random: search_next(); break;
                 case state_type::sorted:
-                    if (++cur == nxt) {
+                    ++cur;
+                    if (--val == 0) {
                         find_state();
                     }
                     break;
@@ -318,6 +324,7 @@ namespace webpp::unicode {
         explicit constexpr sorted_combining_marks_iterator(Iter inp_pos, EIter inp_end = EIter{}) noexcept
           : beg{inp_pos},
             cur{inp_pos},
+            nxt{inp_pos},
             endp{inp_end} {
             find_state();
         }
@@ -356,6 +363,12 @@ namespace webpp::unicode {
 
         [[nodiscard]] constexpr bool operator==(EIter const& other) const noexcept {
             return cur == other;
+        }
+
+        [[nodiscard]] constexpr bool operator==(stl::default_sentinel_t) const noexcept
+            requires(!stl::same_as<EIter, stl::default_sentinel_t>)
+        {
+            return at_end();
         }
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
