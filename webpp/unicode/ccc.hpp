@@ -291,27 +291,46 @@ namespace webpp::unicode {
         }
 
         constexpr void search_next() noexcept {
-            auto const pccc     = ccc_of(*cur);
-            auto       smallest = max_canonical_combining_classes;
-            nxt = cur  = beg;
-            bool found = false;
+            auto const pccc       = ccc_of(*cur);
+            auto       smallest   = max_canonical_combining_classes;
+            bool       found      = false;
+            auto const prev_index = val;
+            val                   = 0;
+            nxt = cur = beg;
             std::println("Searching Next");
-            for (stl::ptrdiff_t index = 0; nxt != endp; ++nxt) {
-                auto const ccc = ccc_of(*nxt);
-                if (ccc == 0) {
+            for (stl::ptrdiff_t index = 0;; ++nxt) {
+                if (nxt == endp) {
+                    if (!found) {
+                        cur = beg = nxt;
+                    }
                     break;
                 }
-                if (ccc >= pccc && ccc < smallest && ++index >= val) {
-                    std::println("{} -- {}>={} && {}<{}", static_cast<int>(*nxt), ccc, pccc, ccc, smallest);
-                    smallest = ccc;
-                    cur      = nxt;
-                    ++val;
-                    found = true;
+                auto const ccc = ccc_of(*nxt);
+                std::println("  Testing U+{:X} {} {}", static_cast<int>(*nxt), ccc, index);
+                if (ccc == 0) {
+                    if (!found) { // Next Code Point is a starter Code Point
+                        std::println("Not Found.");
+                        cur = beg = nxt;
+                        state     = state_type::sorted;
+                        val       = 1;
+                    }
+                    break;
                 }
-            }
-            if (!found) { // Next Code Point is a starter Code Point
-                std::println("Not Found.");
-                find_state();
+                if ((ccc > pccc || (ccc == pccc && ++index == prev_index)) && ccc < smallest) {
+                    std::println(
+                      "U+{:X} -- #{}-{} {}>={} && {}<{}",
+                      static_cast<int>(*nxt),
+                      index,
+                      prev_index,
+                      ccc,
+                      pccc,
+                      ccc,
+                      smallest);
+                    cur      = nxt;
+                    val      = index + 1;
+                    found    = true;
+                    smallest = ccc;
+                }
             }
         }
 
