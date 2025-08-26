@@ -6,8 +6,6 @@
 #include "./details/ccc_tables.hpp"
 #include "./unicode.hpp"
 
-#include <print>
-
 namespace webpp::unicode {
 
     static constexpr std::uint8_t max_canonical_combining_classes = 255;
@@ -237,9 +235,9 @@ namespace webpp::unicode {
 
       private:
         enum struct state_type : stl::uint8_t {
-            random,  // We have to search
-            sorted,  // It's already sorted
-            rotate,  // It's half sorted, we need to rotate
+            random, // We have to search
+            sorted, // It's already sorted
+            rotate, // It's half sorted, we need to rotate
         } state = state_type::sorted;
         [[no_unique_address]] Iter  beg{};
         [[no_unique_address]] Iter  cur{};
@@ -294,7 +292,6 @@ namespace webpp::unicode {
             auto const cpccc      = pccc;
             length                = 0;
             nxt = cur = beg;
-            std::println("Searching Next");
             for (stl::size_t index = 0;; ++nxt) {
                 if (nxt == endp) {
                     if (!found) {
@@ -303,17 +300,8 @@ namespace webpp::unicode {
                     break;
                 }
                 auto const ccc = ccc_of(*nxt);
-                std::println(
-                  "  Testing U+{:X} {}<=>{}<=>{} {}-{}",
-                  static_cast<int>(*nxt),
-                  ccc,
-                  cpccc,
-                  smallest,
-                  index,
-                  prev_index);
                 if (ccc == 0) {
                     if (!found) { // Next Code Point is a starter Code Point
-                        std::println("Not Found.");
                         cur = beg = nxt;
                         state     = state_type::sorted;
                         length    = 1;
@@ -321,21 +309,15 @@ namespace webpp::unicode {
                     }
                     break;
                 }
-                if (ccc < smallest && (ccc > cpccc || (ccc == cpccc && ++index == prev_index))) {
-                    std::println(
-                      "U+{:X} -- #{}-{} {}>={} && {}<{}",
-                      static_cast<int>(*nxt),
-                      index,
-                      prev_index,
-                      ccc,
-                      cpccc,
-                      ccc,
-                      smallest);
-                    cur      = nxt;
-                    length   = index;
-                    found    = true;
-                    smallest = ccc;
-                    pccc     = ccc;
+                if (ccc < smallest) {
+                    ++index;
+                    if (ccc > cpccc || (ccc == cpccc && index >= prev_index)) {
+                        cur      = nxt;
+                        length   = index;
+                        found    = true;
+                        smallest = ccc;
+                        pccc     = ccc;
+                    }
                 }
             }
         }

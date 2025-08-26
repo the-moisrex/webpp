@@ -7082,7 +7082,7 @@ TEST(Unicode, FuzzFixes7) {
 
 TEST(Unicode, FuzzFixes6Explicit) {
     EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
-    EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
+    EXPECT_FALSE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
 
     EXPECT_FALSE(isNFC("\xF0\xCD\x81\xCC"sv));
     EXPECT_EQ("�́�"sv, toNFC("\xF0\xCD\x81\xCC"s));
@@ -7331,6 +7331,21 @@ TEST(Unicode, FuzzFixes14) {
     EXPECT_EQ(*iter++, *sorted32++); // 7
     EXPECT_EQ(*iter++, *sorted32++); // 8
     EXPECT_EQ(*iter++, *sorted32++); // 9
+    EXPECT_EQ(iter, std::default_sentinel);
+    EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+}
+
+TEST(Unicode, FuzzFixes15) {
+    constexpr auto                                  decomposed = u"\x0041\x030A\x033B\x0303"sv;
+    constexpr auto                                  composed   = u"\x00C5\x033B\x0303"sv;
+    constexpr auto                                  sorted     = u"\x0041\x033B\x030A\x0303"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(*iter++, *sorted32++); // 4
     EXPECT_EQ(iter, std::default_sentinel);
     EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
 }
