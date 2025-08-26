@@ -7372,12 +7372,46 @@ TEST(Unicode, FuzzFixes17) {
     EXPECT_EQ(*iter++, *sorted32++); // 1
     EXPECT_EQ(*iter++, *sorted32++); // 2
     EXPECT_EQ(*iter++, *sorted32++); // 3
-    EXPECT_EQ(*iter++, *sorted32++); // 4
     EXPECT_EQ(iter, std::default_sentinel);
 }
 
 TEST(Unicode, FuzzFixes18) {
+    constexpr auto                                  decomposed = u"\xF71\xF80\xF71\xF80"sv;
+    constexpr auto                                  sorted     = u"\xF71\xF71\xF80\xF80"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
+TEST(Unicode, FuzzFixes19) {
+    constexpr auto                                  decomposed = u"r\x31E\x323\x304"sv;
+    constexpr auto                                  sorted     = u"r\x323\x31E\x304"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
+TEST(Unicode, FuzzFixes20) {
     unicode_fuzz("\xC7\x97\xD7\x87"sv);
+
+    unicode_fuzz("\x24\xFA\x02\x00\x0A"sv);
+    EXPECT_EQ(isNFC(U"\x0002FA24"sv), toNFC(U"\x0002FA24"s) == U"\x0002FA24"sv);
+
+
+    unicode_fuzz("\xF0\xAF\xA8\xAF"sv);
+    unicode_fuzz("\x1\x1\x1\x1"sv);
+
+    unicode_fuzz("\n\xF0\xAF\xA8\xAF"sv);
+    unicode_fuzz("\n\xF0\xAF\xA8\xAF"sv);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
