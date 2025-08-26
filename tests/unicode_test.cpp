@@ -7401,6 +7401,33 @@ TEST(Unicode, FuzzFixes19) {
 }
 
 TEST(Unicode, FuzzFixes20) {
+    constexpr auto                                  decomposed = u"\x3B7\x1ACC\x314\x300\x345"sv;
+    constexpr auto                                  sorted     = u"\x3B7\x314\x300\x1ACC\x345"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_EQ(*iter++, *sorted32++); // 5
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
+TEST(Unicode, FuzzFixes21) {
+    constexpr auto                                  decomposed = u"\xF71\xF74\xF71\xF74"sv;
+    constexpr auto                                  sorted     = u"\xF71\xF71\xF74\xF74"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
+TEST(Unicode, FuzzFixes22) {
     unicode_fuzz("\xC7\x97\xD7\x87"sv);
 
     unicode_fuzz("\x24\xFA\x02\x00\x0A"sv);
