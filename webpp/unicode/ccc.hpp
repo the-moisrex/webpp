@@ -237,11 +237,10 @@ namespace webpp::unicode {
 
       private:
         enum struct state_type : stl::uint8_t {
-            process, // We don't know what's what!
             random,  // We have to search
             sorted,  // It's already sorted
             rotate,  // It's half sorted, we need to rotate
-        } state = state_type::process;
+        } state = state_type::sorted;
         [[no_unique_address]] Iter  beg{};
         [[no_unique_address]] Iter  cur{};
         [[no_unique_address]] Iter  nxt{};
@@ -272,7 +271,6 @@ namespace webpp::unicode {
                             smallest = stl::min(ccc, smallest);
                         }
                         break;
-                    case state_type::process:
                     case state_type::rotate:
                         if (ccc <= prev_ccc || ccc <= smallest) {
                             state  = state_type::random;
@@ -283,7 +281,6 @@ namespace webpp::unicode {
                             return;
                         }
                         break;
-                    case state_type::random: stl::unreachable();
                     default: smallest = stl::min(ccc, smallest); break;
                 }
                 prev_ccc = ccc;
@@ -361,7 +358,6 @@ namespace webpp::unicode {
                         cur = beg;
                     }
                     break;
-                case state_type::process: stl::unreachable();
             }
         }
 
