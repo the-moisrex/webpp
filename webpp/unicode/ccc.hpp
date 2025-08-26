@@ -6,6 +6,8 @@
 #include "./details/ccc_tables.hpp"
 #include "./unicode.hpp"
 
+#include <print>
+
 namespace webpp::unicode {
 
     static constexpr std::uint8_t max_canonical_combining_classes = 255;
@@ -247,16 +249,16 @@ namespace webpp::unicode {
 
         /// The meaning of this is state-dependent
         ///   - rotate: length
-        ///   - random: last CCC
+        ///   - random: last index
         stl::ptrdiff_t val = 0;
 
         constexpr void find_state() noexcept {
-            auto pccc = 0;
-            state     = state_type::sorted;
-            val       = 0;
-            beg       = cur;
-            nxt       = beg;
-            stl::uint8_t smallest = max_canonical_combining_classes;
+            auto pccc             = 0;
+            state                 = state_type::sorted;
+            val                   = 0;
+            beg                   = cur;
+            nxt                   = beg;
+            stl::uint8_t smallest = max_canonical_combining_classes; // smallest until we go into rotate state
             for (; nxt != endp; ++nxt) {
                 ++val;
                 auto const ccc = ccc_of(*nxt);
@@ -268,39 +270,47 @@ namespace webpp::unicode {
                         if (ccc < pccc) {
                             cur   = nxt;
                             state = state_type::rotate;
+                        } else {
+                            smallest = stl::min(ccc, smallest);
                         }
                         break;
                     case state_type::process:
                     case state_type::rotate:
                         if (ccc <= pccc || ccc <= smallest) {
                             state = state_type::random;
+                            val   = 0;
+                            search_next();
                             return;
                         }
                         break;
                     case state_type::random: stl::unreachable();
+                    default: smallest = stl::min(ccc, smallest); break;
                 }
                 pccc = ccc;
-                smallest = stl::min(ccc, smallest);
             }
         }
 
         constexpr void search_next() noexcept {
-            auto const pccc     = static_cast<stl::uint8_t>(val);
-            auto       smallest = pccc;
-            nxt                 = beg;
-            for (; nxt != endp; ++nxt) {
+            auto const pccc     = ccc_of(*cur);
+            auto       smallest = max_canonical_combining_classes;
+            nxt = cur  = beg;
+            bool found = false;
+            std::println("Searching Next");
+            for (stl::ptrdiff_t index = 0; nxt != endp; ++nxt) {
                 auto const ccc = ccc_of(*nxt);
                 if (ccc == 0) {
                     break;
                 }
-                if (ccc > pccc && ccc < smallest) {
+                if (ccc >= pccc && ccc < smallest && ++index >= val) {
+                    std::println("{} -- {}>={} && {}<{}", static_cast<int>(*nxt), ccc, pccc, ccc, smallest);
                     smallest = ccc;
                     cur      = nxt;
-                    val      = ccc;
+                    ++val;
+                    found = true;
                 }
             }
-            if (smallest == pccc) { // Next Code Point is a starter Code Point
-                cur = nxt;
+            if (!found) { // Next Code Point is a starter Code Point
+                std::println("Not Found.");
                 find_state();
             }
         }
