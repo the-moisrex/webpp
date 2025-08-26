@@ -247,27 +247,25 @@ namespace webpp::unicode {
         [[no_unique_address]] Iter  nxt{};
         [[no_unique_address]] EIter endp{};
 
-        /// The meaning of this is state-dependent
-        ///   - rotate: length
-        ///   - random: last index
-        stl::ptrdiff_t val = 0;
+        stl::size_t length = 0;
+        stl::size_t pccc   = 0;
 
         constexpr void find_state() noexcept {
-            auto pccc             = 0;
+            auto prev_ccc         = 0;
             state                 = state_type::sorted;
-            val                   = 0;
+            length                = 0;
             beg                   = cur;
             nxt                   = beg;
             stl::uint8_t smallest = max_canonical_combining_classes; // smallest until we go into rotate state
             for (; nxt != endp; ++nxt) {
-                ++val;
+                ++length;
                 auto const ccc = ccc_of(*nxt);
                 if (ccc == 0) {
                     break;
                 }
                 switch (state) {
                     case state_type::sorted:
-                        if (ccc < pccc) {
+                        if (ccc < prev_ccc) {
                             cur   = nxt;
                             state = state_type::rotate;
                         } else {
@@ -276,9 +274,11 @@ namespace webpp::unicode {
                         break;
                     case state_type::process:
                     case state_type::rotate:
-                        if (ccc <= pccc || ccc <= smallest) {
-                            state = state_type::random;
-                            val   = 0;
+                        if (ccc <= prev_ccc || ccc <= smallest) {
+                            state  = state_type::random;
+                            length = 0;
+                            pccc   = 0;
+                            cur    = beg;
                             search_next();
                             return;
                         }
@@ -286,19 +286,19 @@ namespace webpp::unicode {
                     case state_type::random: stl::unreachable();
                     default: smallest = stl::min(ccc, smallest); break;
                 }
-                pccc = ccc;
+                prev_ccc = ccc;
             }
         }
 
         constexpr void search_next() noexcept {
-            auto const pccc       = ccc_of(*cur);
             auto       smallest   = max_canonical_combining_classes;
             bool       found      = false;
-            auto const prev_index = val;
-            val                   = 0;
+            auto const prev_index = length + 1;
+            auto const cpccc      = pccc;
+            length                = 0;
             nxt = cur = beg;
             std::println("Searching Next");
-            for (stl::ptrdiff_t index = 0;; ++nxt) {
+            for (stl::size_t index = 0;; ++nxt) {
                 if (nxt == endp) {
                     if (!found) {
                         cur = beg = nxt;
@@ -306,30 +306,39 @@ namespace webpp::unicode {
                     break;
                 }
                 auto const ccc = ccc_of(*nxt);
-                std::println("  Testing U+{:X} {} {}", static_cast<int>(*nxt), ccc, index);
+                std::println(
+                  "  Testing U+{:X} {}<=>{}<=>{} {}-{}",
+                  static_cast<int>(*nxt),
+                  ccc,
+                  cpccc,
+                  smallest,
+                  index,
+                  prev_index);
                 if (ccc == 0) {
                     if (!found) { // Next Code Point is a starter Code Point
                         std::println("Not Found.");
                         cur = beg = nxt;
                         state     = state_type::sorted;
-                        val       = 1;
+                        length    = 1;
+                        pccc      = 0;
                     }
                     break;
                 }
-                if ((ccc > pccc || (ccc == pccc && ++index == prev_index)) && ccc < smallest) {
+                if (ccc < smallest && (ccc > cpccc || (ccc == cpccc && ++index == prev_index))) {
                     std::println(
                       "U+{:X} -- #{}-{} {}>={} && {}<{}",
                       static_cast<int>(*nxt),
                       index,
                       prev_index,
                       ccc,
-                      pccc,
+                      cpccc,
                       ccc,
                       smallest);
                     cur      = nxt;
-                    val      = index + 1;
+                    length   = index;
                     found    = true;
                     smallest = ccc;
+                    pccc     = ccc;
                 }
             }
         }
@@ -339,12 +348,12 @@ namespace webpp::unicode {
                 case state_type::random: search_next(); break;
                 case state_type::sorted:
                     ++cur;
-                    if (--val == 0) {
+                    if (--length == 0) {
                         find_state();
                     }
                     break;
                 case state_type::rotate:
-                    if (--val == 0) {
+                    if (--length == 0) {
                         cur = nxt;
                         find_state();
                     }
