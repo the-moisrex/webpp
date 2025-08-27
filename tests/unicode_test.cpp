@@ -7356,10 +7356,18 @@ TEST(Unicode, FuzzFixes16) {
     utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
-    EXPECT_EQ(*iter++, *sorted32++); // 1
-    EXPECT_EQ(*iter++, *sorted32++); // 2
-    EXPECT_EQ(*iter++, *sorted32++); // 3
-    EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_EQ(*iter, *sorted32) << static_cast<int>(ccc_of(*iter)) << " " << static_cast<int>(ccc_of(*sorted32));
+    ++iter;
+    ++sorted32;
+    EXPECT_EQ(*iter, *sorted32) << static_cast<int>(ccc_of(*iter)) << " " << static_cast<int>(ccc_of(*sorted32));
+    ++iter;
+    ++sorted32;
+    EXPECT_EQ(*iter, *sorted32) << static_cast<int>(ccc_of(*iter)) << " " << static_cast<int>(ccc_of(*sorted32));
+    ++iter;
+    ++sorted32;
+    EXPECT_EQ(*iter, *sorted32) << static_cast<int>(ccc_of(*iter)) << " " << static_cast<int>(ccc_of(*sorted32));
+    ++iter;
+    ++sorted32;
     EXPECT_EQ(iter, std::default_sentinel);
 }
 
