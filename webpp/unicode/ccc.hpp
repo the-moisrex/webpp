@@ -263,8 +263,17 @@ namespace webpp::unicode {
                 switch (state) {
                     case state_type::sorted:
                         if (ccc < prev_ccc) {
-                            cur   = nxt;
-                            state = state_type::rotate;
+                            // to prevent CCCs in order of 129-132-130
+                            if (ccc < smallest) {
+                                cur   = nxt;
+                                state = state_type::rotate;
+                            } else {
+                                state  = state_type::random;
+                                length = 0;
+                                pccc   = 0;
+                                cur    = beg;
+                                search_next();
+                            }
                         } else {
                             smallest = stl::min(ccc, smallest);
                         }

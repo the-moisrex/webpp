@@ -7372,7 +7372,7 @@ TEST(Unicode, FuzzFixes16) {
 }
 
 TEST(Unicode, FuzzFixes17) {
-    constexpr auto                                  decomposed = u"\xF71\xF74\xF80"sv;
+    constexpr auto                                  decomposed = u"\xF71\xF74\xF80"sv; // CCCs: 129-132-130
     constexpr auto                                  sorted     = u"\xF71\xF80\xF74"sv;
     utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
