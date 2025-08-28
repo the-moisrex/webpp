@@ -149,7 +149,7 @@ export class TablePairs {
             codePointStart, length, data: this.data, dataView,
         }) || {};
 
-        if (dataView.getAll().includes(undefined)) {
+        if (dataView?.getAll?.()?.includes?.(undefined)) {
             console.error(dataView.getAll());
             throw new Error(`Undefined found in data view: ${dataView.getAll()}`);
         }

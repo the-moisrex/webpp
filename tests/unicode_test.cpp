@@ -7464,6 +7464,11 @@ TEST(Unicode, FuzzFixes22) {
     unicode_fuzz("\n\xF0\xAF\xA8\xAF"sv);
 }
 
+TEST(Unicode, FuzzFixes23) {
+    constexpr auto str = "\xF0\xAF\xA8\xAF"sv;
+    EXPECT_EQ(toNFC(std::basic_string{str.data(), str.size()}), str);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE

@@ -273,7 +273,7 @@ namespace webpp::unicode {
             }
 
             auto const start_ptr = decomp_ptr(code, code_point);
-            if (*start_ptr != u'\0') {
+            if (*start_ptr != u8'\0') {
                 break;
             }
         }

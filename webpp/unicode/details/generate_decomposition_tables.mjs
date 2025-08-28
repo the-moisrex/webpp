@@ -317,18 +317,27 @@ class DecompTable {
             // }
         };
         const self = this;
-        addenda.renderFunctions = [staticFields, function notMappedFunction() {
-            const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement,);
-            return `
+        addenda.renderFunctions = [
+            staticFields,
+            function notMappedFunction() {
+                const addenda = this.addenda.toSorted(
+                    (a, b) => a.placement - b.placement,
+                );
+                return `
         /// Get an invalid mapping (that shows the code point is not being mapped at all)
         /// This means the code point is mapped to itself
         [[nodiscard]] static consteval ${this.name} not_mapped() noexcept {
             // it can be identified by ${this.max_length.name} == 0
-            return ${this.name}{${addenda.map((addendum) => (addendum.name === "max_length" ? "0" : `${addendum.defaultValue}`)).join(", ")}};
+            return ${this.name}{${
+                    addenda
+                        .map((addendum) =>
+                                 (addendum.name === "max_length" ? "0" : `${addendum.defaultValue}`))
+                        .join(", ")}};
         }
                 `;
-        }, function maxMaxLengthFunction() {
-            return `
+            },
+            function maxMaxLengthFunction() {
+                return `
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
@@ -340,34 +349,43 @@ class DecompTable {
         /// Maximum values of code points mapped (UTF-32)
         static constexpr auto max_utf32_mapped_length = ${self.max32MaxLength}UL;
                 `;
-        }, function getPositionFunction() {
-            return `
+            },
+            function getPositionFunction() {
+                return `
         /**
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
-        [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+        [[nodiscard]] constexpr ${
+                    this.pos.STLTypeString} get_position(char32_t const request_position) const noexcept {
 #if __cplusplus >= 202302L // C++23
             [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
-            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
-            ${enableMaksField ? `auto const mask = static_cast<${this.pos.STLTypeString}>((0b1U << compact_mask) - 1U);
-            return pos + static_cast<${this.pos.STLTypeString}>((remaining_pos & mask) * max_length);` : `return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);`}
+            ${this.pos.STLTypeString} const remaining_pos = static_cast<${
+                    this.pos.STLTypeString}>(request_position) & chunk_mask;
+            ${
+                    enableMaksField
+                        ? `auto const mask = static_cast<${
+                              this.pos.STLTypeString}>((0b1U << compact_mask) - 1U);
+            return pos + static_cast<${this.pos.STLTypeString}>((remaining_pos & mask) * max_length);`
+                        : `return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);`}
         }
         `;
-        }, function magicalRender() {
-            if (embedCanonical || embedCodePointCanonical) {
-                return self.#canonicalCompositions.render();
-            }
-            return "";
-        }, //     function isMapped() {
-            //         return `
-            // /// See if this code point
-            // [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
-            //     return max_length == 0;
-            // }
-            //         `;
-            //     }
+            },
+            function magicalRender() {
+                if (embedCanonical || embedCodePointCanonical) {
+                    return self.#canonicalCompositions.render();
+                }
+                return "";
+            }, //     function isMapped() {
+               //         return `
+               // /// See if this code point
+               // [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value)
+               // const noexcept {
+               //     return max_length == 0;
+               // }
+               //         `;
+               //     }
         ];
         return addenda;
     };
@@ -630,18 +648,8 @@ namespace webpp::unicode::details {
 
 ${tableContents}
 
-    template <typename CharT = char8_t, typename CPType>
-        requires (sizeof(CharT) == sizeof(char8_t))
-    [[nodiscard]] static constexpr CharT const* decomp_ptr(decomp_index const code, CPType const code_point) noexcept {
-        if constexpr (std::same_as<CharT, char8_t>) {
-            return decomp_values.data() + code.get_position(code_point);
-        } else {
-            // Legally we can't cast a "char const*" to "char8_t const*",
-            // but we can cast a "char8_t const*" to "char const*"; this is a very weird C++ behavior, that's why
-            // we chose u8-based strings in the values table above instead of traditional values.
-            // NOLINTNEXTLINE(*-pro-type-reinterpret-cast)
-            return reinterpret_cast<CharT const*>(decomp_values.data()) + code.get_position(code_point);
-        }
+    [[nodiscard]] static constexpr char8_t const* decomp_ptr(decomp_index const code, char32_t const code_point) noexcept {
+        return decomp_values.data() + code.get_position(code_point);
     }
 
 } // namespace webpp::unicode::details
