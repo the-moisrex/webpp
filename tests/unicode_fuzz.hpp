@@ -538,7 +538,8 @@ namespace webpp::tests {
             static_cast<void>(webpp::unicode::checked::append(sorted16, cur_cp));
         }
 
-        EXPECT_EQ(sorted16, unicode::canonically_reordered(idres16));
+        EXPECT_EQ(sorted16, unicode::canonically_reordered(idres16))
+          << "  idres16: " << to_hex(idres16) << "\n  src: " << to_hex(data);
 
         ASSERT_TRUE(isNFC(res.begin(), res.end()))
           << "Src: " << to_hex(data) << "\nNFC: " << to_hex(res) << "\ndecomposed: " << to_hex(idres)
