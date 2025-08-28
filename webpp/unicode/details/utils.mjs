@@ -637,6 +637,8 @@ export class TableTraits {
         index = Number(index);
         if (index >= this.length) {
             throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`,);
+        } else if (index < 0) {
+            index = this.length - index;
         }
         return this.bytes.at(index);
     }

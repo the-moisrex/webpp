@@ -171,9 +171,9 @@ namespace webpp::unicode {
         }
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
-        auto const chunk         = code_point >> decomp_index::chunk_shift;
+        auto const chunk         = static_cast<std::uint32_t>(code_point) >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
-        if (chunk >= static_cast<char32_t>(details::decomp_last_breakpoint)) [[unlikely]] {
+        if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
             return append<Iter>(out, code_point);
         }
         auto const [starting, ending, offset] = decomp_breakpoints[section_index];

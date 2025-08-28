@@ -9,6 +9,7 @@ import {
     cppValueOf, findBestTypeFrom,
     overlapInserts,
     realSizeOf,
+    recursiveLength,
     renderTableValues,
     Span,
     splitInto,
@@ -270,6 +271,18 @@ export class TablePairs {
         // todo: distil the values table as well
     }
 
+    #calcPadding() {
+        // to calculate the padding:
+        const lastCode = this.values.result.at(-1);
+        const startOfLastPos = this.#indicesTables.at(-1).start;
+        const maxLength = this.#indexAddenda.addendumValueOf("max_length", lastCode);
+        const lastChunkLength = this.values.result.length - Number(startOfLastPos);
+        const padding = lastChunkLength * Number(maxLength);
+        const paddingDiff = padding - lastChunkLength;
+        console.log("Padding: ", this.indices, lastCode, startOfLastPos, maxLength, lastChunkLength, padding, paddingDiff);
+        return paddingDiff;
+    }
+
     /// Post-Processing
     process() {
         console.time("Process");
@@ -390,6 +403,18 @@ export class TablePairs {
         }
 
         this.splitTables();
+
+
+        // add padding:
+        const paddingDiff = this.#calcPadding();
+        if (paddingDiff !== 0) {
+            const lastCommonValue = this.#commonIndices.at(-1)?.commonValue || 0;
+            console.log("Padding Length:", paddingDiff);
+            console.log("Last Common Value:", lastCommonValue);
+            for (let index = 0; index != paddingDiff; ++index) {
+                this.values.append(lastCommonValue);
+            }
+        }
 
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
         // console.log("Successful masks:", reusedMaskedCount);
@@ -599,7 +624,7 @@ export class TablePairs {
                ${index === 0 ? `${this.#name}_breakpoint_type` : ''}{.starting = ${item.starting}, .ending = ${item.ending}, .offset = ${item.offset} ${isSingleCommonValue ? '' : `, .common_value = ${item?.commonValue ?? 0}`}}, // Section ${item.section}`).join("")}
             };
 
-            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{0x${breakpointsTable[breakpointsTable.length - 1].ending.toString(16).toUpperCase()}U};
+            static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_last_breakpoint{${breakpointsTable.at(-1).ending}U};
             static constexpr ${this.#indexAddenda.STLTypeString} ${this.#name}_breakpoint_shift{${breakpointsTableShift}U};
             static constexpr ${this.#indexAddenda.name} ${this.#name}_common_pos{${commonValues.at(-1)}U}; // this is the last common value position
         `}
