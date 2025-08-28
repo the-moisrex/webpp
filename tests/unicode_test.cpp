@@ -7469,6 +7469,17 @@ TEST(Unicode, FuzzFixes23) {
     EXPECT_EQ(toNFC(std::basic_string{str.data(), str.size()}), str);
 }
 
+TEST(Unicode, FuzzFixes24) {
+    unicode_fuzz("\x2A\xFA\x02\x00"sv);
+    unicode_fuzz("\xC7\x97\xD7\x87"sv);
+    unicode_fuzz("\xC7\x97\x87\xCC\xD7\x87"sv);
+    unicode_fuzz("\xC7\x97\xD7\x87"sv);
+    unicode_fuzz("\x80\x0F\x75\x0F"sv);
+    unicode_fuzz("\x24\xFA\x02\x00\x0A"sv);
+    unicode_fuzz("\xF0\xAF\xA8\xAF"sv);
+    unicode_fuzz("\n\xF0\xAF\xA8\xAF"sv);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
