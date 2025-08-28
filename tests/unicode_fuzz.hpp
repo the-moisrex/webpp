@@ -502,16 +502,22 @@ namespace webpp::tests {
         // we don't use the iterators directly since std::string will try to use distance on it
         stl::string    idres;
         stl::u16string idres16;
-        istl::resize_and_overwrite(idres, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
-            return stl::copy(dbeg, dend, buf) - buf;
-        });
-        istl::resize_and_overwrite(idres16, data.size() * 4, [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
-            auto cptr = buf;
-            for (auto it = dbeg16; it != std::default_sentinel; ++it) {
-                *cptr++ = *it;
-            }
-            return cptr - buf;
-        });
+        istl::resize_and_overwrite(
+          idres,
+          data.size() * unicode::max_decomposed_length<char> + 1,
+          [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
+              return stl::copy(dbeg, dend, buf) - buf;
+          });
+        istl::resize_and_overwrite(
+          idres16,
+          data.size() * unicode::max_decomposed_length<char16_t> + 1,
+          [=](auto* buf, [[maybe_unused]] stl::size_t max_len) {
+              auto cptr = buf;
+              for (auto it = dbeg16; it != std::default_sentinel; ++it) {
+                  *cptr++ = *it;
+              }
+              return cptr - buf;
+          });
 
         ASSERT_EQ(idres, dres) << "Source: " << to_hex(data);
         ASSERT_TRUE(stl::equal(dbeg, dend, dres.begin()))

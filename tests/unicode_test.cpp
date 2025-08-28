@@ -7390,36 +7390,51 @@ TEST(Unicode, FuzzFixes18) {
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 4
     EXPECT_EQ(iter, std::default_sentinel);
 }
 
 TEST(Unicode, FuzzFixes19) {
-    constexpr auto                                  decomposed = u"r\x31E\x323\x304"sv;
-    constexpr auto                                  sorted     = u"r\x323\x31E\x304"sv;
+    constexpr auto                                  decomposed = u"r\x31E\x323\x304"sv; // CCCs: 0-220-220-230
+    constexpr auto                                  sorted     = u"r\x31E\x323\x304"sv;
     utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_NE(iter, std::default_sentinel);
+    EXPECT_EQ(*iter++, *sorted32++); // 4
     EXPECT_EQ(iter, std::default_sentinel);
+
+    EXPECT_EQ(webpp::unicode::canonically_reordered(u16string{decomposed}), sorted);
 }
 
 TEST(Unicode, FuzzFixes20) {
     constexpr auto                                  decomposed = u"\x3B7\x1ACC\x314\x300\x345"sv;
-    constexpr auto                                  sorted     = u"\x3B7\x314\x300\x1ACC\x345"sv;
+    constexpr auto                                  sorted     = u"\x3B7\x1ACC\x314\x300\x345"sv;
     utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 4
+    EXPECT_NE(iter, std::default_sentinel);
     EXPECT_EQ(*iter++, *sorted32++); // 5
     EXPECT_EQ(iter, std::default_sentinel);
+
+    EXPECT_EQ(webpp::unicode::canonically_reordered(u16string{decomposed}), sorted);
 }
 
 TEST(Unicode, FuzzFixes21) {

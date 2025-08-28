@@ -273,6 +273,7 @@ namespace webpp::unicode {
                                 pccc   = 0;
                                 cur    = beg;
                                 search_next();
+                                return;
                             }
                         } else {
                             smallest = stl::min(ccc, smallest);
