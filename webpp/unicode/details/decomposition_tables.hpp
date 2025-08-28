@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 28 Aug 2025 17:08:13 GMT
+ *   This file's generation date:        Thu, 28 Aug 2025 17:20:05 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       253976

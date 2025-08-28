@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
  *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Fri, 09 May 2025 19:39:11 GMT
+ *   This file's generation date:        Thu, 28 Aug 2025 17:21:17 GMT
  *   Unicode Version:                    16.0.0
  *   Total Table sizes in this file:
  *       - in bits:       366992
@@ -75,8 +75,8 @@ namespace webpp::unicode::idna::details {
     /// When Code Points are being mapped, this is the maximum length change.
     /// This can be used to calculate the necessary space required for mapping a string.
     /// FDFA => 635, 644, 649, 20, 627, 644, 644, 647, 20, 639, 644, 64A, 647, 20, 648, 633, 644, 645
-    /// 239, 183, 186 => 216, 181, 217, 132, 217, 137, 32, 216, 167, 217, 132, 217, 132, 217, 135, 32, 216,
-    /// 185, 217, 132, 217, 138, 217, 135, 32, 217, 136, 216, 179, 217, 132, 217, 133
+    /// 239, 183, 186 => 216, 181, 217, 132, 217, 137, 32, 216, 167, 217, 132, 217, 132, 217, 135, 32, 216, 185, 217,
+    /// 132, 217, 138, 217, 135, 32, 217, 136, 216, 179, 217, 132, 217, 133
     static constexpr std::size_t max_mapping_factor = 11UL; // times of the original string
     static constexpr std::size_t max_mapping_diff   = 30UL;
     static constexpr std::size_t max_mapping_length = 33UL;
@@ -123,8 +123,7 @@ namespace webpp::unicode::idna::details {
      * Table size in KibiBytes:  2.13 KiB
      */
     static constexpr std::array<idna_breakpoint_type, 34U> idna_breakpoints{
-      idna_breakpoint_type{    .starting = 0,   .ending = 416,     .offset = 0,  .common_value = iblt | 0x0U}, // Section
-                                                                                                    // 1
+      idna_breakpoint_type{    .starting = 0,   .ending = 416,     .offset = 0,  .common_value = iblt | 0x0U}, // Section 1
       { .starting = 1315,  .ending = 4096,   .offset = 899,  .common_value = iblt | 0x0U}, // Section 2
       { .starting = 1315,  .ending = 4096,   .offset = 899,  .common_value = iblt | 0x0U}, // Section 2
       { .starting = 1315,  .ending = 4096,   .offset = 899,  .common_value = iblt | 0x0U}, // Section 2
@@ -160,7 +159,7 @@ namespace webpp::unicode::idna::details {
       {.starting = 34815, .ending = 34816, .offset = 30609,         .common_value = 0x0U}, // Section 5
     };
 
-    static constexpr std::uint16_t idna_last_breakpoint{0x8800U};
+    static constexpr std::uint16_t idna_last_breakpoint{34816U};
     static constexpr std::uint16_t idna_breakpoint_shift{10U};
     static constexpr std::uint16_t idna_common_pos{32800U}; // this is the last common value position
 
@@ -712,8 +711,8 @@ namespace webpp::unicode::idna::details {
     /**
      * IDNA Values Table
      *
-     * Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's
-     * not VALID or DISALLOWED specifically specified.
+     * Block values of the IDNA Mappings; the values of this table points to the idna_mappings table if it's not VALID
+     * or DISALLOWED specifically specified.
      *
      * Table size:
      *   - in bits:       138800
@@ -722,28 +721,26 @@ namespace webpp::unicode::idna::details {
      */
     static constexpr std::array<std::uint16_t, 8675ULL> idna_mapping_blocks{
 
-      // Start of 0x0-0x60, 0xe0, 0x260-0x280, 0x300-0x320, 0x440, 0x560, 0x5a0, 0x620-0x640, 0x680-0x6a0,
-      // 0x6e0, 0x720, 0x760-0x780, 0x7c0, 0x800, 0x8a0-0x8c0, 0x900-0x920, 0x960, 0xd20, 0xf20,
-      // 0x1000-0x1080, 0x1100-0x1120, 0x1180-0x1220, 0x1260, 0x12e0, 0x1320, 0x13a0-0x13c0, 0x1400-0x1660,
-      // 0x16a0-0x16c0, 0x1780, 0x1820-0x1840, 0x1880, 0x18c0, 0x1980, 0x19e0, 0x1a20, 0x1b00-0x1b20,
-      // 0x1b60-0x1bc0, 0x1c00, 0x1c60, 0x1d00, 0x1dc0-0x1de0, 0x21a0-0x2200, 0x2240-0x2300, 0x2340-0x2400,
-      // 0x2500-0x29e0, 0x2a20-0x2a40, 0x2a80-0x2aa0, 0x2ae0-0x2b40, 0x2ba0-0x2be0, 0x2c40, 0x2d00, 0x2d40,
-      // 0x2de0-0x2e20, 0x2ea0-0x2ec0, 0x3060, 0x30a0-0x30c0, 0x31a0-0x31c0, 0x3400-0xa460, 0xa4a0,
-      // 0xa4e0-0xa600, 0xa6a0-0xa6c0, 0xa700, 0xa800, 0xa840, 0xa880-0xa8a0, 0xa8e0-0xa920, 0xa980-0xa9a0,
-      // 0xaa00, 0xaa60-0xaaa0, 0xabc0, 0xac00-0xd780, 0x10080-0x100c0, 0x10140-0x10160, 0x102a0, 0x10300,
-      // 0x103a0, 0x10440-0x10460, 0x10500, 0x10540, 0x105c0, 0x10600-0x10700, 0x10860, 0x10980, 0x109e0,
-      // 0x10a60-0x10a80, 0x10ac0, 0x10b00, 0x10c00-0x10c20, 0x10cc0, 0x10d00, 0x10e80, 0x10f00,
-      // 0x11000-0x11020, 0x11080, 0x11100, 0x11180-0x111c0, 0x11220, 0x112c0, 0x11400-0x11420,
-      // 0x11480-0x114a0, 0x11580, 0x11600-0x11620, 0x11680, 0x11800, 0x118c0, 0x11a00-0x11a20,
-      // 0x11a60-0x11a80, 0x11ac0, 0x11bc0, 0x11fc0, 0x12000-0x12360, 0x12400-0x12440, 0x12480-0x12520,
-      // 0x12fa0-0x12fc0, 0x13000-0x13400, 0x13460-0x143c0, 0x14400-0x14620, 0x16100, 0x16800-0x16a00,
-      // 0x16a80, 0x16b00-0x16b20, 0x16d40, 0x16e60, 0x16f00-0x16f20, 0x16f60, 0x17000-0x187c0,
-      // 0x18800-0x18ca0, 0x1b000-0x1b100, 0x1b180-0x1b2c0, 0x1bc00-0x1bc40, 0x1cc00-0x1cca0, 0x1cd00-0x1ce80,
-      // 0x1cf00, 0x1cf60-0x1cfa0, 0x1d000-0x1d0c0, 0x1d100, 0x1d180, 0x1d200-0x1d220, 0x1d300-0x1d320,
-      // 0x1d800-0x1da60, 0x1e100, 0x1e2c0, 0x1e800-0x1e8a0, 0x1ec80, 0x1f000, 0x1f040-0x1f060,
-      // 0x1f300-0x1f6a0, 0x1f700-0x1f740, 0x1f780-0x1f7a0, 0x1f820, 0x1f860, 0x1f900-0x1fa20, 0x1faa0,
-      // 0x1fb00-0x1fb60, 0x1fba0-0x1fbc0, 0x20000-0x2a6c0, 0x2a700-0x2b700, 0x2b740-0x2b7e0, 0x2b820-0x2ce80,
-      // 0x2cec0-0x2ebc0, 0x2ec00-0x2ee20, 0x30000-0x31320, 0x31360-0x32380, 0x110000:
+      // Start of 0x0-0x60, 0xe0, 0x260-0x280, 0x300-0x320, 0x440, 0x560, 0x5a0, 0x620-0x640, 0x680-0x6a0, 0x6e0, 0x720,
+      // 0x760-0x780, 0x7c0, 0x800, 0x8a0-0x8c0, 0x900-0x920, 0x960, 0xd20, 0xf20, 0x1000-0x1080, 0x1100-0x1120,
+      // 0x1180-0x1220, 0x1260, 0x12e0, 0x1320, 0x13a0-0x13c0, 0x1400-0x1660, 0x16a0-0x16c0, 0x1780, 0x1820-0x1840,
+      // 0x1880, 0x18c0, 0x1980, 0x19e0, 0x1a20, 0x1b00-0x1b20, 0x1b60-0x1bc0, 0x1c00, 0x1c60, 0x1d00, 0x1dc0-0x1de0,
+      // 0x21a0-0x2200, 0x2240-0x2300, 0x2340-0x2400, 0x2500-0x29e0, 0x2a20-0x2a40, 0x2a80-0x2aa0, 0x2ae0-0x2b40,
+      // 0x2ba0-0x2be0, 0x2c40, 0x2d00, 0x2d40, 0x2de0-0x2e20, 0x2ea0-0x2ec0, 0x3060, 0x30a0-0x30c0, 0x31a0-0x31c0,
+      // 0x3400-0xa460, 0xa4a0, 0xa4e0-0xa600, 0xa6a0-0xa6c0, 0xa700, 0xa800, 0xa840, 0xa880-0xa8a0, 0xa8e0-0xa920,
+      // 0xa980-0xa9a0, 0xaa00, 0xaa60-0xaaa0, 0xabc0, 0xac00-0xd780, 0x10080-0x100c0, 0x10140-0x10160, 0x102a0,
+      // 0x10300, 0x103a0, 0x10440-0x10460, 0x10500, 0x10540, 0x105c0, 0x10600-0x10700, 0x10860, 0x10980, 0x109e0,
+      // 0x10a60-0x10a80, 0x10ac0, 0x10b00, 0x10c00-0x10c20, 0x10cc0, 0x10d00, 0x10e80, 0x10f00, 0x11000-0x11020,
+      // 0x11080, 0x11100, 0x11180-0x111c0, 0x11220, 0x112c0, 0x11400-0x11420, 0x11480-0x114a0, 0x11580,
+      // 0x11600-0x11620, 0x11680, 0x11800, 0x118c0, 0x11a00-0x11a20, 0x11a60-0x11a80, 0x11ac0, 0x11bc0, 0x11fc0,
+      // 0x12000-0x12360, 0x12400-0x12440, 0x12480-0x12520, 0x12fa0-0x12fc0, 0x13000-0x13400, 0x13460-0x143c0,
+      // 0x14400-0x14620, 0x16100, 0x16800-0x16a00, 0x16a80, 0x16b00-0x16b20, 0x16d40, 0x16e60, 0x16f00-0x16f20,
+      // 0x16f60, 0x17000-0x187c0, 0x18800-0x18ca0, 0x1b000-0x1b100, 0x1b180-0x1b2c0, 0x1bc00-0x1bc40, 0x1cc00-0x1cca0,
+      // 0x1cd00-0x1ce80, 0x1cf00, 0x1cf60-0x1cfa0, 0x1d000-0x1d0c0, 0x1d100, 0x1d180, 0x1d200-0x1d220, 0x1d300-0x1d320,
+      // 0x1d800-0x1da60, 0x1e100, 0x1e2c0, 0x1e800-0x1e8a0, 0x1ec80, 0x1f000, 0x1f040-0x1f060, 0x1f300-0x1f6a0,
+      // 0x1f700-0x1f740, 0x1f780-0x1f7a0, 0x1f820, 0x1f860, 0x1f900-0x1fa20, 0x1faa0, 0x1fb00-0x1fb60, 0x1fba0-0x1fbc0,
+      // 0x20000-0x2a6c0, 0x2a700-0x2b700, 0x2b740-0x2b7e0, 0x2b820-0x2ce80, 0x2cec0-0x2ebc0, 0x2ec00-0x2ee20,
+      // 0x30000-0x31320, 0x31360-0x32380, 0x110000:
       valid,
 
       // Start of 0x1900, 0x1a40, 0xa9e0, 0x10880, 0x10e60, 0x16a40, 0x16aa0, 0x1df00:
@@ -837,15 +834,15 @@ namespace webpp::unicode::idna::details {
       valid,
 
       // Start of 0x80-0xa0, 0xe60, 0xee0, 0xfe0, 0x1ae0, 0x2e60, 0x2fe0, 0xd800-0xf8e0, 0xfae0, 0x10060,
-      // 0x10200-0x10260, 0x103e0, 0x107c0-0x107e0, 0x108c0, 0x10940-0x10960, 0x10aa0, 0x10bc0-0x10be0,
-      // 0x10c60, 0x10da0-0x10e40, 0x11260, 0x114e0-0x11560, 0x115e0, 0x11760-0x117e0, 0x11840-0x11880,
-      // 0x11960-0x11980, 0x11b20-0x11ba0, 0x11cc0-0x11ce0, 0x11dc0-0x11ec0, 0x11f60-0x11f80, 0x123a0-0x123e0,
-      // 0x12560-0x12f60, 0x14660-0x160e0, 0x16140-0x167e0, 0x16ba0-0x16d20, 0x16d80-0x16e20, 0x16ea0-0x16ee0,
-      // 0x16fa0-0x16fc0, 0x18d20-0x1afc0, 0x1b300-0x1bbe0, 0x1bcc0-0x1cbe0, 0x1cec0-0x1cee0, 0x1cfe0,
-      // 0x1d260-0x1d2a0, 0x1d380-0x1d3e0, 0x1dac0-0x1dee0, 0x1df40-0x1dfe0, 0x1e0a0-0x1e0e0, 0x1e160-0x1e260,
-      // 0x1e300-0x1e4a0, 0x1e500-0x1e5a0, 0x1e600-0x1e7c0, 0x1e8e0, 0x1e960-0x1ec40, 0x1ecc0-0x1ece0,
-      // 0x1ed40-0x1ede0, 0x1eec0, 0x1ef00-0x1efe0, 0x1f1c0, 0x1f280-0x1f2e0, 0x1f8e0, 0x1fc00-0x1ffe0,
-      // 0x2a6e0, 0x2ee60-0x2f7e0, 0x2fa20-0x2ffe0, 0x323c0-0xe00e0, 0xe0200-0x10ffe0:
+      // 0x10200-0x10260, 0x103e0, 0x107c0-0x107e0, 0x108c0, 0x10940-0x10960, 0x10aa0, 0x10bc0-0x10be0, 0x10c60,
+      // 0x10da0-0x10e40, 0x11260, 0x114e0-0x11560, 0x115e0, 0x11760-0x117e0, 0x11840-0x11880, 0x11960-0x11980,
+      // 0x11b20-0x11ba0, 0x11cc0-0x11ce0, 0x11dc0-0x11ec0, 0x11f60-0x11f80, 0x123a0-0x123e0, 0x12560-0x12f60,
+      // 0x14660-0x160e0, 0x16140-0x167e0, 0x16ba0-0x16d20, 0x16d80-0x16e20, 0x16ea0-0x16ee0, 0x16fa0-0x16fc0,
+      // 0x18d20-0x1afc0, 0x1b300-0x1bbe0, 0x1bcc0-0x1cbe0, 0x1cec0-0x1cee0, 0x1cfe0, 0x1d260-0x1d2a0, 0x1d380-0x1d3e0,
+      // 0x1dac0-0x1dee0, 0x1df40-0x1dfe0, 0x1e0a0-0x1e0e0, 0x1e160-0x1e260, 0x1e300-0x1e4a0, 0x1e500-0x1e5a0,
+      // 0x1e600-0x1e7c0, 0x1e8e0, 0x1e960-0x1ec40, 0x1ecc0-0x1ece0, 0x1ed40-0x1ede0, 0x1eec0, 0x1ef00-0x1efe0, 0x1f1c0,
+      // 0x1f280-0x1f2e0, 0x1f8e0, 0x1fc00-0x1ffe0, 0x2a6e0, 0x2ee60-0x2f7e0, 0x2fa20-0x2ffe0, 0x323c0-0xe00e0,
+      // 0xe0200-0x10ffe0:
       52,
 
       // Start of 0x18ce0:
@@ -2651,116 +2648,113 @@ namespace webpp::unicode::idna::details {
      *   - in KibiBytes:  16.84 KiB
      */
     static constexpr std::basic_string_view<char8_t> idna_mappings{
-      u8"\x61\0"        // 41, AA, 1D2C, 1D43, 2090, 24B6, 24D0, FF21, FF41, 1CCD6, 1D400, 1D41A, 1D434, 1D44E,
-                        // 1D468, 1D482, 1D49C, 1D4B6, 1D4D0, 1D4EA, 1D504, 1D51E, 1D538, 1D552, 1D56C, 1D586, 1D5A0,
-                        // 1D5BA, 1D5D4, 1D5EE, 1D608, 1D622, 1D63C, 1D656, 1D670, 1D68A, 1F130
-      u8"\x62\0"        // 42, 1D2E, 1D47, 212C, 24B7, 24D1, FF22, FF42, 1CCD7, 1D401, 1D41B, 1D435, 1D44F, 1D469,
-                        // 1D483, 1D4B7, 1D4D1, 1D4EB, 1D505, 1D51F, 1D539, 1D553, 1D56D, 1D587, 1D5A1, 1D5BB, 1D5D5,
-                        // 1D5EF, 1D609, 1D623, 1D63D, 1D657, 1D671, 1D68B, 1F131
-      u8"\x63\0"        // 43, 1D9C, 2102, 212D, 216D, 217D, 24B8, 24D2, A7F2, FF23, FF43, 1CCD8, 1D402, 1D41C,
-                        // 1D436, 1D450, 1D46A, 1D484, 1D49E, 1D4B8, 1D4D2, 1D4EC, 1D520, 1D554, 1D56E, 1D588, 1D5A2,
-                        // 1D5BC, 1D5D6, 1D5F0, 1D60A, 1D624, 1D63E, 1D658, 1D672, 1D68C, 1F12B, 1F132
-      u8"\x64\0"        // 44, 1D30, 1D48, 2145, 2146, 216E, 217E, 24B9, 24D3, FF24, FF44, 1CCD9, 1D403, 1D41D,
-                        // 1D437, 1D451, 1D46B, 1D485, 1D49F, 1D4B9, 1D4D3, 1D4ED, 1D507, 1D521, 1D53B, 1D555, 1D56F,
-                        // 1D589, 1D5A3, 1D5BD, 1D5D7, 1D5F1, 1D60B, 1D625, 1D63F, 1D659, 1D673, 1D68D, 1F133
-      u8"\x65\0"        // 45, 1D31, 1D49, 2091, 212F, 2130, 2147, 24BA, 24D4, FF25, FF45, 1CCDA, 1D404, 1D41E,
-                        // 1D438, 1D452, 1D46C, 1D486, 1D4D4, 1D4EE, 1D508, 1D522, 1D53C, 1D556, 1D570, 1D58A, 1D5A4,
-                        // 1D5BE, 1D5D8, 1D5F2, 1D60C, 1D626, 1D640, 1D65A, 1D674, 1D68E, 1F134
-      u8"\x66\0"        // 46, 1DA0, 2131, 24BB, 24D5, A7F3, FF26, FF46, 1CCDB, 1D405, 1D41F, 1D439, 1D453, 1D46D,
-                        // 1D487, 1D4BB, 1D4D5, 1D4EF, 1D509, 1D523, 1D53D, 1D557, 1D571, 1D58B, 1D5A5, 1D5BF, 1D5D9,
-                        // 1D5F3, 1D60D, 1D627, 1D641, 1D65B, 1D675, 1D68F, 1F135
-      u8"\x67\0"        // 47, 1D33, 1D4D, 210A, 24BC, 24D6, FF27, FF47, 1CCDC, 1D406, 1D420, 1D43A, 1D454, 1D46E,
-                        // 1D488, 1D4A2, 1D4D6, 1D4F0, 1D50A, 1D524, 1D53E, 1D558, 1D572, 1D58C, 1D5A6, 1D5C0, 1D5DA,
-                        // 1D5F4, 1D60E, 1D628, 1D642, 1D65C, 1D676, 1D690, 1F136
-      u8"\x68\0"        // 48, 2B0, 1D34, 2095, 210B, 210C, 210D, 210E, 24BD, 24D7, FF28, FF48, 1CCDD, 1D407, 1D421,
-                        // 1D43B, 1D46F, 1D489, 1D4BD, 1D4D7, 1D4F1, 1D525, 1D559, 1D573, 1D58D, 1D5A7, 1D5C1, 1D5DB,
-                        // 1D5F5, 1D60F, 1D629, 1D643, 1D65D, 1D677, 1D691, 1F137
-      u8"\x69\0"        // 49, 1D35, 1D62, 2071, 2110, 2111, 2139, 2148, 2160, 2170, 24BE, 24D8, FF29, FF49, 1CCDE,
-                        // 1D408, 1D422, 1D43C, 1D456, 1D470, 1D48A, 1D4BE, 1D4D8, 1D4F2, 1D526, 1D540, 1D55A, 1D574,
-                        // 1D58E, 1D5A8, 1D5C2, 1D5DC, 1D5F6, 1D610, 1D62A, 1D644, 1D65E, 1D678, 1D692, 1F138
-      u8"\x6a\0"        // 4A, 2B2, 1D36, 2149, 24BF, 24D9, 2C7C, FF2A, FF4A, 1CCDF, 1D409, 1D423, 1D43D, 1D457,
-                        // 1D471, 1D48B, 1D4A5, 1D4BF, 1D4D9, 1D4F3, 1D50D, 1D527, 1D541, 1D55B, 1D575, 1D58F, 1D5A9,
-                        // 1D5C3, 1D5DD, 1D5F7, 1D611, 1D62B, 1D645, 1D65F, 1D679, 1D693, 1F139
-      u8"\x6b\0"        // 4B, 1D37, 1D4F, 2096, 212A, 24C0, 24DA, FF2B, FF4B, 1CCE0, 1D40A, 1D424, 1D43E, 1D458,
-                        // 1D472, 1D48C, 1D4A6, 1D4C0, 1D4DA, 1D4F4, 1D50E, 1D528, 1D542, 1D55C, 1D576, 1D590, 1D5AA,
-                        // 1D5C4, 1D5DE, 1D5F8, 1D612, 1D62C, 1D646, 1D660, 1D67A, 1D694, 1F13A
-      u8"\x6c\0"        // 4C, 2E1, 1D38, 2097, 2112, 2113, 216C, 217C, 24C1, 24DB, FF2C, FF4C, 1CCE1, 1D40B, 1D425,
-                        // 1D43F, 1D459, 1D473, 1D48D, 1D4C1, 1D4DB, 1D4F5, 1D50F, 1D529, 1D543, 1D55D, 1D577, 1D591,
-                        // 1D5AB, 1D5C5, 1D5DF, 1D5F9, 1D613, 1D62D, 1D647, 1D661, 1D67B, 1D695, 1F13B
-      u8"\x6d\0"        // 4D, 1D39, 1D50, 2098, 2133, 216F, 217F, 24C2, 24DC, FF2D, FF4D, 1CCE2, 1D40C, 1D426,
-                        // 1D440, 1D45A, 1D474, 1D48E, 1D4C2, 1D4DC, 1D4F6, 1D510, 1D52A, 1D544, 1D55E, 1D578, 1D592,
-                        // 1D5AC, 1D5C6, 1D5E0, 1D5FA, 1D614, 1D62E, 1D648, 1D662, 1D67C, 1D696, 1F13C
-      u8"\x6e\0"        // 4E, 1D3A, 207F, 2099, 2115, 24C3, 24DD, FF2E, FF4E, 1CCE3, 1D40D, 1D427, 1D441, 1D45B,
-                        // 1D475, 1D48F, 1D4A9, 1D4C3, 1D4DD, 1D4F7, 1D511, 1D52B, 1D55F, 1D579, 1D593, 1D5AD, 1D5C7,
-                        // 1D5E1, 1D5FB, 1D615, 1D62F, 1D649, 1D663, 1D67D, 1D697, 1F13D
-      u8"\x6f\0"        // 4F, BA, 1D3C, 1D52, 2092, 2134, 24C4, 24DE, FF2F, FF4F, 1CCE4, 1D40E, 1D428, 1D442, 1D45C,
-                        // 1D476, 1D490, 1D4AA, 1D4DE, 1D4F8, 1D512, 1D52C, 1D546, 1D560, 1D57A, 1D594, 1D5AE, 1D5C8,
-                        // 1D5E2, 1D5FC, 1D616, 1D630, 1D64A, 1D664, 1D67E, 1D698, 1F13E
-      u8"\x70\0"        // 50, 1D3E, 1D56, 209A, 2119, 24C5, 24DF, FF30, FF50, 1CCE5, 1D40F, 1D429, 1D443, 1D45D,
-                        // 1D477, 1D491, 1D4AB, 1D4C5, 1D4DF, 1D4F9, 1D513, 1D52D, 1D561, 1D57B, 1D595, 1D5AF, 1D5C9,
-                        // 1D5E3, 1D5FD, 1D617, 1D631, 1D64B, 1D665, 1D67F, 1D699, 1F13F
-      u8"\x71\0"        // 51, 211A, 24C6, 24E0, A7F4, FF31, FF51, 107A5, 1CCE6, 1D410, 1D42A, 1D444, 1D45E, 1D478,
-                        // 1D492, 1D4AC, 1D4C6, 1D4E0, 1D4FA, 1D514, 1D52E, 1D562, 1D57C, 1D596, 1D5B0, 1D5CA, 1D5E4,
-                        // 1D5FE, 1D618, 1D632, 1D64C, 1D666, 1D680, 1D69A, 1F140
-      u8"\x72\0"        // 52, 2B3, 1D3F, 1D63, 211B, 211C, 211D, 24C7, 24E1, FF32, FF52, 1CCE7, 1D411, 1D42B, 1D445,
-                        // 1D45F, 1D479, 1D493, 1D4C7, 1D4E1, 1D4FB, 1D52F, 1D563, 1D57D, 1D597, 1D5B1, 1D5CB, 1D5E5,
-                        // 1D5FF, 1D619, 1D633, 1D64D, 1D667, 1D681, 1D69B, 1F12C, 1F141
-      u8"\x73\0"        // 53, 17F, 2E2, 209B, 24C8, 24E2, FF33, FF53, 1CCE8, 1D412, 1D42C, 1D446, 1D460, 1D47A,
-                        // 1D494, 1D4AE, 1D4C8, 1D4E2, 1D4FC, 1D516, 1D530, 1D54A, 1D564, 1D57E, 1D598, 1D5B2, 1D5CC,
-                        // 1D5E6, 1D600, 1D61A, 1D634, 1D64E, 1D668, 1D682, 1D69C, 1F142
-      u8"\x74\0"        // 54, 1D40, 1D57, 209C, 24C9, 24E3, FF34, FF54, 1CCE9, 1D413, 1D42D, 1D447, 1D461, 1D47B,
-                        // 1D495, 1D4AF, 1D4C9, 1D4E3, 1D4FD, 1D517, 1D531, 1D54B, 1D565, 1D57F, 1D599, 1D5B3, 1D5CD,
-                        // 1D5E7, 1D601, 1D61B, 1D635, 1D64F, 1D669, 1D683, 1D69D, 1F143
-      u8"\x75\0"        // 55, 1D41, 1D58, 1D64, 24CA, 24E4, FF35, FF55, 1CCEA, 1D414, 1D42E, 1D448, 1D462, 1D47C,
-                        // 1D496, 1D4B0, 1D4CA, 1D4E4, 1D4FE, 1D518, 1D532, 1D54C, 1D566, 1D580, 1D59A, 1D5B4, 1D5CE,
-                        // 1D5E8, 1D602, 1D61C, 1D636, 1D650, 1D66A, 1D684, 1D69E, 1F144
-      u8"\x76\0"        // 56, 1D5B, 1D65, 2164, 2174, 24CB, 24E5, 2C7D, FF36, FF56, 1CCEB, 1D415, 1D42F, 1D449,
-                        // 1D463, 1D47D, 1D497, 1D4B1, 1D4CB, 1D4E5, 1D4FF, 1D519, 1D533, 1D54D, 1D567, 1D581, 1D59B,
-                        // 1D5B5, 1D5CF, 1D5E9, 1D603, 1D61D, 1D637, 1D651, 1D66B, 1D685, 1D69F, 1F145
-      u8"\x77\0"        // 57, 2B7, 1D42, 24CC, 24E6, FF37, FF57, 1CCEC, 1D416, 1D430, 1D44A, 1D464, 1D47E, 1D498,
-                        // 1D4B2, 1D4CC, 1D4E6, 1D500, 1D51A, 1D534, 1D54E, 1D568, 1D582, 1D59C, 1D5B6, 1D5D0, 1D5EA,
-                        // 1D604, 1D61E, 1D638, 1D652, 1D66C, 1D686, 1D6A0, 1F146
-      u8"\x78\0"        // 58, 2E3, 2093, 2169, 2179, 24CD, 24E7, FF38, FF58, 1CCED, 1D417, 1D431, 1D44B, 1D465,
-                        // 1D47F, 1D499, 1D4B3, 1D4CD, 1D4E7, 1D501, 1D51B, 1D535, 1D54F, 1D569, 1D583, 1D59D, 1D5B7,
-                        // 1D5D1, 1D5EB, 1D605, 1D61F, 1D639, 1D653, 1D66D, 1D687, 1D6A1, 1F147
-      u8"\x79\0"        // 59, 2B8, 24CE, 24E8, FF39, FF59, 1CCEE, 1D418, 1D432, 1D44C, 1D466, 1D480, 1D49A, 1D4B4,
-                        // 1D4CE, 1D4E8, 1D502, 1D51C, 1D536, 1D550, 1D56A, 1D584, 1D59E, 1D5B8, 1D5D2, 1D5EC, 1D606,
-                        // 1D620, 1D63A, 1D654, 1D66E, 1D688, 1D6A2, 1F148
-      u8"\x7a\0"        // 5A, 1DBB, 2124, 2128, 24CF, 24E9, FF3A, FF5A, 1CCEF, 1D419, 1D433, 1D44D, 1D467, 1D481,
-                        // 1D49B, 1D4B5, 1D4CF, 1D4E9, 1D503, 1D537, 1D56B, 1D585, 1D59F, 1D5B9, 1D5D3, 1D5ED, 1D607,
-                        // 1D621, 1D63B, 1D655, 1D66F, 1D689, 1D6A3, 1F149
-      u8"\40\0"         // A0, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 200A, 202F, 205F, 3000
+      u8"\x61\0" // 41, AA, 1D2C, 1D43, 2090, 24B6, 24D0, FF21, FF41, 1CCD6, 1D400, 1D41A, 1D434, 1D44E, 1D468, 1D482,
+                 // 1D49C, 1D4B6, 1D4D0, 1D4EA, 1D504, 1D51E, 1D538, 1D552, 1D56C, 1D586, 1D5A0, 1D5BA, 1D5D4, 1D5EE,
+                 // 1D608, 1D622, 1D63C, 1D656, 1D670, 1D68A, 1F130
+      u8"\x62\0" // 42, 1D2E, 1D47, 212C, 24B7, 24D1, FF22, FF42, 1CCD7, 1D401, 1D41B, 1D435, 1D44F, 1D469, 1D483,
+                 // 1D4B7, 1D4D1, 1D4EB, 1D505, 1D51F, 1D539, 1D553, 1D56D, 1D587, 1D5A1, 1D5BB, 1D5D5, 1D5EF, 1D609,
+                 // 1D623, 1D63D, 1D657, 1D671, 1D68B, 1F131
+      u8"\x63\0" // 43, 1D9C, 2102, 212D, 216D, 217D, 24B8, 24D2, A7F2, FF23, FF43, 1CCD8, 1D402, 1D41C, 1D436, 1D450,
+                 // 1D46A, 1D484, 1D49E, 1D4B8, 1D4D2, 1D4EC, 1D520, 1D554, 1D56E, 1D588, 1D5A2, 1D5BC, 1D5D6, 1D5F0,
+                 // 1D60A, 1D624, 1D63E, 1D658, 1D672, 1D68C, 1F12B, 1F132
+      u8"\x64\0" // 44, 1D30, 1D48, 2145, 2146, 216E, 217E, 24B9, 24D3, FF24, FF44, 1CCD9, 1D403, 1D41D, 1D437, 1D451,
+                 // 1D46B, 1D485, 1D49F, 1D4B9, 1D4D3, 1D4ED, 1D507, 1D521, 1D53B, 1D555, 1D56F, 1D589, 1D5A3, 1D5BD,
+                 // 1D5D7, 1D5F1, 1D60B, 1D625, 1D63F, 1D659, 1D673, 1D68D, 1F133
+      u8"\x65\0" // 45, 1D31, 1D49, 2091, 212F, 2130, 2147, 24BA, 24D4, FF25, FF45, 1CCDA, 1D404, 1D41E, 1D438, 1D452,
+                 // 1D46C, 1D486, 1D4D4, 1D4EE, 1D508, 1D522, 1D53C, 1D556, 1D570, 1D58A, 1D5A4, 1D5BE, 1D5D8, 1D5F2,
+                 // 1D60C, 1D626, 1D640, 1D65A, 1D674, 1D68E, 1F134
+      u8"\x66\0" // 46, 1DA0, 2131, 24BB, 24D5, A7F3, FF26, FF46, 1CCDB, 1D405, 1D41F, 1D439, 1D453, 1D46D, 1D487,
+                 // 1D4BB, 1D4D5, 1D4EF, 1D509, 1D523, 1D53D, 1D557, 1D571, 1D58B, 1D5A5, 1D5BF, 1D5D9, 1D5F3, 1D60D,
+                 // 1D627, 1D641, 1D65B, 1D675, 1D68F, 1F135
+      u8"\x67\0" // 47, 1D33, 1D4D, 210A, 24BC, 24D6, FF27, FF47, 1CCDC, 1D406, 1D420, 1D43A, 1D454, 1D46E, 1D488,
+                 // 1D4A2, 1D4D6, 1D4F0, 1D50A, 1D524, 1D53E, 1D558, 1D572, 1D58C, 1D5A6, 1D5C0, 1D5DA, 1D5F4, 1D60E,
+                 // 1D628, 1D642, 1D65C, 1D676, 1D690, 1F136
+      u8"\x68\0" // 48, 2B0, 1D34, 2095, 210B, 210C, 210D, 210E, 24BD, 24D7, FF28, FF48, 1CCDD, 1D407, 1D421, 1D43B,
+                 // 1D46F, 1D489, 1D4BD, 1D4D7, 1D4F1, 1D525, 1D559, 1D573, 1D58D, 1D5A7, 1D5C1, 1D5DB, 1D5F5, 1D60F,
+                 // 1D629, 1D643, 1D65D, 1D677, 1D691, 1F137
+      u8"\x69\0" // 49, 1D35, 1D62, 2071, 2110, 2111, 2139, 2148, 2160, 2170, 24BE, 24D8, FF29, FF49, 1CCDE, 1D408,
+                 // 1D422, 1D43C, 1D456, 1D470, 1D48A, 1D4BE, 1D4D8, 1D4F2, 1D526, 1D540, 1D55A, 1D574, 1D58E, 1D5A8,
+                 // 1D5C2, 1D5DC, 1D5F6, 1D610, 1D62A, 1D644, 1D65E, 1D678, 1D692, 1F138
+      u8"\x6a\0" // 4A, 2B2, 1D36, 2149, 24BF, 24D9, 2C7C, FF2A, FF4A, 1CCDF, 1D409, 1D423, 1D43D, 1D457, 1D471, 1D48B,
+                 // 1D4A5, 1D4BF, 1D4D9, 1D4F3, 1D50D, 1D527, 1D541, 1D55B, 1D575, 1D58F, 1D5A9, 1D5C3, 1D5DD, 1D5F7,
+                 // 1D611, 1D62B, 1D645, 1D65F, 1D679, 1D693, 1F139
+      u8"\x6b\0" // 4B, 1D37, 1D4F, 2096, 212A, 24C0, 24DA, FF2B, FF4B, 1CCE0, 1D40A, 1D424, 1D43E, 1D458, 1D472, 1D48C,
+                 // 1D4A6, 1D4C0, 1D4DA, 1D4F4, 1D50E, 1D528, 1D542, 1D55C, 1D576, 1D590, 1D5AA, 1D5C4, 1D5DE, 1D5F8,
+                 // 1D612, 1D62C, 1D646, 1D660, 1D67A, 1D694, 1F13A
+      u8"\x6c\0" // 4C, 2E1, 1D38, 2097, 2112, 2113, 216C, 217C, 24C1, 24DB, FF2C, FF4C, 1CCE1, 1D40B, 1D425, 1D43F,
+                 // 1D459, 1D473, 1D48D, 1D4C1, 1D4DB, 1D4F5, 1D50F, 1D529, 1D543, 1D55D, 1D577, 1D591, 1D5AB, 1D5C5,
+                 // 1D5DF, 1D5F9, 1D613, 1D62D, 1D647, 1D661, 1D67B, 1D695, 1F13B
+      u8"\x6d\0" // 4D, 1D39, 1D50, 2098, 2133, 216F, 217F, 24C2, 24DC, FF2D, FF4D, 1CCE2, 1D40C, 1D426, 1D440, 1D45A,
+                 // 1D474, 1D48E, 1D4C2, 1D4DC, 1D4F6, 1D510, 1D52A, 1D544, 1D55E, 1D578, 1D592, 1D5AC, 1D5C6, 1D5E0,
+                 // 1D5FA, 1D614, 1D62E, 1D648, 1D662, 1D67C, 1D696, 1F13C
+      u8"\x6e\0" // 4E, 1D3A, 207F, 2099, 2115, 24C3, 24DD, FF2E, FF4E, 1CCE3, 1D40D, 1D427, 1D441, 1D45B, 1D475, 1D48F,
+                 // 1D4A9, 1D4C3, 1D4DD, 1D4F7, 1D511, 1D52B, 1D55F, 1D579, 1D593, 1D5AD, 1D5C7, 1D5E1, 1D5FB, 1D615,
+                 // 1D62F, 1D649, 1D663, 1D67D, 1D697, 1F13D
+      u8"\x6f\0" // 4F, BA, 1D3C, 1D52, 2092, 2134, 24C4, 24DE, FF2F, FF4F, 1CCE4, 1D40E, 1D428, 1D442, 1D45C, 1D476,
+                 // 1D490, 1D4AA, 1D4DE, 1D4F8, 1D512, 1D52C, 1D546, 1D560, 1D57A, 1D594, 1D5AE, 1D5C8, 1D5E2, 1D5FC,
+                 // 1D616, 1D630, 1D64A, 1D664, 1D67E, 1D698, 1F13E
+      u8"\x70\0" // 50, 1D3E, 1D56, 209A, 2119, 24C5, 24DF, FF30, FF50, 1CCE5, 1D40F, 1D429, 1D443, 1D45D, 1D477, 1D491,
+                 // 1D4AB, 1D4C5, 1D4DF, 1D4F9, 1D513, 1D52D, 1D561, 1D57B, 1D595, 1D5AF, 1D5C9, 1D5E3, 1D5FD, 1D617,
+                 // 1D631, 1D64B, 1D665, 1D67F, 1D699, 1F13F
+      u8"\x71\0" // 51, 211A, 24C6, 24E0, A7F4, FF31, FF51, 107A5, 1CCE6, 1D410, 1D42A, 1D444, 1D45E, 1D478, 1D492,
+                 // 1D4AC, 1D4C6, 1D4E0, 1D4FA, 1D514, 1D52E, 1D562, 1D57C, 1D596, 1D5B0, 1D5CA, 1D5E4, 1D5FE, 1D618,
+                 // 1D632, 1D64C, 1D666, 1D680, 1D69A, 1F140
+      u8"\x72\0" // 52, 2B3, 1D3F, 1D63, 211B, 211C, 211D, 24C7, 24E1, FF32, FF52, 1CCE7, 1D411, 1D42B, 1D445, 1D45F,
+                 // 1D479, 1D493, 1D4C7, 1D4E1, 1D4FB, 1D52F, 1D563, 1D57D, 1D597, 1D5B1, 1D5CB, 1D5E5, 1D5FF, 1D619,
+                 // 1D633, 1D64D, 1D667, 1D681, 1D69B, 1F12C, 1F141
+      u8"\x73\0" // 53, 17F, 2E2, 209B, 24C8, 24E2, FF33, FF53, 1CCE8, 1D412, 1D42C, 1D446, 1D460, 1D47A, 1D494, 1D4AE,
+                 // 1D4C8, 1D4E2, 1D4FC, 1D516, 1D530, 1D54A, 1D564, 1D57E, 1D598, 1D5B2, 1D5CC, 1D5E6, 1D600, 1D61A,
+                 // 1D634, 1D64E, 1D668, 1D682, 1D69C, 1F142
+      u8"\x74\0" // 54, 1D40, 1D57, 209C, 24C9, 24E3, FF34, FF54, 1CCE9, 1D413, 1D42D, 1D447, 1D461, 1D47B, 1D495,
+                 // 1D4AF, 1D4C9, 1D4E3, 1D4FD, 1D517, 1D531, 1D54B, 1D565, 1D57F, 1D599, 1D5B3, 1D5CD, 1D5E7, 1D601,
+                 // 1D61B, 1D635, 1D64F, 1D669, 1D683, 1D69D, 1F143
+      u8"\x75\0" // 55, 1D41, 1D58, 1D64, 24CA, 24E4, FF35, FF55, 1CCEA, 1D414, 1D42E, 1D448, 1D462, 1D47C, 1D496,
+                 // 1D4B0, 1D4CA, 1D4E4, 1D4FE, 1D518, 1D532, 1D54C, 1D566, 1D580, 1D59A, 1D5B4, 1D5CE, 1D5E8, 1D602,
+                 // 1D61C, 1D636, 1D650, 1D66A, 1D684, 1D69E, 1F144
+      u8"\x76\0" // 56, 1D5B, 1D65, 2164, 2174, 24CB, 24E5, 2C7D, FF36, FF56, 1CCEB, 1D415, 1D42F, 1D449, 1D463, 1D47D,
+                 // 1D497, 1D4B1, 1D4CB, 1D4E5, 1D4FF, 1D519, 1D533, 1D54D, 1D567, 1D581, 1D59B, 1D5B5, 1D5CF, 1D5E9,
+                 // 1D603, 1D61D, 1D637, 1D651, 1D66B, 1D685, 1D69F, 1F145
+      u8"\x77\0" // 57, 2B7, 1D42, 24CC, 24E6, FF37, FF57, 1CCEC, 1D416, 1D430, 1D44A, 1D464, 1D47E, 1D498, 1D4B2,
+                 // 1D4CC, 1D4E6, 1D500, 1D51A, 1D534, 1D54E, 1D568, 1D582, 1D59C, 1D5B6, 1D5D0, 1D5EA, 1D604, 1D61E,
+                 // 1D638, 1D652, 1D66C, 1D686, 1D6A0, 1F146
+      u8"\x78\0" // 58, 2E3, 2093, 2169, 2179, 24CD, 24E7, FF38, FF58, 1CCED, 1D417, 1D431, 1D44B, 1D465, 1D47F, 1D499,
+                 // 1D4B3, 1D4CD, 1D4E7, 1D501, 1D51B, 1D535, 1D54F, 1D569, 1D583, 1D59D, 1D5B7, 1D5D1, 1D5EB, 1D605,
+                 // 1D61F, 1D639, 1D653, 1D66D, 1D687, 1D6A1, 1F147
+      u8"\x79\0" // 59, 2B8, 24CE, 24E8, FF39, FF59, 1CCEE, 1D418, 1D432, 1D44C, 1D466, 1D480, 1D49A, 1D4B4, 1D4CE,
+                 // 1D4E8, 1D502, 1D51C, 1D536, 1D550, 1D56A, 1D584, 1D59E, 1D5B8, 1D5D2, 1D5EC, 1D606, 1D620, 1D63A,
+                 // 1D654, 1D66E, 1D688, 1D6A2, 1F148
+      u8"\x7a\0" // 5A, 1DBB, 2124, 2128, 24CF, 24E9, FF3A, FF5A, 1CCEF, 1D419, 1D433, 1D44D, 1D467, 1D481, 1D49B,
+                 // 1D4B5, 1D4CF, 1D4E9, 1D503, 1D537, 1D56B, 1D585, 1D59F, 1D5B9, 1D5D3, 1D5ED, 1D607, 1D621, 1D63B,
+                 // 1D655, 1D66F, 1D689, 1D6A3, 1F149
+      u8"\40\0"  // A0, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 200A, 202F, 205F, 3000
       u8"\40\xcc\x88\0" // A8
-      u8"\0"            // AD, 34F, 115F, 1160, 17B4, 17B5, 180B, 180C, 180D, 180E, 180F, 200B, 2060, 2061, 2062, 2063,
-                        // 2064, 206A, 206B, 206C, 206D, 206E, 206F, 3164, FE00, FE01, FE02, FE03, FE04, FE05, FE06,
-                        // FE07, FE08, FE09, FE0A, FE0B, FE0C, FE0D, FE0E, FE0F, FEFF, FFA0, 1BCA0, 1BCA1, 1BCA2, 1BCA3,
-                        // 1D173, 1D174, 1D175, 1D176, 1D177, 1D178, 1D179, 1D17A, E0100, E0101, E0102, E0103, E0104,
-                        // E0105, E0106, E0107, E0108, E0109, E010A, E010B, E010C, E010D, E010E, E010F, E0110, E0111,
-                        // E0112, E0113, E0114, E0115, E0116, E0117, E0118, E0119, E011A, E011B, E011C, E011D, E011E,
-                        // E011F, E0120, E0121, E0122, E0123, E0124, E0125, E0126, E0127, E0128, E0129, E012A, E012B,
-                        // E012C, E012D, E012E, E012F, E0130, E0131, E0132, E0133, E0134, E0135, E0136, E0137, E0138,
-                        // E0139, E013A, E013B, E013C, E013D, E013E, E013F, E0140, E0141, E0142, E0143, E0144, E0145,
-                        // E0146, E0147, E0148, E0149, E014A, E014B, E014C, E014D, E014E, E014F, E0150, E0151, E0152,
-                        // E0153, E0154, E0155, E0156, E0157, E0158, E0159, E015A, E015B, E015C, E015D, E015E, E015F,
-                        // E0160, E0161, E0162, E0163, E0164, E0165, E0166, E0167, E0168, E0169, E016A, E016B, E016C,
-                        // E016D, E016E, E016F, E0170, E0171, E0172, E0173, E0174, E0175, E0176, E0177, E0178, E0179,
-                        // E017A, E017B, E017C, E017D, E017E, E017F, E0180, E0181, E0182, E0183, E0184, E0185, E0186,
-                        // E0187, E0188, E0189, E018A, E018B, E018C, E018D, E018E, E018F, E0190, E0191, E0192, E0193,
-                        // E0194, E0195, E0196, E0197, E0198, E0199, E019A, E019B, E019C, E019D, E019E, E019F, E01A0,
-                        // E01A1, E01A2, E01A3, E01A4, E01A5, E01A6, E01A7, E01A8, E01A9, E01AA, E01AB, E01AC, E01AD,
-                        // E01AE, E01AF, E01B0, E01B1, E01B2, E01B3, E01B4, E01B5, E01B6, E01B7, E01B8, E01B9, E01BA,
-                        // E01BB, E01BC, E01BD, E01BE, E01BF, E01C0, E01C1, E01C2, E01C3, E01C4, E01C5, E01C6, E01C7,
-                        // E01C8, E01C9, E01CA, E01CB, E01CC, E01CD, E01CE, E01CF, E01D0, E01D1, E01D2, E01D3, E01D4,
-                        // E01D5, E01D6, E01D7, E01D8, E01D9, E01DA, E01DB, E01DC, E01DD, E01DE, E01DF, E01E0, E01E1,
-                        // E01E2, E01E3, E01E4, E01E5, E01E6, E01E7, E01E8, E01E9, E01EA, E01EB, E01EC, E01ED, E01EE,
-                        // E01EF
-      u8"\40\xcc\x84\0" // AF, FFE3
-      u8"\62\0"         // B2, 2082, 2461, FF12, 1CCF2, 1D7D0, 1D7DA, 1D7E4, 1D7EE, 1D7F8, 1FBF2
-      u8"\63\0"         // B3, 2083, 2462, FF13, 1CCF3, 1D7D1, 1D7DB, 1D7E5, 1D7EF, 1D7F9, 1FBF3
-      u8"\40\xcc\x81\0" // B4, 384, 1FFD
-      u8"\xce\xbc\0"    // B5, 39C, 1D6B3, 1D6CD, 1D6ED, 1D707, 1D727, 1D741, 1D761, 1D77B, 1D79B, 1D7B5
-      u8"\40\xcc\xa7\0" // B8
-      u8"\61\0"         // B9, 2081, 2460, FF11, 1CCF1, 1D7CF, 1D7D9, 1D7E3, 1D7ED, 1D7F7, 1FBF1
+      u8"\0" // AD, 34F, 115F, 1160, 17B4, 17B5, 180B, 180C, 180D, 180E, 180F, 200B, 2060, 2061, 2062, 2063, 2064, 206A,
+             // 206B, 206C, 206D, 206E, 206F, 3164, FE00, FE01, FE02, FE03, FE04, FE05, FE06, FE07, FE08, FE09, FE0A,
+             // FE0B, FE0C, FE0D, FE0E, FE0F, FEFF, FFA0, 1BCA0, 1BCA1, 1BCA2, 1BCA3, 1D173, 1D174, 1D175, 1D176, 1D177,
+             // 1D178, 1D179, 1D17A, E0100, E0101, E0102, E0103, E0104, E0105, E0106, E0107, E0108, E0109, E010A, E010B,
+             // E010C, E010D, E010E, E010F, E0110, E0111, E0112, E0113, E0114, E0115, E0116, E0117, E0118, E0119, E011A,
+             // E011B, E011C, E011D, E011E, E011F, E0120, E0121, E0122, E0123, E0124, E0125, E0126, E0127, E0128, E0129,
+             // E012A, E012B, E012C, E012D, E012E, E012F, E0130, E0131, E0132, E0133, E0134, E0135, E0136, E0137, E0138,
+             // E0139, E013A, E013B, E013C, E013D, E013E, E013F, E0140, E0141, E0142, E0143, E0144, E0145, E0146, E0147,
+             // E0148, E0149, E014A, E014B, E014C, E014D, E014E, E014F, E0150, E0151, E0152, E0153, E0154, E0155, E0156,
+             // E0157, E0158, E0159, E015A, E015B, E015C, E015D, E015E, E015F, E0160, E0161, E0162, E0163, E0164, E0165,
+             // E0166, E0167, E0168, E0169, E016A, E016B, E016C, E016D, E016E, E016F, E0170, E0171, E0172, E0173, E0174,
+             // E0175, E0176, E0177, E0178, E0179, E017A, E017B, E017C, E017D, E017E, E017F, E0180, E0181, E0182, E0183,
+             // E0184, E0185, E0186, E0187, E0188, E0189, E018A, E018B, E018C, E018D, E018E, E018F, E0190, E0191, E0192,
+             // E0193, E0194, E0195, E0196, E0197, E0198, E0199, E019A, E019B, E019C, E019D, E019E, E019F, E01A0, E01A1,
+             // E01A2, E01A3, E01A4, E01A5, E01A6, E01A7, E01A8, E01A9, E01AA, E01AB, E01AC, E01AD, E01AE, E01AF, E01B0,
+             // E01B1, E01B2, E01B3, E01B4, E01B5, E01B6, E01B7, E01B8, E01B9, E01BA, E01BB, E01BC, E01BD, E01BE, E01BF,
+             // E01C0, E01C1, E01C2, E01C3, E01C4, E01C5, E01C6, E01C7, E01C8, E01C9, E01CA, E01CB, E01CC, E01CD, E01CE,
+             // E01CF, E01D0, E01D1, E01D2, E01D3, E01D4, E01D5, E01D6, E01D7, E01D8, E01D9, E01DA, E01DB, E01DC, E01DD,
+             // E01DE, E01DF, E01E0, E01E1, E01E2, E01E3, E01E4, E01E5, E01E6, E01E7, E01E8, E01E9, E01EA, E01EB, E01EC,
+             // E01ED, E01EE, E01EF
+      u8"\40\xcc\x84\0"         // AF, FFE3
+      u8"\62\0"                 // B2, 2082, 2461, FF12, 1CCF2, 1D7D0, 1D7DA, 1D7E4, 1D7EE, 1D7F8, 1FBF2
+      u8"\63\0"                 // B3, 2083, 2462, FF13, 1CCF3, 1D7D1, 1D7DB, 1D7E5, 1D7EF, 1D7F9, 1FBF3
+      u8"\40\xcc\x81\0"         // B4, 384, 1FFD
+      u8"\xce\xbc\0"            // B5, 39C, 1D6B3, 1D6CD, 1D6ED, 1D707, 1D727, 1D741, 1D761, 1D77B, 1D79B, 1D7B5
+      u8"\40\xcc\xa7\0"         // B8
+      u8"\61\0"                 // B9, 2081, 2460, FF11, 1CCF1, 1D7CF, 1D7D9, 1D7E3, 1D7ED, 1D7F7, 1FBF1
       u8"\61\xe2\x81\x84\64\0"  // BC
       u8"\61\xe2\x81\x84\62\0"  // BD
       u8"\63\xe2\x81\x84\64\0"  // BE
@@ -2994,247 +2988,246 @@ namespace webpp::unicode::idna::details {
       u8"\xcf\x8d\0"            // 38E, 3D3, 1F7B, 1FEB
       u8"\xcf\x8e\0"            // 38F, 1F7D, 1FFB
       u8"\xce\xb1\0"            // 391, 1D6A8, 1D6C2, 1D6E2, 1D6FC, 1D71C, 1D736, 1D756, 1D770, 1D790, 1D7AA
-      u8"\xce\xb2\0"            // 392, 3D0, 1D5D, 1D66, 1D6A9, 1D6C3, 1D6E3, 1D6FD, 1D71D, 1D737, 1D757, 1D771, 1D791,
-                                // 1D7AB
-      u8"\xce\xb3\0"            // 393, 1D5E, 1D67, 213D, 213E, 1D6AA, 1D6C4, 1D6E4, 1D6FE, 1D71E, 1D738, 1D758, 1D772,
-                                // 1D792, 1D7AC
-      u8"\xce\xb4\0"            // 394, 1D5F, 1D6AB, 1D6C5, 1D6E5, 1D6FF, 1D71F, 1D739, 1D759, 1D773, 1D793, 1D7AD
-      u8"\xce\xb5\0"         // 395, 3F5, 1D6AC, 1D6C6, 1D6DC, 1D6E6, 1D700, 1D716, 1D720, 1D73A, 1D750, 1D75A, 1D774,
-                             // 1D78A, 1D794, 1D7AE, 1D7C4
-      u8"\xce\xb6\0"         // 396, 1D6AD, 1D6C7, 1D6E7, 1D701, 1D721, 1D73B, 1D75B, 1D775, 1D795, 1D7AF
-      u8"\xce\xb7\0"         // 397, 1D6AE, 1D6C8, 1D6E8, 1D702, 1D722, 1D73C, 1D75C, 1D776, 1D796, 1D7B0
-      u8"\xce\xb8\0"         // 398, 3D1, 3F4, 1DBF, 1D6AF, 1D6B9, 1D6C9, 1D6DD, 1D6E9, 1D6F3, 1D703, 1D717, 1D723,
-                             // 1D72D, 1D73D, 1D751, 1D75D, 1D767, 1D777, 1D78B, 1D797, 1D7A1, 1D7B1, 1D7C5
-      u8"\xce\xba\0"         // 39A, 3F0, 1D6B1, 1D6CB, 1D6DE, 1D6EB, 1D705, 1D718, 1D725, 1D73F, 1D752, 1D75F, 1D779,
-                             // 1D78C, 1D799, 1D7B3, 1D7C6
-      u8"\xce\xbb\0"         // 39B, 1D6B2, 1D6CC, 1D6EC, 1D706, 1D726, 1D740, 1D760, 1D77A, 1D79A, 1D7B4
-      u8"\xce\xbd\0"         // 39D, 1D6B4, 1D6CE, 1D6EE, 1D708, 1D728, 1D742, 1D762, 1D77C, 1D79C, 1D7B6
-      u8"\xce\xbe\0"         // 39E, 1D6B5, 1D6CF, 1D6EF, 1D709, 1D729, 1D743, 1D763, 1D77D, 1D79D, 1D7B7
-      u8"\xce\xbf\0"         // 39F, 1D6B6, 1D6D0, 1D6F0, 1D70A, 1D72A, 1D744, 1D764, 1D77E, 1D79E, 1D7B8
-      u8"\xcf\x80\0"         // 3A0, 3D6, 213C, 213F, 1D6B7, 1D6D1, 1D6E1, 1D6F1, 1D70B, 1D71B, 1D72B, 1D745, 1D755,
-                             // 1D765, 1D77F, 1D78F, 1D79F, 1D7B9, 1D7C9
-      u8"\xcf\x81\0"         // 3A1, 3F1, 1D68, 1D6B8, 1D6D2, 1D6E0, 1D6F2, 1D70C, 1D71A, 1D72C, 1D746, 1D754, 1D766,
-                             // 1D780, 1D78E, 1D7A0, 1D7BA, 1D7C8
-      u8"\xcf\x83\0"         // 3A3, 3F2, 3F9, 1D6BA, 1D6D3, 1D6D4, 1D6F4, 1D70D, 1D70E, 1D72E, 1D747, 1D748, 1D768,
-                             // 1D781, 1D782, 1D7A2, 1D7BB, 1D7BC
-      u8"\xcf\x84\0"         // 3A4, 1D6BB, 1D6D5, 1D6F5, 1D70F, 1D72F, 1D749, 1D769, 1D783, 1D7A3, 1D7BD
-      u8"\xcf\x85\0"         // 3A5, 3D2, 1D6BC, 1D6D6, 1D6F6, 1D710, 1D730, 1D74A, 1D76A, 1D784, 1D7A4, 1D7BE
-      u8"\xcf\x86\0"         // 3A6, 3D5, 1D60, 1D69, 1D6BD, 1D6D7, 1D6DF, 1D6F7, 1D711, 1D719, 1D731, 1D74B, 1D753,
-                             // 1D76B, 1D785, 1D78D, 1D7A5, 1D7BF, 1D7C7
-      u8"\xcf\x87\0"         // 3A7, 1D61, 1D6A, 1D6BE, 1D6D8, 1D6F8, 1D712, 1D732, 1D74C, 1D76C, 1D786, 1D7A6, 1D7C0
-      u8"\xcf\x88\0"         // 3A8, 1D6BF, 1D6D9, 1D6F9, 1D713, 1D733, 1D74D, 1D76D, 1D787, 1D7A7, 1D7C1
-      u8"\xcf\x89\0"         // 3A9, 2126, 1D6C0, 1D6DA, 1D6FA, 1D714, 1D734, 1D74E, 1D76E, 1D788, 1D7A8, 1D7C2
-      u8"\xcf\x8a\0"         // 3AA
-      u8"\xcf\x8b\0"         // 3AB, 3D4
-      u8"\xcf\x97\0"         // 3CF
-      u8"\xcf\x99\0"         // 3D8
-      u8"\xcf\x9b\0"         // 3DA
-      u8"\xcf\x9d\0"         // 3DC, 1D7CA, 1D7CB
-      u8"\xcf\x9f\0"         // 3DE
-      u8"\xcf\xa1\0"         // 3E0
-      u8"\xcf\xa3\0"         // 3E2
-      u8"\xcf\xa5\0"         // 3E4
-      u8"\xcf\xa7\0"         // 3E6
-      u8"\xcf\xa9\0"         // 3E8
-      u8"\xcf\xab\0"         // 3EA
-      u8"\xcf\xad\0"         // 3EC
-      u8"\xcf\xaf\0"         // 3EE
-      u8"\xcf\xb8\0"         // 3F7
-      u8"\xcf\xbb\0"         // 3FA
-      u8"\xcd\xbb\0"         // 3FD
-      u8"\xcd\xbc\0"         // 3FE
-      u8"\xcd\xbd\0"         // 3FF
-      u8"\xd1\x90\0"         // 400
-      u8"\xd1\x91\0"         // 401
-      u8"\xd1\x92\0"         // 402
-      u8"\xd1\x93\0"         // 403
-      u8"\xd1\x94\0"         // 404
-      u8"\xd1\x95\0"         // 405, 1E069
-      u8"\xd1\x96\0"         // 406, 1E04C, 1E068
-      u8"\xd1\x97\0"         // 407
-      u8"\xd1\x98\0"         // 408, 1E04D
-      u8"\xd1\x99\0"         // 409
-      u8"\xd1\x9a\0"         // 40A
-      u8"\xd1\x9b\0"         // 40B
-      u8"\xd1\x9c\0"         // 40C
-      u8"\xd1\x9d\0"         // 40D
-      u8"\xd1\x9e\0"         // 40E
-      u8"\xd1\x9f\0"         // 40F, 1E06A
-      u8"\xd0\xb0\0"         // 410, 1E030, 1E051
-      u8"\xd0\xb1\0"         // 411, 1E031, 1E052
-      u8"\xd0\xb2\0"         // 412, 1C80, 1E032, 1E053
-      u8"\xd0\xb3\0"         // 413, 1E033, 1E054
-      u8"\xd0\xb4\0"         // 414, 1C81, 1E034, 1E055
-      u8"\xd0\xb5\0"         // 415, 1E035, 1E056
-      u8"\xd0\xb6\0"         // 416, 1E036, 1E057
-      u8"\xd0\xb7\0"         // 417, 1E037, 1E058
-      u8"\xd0\xb8\0"         // 418, 1E038, 1E059
-      u8"\xd0\xb9\0"         // 419
-      u8"\xd0\xba\0"         // 41A, 1E039, 1E05A
-      u8"\xd0\xbb\0"         // 41B, 1E03A, 1E05B
-      u8"\xd0\xbc\0"         // 41C, 1E03B
-      u8"\xd0\xbd\0"         // 41D, 1D78
-      u8"\xd0\xbe\0"         // 41E, 1C82, 1E03C, 1E05C
-      u8"\xd0\xbf\0"         // 41F, 1E03D, 1E05D
-      u8"\xd1\x80\0"         // 420, 1E03E
-      u8"\xd1\x81\0"         // 421, 1C83, 1E03F, 1E05E
-      u8"\xd1\x82\0"         // 422, 1C84, 1C85, 1E040
-      u8"\xd1\x83\0"         // 423, 1E041, 1E05F
-      u8"\xd1\x84\0"         // 424, 1E042, 1E060
-      u8"\xd1\x85\0"         // 425, 1E043, 1E061
-      u8"\xd1\x86\0"         // 426, 1E044, 1E062
-      u8"\xd1\x87\0"         // 427, 1E045, 1E063
-      u8"\xd1\x88\0"         // 428, 1E046, 1E064
-      u8"\xd1\x89\0"         // 429
-      u8"\xd1\x8a\0"         // 42A, 1C86, A69C, 1E065
-      u8"\xd1\x8b\0"         // 42B, 1E047, 1E066
-      u8"\xd1\x8c\0"         // 42C, A69D
-      u8"\xd1\x8d\0"         // 42D, 1E048
-      u8"\xd1\x8e\0"         // 42E, 1E049
-      u8"\xd1\x8f\0"         // 42F
-      u8"\xd1\xa1\0"         // 460
-      u8"\xd1\xa3\0"         // 462, 1C87
-      u8"\xd1\xa5\0"         // 464
-      u8"\xd1\xa7\0"         // 466
-      u8"\xd1\xa9\0"         // 468
-      u8"\xd1\xab\0"         // 46A
-      u8"\xd1\xad\0"         // 46C
-      u8"\xd1\xaf\0"         // 46E
-      u8"\xd1\xb1\0"         // 470
-      u8"\xd1\xb3\0"         // 472
-      u8"\xd1\xb5\0"         // 474
-      u8"\xd1\xb7\0"         // 476
-      u8"\xd1\xb9\0"         // 478
-      u8"\xd1\xbb\0"         // 47A
-      u8"\xd1\xbd\0"         // 47C
-      u8"\xd1\xbf\0"         // 47E
-      u8"\xd2\x81\0"         // 480
-      u8"\xd2\x8b\0"         // 48A
-      u8"\xd2\x8d\0"         // 48C
-      u8"\xd2\x8f\0"         // 48E
-      u8"\xd2\x91\0"         // 490, 1E067
-      u8"\xd2\x93\0"         // 492
-      u8"\xd2\x95\0"         // 494
-      u8"\xd2\x97\0"         // 496
-      u8"\xd2\x99\0"         // 498
-      u8"\xd2\x9b\0"         // 49A
-      u8"\xd2\x9d\0"         // 49C
-      u8"\xd2\x9f\0"         // 49E
-      u8"\xd2\xa1\0"         // 4A0
-      u8"\xd2\xa3\0"         // 4A2
-      u8"\xd2\xa5\0"         // 4A4
-      u8"\xd2\xa7\0"         // 4A6
-      u8"\xd2\xa9\0"         // 4A8
-      u8"\xd2\xab\0"         // 4AA, 1E06B
-      u8"\xd2\xad\0"         // 4AC
-      u8"\xd2\xaf\0"         // 4AE, 1E04F
-      u8"\xd2\xb1\0"         // 4B0, 1E06D
-      u8"\xd2\xb3\0"         // 4B2
-      u8"\xd2\xb5\0"         // 4B4
-      u8"\xd2\xb7\0"         // 4B6
-      u8"\xd2\xb9\0"         // 4B8
-      u8"\xd2\xbb\0"         // 4BA
-      u8"\xd2\xbd\0"         // 4BC
-      u8"\xd2\xbf\0"         // 4BE
-      u8"\xd3\x8f\0"         // 4C0, 1E050
-      u8"\xd3\x82\0"         // 4C1
-      u8"\xd3\x84\0"         // 4C3
-      u8"\xd3\x86\0"         // 4C5
-      u8"\xd3\x88\0"         // 4C7
-      u8"\xd3\x8a\0"         // 4C9
-      u8"\xd3\x8c\0"         // 4CB
-      u8"\xd3\x8e\0"         // 4CD
-      u8"\xd3\x91\0"         // 4D0
-      u8"\xd3\x93\0"         // 4D2
-      u8"\xd3\x95\0"         // 4D4
-      u8"\xd3\x97\0"         // 4D6
-      u8"\xd3\x99\0"         // 4D8, 1E04B
-      u8"\xd3\x9b\0"         // 4DA
-      u8"\xd3\x9d\0"         // 4DC
-      u8"\xd3\x9f\0"         // 4DE
-      u8"\xd3\xa1\0"         // 4E0
-      u8"\xd3\xa3\0"         // 4E2
-      u8"\xd3\xa5\0"         // 4E4
-      u8"\xd3\xa7\0"         // 4E6
-      u8"\xd3\xa9\0"         // 4E8, 1E04E
-      u8"\xd3\xab\0"         // 4EA
-      u8"\xd3\xad\0"         // 4EC
-      u8"\xd3\xaf\0"         // 4EE
-      u8"\xd3\xb1\0"         // 4F0
-      u8"\xd3\xb3\0"         // 4F2
-      u8"\xd3\xb5\0"         // 4F4
-      u8"\xd3\xb7\0"         // 4F6
-      u8"\xd3\xb9\0"         // 4F8
-      u8"\xd3\xbb\0"         // 4FA
-      u8"\xd3\xbd\0"         // 4FC
-      u8"\xd3\xbf\0"         // 4FE
-      u8"\xd4\x81\0"         // 500
-      u8"\xd4\x83\0"         // 502
-      u8"\xd4\x85\0"         // 504
-      u8"\xd4\x87\0"         // 506
-      u8"\xd4\x89\0"         // 508
-      u8"\xd4\x8b\0"         // 50A
-      u8"\xd4\x8d\0"         // 50C
-      u8"\xd4\x8f\0"         // 50E
-      u8"\xd4\x91\0"         // 510
-      u8"\xd4\x93\0"         // 512
-      u8"\xd4\x95\0"         // 514
-      u8"\xd4\x97\0"         // 516
-      u8"\xd4\x99\0"         // 518
-      u8"\xd4\x9b\0"         // 51A
-      u8"\xd4\x9d\0"         // 51C
-      u8"\xd4\x9f\0"         // 51E
-      u8"\xd4\xa1\0"         // 520
-      u8"\xd4\xa3\0"         // 522
-      u8"\xd4\xa5\0"         // 524
-      u8"\xd4\xa7\0"         // 526
-      u8"\xd4\xa9\0"         // 528
-      u8"\xd4\xab\0"         // 52A
-      u8"\xd4\xad\0"         // 52C
-      u8"\xd4\xaf\0"         // 52E
-      u8"\xd5\xa1\0"         // 531
-      u8"\xd5\xa2\0"         // 532
-      u8"\xd5\xa3\0"         // 533
-      u8"\xd5\xa4\0"         // 534
-      u8"\xd5\xa5\0"         // 535
-      u8"\xd5\xa6\0"         // 536
-      u8"\xd5\xa7\0"         // 537
-      u8"\xd5\xa8\0"         // 538
-      u8"\xd5\xa9\0"         // 539
-      u8"\xd5\xaa\0"         // 53A
-      u8"\xd5\xab\0"         // 53B
-      u8"\xd5\xac\0"         // 53C
-      u8"\xd5\xad\0"         // 53D
-      u8"\xd5\xae\0"         // 53E
-      u8"\xd5\xaf\0"         // 53F
-      u8"\xd5\xb0\0"         // 540
-      u8"\xd5\xb1\0"         // 541
-      u8"\xd5\xb2\0"         // 542
-      u8"\xd5\xb3\0"         // 543
-      u8"\xd5\xb4\0"         // 544
-      u8"\xd5\xb5\0"         // 545
-      u8"\xd5\xb6\0"         // 546
-      u8"\xd5\xb7\0"         // 547
-      u8"\xd5\xb8\0"         // 548
-      u8"\xd5\xb9\0"         // 549
-      u8"\xd5\xba\0"         // 54A
-      u8"\xd5\xbb\0"         // 54B
-      u8"\xd5\xbc\0"         // 54C
-      u8"\xd5\xbd\0"         // 54D
-      u8"\xd5\xbe\0"         // 54E
-      u8"\xd5\xbf\0"         // 54F
-      u8"\xd6\x80\0"         // 550
-      u8"\xd6\x81\0"         // 551
-      u8"\xd6\x82\0"         // 552
-      u8"\xd6\x83\0"         // 553
-      u8"\xd6\x84\0"         // 554
-      u8"\xd6\x85\0"         // 555
-      u8"\xd6\x86\0"         // 556
-      u8"\xd5\xa5\xd6\x82\0" // 587
-      u8"\xd8\xa7\xd9\xb4\0" // 675
-      u8"\xd9\x88\xd9\xb4\0" // 676
-      u8"\xdb\x87\xd9\xb4\0" // 677, FBDD
-      u8"\xd9\x8a\xd9\xb4\0" // 678
+      u8"\xce\xb2\0" // 392, 3D0, 1D5D, 1D66, 1D6A9, 1D6C3, 1D6E3, 1D6FD, 1D71D, 1D737, 1D757, 1D771, 1D791, 1D7AB
+      u8"\xce\xb3\0" // 393, 1D5E, 1D67, 213D, 213E, 1D6AA, 1D6C4, 1D6E4, 1D6FE, 1D71E, 1D738, 1D758, 1D772, 1D792,
+                     // 1D7AC
+      u8"\xce\xb4\0" // 394, 1D5F, 1D6AB, 1D6C5, 1D6E5, 1D6FF, 1D71F, 1D739, 1D759, 1D773, 1D793, 1D7AD
+      u8"\xce\xb5\0" // 395, 3F5, 1D6AC, 1D6C6, 1D6DC, 1D6E6, 1D700, 1D716, 1D720, 1D73A, 1D750, 1D75A, 1D774, 1D78A,
+                     // 1D794, 1D7AE, 1D7C4
+      u8"\xce\xb6\0" // 396, 1D6AD, 1D6C7, 1D6E7, 1D701, 1D721, 1D73B, 1D75B, 1D775, 1D795, 1D7AF
+      u8"\xce\xb7\0" // 397, 1D6AE, 1D6C8, 1D6E8, 1D702, 1D722, 1D73C, 1D75C, 1D776, 1D796, 1D7B0
+      u8"\xce\xb8\0" // 398, 3D1, 3F4, 1DBF, 1D6AF, 1D6B9, 1D6C9, 1D6DD, 1D6E9, 1D6F3, 1D703, 1D717, 1D723, 1D72D,
+                     // 1D73D, 1D751, 1D75D, 1D767, 1D777, 1D78B, 1D797, 1D7A1, 1D7B1, 1D7C5
+      u8"\xce\xba\0" // 39A, 3F0, 1D6B1, 1D6CB, 1D6DE, 1D6EB, 1D705, 1D718, 1D725, 1D73F, 1D752, 1D75F, 1D779, 1D78C,
+                     // 1D799, 1D7B3, 1D7C6
+      u8"\xce\xbb\0" // 39B, 1D6B2, 1D6CC, 1D6EC, 1D706, 1D726, 1D740, 1D760, 1D77A, 1D79A, 1D7B4
+      u8"\xce\xbd\0" // 39D, 1D6B4, 1D6CE, 1D6EE, 1D708, 1D728, 1D742, 1D762, 1D77C, 1D79C, 1D7B6
+      u8"\xce\xbe\0" // 39E, 1D6B5, 1D6CF, 1D6EF, 1D709, 1D729, 1D743, 1D763, 1D77D, 1D79D, 1D7B7
+      u8"\xce\xbf\0" // 39F, 1D6B6, 1D6D0, 1D6F0, 1D70A, 1D72A, 1D744, 1D764, 1D77E, 1D79E, 1D7B8
+      u8"\xcf\x80\0" // 3A0, 3D6, 213C, 213F, 1D6B7, 1D6D1, 1D6E1, 1D6F1, 1D70B, 1D71B, 1D72B, 1D745, 1D755, 1D765,
+                     // 1D77F, 1D78F, 1D79F, 1D7B9, 1D7C9
+      u8"\xcf\x81\0" // 3A1, 3F1, 1D68, 1D6B8, 1D6D2, 1D6E0, 1D6F2, 1D70C, 1D71A, 1D72C, 1D746, 1D754, 1D766, 1D780,
+                     // 1D78E, 1D7A0, 1D7BA, 1D7C8
+      u8"\xcf\x83\0" // 3A3, 3F2, 3F9, 1D6BA, 1D6D3, 1D6D4, 1D6F4, 1D70D, 1D70E, 1D72E, 1D747, 1D748, 1D768, 1D781,
+                     // 1D782, 1D7A2, 1D7BB, 1D7BC
+      u8"\xcf\x84\0" // 3A4, 1D6BB, 1D6D5, 1D6F5, 1D70F, 1D72F, 1D749, 1D769, 1D783, 1D7A3, 1D7BD
+      u8"\xcf\x85\0" // 3A5, 3D2, 1D6BC, 1D6D6, 1D6F6, 1D710, 1D730, 1D74A, 1D76A, 1D784, 1D7A4, 1D7BE
+      u8"\xcf\x86\0" // 3A6, 3D5, 1D60, 1D69, 1D6BD, 1D6D7, 1D6DF, 1D6F7, 1D711, 1D719, 1D731, 1D74B, 1D753, 1D76B,
+                     // 1D785, 1D78D, 1D7A5, 1D7BF, 1D7C7
+      u8"\xcf\x87\0" // 3A7, 1D61, 1D6A, 1D6BE, 1D6D8, 1D6F8, 1D712, 1D732, 1D74C, 1D76C, 1D786, 1D7A6, 1D7C0
+      u8"\xcf\x88\0" // 3A8, 1D6BF, 1D6D9, 1D6F9, 1D713, 1D733, 1D74D, 1D76D, 1D787, 1D7A7, 1D7C1
+      u8"\xcf\x89\0" // 3A9, 2126, 1D6C0, 1D6DA, 1D6FA, 1D714, 1D734, 1D74E, 1D76E, 1D788, 1D7A8, 1D7C2
+      u8"\xcf\x8a\0" // 3AA
+      u8"\xcf\x8b\0" // 3AB, 3D4
+      u8"\xcf\x97\0" // 3CF
+      u8"\xcf\x99\0" // 3D8
+      u8"\xcf\x9b\0" // 3DA
+      u8"\xcf\x9d\0" // 3DC, 1D7CA, 1D7CB
+      u8"\xcf\x9f\0" // 3DE
+      u8"\xcf\xa1\0" // 3E0
+      u8"\xcf\xa3\0" // 3E2
+      u8"\xcf\xa5\0" // 3E4
+      u8"\xcf\xa7\0" // 3E6
+      u8"\xcf\xa9\0" // 3E8
+      u8"\xcf\xab\0" // 3EA
+      u8"\xcf\xad\0" // 3EC
+      u8"\xcf\xaf\0" // 3EE
+      u8"\xcf\xb8\0" // 3F7
+      u8"\xcf\xbb\0" // 3FA
+      u8"\xcd\xbb\0" // 3FD
+      u8"\xcd\xbc\0" // 3FE
+      u8"\xcd\xbd\0" // 3FF
+      u8"\xd1\x90\0" // 400
+      u8"\xd1\x91\0" // 401
+      u8"\xd1\x92\0" // 402
+      u8"\xd1\x93\0" // 403
+      u8"\xd1\x94\0" // 404
+      u8"\xd1\x95\0" // 405, 1E069
+      u8"\xd1\x96\0" // 406, 1E04C, 1E068
+      u8"\xd1\x97\0" // 407
+      u8"\xd1\x98\0" // 408, 1E04D
+      u8"\xd1\x99\0" // 409
+      u8"\xd1\x9a\0" // 40A
+      u8"\xd1\x9b\0" // 40B
+      u8"\xd1\x9c\0" // 40C
+      u8"\xd1\x9d\0" // 40D
+      u8"\xd1\x9e\0" // 40E
+      u8"\xd1\x9f\0" // 40F, 1E06A
+      u8"\xd0\xb0\0" // 410, 1E030, 1E051
+      u8"\xd0\xb1\0" // 411, 1E031, 1E052
+      u8"\xd0\xb2\0" // 412, 1C80, 1E032, 1E053
+      u8"\xd0\xb3\0" // 413, 1E033, 1E054
+      u8"\xd0\xb4\0" // 414, 1C81, 1E034, 1E055
+      u8"\xd0\xb5\0" // 415, 1E035, 1E056
+      u8"\xd0\xb6\0" // 416, 1E036, 1E057
+      u8"\xd0\xb7\0" // 417, 1E037, 1E058
+      u8"\xd0\xb8\0" // 418, 1E038, 1E059
+      u8"\xd0\xb9\0" // 419
+      u8"\xd0\xba\0" // 41A, 1E039, 1E05A
+      u8"\xd0\xbb\0" // 41B, 1E03A, 1E05B
+      u8"\xd0\xbc\0" // 41C, 1E03B
+      u8"\xd0\xbd\0" // 41D, 1D78
+      u8"\xd0\xbe\0" // 41E, 1C82, 1E03C, 1E05C
+      u8"\xd0\xbf\0" // 41F, 1E03D, 1E05D
+      u8"\xd1\x80\0" // 420, 1E03E
+      u8"\xd1\x81\0" // 421, 1C83, 1E03F, 1E05E
+      u8"\xd1\x82\0" // 422, 1C84, 1C85, 1E040
+      u8"\xd1\x83\0" // 423, 1E041, 1E05F
+      u8"\xd1\x84\0" // 424, 1E042, 1E060
+      u8"\xd1\x85\0" // 425, 1E043, 1E061
+      u8"\xd1\x86\0" // 426, 1E044, 1E062
+      u8"\xd1\x87\0" // 427, 1E045, 1E063
+      u8"\xd1\x88\0" // 428, 1E046, 1E064
+      u8"\xd1\x89\0" // 429
+      u8"\xd1\x8a\0" // 42A, 1C86, A69C, 1E065
+      u8"\xd1\x8b\0" // 42B, 1E047, 1E066
+      u8"\xd1\x8c\0" // 42C, A69D
+      u8"\xd1\x8d\0" // 42D, 1E048
+      u8"\xd1\x8e\0" // 42E, 1E049
+      u8"\xd1\x8f\0" // 42F
+      u8"\xd1\xa1\0" // 460
+      u8"\xd1\xa3\0" // 462, 1C87
+      u8"\xd1\xa5\0" // 464
+      u8"\xd1\xa7\0" // 466
+      u8"\xd1\xa9\0" // 468
+      u8"\xd1\xab\0" // 46A
+      u8"\xd1\xad\0" // 46C
+      u8"\xd1\xaf\0" // 46E
+      u8"\xd1\xb1\0" // 470
+      u8"\xd1\xb3\0" // 472
+      u8"\xd1\xb5\0" // 474
+      u8"\xd1\xb7\0" // 476
+      u8"\xd1\xb9\0" // 478
+      u8"\xd1\xbb\0" // 47A
+      u8"\xd1\xbd\0" // 47C
+      u8"\xd1\xbf\0" // 47E
+      u8"\xd2\x81\0" // 480
+      u8"\xd2\x8b\0" // 48A
+      u8"\xd2\x8d\0" // 48C
+      u8"\xd2\x8f\0" // 48E
+      u8"\xd2\x91\0" // 490, 1E067
+      u8"\xd2\x93\0" // 492
+      u8"\xd2\x95\0" // 494
+      u8"\xd2\x97\0" // 496
+      u8"\xd2\x99\0" // 498
+      u8"\xd2\x9b\0" // 49A
+      u8"\xd2\x9d\0" // 49C
+      u8"\xd2\x9f\0" // 49E
+      u8"\xd2\xa1\0" // 4A0
+      u8"\xd2\xa3\0" // 4A2
+      u8"\xd2\xa5\0" // 4A4
+      u8"\xd2\xa7\0" // 4A6
+      u8"\xd2\xa9\0" // 4A8
+      u8"\xd2\xab\0" // 4AA, 1E06B
+      u8"\xd2\xad\0" // 4AC
+      u8"\xd2\xaf\0" // 4AE, 1E04F
+      u8"\xd2\xb1\0" // 4B0, 1E06D
+      u8"\xd2\xb3\0" // 4B2
+      u8"\xd2\xb5\0" // 4B4
+      u8"\xd2\xb7\0" // 4B6
+      u8"\xd2\xb9\0" // 4B8
+      u8"\xd2\xbb\0" // 4BA
+      u8"\xd2\xbd\0" // 4BC
+      u8"\xd2\xbf\0" // 4BE
+      u8"\xd3\x8f\0" // 4C0, 1E050
+      u8"\xd3\x82\0" // 4C1
+      u8"\xd3\x84\0" // 4C3
+      u8"\xd3\x86\0" // 4C5
+      u8"\xd3\x88\0" // 4C7
+      u8"\xd3\x8a\0" // 4C9
+      u8"\xd3\x8c\0" // 4CB
+      u8"\xd3\x8e\0" // 4CD
+      u8"\xd3\x91\0" // 4D0
+      u8"\xd3\x93\0" // 4D2
+      u8"\xd3\x95\0" // 4D4
+      u8"\xd3\x97\0" // 4D6
+      u8"\xd3\x99\0" // 4D8, 1E04B
+      u8"\xd3\x9b\0" // 4DA
+      u8"\xd3\x9d\0" // 4DC
+      u8"\xd3\x9f\0" // 4DE
+      u8"\xd3\xa1\0" // 4E0
+      u8"\xd3\xa3\0" // 4E2
+      u8"\xd3\xa5\0" // 4E4
+      u8"\xd3\xa7\0" // 4E6
+      u8"\xd3\xa9\0" // 4E8, 1E04E
+      u8"\xd3\xab\0" // 4EA
+      u8"\xd3\xad\0" // 4EC
+      u8"\xd3\xaf\0" // 4EE
+      u8"\xd3\xb1\0" // 4F0
+      u8"\xd3\xb3\0" // 4F2
+      u8"\xd3\xb5\0" // 4F4
+      u8"\xd3\xb7\0" // 4F6
+      u8"\xd3\xb9\0" // 4F8
+      u8"\xd3\xbb\0" // 4FA
+      u8"\xd3\xbd\0" // 4FC
+      u8"\xd3\xbf\0" // 4FE
+      u8"\xd4\x81\0" // 500
+      u8"\xd4\x83\0" // 502
+      u8"\xd4\x85\0" // 504
+      u8"\xd4\x87\0" // 506
+      u8"\xd4\x89\0" // 508
+      u8"\xd4\x8b\0" // 50A
+      u8"\xd4\x8d\0" // 50C
+      u8"\xd4\x8f\0" // 50E
+      u8"\xd4\x91\0" // 510
+      u8"\xd4\x93\0" // 512
+      u8"\xd4\x95\0" // 514
+      u8"\xd4\x97\0" // 516
+      u8"\xd4\x99\0" // 518
+      u8"\xd4\x9b\0" // 51A
+      u8"\xd4\x9d\0" // 51C
+      u8"\xd4\x9f\0" // 51E
+      u8"\xd4\xa1\0" // 520
+      u8"\xd4\xa3\0" // 522
+      u8"\xd4\xa5\0" // 524
+      u8"\xd4\xa7\0" // 526
+      u8"\xd4\xa9\0" // 528
+      u8"\xd4\xab\0" // 52A
+      u8"\xd4\xad\0" // 52C
+      u8"\xd4\xaf\0" // 52E
+      u8"\xd5\xa1\0" // 531
+      u8"\xd5\xa2\0" // 532
+      u8"\xd5\xa3\0" // 533
+      u8"\xd5\xa4\0" // 534
+      u8"\xd5\xa5\0" // 535
+      u8"\xd5\xa6\0" // 536
+      u8"\xd5\xa7\0" // 537
+      u8"\xd5\xa8\0" // 538
+      u8"\xd5\xa9\0" // 539
+      u8"\xd5\xaa\0" // 53A
+      u8"\xd5\xab\0" // 53B
+      u8"\xd5\xac\0" // 53C
+      u8"\xd5\xad\0" // 53D
+      u8"\xd5\xae\0" // 53E
+      u8"\xd5\xaf\0" // 53F
+      u8"\xd5\xb0\0" // 540
+      u8"\xd5\xb1\0" // 541
+      u8"\xd5\xb2\0" // 542
+      u8"\xd5\xb3\0" // 543
+      u8"\xd5\xb4\0" // 544
+      u8"\xd5\xb5\0" // 545
+      u8"\xd5\xb6\0" // 546
+      u8"\xd5\xb7\0" // 547
+      u8"\xd5\xb8\0" // 548
+      u8"\xd5\xb9\0" // 549
+      u8"\xd5\xba\0" // 54A
+      u8"\xd5\xbb\0" // 54B
+      u8"\xd5\xbc\0" // 54C
+      u8"\xd5\xbd\0" // 54D
+      u8"\xd5\xbe\0" // 54E
+      u8"\xd5\xbf\0" // 54F
+      u8"\xd6\x80\0" // 550
+      u8"\xd6\x81\0" // 551
+      u8"\xd6\x82\0" // 552
+      u8"\xd6\x83\0" // 553
+      u8"\xd6\x84\0" // 554
+      u8"\xd6\x85\0" // 555
+      u8"\xd6\x86\0" // 556
+      u8"\xd5\xa5\xd6\x82\0"                                 // 587
+      u8"\xd8\xa7\xd9\xb4\0"                                 // 675
+      u8"\xd9\x88\xd9\xb4\0"                                 // 676
+      u8"\xdb\x87\xd9\xb4\0"                                 // 677, FBDD
+      u8"\xd9\x8a\xd9\xb4\0"                                 // 678
       u8"\xe0\xa4\x95\xe0\xa4\xbc\0"                         // 958
       u8"\xe0\xa4\x96\xe0\xa4\xbc\0"                         // 959
       u8"\xe0\xa4\x97\xe0\xa4\xbc\0"                         // 95A
@@ -5652,8 +5645,8 @@ namespace webpp::unicode::idna::details {
       u8"\xd8\xb9\xd9\x84\xd9\x8a\xd9\x87\0"                                         // FDF7
       u8"\xd9\x88\xd8\xb3\xd9\x84\xd9\x85\0"                                         // FDF8
       u8"\xd8\xb5\xd9\x84\xd9\x89\0"                                                 // FDF9
-      u8"\xd8\xb5\xd9\x84\xd9\x89\40\xd8\xa7\xd9\x84\xd9\x84\xd9\x87\40\xd8\xb9\xd9\x84\xd9\x8a\xd9\x87\40"
-      u8"\xd9\x88\xd8\xb3\xd9\x84\xd9\x85\0"                                         // FDFA
+      u8"\xd8\xb5\xd9\x84\xd9\x89\40\xd8\xa7\xd9\x84\xd9\x84\xd9\x87\40\xd8\xb9\xd9\x84\xd9\x8a\xd9\x87\40\xd9\x88\xd8"
+      u8"\xb3\xd9\x84\xd9\x85\0"                                                     // FDFA
       u8"\xd8\xac\xd9\x84\40\xd8\xac\xd9\x84\xd8\xa7\xd9\x84\xd9\x87\0"              // FDFB
       u8"\xd8\xb1\xdb\x8c\xd8\xa7\xd9\x84\0"                                         // FDFC
       u8"\54\0"                                                                      // FE10, FE50, FF0C

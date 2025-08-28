@@ -388,7 +388,7 @@ export class Addenda {
         if (typeof addendum === "string") {
             addendum = this.addendum(addendum);
         }
-        return (BigInt(code) & addendum.mask) >> this.shiftOf(addendum);
+        return (BigInt(code) & (addendum?.mask || ~0n)) >> this.shiftOf(addendum);
     }
 
     valuesOf(code) {

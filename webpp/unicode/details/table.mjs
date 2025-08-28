@@ -276,6 +276,9 @@ export class TablePairs {
     }
 
     #calcPadding() {
+        if (!this.#indexAddenda.has("max_length")) {
+            return 0;
+        }
         // to calculate the padding:
         const lastCode = this.indices.result.at(-1);
         const startOfLastPos = this.#indexAddenda.addendumValueOf("pos", lastCode);
