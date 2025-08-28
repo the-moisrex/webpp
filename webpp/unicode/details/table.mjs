@@ -1,21 +1,25 @@
 import * as assert from "node:assert";
+
 import {
     findModifiedSubsetRange,
-    genIndexAddenda, ModifiedSpan, Modifier, rangeLength,
+    genIndexAddenda,
+    ModifiedSpan,
+    Modifier,
+    rangeLength,
 } from "./modifiers.mjs";
 import {
-    alignmentOf,
     commentify,
-    cppValueOf, findBestTypeFrom,
+    cppValueOf,
+    findBestTypeFrom,
     overlapInserts,
     realSizeOf,
-    recursiveLength,
     renderTableValues,
     Span,
     splitInto,
     TableTraits,
     uint32,
-    uint8, updateProgressBar,
+    uint8,
+    updateProgressBar,
 } from "./utils.mjs";
 
 const verbose = process.argv.includes("--verbose");
@@ -273,14 +277,15 @@ export class TablePairs {
 
     #calcPadding() {
         // to calculate the padding:
-        const lastCode = this.values.result.at(-1);
-        const startOfLastPos = this.#indicesTables.at(-1).start;
+        const lastCode = this.indices.result.at(-1);
+        const startOfLastPos = this.#indexAddenda.addendumValueOf("pos", lastCode);
         const maxLength = this.#indexAddenda.addendumValueOf("max_length", lastCode);
         const lastChunkLength = this.values.result.length - Number(startOfLastPos);
         const padding = lastChunkLength * Number(maxLength);
         const paddingDiff = padding - lastChunkLength;
-        console.log("Padding: ", this.indices, lastCode, startOfLastPos, maxLength, lastChunkLength, padding, paddingDiff);
-        return paddingDiff;
+        // console.log("Padding: ", this.#indexAddenda, lastCode, startOfLastPos, maxLength, lastChunkLength,
+        // padding, paddingDiff);
+        return paddingDiff || 0;
     }
 
     /// Post-Processing
