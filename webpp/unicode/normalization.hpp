@@ -870,6 +870,42 @@ namespace webpp::unicode {
     }
 
     /**
+     * This runs a quick check on the input and stops at the first starter code point that after that there's a MAYBE.
+     */
+    template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter>
+    [[nodiscard]] static constexpr quick_check_state quick_check_till_maybe(Iter& spos, Iter const send) noexcept {
+        using stl::to_underlying;
+        using enum quick_check_state;
+        using enum checked::error_handling;
+
+        stl::uint8_t prev_ccc = 0;
+        auto         result   = to_underlying(YES);
+        auto         starter  = istl::deref(spos);
+        while (spos != send) {
+            auto const code_point = checked::next_code_point<return_negated>(spos, send);
+            if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                return NO;
+            }
+            auto const info    = qc_ccc_of(code_point);
+            auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
+            auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
+            result            |= to_underlying(qc_of<Form>(qc_val));
+
+            // constantly keep track of the starter code point
+            if (ccc == 0) {
+                starter = spos;
+            } else if (prev_ccc > ccc || result != to_underlying(YES)) [[unlikely]] {
+                if (result == to_underlying(MAYBE)) {
+                    spos = starter; // restoring the lastest starter code point
+                }
+                return static_cast<quick_check_state>(result);
+            }
+            prev_ccc = ccc;
+        }
+        return static_cast<quick_check_state>(result);
+    }
+
+    /**
      * Usage: is_ccc_of(cp, ccc_props::Virama);
      */
     template <UTF CharT = char32_t>
@@ -1026,19 +1062,30 @@ namespace webpp::unicode {
             // to look at previous characters, back to the last starter. See Section 9, Detecting
             // Normalization Forms, for more information.
 
-            auto const qc_val = quick_check<NFC>(spos, send);
-            switch (qc_val) {
-                [[likely]] case YES:
-                    return true;
-                [[unlikely]] case NO:
-                    return false;
-                case MAYBE: break;
-                default: assert(false); stl::unreachable();
+            for (;;) {
+                switch (quick_check_till_maybe<NFC>(spos, send)) {
+                    [[likely]] case YES:
+                        return true;
+                    [[unlikely]] case NO:
+                        return false;
+                    case MAYBE: {
+                        // Slow path:
+                        auto nxt = istl::deref(spos);
+                        next_starter(nxt, send);
+                        decompose_iterator const dbeg{spos, nxt};
+                        if (!is_reordered_composable_to(dbeg, stl::default_sentinel, spos, nxt)) {
+                            return false;
+                        }
+                        spos = nxt;
+                        if (spos == send) {
+                            return true;
+                        }
+                        break;
+                    }
+                    default: assert(false); stl::unreachable();
+                }
             }
-
-            // Slow path:
-            decompose_iterator const dbeg{spos, send};
-            return is_reordered_composable_to(dbeg, stl::default_sentinel, spos, send);
+            return true;
         } else {
             // todo: NFKC and NFKD
             static_assert_false(Iter, "NFKC and NFKD are not yet implemented.");

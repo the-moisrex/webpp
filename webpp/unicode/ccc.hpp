@@ -73,6 +73,20 @@ namespace webpp::unicode {
     }
 
     /**
+     * Go to the next code point with CCC = 0
+     */
+    template <stl::forward_iterator Iter, typename EIter = Iter>
+        requires stl::sentinel_for<EIter, Iter>
+    static constexpr void next_starter(Iter& spos, EIter const send) noexcept {
+        checked::next_char(spos, send);
+        for (auto pos = istl::deref(spos); pos != send; spos = pos) {
+            if (is_starter(checked::next_code_point(pos, send))) {
+                break;
+            }
+        }
+    }
+
+    /**
      * Function to check if a combining character sequence is blocked based on combining classes
      * See Section 3.11, D115 of Version 15.1.0 of the Unicode Standard.
      *
