@@ -880,8 +880,8 @@ namespace webpp::unicode {
 
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
-        auto         starter  = istl::deref(spos);
-        while (spos != send) {
+        for (Iter starter = spos; spos != send;) {
+            Iter       prev       = spos;
             auto const code_point = checked::next_code_point<return_negated>(spos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
                 return NO;
@@ -893,7 +893,7 @@ namespace webpp::unicode {
 
             // constantly keep track of the starter code point
             if (ccc == 0) {
-                starter = spos;
+                starter = prev;
             } else if (prev_ccc > ccc || result != to_underlying(YES)) [[unlikely]] {
                 if (result == to_underlying(MAYBE)) {
                     spos = starter; // restoring the lastest starter code point
