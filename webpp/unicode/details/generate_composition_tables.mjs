@@ -116,18 +116,18 @@ class CompTable {
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
-        [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+        [[nodiscard]] constexpr ${
+                    this.pos.STLTypeString} get_position(char32_t const request_position) const noexcept {
 #if __cplusplus >= 202302L // C++23
             [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
-            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
+            ${this.pos.STLTypeString} const remaining_pos = static_cast<${
+                    this.pos.STLTypeString}>(request_position) & chunk_mask;
             return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);
         }
         `;
             },
-            function magicalRender() {
-                return self.#canonicalCompositions.render();
-            },
+            function magicalRender() { return self.#canonicalCompositions.render(); },
         ];
         return addenda;
     };

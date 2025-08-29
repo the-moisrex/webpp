@@ -825,7 +825,8 @@ export function getPositionFunction() {
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies that mask.
          */
-        [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+        [[nodiscard]] constexpr ${
+        this.pos.STLTypeString} get_position(char32_t const request_position) const noexcept {
             auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
             auto const masked_remaining_pos = masked(remaining_pos);
             return pos + masked_remaining_pos;
@@ -839,7 +840,8 @@ export function getSimplePositionFunction() {
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies that mask.
          */
-        [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+        [[nodiscard]] constexpr ${
+        this.pos.STLTypeString} get_position(char32_t const request_position) const noexcept {
             auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
             return pos + remaining_pos;
         }

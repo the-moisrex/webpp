@@ -153,7 +153,7 @@ namespace webpp::unicode::details {
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies that mask.
          */
-        [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
+        [[nodiscard]] constexpr std::uint16_t get_position(char32_t const request_position) const noexcept {
             auto const remaining_pos = static_cast<std::uint16_t>(request_position & chunk_mask);
             return pos + remaining_pos;
         }
