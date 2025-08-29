@@ -41,6 +41,7 @@ set(FILE_SOURCES
         inet_ntop6_size/inet_ntop6_size_benchmark.cpp
         path_dots/path_dots_benchmark.cpp
         bidi/bidi_benchmark.cpp
+        sorted_combining_marks/sorted_combining_marks_benchmark.cpp
 )
 file(GLOB FILE_PCH *_pch.hpp)
 
