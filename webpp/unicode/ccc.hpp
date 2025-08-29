@@ -67,11 +67,6 @@ namespace webpp::unicode {
         return ccc_of(code_point) == 0;
     }
 
-    template <stl::input_iterator Iter = char8_t const*>
-    [[nodiscard]] static constexpr bool is_starter(Iter const pos) noexcept {
-        return ccc_of(unchecked::next_code_point_copy(pos)) == 0;
-    }
-
     /**
      * Go to the next code point with CCC = 0
      */
@@ -84,6 +79,7 @@ namespace webpp::unicode {
                 break;
             }
         }
+        // assert(spos == send || is_starter(checked::next_code_point_copy(spos, send)));
     }
 
     /**

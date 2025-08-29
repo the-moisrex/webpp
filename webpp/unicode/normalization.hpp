@@ -1070,13 +1070,12 @@ namespace webpp::unicode {
                         return false;
                     case MAYBE: {
                         // Slow path:
-                        auto nxt = istl::deref(spos);
-                        next_starter(nxt, send);
-                        decompose_iterator const dbeg{spos, nxt};
-                        if (!is_reordered_composable_to(dbeg, stl::default_sentinel, spos, nxt)) {
+                        Iter pos = spos;
+                        next_starter(spos, send);
+                        decompose_iterator const dbeg{pos, spos};
+                        if (!is_reordered_composable_to(dbeg, stl::default_sentinel, pos, spos)) {
                             return false;
                         }
-                        spos = nxt;
                         if (spos == send) {
                             return true;
                         }
