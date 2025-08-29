@@ -7480,6 +7480,20 @@ TEST(Unicode, FuzzFixes24) {
     unicode_fuzz("\n\xF0\xAF\xA8\xAF"sv);
 }
 
+TEST(Unicode, FuzzFixes25) {
+    constexpr auto                                  decomposed = u"\xF80\xF71\xF74"sv; // 130-129-132
+    constexpr auto                                  sorted     = u"\xF71\xF80\xF74"sv;
+    utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
+    utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, *sorted32++); // 1
+    EXPECT_NE(iter, std::default_sentinel);
+    EXPECT_EQ(*iter++, *sorted32++); // 2
+    EXPECT_NE(iter, std::default_sentinel);
+    EXPECT_EQ(*iter++, *sorted32++); // 3
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE

@@ -280,7 +280,7 @@ namespace webpp::unicode {
                         }
                         break;
                     case state_type::rotate:
-                        if (ccc <= prev_ccc || ccc <= smallest) {
+                        if (ccc <= prev_ccc || ccc >= smallest) {
                             state  = state_type::random;
                             length = 0;
                             pccc   = 0;
