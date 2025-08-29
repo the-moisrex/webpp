@@ -7494,6 +7494,13 @@ TEST(Unicode, FuzzFixes25) {
     EXPECT_EQ(iter, std::default_sentinel);
 }
 
+TEST(Unicode, FuzzFixes26) {
+    EXPECT_FALSE(isNFC(u8"\xC7\x97\x87\xCC\xD7\x87"sv));
+
+    // new TextDecoder().decode(new Uint8Array([0xC7, 0x97, 0x87, 0xCC, 0xD7, 0x87]))
+    EXPECT_TRUE(isNFC(U"\x000001d7\x0000fffd\x0000fffd\x000005c7"sv)); // UTF-32 version of the previous one
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
