@@ -47,6 +47,8 @@ set(ALL_SOURCES_SHORT
         strings/trim.hpp
         strings/validators.hpp
 
+        unicode/bidi.hpp
+        unicode/ccc.hpp
         unicode/details/bidi_tables.hpp
         unicode/details/ccc_tables.hpp
         unicode/details/composition_tables.hpp
@@ -54,14 +56,13 @@ set(ALL_SOURCES_SHORT
         unicode/details/gc_tables.hpp
         unicode/details/idna_mapping_tables.hpp
         unicode/details/joiners_tables.hpp
-        unicode/bidi.hpp
-        unicode/ccc.hpp
         unicode/general_category.hpp
         unicode/hangul.hpp
         unicode/idna.hpp
         unicode/joiners.hpp
         unicode/normalization.hpp
         unicode/punycodes.hpp
+        unicode/quick_check.hpp
         unicode/unicode.hpp
         unicode/unicode_concepts.hpp
         unicode/utf32_iterator.hpp

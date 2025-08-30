@@ -46,6 +46,14 @@ namespace webpp::unicode {
     }
 
     /**
+     * Usage: is_ccc_of(cp, ccc_props::Virama);
+     */
+    template <UTF CharT = char32_t>
+    [[nodiscard]] static constexpr bool is_ccc_of(CharT const code_point, stl::uint8_t const alias) noexcept {
+        return ccc_of(code_point) == alias;
+    }
+
+    /**
      * A starter code point in Unicode is a base character that can be combined with combining characters to
      * form a grapheme cluster. Specifically:
      *
