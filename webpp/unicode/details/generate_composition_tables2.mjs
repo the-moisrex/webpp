@@ -74,7 +74,7 @@ class CP1 {
      */
     hasConflicts(cp2) {
         // const pos = cp2.position + (Number(this.#codePoint) % cp2.rem);
-        for (let cp = 0; cp < 0x0010FFFF; cp += cp2.rem) {
+        for (let cp = 0; cp < 0x0010FFFF; ++cp) { // cp += cp2.rem
             // We found a code point that will have the same mask as this one, and that will cause that code
             // point to have the same composition result as this code point.
             if (cp === this.#codePoint) {
