@@ -7508,6 +7508,10 @@ TEST(Unicode, FuzzFixes26) {
 
     // new TextDecoder().decode(new Uint8Array([0xC7, 0x97, 0x87, 0xCC, 0xD7, 0x87]))
     EXPECT_TRUE(isNFC(U"\x000001d7\x0000fffd\x0000fffd\x000005c7"sv)); // UTF-32 version of the previous one
+
+    EXPECT_EQ(toNFC<u8string>(u8"'\xD9\x93"s), u8"\x27\xd9\x93"sv);
+    EXPECT_EQ(toNFC<u32string>(U"'\x653"s), U"\x27\x653"sv);
+    EXPECT_EQ(canonical_composed<0x0>(0x27, 0x653), 0x0);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
