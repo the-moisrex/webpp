@@ -14,14 +14,18 @@ String.prototype.toStr = function() {
     return decoder.decode(bytes);
 };
 
+String.prototype.toUTF8Array = function() {
+    const encoder = new TextEncoder();
+    return encoder.encode(this);
+};
+
+String.prototype.toUTF8 =
+    function() { return Array.from(this.toUTF8Array()).map(c => `\\x${c.toString(16)}`).join(""); };
+
 String.prototype.toUTF32Array = function() { return this.split("").map(c => c.charCodeAt(0)); };
-
 String.prototype.toHex = function() { return this.toUTF32Array().map(c => `\\x${c.toString(16)}`).join(''); };
-
 String.prototype.isNFC = function() { return this.normalize("NFC") == this; };
-
 String.prototype.isNFD = function() { return this.normalize("NFD") == this; };
-
 String.prototype.toNFC = function() { return this.normalize("NFC"); };
-
+String.prototype.toNFD = function() { return this.normalize("NFD"); };
 String.prototype.toNFD = function() { return this.normalize("NFD"); };

@@ -7498,6 +7498,14 @@ TEST(Unicode, FuzzFixes26) {
     EXPECT_FALSE(isNFC(u8"\xC7\x97\x87\xCC\xD7\x87"sv)); // UTF-32: \x1d7\xfffd\xfffd\x5c7 (Replacement Char is used)
     EXPECT_TRUE(isNFC(u8"\xC7\x97\xD7\x87"sv));          // UTF-32: \x1d7\x5c7
 
+    EXPECT_EQ(toNFC<u8string>(u8"\xC7\x97\xD7\x87"s), u8"\xC7\x97\xD7\x87"sv);
+    EXPECT_EQ(toNFD<u8string>(u8"\xC7\x97\xD7\x87"s), u8"\x55\xd7\x87\xcc\x88\xcc\x81"sv);
+    EXPECT_EQ(toNFD(toNFD<u8string>(u8"\x55\xd7\x87\xcc\x88\xcc\x81"s)), u8"\x55\xd7\x87\xcc\x88\xcc\x81"sv);
+    EXPECT_EQ(toNFC<u8string>(u8"\x55\xd7\x87\xcc\x88\xcc\x81"s), u8"\xC7\x97\xD7\x87"sv);
+    EXPECT_EQ(toNFC<u32string>(U"\x55\x5c7\x308\x301"s), U"\x1d7\x5c7"sv);
+    EXPECT_EQ(toNFC(toNFC<u8string>(u8"\xC7\x97\xD7\x87"s)), u8"\xC7\x97\xD7\x87"sv);
+    EXPECT_EQ(toNFC<u32string>(U"\x1d7\x5c7"s), U"\x1d7\x5c7"sv);
+
     // new TextDecoder().decode(new Uint8Array([0xC7, 0x97, 0x87, 0xCC, 0xD7, 0x87]))
     EXPECT_TRUE(isNFC(U"\x000001d7\x0000fffd\x0000fffd\x000005c7"sv)); // UTF-32 version of the previous one
 }
