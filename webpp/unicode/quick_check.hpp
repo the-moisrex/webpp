@@ -1,7 +1,7 @@
 // Created by moisrex on 8/30/25.
 
-#ifndef WEBPP_QUICK_CHECK_HPP
-#define WEBPP_QUICK_CHECK_HPP
+#ifndef WEBPP_UNICODE_QUICK_CHECK_HPP
+#define WEBPP_UNICODE_QUICK_CHECK_HPP
 
 #include "./ccc.hpp"
 
@@ -140,4 +140,4 @@ namespace webpp::unicode {
 
 } // namespace webpp::unicode
 
-#endif // WEBPP_QUICK_CHECK_HPP
+#endif // WEBPP_UNICODE_QUICK_CHECK_HPP
