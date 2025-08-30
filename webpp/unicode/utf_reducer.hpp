@@ -895,9 +895,9 @@ namespace webpp::unicode {
         constexpr void snap_hole_to_end(utf_range_marker<iterator>& hole) noexcept(is_nothrow) {
             if constexpr (!UTF32<unit_type>) {
                 if (!hole.empty()) {
-                    auto const distance_till_hold_end = this->newend - hole.end();
-                    assert(hole.end() + distance_till_hold_end <= this->endptr);
-                    hole.move(distance_till_hold_end, this->iters);
+                    auto const distance_till_hole_end = this->newend - hole.end();
+                    assert(hole.end() + distance_till_hole_end <= this->endptr);
+                    hole.move(distance_till_hole_end, this->iters);
                     this->newend  = hole.begin();
                     *this->newend = static_cast<unit_type>('\0');
                     if (hole.has_overlaps(this->newend, this->endptr)) {
