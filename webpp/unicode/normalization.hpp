@@ -445,8 +445,10 @@ namespace webpp::unicode {
      * Compose 2 code points into one
      * Attention: You could return 0xFFFD (replacement character) or 0 if they're not valid inputs
      */
-    template <char32_t Error = replacement_char<char32_t>>
-    [[nodiscard]] static constexpr char32_t canonical_composed(char32_t const lhs, char32_t const rhs) noexcept {
+    [[nodiscard]] static constexpr char32_t canonical_composed(
+      char32_t const lhs,
+      char32_t const rhs,
+      char32_t const error = replacement_char<char32_t>) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
@@ -455,7 +457,7 @@ namespace webpp::unicode {
         // there are fewer second code points, so there will be more early bailouts
         stl::size_t const pos2 = static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem);
         if (pos2 >= cp2s.size()) [[unlikely]] {
-            return Error;
+            return error;
         }
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
@@ -463,7 +465,7 @@ namespace webpp::unicode {
         // todo: use -1 as invalid values for cp2 instead of 0 to eliminate the necessity of cp2 == 0 comparison
         if (cp2 == 0 || cp2 != rhs) {
             auto const hangul = compose_hangul(lhs, rhs);
-            return hangul != 0 ? hangul : Error;
+            return hangul != 0 ? hangul : error;
         }
 
         stl::size_t const pos        = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
@@ -472,13 +474,13 @@ namespace webpp::unicode {
         auto [cp1_mask, replacement] = cp1s[pos];
         // NOLINTEND(*-pro-bounds-constant-array-index)
 
-        bool error  = !is_code_point_valid(lhs);
-        error      |= !is_code_point_valid(rhs);
-        error      |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
-        // error      |= lhs == 0;
-        // error      |= rhs == 0;
-        if (error) [[unlikely]] {
-            return Error;
+        bool has_error  = !is_code_point_valid(lhs);
+        has_error      |= !is_code_point_valid(rhs);
+        has_error      |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
+        // has_error      |= lhs == 0;
+        // has_error      |= rhs == 0;
+        if (has_error) [[unlikely]] {
+            return error;
         }
         return replacement;
     }
@@ -511,7 +513,7 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
                 if (prev_ccc < ccc && replaced_cp != U'\0') {
                     // found a composition of cp1 and cp2
                     cp1 = replaced_cp;
@@ -785,7 +787,7 @@ namespace webpp::unicode {
     }
 
     [[nodiscard]] static constexpr bool is_composable(char32_t const lhs, char32_t const rhs) noexcept {
-        return canonical_composed<U'\0'>(lhs, rhs) != U'\0';
+        return canonical_composed(lhs, rhs, U'\0') != U'\0';
     }
 
     /**
@@ -816,7 +818,7 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
                 if (prev_ccc < ccc && replaced_cp != U'\0') {
                     // found a composition
                     cp1 = replaced_cp;
@@ -870,7 +872,7 @@ namespace webpp::unicode {
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed<U'\0'>(cp1, cp2);
+                auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
                 if (prev_ccc < ccc && replaced_cp != U'\0') {
                     // found a composition
                     cp1 = replaced_cp;

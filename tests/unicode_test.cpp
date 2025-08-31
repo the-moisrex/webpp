@@ -7511,7 +7511,7 @@ TEST(Unicode, FuzzFixes26) {
 
     EXPECT_EQ(toNFC<u8string>(u8"'\xD9\x93"s), u8"\x27\xd9\x93"sv);
     EXPECT_EQ(toNFC<u32string>(U"'\x653"s), U"\x27\x653"sv);
-    EXPECT_EQ(canonical_composed<0x0>(0x27, 0x653), 0x0);
+    EXPECT_EQ(canonical_composed(0x27, 0x653, 0x0), 0x0);
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
