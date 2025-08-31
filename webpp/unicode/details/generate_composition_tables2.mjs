@@ -69,23 +69,21 @@ class CP1 {
         `;
     }
 
-    /**
-     * @param cp2 CP2
-     */
-    hasConflicts(cp2) {
-        // const pos = cp2.position + (Number(this.#codePoint) % cp2.rem);
-        for (let cp = 0; cp < 0x0010FFFF; ++cp) { // cp += cp2.rem
-            // We found a code point that will have the same mask as this one, and that will cause that code
-            // point to have the same composition result as this code point.
-            if (cp === this.#codePoint) {
-                continue;
-            }
-            if ((cp & 0xFF) === this.#mask) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // /**
+    //  * @param cp2 CP2
+    //  */
+    // hasConflicts(cp2) {
+    //     // const pos = cp2.position + (Number(this.#codePoint) % cp2.rem);
+    //     for (let cp = 0; cp < 0x0010FFFF; cp += cp2.rem) {
+    //         // We found a code point that will have the same mask as this one, and that will cause that
+    //         code
+    //         // point to have the same composition result as this code point.
+    //         if ((cp & 0xFF) === this.#mask && cp !== this.#codePoint) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     render() {
         return `{0x${this.#mask.toString(16).toUpperCase()}U, 0x${
@@ -119,6 +117,8 @@ class CP2 {
     get position() {
         return this.#cp1Pos;
     }
+
+    get codePoint() { return this.#codePoint; }
 
     get rem() {
         return this.#rem;
@@ -213,10 +213,15 @@ class CompTable {
 
                 cp2.setRem(cp1sRaw.length);
                 nextRem: for (; ; cp2.nextRem()) {
+                    if (cp2.rem > cp2.codePoint) {
+                        // throw Error(`There's no rem for this one: ${cp2.codePoint}`);
+                        console.log("Invalid CP2sREM:", this.cp2sRem);
+                        continue retry;
+                    }
                     const cp1sTemp = {};
                     for (const {cp1 : cp1Raw, codePoint : replacement} of cp1Vals) {
                         const cp1 = new CP1(cp1Raw, replacement);
-                        const pos = cp2.position + (Number(cp1Raw) % cp2.rem);
+                        const pos = cp2.position + (Number(cp1.codePoint) % cp2.rem);
                         if (pos in cp1sTemp) {
                             // throw new Error(`Replacing: ${pos}`);
                             // console.log(
@@ -227,15 +232,34 @@ class CompTable {
                             // );
                             continue nextRem;
                         }
-                        if (cp1.hasConflicts(cp2)) {
-                            console.log("Conflict in CP1 Mask detected:", cp1.codePoint, cp1.replacement);
-                            continue nextRem;
-                        }
                         cp1sTemp[pos] = cp1;
 
                         const maxPossible = cp2.position + cp2.rem;
                         if (maxPossible > maxCP1sRequired) {
                             maxCP1sRequired = maxPossible;
+                        }
+                    }
+
+                    // Find another composition that would conflict with this one
+                    for (let codePoint = 0; codePoint != 0x0010FFFF; ++codePoint) {
+                        const cp1 = new CP1(codePoint, 0);
+                        const pos = cp2.position + (Number(cp1.codePoint) % cp2.rem);
+                        if (pos in cp1sTemp) {
+                            if (cp1sTemp[pos].mask !== cp1.mask) {
+                                // console.log("Skipped: ", cp1.codePoint, cp1.mask, cp1sTemp[pos].codePoint,
+                                // cp1sTemp[pos].mask);
+                                continue;
+                            }
+                            // It's fine if both have the same replacement value and the same mask
+                            console.log(cp1Vals)
+                            if (cp1Vals.includes(cp => Number(cp.cp1) === cp1.codePoint &&
+                                                       cp.codePoint == cp1sTemp[pos].replacement)) {
+                                console.log("Skipped due to same replacement: ", cp1.codePoint, cp1.mask);
+                                continue;
+                            }
+                            console.log("Conflict found: ", cp1.codePoint, cp1.mask, pos, cp2.codePoint,
+                                        cp2.position, cp2.rem);
+                            continue nextRem;
                         }
                     }
 
