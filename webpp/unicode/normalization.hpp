@@ -471,12 +471,12 @@ namespace webpp::unicode {
         stl::size_t const pos        = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
         // there's no need to check if the position here is valid or not, the `cp1s` table is guaranteed to
         // have the max number of elements.
-        auto [cp1_mask, replacement] = cp1s[pos];
+        auto const [cp1_mask, replacement] = cp1s[pos];
         // NOLINTEND(*-pro-bounds-constant-array-index)
 
         bool has_error  = !is_code_point_valid(lhs);
         has_error      |= !is_code_point_valid(rhs);
-        has_error      |= static_cast<std::uint8_t>(lhs) != cp1_mask; // Invalid code points are visible with 0
+        has_error |= static_cast<std::uint16_t>(lhs & 0xFFE) != cp1_mask; // Invalid code points are visible with 0
         // has_error      |= lhs == 0;
         // has_error      |= rhs == 0;
         if (has_error) [[unlikely]] {
