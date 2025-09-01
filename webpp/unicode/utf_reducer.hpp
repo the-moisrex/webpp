@@ -240,17 +240,17 @@ namespace webpp::unicode {
                 beginp         = mid;
                 move_content(diff);
                 move_iterators(diff, iters);
-                endp   = mid;
                 beginp = old_beg;
+                endp   = mid;
             } else if (diff < 0) {
                 // cutting the first half of the hole
-                auto const mid = endp - static_cast<difference_type>(length);
+                auto const mid = beginp + static_cast<difference_type>(length);
                 endp           = mid;
                 move_content(diff);
                 move_iterators(diff, iters);
                 beginp = mid;
                 endp   = old_end;
-            } else if (diff == 0) {
+            } else {
                 beginp += static_cast<difference_type>(length);
             }
             assert(beginp <= endp);
