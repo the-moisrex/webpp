@@ -7082,7 +7082,7 @@ TEST(Unicode, FuzzFixes7) {
 
 TEST(Unicode, FuzzFixes6Explicit) {
     EXPECT_FALSE(isNFC("\xF0\xCC\x81\xC3\x8C"sv));
-    EXPECT_FALSE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
+    EXPECT_TRUE(isNFC("\xC3\x8C\x24\xC3\x8C\xC3\x8C\xCC\xAD\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\xC3\x8C\x0A\x0A"sv));
 
     EXPECT_FALSE(isNFC("\xF0\xCD\x81\xCC"sv));
     EXPECT_EQ("�́�"sv, toNFC("\xF0\xCD\x81\xCC"s));
@@ -7512,6 +7512,11 @@ TEST(Unicode, FuzzFixes26) {
     EXPECT_EQ(toNFC<u8string>(u8"'\xD9\x93"s), u8"\x27\xd9\x93"sv);
     EXPECT_EQ(toNFC<u32string>(U"'\x653"s), U"\x27\x653"sv);
     EXPECT_EQ(canonical_composed(0x27, 0x653, 0x0), 0x0);
+}
+
+TEST(Unicode, FuzzFixes27) {
+    EXPECT_FALSE(isNFC(u8"\xE1\x84\x8D\xE1\x85\xAC\xE1\x86\xAF\xC3\xAC\n"sv)); // NFC UTF-32: \xcb18\xec\xa
+    EXPECT_FALSE(isNFC(u8"\xCC\xAA\xCC\xA1"sv));
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
