@@ -15,6 +15,8 @@ import {getCanonicalDecompositions} from "./UnicodeData.mjs";
 import {fillEmpty, runClangFormat, writePieces} from "./utils.mjs";
 
 const outFile = `composition_tables.hpp`;
+let cp1Mask = 0xFFE; // dynamically will change
+let cp1BitCount = 8;
 
 const start = async () => {
     await readme.download();
@@ -33,7 +35,7 @@ class CP1 {
 
     constructor(codePoint = 0, replacement = 0) {
         this.#codePoint = Number(codePoint);
-        this.#mask = Number(codePoint) & 0xFFE;
+        this.#mask = Number(codePoint) & cp1Mask;
         this.#replacement = replacement;
     }
 
@@ -61,8 +63,9 @@ class CP1 {
              * First Code Point of the compositions
              */
             struct alignas(std::uint${this.typeSize()}_t) CP1 {
-                std::uint16_t cp1_mask : 11 = 0; // a mask to identify if you have found the right code point
-                char32_t replacement : 21 = 0U; // the composition code point
+                std::uint16_t cp1_mask : ${
+            cp1BitCount} = 0; // a mask to identify if you have found the right code point
+                char32_t replacement : ${32n - cp1BitCount} = 0U; // the composition code point
             } WEBPP_GCC_PACKED;
 
             static_assert(sizeof(CP1) == ${this.typeSize() / 8}U, "Type size is not valid.");
@@ -208,10 +211,10 @@ class CompTable {
             }
         }
 
-        const smallestMask = (0b1 << (32 - Math.clz32(lastComposedReplacement)) - 1)
-                             << Math.clz32(lastComposedReplacement);
+        cp1BitCount = BigInt(Math.clz32(lastComposedReplacement));
+        cp1Mask = Number(((0b1n << cp1BitCount) - 1n) /* << (32n - cp1BitCount) */);
         console.log("Last Composed CP1:", lastComposedReplacement);
-        console.log("Smallest Mask:", smallestMask.toString(16));
+        console.log("Smallest Mask:", cp1Mask.toString(16));
 
         let maxCP1sRequired = 0;
         this.cp2sRem = cp2sArr.length;
@@ -311,6 +314,7 @@ class CompTable {
         return `
             namespace composition {
 
+                static constexpr std::uint16_t cp1_mask = 0x${cp1Mask.toString(16).toUpperCase()}U;
                 ${/*static constexpr auto cp2s_mask = 0x${this.cp2sMask.toString(16).toUpperCase()}U;*/ ""}
                 static constexpr auto cp2s_rem = ${this.cp2sRem}U;
 
