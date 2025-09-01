@@ -113,28 +113,36 @@ namespace webpp::unicode {
 
         stl::uint8_t prev_ccc = 0;
         auto         result   = to_underlying(YES);
-        for (Iter starter = spos; spos != send;) {
-            Iter       prev       = spos;
+        Iter         starter  = spos;
+        Iter         prev     = spos;
+        for (; spos != send; prev = spos) {
             auto const code_point = checked::next_code_point<return_negated>(spos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                return NO;
+                result = to_underlying(NO);
+                break;
             }
             auto const info    = qc_ccc_of(code_point);
             auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
             auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
             result            |= to_underlying(qc_of<Form>(qc_val));
 
+            if (result != to_underlying(YES)) [[unlikely]] {
+                break;
+            }
+
             // constantly keep track of the starter code point
             if (ccc == 0) {
                 starter = prev;
-            } else if (prev_ccc > ccc || result != to_underlying(YES)) [[unlikely]] {
-                if (result == to_underlying(MAYBE)) {
-                    spos = starter; // restoring the lastest starter code point
-                    return MAYBE;
-                }
-                return NO;
+            } else if (prev_ccc > ccc) [[unlikely]] {
+                result = to_underlying(NO);
+                break;
             }
             prev_ccc = ccc;
+        }
+        if (result == to_underlying(MAYBE)) {
+            spos = starter; // restoring the lastest starter code point
+        } else if (result == to_underlying(NO)) {
+            spos = prev;
         }
         return static_cast<quick_check_state>(result);
     }

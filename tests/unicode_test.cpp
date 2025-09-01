@@ -7516,6 +7516,9 @@ TEST(Unicode, FuzzFixes26) {
 
 TEST(Unicode, FuzzFixes27) {
     EXPECT_FALSE(isNFC(u8"\xE1\x84\x8D\xE1\x85\xAC\xE1\x86\xAF\xC3\xAC\n"sv)); // NFC UTF-32: \xcb18\xec\xa
+    EXPECT_FALSE(isNFC(U"\x110d\x116c\x11af"sv));
+    constexpr auto str = U"\x110d\x116c\x11af\xec\xa"sv;
+    EXPECT_EQ(webpp::unicode::quick_check(str.begin(), str.end()), webpp::unicode::quick_check_state::MAYBE);
     EXPECT_FALSE(isNFC(u8"\xCC\xAA\xCC\xA1"sv));
 }
 
