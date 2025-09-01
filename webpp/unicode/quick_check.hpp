@@ -130,8 +130,9 @@ namespace webpp::unicode {
             } else if (prev_ccc > ccc || result != to_underlying(YES)) [[unlikely]] {
                 if (result == to_underlying(MAYBE)) {
                     spos = starter; // restoring the lastest starter code point
+                    return MAYBE;
                 }
-                return static_cast<quick_check_state>(result);
+                return NO;
             }
             prev_ccc = ccc;
         }
