@@ -279,7 +279,7 @@ namespace {
         // auto const code_point_index = static_cast<uint8_t>(code_point);
         auto const code        = ccc_indices.at(code_point_range);
         // calculating the position of te value in the ccc_values table:
-        size_t const index_pos = code.get_position(code_point);
+        size_t const index_pos = code.get_position(static_cast<char32_t>(code_point));
         auto         res       = ccc_values.at(index_pos);
 
         string           around       = "[..., ";
@@ -313,7 +313,7 @@ result: {}
           code.pos,
           remaining_pos,
           // code.masked(remaining_pos),
-          code.get_position(code_point),
+          code.get_position(static_cast<char32_t>(code_point)),
           code.pos,
           remaining_pos,
           res,
@@ -345,7 +345,7 @@ result: {}
               code.pos,
               static_cast<int>(code.max_length),
               remaining_pos,
-              code.get_position(code_point),
+              code.get_position(static_cast<char32_t>(code_point)),
               code.pos,
               remaining_pos,
               static_cast<int>(res));
