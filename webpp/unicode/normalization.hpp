@@ -197,7 +197,7 @@ namespace webpp::unicode {
      */
     template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter, typename SEIter = SIter>
         requires stl::sentinel_for<SEIter, SIter>
-    static constexpr stl::size_t canonical_decompose_to(Iter& out, SIter& spos, SIter const send)
+    static constexpr stl::size_t canonical_decompose_to(Iter& out, SIter& spos, SEIter const& send)
       noexcept(istl::NothrowAppendable<Iter>) {
         using enum checked::error_handling;
 
@@ -208,7 +208,7 @@ namespace webpp::unicode {
 
     template <istl::Appendable Iter = std::u8string::iterator, stl::forward_iterator SIter, typename SEIter = SIter>
         requires stl::sentinel_for<SEIter, SIter>
-    static constexpr stl::size_t canonical_decompose_prev_to(Iter& out, SIter& spos, SIter const sbeg)
+    static constexpr stl::size_t canonical_decompose_prev_to(Iter& out, SIter& spos, SEIter const& sbeg)
       noexcept(istl::NothrowAppendable<Iter>) {
         using enum checked::error_handling;
 
@@ -221,7 +221,7 @@ namespace webpp::unicode {
      */
     template <stl::forward_iterator Iter, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    static constexpr void skip_to_decomp(Iter& spos, EIter const send) noexcept {
+    static constexpr void skip_to_decomp(Iter& spos, EIter const& send) noexcept {
         using details::decomp_breakpoints;
         using details::decomp_common_pos;
         using details::decomp_index;
@@ -688,7 +688,7 @@ namespace webpp::unicode {
         decomposed_array<value_type>                     buf{};
 
       public:
-        explicit constexpr decompose_iterator(Iter inp_pos, EIter inp_end) noexcept
+        explicit constexpr decompose_iterator(Iter inp_pos, EIter inp_end = {}) noexcept
           : beg{istl::begin_sentinel(inp_pos)},
             cur{inp_pos},
             nxt{inp_pos},
@@ -781,7 +781,7 @@ namespace webpp::unicode {
      * Check if the specified string is decomposable
      */
     template <stl::forward_iterator Iter>
-    [[nodiscard]] static constexpr bool is_decomposable(Iter spos, Iter send) noexcept {
+    [[nodiscard]] static constexpr bool is_decomposable(Iter spos, Iter const& send) noexcept {
         skip_to_decomp(spos, send);
         return spos != send;
     }
@@ -799,23 +799,24 @@ namespace webpp::unicode {
     template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
     [[nodiscard]] static constexpr bool
-    is_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
-        checked::utf32_forward_iter cp1_pin{spos, send};
-        checked::utf32_forward_iter rep_cpin{cpos, cend};
+    is_composable_to(Iter const& spos, EIter const& send, CIter cpos, CEIter const& cend) noexcept {
+        static_assert(UTF32<stl::iter_value_t<Iter>>, "We need utf-32 string, wrap it in utf32 iterator.");
+        static_assert(UTF32<stl::iter_value_t<CIter>>, "We need utf-32 string, wrap it in utf32 iterator.");
 
         // I'm not bailing out early and using is_valid because I want to put less branches on the path that gives true
+        Iter cp1_pin  = spos;
         bool is_valid = true;
-        while (!cp1_pin.at_end()) {
-            if (rep_cpin.at_end()) [[unlikely]] {
+        while (cp1_pin != send) {
+            if (cpos == cend) [[unlikely]] {
                 return false;
             }
 
             auto       cp1         = *cp1_pin;
-            auto const starter_ccp = *rep_cpin;
+            auto const starter_ccp = *cpos;
             ++cp1_pin;
 
-            auto cp2_pin = istl::deref(cp1_pin);
-            for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
+            Iter cp2_pin = cp1_pin;
+            for (stl::int_fast16_t prev_ccc = -1; cp2_pin != send; ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
                 auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
@@ -828,75 +829,18 @@ namespace webpp::unicode {
                     break;
                 }
                 prev_ccc = ccc;
-                ++rep_cpin;
-                is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
+                ++cpos;
+                is_valid &= cpos != cend && *cpos == cp2;
             }
             is_valid &= starter_ccp == cp1;
-            ++rep_cpin;
+            ++cpos;
 
             // bailout early, but not too early
             if (!is_valid) [[unlikely]] {
                 return false;
             }
         }
-        is_valid &= rep_cpin.at_end();
-        return is_valid;
-    }
-
-    /**
-     * Check if composing the decomposed string (spos/send) would result in the original string (cpos/cend).
-     * This is used to verify that a string is in NFC form.
-     *
-     * Attension: don't use this directly, this is slow, and will not take the invalid code points into account.
-     */
-    template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
-        requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
-    [[nodiscard]] static constexpr bool
-    is_reordered_composable_to(Iter spos, EIter const send, CIter cpos, CEIter const cend) noexcept {
-        using checked::next_code_point;
-        using checked::prev_code_point;
-        using enum checked::error_handling;
-
-        checked::utf32_forward_iter     cp1_utf32{spos, send};
-        checked::utf32_forward_iter     rep_cpin{cpos, cend};
-        sorted_combining_marks_iterator cp1_pin{cp1_utf32, stl::default_sentinel};
-
-        bool is_valid = true;
-        while (!cp1_pin.at_end()) {
-            if (rep_cpin.at_end()) [[unlikely]] {
-                return false;
-            }
-
-            auto       cp1         = *cp1_pin;
-            auto const starter_ccp = *rep_cpin;
-            ++cp1_pin;
-
-            auto cp2_pin = istl::deref(cp1_pin);
-            for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
-                auto const cp2         = *cp2_pin;
-                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
-                if (prev_ccc < ccc && replaced_cp != U'\0') {
-                    // found a composition
-                    cp1 = replaced_cp;
-                    continue;
-                }
-                if (ccc == 0) [[likely]] {
-                    break;
-                }
-                prev_ccc = ccc;
-                ++rep_cpin;
-                is_valid &= !rep_cpin.at_end() && *rep_cpin == cp2;
-            }
-            is_valid &= starter_ccp == cp1;
-            ++rep_cpin;
-
-            // bailout early, but not too early
-            if (!is_valid) [[unlikely]] {
-                return false;
-            }
-        }
-        is_valid &= rep_cpin.at_end();
+        is_valid &= cpos == cend;
         return is_valid;
     }
 
@@ -908,7 +852,7 @@ namespace webpp::unicode {
      * have a unique binary representation
      */
     template <norm_form Form = norm_form::NFC, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const send) noexcept {
+    [[nodiscard]] static constexpr bool is_normalized(Iter spos, Iter const& send) noexcept {
         using enum norm_form;
         using enum quick_check_state;
 
@@ -952,8 +896,13 @@ namespace webpp::unicode {
                             case NO: return false;
                             default: break;
                         }
-                        if (
-                          !is_reordered_composable_to(decompose_iterator{pos, spos}, stl::default_sentinel, pos, spos))
+                        if (!is_composable_to(
+                              sorted_combining_marks_iterator{
+                                decompose_iterator{checked::utf32_bidi_iter{pos, spos}, stl::default_sentinel}
+                        },
+                              stl::default_sentinel,
+                              checked::utf32_forward_iter{pos, spos},
+                              stl::default_sentinel))
                         {
                             return false;
                         }

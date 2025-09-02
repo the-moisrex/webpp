@@ -67,7 +67,6 @@ using webpp::unicode::details::decomp_values;
 using webpp::unicode::details::trailing_mapped_decomps;
 using webpp::unicode::details::trailing_zero_cccs;
 using enum webpp::unicode::checked::error_handling;
-using webpp::unicode::is_reordered_composable_to;
 using webpp::unicode::checked::utf32_bidi_iter;
 using webpp::unicode::checked::utf32_forward_iter;
 
@@ -7290,14 +7289,15 @@ TEST(Unicode, FuzzFixes12) {
 TEST(Unicode, FuzzFixes13) {
     {
         constexpr auto                                  decomposed = u"\x0069\x0306\x0330"sv;
-        constexpr auto                                  composed   = u"\x1E2D\x0306"sv;
+        constexpr auto                                  composed   = U"\x1E2D\x0306"sv;
         constexpr utf32_forward_iter                    fiter{decomposed.begin(), decomposed.end()};
         webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+        webpp::unicode::sorted_combining_marks_iterator iter2{fiter};
         EXPECT_EQ(*iter++, U'\x0069');
         EXPECT_EQ(*iter++, U'\x0330');
         EXPECT_EQ(*iter++, U'\x0306');
         EXPECT_EQ(iter, std::default_sentinel);
-        EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+        EXPECT_TRUE(is_composable_to(iter2, std::default_sentinel, composed.begin(), composed.end()));
         EXPECT_FALSE(isNFC(u"\x012D\x0330"sv)); // Decomposed (not ordered): \x0069\x0306\x0330
     }
 
@@ -7317,11 +7317,12 @@ TEST(Unicode, FuzzFixes13) {
 
 TEST(Unicode, FuzzFixes14) {
     constexpr auto     decomposed = u"\x0041\x030A\x0303\x0303\x0303\x0303\x0303\x033B\x0303"sv;
-    constexpr auto     composed   = u"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv;
+    constexpr auto     composed   = U"\x00C5\x033B\x0303\x0303\x0303\x0303\x0303\x0303"sv;
     constexpr auto     sorted     = u"\x0041\x033B\x030A\x0303\x0303\x0303\x0303\x0303\x0303"sv;
     utf32_forward_iter fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    webpp::unicode::sorted_combining_marks_iterator iter2{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
     EXPECT_EQ(*iter++, *sorted32++); // 2
     EXPECT_EQ(*iter++, *sorted32++); // 3
@@ -7332,22 +7333,23 @@ TEST(Unicode, FuzzFixes14) {
     EXPECT_EQ(*iter++, *sorted32++); // 8
     EXPECT_EQ(*iter++, *sorted32++); // 9
     EXPECT_EQ(iter, std::default_sentinel);
-    EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+    EXPECT_TRUE(is_composable_to(iter2, std::default_sentinel, composed.begin(), composed.end()));
 }
 
 TEST(Unicode, FuzzFixes15) {
     constexpr auto                                  decomposed = u"\x0041\x030A\x033B\x0303"sv;
-    constexpr auto                                  composed   = u"\x00C5\x033B\x0303"sv;
+    constexpr auto                                  composed   = U"\x00C5\x033B\x0303"sv;
     constexpr auto                                  sorted     = u"\x0041\x033B\x030A\x0303"sv;
     utf32_forward_iter                              fiter{decomposed.begin(), decomposed.end()};
     utf32_forward_iter                              sorted32{sorted.begin(), sorted.end()};
     webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    webpp::unicode::sorted_combining_marks_iterator iter2{fiter};
     EXPECT_EQ(*iter++, *sorted32++); // 1
     EXPECT_EQ(*iter++, *sorted32++); // 2
     EXPECT_EQ(*iter++, *sorted32++); // 3
     EXPECT_EQ(*iter++, *sorted32++); // 4
     EXPECT_EQ(iter, std::default_sentinel);
-    EXPECT_TRUE(is_reordered_composable_to(decomposed.begin(), decomposed.end(), composed.begin(), composed.end()));
+    EXPECT_TRUE(is_composable_to(iter2, std::default_sentinel, composed.begin(), composed.end()));
 }
 
 TEST(Unicode, FuzzFixes16) {
@@ -7529,6 +7531,10 @@ TEST(Unicode, FuzzFixes28) {
 TEST(Unicode, FuzzFixes29) {
     EXPECT_FALSE(isNFC(u"\x0303\x031D"sv)); // NFC is \x031D\x0303
     EXPECT_FALSE(isNFC(u"\x030A\x032A"sv)); // NFC is \x032A\x030A
+}
+
+TEST(Unicode, FuzzFixes30) {
+    EXPECT_FALSE(isNFC(u"\x0303\x0303\x032A\x2A03"sv));
 }
 
 TEST(Unicode, UTF32IteratorsTest) {
