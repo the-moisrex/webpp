@@ -35,7 +35,8 @@
     "__node_handle": "cpp",
     "regex": "cpp",
     "future": "cpp",
-    "cstdint": "cpp"
+    "cstdint": "cpp",
+    "utility": "cpp"
   },
   "cSpell.words": [
     "addr",

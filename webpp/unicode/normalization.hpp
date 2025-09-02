@@ -846,6 +846,8 @@ namespace webpp::unicode {
     /**
      * Check if composing the decomposed string (spos/send) would result in the original string (cpos/cend).
      * This is used to verify that a string is in NFC form.
+     *
+     * Attension: don't use this directly, this is slow, and will not take the invalid code points into account.
      */
     template <stl::forward_iterator Iter, typename EIter = Iter, stl::forward_iterator CIter, typename CEIter = CIter>
         requires(stl::sentinel_for<EIter, Iter> && stl::sentinel_for<CEIter, CIter>)
@@ -945,9 +947,10 @@ namespace webpp::unicode {
                     case MAYBE: {
                         // Slow path:
                         Iter pos = spos;
-                        next_starter(spos, send);
-                        decompose_iterator const dbeg{pos, spos};
-                        if (!is_reordered_composable_to(dbeg, stl::default_sentinel, pos, spos)) {
+                        next_definite_starter(spos, send);
+                        if (
+                          !is_reordered_composable_to(decompose_iterator{pos, spos}, stl::default_sentinel, pos, spos))
+                        {
                             return false;
                         }
                         if (spos == send) {

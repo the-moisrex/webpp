@@ -7522,6 +7522,10 @@ TEST(Unicode, FuzzFixes27) {
     EXPECT_FALSE(isNFC(u8"\xCC\xAA\xCC\xA1"sv));
 }
 
+TEST(Unicode, FuzzFixes28) {
+    EXPECT_FALSE(isNFC(U"\x00000300\xFFF70000"sv)); // NFC is \x00000300\x0000FFFD
+}
+
 TEST(Unicode, UTF32IteratorsTest) {
     // 00CD;00CD;0049 0301;00CD;0049 0301; # (Í; Í; I◌́; Í; I◌́; ) LATIN CAPITAL LETTER I WITH ACUTE
     // 00CC;00CC;0049 0300;00CC;0049 0300; # (Ì; Ì; I◌̀; Ì; I◌̀; ) LATIN CAPITAL LETTER I WITH GRAVE
