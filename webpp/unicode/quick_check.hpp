@@ -152,16 +152,17 @@ namespace webpp::unicode {
      */
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    static constexpr void next_definite_starter(Iter& spos, EIter const send) noexcept {
+    static constexpr quick_check_state next_definite_starter(Iter& spos, EIter const send) noexcept {
         using stl::to_underlying;
         using enum quick_check_state;
         using enum checked::error_handling;
 
         checked::next_char(spos, send);
+        stl::uint8_t prev_ccc = 0;
         for (auto pos = istl::deref(spos); pos != send; spos = pos) {
             auto const code_point = checked::next_code_point<return_negated>(pos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                break;
+                return NO;
             }
             auto const info   = qc_ccc_of(code_point);
             auto const ccc    = static_cast<stl::uint8_t>(info & 0xFFU);
@@ -169,9 +170,14 @@ namespace webpp::unicode {
             auto const result = to_underlying(qc_of<Form>(qc_val));
 
             if (ccc == 0 && result != to_underlying(MAYBE)) {
-                break;
+                return static_cast<quick_check_state>(result);
             }
+            if (prev_ccc > ccc) {
+                return NO;
+            }
+            prev_ccc = ccc;
         }
+        return MAYBE;
     }
 
 } // namespace webpp::unicode

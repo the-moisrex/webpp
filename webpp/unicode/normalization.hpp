@@ -857,8 +857,9 @@ namespace webpp::unicode {
         using checked::prev_code_point;
         using enum checked::error_handling;
 
-        checked::utf32_forward_iter cp1_pin{spos, send};
-        checked::utf32_forward_iter rep_cpin{cpos, cend};
+        checked::utf32_forward_iter     cp1_utf32{spos, send};
+        checked::utf32_forward_iter     rep_cpin{cpos, cend};
+        sorted_combining_marks_iterator cp1_pin{cp1_utf32, stl::default_sentinel};
 
         bool is_valid = true;
         while (!cp1_pin.at_end()) {
@@ -870,7 +871,7 @@ namespace webpp::unicode {
             auto const starter_ccp = *rep_cpin;
             ++cp1_pin;
 
-            sorted_combining_marks_iterator cp2_pin{cp1_pin, send};
+            auto cp2_pin = istl::deref(cp1_pin);
             for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -947,7 +948,10 @@ namespace webpp::unicode {
                     case MAYBE: {
                         // Slow path:
                         Iter pos = spos;
-                        next_definite_starter(spos, send);
+                        switch (next_definite_starter(spos, send)) {
+                            case NO: return false;
+                            default: break;
+                        }
                         if (
                           !is_reordered_composable_to(decompose_iterator{pos, spos}, stl::default_sentinel, pos, spos))
                         {

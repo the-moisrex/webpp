@@ -425,6 +425,10 @@ namespace webpp::unicode {
         [[nodiscard]] constexpr bool at_end() const noexcept {
             return cur == endp;
         }
+
+        [[nodiscard]] constexpr bool is_sorted() const noexcept {
+            return state == state_type::sorted;
+        }
     };
 
 } // namespace webpp::unicode
