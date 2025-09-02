@@ -666,17 +666,21 @@ namespace webpp::unicode {
      * This is not the most performant way of doing this, so use it in slow paths of your code.
      * This allocates NOTHING.
      */
-    template <stl::bidirectional_iterator Iter, typename EIter = stl::default_sentinel_t>
+    template <stl::forward_iterator Iter, typename EIter = stl::default_sentinel_t>
         requires stl::sentinel_for<EIter, Iter>
     struct decompose_iterator {
-        using difference_type   = stl::iter_difference_t<Iter>;
-        using value_type        = stl::iter_value_t<Iter>;
-        using traits            = stl::iterator_traits<Iter>;
-        using pointer           = typename traits::pointer;
-        using reference         = value_type&;
-        using const_reference   = value_type const&;
-        using iterator_category = stl::bidirectional_iterator_tag;
-        using iterator_concept  = stl::bidirectional_iterator_tag;
+        using difference_type = stl::iter_difference_t<Iter>;
+        using value_type      = stl::iter_value_t<Iter>;
+        using traits          = stl::iterator_traits<Iter>;
+        using pointer         = typename traits::pointer;
+        using reference       = value_type&;
+        using const_reference = value_type const&;
+
+        static constexpr bool is_bidi = stl::bidirectional_iterator<Iter>;
+
+        using iterator_category =
+          stl::conditional_t<is_bidi, stl::bidirectional_iterator_tag, stl::forward_iterator_tag>;
+        using iterator_concept = iterator_category;
 
       private:
         [[no_unique_address]] istl::begin_iterator<Iter> beg{};
@@ -728,7 +732,9 @@ namespace webpp::unicode {
             return *this;
         }
 
-        constexpr decompose_iterator& operator--() noexcept {
+        constexpr decompose_iterator& operator--() noexcept
+            requires(is_bidi)
+        {
             --index;
             if (index < 0) {
                 nxt          = cur;
@@ -746,7 +752,9 @@ namespace webpp::unicode {
             return buf[static_cast<stl::uint8_t>(index)];
         }
 
-        [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept {
+        [[nodiscard]] constexpr decompose_iterator operator--(int) noexcept
+            requires(is_bidi)
+        {
             auto const res = decompose_iterator{*this};
             operator--();
             return res;
@@ -896,12 +904,13 @@ namespace webpp::unicode {
                             case NO: return false;
                             default: break;
                         }
+                        checked::utf32_forward_iter const utf32_pos{pos, spos};
                         if (!is_composable_to(
                               sorted_combining_marks_iterator{
-                                decompose_iterator{checked::utf32_bidi_iter{pos, spos}, stl::default_sentinel}
+                                decompose_iterator{utf32_pos, stl::default_sentinel}
                         },
                               stl::default_sentinel,
-                              checked::utf32_forward_iter{pos, spos},
+                              utf32_pos,
                               stl::default_sentinel))
                         {
                             return false;

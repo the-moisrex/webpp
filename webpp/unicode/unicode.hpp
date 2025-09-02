@@ -445,14 +445,14 @@ namespace webpp::unicode {
             }
         }
 
-        template <stl::bidirectional_iterator Iter = char8_t const*,
-                  typename EIter                   = Iter,
-                  UTF32 CodePointType              = char32_t>
+        template <stl::forward_iterator Iter = char8_t const*, typename EIter = Iter, UTF32 CodePointType = char32_t>
             requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
             using code_point_type    = CodePointType;
             using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
+
+            static_assert(stl::bidirectional_iterator<Iter> || UTF32<char_type>, "Impl requirements are not met.");
 
             if (pos == end) {
                 return static_cast<code_point_type>(0);
@@ -523,9 +523,7 @@ namespace webpp::unicode {
             return next_code_point<Iter, CodePointType>(pos);
         }
 
-        template <stl::bidirectional_iterator Iter = char8_t const*,
-                  typename EIter                   = Iter,
-                  typename CodePointType           = char32_t>
+        template <stl::forward_iterator Iter = char8_t const*, typename EIter = Iter, typename CodePointType = char32_t>
             requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
             return next_code_point<Iter, EIter, CodePointType>(pos, end);
@@ -1009,10 +1007,10 @@ namespace webpp::unicode {
             return is_code_point_valid(code_point) ? code_point : to_error<ErrorHandling>(code_point);
         }
 
-        template <error_handling              ErrorHandling = error_handling::return_unchanged,
-                  UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*,
-                  typename EIter                            = char32_t const*>
+        template <error_handling        ErrorHandling = error_handling::return_unchanged,
+                  UTF32                 CodePointType = char32_t,
+                  stl::forward_iterator Iter          = char8_t const*,
+                  typename EIter                      = char32_t const*>
             requires(stl::sentinel_for<EIter, Iter>)
         [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter const& end) noexcept {
             using enum error_handling;
@@ -1020,6 +1018,8 @@ namespace webpp::unicode {
             using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
             using difference_type    = stl::iter_difference_t<Iter>;
+
+            static_assert(stl::bidirectional_iterator<Iter> || UTF32<char_type>, "Impl requirement is not met.");
 
             if (pos == end) {
                 return static_cast<code_point_type>(0); // return \0 if we're at the end already
@@ -1168,16 +1168,16 @@ namespace webpp::unicode {
             return to_error<ErrorHandling>(code_point);
         }
 
-        template <error_handling              ErrorHandling = error_handling::return_unchanged,
-                  UTF32                       CodePointType = char32_t,
-                  stl::bidirectional_iterator Iter          = char8_t const*,
-                  typename EIter                            = Iter>
+        template <error_handling        ErrorHandling = error_handling::return_unchanged,
+                  UTF32                 CodePointType = char32_t,
+                  stl::forward_iterator Iter          = char8_t const*,
+                  typename EIter                      = Iter>
             requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter const& end) noexcept {
             return next_code_point<ErrorHandling, CodePointType, Iter, EIter>(pos, end);
         }
 
-        template <stl::bidirectional_iterator Iter = char8_t*, typename EIter = Iter>
+        template <stl::forward_iterator Iter = char8_t*, typename EIter = Iter>
             requires stl::sentinel_for<EIter, Iter>
         static constexpr bool next_char(Iter& pos, EIter const& end) noexcept {
             using enum error_handling;
