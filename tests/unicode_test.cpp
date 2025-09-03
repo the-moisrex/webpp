@@ -7651,6 +7651,17 @@ TEST(Unicode, Case_030A_032A_0000) {
     EXPECT_EQ(actual, expected);
 }
 
+TEST(Unicode, Case_030A_032A_0000_Manual) {
+    std::u16string                                  idres16  = {0x030A, 0x032A, 0x0000};
+    auto                                            expected = webpp::unicode::canonically_reordered(idres16);
+    webpp::unicode::checked::utf32_forward_iter     fiter{idres16.begin(), idres16.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
+    EXPECT_EQ(*iter++, expected[0]);
+    EXPECT_EQ(*iter++, expected[1]);
+    EXPECT_EQ(*iter++, expected[2]);
+    EXPECT_EQ(iter, std::default_sentinel);
+}
+
 TEST(Unicode, Case_0303_0349_4949) {
     std::u16string idres16  = {0x0303, 0x0349, 0x4949};
     auto           expected = webpp::unicode::canonically_reordered(idres16);

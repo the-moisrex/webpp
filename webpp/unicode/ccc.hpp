@@ -276,6 +276,9 @@ namespace webpp::unicode {
                 ++length;
                 auto const ccc = ccc_of(*nxt);
                 if (ccc == 0) {
+                    if (state == state_type::rotate) {
+                        --length;
+                    }
                     break;
                 }
                 switch (state) {
@@ -363,8 +366,7 @@ namespace webpp::unicode {
                     if (--length == 0) {
                         cur = nxt;
                         find_state();
-                    }
-                    if (++cur == nxt) {
+                    } else if (++cur == nxt) {
                         cur = beg;
                     }
                     break;
