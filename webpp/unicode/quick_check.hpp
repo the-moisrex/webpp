@@ -169,10 +169,11 @@ namespace webpp::unicode {
             auto const qc_val = static_cast<stl::uint8_t>(info >> 8U);
             auto const result = to_underlying(qc_of<Form>(qc_val));
 
-            if (ccc == 0 && result != to_underlying(MAYBE)) {
-                return static_cast<quick_check_state>(result);
-            }
-            if (prev_ccc > ccc) {
+            if (ccc == 0) {
+                if (result != to_underlying(MAYBE)) {
+                    return static_cast<quick_check_state>(result);
+                }
+            } else if (prev_ccc > ccc) {
                 return NO;
             }
             prev_ccc = ccc;
