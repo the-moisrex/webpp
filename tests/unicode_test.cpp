@@ -7735,4 +7735,8 @@ TEST(Unicode, FuzzFixes32) {
     unicode_fuzz("\x5B\x0A\xC2\x11\x3C\x0A\x0A\x0A\x0A\x0A"sv);
 }
 
+TEST(Unicode, UtfReducerSegfault) {
+    unicode_fuzz("\xa\x10\xa\xe1\xb9\x90\xcc\x81\xcc\x62"sv);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
