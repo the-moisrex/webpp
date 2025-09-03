@@ -7718,4 +7718,16 @@ TEST(Unicode, Case_0741_0711_0707) {
     EXPECT_EQ(actual, expected);
 }
 
+TEST(Unicode, FuzzFixes31) {
+    EXPECT_FALSE(isNFC(u"\x323E\x0A38\x0A3C\x0B3E"sv));
+    EXPECT_FALSE(isNFC(U"\x323E\x0A38\x0A3C\x0B3E"sv));
+    EXPECT_EQ(U"\x323E\x0A38\x0A3C\x0B3E"sv, toNFC(U"\x323E\x0A38\x0A3C\x0B3E"s));
+    EXPECT_EQ(u"\x323E\x0A38\x0A3C\x0B3E"sv, toNFC(u"\x323E\x0A38\x0A3C\x0B3E"s));
+    EXPECT_FALSE(isNFC(u"\x323E\x0A36\x0B3E"sv));
+    EXPECT_FALSE(isNFC(U"\x323E\x0A36\x0B3E"sv));
+    EXPECT_EQ(u"\x323e\xa38\xa3c\xb3e"sv, toNFC(u"\x323E\x0A36\x0B3E"s));
+    EXPECT_EQ(U"\x323e\xa38\xa3c\xb3e"sv, toNFC(U"\x323E\x0A36\x0B3E"s));
+    unicode_fuzz("\x3E\x32\x36\x0A\x3E\x0B"sv);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
