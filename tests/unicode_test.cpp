@@ -7629,169 +7629,61 @@ TEST(Unicode, UTF8IteratorsTest) {
     EXPECT_EQ(upos, uend);
 }
 
-TEST(Unicode, FuzzFixes31) {
-    // idres16: \x0ABC\x0415\x0308\x0ABC\x0415\x0308
-    // Expected: u"\xABC\x415\xABC\x308\xABC\x308"
-    // Actual: u"\xABC\x415\xABC\x308\x415\x308"
-    std::u16string idres16  = {0x0ABC, 0x0415, 0x0308, 0x0ABC, 0x0415, 0x0308};
-    std::u16string expected = {0x0ABC, 0x0415, 0x0ABC, 0x0308, 0x0ABC, 0x0308};
+// Helper: run through sorted_combining_marks_iterator
+static std::u16string reorder_with_iterator(std::u16string const& in) {
+    webpp::unicode::checked::utf32_forward_iter     fiter{in.begin(), in.end()};
+    webpp::unicode::sorted_combining_marks_iterator iter{fiter};
 
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+    std::u16string out;
+    for (; iter != std::default_sentinel; ++iter) {
+        char32_t cp = *iter;
+        (void) webpp::unicode::checked::append(out, cp);
+    }
+    return out;
 }
 
-TEST(Unicode, FuzzFixes32) {
-    // idres16: \x082A\x0ACD\x0A3A
-    // Expected: u"\xACD\x82A\xACD"
-    // Actual: u"\xACD\x82A\xA3A"
-    std::u16string idres16  = {0x082A, 0x0ACD, 0x0A3A};
-    std::u16string expected = {0x0ACD, 0x082A, 0x0ACD};
+// Each fuzz case as a raw test
 
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_030A_032A_0000) {
+    std::u16string idres16  = {0x030A, 0x032A, 0x0000};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
-TEST(Unicode, FuzzFixes33) {
-    // idres16: \x08FF\x0F71\x0F74\x80CD\x1748
-    // Expected: u"\xF71\xF74\x8FF\xF71\x1748"
-    // Actual: u"\xF71\xF74\x8FF\x80CD\x1748"
-    std::u16string idres16  = {0x08FF, 0x0F71, 0x0F74, 0x80CD, 0x1748};
-    std::u16string expected = {0x0F71, 0x0F74, 0x08FF, 0x0F71, 0x1748};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_0303_0349_4949) {
+    std::u16string idres16  = {0x0303, 0x0349, 0x4949};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
-TEST(Unicode, FuzzFixes34) {
-    // idres16: \x0049\x0311\x0F71\x0F74\x80CC
-    // Expected: u"I\xF71\xF74\x311\xF71"
-    // Actual: u"I\xF71\xF74\x311\x80CC"
-    std::u16string idres16  = {0x0049, 0x0311, 0x0F71, 0x0F74, 0x80CC};
-    std::u16string expected = {0x0049, 0x0F71, 0x0F74, 0x0311, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_0049_0301_0ACD_110E_1170_11A8) {
+    std::u16string idres16  = {0x0049, 0x0301, 0x0ACD, 0x110E, 0x1170, 0x11A8};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
-TEST(Unicode, FuzzFixes35) {
-    // idres16: \x004F\x0311\x0F71\x0F74\x80CC
-    // Expected: u"O\xF71\xF74\x311\xF71"
-    // Actual: u"O\xF71\xF74\x311\x80CC"
-    std::u16string idres16  = {0x004F, 0x0311, 0x0F71, 0x0F74, 0x80CC};
-    std::u16string expected = {0x004F, 0x0F71, 0x0F74, 0x0311, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_0303_032A_2A03) {
+    std::u16string idres16  = {0x0303, 0x032A, 0x2A03};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
-TEST(Unicode, FuzzFixes36) {
-    // idres16: \x0055\x0304\x0F71\x0F74\x80CD
-    // Expected: u"U\xF71\xF74\x304\xF71"
-    // Actual: u"U\xF71\xF74\x304\x80CD"
-    std::u16string idres16  = {0x0055, 0x0304, 0x0F71, 0x0F74, 0x80CD};
-    std::u16string expected = {0x0055, 0x0F71, 0x0F74, 0x0304, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_0360_0303_3F03) {
+    std::u16string idres16  = {0x0360, 0x0303, 0x3F03};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
-TEST(Unicode, FuzzFixes37) {
-    // idres16: \x0055\x0304\x0F71\x0F74\x80CC\x0A00
-    // Expected: u"U\xF71\xF74\x304\xF71\xA00"
-    // Actual: u"U\xF71\xF74\x304\x80CC\xA00"
-    std::u16string idres16  = {0x0055, 0x0304, 0x0F71, 0x0F74, 0x80CC, 0x0A00};
-    std::u16string expected = {0x0055, 0x0F71, 0x0F74, 0x0304, 0x0F71, 0x0A00};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes38) {
-    // idres16: \x0055\x0304\x0F71\x0F74\x0080
-    // Expected: u"U\xF71\xF74\x304\xF71"
-    // Actual: u"U\xF71\xF74\x304\x80"
-    std::u16string idres16  = {0x0055, 0x0304, 0x0F71, 0x0F74, 0x0080};
-    std::u16string expected = {0x0055, 0x0F71, 0x0F74, 0x0304, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes39) {
-    // idres16: \x0055\x0304\x0F80\x0087
-    // Expected: u"U\xF80\x304\xF80"
-    // Actual: u"U\xF80\x304\x87"
-    std::u16string idres16  = {0x0055, 0x0304, 0x0F80, 0x0087};
-    std::u16string expected = {0x0055, 0x0F80, 0x0304, 0x0F80};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes40) {
-    // idres16: \x082A\x0F71\x0F74\x80CC
-    // Expected: u"\xF71\xF74\x82A\xF71"
-    // Actual: u"\xF71\xF74\x82A\x80CC"
-    std::u16string idres16  = {0x082A, 0x0F71, 0x0F74, 0x80CC};
-    std::u16string expected = {0x0F71, 0x0F74, 0x082A, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes41) {
-    // idres16: \x0303\x0303\x032B\x0A03
-    // Expected: u"\x32B\x303\x303\x32B"
-    // Actual: u"\x32B\x303\x303\xA03"
-    std::u16string idres16  = {0x0303, 0x0303, 0x032B, 0x0A03};
-    std::u16string expected = {0x032B, 0x0303, 0x0303, 0x032B};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes42) {
-    // idres16: \x0303\x0303\x032B\x2303
-    // Expected: u"\x32B\x303\x303\x32B"
-    // Actual: u"\x32B\x303\x303\x2303"
-    std::u16string idres16  = {0x0303, 0x0303, 0x032B, 0x2303};
-    std::u16string expected = {0x032B, 0x0303, 0x0303, 0x032B};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes43) {
-    // idres16: \x082B\x0F71\x0F74\x80CD
-    // Expected: u"\xF71\xF74\x82B\xF71"
-    // Actual: u"\xF71\xF74\x82B\x80CD"
-    std::u16string idres16  = {0x082B, 0x0F71, 0x0F74, 0x80CD};
-    std::u16string expected = {0x0F71, 0x0F74, 0x082B, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes44) {
-    // idres16: \x2B0A\x082B\x0F71\x0F74\x80CC
-    // Expected: u"\x2B0A\xF71\xF74\x82B\xF71"
-    // Actual: u"\x2B0A\xF71\xF74\x82B\x80CC"
-    std::u16string idres16  = {0x2B0A, 0x082B, 0x0F71, 0x0F74, 0x80CC};
-    std::u16string expected = {0x2B0A, 0x0F71, 0x0F74, 0x082B, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
-}
-
-TEST(Unicode, FuzzFixes45) {
-    // idres16: \x0A7A\x082B\x0F71\x0F74\x80CD
-    // Expected: u"\xA7A\xF71\xF74\x82B\xF71"
-    // Actual: u"\xA7A\xF71\xF74\x82B\x80CD"
-    std::u16string idres16  = {0x0A7A, 0x082B, 0x0F71, 0x0F74, 0x80CD};
-    std::u16string expected = {0x0A7A, 0x0F71, 0x0F74, 0x082B, 0x0F71};
-
-    auto result = webpp::unicode::canonically_reordered(idres16);
-    EXPECT_EQ(result, expected);
+TEST(Unicode, Case_0741_0711_0707) {
+    std::u16string idres16  = {0x0741, 0x0711, 0x0707};
+    auto           expected = webpp::unicode::canonically_reordered(idres16);
+    auto           actual   = reorder_with_iterator(idres16);
+    EXPECT_EQ(actual, expected);
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

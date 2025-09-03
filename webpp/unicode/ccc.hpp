@@ -136,7 +136,7 @@ namespace webpp::unicode {
      */
     template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    static constexpr void canonically_reorder(Iter const start, EIter const& end)
+    static constexpr void canonically_reorder(Iter const& start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using checked::next_code_point;
         using checked::prev_code_point;
@@ -149,10 +149,10 @@ namespace webpp::unicode {
             return;
         }
 
-        auto pos = istl::deref(start);
+        Iter pos = start;
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
-            auto       back_pos = istl::deref(pos);
+            Iter       back_pos = pos;
             auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
@@ -160,13 +160,13 @@ namespace webpp::unicode {
                     break;
                 }
                 // skip the next code point as well, the next one is never going to be swapped with this one
-                checked::next_char<Iter>(pos, end);
+                checked::next_char(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
 
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
-                auto       prev    = istl::deref(back_pos);
+                Iter       prev    = back_pos;
                 auto const prev_cp = prev_code_point<return_replacement_char>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
@@ -183,7 +183,7 @@ namespace webpp::unicode {
      */
     template <stl::bidirectional_iterator Iter, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
-    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter const start, EIter const end) noexcept {
+    [[nodiscard]] static constexpr bool is_canonically_ordered(Iter const& start, EIter const& end) noexcept {
         using checked::next_code_point;
         using checked::prev_code_point;
         using enum checked::error_handling;
@@ -192,10 +192,10 @@ namespace webpp::unicode {
             return true;
         }
 
-        auto pos = istl::deref(start);
+        Iter pos = start;
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
-            auto       back_pos = istl::deref(pos);
+            Iter       back_pos = pos;
             auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
@@ -203,12 +203,12 @@ namespace webpp::unicode {
                     break;
                 }
                 // skip the next code point as well, the next one is never going to be swapped with this one
-                checked::next_char<Iter>(pos, end);
+                checked::next_char(pos, end);
                 continue; // Skip non-combining characters (starter code points)
             }
 
             while (back_pos != start) {
-                auto       prev     = istl::deref(back_pos);
+                Iter       prev     = back_pos;
                 auto const prev_cp  = prev_code_point<return_replacement_char>(prev, start);
                 auto const prev_ccc = ccc_of(prev_cp);
                 if (prev_ccc <= ccc) {
@@ -243,8 +243,8 @@ namespace webpp::unicode {
         using value_type        = stl::iter_value_t<Iter>;
         using traits            = stl::iterator_traits<Iter>;
         using pointer           = typename traits::pointer;
-        using reference         = value_type&;
-        using const_reference   = value_type const&;
+        using reference         = stl::iter_reference_t<Iter>;
+        using const_reference   = reference;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
