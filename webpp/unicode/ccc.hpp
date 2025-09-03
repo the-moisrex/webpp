@@ -414,7 +414,9 @@ namespace webpp::unicode {
             return cur == other;
         }
 
-        [[nodiscard]] constexpr bool operator==(EIter const& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(EIter const& other) const noexcept
+            requires(!stl::same_as<EIter, Iter>)
+        {
             return cur == other;
         }
 
