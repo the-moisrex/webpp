@@ -7738,6 +7738,7 @@ TEST(Unicode, FuzzFixes32) {
 TEST(Unicode, UtfReducerSegfault) {
     EXPECT_TRUE(isNFC(U"\u000A\u0010\u000A\u1E50\u0301\u0302"sv));
     EXPECT_TRUE(isNFC(U"\n\x10\n\u1E50\u0301\u0302"sv));
+    EXPECT_EQ(toNFC("\xe1\xb9\x90\xcc\x81\xcc\x62"s), "\xe1\xb9\x90\xcc\x81\xcc\x82"sv);
     EXPECT_EQ(toNFC("\xa\x10\xa\xe1\xb9\x90\xcc\x81\xcc\x62"s), "\x0a\x10\x0a\xe1\xb9\x90\xcc\x81\xcc\x82"sv);
     unicode_fuzz("\xa\x10\xa\xe1\xb9\x90\xcc\x81\xcc\x62"sv);
 }
