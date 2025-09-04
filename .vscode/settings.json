@@ -36,7 +36,8 @@
     "regex": "cpp",
     "future": "cpp",
     "cstdint": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "concepts": "cpp"
   },
   "cSpell.words": [
     "addr",

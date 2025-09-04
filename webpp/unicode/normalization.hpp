@@ -502,14 +502,14 @@ namespace webpp::unicode {
       EIter end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
         using reducer_type = utf_reducer<4, Iter>;
 
-        reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
+        reducer_type           reducer{ptr, static_cast<stl::size_t>(end - ptr)};
+        utf_range_marker<Iter> hole;
         auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
         for (; cp1_pin != reducer.end(); ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin;
             cp2_pin     = cp1_pin;
             ++cp2_pin;
-            auto                   cp1 = *cp1_pin;
-            utf_range_marker<Iter> hole;
+            auto cp1 = *cp1_pin;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
