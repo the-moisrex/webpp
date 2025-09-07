@@ -11,7 +11,7 @@ define show_hole_buffer
 
   # buffer pointers
   set $buf_start = $reducer.beg
-  set $buf_end   = $reducer.newend
+  set $buf_end   = $reducer.endptr
 
   # offset + size
   set $offset = $beginp - $buf_start

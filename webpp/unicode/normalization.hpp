@@ -502,14 +502,14 @@ namespace webpp::unicode {
       EIter end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
         using reducer_type = utf_reducer<4, Iter>;
 
-        reducer_type           reducer{ptr, static_cast<stl::size_t>(end - ptr)};
-        utf_range_marker<Iter> hole;
+        reducer_type reducer{ptr, static_cast<stl::size_t>(end - ptr)};
         auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
         for (; cp1_pin != reducer.end(); ++cp1_pin, ++rep_pin) {
             starter_pin = rep_pin;
             cp2_pin     = cp1_pin;
             ++cp2_pin;
-            auto cp1 = *cp1_pin;
+            auto                   cp1 = *cp1_pin;
+            utf_range_marker<Iter> hole;
             for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
                 auto const cp2         = *cp2_pin;
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
@@ -525,11 +525,9 @@ namespace webpp::unicode {
                 }
                 prev_ccc = ccc;
 
-                utf_range_marker<Iter> cp2_hole;
-                cp2_hole.mark_code_point(cp2_pin.iter(), reducer.end());
+                hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
                 ++rep_pin;
-                rep_pin.set(cp2, cp2_hole, hole);
-                rep_pin.fallback_hole(hole, cp2_hole);
+                rep_pin.set(cp2, hole);
             }
 
             // use the hole if you run out of space in UTF-8 and UTF-16 mode

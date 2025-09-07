@@ -296,8 +296,8 @@ namespace webpp::unicode {
             }
 
             // 4. AN and EN should not be present together
-            webpp_static_constexpr auto AN_EN  = bidi_mask(AN, EN);
-            valid                             &= (accum & AN_EN) != AN_EN;
+            constexpr auto AN_EN  = bidi_mask(AN, EN);
+            valid                &= (accum & AN_EN) != AN_EN;
         }
 
         // We don't need early bailouts in this function since the happy path goes through all the checks and
