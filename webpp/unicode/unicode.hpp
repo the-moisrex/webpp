@@ -1471,7 +1471,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<CharT> && UTF32<out_char_type>) {
                 stl::copy_n(out, oend - out - 1, stl::next(out));
             } else {
-                auto const len = utf_length_from<out_char_type, diff_type>(val);
+                auto const len = static_cast<diff_type>(utf_length_from<out_char_type>(val));
                 stl::copy_n(out, oend - out - len, stl::next(out, len));
             }
             unchecked::append(out, val);

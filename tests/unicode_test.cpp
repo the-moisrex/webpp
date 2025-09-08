@@ -6494,9 +6494,12 @@ TEST(Unicode, ComposedStr2) {
 }
 
 TEST(Unicode, HangulCompose) {
-    EXPECT_EQ(canonical_composed(0xAC00, 0x11A8), 0xAC01) << compose_hangul(0xAC00, 0x11A8); // 가 + ᆨ = 각
-    EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC1C, 0x11B2); // 개 + ᆲ = 갥
-    EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC24, 0x11B2); // 개 + ᆲ = 갧
+    EXPECT_EQ(canonical_composed(0xAC00, 0x11A8), 0xAC01)
+      << static_cast<std::uint32_t>(compose_hangul(U'\xAC00', U'\x11A8')); // 가 + ᆨ = 각
+    EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27)
+      << static_cast<std::uint32_t>(compose_hangul(U'\xAC1C', U'\x11B2')); // 개 + ᆲ = 갥
+    EXPECT_EQ(canonical_composed(0xAC1C, 0x11B2), 0xAC27)
+      << static_cast<std::uint32_t>(compose_hangul(U'\xAC24', U'\x11B2')); // 개 + ᆲ = 갧
 }
 
 TEST(Unicode, NoCompose) {

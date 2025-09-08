@@ -7,7 +7,6 @@
 #include "../std/iterator.hpp"
 #include "./unicode.hpp"
 
-
 namespace webpp::unicode {
 
     // From https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
@@ -59,10 +58,8 @@ namespace webpp::unicode {
      * and the total count of Hangul syllables (hangul_syllable_count).
      * If the code point falls within this range, it returns true; otherwise, it returns false.
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_hangul_code_point(CharT const code_point) noexcept {
-        return code_point >= static_cast<CharT>(hangul_syllable_base) &&
-               code_point < static_cast<CharT>(hangul_syllable_base + hangul_syllable_count);
+    [[nodiscard]] static constexpr bool is_hangul_code_point(char32_t const code_point) noexcept {
+        return code_point >= hangul_syllable_base && code_point < hangul_syllable_base + hangul_syllable_count;
     }
 
     /**
@@ -80,10 +77,8 @@ namespace webpp::unicode {
      * the count of Hangul leading consonants (hangul_leading_count).
      * If the code point falls within this range, it returns true; otherwise, it returns false.
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_hangul_leading(CharT const code_point) noexcept {
-        return code_point >= static_cast<CharT>(hangul_leading_base) &&
-               code_point < static_cast<CharT>(hangul_leading_base + hangul_leading_count);
+    [[nodiscard]] static constexpr bool is_hangul_leading(char32_t const code_point) noexcept {
+        return code_point >= hangul_leading_base && code_point < hangul_leading_base + hangul_leading_count;
     }
 
     /**
@@ -101,10 +96,8 @@ namespace webpp::unicode {
      * the count of Hangul trailing consonants (hangul_trailing_count).
      * If the code point falls within this range, it returns true; otherwise, it returns false.
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_hangul_trailing(CharT const code_point) noexcept {
-        return code_point >= static_cast<CharT>(hangul_trailing_base) &&
-               code_point < static_cast<CharT>(hangul_trailing_base + hangul_trailing_count);
+    [[nodiscard]] static constexpr bool is_hangul_trailing(char32_t const code_point) noexcept {
+        return code_point >= hangul_trailing_base && code_point < hangul_trailing_base + hangul_trailing_count;
     }
 
     /**
@@ -125,10 +118,8 @@ namespace webpp::unicode {
      * Hangul vowels (hangul_vowel_count).
      * If the code point falls within this range, it returns true; otherwise, it returns false.
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_hangul_vowel(CharT const code_point) noexcept {
-        return code_point >= static_cast<CharT>(hangul_vowel_base) &&
-               code_point < static_cast<CharT>(hangul_vowel_base + hangul_vowel_count);
+    [[nodiscard]] static constexpr bool is_hangul_vowel(char32_t const code_point) noexcept {
+        return code_point >= hangul_vowel_base && code_point < hangul_vowel_base + hangul_vowel_count;
     }
 
     /**
@@ -137,8 +128,7 @@ namespace webpp::unicode {
      * Attention: the returned length is UTF-32 (and also UTF-16) and is not in UTF-8.
      * Attention: the code point MUST be a valid Hangul code point.
      */
-    template <UTF32 CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
-    [[nodiscard]] static constexpr RetT hangul_decompose_length_utf32(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr std::size_t hangul_decompose_length_utf32(char32_t const code_point) noexcept {
         webpp_assume(is_hangul_code_point(code_point));
         if ((code_point - hangul_syllable_base) % hangul_trailing_count) {
             return 3U;
@@ -154,21 +144,19 @@ namespace webpp::unicode {
      *
      * This function returns either 9 or 6.
      */
-    template <typename CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
-    [[nodiscard]] static constexpr RetT hangul_decompose_length_utf8(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::size_t hangul_decompose_length_utf8(char32_t const code_point) noexcept {
         return hangul_decompose_length_utf32(code_point) * 3;
     }
 
     /**
      * Hangul decompose length based on the character type
      */
-    template <typename CharT = char32_t, typename CodePointT = char32_t, stl::unsigned_integral RetT = stl::size_t>
-        requires(sizeof(CodePointT) >= sizeof(char32_t))
-    [[nodiscard]] static constexpr RetT hangul_decompose_length(CodePointT const code_point) noexcept {
+    template <typename CharT = char32_t>
+    [[nodiscard]] static constexpr stl::size_t hangul_decompose_length(char32_t const code_point) noexcept {
         if constexpr (UTF8<CharT>) {
-            return hangul_decompose_length_utf8<CodePointT, RetT>(code_point);
+            return hangul_decompose_length_utf8(code_point);
         } else {
-            return hangul_decompose_length_utf32<CodePointT, RetT>(code_point);
+            return hangul_decompose_length_utf32(code_point);
         }
     }
 
@@ -244,24 +232,21 @@ namespace webpp::unicode {
      *
      * From: https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G59688
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr CharT compose_hangul(CharT const lhs, CharT const rhs) noexcept {
+    [[nodiscard]] static constexpr char32_t compose_hangul(char32_t const lhs, char32_t const rhs) noexcept {
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
-            auto const leading_pos       = lhs - static_cast<CharT>(hangul_leading_base);
-            auto const vowel_pos         = rhs - static_cast<CharT>(hangul_vowel_base);
-            auto const leading_vowel_pos = leading_pos * static_cast<CharT>(hangul_block_count) +
-                                           vowel_pos * static_cast<CharT>(hangul_trailing_count);
-            return static_cast<CharT>(hangul_syllable_base) + leading_vowel_pos;
+            char32_t const leading_pos       = lhs - hangul_leading_base;
+            char32_t const vowel_pos         = rhs - hangul_vowel_base;
+            char32_t const leading_vowel_pos = leading_pos * hangul_block_count + vowel_pos * hangul_trailing_count;
+            return hangul_syllable_base + leading_vowel_pos;
         }
 
         // LV characters are the first in each "T block", so use this check to avoid combining LVT with T.
-        if (is_hangul_code_point(lhs) &&
-            (lhs - static_cast<CharT>(hangul_syllable_base)) % static_cast<CharT>(hangul_trailing_count) == 0 &&
+        if (is_hangul_code_point(lhs) && (lhs - hangul_syllable_base) % hangul_trailing_count == 0 &&
             is_hangul_trailing(rhs))
         {
-            return static_cast<CharT>(lhs + rhs - static_cast<CharT>(hangul_trailing_base));
+            return lhs + rhs - hangul_trailing_base;
         }
-        return 0;
+        return U'\0';
     }
 
 } // namespace webpp::unicode
