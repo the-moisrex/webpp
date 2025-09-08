@@ -434,9 +434,10 @@ namespace webpp::unicode {
                 auto             iter_cpy = istl::deref(iter());
                 while (count <= cp_len) {
                     assert(iter_cpy <= reducer->endptr);
-                    auto const cur_len  = checked::code_point_length<stl::int_fast8_t>(iter_cpy, reducer->end());
-                    iter_cpy           += cur_len;
-                    count              += cur_len;
+                    auto const cur_len =
+                      static_cast<stl::int_fast8_t>(checked::code_point_length(iter_cpy, reducer->end()));
+                    iter_cpy += cur_len;
+                    count    += cur_len;
                 }
                 webpp_assume(count <= 6);
                 return count;
@@ -448,7 +449,8 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 return 1; // always
             } else {
-                return required_code_units_of_len(utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_cp));
+                return required_code_units_of_len(
+                  static_cast<stl::int_fast8_t>(utf_length_from_utf32<unit_type>(inp_cp)));
             }
         }
 
@@ -645,10 +647,10 @@ namespace webpp::unicode {
                 *iter() = code_point;
             } else {
                 assert(iter() < reducer->endptr);
-                assert(is_code_point_valid(code_point) > 0);
+                assert(is_code_point_valid(code_point));
 
-                auto const new_len = utf_length_from<unit_type, stl::int_fast8_t>(code_point);
-                auto const cur_len = checked::code_point_length<difference_type>(iter(), reducer->end());
+                auto const new_len = static_cast<stl::int_fast8_t>(utf_length_from<unit_type>(code_point));
+                auto const cur_len = static_cast<difference_type>(checked::code_point_length(iter(), reducer->end()));
                 set_inplace(code_point, cur_len, new_len);
             }
         }
