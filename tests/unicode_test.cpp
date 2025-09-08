@@ -88,7 +88,7 @@ TEST(UnicodeAlgos, UnitStart) {
     EXPECT_FALSE(is_code_unit_start('\xAC'));
     EXPECT_FALSE(is_code_unit_start('\x8B'));
     EXPECT_TRUE(is_code_unit_start('\xE2'));
-    EXPECT_TRUE(webpp::unicode::is_bmp('\xE2'));
+    EXPECT_TRUE(webpp::unicode::is_bmp(U'\xE2'));
     EXPECT_TRUE(webpp::unicode::is_supplementary(0xFFFF + 1));
 }
 
