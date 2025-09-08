@@ -93,9 +93,9 @@ namespace webpp::unicode {
             endp   += diff;
         }
 
-        constexpr void shave_start(size_type lengh = 1) noexcept {
-            // assert(lengh <= size());
-            beginp += static_cast<difference_type>(lengh);
+        constexpr void shave_start(size_type length = 1) noexcept {
+            // assert(length <= size());
+            beginp += static_cast<difference_type>(length);
             if (beginp >= endp) {
                 this->clear();
             }
@@ -157,15 +157,11 @@ namespace webpp::unicode {
             assert(this->end() != IterT{});
             assert(!this->empty());
             assert(this->begin() < this->end());
-            // if (diff == 0) {
-            //     return;
-            // }
-            auto const length = this->size();
-            assert(length > 0);
+            auto const length = static_cast<difference_type>(this->size());
             if (diff < 0) {
-                stl::shift_right(beginp + diff, endp, static_cast<difference_type>(length));
+                stl::shift_right(beginp + diff, endp, length);
             } else if (diff > 0) {
-                stl::shift_left(beginp, endp + diff, static_cast<difference_type>(length));
+                stl::shift_left(beginp, endp + diff, length);
             }
             beginp += diff;
             endp   += diff;
@@ -175,37 +171,37 @@ namespace webpp::unicode {
         /// previously moved content by move_content.
         template <typename IterableT>
         constexpr void move_iterators(difference_type diff, IterableT& iters) noexcept {
+            if (diff == 0) {
+                return;
+            }
+
             if constexpr (stl::is_pointer_v<IterT>) {
                 assert(this->begin() != nullptr);
                 assert(this->end() != nullptr);
             }
             assert(!this->empty());
             assert(this->begin() < this->end());
+
             auto const length  = this->size();
             auto const old_beg = beginp - diff;
             auto const old_end = endp - diff;
             auto const new_beg = beginp;
             auto const new_end = endp;
-            if (diff < 0) {
-                for (auto& cur : iters) {
-                    if (cur >= new_beg && cur < old_beg) {
-                        stl::advance(cur, length);
-                    } else if (cur >= old_beg && cur < old_end) {
-                        cur = old_end;
-                        while (!is_code_unit_start(*--cur)) {
-                            // moving the iterator to the beginning of the previous code point
-                        }
-                    }
-                }
-            } else if (diff > 0) {
-                for (auto& cur : iters) {
-                    if (cur >= old_end && cur < new_end) {
-                        stl::advance(cur, -length);
-                    } else if (cur >= old_beg && cur < old_end) {
-                        cur = old_beg;
-                        while (!is_code_unit_start(*--cur)) {
-                            // moving the iterator to the beginning of the previous code point
-                        }
+
+            // Define the ranges and advance amount based on the sign of diff
+            auto const& range1_beg     = (diff < 0) ? new_beg : old_end;
+            auto const& range1_end     = (diff < 0) ? old_beg : new_end;
+            auto const& range2_beg     = old_beg;
+            auto const& range2_end     = old_end;
+            auto const  advance_amount = (diff < 0) ? length : -length;
+
+            for (auto& cur : iters) {
+                if (cur >= range1_beg && cur < range1_end) {
+                    stl::advance(cur, advance_amount);
+                } else if (cur >= range2_beg && cur < range2_end) {
+                    cur = (diff < 0) ? old_end : old_beg;
+                    while (!is_code_unit_start(*--cur)) {
+                        // moving the iterator to the beginning of the previous code point
                     }
                 }
             }
