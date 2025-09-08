@@ -160,7 +160,7 @@ namespace webpp::unicode::idna {
         }
         while (handled_len < utf32_size) {
             // Find the next larger non-ascii code point:
-            punycode_uint max_m = max_legal_utf32<punycode_uint>;
+            punycode_uint max_m = max_legal_utf32;
             for (auto pos = spos;;) {
                 auto const code_point = checked::next_code_point<return_replacement_char>(pos, send);
                 if (code_point == 0) {
@@ -175,7 +175,7 @@ namespace webpp::unicode::idna {
 
             // Increase delta enough to advance the decoder's <n,i> state to <m,0>, but guard against overflow
             // the standard uses max-integer, but we use max-utf32
-            if (diff > (max_utf32<punycode_uint> - delta) / (handled_len + 1)) [[unlikely]] {
+            if (diff > (max_utf32 - delta) / (handled_len + 1)) [[unlikely]] {
                 return overflow;
             }
             delta += static_cast<punycode_uint>(diff * (handled_len + 1));
@@ -188,7 +188,7 @@ namespace webpp::unicode::idna {
                 }
 
                 if (code_point < n_val) {
-                    if (delta == max_utf32<punycode_uint>) [[unlikely]] {
+                    if (delta == max_utf32) [[unlikely]] {
                         return overflow;
                     }
                     ++delta;
@@ -291,7 +291,7 @@ namespace webpp::unicode::idna {
                 if (digit >= Options.base) [[unlikely]] {
                     return bad_input;
                 }
-                if (digit > (max_utf32<punycode_uint> - i_val) / w_val) [[unlikely]] {
+                if (digit > (max_utf32 - i_val) / w_val) [[unlikely]] {
                     return overflow;
                 }
                 i_val += digit * w_val;
@@ -303,7 +303,7 @@ namespace webpp::unicode::idna {
                 if (digit < t_val) {
                     break;
                 }
-                if (w_val > max_utf32<punycode_uint> / (Options.base - t_val)) [[unlikely]] {
+                if (w_val > max_utf32 / (Options.base - t_val)) [[unlikely]] {
                     return overflow;
                 }
                 w_val *= Options.base - t_val;
@@ -312,7 +312,7 @@ namespace webpp::unicode::idna {
 
             // "i" was supposed to wrap around from out+1 to 0,
             // incrementing n each time, so we'll fix that now:
-            if (i_val / (out_len + 1) > max_utf32<punycode_uint> - n_val) [[unlikely]] {
+            if (i_val / (out_len + 1) > max_utf32 - n_val) [[unlikely]] {
                 return overflow;
             }
             n_val += i_val / (out_len + 1);

@@ -56,7 +56,7 @@ namespace webpp::tests {
                 iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
                 return 4U;
             } else if constexpr (UTF16<char_type>) {
-                if (ccp <= max_bmp<char_type>) {
+                if (ccp <= max_bmp) {
                     iter_append(out, ccp); // normal case
                     return 1U;
                 }

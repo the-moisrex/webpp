@@ -161,7 +161,7 @@ TEST(Unicode, AppendInvalidCodePoint) {
 
 TEST(Unicode, AppendAllowedBMPCodePoints) {
     std::u16string utf16String;
-    for (char32_t codePoint = 0x0001; codePoint <= webpp::unicode::max_bmp<char32_t>; ++codePoint) {
+    for (char32_t codePoint = 0x0001; codePoint <= webpp::unicode::max_bmp; ++codePoint) {
         bool const res = append(utf16String, codePoint);
         if (webpp::unicode::is_surrogate(codePoint)) {
             ASSERT_FALSE(res) << "0x" << std::hex << static_cast<uint16_t>(codePoint)
@@ -208,7 +208,7 @@ TEST(Unicode, AppendMixOfCodePointTypes) {
 
 TEST(Unicode, AppendLargeNumberOfCodePoints) {
     std::u16string utf16String;
-    for (char32_t codePoint = max_bmp<char32_t> + 1; codePoint <= max_legal_utf32<char32_t>; codePoint++) {
+    for (char32_t codePoint = max_bmp + 1; codePoint <= max_legal_utf32; codePoint++) {
         auto const prev_size = utf16String.size();
         bool const res       = append(utf16String, codePoint);
         if (webpp::unicode::is_surrogate(codePoint) || !webpp::unicode::is_code_point_valid(codePoint)) {
@@ -4934,12 +4934,12 @@ TEST(Unicode, Compose) {
     // clang-format on
 
     // specials:
-    EXPECT_EQ(canonical_composed(70'375, 43'456), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(70'375, 43'456), webpp::unicode::replacement_char);
 
     // cat DerivedNormalizationProps.txt | grep 308 | grep 301
     // 0344          ; NFKC_CF; 0308 0301      # Mn       COMBINING GREEK DIALYTIKA TONOS
     // It's NFKC_CaseFold, not a canonical composed
-    EXPECT_EQ(canonical_composed(0x308, 0x301), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(0x308, 0x301), webpp::unicode::replacement_char);
 
     // clang-format off
 #ifndef __CLION_IDE__
@@ -5890,7 +5890,7 @@ TEST(Unicode, Compose) {
 
 TEST(Unicode, UTFLeadingCodeUnitsTest) {
     std::size_t index = 0;
-    for (auto const unit : webpp::unicode::utf8_leading_code_units<char8_t>) {
+    for (auto const unit : webpp::unicode::utf8_leading_code_units) {
         EXPECT_TRUE(webpp::unicode::is_code_unit_start(unit));
         if (index != 0 && index <= 6) {
             EXPECT_EQ(webpp::unicode::required_length_of(unit), index);
@@ -5899,7 +5899,7 @@ TEST(Unicode, UTFLeadingCodeUnitsTest) {
     }
 
     index = 0;
-    for (auto const unit : webpp::unicode::utf16_leading_code_units<char16_t>) {
+    for (auto const unit : webpp::unicode::utf16_leading_code_units) {
         EXPECT_TRUE(webpp::unicode::is_code_unit_start(unit)) << static_cast<std::size_t>(unit);
         if (index != 0) {
             EXPECT_EQ(webpp::unicode::required_length_of(unit), index);
@@ -5957,8 +5957,8 @@ TEST(Unicode, CanonicalComposeSpecial) {
 
 TEST(Unicode, ComposeStr) {
     EXPECT_EQ(canonical_composed('a', 0x0300), U'\x00e0');
-    EXPECT_EQ(canonical_composed(1488, 776), webpp::unicode::replacement_char<char32_t>);
-    EXPECT_EQ(canonical_composed(111, 0x03'08bb), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(1488, 776), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(111, 0x03'08bb), webpp::unicode::replacement_char);
     EXPECT_EQ(canonical_composed<u32string>(U"o\u0308bb"), U"\u00f6bb");
     EXPECT_EQ(canonical_composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
     EXPECT_EQ(canonical_composed<u32string>(U"."), U".");
@@ -6500,12 +6500,12 @@ TEST(Unicode, HangulCompose) {
 }
 
 TEST(Unicode, NoCompose) {
-    EXPECT_EQ(canonical_composed(0x925, 0x0020), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(0, 0), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(1, 0), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(std::numeric_limits<std::uint32_t>::max(), 0U), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(0U, std::numeric_limits<std::uint32_t>::max()), webpp::unicode::replacement_char<>);
-    EXPECT_EQ(canonical_composed(static_cast<char32_t>(-1), 0), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(canonical_composed(0x925, 0x0020), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(0, 0), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(1, 0), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(std::numeric_limits<std::uint32_t>::max(), 0U), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(0U, std::numeric_limits<std::uint32_t>::max()), webpp::unicode::replacement_char);
+    EXPECT_EQ(canonical_composed(static_cast<char32_t>(-1), 0), webpp::unicode::replacement_char);
     EXPECT_NE(canonical_composed(0x594, 0x0020), 0x00A8);
     EXPECT_NE(canonical_composed(0x307, 0x0061), 0x00AA);
     EXPECT_NE(canonical_composed(0x579, 0x0020), 0x00AF);
@@ -6549,7 +6549,7 @@ namespace {
         for (auto const lhs : str) {
             for (auto const rhs : str) {
                 auto const comp = webpp::unicode::canonical_composed(lhs, rhs);
-                if (comp == webpp::unicode::replacement_char<char32_t>) {
+                if (comp == webpp::unicode::replacement_char) {
                     continue;
                 }
                 report << "\n  Compositions: " << std::hex << std::uppercase << "0x" << static_cast<std::uint32_t>(lhs)
@@ -6562,7 +6562,7 @@ namespace {
         for (auto const lhs : comps) {
             for (auto const rhs : str) {
                 auto const comp = webpp::unicode::canonical_composed(lhs, rhs);
-                if (comp == webpp::unicode::replacement_char<char32_t>) {
+                if (comp == webpp::unicode::replacement_char) {
                     continue;
                 }
                 report << "\n  Compositions: " << std::hex << std::uppercase << "0x" << static_cast<std::uint32_t>(lhs)
@@ -6663,7 +6663,7 @@ TEST(Unicode, NormalizationTests) {
       };
 
     // special cases:
-    EXPECT_EQ(canonical_composed(0xE0, 0x302), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(0xE0, 0x302), webpp::unicode::replacement_char);
     EXPECT_EQ(toNFC<std::u32string>(U"\x61\x5ae\x300\x302\x315\x62"), U"\xe0\x5ae\x302\x315\x62");
     EXPECT_EQ(canonical_decomposed<u32string>(U'\u1e0a'), U"D\x307") << "Ḋ";
     EXPECT_EQ(canonical_decomposed<u32string>(u32string_view{U"\x1e0a"}), U"D\x307") << "Ḋ";
@@ -6714,7 +6714,7 @@ TEST(Unicode, CheckedNextCodePoint) {
     std::u8string str = u8"\xac";
     EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
     EXPECT_EQ(next_code_point_copy<return_negated>(str.begin(), str.end()), -U'\xac');
-    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()), replacement_char<char32_t>);
+    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()), replacement_char);
 
     std::u8string str2 = u8"\xac\xac";
     EXPECT_EQ(next_code_point_copy<return_negated>(str2.begin(), str2.end()), -U'\xac');
@@ -6962,7 +6962,7 @@ TEST(Unicode, FuzzFixes4) {
 }
 
 TEST(Unicode, FuzzTestFixes3) {
-    EXPECT_EQ(canonical_composed(0xffff'ff74, 0x30c), replacement_char<char32_t>);
+    EXPECT_EQ(canonical_composed(0xffff'ff74, 0x30c), replacement_char);
 
     unicode_fuzz("\xed\x96\x96\xd6\x96"sv);
     unicode_fuzz("\xa\xae\xae\xae"sv);

@@ -445,10 +445,8 @@ namespace webpp::unicode {
      * Compose 2 code points into one
      * Attention: You could return 0xFFFD (replacement character) or 0 if they're not valid inputs
      */
-    [[nodiscard]] static constexpr char32_t canonical_composed(
-      char32_t const lhs,
-      char32_t const rhs,
-      char32_t const error = replacement_char<char32_t>) noexcept {
+    [[nodiscard]] static constexpr char32_t
+    canonical_composed(char32_t const lhs, char32_t const rhs, char32_t const error = replacement_char) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
@@ -490,6 +488,10 @@ namespace webpp::unicode {
      *
      * Attention: this function does NOT decompose, meaning this function can be used in
      * NFC normalization, but itself is NOT NFC.
+     *
+     * Attention: if the input contains invalid code point, they might get replaced with
+     * the replacement character, which in UTF-8/16 it may exceed the length of the original
+     * Code Point; so make sure the input does not contain invalid Code Points.
      *
      * @returns The new length of the string. Specified end is no longer valid.
      */

@@ -38,7 +38,7 @@ namespace webpp::unicode::checked {
             lpos{stl::move(inp_pos)},
             upos{stl::move(inp_pos)},
             send{stl::move(inp_end)},
-            code_point{checked::next_code_point<ErrorHandling, value_type>(upos, send)} {}
+            code_point{checked::next_code_point<ErrorHandling>(upos, send)} {}
 
         constexpr utf32_bidi_iter()                                      = default;
         constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
@@ -49,13 +49,13 @@ namespace webpp::unicode::checked {
 
         constexpr utf32_bidi_iter& operator++() noexcept {
             lpos       = upos;
-            code_point = checked::next_code_point<ErrorHandling, value_type>(upos, send);
+            code_point = checked::next_code_point<ErrorHandling>(upos, send);
             return *this;
         }
 
         constexpr utf32_bidi_iter& operator--() noexcept {
             upos       = lpos;
-            code_point = checked::prev_code_point<ErrorHandling, value_type>(lpos, beg);
+            code_point = checked::prev_code_point<ErrorHandling>(lpos, beg);
             return *this;
         }
 
@@ -213,7 +213,7 @@ namespace webpp::unicode::checked {
         explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept
           : pos{stl::move(inp_pos)},
             send{stl::move(inp_end)},
-            code_point{checked::next_code_point_copy<ErrorHandling, value_type>(pos, send)} {}
+            code_point{checked::next_code_point_copy<ErrorHandling>(pos, send)} {}
 
         constexpr utf32_forward_iter()                                         = default;
         constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;
@@ -224,7 +224,7 @@ namespace webpp::unicode::checked {
 
         constexpr utf32_forward_iter& operator++() noexcept {
             if (checked::next_char(pos, send)) {
-                code_point = checked::next_code_point_copy<ErrorHandling, value_type>(pos, send);
+                code_point = checked::next_code_point_copy<ErrorHandling>(pos, send);
             } else {
                 code_point = U'\0';
             }
