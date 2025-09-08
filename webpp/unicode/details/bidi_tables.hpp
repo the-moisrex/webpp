@@ -41,7 +41,7 @@ namespace webpp::unicode::details {
      * In "bidi_index" table, any code point bigger than this number will have "None" as its Bidi value;
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_zero_bidis = 0x110000UL;
+    static constexpr char32_t trailing_zero_bidis = U'\x110000';
 
     /**
      * Bidi (Index Table)

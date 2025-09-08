@@ -5,13 +5,14 @@
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
 import * as path from "node:path";
+
+import * as DerivedBidiClass from "./DerivedBidiClass.mjs";
 import {genSimpleIndexAddenda} from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import * as DerivedBidiClass from "./DerivedBidiClass.mjs";
-import {runClangFormat, uint32, uint5, uint8, writePieces} from "./utils.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
+import {runClangFormat, uint32, uint5, uint8, writePieces} from "./utils.mjs";
 
 const bidiOutFile = `bidi_tables.hpp`;
 
@@ -111,7 +112,7 @@ class BidiTables {
      * In "bidi_index" table, any code point bigger than this number will have "None" as its Bidi value;
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_zero_bidis = 0x${this.lastZero.toString(16).toUpperCase()}UL;
+    static constexpr char32_t trailing_zero_bidis = U'\\x${this.lastZero.toString(16).toUpperCase()}';
 
 ${renderedTables}
         `;

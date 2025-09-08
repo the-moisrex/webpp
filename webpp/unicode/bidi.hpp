@@ -57,8 +57,7 @@ namespace webpp::unicode {
 
     template <typename... T>
     [[nodiscard]] consteval stl::uint32_t bidi_mask(T const... dirs) noexcept {
-        using stl::to_underlying;
-        return ((0b1U << to_underlying(dirs)) | ... | 0b0U);
+        return ((0b1U << stl::to_underlying(dirs)) | ... | 0b0U);
     }
 
     [[nodiscard]] static constexpr stl::string_view to_string(direction const dir) noexcept {
@@ -142,8 +141,7 @@ namespace webpp::unicode {
     }
 
     /// Get the direction of the specified code point
-    template <UTF CPType>
-    [[nodiscard]] static constexpr direction direction_of(CPType const code_point) noexcept {
+    [[nodiscard]] static constexpr direction direction_of(char32_t const code_point) noexcept {
         using enum direction;
         using details::bidi_common_pos;
         using details::bidi_index;
@@ -151,7 +149,7 @@ namespace webpp::unicode {
         using details::bidi_values;
 
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        if (code_point < 0 || code_point >= static_cast<CPType>(details::trailing_zero_bidis)) [[unlikely]] {
+        if (static_cast<stl::int32_t>(code_point) < 0 || code_point >= details::trailing_zero_bidis) [[unlikely]] {
             return NONE;
         }
 
