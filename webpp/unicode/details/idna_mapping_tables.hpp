@@ -5,9 +5,9 @@
  *   to re-generate this file with different options.
  *
  *   Auto generated from:                generate_idna_mapping_tables3.mjs
- *   Unicode UCD Database Creation Date: 2024-08-25
- *   This file's generation date:        Thu, 28 Aug 2025 17:21:17 GMT
- *   Unicode Version:                    16.0.0
+ *   Unicode UCD Database Creation Date: 2025-08-15
+ *   This file's generation date:        Wed, 10 Sep 2025 16:49:42 GMT
+ *   Unicode Version:                    17.0.0
  *   Total Table sizes in this file:
  *       - in bits:       366992
  *       - in bytes:      45874 B
