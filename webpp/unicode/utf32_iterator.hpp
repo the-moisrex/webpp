@@ -24,6 +24,7 @@ namespace webpp::unicode::checked {
         using const_reference   = value_type const&;
         using iterator_category = stl::bidirectional_iterator_tag;
         using iterator_concept  = stl::bidirectional_iterator_tag;
+        using unit_type         = stl::iter_value_t<Iter>;
 
       private:
         [[no_unique_address]] istl::begin_iterator<Iter> beg{};
@@ -96,6 +97,28 @@ namespace webpp::unicode::checked {
         [[nodiscard]] constexpr bool at_end() const noexcept {
             return lpos == send;
         }
+
+        [[nodiscard]] constexpr Iter const& base() const noexcept {
+            return lpos;
+        }
+
+        /// Return the start of the next Code Point
+        [[nodiscard]] constexpr Iter const& upper_base() const noexcept {
+            return upos;
+        }
+
+        constexpr stl::size_t unsafe_set(char32_t const new_code_point) noexcept {
+            code_point      = new_code_point;
+            Iter       cpos = lpos;
+            auto const len  = unchecked::append(cpos, code_point);
+            upos            = stl::next(lpos, static_cast<difference_type>(len));
+            return len;
+        }
+
+        /// Return the length of the code point
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            return static_cast<stl::size_t>(upos - lpos);
+        }
     };
 
     /**
@@ -112,6 +135,7 @@ namespace webpp::unicode::checked {
         using const_reference   = value_type const&;
         using iterator_category = stl::bidirectional_iterator_tag;
         using iterator_concept  = stl::bidirectional_iterator_tag;
+        using unit_type         = stl::iter_value_t<Iter>;
 
       private:
         // todo: do we need beg in this specialization?
@@ -185,6 +209,29 @@ namespace webpp::unicode::checked {
         [[nodiscard]] constexpr bool at_start() const noexcept {
             return pos == beg;
         }
+
+        [[nodiscard]] constexpr Iter const& base() const noexcept {
+            return pos;
+        }
+
+        /// Return the start of the next Code Point
+        [[nodiscard]] constexpr Iter upper_base() const noexcept {
+            // return stl::next(*this).base();
+            Iter upos = pos;
+            auto _    = checked::next_code_point(upos, send);
+            return upos;
+        }
+
+        constexpr stl::size_t unsafe_set(char32_t const new_code_point) noexcept {
+            code_point = new_code_point;
+            Iter cpos  = pos;
+            return unchecked::append(cpos, code_point);
+        }
+
+        /// Return the length of the code point
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            return code_point_length(pos, send);
+        }
     };
 
     /**
@@ -203,6 +250,7 @@ namespace webpp::unicode::checked {
         using const_reference   = value_type const&;
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
+        using unit_type         = stl::iter_value_t<Iter>;
 
       private:
         [[no_unique_address]] stl::remove_cvref_t<Iter>  pos{};
@@ -257,6 +305,29 @@ namespace webpp::unicode::checked {
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
             return pos == send;
+        }
+
+        [[nodiscard]] constexpr Iter const& base() const noexcept {
+            return pos;
+        }
+
+        /// Return the start of the next Code Point
+        [[nodiscard]] constexpr Iter upper_base() const noexcept {
+            // return stl::next(*this).base();
+            Iter upos = pos;
+            auto _    = checked::next_code_point(upos, send);
+            return upos;
+        }
+
+        constexpr stl::size_t unsafe_set(char32_t const new_code_point) noexcept {
+            code_point = new_code_point;
+            Iter cpos  = pos;
+            return unchecked::append(cpos, code_point);
+        }
+
+        /// Return the length of the code point
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            return code_point_length(pos, send);
         }
     };
 

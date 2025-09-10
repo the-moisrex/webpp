@@ -810,8 +810,8 @@ namespace webpp::unicode {
          * Append a Code Point to a string
          * "out" can be an iterator/pointer or a string
          */
-        template <istl::Appendable StrT, stl::integral SizeT = istl::size_type_of_t<StrT>, UTF CharT = char32_t>
-        static constexpr SizeT append(StrT& out, CharT code_point) noexcept(istl::NothrowAppendable<StrT>) {
+        template <istl::Appendable StrT, UTF CharT = char32_t>
+        static constexpr stl::size_t append(StrT& out, CharT code_point) noexcept(istl::NothrowAppendable<StrT>) {
             using istl::iter_append;
 
             using char_type = istl::appendable_value_type_t<StrT>;
@@ -887,49 +887,42 @@ namespace webpp::unicode {
             }
         }
 
-        template <istl::Appendable      StrT,
-                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
-                  stl::forward_iterator Iter  = char32_t const*>
-        static constexpr SizeT append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
+        template <istl::Appendable StrT, stl::forward_iterator Iter = char32_t const*>
+        static constexpr stl::size_t append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::appendable_value_type_t<StrT>;
             using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF32<src_char_type>) {
-                return append<StrT, SizeT>(out, *src++);
+                return append<StrT>(out, *src++);
             } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
                 return unchecked::copy_next_into(out, src);
             } else {
-                return append<StrT, SizeT>(out, next_code_point(src));
+                return append<StrT>(out, next_code_point(src));
             }
         }
 
-        template <istl::Appendable      StrT,
-                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
-                  stl::forward_iterator Iter  = char32_t const*>
-        static constexpr SizeT append(StrT& out, Iter const& src) noexcept(istl::NothrowAppendable<StrT>) {
+        template <istl::Appendable StrT, stl::forward_iterator Iter = char32_t const*>
+        static constexpr stl::size_t append(StrT& out, Iter const& src) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::appendable_value_type_t<StrT>;
             using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (UTF32<src_char_type>) {
-                return append<StrT, SizeT>(out, *src);
+                return append<StrT>(out, *src);
             } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
                 return unchecked::copy_next_into(out, src);
             } else {
-                return append<StrT, SizeT>(out, next_code_point(src));
+                return append<StrT>(out, next_code_point(src));
             }
         }
 
-        template <istl::Appendable      StrT,
-                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
-                  stl::forward_iterator Iter  = char32_t const*,
-                  typename EIter              = Iter>
+        template <istl::Appendable StrT, stl::forward_iterator Iter = char32_t const*, typename EIter = Iter>
             requires stl::sentinel_for<EIter, Iter>
-        static constexpr SizeT append(StrT& out, Iter& src, EIter end) noexcept(istl::NothrowAppendable<StrT>) {
+        static constexpr stl::size_t append(StrT& out, Iter& src, EIter end) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::char_traits_type_of_t<StrT>;
             using src_char_type = stl::iter_value_t<Iter>;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
                 // no need to convert to UTF32 then convert to whatever
-                return append<StrT, SizeT>(out, *src++);
+                return append<StrT>(out, *src++);
             } else {
-                return append<StrT, SizeT>(out, next_code_point(src, end));
+                return append<StrT>(out, next_code_point(src, end));
             }
         }
 
@@ -949,7 +942,7 @@ namespace webpp::unicode {
         template <typename Ptr, UTF CharT = char32_t>
         [[nodiscard("Use unicode::unchecked::append if the input codepoint is always valid.")]] static constexpr bool
         append(Ptr& out, CharT code_point) noexcept {
-            if (!is_code_point_valid(code_point)) {
+            if (!is_code_point_valid(static_cast<char32_t>(code_point))) {
                 return false;
             }
             unchecked::append<Ptr, CharT>(out, code_point);

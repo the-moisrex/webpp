@@ -66,7 +66,6 @@ set(ALL_SOURCES_SHORT
         unicode/unicode.hpp
         unicode/unicode_concepts.hpp
         unicode/utf32_iterator.hpp
-        unicode/utf_reducer.hpp
 
         traits/enable_traits.hpp
         traits/std_pmr_traits.hpp

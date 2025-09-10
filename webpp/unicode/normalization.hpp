@@ -113,7 +113,6 @@
 #include "./quick_check.hpp"
 #include "./unicode.hpp"
 #include "./utf32_iterator.hpp"
-#include "./utf_reducer.hpp"
 
 #include <cassert>
 
@@ -495,49 +494,112 @@ namespace webpp::unicode {
      *
      * @returns The new length of the string. Specified end is no longer valid.
      */
-    template <stl::integral               SizeT = stl::size_t,
-              stl::random_access_iterator Iter  = char32_t*,
-              typename EIter                    = char32_t const* const>
+    template <stl::random_access_iterator Iter = char32_t*, typename EIter = char32_t const* const>
         requires stl::sentinel_for<EIter, Iter>
-    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT canonical_compose(
-      Iter& ptr,
-      EIter end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
-        using reducer_type = utf_reducer<4, Iter>;
-
-        reducer_type           reducer{ptr, static_cast<stl::size_t>(end - ptr)};
-        utf_range_marker<Iter> hole;
-        auto [starter_pin, rep_pin, cp1_pin, cp2_pin] = reducer.pins();
-        for (; cp1_pin != reducer.end(); ++cp1_pin, ++rep_pin) {
-            starter_pin = rep_pin;
-            cp2_pin     = cp1_pin;
-            ++cp2_pin;
-            auto cp1 = *cp1_pin;
-            for (stl::int_fast16_t prev_ccc = -1; cp2_pin != reducer.end(); ++cp1_pin, ++cp2_pin) {
-                auto const cp2         = *cp2_pin;
-                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
-                auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
-                if (prev_ccc < ccc && replaced_cp != U'\0') {
-                    // found a composition of cp1 and cp2
-                    cp1 = replaced_cp;
-                    hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
-                    continue;
+    [[nodiscard("Use the new size to resize the container.")]] static constexpr stl::size_t canonical_compose(
+      Iter         ptr,
+      EIter const& end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
+        using char_type = stl::iter_value_t<Iter>;
+        if constexpr (UTF32<char_type>) {
+            Iter starter_pin = ptr;
+            Iter rep_pin     = ptr;
+            Iter cp1_pin     = ptr;
+            Iter cp2_pin     = ptr;
+            for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
+                starter_pin = rep_pin;
+                cp2_pin     = cp1_pin;
+                ++cp2_pin;
+                auto cp1 = *cp1_pin;
+                for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
+                    auto const cp2         = *cp2_pin;
+                    auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
+                    auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
+                    if (prev_ccc < ccc && replaced_cp != U'\0') {
+                        // found a composition of cp1 and cp2
+                        cp1 = replaced_cp;
+                        continue;
+                    }
+                    if (ccc == 0) [[likely]] {
+                        break;
+                    }
+                    prev_ccc   = ccc;
+                    *++rep_pin = cp2;
                 }
-                if (ccc == 0) [[likely]] {
-                    break;
-                }
-                prev_ccc = ccc;
-
-                hole.append_code_point(cp2_pin.iter(), reducer.end(), reducer.all_pins());
-                ++rep_pin;
-                rep_pin.set(cp2, hole);
+                *starter_pin = cp1;
             }
-
-            // use the hole if you run out of space in UTF-8 and UTF-16 mode
-            starter_pin.set(cp1, hole);
+            return static_cast<stl::size_t>(rep_pin - ptr);
+        } else {
+            using checked::utf32_forward_iter;
+            using stl::copy_backward;
+            using stl::next;
+            using difference_type = stl::iter_difference_t<Iter>;
+            // In UTF-8 and UTF-16 when two Code Points get composed, they may require a different length
+            // of code units to store the result. So the normal algorithms won't work.
+            // And we have removed the old utf_reducer because it was simply too buggy.
+            utf32_forward_iter starter_pin{ptr, end};
+            utf32_forward_iter rep_pin{ptr, end};
+            utf32_forward_iter cp1_pin{ptr, end};
+            utf32_forward_iter cp2_pin{ptr, end};
+            stl::size_t        length    = 0;
+            difference_type    hole_size = 0;
+            for (; !cp1_pin.at_end(); ++cp1_pin, ++length) {
+                starter_pin = rep_pin;
+                cp2_pin     = cp1_pin;
+                ++cp2_pin;
+                ++rep_pin;
+                auto cp1 = *cp1_pin;
+                for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end();) {
+                    auto const cp2         = *cp2_pin;
+                    auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
+                    auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
+                    if (prev_ccc < ccc && replaced_cp != U'\0') {
+                        // found a composition of cp1 and cp2
+                        cp1 = replaced_cp;
+                        ++cp1_pin;
+                        ++cp2_pin;
+                        // cp2 now is a hole, which we want to move that hole at the end of rep_pin
+                        hole_size       += cp1_pin.size();
+                        auto const lpos  = rep_pin.upper_base();
+                        auto const rpos  = cp1_pin.base();
+                        copy_backward(lpos, rpos, cp2_pin.upper_base());
+                        continue;
+                    }
+                    if (ccc == 0) [[likely]] {
+                        // if there's anything left of the hole, move it to the starter_pin's end
+                        if (hole_size > 0) {
+                            auto const lpos = next(starter_pin).base();
+                            auto const rpos = next(rep_pin).base();
+                            copy_backward(lpos, rpos, next(rpos, hole_size));
+                        }
+                        break;
+                    }
+                    prev_ccc            = ccc;
+                    auto const prev_len = rep_pin.size();
+                    auto const len      = rep_pin.unsafe_set(cp2);
+                    ++length;
+                    ++rep_pin;
+                    // no need to move the whole, but we need to track how much of that hole we used:
+                    hole_size -= static_cast<difference_type>(len - prev_len);
+                    if (hole_size < 0) {
+                        hole_size = 0;
+                    }
+                    assert(hole_size >= 0);
+                    ++cp1_pin;
+                    ++cp2_pin;
+                }
+                auto const prev_len  = starter_pin.size();
+                auto const len       = starter_pin.unsafe_set(cp1);
+                hole_size           -= static_cast<difference_type>(len - prev_len);
+                assert(hole_size >= 0);
+                if (hole_size > 0) {
+                    // move the hole to the end of the rep_pin's tail:
+                    auto const lpos = next(starter_pin.upper_base(), hole_size);
+                    auto const rpos = rep_pin.upper_base();
+                    stl::copy(lpos, rpos, starter_pin.upper_base());
+                }
+            }
+            return length;
         }
-        reducer.snap_hole_to_end(hole);
-        reducer.set_end(rep_pin);
-        return static_cast<SizeT>(reducer.size());
     }
 
     /**
@@ -555,12 +617,10 @@ namespace webpp::unicode {
      */
     template <istl::String StrT = stl::u32string, bool isNothrow = true>
     static constexpr void canonical_compose(StrT& out) noexcept(isNothrow) {
-        using size_type = typename stl::remove_cvref_t<StrT>::size_type;
-
         auto*             ptr = out.data();
         auto const* const end = ptr + out.size();
 
-        out.resize(canonical_compose<size_type>(ptr, end));
+        out.resize(canonical_compose(ptr, end));
     }
 
     template <istl::String StrT = stl::u32string>
