@@ -530,8 +530,9 @@ namespace webpp::unicode {
             return static_cast<stl::size_t>(rep_pin - ptr);
         } else {
             using checked::utf32_forward_iter;
-            using stl::copy_backward;
             using stl::next;
+            using stl::shift_left;
+            using stl::shift_right;
             using difference_type = stl::iter_difference_t<Iter>;
             // In UTF-8 and UTF-16 when two Code Points get composed, they may require a different length
             // of code units to store the result. So the normal algorithms won't work.
@@ -561,7 +562,7 @@ namespace webpp::unicode {
                         hole_size       += cp1_pin.size();
                         auto const lpos  = rep_pin.upper_base();
                         auto const rpos  = cp1_pin.base();
-                        copy_backward(lpos, rpos, cp2_pin.upper_base());
+                        shift_right(lpos, rpos, cp1_pin.size());
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
@@ -569,7 +570,7 @@ namespace webpp::unicode {
                         if (hole_size > 0) {
                             auto const lpos = next(starter_pin).base();
                             auto const rpos = next(rep_pin).base();
-                            copy_backward(lpos, rpos, next(rpos, hole_size));
+                            shift_right(lpos, rpos, hole_size);
                         }
                         break;
                     }
@@ -595,7 +596,7 @@ namespace webpp::unicode {
                     // move the hole to the end of the rep_pin's tail:
                     auto const lpos = next(starter_pin.upper_base(), hole_size);
                     auto const rpos = rep_pin.upper_base();
-                    stl::copy(lpos, rpos, starter_pin.upper_base());
+                    shift_left(lpos, rpos, hole_size);
                 }
             }
             return length;
