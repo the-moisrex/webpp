@@ -559,17 +559,18 @@ namespace webpp::unicode {
                         ++cp1_pin;
                         ++cp2_pin;
                         // cp2 now is a hole, which we want to move that hole at the end of rep_pin
-                        hole_size       += cp1_pin.size();
-                        auto const lpos  = rep_pin.upper_base();
-                        auto const rpos  = cp1_pin.base();
-                        shift_right(lpos, rpos, cp1_pin.size());
+                        auto const cp_len  = cp1_pin.size();
+                        hole_size         += cp_len;
+                        auto const lpos    = rep_pin.upper_base();
+                        auto const rpos    = cp2_pin.base(); // or next(cp1_pin.upper_base())
+                        shift_right(lpos, rpos, cp_len);
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
                         // if there's anything left of the hole, move it to the starter_pin's end
                         if (hole_size > 0) {
-                            auto const lpos = next(starter_pin).base();
-                            auto const rpos = next(rep_pin).base();
+                            auto const lpos = starter_pin.upper_base();
+                            auto const rpos = next(rep_pin.upper_base(), hole_size);
                             shift_right(lpos, rpos, hole_size);
                         }
                         break;
@@ -594,7 +595,7 @@ namespace webpp::unicode {
                 assert(hole_size >= 0);
                 if (hole_size > 0) {
                     // move the hole to the end of the rep_pin's tail:
-                    auto const lpos = next(starter_pin.upper_base(), hole_size);
+                    auto const lpos = starter_pin.upper_base();
                     auto const rpos = rep_pin.upper_base();
                     shift_left(lpos, rpos, hole_size);
                 }
