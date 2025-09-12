@@ -551,6 +551,8 @@ namespace webpp::unicode {
                 ++rep_pin;
                 if (hole_size > 0) {
                     // move the hole to the end of the rep_pin's tail:
+                    assert(hole <= rep_pin.upper_base());
+                    assert(hole >= starter_pin.base());
                     hole = shift_left(hole, rep_pin.upper_base(), hole_size);
                 }
                 auto cp1 = *cp1_pin;
@@ -575,31 +577,35 @@ namespace webpp::unicode {
                         auto const rpos    = cp2_pin.base(); // or next(cp1_pin.upper_base())
                         hole_size          += cp_len;
                         hole                 = stl::prev(shift_right(lpos, rpos, cp_len), cp_len);
+                        assert(hole >= rep_pin.base());
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
-                        // if there's anything left of the hole, move it to the starter_pin's end
-                        if (hole_size > 0) {
-                            auto const lpos = starter_pin.upper_base();
-                            auto const rpos = next(hole, hole_size);
-                            hole            = shift_right(lpos, rpos, hole_size);
-                        }
                         break;
                     }
-                    prev_ccc             = ccc;
-                    auto const prev_len  = rep_pin.size();
-                    auto const len       = rep_pin.unsafe_set(cp2);
-                    // no need to move the whole, but we need to track how much of that hole we used:
-                    hole_size           -= static_cast<difference_type>(len - prev_len);
+                    prev_ccc = ccc;
+                    assert(hole >= rep_pin.base());
+                    rep_pin.unsafe_set(cp2);
+                    // no need to move the hole, but we need to track how much of that hole we used:
+                    auto const hole_diff  = stl::max<difference_type>(rep_pin.upper_base() - hole, 0);
+                    hole_size            -= hole_diff;
+                    hole                  = rep_pin.upper_base();
                     assert(hole_size >= 0);
                     ++length;
                     ++rep_pin;
                     ++cp1_pin;
                     ++cp2_pin;
                 }
-                auto const prev_len   = starter_pin.size();
-                auto const len        = starter_pin.unsafe_set(cp1);
-                auto const hole_diff  = static_cast<difference_type>(len - prev_len);
+                if (hole_size > 0) {
+                    // if there's anything left of the hole, move it to the starter_pin's end
+                    assert(hole >= starter_pin.upper_base());
+                    auto const lpos = starter_pin.upper_base();
+                    auto const rpos = next(hole, hole_size);
+                    shift_right(lpos, rpos, hole_size);
+                    hole = lpos;
+                }
+                starter_pin.unsafe_set(cp1);
+                auto const hole_diff  = stl::max<difference_type>(starter_pin.upper_base() - hole, 0);
                 hole_size            -= hole_diff;
                 stl::advance(hole, hole_diff);
                 assert(hole_size >= 0);
