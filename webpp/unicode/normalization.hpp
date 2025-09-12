@@ -505,12 +505,12 @@ namespace webpp::unicode {
             Iter rep_pin     = ptr;
             Iter cp1_pin     = ptr;
             Iter cp2_pin     = ptr;
-            for (; cp1_pin != end; ++cp1_pin, ++rep_pin) {
+            for (; cp1_pin != end; cp1_pin = cp2_pin, ++rep_pin) {
                 starter_pin = rep_pin;
                 cp2_pin     = cp1_pin;
                 ++cp2_pin;
                 auto cp1 = *cp1_pin;
-                for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp1_pin, ++cp2_pin) {
+                for (stl::int_fast16_t prev_ccc = -1; cp2_pin != end; ++cp2_pin) {
                     auto const cp2         = *cp2_pin;
                     auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
                     auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
@@ -542,6 +542,7 @@ namespace webpp::unicode {
             utf32_forward_iter cp1_pin{ptr, end};
             utf32_forward_iter cp2_pin{ptr, end};
             stl::size_t        length    = 0;
+            Iter               hole      = ptr; // the start of the hole
             difference_type    hole_size = 0;
             for (; !cp1_pin.at_end(); ++cp1_pin, ++length) {
                 starter_pin = rep_pin;
@@ -556,13 +557,20 @@ namespace webpp::unicode {
                     if (prev_ccc < ccc && replaced_cp != U'\0') {
                         // found a composition of cp1 and cp2
                         cp1 = replaced_cp;
+
+                        // make sure to move the code points before we mark them as a hole;
+                        // cp1_pin is now dirty, but it won't matter because we won't read from it,
+                        // there's always a ++cp1_pin after this whichever path we take.
+                        // in fact, cp1_pin don't need to be incremented in this loop, we could just
+                        // call a cp1_pin = cp2_pin after the loop.
                         ++cp1_pin;
                         ++cp2_pin;
-                        // cp2 now is a hole, which we want to move that hole at the end of rep_pin
-                        auto const cp_len  = cp1_pin.size();
-                        hole_size         += cp_len;
+                        // cp2 now is a hole, which we want to move that hole at the end of rep_pin (or in the rep_pin)
+                        auto const cp_len   = cp1_pin.size();
                         auto const lpos    = rep_pin.upper_base();
                         auto const rpos    = cp2_pin.base(); // or next(cp1_pin.upper_base())
+                        hole_size          += cp_len;
+                        hole                = cp1_pin.base();
                         shift_right(lpos, rpos, cp_len);
                         continue;
                     }
@@ -570,22 +578,19 @@ namespace webpp::unicode {
                         // if there's anything left of the hole, move it to the starter_pin's end
                         if (hole_size > 0) {
                             auto const lpos = starter_pin.upper_base();
-                            auto const rpos = next(rep_pin.upper_base(), hole_size);
+                            auto const rpos = next(hole, hole_size);
                             shift_right(lpos, rpos, hole_size);
                         }
                         break;
                     }
-                    prev_ccc            = ccc;
-                    auto const prev_len = rep_pin.size();
-                    auto const len      = rep_pin.unsafe_set(cp2);
+                    prev_ccc             = ccc;
+                    auto const prev_len  = rep_pin.size();
+                    auto const len       = rep_pin.unsafe_set(cp2);
+                    // no need to move the whole, but we need to track how much of that hole we used:
+                    hole_size           -= static_cast<difference_type>(len - prev_len);
+                    assert(hole_size >= 0);
                     ++length;
                     ++rep_pin;
-                    // no need to move the whole, but we need to track how much of that hole we used:
-                    hole_size -= static_cast<difference_type>(len - prev_len);
-                    if (hole_size < 0) {
-                        hole_size = 0;
-                    }
-                    assert(hole_size >= 0);
                     ++cp1_pin;
                     ++cp2_pin;
                 }
@@ -600,6 +605,7 @@ namespace webpp::unicode {
                     shift_left(lpos, rpos, hole_size);
                 }
             }
+            // no need to snap the hole to the end of the string, it's already at the end of rep_pin.
             return length;
         }
     }
