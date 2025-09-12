@@ -574,8 +574,7 @@ namespace webpp::unicode {
                         auto const lpos    = rep_pin.upper_base();
                         auto const rpos    = cp2_pin.base(); // or next(cp1_pin.upper_base())
                         hole_size          += cp_len;
-                        hole                = cp1_pin.base();
-                        shift_right(lpos, rpos, cp_len);
+                        hole                 = stl::prev(shift_right(lpos, rpos, cp_len), cp_len);
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
