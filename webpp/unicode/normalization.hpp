@@ -549,6 +549,10 @@ namespace webpp::unicode {
                 cp2_pin     = cp1_pin;
                 ++cp2_pin;
                 ++rep_pin;
+                if (hole_size > 0) {
+                    // move the hole to the end of the rep_pin's tail:
+                    hole = shift_left(hole, rep_pin.upper_base(), hole_size);
+                }
                 auto cp1 = *cp1_pin;
                 for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end();) {
                     auto const cp2         = *cp2_pin;
@@ -579,7 +583,7 @@ namespace webpp::unicode {
                         if (hole_size > 0) {
                             auto const lpos = starter_pin.upper_base();
                             auto const rpos = next(hole, hole_size);
-                            shift_right(lpos, rpos, hole_size);
+                            hole            = shift_right(lpos, rpos, hole_size);
                         }
                         break;
                     }
@@ -594,16 +598,12 @@ namespace webpp::unicode {
                     ++cp1_pin;
                     ++cp2_pin;
                 }
-                auto const prev_len  = starter_pin.size();
-                auto const len       = starter_pin.unsafe_set(cp1);
-                hole_size           -= static_cast<difference_type>(len - prev_len);
+                auto const prev_len   = starter_pin.size();
+                auto const len        = starter_pin.unsafe_set(cp1);
+                auto const hole_diff  = static_cast<difference_type>(len - prev_len);
+                hole_size            -= hole_diff;
+                stl::advance(hole, hole_diff);
                 assert(hole_size >= 0);
-                if (hole_size > 0) {
-                    // move the hole to the end of the rep_pin's tail:
-                    auto const lpos = starter_pin.upper_base();
-                    auto const rpos = rep_pin.upper_base();
-                    shift_left(lpos, rpos, hole_size);
-                }
             }
             // no need to snap the hole to the end of the string, it's already at the end of rep_pin.
             return length;
