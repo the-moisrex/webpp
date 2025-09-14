@@ -588,17 +588,18 @@ namespace webpp::unicode {
                     rep_pin.unsafe_set(cp2);
                     // no need to move the hole, but we need to track how much of that hole we used:
                     auto const hole_diff  = stl::max<difference_type>(rep_pin.upper_base() - hole, 0);
-                    hole_size            -= hole_diff;
-                    hole                  = rep_pin.upper_base();
+                    hole_size             -= hole_diff;
                     assert(hole_size >= 0);
                     ++length;
                     ++rep_pin;
+                    hole = rep_pin.base();
                     ++cp1_pin;
                     ++cp2_pin;
                 }
                 if (hole_size > 0) {
                     // if there's anything left of the hole, move it to the starter_pin's end
                     assert(hole >= starter_pin.upper_base());
+                    assert(hole >= rep_pin.base());
                     auto const lpos = starter_pin.upper_base();
                     auto const rpos = next(hole, hole_size);
                     shift_right(lpos, rpos, hole_size);
