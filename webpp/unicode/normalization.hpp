@@ -600,7 +600,7 @@ namespace webpp::unicode {
 
                         // no need for ++cp2_pin, we have already moved to the next code point
                         // we've pulled the rug under cp2_pin, let's re-initalize it
-                        cp2_pin = utf32_forward_iter{cp2_pin.base(), endp};
+                        cp2_pin = utf32_forward_iter{next(cp2_pin.base(), needed_len), endp};
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
@@ -611,7 +611,7 @@ namespace webpp::unicode {
                 }
             }
 
-            assert(hole_size < length);
+            assert(hole_size <= length);
             return static_cast<stl::size_t>(length - hole_size);
         }
     }
