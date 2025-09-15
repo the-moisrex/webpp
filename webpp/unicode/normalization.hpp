@@ -499,7 +499,9 @@ namespace webpp::unicode {
     [[nodiscard("Use the new size to resize the container.")]] static constexpr stl::size_t canonical_compose(
       Iter         ptr,
       EIter const& end) noexcept(stl::is_nothrow_copy_assignable_v<stl::iter_value_t<Iter>>) {
-        using char_type = stl::iter_value_t<Iter>;
+        using char_type       = stl::iter_value_t<Iter>;
+        using difference_type = stl::iter_difference_t<Iter>;
+
         if constexpr (UTF32<char_type>) {
             Iter starter_pin = ptr;
             Iter rep_pin     = ptr;
@@ -533,34 +535,57 @@ namespace webpp::unicode {
             using stl::next;
             using stl::shift_left;
             using stl::shift_right;
-            using difference_type = stl::iter_difference_t<Iter>;
             // In UTF-8 and UTF-16 when two Code Points get composed, they may require a different length
             // of code units to store the result. So the normal algorithms won't work.
             // And we have removed the old utf_reducer because it was simply too buggy.
-            utf32_forward_iter starter_pin{ptr, end};
             utf32_forward_iter cp1_pin{ptr, end};
             utf32_forward_iter cp2_pin{ptr, end};
-            stl::size_t        length    = stl::distance<EIter>(ptr, end);
-            Iter               endp      = stl::next(ptr, length);
-            difference_type    hole_size = 0;
+            stl::size_t const  length    = stl::distance<EIter>(ptr, end);
+            difference_type    hole_size = 0; // hole will be created at the end of the string
+            Iter               endp      = next(ptr, static_cast<difference_type>(length));
             for (; !cp1_pin.at_end(); cp1_pin = cp2_pin) {
                 ++cp2_pin;
 
                 // first find the starter code point
-                auto cp1 = *cp1_pin;
+                char32_t cp1 = *cp1_pin;
                 for (stl::int_fast16_t prev_ccc = -1; !cp2_pin.at_end();) {
                     auto const cp2         = *cp2_pin;
                     auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(cp2));
                     auto const replaced_cp = canonical_composed(cp1, cp2, U'\0');
                     if (prev_ccc < ccc && replaced_cp != U'\0') {
                         // found a composition of cp1 and cp2
-                        cp1               = replaced_cp;
-                        auto const cp_len = cp2_pin.size();
-                        ++cp2_pin;
-                        auto const lpos  = cp1_pin.upper_base();
-                        auto const rpos  = cp2_pin.base(); // or next(cp1_pin.upper_base())
-                        hole_size       += cp_len;
-                        shift_right(lpos, rpos, cp_len);
+                        auto const            cp1_len       = cp1_pin.size();
+                        auto const            cp2_len       = cp2_pin.size();
+                        auto const            rep_len       = utf_length_from_utf32<char_type>(replaced_cp);
+                        difference_type const needed_len    = rep_len - cp1_len;
+                        difference_type const remaining_len = cp2_len - needed_len;
+
+                        // move what we need from cp2 to the end of cp1, and then replace it
+                        if (needed_len > 0) {
+                            shift_right(cp1_pin.upper_base(), cp2_pin.upper_base(), needed_len);
+                        }
+
+                        // move previous what we need from the previous hole here
+                        if (needed_len > static_cast<difference_type>(cp2_len)) {
+                            difference_type const needed_end_len = needed_len - cp2_len;
+                            assert(hole_size >= needed_end_len);
+                            shift_right(cp1_pin.upper_base(), endp, needed_end_len);
+                            hole_size -= needed_end_len;
+                        }
+
+                        // move the rest of the cp2 to the end of the string
+                        if (remaining_len > 0) {
+                            shift_left(next(cp2_pin.base(), needed_len), endp, remaining_len);
+                            hole_size += remaining_len;
+                        }
+
+                        // set the composed code point, there must be enough room for it now
+                        cp1 = replaced_cp;
+                        cp1_pin.unsafe_set(replaced_cp);
+                        assert(cp2_len < length);
+                        assert(cp1_len + cp2_len >= rep_len);
+
+                        // no need for ++cp2_pin, we have already moved to the next code point
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
@@ -569,17 +594,10 @@ namespace webpp::unicode {
                     prev_ccc = ccc;
                     ++cp2_pin;
                 }
-                auto const hole = cp1_pin.base();
-                cp1_pin.unsafe_set(cp1);
-                auto       new_hole  = cp1_pin.upper_base();
-                auto const hole_diff = stl::max<difference_type>(new_hole - hole, 0);
-                shift_left(new_hole, cp2_pin.upper_base(), hole_size);
-                hole_size -= hole_diff;
-                assert(hole_diff < static_cast<difference_type>(length));
-                length -= hole_diff;
             }
-            // no need to snap the hole to the end of the string, it's already at the end of rep_pin.
-            return length;
+
+            assert(hole_size < static_cast<difference_type>(length));
+            return static_cast<stl::size_t>(length - hole_size);
         }
     }
 
