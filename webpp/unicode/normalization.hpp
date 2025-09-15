@@ -538,11 +538,11 @@ namespace webpp::unicode {
             // In UTF-8 and UTF-16 when two Code Points get composed, they may require a different length
             // of code units to store the result. So the normal algorithms won't work.
             // And we have removed the old utf_reducer because it was simply too buggy.
-            utf32_forward_iter cp1_pin{ptr, end};
-            utf32_forward_iter cp2_pin{ptr, end};
-            stl::size_t const  length    = stl::distance<EIter>(ptr, end);
+            stl::size_t const  length = stl::distance<EIter>(ptr, end);
+            Iter               endp   = next(ptr, static_cast<difference_type>(length));
+            utf32_forward_iter cp1_pin{ptr, endp};
+            utf32_forward_iter cp2_pin{ptr, endp};
             difference_type    hole_size = 0; // hole will be created at the end of the string
-            Iter               endp      = next(ptr, static_cast<difference_type>(length));
             for (; !cp1_pin.at_end(); cp1_pin = cp2_pin) {
                 ++cp2_pin;
 
@@ -577,6 +577,8 @@ namespace webpp::unicode {
                         if (remaining_len > 0) {
                             shift_left(next(cp2_pin.base(), needed_len), endp, remaining_len);
                             hole_size += remaining_len;
+                            endp      -= remaining_len;
+                            *endp      = static_cast<char_type>('\0');
                         }
 
                         // set the composed code point, there must be enough room for it now
@@ -586,6 +588,8 @@ namespace webpp::unicode {
                         assert(cp1_len + cp2_len >= rep_len);
 
                         // no need for ++cp2_pin, we have already moved to the next code point
+                        // we've pulled the rug under cp2_pin, let's re-initalize it
+                        cp2_pin = utf32_forward_iter{cp2_pin.base(), endp};
                         continue;
                     }
                     if (ccc == 0) [[likely]] {
