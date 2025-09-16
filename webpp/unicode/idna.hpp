@@ -153,7 +153,7 @@ namespace webpp::unicode::idna {
         using checked::next_code_point;
         using details::valid;
         for (;;) {
-            auto const code_point = next_code_point<return_negated, char32_t, Iter>(pos, end);
+            auto const code_point = next_code_point<return_negated, Iter>(pos, end);
             if (code_point == 0) {
                 break;
             }
@@ -190,7 +190,7 @@ namespace webpp::unicode::idna {
         auto is_valid = true;
         for (auto pos = beg;;) {
             auto const cp_beg     = istl::deref(pos);
-            auto const code_point = next_code_point<return_negated, char32_t, Iter>(pos, end);
+            auto const code_point = next_code_point<return_negated, Iter>(pos, end);
             if (code_point == 0) {
                 break;
             }
@@ -406,7 +406,7 @@ namespace webpp::unicode::idna {
      *
      * Starting with Unicode 16.0, UseSTD3ASCIIRules=true is handled only in the Validity Criteria
      */
-    template <idna_options Options = {}, stl::random_access_iterator Iter>
+    template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_label_valid(Iter spos, Iter send) noexcept {
         // 1. SKIPPED: The label must be in Unicode Normalization Form NFC.
         // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
@@ -519,7 +519,7 @@ namespace webpp::unicode::idna {
         return valid;
     }
 
-    template <idna_options Options = {}, istl::StringViewifiable StrT>
+    template <idna_options Options = idna_options{}, istl::StringViewifiable StrT>
     [[nodiscard]] static constexpr bool is_label_valid(StrT&& inp_str) noexcept {
         auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return is_label_valid<Options>(str.begin(), str.end());
@@ -653,7 +653,9 @@ namespace webpp::unicode::idna {
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      *    Used by:  https://url.spec.whatwg.org/#idna
      */
-    template <idna_options Options = {}, stl::random_access_iterator Iter, stl::random_access_iterator OIter>
+    template <idna_options                Options = idna_options{},
+              stl::random_access_iterator Iter,
+              stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
       Iter                           ipos,
       Iter const                     iend,
@@ -877,7 +879,9 @@ namespace webpp::unicode::idna {
         return status;
     }
 
-    template <idna_options Options = {}, stl::random_access_iterator Iter, istl::String StrT = stl::u8string>
+    template <idna_options                Options = idna_options{},
+              stl::random_access_iterator Iter,
+              istl::String                StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
@@ -896,14 +900,14 @@ namespace webpp::unicode::idna {
         return status;
     }
 
-    template <idna_options Options = {}, istl::StringViewifiable StrVT, istl::String StrT = stl::u8string>
+    template <idna_options Options = idna_options{}, istl::StringViewifiable StrVT, istl::String StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT&& src, StrT& out) {
         auto const src_v = istl::string_viewify(stl::forward<StrVT>(src));
         return to_ascii<Options>(src_v.begin(), src_v.end(), out);
     }
 
     template <istl::String            OutStrT = stl::u8string,
-              idna_options            Options = {},
+              idna_options            Options = idna_options{},
               istl::StringViewifiable StrT,
               typename... Args>
     [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(StrT&& src, Args&&... args) {
