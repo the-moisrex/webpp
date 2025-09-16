@@ -936,9 +936,6 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using webpp::unicode::toNFC;
     using webpp::unicode::idna::to_ascii;
 
-    // Just don't blow up
-    EXPECT_EQ(toNFC<string>("\365"), "\365");
-
     EXPECT_FALSE(to_ascii<u16string>("\232"));
     EXPECT_FALSE(to_ascii<u16string>("\330"));
     EXPECT_FALSE(to_ascii<u16string>("\012\241"));

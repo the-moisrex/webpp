@@ -8,7 +8,6 @@
 #include "./unicode.hpp"
 
 #include <cstdint>
-#include <cstring>
 
 namespace webpp::unicode::idna {
 
@@ -30,7 +29,8 @@ namespace webpp::unicode::idna {
             case punycode_status::success: return "Success";
             case punycode_status::bad_input: return "Input is invalid";
             case punycode_status::overflow: return "Input needs wider integers to process";
-            default: return "Unknown error";
+            [[unlikely]] default:
+                return "Unknown punycode error";
         }
     }
 
@@ -54,7 +54,7 @@ namespace webpp::unicode::idna {
      * point (for use in representing integers) in the range 0 to
      * base-1, or base if cp is, does not represent a value.
      */
-    template <punycode_options Options = {}>
+    template <punycode_options Options = punycode_options{}>
     static constexpr punycode_uint decode_digit(punycode_uint const code_point) noexcept {
         // NOLINTBEGIN(*-avoid-nested-conditional-operator)
         return code_point - 48 < 10   ? code_point - 22
@@ -82,7 +82,7 @@ namespace webpp::unicode::idna {
      * Bias adaptation function
      * https://www.rfc-editor.org/rfc/rfc3492.html#section-6.1
      */
-    template <punycode_options Options = {}>
+    template <punycode_options Options = punycode_options{}>
     static constexpr punycode_uint
     adapt(punycode_uint delta, punycode_uint const num_points, bool const first_time) noexcept {
         delta                = first_time ? delta / Options.damp : delta / 2;
@@ -104,7 +104,7 @@ namespace webpp::unicode::idna {
      * https://www.rfc-editor.org/info/rfc3492
      * https://www.rfc-editor.org/info/rfc5891
      */
-    template <punycode_options            Options = {},
+    template <punycode_options            Options = punycode_options{},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>
     [[nodiscard]] static constexpr punycode_status punycode_encode(IterT const spos, IterT const send, OIterT &out)
@@ -227,7 +227,7 @@ namespace webpp::unicode::idna {
      * Punycode Decode.
      * The output length cannot exceed the input length.
      */
-    template <punycode_options            Options = {},
+    template <punycode_options            Options = punycode_options{},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>
     [[nodiscard]] static constexpr punycode_status punycode_decode(IterT spos, IterT const send, OIterT &out)

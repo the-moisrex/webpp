@@ -188,8 +188,8 @@ namespace webpp::unicode::idna {
         }
 
         auto is_valid = true;
-        for (auto pos = beg;;) {
-            auto const cp_beg     = istl::deref(pos);
+        for (Iter pos = beg;;) {
+            Iter const cp_beg     = pos;
             auto const code_point = next_code_point<return_negated, Iter>(pos, end);
             if (code_point == 0) {
                 break;
@@ -297,7 +297,8 @@ namespace webpp::unicode::idna {
             case empty_domain_label: return {"Empty domain labels are not valid."};
             case too_long_label: return {"Label was too long."};
             case too_long_domain: return {"The Domain was too long."};
-            default: break;
+            [[unlikely]] default:
+                break;
         }
         return {"<unknown-to-ascii-status>"};
     }
@@ -677,11 +678,11 @@ namespace webpp::unicode::idna {
 
         auto const src_length          = iend - ipos;
         auto       status              = to_underlying(valid);
-        auto const out_beg             = istl::deref(out);
+        OIter const out_beg             = out;
         bool const all_ascii           = (flags & to_underlying(non_ascii)) == 0;
         bool const might_have_punycode = (flags & to_underlying(ace)) != 0;
         bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
-        auto       spos                = istl::deref(out);
+        OIter       spos                = out;
         auto       send                = stl::next(spos, src_length); // init
         auto const oend                = stl::next(out, static_cast<diff_type>(out_len));
 
@@ -726,7 +727,7 @@ namespace webpp::unicode::idna {
         stl::uint16_t accum_length = 0;
         while (spos != send) {
             auto const lcbeg = spos;
-            auto       lbeg  = istl::deref(spos); // start of label
+            OIter      lbeg  = spos; // start of label
 
             // find the label:
             flag_type flag = or_all_if<flag_type>(
@@ -739,7 +740,7 @@ namespace webpp::unicode::idna {
 
             bool const contains_dot     = (flag & to_underlying(dot)) == to_underlying(dot);
             auto const lcend            = contains_dot ? stl::prev(spos) : spos;
-            auto       lend             = istl::deref(lcend);
+            OIter      lend             = lcend;
             auto const src_label_length = lend - lbeg;
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
