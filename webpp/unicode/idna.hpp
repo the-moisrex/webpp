@@ -36,8 +36,7 @@ namespace webpp::unicode::idna {
      *   - Mapped: if it's not valid/disallowed, the return value is the starting position of
      *             the mapped value in the idna_mappings table.
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr stl::uint16_t status_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::uint16_t status_of(char32_t const code_point) noexcept {
         using details::disallowed;
         using details::idna_index;
         using details::not_mapped;
@@ -46,7 +45,7 @@ namespace webpp::unicode::idna {
         auto const chunk         = code_point >> idna_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::idna_breakpoint_shift);
 
-        if (code_point < 0 || section_index >= details::idna_last_breakpoint) [[unlikely]] {
+        if (static_cast<stl::int32_t>(code_point) < 0 || section_index >= details::idna_last_breakpoint) [[unlikely]] {
             return disallowed;
         }
 
@@ -81,8 +80,8 @@ namespace webpp::unicode::idna {
      * Perform the mapping for a single character
      * @returns false if the code point is not allowed to be in a URL
      */
-    template <UTF32 CharT = char32_t, istl::Appendable OutStrT = stl::u8string>
-    static constexpr bool map(CharT const code_point, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
+    template <istl::Appendable OutStrT = stl::u8string>
+    static constexpr bool map(char32_t const code_point, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
         using details::disallowed;
         using details::idna_mappings;
         using details::valid;
@@ -119,8 +118,8 @@ namespace webpp::unicode::idna {
         }
     }
 
-    template <istl::String OutStrT = stl::u8string, UTF32 CharT = char32_t, typename... Args>
-    static constexpr OutStrT mapped(CharT const code_point, Args&&... args) {
+    template <istl::String OutStrT = stl::u8string, typename... Args>
+    static constexpr OutStrT mapped(char32_t const code_point, Args&&... args) {
         OutStrT out{stl::forward<Args>(args)...};
         map(code_point, out);
         return out;
@@ -566,7 +565,7 @@ namespace webpp::unicode::idna {
         stl::size_t max_size = 0; // not adjusted to the output size if the input and output's character types
                                   // are different.
 
-        [[nodiscard]] static constexpr stl::uint8_t best_factor_of(UTF32 auto const code_point) noexcept {
+        [[nodiscard]] static constexpr stl::uint8_t best_factor_of(char32_t const code_point) noexcept {
             constexpr stl::uint32_t split = 24U;
             constexpr stl::uint32_t mask  = (0b1U << split) - 1U;
             auto const              inf   = details::idna_max_len_factors[code_point % details::idna_rem];
