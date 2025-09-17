@@ -40,8 +40,7 @@ namespace webpp::unicode {
      * This function returns the Joining_Type of the input code point.
      * They are extracted from DerivedJoiningType.txt
      */
-    template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr joiner_type joiner_type_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr joiner_type joiner_type_of(char32_t const code_point) noexcept {
         using enum joiner_type;
         using details::joiners_index;
         using details::joiners_indices;
@@ -51,7 +50,7 @@ namespace webpp::unicode {
 
         auto const chunk         = code_point >> joiners_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::joiners_breakpoint_shift);
-        if (chunk >= static_cast<CharT>(details::joiners_last_breakpoint)) [[unlikely]] {
+        if (chunk >= static_cast<char32_t>(details::joiners_last_breakpoint)) [[unlikely]] {
             return non_joining;
         }
         auto const [starting, ending, offset] = details::joiners_breakpoints[section_index];

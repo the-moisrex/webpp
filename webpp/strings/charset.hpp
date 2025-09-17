@@ -873,10 +873,8 @@ namespace webpp {
     [[nodiscard]] static constexpr T or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         T res{};
-        for (;; ++pos) {
-            if (pos == end || func(res)) {
-                break;
-            }
+        // todo: this can be optimized
+        for (; pos != end && !func(res); ++pos) {
             // unsigned char must be used to make sure the Unicode Code Units don't show up as negative
             res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos)]);
         }

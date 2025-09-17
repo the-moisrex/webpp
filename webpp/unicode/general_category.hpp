@@ -14,8 +14,7 @@ namespace webpp::unicode {
      *            full GC values in order to reduce table size.
      *            Checkout ./details/gc_tables.hpp file's comments for the list of excluded categories if any.
      */
-    template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr general_category general_category_of(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr general_category general_category_of(char32_t const code_point) noexcept {
         using enum general_category;
         using details::gc_index;
         using details::gc_indices;
@@ -24,7 +23,7 @@ namespace webpp::unicode {
         // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         auto const chunk         = code_point >> gc_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::gc_breakpoint_shift);
-        if (chunk >= static_cast<CharT>(details::gc_last_breakpoint)) [[unlikely]] {
+        if (chunk >= static_cast<char32_t>(details::gc_last_breakpoint)) [[unlikely]] {
             return Unassigned;
         }
         auto const [starting, ending, offset] = details::gc_breakpoints[section_index];
@@ -42,8 +41,7 @@ namespace webpp::unicode {
      * Attention: this is not an exact match; if you give a single-letter category, and the code point
      *            belongs to a 2-letter sub-category, it'll match.
      */
-    template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_general_category_of(CharT const            code_point,
+    [[nodiscard]] static constexpr bool is_general_category_of(char32_t const         code_point,
                                                                general_category const cat) noexcept {
         using enum general_category;
         constexpr stl::uint8_t mask   = 31U; // 32 - 1

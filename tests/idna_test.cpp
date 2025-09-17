@@ -990,11 +990,8 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_EQ(to_ascii<string>(U"\u1E9E"), "xn--zca") << "German capital sharp S should convert to expected Punycode";
 
     // Replacement character (U+FFFD)
-    EXPECT_EQ(to_ascii<string>("\xef\xbf\xbd.com").value(), ".com")
-      << "Replacement character in domain should result in empty string";
-
-    EXPECT_EQ(to_ascii<string>(U"\uFFFD.com").value(), ".com")
-      << "Replacement character in domain should result in empty string";
+    EXPECT_FALSE(to_ascii<string>("\xef\xbf\xbd.com"));
+    EXPECT_FALSE(to_ascii<string>(U"\uFFFD.com"));
 
     // soft hyphen (U+00AD)
     EXPECT_FALSE(to_ascii("\u00AD")) << "Soft hyphen should result in empty string";

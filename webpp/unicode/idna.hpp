@@ -151,12 +151,9 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using checked::next_code_point;
         using details::valid;
-        for (;;) {
-            auto const code_point = next_code_point<return_negated, Iter>(pos, end);
-            if (code_point == 0) {
-                break;
-            }
-            auto const map_pos = status_of(code_point);
+        while (pos != end) {
+            auto const code_point = next_code_point<return_negated>(pos, end);
+            auto const map_pos    = status_of(code_point);
             if (map_pos != valid) {
                 return true;
             }
@@ -313,14 +310,9 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using enum joiner_type;
 
-        auto     spos       = sbeg;
-        char32_t code_point = 0;
-        for (;;) {
-            code_point = checked::next_code_point<return_unchanged>(spos, send);
-            if (code_point == 0) {
-                break;
-            }
-            switch (code_point) {
+        Iter spos = sbeg;
+        while (spos != send) {
+            switch (checked::next_code_point<return_negated>(spos, send)) {
                     // This may occur in a formally cursive script (such as Arabic) in a context where it
                     // breaks a cursive connection as required for orthographic rules, as in the Persian
                     // language, for example. It also may occur in Indic scripts in a consonant-conjunct
@@ -330,7 +322,7 @@ namespace webpp::unicode::idna {
                     // ZERO WIDTH NON-JOINER
                     bool       is_valid  = false;
                     auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, sbeg);
+                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
 
                     // ccc_of(0) is not gonna be Virama, so we don't need to check for it
                     if (is_ccc_of(before_cp, ccc_props::Virama)) {
@@ -338,10 +330,7 @@ namespace webpp::unicode::idna {
                     }
 
                     for (;;) {
-                        auto const cur_cp = checked::prev_code_point<return_unchanged>(pos, sbeg);
-                        if (cur_cp == 0) {
-                            break;
-                        }
+                        auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
                         auto const joining_type = joiner_type_of(cur_cp);
                         if (joining_type == transparent) {
                             continue;
@@ -358,8 +347,8 @@ namespace webpp::unicode::idna {
                     // }
 
                     pos         = spos;
-                    auto cur_cp = checked::next_code_point<return_unchanged>(pos, send);
-                    for (; cur_cp != 0; cur_cp = checked::next_code_point<return_unchanged>(pos, send)) {
+                    auto cur_cp = checked::next_code_point<return_negated>(pos, send);
+                    for (; cur_cp != 0; cur_cp = checked::next_code_point<return_negated>(pos, send)) {
                         auto const joining_type = joiner_type_of(cur_cp);
                         if (joining_type == transparent) {
                             continue;
@@ -379,7 +368,7 @@ namespace webpp::unicode::idna {
                     // a virama), to control the required display of such conjuncts.
                 case U'\x200D': { // ZERO WIDTH JOINER
                     auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_unchanged>(pos, sbeg);
+                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
                     // ccc_of(0) is not gonna be Virama, so we don't need to check
                     if (!is_ccc_of(before_cp, ccc_props::Virama)) {
                         return false;
@@ -475,7 +464,7 @@ namespace webpp::unicode::idna {
 
         // 6. The label must not start with a combining mark
         {
-            auto const cur_cp = checked::next_code_point_copy<return_unchanged>(spos, send);
+            auto const cur_cp = checked::next_code_point_copy<return_negated>(spos, send);
 
             // no need to check the length, it'll return 0, which is not GC, so it's fine.
             valid &= !is_general_category_of(cur_cp, general_category::Mark);
@@ -490,11 +479,8 @@ namespace webpp::unicode::idna {
             //   (U+002D). (Note: This excludes uppercase ASCII A-Z which are mapped in UTS #46 and disallowed
             //   in IDNA2008.)
             auto pos = spos;
-            for (;;) {
-                auto const cur_cp = checked::next_code_point<return_unchanged>(pos, send);
-                if (cur_cp == 0) {
-                    break;
-                }
+            while (pos != send) {
+                auto const cur_cp = checked::next_code_point<return_negated>(pos, send);
                 auto const status = status_of(cur_cp);
 
                 // https://www.unicode.org/reports/tr46/#Deviations
@@ -548,6 +534,7 @@ namespace webpp::unicode::idna {
             // Misc:
             clean         = static_cast<flag_type>(~dot | ascii),
             length_police = (dot | non_ascii) & ~ascii,
+            ascii_mask    = non_ascii | ascii | ascii_upper,
             all           = 0b1111'1111U, // all possibilities
         };
 
@@ -598,11 +585,8 @@ namespace webpp::unicode::idna {
             // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
             // consider the whole string as one big label.
             while (spos != send) {
-                flag_type const flag = or_all_if<flag_type>(
-                  interesting_characters,
-                  spos,
-                  send,
-                  [](flag_type const cur_flag) constexpr noexcept {
+                flag_type const flag =
+                  or_all_if(interesting_characters, spos, send, [](flag_type const cur_flag) constexpr noexcept {
                       return (cur_flag & to_underlying(length_police)) != 0;
                   });
 
@@ -612,7 +596,9 @@ namespace webpp::unicode::idna {
                     biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
                     lbeg          = spos;
                 } else if ((flag & to_underlying(non_ascii)) != 0) {
-                    auto const code_point = checked::next_code_point<return_unchanged>(spos, send);
+                    // or_all_if will go past that bad code point, so we need prev(spos)
+                    --spos;
+                    auto const code_point = checked::next_code_point<return_negated>(spos, send);
 
                     // Update the max size
                     auto map_count  = adjust_utf_output_size<char32_t, OutCharT>(best_factor_of(code_point));
@@ -681,7 +667,7 @@ namespace webpp::unicode::idna {
         OIter const out_beg             = out;
         bool const  all_ascii           = (flags & to_underlying(non_ascii)) == 0;
         bool const  might_have_punycode = (flags & to_underlying(ace)) != 0;
-        bool const  all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
+        bool const  all_lower_ascii     = (flags & to_underlying(ascii_mask)) == to_underlying(ascii);
         OIter       spos                = out;
         auto        send                = stl::next(spos, src_length); // init
         auto const  oend                = stl::next(out, static_cast<diff_type>(out_len));
@@ -726,11 +712,12 @@ namespace webpp::unicode::idna {
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         stl::uint16_t accum_length = 0;
         while (spos != send) {
+            assert(spos <= send);
             auto const lcbeg = spos;
             OIter      lbeg  = spos; // start of label
 
             // find the label:
-            flag_type flag = or_all_if<flag_type>(
+            flag_type flag = or_all_if(
               to_ascii_info::interesting_characters,
               spos,
               send,
