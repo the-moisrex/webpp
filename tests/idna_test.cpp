@@ -61,16 +61,16 @@ TYPED_TEST(IDNATests, LabelSeparators) {
     //   - U+FF61 ( ｡ ) HALFWIDTH IDEOGRAPHIC FULL STOP
 
     auto const ctx1 = this->template parse_from_string<TypeParam>("http://example.org");
-    EXPECT_FALSE(uri::is_valid(ctx1.status)) << to_string(uri::get_value(ctx1.status));
+    EXPECT_TRUE(uri::is_valid(ctx1.status)) << to_string(uri::get_value(ctx1.status));
 
     auto const ctx2 = this->template parse_from_string<TypeParam>("http://example．org");
-    EXPECT_FALSE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
+    EXPECT_TRUE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
 
     auto const ctx3 = this->template parse_from_string<TypeParam>("http://example。org");
-    EXPECT_FALSE(uri::is_valid(ctx3.status)) << to_string(uri::get_value(ctx3.status));
+    EXPECT_TRUE(uri::is_valid(ctx3.status)) << to_string(uri::get_value(ctx3.status));
 
     auto const ctx4 = this->template parse_from_string<TypeParam>("http://example｡org");
-    EXPECT_FALSE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
+    EXPECT_TRUE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
 
     EXPECT_EQ(ctx1.out.get_hostname(), "example.org");
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
@@ -831,7 +831,6 @@ TEST(BasicIDNATests, ToASCIITest) {
       "xn--a.ß",
       "xn--ls8h=",
       "xn--tešla",
-      "128.0,0.1",
       "يa",
       "xn--",
       "xn--zn7c.com",
@@ -936,6 +935,7 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using webpp::unicode::toNFC;
     using webpp::unicode::idna::to_ascii;
 
+    EXPECT_EQ(to_ascii<string>("128.0,0.1"), "128.0,0.1");
     EXPECT_FALSE(to_ascii<u16string>("\232"));
     EXPECT_FALSE(to_ascii<u16string>("\330"));
     EXPECT_FALSE(to_ascii<u16string>("\012\241"));

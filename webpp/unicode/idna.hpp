@@ -180,7 +180,7 @@ namespace webpp::unicode::idna {
         using istl::iter_append_range;
         using enum checked::error_handling;
         using inp_char_type = stl::iter_value_t<Iter>;
-        using out_iter_type = istl::iter_of_t<OutStrT>;
+        using out_char_type = istl::appendable_value_type_t<OutStrT>;
 
         if constexpr (stl::same_as<Iter, OutStrT>) {
             // no inplace mapping
@@ -209,7 +209,7 @@ namespace webpp::unicode::idna {
                     // Disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate
                     //             step below checks for disallowed characters, after mapping
                     //             and normalization.
-                    if constexpr (stl::output_iterator<out_iter_type, inp_char_type>) {
+                    if constexpr (sizeof(inp_char_type) == sizeof(out_char_type)) {
                         iter_append_range(out, cp_beg, pos);
                     } else {
                         unchecked::append(out, code_point);
@@ -219,7 +219,7 @@ namespace webpp::unicode::idna {
 
                 default: { // mapped or ignored
                     auto ptr = idna_mappings.begin() + map_pos;
-                    if constexpr (stl::output_iterator<out_iter_type, char8_t>) {
+                    if constexpr (UTF8<out_char_type>) {
                         for (; *ptr != u8'\0'; ++ptr) {
                             iter_append(out, *ptr);
                         }
@@ -296,7 +296,8 @@ namespace webpp::unicode::idna {
             case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping."};
             case empty_domain_label: return {"Empty domain labels are not valid."};
             case too_long_label: return {"Label was too long."};
-            case too_long_domain: return {"The Domain was too long."};
+            case too_long_domain:
+                return {"The Domain was too long."};
             [[unlikely]] default:
                 break;
         }
@@ -676,15 +677,15 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const src_length          = iend - ipos;
-        auto       status              = to_underlying(valid);
+        auto const  src_length          = iend - ipos;
+        auto        status              = to_underlying(valid);
         OIter const out_beg             = out;
-        bool const all_ascii           = (flags & to_underlying(non_ascii)) == 0;
-        bool const might_have_punycode = (flags & to_underlying(ace)) != 0;
-        bool const all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
+        bool const  all_ascii           = (flags & to_underlying(non_ascii)) == 0;
+        bool const  might_have_punycode = (flags & to_underlying(ace)) != 0;
+        bool const  all_lower_ascii     = (flags & to_underlying(ascii_upper)) == to_underlying(ascii);
         OIter       spos                = out;
-        auto       send                = stl::next(spos, src_length); // init
-        auto const oend                = stl::next(out, static_cast<diff_type>(out_len));
+        auto        send                = stl::next(spos, src_length); // init
+        auto const  oend                = stl::next(out, static_cast<diff_type>(out_len));
 
         // If output is in between the input, it's a disaster waiting to happen.
         if constexpr (stl::same_as<Iter, OIter>) {
