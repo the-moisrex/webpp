@@ -821,7 +821,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     using webpp::stl::string;
     using webpp::stl::string_view;
 
-    static constexpr array<string_view, 13> invalids{
+    static constexpr array<string_view, 11> invalids{
       "xn--",
       "xn--zn7c.com",
       "xn--a-yoc",
@@ -832,7 +832,6 @@ TEST(BasicIDNATests, ToASCIITest) {
       "xn--ls8h=",
       "xn--tešla",
       "يa",
-      "xn--",
       "xn--zn7c.com",
     };
 
@@ -898,12 +897,12 @@ TEST(BasicIDNATests, ToASCIITest) {
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
-    EXPECT_EQ(to_ascii(u8"xn--zn7c.com"), u8""); // invalid
+    EXPECT_FALSE(to_ascii(u8"xn--zn7c.com")); // invalid
     EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
     EXPECT_EQ(to_ascii(u8"نامه‌ای"), u8"xn--mgba3gch31f060k");
     EXPECT_EQ(to_ascii(u8"TESTING-UPPER"), u8"testing-upper");
     EXPECT_EQ(to_ascii(u8"xn--zca.xn--zca"), u8"xn--zca.xn--zca");
-    EXPECT_EQ(to_ascii(u8"يa"), u8"");
+    EXPECT_FALSE(to_ascii(u8"يa"));
     EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");
     EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
     EXPECT_EQ(to_ascii(u8"one"), u8"one");
@@ -912,7 +911,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid).value_or(u8""), u8"") << invalid;
         string out;
-        EXPECT_NE(to_ascii(invalid, out), stl::to_underlying(valid)) << invalid;
+        EXPECT_NE(to_ascii(invalid, out), stl::to_underlying(valid)) << "'" << invalid << "'";
     }
 
     for (auto const [raw, mappedTo] : valids) {
