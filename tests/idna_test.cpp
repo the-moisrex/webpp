@@ -933,6 +933,8 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using std::u32string;
     using std::u8string;
     using webpp::unicode::toNFC;
+    using webpp::unicode::idna::mapped;
+    using webpp::unicode::idna::status_of;
     using webpp::unicode::idna::to_ascii;
 
     EXPECT_EQ(to_ascii<string>("128.0,0.1"), "128.0,0.1");
@@ -994,7 +996,12 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_FALSE(to_ascii<string>(U"\uFFFD.com"));
 
     // soft hyphen (U+00AD)
-    EXPECT_FALSE(to_ascii("\u00AD")) << "Soft hyphen should result in empty string";
+    // Soft Hyphen will be ignored in the IDNA Mapping, but the string is still valid after toASCII
+    EXPECT_NE(status_of(U'\xAD'), unicode::idna::details::not_mapped);
+    EXPECT_EQ(mapped<u32string>(U'\xAD'), U"");
+    EXPECT_FALSE(to_ascii("\xAD")) << "This is not Soft hyphen, this should be interpreted as replacement char";
+    EXPECT_EQ(to_ascii(u8"\u00AD"), u8"") << "This is soft hyphen, C++ converts it to UTF-8 automagically.";
+    EXPECT_EQ(to_ascii<u32string>(U"\xAD"), U"") << "Soft hyphen should result in empty string";
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -131,9 +131,10 @@ namespace webpp::unicode::idna {
       idna_mappings_string_type const& src) noexcept {
         using details::disallowed;
         using details::valid;
+        using enum checked::error_handling;
         auto const* beg        = stl::begin(src);
         auto const* end        = stl::end(src);
-        auto const  code_point = checked::next_code_point(beg, end);
+        auto const  code_point = checked::next_code_point<return_negated>(beg, end);
 
         // ignored code points are mapped to nothing, so no special code is needed
         switch (auto const pos = status_of(code_point)) {
@@ -184,19 +185,10 @@ namespace webpp::unicode::idna {
         }
 
         auto is_valid = true;
-        for (Iter pos = beg;;) {
+        for (Iter pos = beg; pos != end;) {
             Iter const cp_beg     = pos;
-            auto const code_point = next_code_point<return_negated, Iter>(pos, end);
-            if (code_point == 0) {
-                break;
-            }
-            if (code_point < 0) [[unlikely]] {
-                is_valid = false;
-                iter_append_range(out, cp_beg, pos);
-                continue;
-            }
-
-            auto const map_pos = status_of(code_point);
+            auto const code_point = next_code_point<return_negated>(pos, end);
+            auto const map_pos    = status_of(code_point);
 
             // ignored code points are mapped to nothing, so no special code is needed
             switch (map_pos) {
