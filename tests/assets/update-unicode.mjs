@@ -33,3 +33,5 @@ const doneDownloading = async (content) => {
 
 
 downloadFileNoCache("https://www.unicode.org/Public/UCD/latest/ucd/NormalizationTest.txt", "NormalizationTest.txt", doneDownloading);
+downloadFileNoCache("https://www.unicode.org/Public/idna/latest/IdnaTestV2.txt", "IdnaTestV2.txt",
+                    doneDownloading);

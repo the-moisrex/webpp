@@ -8,6 +8,9 @@
 #include "./common/bidi.hpp"
 #include "./common/tests_common_pch.hpp"
 
+#include <filesystem>
+#include <fstream>
+
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
 using namespace webpp;
 
@@ -79,91 +82,6 @@ TYPED_TEST(IDNATests, LabelSeparators) {
         EXPECT_EQ(ctx4.out.get_hostname(), "example.org");
     }
 }
-
-/*
-TEST(BasicIDNATests, TestingAllTheTable) {
-    stl::size_t errors           = 0;
-    stl::size_t picking_last_one = 0;
-    stl::size_t picking_next_one = 0;
-
-    stl::uint32_t           last_one = 0;
-    std::set<stl::uint32_t> faileds;
-    for (stl::uint32_t index = 0; index != unicode::idna::details::idna_mapping_table.size(); ++index) {
-        auto const cur = unicode::idna::details::idna_mapping_table[index];
-        if ((cur & unicode::idna::details::mapped_mask) == 0) {
-            continue;
-        }
-        auto length = (cur & ~unicode::idna::details::mapped_mask) >> 24U;
-
-        auto             range_start = cur & ~unicode::idna::details::disallowed_mask;
-        auto             range_end   = unicode::idna::details::idna_mapping_table[index + 1];
-        std::string_view action      = "disallowed";
-        if ([[maybe_unused]] bool const is_mapped =
-              (cur & unicode::idna::details::disallowed_mask) != unicode::idna::details::disallowed_mask)
-        {
-            range_end = range_start + length;
-            action    = "mapped/ignored";
-        }
-
-        length = range_end - range_start;
-
-        for (stl::uint32_t sub_index = range_start; sub_index <= range_end;) {
-            auto             sub_pos = unicode::idna::find_mapping_code_point(sub_index);
-            std::string_view state   = "";
-            if (*sub_pos != cur) {
-                ++errors;
-                sub_pos = unicode::idna::find_mapping_code_point(sub_index);
-                faileds.insert(cur & ~unicode::idna::details::disallowed_mask);
-                if (*sub_pos == last_one) {
-                    state = " (last one) ";
-                    ++picking_last_one;
-                } else {
-                    auto next_index = index + 1;
-                    auto next       = unicode::idna::details::idna_mapping_table[next_index];
-                    while ((next & unicode::idna::details::mapped_mask) == 0) {
-                        ++next_index;
-                        next = unicode::idna::details::idna_mapping_table[next_index];
-                    }
-                    if (*sub_pos == next) {
-                        ++picking_next_one;
-                        state = " (next one) ";
-                    }
-                }
-                EXPECT_EQ(*sub_pos, cur)
-                  << "Index: " << index << "\n"
-                  << "Sub Index: " << sub_index << " HexChar: " << std::hex << sub_index << std::dec
-                  << " diff: " << (sub_index - range_start) << "\n"
-                  << "Current: " << stl::hex << cur << " " << (cur & ~unicode::idna::details::disallowed_mask)
-                  << stl::dec << "\n"
-                  << "Range start: " << range_start << "\n"
-                  << "Range end: " << range_end << "\n"
-                  << "length: " << length << "\n"
-                  << "Position of the iterator: "
-                  << stl::distance(unicode::idna::details::idna_mapping_table.begin(), sub_pos)
-                  << "\nCurrent: " << std::hex << (*sub_pos & ~unicode::idna::details::disallowed_mask)
-                  << std::dec << state << "\nExpected: " << std::hex
-                  << (cur & ~unicode::idna::details::disallowed_mask) << std::dec << "\naction: " << action;
-            }
-
-            auto const half  = length / 2;
-            sub_index       += half;
-            if (half == 0) {
-                ++sub_index;
-            }
-        }
-
-        last_one = cur;
-    }
-    EXPECT_EQ(errors, 0)
-      << stl::accumulate(faileds.begin(), faileds.end(), std::string(), [](auto const& res, auto b) {
-             return res + ", " + stl::to_string(b);
-         }).substr(2);
-    EXPECT_EQ(picking_last_one, 0);
-    EXPECT_EQ(picking_next_one, 0);
-}
-*/
-
-
 
 TEST(BasicIDNATests, PerformMappingTest) {
     // 'A' should be mapped to 'a'
@@ -1001,6 +919,183 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_FALSE(to_ascii("\xAD")) << "This is not Soft hyphen, this should be interpreted as replacement char";
     EXPECT_EQ(to_ascii(u8"\u00AD"), u8"") << "This is soft hyphen, C++ converts it to UTF-8 automagically.";
     EXPECT_EQ(to_ascii<u32string>(U"\xAD"), U"") << "Soft hyphen should result in empty string";
+}
+
+namespace {
+    //----------------------------------------------------------------------------
+    // HELPER FUNCTIONS FOR PARSING IdnaTestV2.txt
+    //----------------------------------------------------------------------------
+
+    /**
+     * Converts a Unicode code point to a UTF-8 encoded string.
+     */
+    void codepoint_to_utf8(char32_t cp, std::string& out) {
+        if (cp <= 0x7F) {
+            out += static_cast<char>(cp);
+        } else if (cp <= 0x7FF) {
+            out += static_cast<char>(0xC0 | (cp >> 6));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        } else if (cp <= 0xFFFF) {
+            out += static_cast<char>(0xE0 | (cp >> 12));
+            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        } else if (cp <= 0x10'FFFF) {
+            out += static_cast<char>(0xF0 | (cp >> 18));
+            out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (cp & 0x3F));
+        }
+    }
+
+    /**
+     * Unescapes a string containing \\uXXXX or \\x{XXXX} sequences.
+     */
+    std::string unescape(std::string_view s) {
+        std::string res;
+        res.reserve(s.length());
+        for (size_t i = 0; i < s.length(); ++i) {
+            if (s[i] == '\\' && i + 1 < s.length()) {
+                char32_t codepoint = 0;
+                size_t   len       = 0;
+                try {
+                    if (s[i + 1] == 'u') {
+                        codepoint  = static_cast<char32_t>(std::stoul(std::string(s.substr(i + 2, 4)), &len, 16));
+                        i         += 5; // Skip '\u' and 4 hex digits
+                    } else if (s[i + 1] == 'x' && s[i + 2] == '{') {
+                        size_t end_pos = s.find('}', i + 3);
+                        if (end_pos != std::string_view::npos) {
+                            auto hex_part = s.substr(i + 3, end_pos - (i + 3));
+                            codepoint     = static_cast<char32_t>(std::stoul(std::string(hex_part), &len, 16));
+                            i             = end_pos; // Move index to '}'
+                        }
+                    } else {
+                        res += s[i];                 // Not a unicode escape, treat as literal
+                        continue;
+                    }
+                    codepoint_to_utf8(codepoint, res);
+                } catch (std::exception const&) {
+                    // Handle malformed escape sequences if necessary
+                    res += '?'; // Add replacement character on error
+                }
+            } else {
+                res += s[i];
+            }
+        }
+        return res;
+    }
+
+    std::vector<std::string> split(std::string const& line, char delimiter) {
+        std::vector<std::string> tokens;
+        std::string              token;
+        std::istringstream       tokenStream(line);
+        while (std::getline(tokenStream, token, delimiter)) {
+            tokens.push_back(token);
+        }
+        // Add empty strings for any trailing delimiters
+        if (!line.empty() && line.back() == delimiter) {
+            tokens.push_back("");
+        }
+        return tokens;
+    }
+
+    std::string_view trim(std::string_view s) {
+        s.remove_prefix(std::min(s.find_first_not_of(" \t"), s.size()));
+        s.remove_suffix(std::min(s.size() - s.find_last_not_of(" \t") - 1, s.size()));
+        return s;
+    }
+
+} // namespace
+
+// ## UTS #46 Compliance Tests
+//
+// This test reads `IdnaTestV2.txt` to verify full compliance with the Unicode
+// Technical Standard #46 for Internationalized Domain Names in Applications (IDNA2008).
+// https://www.unicode.org/reports/tr46/#Conformance_Testing
+TEST(BasicIDNATests, IDNAComplianceTests) {
+    std::filesystem::path const cur_file   = __FILE__;
+    std::filesystem::path       file_path  = cur_file.parent_path();
+    file_path                             /= "assets/IdnaTestV2.txt";
+    std::ifstream file(file_path);
+    ASSERT_TRUE(file.is_open()) << "Could not open IdnaTestV2.txt. Make sure it's in the working directory.";
+
+    std::string line;
+    int         line_num = 0;
+    while (std::getline(file, line)) {
+        line_num++;
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+
+        // The comment part is separated by a hash
+        auto comment_pos = line.find('#');
+        if (comment_pos != std::string::npos) {
+            line = line.substr(0, comment_pos);
+        }
+
+        // Trim trailing whitespace from the line itself
+        line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
+
+        auto parts = split(line, ';');
+        if (parts.size() < 5) {
+            continue; // Skip malformed lines
+        }
+
+        // Add scoped trace for better error reporting
+        SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + parts[0]);
+
+        // 1. Parse columns from the file
+        std::string const source            = unescape(trim(parts[0]));
+        std::string       to_unicode_exp    = unescape(trim(parts[1]));
+        std::string const to_unicode_status = std::string(trim(parts[2]));
+        std::string       to_ascii_n_exp    = unescape(trim(parts[3]));
+        std::string const to_ascii_n_status = std::string(trim(parts[4]));
+
+        // Handle blank columns which inherit values from previous columns
+        if (to_unicode_exp.empty() && source != "\"\"") {
+            to_unicode_exp = source;
+        }
+        if (to_ascii_n_exp.empty()) {
+            to_ascii_n_exp = to_unicode_exp;
+        }
+
+        // bool const to_unicode_has_error = !to_unicode_status.empty() && to_unicode_status != "[]";
+        bool const to_ascii_n_has_error = !(to_ascii_n_status.empty() || to_ascii_n_status == "[]");
+
+        // 2. Test toUnicode
+        // auto unicode_res = unicode::idna::to_unicode(source);
+        // EXPECT_EQ(unicode_res.has_error, to_unicode_has_error);
+        // if (!to_unicode_has_error) {
+        //     EXPECT_EQ(unicode_res.text, to_unicode_exp);
+        // }
+
+        // 3. Test toASCII (Nontransitional)
+        auto ascii_n_res = unicode::idna::to_ascii<std::string>(source);
+        EXPECT_EQ(!ascii_n_res.has_value(), to_ascii_n_has_error);
+        if (ascii_n_res) {
+            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp) << "  Source: " << source << "\n  Line: " << line;
+        }
+
+        // 4. Test toASCII (Transitional), if data is present
+        if (parts.size() >= 7) {
+            std::string to_ascii_t_exp    = unescape(trim(parts[5]));
+            std::string to_ascii_t_status = std::string(trim(parts[6]));
+
+            if (to_ascii_t_exp.empty()) {
+                to_ascii_t_exp = to_ascii_n_exp;
+            }
+            if (to_ascii_t_status.empty()) {
+                to_ascii_t_status = to_ascii_n_status;
+            }
+
+            bool const to_ascii_t_has_error = !(to_ascii_t_status.empty() || to_ascii_t_status == "[]");
+
+            auto ascii_t_res = unicode::idna::to_ascii<std::string>(source);
+            EXPECT_EQ(!ascii_t_res.has_value(), to_ascii_t_has_error);
+            if (ascii_t_res) {
+                EXPECT_EQ(*ascii_t_res, to_ascii_t_exp);
+            }
+        }
+    }
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
