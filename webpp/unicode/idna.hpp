@@ -253,9 +253,10 @@ namespace webpp::unicode::idna {
         too_long_label           = 0b1U << 8U,  // the subdomain is more than 63
         too_long_domain          = 0b1U << 9U,  // the whole domain is more than 253 without the last dot
         failed_validity_criteria = 0b1U << 10U, // the label failed the validity criteria requirements.
+        unknown                  = 0b1U << 11U,
     };
 
-    struct idna_options {                       // NOLINT(*-struct-pack-align)
+    struct idna_options { // NOLINT(*-struct-pack-align)
         bool CheckHyphens          = false;
         bool CheckBidi             = true;
         bool CheckJoiners          = true;
@@ -272,6 +273,31 @@ namespace webpp::unicode::idna {
         bool CheckStatusValues  = false; // rule 7 of the Validity Criteria
     };
 
+    [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
+        return idna_options{
+          .CheckHyphens          = static_cast<bool>(flags >> 8U & 0b1U),
+          .CheckBidi             = static_cast<bool>(flags >> 7U & 0b1U),
+          .CheckJoiners          = static_cast<bool>(flags >> 6U & 0b1U),
+          .UseSTD3ASCIIRules     = static_cast<bool>(flags >> 5U & 0b1U),
+          .VerifyDnsLength       = static_cast<bool>(flags >> 4U & 0b1U),
+          .IgnoreInvalidPunycode = static_cast<bool>(flags >> 3U & 0b1U),
+          .CheckNFC              = static_cast<bool>(flags >> 2U & 0b1U),
+          .CheckDotInclusions    = static_cast<bool>(flags >> 1U & 0b1U),
+          .CheckStatusValues     = static_cast<bool>(flags >> 0U & 0b1U)};
+    }
+
+    [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
+        return (
+          static_cast<stl::uint16_t>(options.CheckHyphens) << 8U | static_cast<stl::uint16_t>(options.CheckBidi) << 7U |
+          static_cast<stl::uint16_t>(options.CheckJoiners) << 6U |
+          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 5U |
+          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 4U |
+          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 3U |
+          static_cast<stl::uint16_t>(options.CheckNFC) << 2U |
+          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 1U |
+          static_cast<stl::uint16_t>(options.CheckStatusValues) << 0U);
+    }
+
     [[nodiscard]] static constexpr stl::string_view to_string(to_ascii_status const status) noexcept {
         using enum to_ascii_status;
         switch (status) {
@@ -284,8 +310,9 @@ namespace webpp::unicode::idna {
             case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping."};
             case empty_domain_label: return {"Empty domain labels are not valid."};
             case too_long_label: return {"Label was too long."};
-            case too_long_domain:
-                return {"The Domain was too long."};
+            case too_long_domain: return {"The Domain was too long."};
+            case unknown:
+                return {"Unknown failure."};
             [[unlikely]] default:
                 break;
         }
@@ -898,6 +925,26 @@ namespace webpp::unicode::idna {
             return out;
         }
         return stl::unexpected{status};
+    }
+
+    template <istl::String OutStrT = stl::u8string, typename... Args>
+    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
+      idna_options options,
+      Args&&... args) {
+        switch (idna_flags(options)) {
+            case 0b1'1111'1111U: return to_ascii<OutStrT, idna_flags(0b1'1111'1111U)>(stl::forward<Args>(args)...);
+            case 0b1111'1111: return to_ascii<OutStrT, idna_flags(0b1111'1111)>(stl::forward<Args>(args)...);
+            case 0b0111'1111: return to_ascii<OutStrT, idna_flags(0b0111'1111)>(stl::forward<Args>(args)...);
+            case 0b0011'1111: return to_ascii<OutStrT, idna_flags(0b0011'1111)>(stl::forward<Args>(args)...);
+            case 0b0001'1111: return to_ascii<OutStrT, idna_flags(0b0001'1111)>(stl::forward<Args>(args)...);
+            case 0b0000'1111: return to_ascii<OutStrT, idna_flags(0b0000'1111)>(stl::forward<Args>(args)...);
+            case 0b0000'0111: return to_ascii<OutStrT, idna_flags(0b0000'0111)>(stl::forward<Args>(args)...);
+            case 0b0000'0011: return to_ascii<OutStrT, idna_flags(0b0000'0011)>(stl::forward<Args>(args)...);
+            case 0b0000'0001: return to_ascii<OutStrT, idna_flags(0b0000'0001)>(stl::forward<Args>(args)...);
+            case 0b0000'0000: return to_ascii<OutStrT, idna_flags(0b0000'0000)>(stl::forward<Args>(args)...);
+            default: break;
+        }
+        return stl::unexpected(stl::to_underlying(to_ascii_status::unknown));
     }
 
     [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {

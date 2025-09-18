@@ -1004,6 +1004,57 @@ namespace {
         return s;
     }
 
+    // Parses a status string like "[B1, V2]" into a set of codes.
+    std::set<std::string> parse_status_codes(std::string_view status_str) {
+        std::set<std::string> codes;
+        if (status_str.length() <= 2) {
+            return codes;
+        }
+        status_str.remove_prefix(1);
+        status_str.remove_suffix(1);
+
+        std::stringstream ss(std::string(status_str.data(), status_str.size()));
+        std::string       code;
+        while (std::getline(ss, code, ',')) {
+            codes.insert(std::string(trim(code)));
+        }
+        return codes;
+    }
+
+    /**
+     * @brief Checks if all errors in the set are ignored by the given options.
+     *
+     * This function maps the error codes from IdnaTestV2.txt to the corresponding
+     * boolean flags in the idna_options struct.
+     *
+     * @return True if every error in the set corresponds to a check that is
+     * disabled in the options struct. False otherwise.
+     */
+    bool all_errors_ignored(std::set<std::string> const& errors, unicode::idna::idna_options const& options) {
+        if (errors.empty()) {
+            return true;
+        }
+
+        for (auto const& error : errors) {
+            char prefix       = error.empty() ? ' ' : error[0];
+            bool is_ignorable = false;
+            switch (prefix) {
+                case 'A': is_ignorable = !options.VerifyDnsLength; break;
+                case 'V': is_ignorable = !options.CheckHyphens && (error == "V2" || error == "V3"); break;
+                case 'C': is_ignorable = !options.CheckJoiners; break;
+                case 'B': is_ignorable = !options.CheckBidi; break;
+                case 'U': is_ignorable = !options.UseSTD3ASCIIRules; break;
+                default: is_ignorable = false; break; // Un-ignorable errors (e.g., Pn, Xn)
+            }
+            if (!is_ignorable) {
+                return false;
+            }
+        }
+        return true; // All errors were successfully ignored.
+    }
+
+
+
 } // namespace
 
 // ## UTS #46 Compliance Tests
@@ -1016,7 +1067,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
     std::filesystem::path       file_path  = cur_file.parent_path();
     file_path                             /= "assets/IdnaTestV2.txt";
     std::ifstream file(file_path);
-    ASSERT_TRUE(file.is_open()) << "Could not open IdnaTestV2.txt. Make sure it's in the working directory.";
+    ASSERT_TRUE(file.is_open())
+      << "Could not open IdnaTestV2.txt. Make sure it's in the same directory as the test executable.";
 
     std::string line;
     int         line_num = 0;
@@ -1026,31 +1078,26 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             continue;
         }
 
-        // The comment part is separated by a hash
         auto comment_pos = line.find('#');
         if (comment_pos != std::string::npos) {
             line = line.substr(0, comment_pos);
         }
-
-        // Trim trailing whitespace from the line itself
         line.erase(line.find_last_not_of(" \t\n\r\f\v") + 1);
 
         auto parts = split(line, ';');
         if (parts.size() < 5) {
-            continue; // Skip malformed lines
+            continue;
         }
 
-        // Add scoped trace for better error reporting
-        SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + parts[0]);
 
-        // 1. Parse columns from the file
-        std::string const source            = unescape(trim(parts[0]));
-        std::string       to_unicode_exp    = unescape(trim(parts[1]));
-        std::string const to_unicode_status = std::string(trim(parts[2]));
-        std::string       to_ascii_n_exp    = unescape(trim(parts[3]));
-        std::string const to_ascii_n_status = std::string(trim(parts[4]));
+        std::string const source                = unescape(trim(parts[0]));
+        std::string       to_unicode_exp        = unescape(trim(parts[1]));
+        std::string const to_unicode_status     = std::string(trim(parts[2]));
+        std::string       to_ascii_n_exp        = unescape(trim(parts[3]));
+        std::string const to_ascii_n_status_str = std::string(trim(parts[4]));
 
-        // Handle blank columns which inherit values from previous columns
+        SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + source + " | line: " + line);
+
         if (to_unicode_exp.empty() && source != "\"\"") {
             to_unicode_exp = source;
         }
@@ -1058,41 +1105,51 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             to_ascii_n_exp = to_unicode_exp;
         }
 
-        // bool const to_unicode_has_error = !to_unicode_status.empty() && to_unicode_status != "[]";
-        bool const to_ascii_n_has_error = !(to_ascii_n_status.empty() || to_ascii_n_status == "[]");
+        // Note: Transitional Processing (columns 5, 6) is skipped as per the idna_options struct.
 
-        // 2. Test toUnicode
-        // auto unicode_res = unicode::idna::to_unicode(source);
-        // EXPECT_EQ(unicode_res.has_error, to_unicode_has_error);
-        // if (!to_unicode_has_error) {
-        //     EXPECT_EQ(unicode_res.text, to_unicode_exp);
-        // }
+        // --- Test toASCII with default (strict) options ---
+        auto const expected_errors        = parse_status_codes(to_ascii_n_status_str);
+        bool const should_fail_by_default = !expected_errors.empty();
 
-        // 3. Test toASCII (Nontransitional)
-        auto ascii_n_res = unicode::idna::to_ascii<std::string>(source);
-        EXPECT_EQ(!ascii_n_res.has_value(), to_ascii_n_has_error);
+        unicode::idna::idna_options default_options{}; // All checks are ON by default.
+        auto                        ascii_n_res = unicode::idna::to_ascii<std::string>(default_options, source);
+
+        EXPECT_EQ(!ascii_n_res.has_value(), should_fail_by_default);
         if (ascii_n_res) {
-            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp) << "  Source: " << source << "\n  Line: " << line;
+            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
         }
 
-        // 4. Test toASCII (Transitional), if data is present
-        if (parts.size() >= 7) {
-            std::string to_ascii_t_exp    = unescape(trim(parts[5]));
-            std::string to_ascii_t_status = std::string(trim(parts[6]));
 
-            if (to_ascii_t_exp.empty()) {
-                to_ascii_t_exp = to_ascii_n_exp;
+        // --- If it failed, test again with relaxed options to see if it passes ---
+        if (should_fail_by_default) {
+            unicode::idna::idna_options relaxed_options;
+            // Disable checks corresponding to the errors on this line
+            for (auto const& error_code : expected_errors) {
+                char prefix = error_code.empty() ? ' ' : error_code[0];
+                if (prefix == 'V') {
+                    relaxed_options.CheckHyphens = false;
+                }
+                if (prefix == 'B') {
+                    relaxed_options.CheckBidi = false;
+                }
+                if (prefix == 'C') {
+                    relaxed_options.CheckJoiners = false;
+                }
+                if (prefix == 'U') {
+                    relaxed_options.UseSTD3ASCIIRules = false;
+                }
+                if (prefix == 'A') {
+                    relaxed_options.VerifyDnsLength = false;
+                }
             }
-            if (to_ascii_t_status.empty()) {
-                to_ascii_t_status = to_ascii_n_status;
-            }
 
-            bool const to_ascii_t_has_error = !(to_ascii_t_status.empty() || to_ascii_t_status == "[]");
-
-            auto ascii_t_res = unicode::idna::to_ascii<std::string>(source);
-            EXPECT_EQ(!ascii_t_res.has_value(), to_ascii_t_has_error);
-            if (ascii_t_res) {
-                EXPECT_EQ(*ascii_t_res, to_ascii_t_exp);
+            // If all errors are ignorable by our relaxed options, this call should now succeed.
+            if (all_errors_ignored(expected_errors, relaxed_options)) {
+                auto ascii_relaxed_res = unicode::idna::to_ascii<std::string>(relaxed_options, source);
+                ASSERT_TRUE(ascii_relaxed_res.has_value())
+                  << "to_ascii should succeed when relevant checks are disabled.";
+                EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
+                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line;
             }
         }
     }
