@@ -841,7 +841,8 @@ namespace webpp::unicode::idna {
                 out                = send;
                 auto const tmp_beg = out;
                 iter_append(out, 'x', 'n', '-', '-');
-                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, out);
+                [[maybe_unused]] auto const p_status         = punycode_encode(lbeg, lend, out);
+                auto const                  out_label_length = stl::distance(tmp_beg, out);
 
                 // We ran out of space
                 assert(out <= oend);
@@ -851,6 +852,8 @@ namespace webpp::unicode::idna {
                 stl::rotate(lcend, tmp_beg, out);
                 stl::shift_left(lbeg, out, src_label_length);
                 stl::advance(out, -src_label_length);
+                stl::advance(spos, out_label_length - src_label_length);
+                send = out;
 
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
