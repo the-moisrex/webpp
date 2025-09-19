@@ -1091,6 +1091,22 @@ namespace {
 
 } // namespace
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit1) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    EXPECT_TRUE(to_ascii<std::string>("fass.de"));
+    EXPECT_EQ(to_ascii<std::string>("fass.de"), "fass.de");
+    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::idna_options{}, "fass.de"), "fass.de");
+    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::strict_idna_options, "fass.de"), "fass.de");
+
+    auto const res = ::to_ascii<std::string>(unicode::idna::strict_idna_options, "faß.de");
+    EXPECT_EQ(res, "xn--fa-hia.de") << res.value_or("Nothing");
+
+    EXPECT_EQ(::to_ascii<std::string>(idna_options{}, "faß.de"), "xn--fa-hia.de");
+    EXPECT_EQ(::to_ascii<std::string>(idna_options{.CheckHyphens = true}, "faß.de"), "xn--fa-hia.de");
+}
+
 // ## UTS #46 Compliance Tests
 //
 // This test reads `IdnaTestV2.txt` to verify full compliance with the Unicode
@@ -1188,15 +1204,6 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
         }
     }
-}
-
-TEST(BasicIDNATests, IDNAComplianceTestsExplicit1) {
-    using unicode::idna::to_ascii;
-
-    EXPECT_TRUE(to_ascii<std::string>("fass.de"));
-    EXPECT_EQ(to_ascii<std::string>("fass.de"), "fass.de");
-    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::idna_options{}, "fass.de"), "fass.de");
-    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::strict_idna_options, "fass.de"), "fass.de");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
