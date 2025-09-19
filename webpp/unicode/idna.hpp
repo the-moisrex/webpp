@@ -360,7 +360,7 @@ namespace webpp::unicode::idna {
                         continue;
                     }
 
-                    for (;;) {
+                    while (pos != sbeg) {
                         auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
                         auto const joining_type = joiner_type_of(cur_cp);
                         if (joining_type == transparent) {

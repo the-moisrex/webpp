@@ -1010,6 +1010,8 @@ namespace {
         if (status_str.length() <= 2) {
             return codes;
         }
+        assert(status_str.front() == '[');
+        assert(status_str.back() == ']');
         status_str.remove_prefix(1);
         status_str.remove_suffix(1);
 
@@ -1107,6 +1109,17 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit1) {
     EXPECT_EQ(::to_ascii<std::string>(idna_options{.CheckHyphens = true}, "faß.de"), "xn--fa-hia.de");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit2) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    EXPECT_FALSE(::to_ascii<std::string>(unicode::idna::strict_idna_options, "à\u05D0"));
+    EXPECT_FALSE(::to_ascii<std::string>(idna_options{.CheckBidi = true}, "à\u05D0"));
+
+    auto res = ::to_ascii<std::string>(idna_options{.CheckBidi = false}, "à\u05D0");
+    EXPECT_EQ(res, "xn--0ca24w") << res.value_or("Nothing");
+}
+
 // ## UTS #46 Compliance Tests
 //
 // This test reads `IdnaTestV2.txt` to verify full compliance with the Unicode
@@ -1144,7 +1157,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         std::string       to_unicode_exp        = unescape(trim(parts[1]));
         std::string const to_unicode_status     = std::string(trim(parts[2]));
         std::string       to_ascii_n_exp        = unescape(trim(parts[3]));
-        std::string const to_ascii_n_status_str = std::string(trim(parts[4]));
+        std::string       to_ascii_n_status_str = std::string(trim(parts[4]));
 
         SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + source + " | line: " + line);
 
@@ -1153,6 +1166,9 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         }
         if (to_ascii_n_exp.empty()) {
             to_ascii_n_exp = to_unicode_exp;
+        }
+        if (to_ascii_n_status_str.empty()) {
+            to_ascii_n_status_str = to_unicode_status;
         }
 
         // Note: Transitional Processing (columns 5, 6) is skipped as per the idna_options struct.
