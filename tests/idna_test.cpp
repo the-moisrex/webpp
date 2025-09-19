@@ -1053,6 +1053,40 @@ namespace {
         return true; // All errors were successfully ignored.
     }
 
+    template <typename OutStrT, unsigned Flags, typename... Args>
+    [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
+    to_ascii_impl(Args&&... args) {
+        // Your actual implementation here, dependent on Flags at compile time
+        return webpp::unicode::idna::to_ascii<OutStrT, webpp::unicode::idna::idna_flags(Flags)>(
+          std::forward<Args>(args)...);
+    }
+
+    // Helper alias for function pointer type
+    template <typename OutStrT, typename... Args>
+    using to_ascii_fn = webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> (*)(Args&&...);
+
+    // Build a constexpr lookup table for all possible flag values
+    template <typename OutStrT, typename... Args, size_t... Is>
+    constexpr auto make_to_ascii_table(std::index_sequence<Is...>) {
+        return std::array<to_ascii_fn<OutStrT, Args...>, sizeof...(Is)>{&to_ascii_impl<OutStrT, Is, Args...>...};
+    }
+
+    // Main entry point: runtime flags -> compile-time dispatch
+    template <typename OutStrT = stl::u8string, typename... Args>
+    [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
+      webpp::unicode::idna::idna_options options,
+      Args&&... args) {
+        constexpr size_t      NumFlags = 256; // 8-bit mask (adjust if wider)
+        static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
+
+        auto flags = idna_flags(options);
+        if (flags < table.size()) {
+            return table[flags](std::forward<Args>(args)...);
+        }
+        return webpp::stl::unexpected(webpp::stl::to_underlying(webpp::unicode::idna::to_ascii_status::unknown));
+    }
+
+
 
 
 } // namespace
@@ -1111,10 +1145,10 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         auto const expected_errors        = parse_status_codes(to_ascii_n_status_str);
         bool const should_fail_by_default = !expected_errors.empty();
 
-        unicode::idna::idna_options default_options{}; // All checks are ON by default.
-        auto                        ascii_n_res = unicode::idna::to_ascii<std::string>(default_options, source);
+        auto default_options = unicode::idna::strict_idna_options;
+        auto ascii_n_res     = to_ascii<std::string>(default_options, source);
 
-        EXPECT_EQ(!ascii_n_res.has_value(), should_fail_by_default);
+        EXPECT_NE(ascii_n_res.has_value(), should_fail_by_default);
         if (ascii_n_res) {
             EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
         }
@@ -1122,7 +1156,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
 
         // --- If it failed, test again with relaxed options to see if it passes ---
         if (should_fail_by_default) {
-            unicode::idna::idna_options relaxed_options;
+            auto relaxed_options = unicode::idna::strict_idna_options;
+
             // Disable checks corresponding to the errors on this line
             for (auto const& error_code : expected_errors) {
                 char prefix = error_code.empty() ? ' ' : error_code[0];
@@ -1145,7 +1180,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
 
             // If all errors are ignorable by our relaxed options, this call should now succeed.
             if (all_errors_ignored(expected_errors, relaxed_options)) {
-                auto ascii_relaxed_res = unicode::idna::to_ascii<std::string>(relaxed_options, source);
+                auto ascii_relaxed_res = to_ascii<std::string>(relaxed_options, source);
                 ASSERT_TRUE(ascii_relaxed_res.has_value())
                   << "to_ascii should succeed when relevant checks are disabled.";
                 EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
@@ -1153,6 +1188,15 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
         }
     }
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit1) {
+    using unicode::idna::to_ascii;
+
+    EXPECT_TRUE(to_ascii<std::string>("fass.de"));
+    EXPECT_EQ(to_ascii<std::string>("fass.de"), "fass.de");
+    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::idna_options{}, "fass.de"), "fass.de");
+    EXPECT_EQ(::to_ascii<std::string>(unicode::idna::strict_idna_options, "fass.de"), "fass.de");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

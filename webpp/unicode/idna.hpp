@@ -273,6 +273,18 @@ namespace webpp::unicode::idna {
         bool CheckStatusValues  = false; // rule 7 of the Validity Criteria
     };
 
+    static constexpr idna_options strict_idna_options{
+      .CheckHyphens          = true,
+      .CheckBidi             = true,
+      .CheckJoiners          = true,
+      .UseSTD3ASCIIRules     = true,
+      .VerifyDnsLength       = true,
+      .IgnoreInvalidPunycode = false,
+      .CheckNFC              = true,
+      .CheckDotInclusions    = true,
+      .CheckStatusValues     = true,
+    };
+
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
         return idna_options{
           .CheckHyphens          = static_cast<bool>(flags >> 8U & 0b1U),
@@ -925,26 +937,6 @@ namespace webpp::unicode::idna {
             return out;
         }
         return stl::unexpected{status};
-    }
-
-    template <istl::String OutStrT = stl::u8string, typename... Args>
-    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(
-      idna_options options,
-      Args&&... args) {
-        switch (idna_flags(options)) {
-            case 0b1'1111'1111U: return to_ascii<OutStrT, idna_flags(0b1'1111'1111U)>(stl::forward<Args>(args)...);
-            case 0b1111'1111: return to_ascii<OutStrT, idna_flags(0b1111'1111)>(stl::forward<Args>(args)...);
-            case 0b0111'1111: return to_ascii<OutStrT, idna_flags(0b0111'1111)>(stl::forward<Args>(args)...);
-            case 0b0011'1111: return to_ascii<OutStrT, idna_flags(0b0011'1111)>(stl::forward<Args>(args)...);
-            case 0b0001'1111: return to_ascii<OutStrT, idna_flags(0b0001'1111)>(stl::forward<Args>(args)...);
-            case 0b0000'1111: return to_ascii<OutStrT, idna_flags(0b0000'1111)>(stl::forward<Args>(args)...);
-            case 0b0000'0111: return to_ascii<OutStrT, idna_flags(0b0000'0111)>(stl::forward<Args>(args)...);
-            case 0b0000'0011: return to_ascii<OutStrT, idna_flags(0b0000'0011)>(stl::forward<Args>(args)...);
-            case 0b0000'0001: return to_ascii<OutStrT, idna_flags(0b0000'0001)>(stl::forward<Args>(args)...);
-            case 0b0000'0000: return to_ascii<OutStrT, idna_flags(0b0000'0000)>(stl::forward<Args>(args)...);
-            default: break;
-        }
-        return stl::unexpected(stl::to_underlying(to_ascii_status::unknown));
     }
 
     [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
