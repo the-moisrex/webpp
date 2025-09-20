@@ -674,29 +674,22 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
         int         opt_index = 0;
     };
 
-    static constexpr array<idna_options, 2> idna_opts{
+    static constexpr array<idna_options, 3> idna_opts{
       {
        idna_options{},
-       idna_options{
-          .CheckHyphens          = true,
-          .CheckBidi             = true,
-          .CheckJoiners          = true,
-          .UseSTD3ASCIIRules     = true,
-          // .Transitional_Processing = true,
-          .VerifyDnsLength       = true,
-          .IgnoreInvalidPunycode = true,
-          .CheckNFC              = false, // todo
-          .CheckDotInclusions    = true,
-          .CheckStatusValues     = true,
-        }, }
+       unicode::idna::strict_idna_options,
+       unicode::idna::loose_idna_options,
+       }
     };
 
-    static constexpr array<opts, 21> tests{
+    static constexpr array<opts, 25> tests{
       opts{"", true, -1},
       {"a", true, -1},
-      {"-"},
-      {"--"},
-      {"---"},
+      {"-", true, 0},
+      {"--", true, 0},
+      {"---", true, 0},
+      {"---", true, 2},
+      {"-", true, 2},
       {"xn---", false},
       {"nn---"},
       {"nn---", false, 1},
@@ -706,6 +699,8 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"correct", true, -1},
       {"a--b", false, 1},
       {"a--b", true, 0},
+      {"שלום.1a", false, 1},
+      {"שלום.1a", true, 2}, // LDH-only label cannot come after RTL label
 
       // Basic ASCII & LDH (Letter-Digit-Hyphen)
       {"1", true, -1}, // Single digit
@@ -724,9 +719,11 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
             case -1:
                 EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str;
                 EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts[2]>(str.begin(), str.end())) << str;
                 break;
             case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str; break;
             case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str; break;
+            case 2: EXPECT_EQ(is_valid, is_label_valid<idna_opts[2]>(str.begin(), str.end())) << str; break;
             default: break;
         }
     }
@@ -1118,6 +1115,18 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit2) {
 
     auto res = ::to_ascii<std::string>(idna_options{.CheckBidi = false}, "à\u05D0");
     EXPECT_EQ(res, "xn--0ca24w") << res.value_or("Nothing");
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit3) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // 0à.\u05D0; ; [B1]; xn--0-sfa.xn--4db; ; ;
+    EXPECT_FALSE(::to_ascii<std::string>(unicode::idna::strict_idna_options, "0à.\u05D0"));
+    EXPECT_FALSE(::to_ascii<std::string>(idna_options{.CheckBidi = true}, "0à.\u05D0"));
+
+    auto res = ::to_ascii<std::string>(idna_options{.CheckBidi = false}, "0à.\u05D0");
+    EXPECT_EQ(res, "xn--0-sfa.xn--4db") << res.value_or("Nothing");
 }
 
 // ## UTS #46 Compliance Tests

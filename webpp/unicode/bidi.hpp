@@ -165,6 +165,10 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
+    [[nodiscard]] static constexpr direction_type direction_mask_of(char32_t const code_point) noexcept {
+        return 0b1U << stl::to_underlying(direction_of(code_point));
+    }
+
     /**
      * An RTL label is a label that contains at least one character of type R, AL, or AN.
      * From RFC: https://www.rfc-editor.org/rfc/rfc5893#section-1.4
@@ -184,7 +188,7 @@ namespace webpp::unicode {
      * Check if we're in compliant with the Bidi Rule
      * RFC: https://www.rfc-editor.org/rfc/rfc5893#section-2
      */
-    template <stl::random_access_iterator IterT>
+    template <bool SkipNonBidiDomainNames = false, stl::random_access_iterator IterT>
     [[nodiscard]] static constexpr bool validate_bidi_rule(IterT const beg, IterT const endp) noexcept {
         using stl::to_underlying;
         using enum direction;
@@ -218,8 +222,8 @@ namespace webpp::unicode {
         auto          pos      = beg;
         char32_t      last_cp  = 0;
         auto const    first_cp = checked::next_code_point<return_zero_char>(pos, endp);
-        auto const    first    = to_underlying(direction_of(first_cp));
-        stl::uint32_t accum    = 0b1U << to_underlying(direction_of(first_cp));
+        auto const    first    = direction_mask_of(first_cp);
+        stl::uint32_t accum    = first;
         if (first_cp == 0) {
             return true;
         }
@@ -227,29 +231,31 @@ namespace webpp::unicode {
         if constexpr (UTF32<char_type>) {
             // Will enable auto-vectorization since it's more simple
             for (; pos != endp; ++pos) {
-                accum |= 0b1U << to_underlying(direction_of(*pos));
+                accum |= direction_mask_of(*pos);
             }
             last_cp = *--pos;
         } else {
-            for (;;) {
-                last_cp = checked::next_code_point<return_zero_char>(pos, endp);
-                if (last_cp == 0) {
-                    break;
-                }
-                accum |= 0b1U << to_underlying(direction_of(last_cp));
+            while (pos != endp) {
+                last_cp  = checked::next_code_point<return_zero_char>(pos, endp);
+                accum   |= direction_mask_of(last_cp);
             }
         }
 
         // A "Bidi domain name" is a domain name that contains at least one RTL label.
-        if ((accum & bidi_mask(R, AL, AN)) == 0U) [[likely]] { // it's all LTR
-            return true;
+        // A Bidi domain name is a domain name containing at least one character with Bidi_Class R, AL, or AN.
+        // See [IDNA2008] RFC 5893, Section 1.4.
+        if constexpr (SkipNonBidiDomainNames) {
+            bool const is_bidi_domain_name = (accum & bidi_mask(R, AL, AN)) != 0U;
+            if (!is_bidi_domain_name) [[likely]] { // it's all LTR
+                return true;
+            }
         }
 
-        stl::uint32_t const last  = 0b1U << to_underlying(direction_of(last_cp));
+        stl::uint32_t const last  = direction_mask_of(last_cp);
         bool                valid = true;
 
         // we don't need to check other things, the first rule will make sure it's not valid otherwise
-        bool const is_rtl = first != to_underlying(L);
+        bool const is_rtl = first != (0b1U << to_underlying(L));
 
         // 1. The first character must be L, R, or AL:
         valid &= (first & bidi_mask(L, R, AL)) != 0;
@@ -259,18 +265,18 @@ namespace webpp::unicode {
             valid &= (accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 6. It ends with (semi-regex): (L|EN)NSM*
-            if ((last & bidi_mask(L, EN)) != 0) [[unlikely]] {
+            if ((last & bidi_mask(L, EN)) != 0) {
                 for (;;) {
                     last_cp = checked::prev_code_point<return_zero_char>(pos, beg);
                     if (last_cp == 0) [[unlikely]] {
                         valid = false;
                         break;
                     }
-                    if (direction_of(*pos) != NSM) {
+                    if (direction_of(last_cp) != NSM) {
                         break;
                     }
                 }
-                valid &= (to_underlying(direction_of(*pos)) & bidi_mask(L, EN)) != 0;
+                valid &= (direction_mask_of(last_cp) & bidi_mask(L, EN)) != 0;
             }
 
         } else {
@@ -286,16 +292,15 @@ namespace webpp::unicode {
                         valid = false;
                         break;
                     }
-                    if (direction_of(*pos) != NSM) {
+                    if (direction_of(last_cp) != NSM) {
                         break;
                     }
                 }
-                valid &= (to_underlying(direction_of(*pos)) & bidi_mask(R, AL, EN, AN)) != 0;
+                valid &= (direction_mask_of(last_cp) & bidi_mask(R, AL, EN, AN)) != 0;
             }
 
             // 4. AN and EN should not be present together
-            constexpr auto AN_EN  = bidi_mask(AN, EN);
-            valid                &= (accum & AN_EN) != AN_EN;
+            valid &= (accum & bidi_mask(AN, EN)) != bidi_mask(AN, EN);
         }
 
         // We don't need early bailouts in this function since the happy path goes through all the checks and

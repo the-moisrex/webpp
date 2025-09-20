@@ -648,7 +648,8 @@ namespace webpp::unicode::idna {
 
         // 9. Check bidi rule
         if constexpr (Options.CheckBidi) {
-            valid &= validate_bidi_rule(spos, send);
+            // If CheckBidi, and if the domain name is a "Bidi domain name":
+            valid &= validate_bidi_rule<true>(spos, send);
         }
 
         return valid;
