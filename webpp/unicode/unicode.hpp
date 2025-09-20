@@ -113,11 +113,8 @@ namespace webpp::unicode {
 
     template <UTF CharT = char8_t>
     [[nodiscard]] static constexpr bool is_ascii(CharT const code_point) noexcept {
-        if constexpr (stl::is_unsigned_v<CharT>) {
-            return code_point < 0x80;
-        } else {
-            return code_point >= 0 && code_point < 0x80;
-        }
+        return (static_cast<CharT>(~0x7FU) & code_point) == 0;
+        // return code_point >= 0 && code_point < 0x80;
     }
 
     template <stl::forward_iterator Iter = char8_t const*>

@@ -925,16 +925,26 @@ namespace webpp::unicode::idna {
                         if (new_label_len == 0) [[unlikely]] {
                             status |= to_underlying(empty_punycode);
                         }
-                        if (is_ascii(lbeg, lend)) [[unlikely]] {
+
+                        char32_t      accum   = 0;
+                        stl::uint16_t map_pos = 0;
+                        for (Iter pos = lbeg; pos != lend;) {
+                            auto const code_point  = checked::next_code_point<return_negated>(pos, lend);
+                            map_pos               |= status_of(code_point);
+                            accum                 |= code_point;
+                        }
+
+                        if (is_ascii(accum)) [[unlikely]] {
                             status |= to_underlying(ascii_only_punycode);
                         }
 
-                        if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
-                            status |= to_underlying(non_normalized_punycode);
+                        if (map_pos != details::valid) {
+                            status |= to_underlying(punycode_requires_idna_mapping);
                         }
 
-                        if (requires_idna_mapping(lbeg, lend)) [[unlikely]] {
-                            status |= to_underlying(punycode_requires_idna_mapping);
+                        // todo: optimize this into the above loop
+                        if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
+                            status |= to_underlying(non_normalized_punycode);
                         }
                     }
                     [[fallthrough]];

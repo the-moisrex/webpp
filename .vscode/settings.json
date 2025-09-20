@@ -55,7 +55,15 @@
     "new": "cpp",
     "typeinfo": "cpp",
     "variant": "cpp",
-    "bit": "cpp"
+    "bit": "cpp",
+    "cstdio": "cpp",
+    "cstring": "cpp",
+    "cwchar": "cpp",
+    "random": "cpp",
+    "ranges": "cpp",
+    "stdexcept": "cpp",
+    "__bit_reference": "cpp",
+    "execution": "cpp"
   },
   "cSpell.words": [
     "addr",
