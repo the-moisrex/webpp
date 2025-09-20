@@ -1174,20 +1174,34 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         // Note: Transitional Processing (columns 5, 6) is skipped as per the idna_options struct.
 
         // --- Test toASCII with default (strict) options ---
-        auto const expected_errors        = parse_status_codes(to_ascii_n_status_str);
-        bool const should_fail_by_default = !expected_errors.empty();
+        auto const expected_errors = parse_status_codes(to_ascii_n_status_str);
 
-        auto default_options = unicode::idna::strict_idna_options;
-        auto ascii_n_res     = to_ascii<std::string>(default_options, source);
+        // error, if "[<non-empty>]"
+        bool const to_ascii_can_fail = to_ascii_n_status_str.length() >= 3 && to_ascii_n_status_str[0] == '[' &&
+                                       to_ascii_n_status_str[to_ascii_n_status_str.length() - 1] == ']';
 
-        EXPECT_NE(ascii_n_res.has_value(), should_fail_by_default);
+        auto        default_options = unicode::idna::strict_idna_options;
+        auto        ascii_n_res     = to_ascii<std::string>(default_options, source);
+        std::string error_string;
+
+        if (!ascii_n_res.has_value()) {
+            for (auto const status : unicode::idna::to_ascii_status_iterator{ascii_n_res.error()}) {
+                error_string += to_string(status);
+                error_string += ", ";
+            }
+        } else {
+            error_string = "No error.";
+        }
+
+        EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
+          << "If we should fail, there should be no value.\n  Error: " << error_string;
         if (ascii_n_res) {
             EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
         }
 
 
         // --- If it failed, test again with relaxed options to see if it passes ---
-        if (should_fail_by_default) {
+        if (to_ascii_can_fail) {
             auto relaxed_options = unicode::idna::strict_idna_options;
 
             // Disable checks corresponding to the errors on this line
@@ -1211,13 +1225,12 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
 
             // If all errors are ignorable by our relaxed options, this call should now succeed.
-            if (all_errors_ignored(expected_errors, relaxed_options)) {
-                auto ascii_relaxed_res = to_ascii<std::string>(relaxed_options, source);
-                ASSERT_TRUE(ascii_relaxed_res.has_value())
-                  << "to_ascii should succeed when relevant checks are disabled.";
-                EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
-                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line;
-            }
+            // if (all_errors_ignored(expected_errors, relaxed_options)) {
+            auto ascii_relaxed_res = to_ascii<std::string>(relaxed_options, source);
+            ASSERT_TRUE(ascii_relaxed_res.has_value()) << "to_ascii should succeed when relevant checks are disabled.";
+            EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
+              << "  Source: " << source << "\n  Relaxed options failed on line: " << line;
+            // }
         }
     }
 }

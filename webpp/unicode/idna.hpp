@@ -16,6 +16,7 @@
 #include "./punycodes.hpp"
 #include "./unicode.hpp"
 
+#include <bit>
 #include <cassert>
 #include <climits>
 #include <cstdint>
@@ -285,6 +286,18 @@ namespace webpp::unicode::idna {
       .CheckStatusValues     = true,
     };
 
+    static constexpr idna_options loose_idna_options{
+      .CheckHyphens          = false,
+      .CheckBidi             = false,
+      .CheckJoiners          = false,
+      .UseSTD3ASCIIRules     = false,
+      .VerifyDnsLength       = false,
+      .IgnoreInvalidPunycode = true,
+      .CheckNFC              = false,
+      .CheckDotInclusions    = false,
+      .CheckStatusValues     = false,
+    };
+
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
         return idna_options{
           .CheckHyphens          = static_cast<bool>(flags >> 8U & 0b1U),
@@ -329,6 +342,110 @@ namespace webpp::unicode::idna {
                 break;
         }
         return {"<unknown-to-ascii-status>"};
+    }
+
+    /**
+     * This is a forward iterator that gives you all the errors inside a to_ascii status.
+     *
+     * to_ascii_status_iterator is designed to work with ranges.
+     *
+     * Example Usage with ranges:
+     * @code
+     *     // Create a string containing all the error messages:
+     *     uint32_t status = ...;
+     *     std::string errors_string =
+     *        to_ascii_status_iterator{status} | transform([](to_ascii_status cur_status) {
+     *            return to_string(cur_status);
+     *        }) | join_with('\n') | to<std::string>();
+     *
+     *     // If status is already in type of to_ascii_status, you can just use status directly,
+     *     // because std::begin(status) returns to_ascii_status_iterator:
+     *     string error_string2 = status | transform(...) | join_with('\n') | to<string>();
+     * @endcode
+     */
+    struct to_ascii_status_iterator {
+        using value_type   = to_ascii_status;
+        using storage_type = stl::underlying_type_t<value_type>;
+
+        using difference_type   = stl::ptrdiff_t;
+        using reference         = value_type&;
+        using const_reference   = value_type const&;
+        using pointer           = value_type*;
+        using const_pointer     = value_type const*;
+        using iterator_category = stl::forward_iterator_tag;
+        using iterator_concept  = stl::forward_iterator_tag;
+
+
+        constexpr to_ascii_status_iterator() noexcept = default;
+
+        constexpr explicit to_ascii_status_iterator(to_ascii_status const inp_status) noexcept
+          : status{stl::to_underlying(inp_status)},
+            current{static_cast<value_type>(stl::bit_floor(status))} {}
+
+        constexpr explicit to_ascii_status_iterator(storage_type const inp_status) noexcept
+          : status{inp_status},
+            current{static_cast<value_type>(stl::bit_floor(status))} {}
+
+        constexpr to_ascii_status_iterator(to_ascii_status_iterator const&) noexcept            = default;
+        constexpr to_ascii_status_iterator(to_ascii_status_iterator&&) noexcept                 = default;
+        constexpr to_ascii_status_iterator& operator=(to_ascii_status_iterator const&) noexcept = default;
+        constexpr to_ascii_status_iterator& operator=(to_ascii_status_iterator&&) noexcept      = default;
+        constexpr ~to_ascii_status_iterator() noexcept                                          = default;
+
+        constexpr to_ascii_status_iterator& operator++() noexcept {
+            // remove the first warning
+            status  &= static_cast<storage_type>(~stl::bit_floor(status));
+            current  = static_cast<value_type>(stl::bit_floor(status));
+            return *this;
+        }
+
+        [[nodiscard]] constexpr to_ascii_status_iterator operator++(int) noexcept {
+            to_ascii_status_iterator const iter{*this};
+            ++*this;
+            return iter;
+        }
+
+        constexpr const_reference operator*() const noexcept {
+            // return valid, error, or 0; it doesn't matter because there's only one of them
+            return current;
+        }
+
+        constexpr const_pointer operator->() const noexcept {
+            return &current;
+        }
+
+        constexpr pointer operator->() noexcept {
+            return &current;
+        }
+
+        [[nodiscard]] constexpr bool operator==(to_ascii_status_iterator const rhs) const noexcept {
+            return status == rhs.status;
+        }
+
+        [[nodiscard]] constexpr auto operator<=>(to_ascii_status_iterator const rhs) const noexcept {
+            return status <=> rhs.status;
+        }
+
+      private:
+        storage_type status  = 0U;
+        value_type   current = to_ascii_status::valid;
+    };
+
+    [[nodiscard]] static constexpr to_ascii_status_iterator begin(to_ascii_status_iterator status) noexcept {
+        return {status};
+    }
+
+    [[nodiscard]] static constexpr to_ascii_status_iterator end(
+      [[maybe_unused]] to_ascii_status_iterator iter) noexcept {
+        return {};
+    }
+
+    [[nodiscard]] static constexpr to_ascii_status_iterator begin(to_ascii_status const status) noexcept {
+        return to_ascii_status_iterator{status};
+    }
+
+    [[nodiscard]] static constexpr to_ascii_status_iterator end([[maybe_unused]] to_ascii_status status) noexcept {
+        return {};
     }
 
     /**

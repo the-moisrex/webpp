@@ -54,7 +54,8 @@
     "limits": "cpp",
     "new": "cpp",
     "typeinfo": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "bit": "cpp"
   },
   "cSpell.words": [
     "addr",
