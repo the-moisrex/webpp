@@ -165,7 +165,7 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
-    [[nodiscard]] static constexpr direction_type direction_mask_of(char32_t const code_point) noexcept {
+    [[nodiscard]] static constexpr stl::uint32_t direction_mask_of(char32_t const code_point) noexcept {
         return 0b1U << stl::to_underlying(direction_of(code_point));
     }
 
@@ -184,16 +184,77 @@ namespace webpp::unicode {
         return (directions & bidi_mask(R, AL, AN)) != 0U;
     }
 
+    struct bidi_info {
+        stl::uint32_t accum           = 0;
+        stl::uint32_t first           = 0;
+        stl::uint32_t last            = 0;
+        char32_t      last_non_nsm_cp = 0;
+    };
+
+    /// Run this while you're looping through a range to fill the bidi_info
+    static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
+        using enum direction;
+
+        info.accum |= direction_mask_of(code_point);
+        info.last   = direction_mask_of(code_point);
+        if (direction_of(info.last_non_nsm_cp) != NSM) {
+            info.last_non_nsm_cp = code_point;
+        }
+    }
+
     /**
-     * Check if we're in compliant with the Bidi Rule
-     * RFC: https://www.rfc-editor.org/rfc/rfc5893#section-2
+     * Generate a bidi_info which is required to check if the specified range is compliant with the Bidi Rules.
      */
-    template <bool SkipNonBidiDomainNames = false, stl::random_access_iterator IterT>
-    [[nodiscard]] static constexpr bool validate_bidi_rule(IterT const beg, IterT const endp) noexcept {
+    template <stl::random_access_iterator IterT>
+    [[nodiscard]] static constexpr bidi_info get_bidi_info(IterT const beg, IterT const endp) noexcept {
         using stl::to_underlying;
         using enum direction;
         using enum checked::error_handling;
         using char_type = stl::iter_value_t<IterT>;
+
+        auto       pos      = beg;
+        char32_t   last_cp  = 0;
+        auto const first_cp = checked::next_code_point<return_zero_char>(pos, endp);
+        bidi_info  info{
+           .first = direction_mask_of(first_cp),
+        };
+        info.accum = info.first;
+        if (pos == endp) {
+            return info;
+        }
+
+        if constexpr (UTF32<char_type>) {
+            // Will enable auto-vectorization since it's more simple
+            for (; pos != endp; ++pos) {
+                info.accum |= direction_mask_of(*pos);
+            }
+            last_cp = *--pos;
+        } else {
+            while (pos != endp) {
+                last_cp     = checked::next_code_point<return_zero_char>(pos, endp);
+                info.accum |= direction_mask_of(last_cp);
+            }
+        }
+
+
+        info.last_non_nsm_cp = info.last = direction_mask_of(last_cp);
+
+        while (direction_of(info.last_non_nsm_cp) == NSM) {
+            info.last_non_nsm_cp = checked::prev_code_point<return_zero_char>(pos, beg);
+            if (info.last_non_nsm_cp == 0) [[unlikely]] {
+                break;
+            }
+        }
+
+        return info;
+    }
+
+    /**
+     * Check if we're in compliant with the Bidi Rule
+     * RFC: https://www.rfc-editor.org/rfc/rfc5893#section-2
+     */
+    [[nodiscard]] static constexpr bool validate_bidi_rule(bidi_info const& info) noexcept {
+        using enum direction;
 
         // The following rule, consisting of six conditions, applies to labels in Bidi domain names.
         // All the conditions must be satisfied for the rule to be satisfied.
@@ -219,88 +280,33 @@ namespace webpp::unicode {
         //     Bidi property L or EN, followed by zero or more characters with
         //     Bidi property NSM.
 
-        auto          pos      = beg;
-        char32_t      last_cp  = 0;
-        auto const    first_cp = checked::next_code_point<return_zero_char>(pos, endp);
-        auto const    first    = direction_mask_of(first_cp);
-        stl::uint32_t accum    = first;
-        if (first_cp == 0) {
-            return true;
-        }
-
-        if constexpr (UTF32<char_type>) {
-            // Will enable auto-vectorization since it's more simple
-            for (; pos != endp; ++pos) {
-                accum |= direction_mask_of(*pos);
-            }
-            last_cp = *--pos;
-        } else {
-            while (pos != endp) {
-                last_cp  = checked::next_code_point<return_zero_char>(pos, endp);
-                accum   |= direction_mask_of(last_cp);
-            }
-        }
-
-        // A "Bidi domain name" is a domain name that contains at least one RTL label.
-        // A Bidi domain name is a domain name containing at least one character with Bidi_Class R, AL, or AN.
-        // See [IDNA2008] RFC 5893, Section 1.4.
-        if constexpr (SkipNonBidiDomainNames) {
-            bool const is_bidi_domain_name = (accum & bidi_mask(R, AL, AN)) != 0U;
-            if (!is_bidi_domain_name) [[likely]] { // it's all LTR
-                return true;
-            }
-        }
-
-        stl::uint32_t const last  = direction_mask_of(last_cp);
-        bool                valid = true;
-
         // we don't need to check other things, the first rule will make sure it's not valid otherwise
-        bool const is_rtl = first != (0b1U << to_underlying(L));
+        bool const is_rtl = info.first != (0b1U << stl::to_underlying(L));
 
         // 1. The first character must be L, R, or AL:
-        valid &= (first & bidi_mask(L, R, AL)) != 0;
+        bool valid = (info.first & bidi_mask(L, R, AL)) != 0;
 
         if (!is_rtl) {
             // 5. Checking LTR allowed characters
-            valid &= (accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
+            valid &= (info.accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 6. It ends with (semi-regex): (L|EN)NSM*
-            if ((last & bidi_mask(L, EN)) != 0) {
-                for (;;) {
-                    last_cp = checked::prev_code_point<return_zero_char>(pos, beg);
-                    if (last_cp == 0) [[unlikely]] {
-                        valid = false;
-                        break;
-                    }
-                    if (direction_of(last_cp) != NSM) {
-                        break;
-                    }
-                }
-                valid &= (direction_mask_of(last_cp) & bidi_mask(L, EN)) != 0;
+            if ((info.last & bidi_mask(L, EN)) != 0) {
+                valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(L, EN)) != 0;
             }
 
         } else {
             // 2. Checking RTL allowed characters
-            valid &= (accum & ~bidi_mask(R, AL, AN, EN, ES, CS, ET, ON, BN, NSM)) == 0;
+            valid &= (info.accum & ~bidi_mask(R, AL, AN, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 3. It ends with (semi-regex): (R|AL|EN|AN)NSM*
-            if ((last & bidi_mask(R, AL, EN, AN)) != 0) {
+            if ((info.last & bidi_mask(R, AL, EN, AN)) != 0) {
                 // For Example, Every Dhivehi word ends with a combining mark (NSM)
-                for (;;) {
-                    last_cp = checked::prev_code_point<return_zero_char>(pos, beg);
-                    if (last_cp == 0) [[unlikely]] {
-                        valid = false;
-                        break;
-                    }
-                    if (direction_of(last_cp) != NSM) {
-                        break;
-                    }
-                }
-                valid &= (direction_mask_of(last_cp) & bidi_mask(R, AL, EN, AN)) != 0;
+                valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(R, AL, EN, AN)) != 0;
             }
 
             // 4. AN and EN should not be present together
-            valid &= (accum & bidi_mask(AN, EN)) != bidi_mask(AN, EN);
+            valid &= (info.accum & bidi_mask(AN, EN)) != bidi_mask(AN, EN);
         }
 
         // We don't need early bailouts in this function since the happy path goes through all the checks and
@@ -309,7 +315,24 @@ namespace webpp::unicode {
         return valid;
     }
 
+    /**
+     * A "Bidi domain name" is a domain name that contains at least one RTL label.
+     * A Bidi domain name is a domain name containing at least one character with Bidi_Class R, AL, or AN.
+     * See [IDNA2008] RFC 5893, Section 1.4.
+     */
+    [[nodiscard]] static constexpr bool is_bidi_domain_name(bidi_info const& info) noexcept {
+        using enum direction;
+        return (info.accum & bidi_mask(R, AL, AN)) != 0U;
+    }
 
+    /**
+     * Check if we're in compliant with the Bidi Rule
+     * RFC: https://www.rfc-editor.org/rfc/rfc5893#section-2
+     */
+    template <stl::random_access_iterator IterT>
+    [[nodiscard]] static constexpr bool validate_bidi_rule(IterT const beg, IterT const endp) noexcept {
+        return validate_bidi_rule(get_bidi_info(beg, endp));
+    }
 
 } // namespace webpp::unicode
 

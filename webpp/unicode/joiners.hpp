@@ -4,6 +4,7 @@
 #define WEBPP_UNICODE_JOINERS_HPP
 
 #include "../std/string_view.hpp"
+#include "./ccc.hpp"
 #include "./details/joiners_tables.hpp"
 #include "./unicode.hpp"
 
@@ -61,6 +62,90 @@ namespace webpp::unicode {
 
         return static_cast<joiner_type>(joiners_values[pos.get_position(code_point)]);
         // NOLINTEND(*-pro-bounds-constant-array-index)
+    }
+
+    /**
+     * Check if joiner code points are correct.
+     * Attention: this function does only the lookup part of the appendix, and not the full check.
+     * RFC: https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A
+     */
+    template <stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool validate_context_joiners(Iter sbeg, Iter send) noexcept {
+        using enum checked::error_handling;
+        using enum joiner_type;
+
+        Iter spos = sbeg;
+        while (spos != send) {
+            switch (checked::next_code_point<return_negated>(spos, send)) {
+                    // This may occur in a formally cursive script (such as Arabic) in a context where it
+                    // breaks a cursive connection as required for orthographic rules, as in the Persian
+                    // language, for example. It also may occur in Indic scripts in a consonant-conjunct
+                    // context (immediately following a virama), to control required display of such
+                    // conjuncts.
+                case U'\x200C': {
+                    // ZERO WIDTH NON-JOINER
+                    bool       is_valid  = false;
+                    auto       pos       = spos;
+                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
+
+                    // ccc_of(0) is not gonna be Virama, so we don't need to check for it
+                    if (is_ccc_of(before_cp, ccc_props::Virama)) {
+                        continue;
+                    }
+
+                    while (pos != sbeg) {
+                        auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
+                        auto const joining_type = joiner_type_of(cur_cp);
+                        if (joining_type == transparent) {
+                            continue;
+                        }
+                        if (joining_type == left_joining || joining_type == dual_joining) {
+                            is_valid = true;
+                            break;
+                        }
+                    }
+
+                    // let's not early bailout on the failure path:
+                    // if (!is_ok) [[unlikely]] {
+                    //     return false;
+                    // }
+
+                    pos         = spos;
+                    auto cur_cp = checked::next_code_point<return_negated>(pos, send);
+                    for (; cur_cp != 0; cur_cp = checked::next_code_point<return_negated>(pos, send)) {
+                        auto const joining_type = joiner_type_of(cur_cp);
+                        if (joining_type == transparent) {
+                            continue;
+                        }
+                        if (joining_type == right_joining || joining_type == dual_joining) {
+                            is_valid = true;
+                            break;
+                        }
+                    }
+                    if (!is_valid) [[unlikely]] {
+                        return false;
+                    }
+                    break;
+                }
+
+                    // This may occur in Indic scripts in a consonant-conjunct context (immediately following
+                    // a virama), to control the required display of such conjuncts.
+                case U'\x200D': { // ZERO WIDTH JOINER
+                    auto       pos       = spos;
+                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
+                    // ccc_of(0) is not gonna be Virama, so we don't need to check
+                    if (!is_ccc_of(before_cp, ccc_props::Virama)) {
+                        return false;
+                    }
+                    break;
+                }
+
+                // Other Appendix rules don't apply since their "Lookup" is false which means we don't need to
+                // check those rules during DNS lookup.
+                default: break;
+            }
+        }
+        return true;
     }
 
 } // namespace webpp::unicode

@@ -1029,28 +1029,28 @@ namespace {
      * @return True if every error in the set corresponds to a check that is
      * disabled in the options struct. False otherwise.
      */
-    bool all_errors_ignored(std::set<std::string> const& errors, unicode::idna::idna_options const& options) {
-        if (errors.empty()) {
-            return true;
-        }
+    // bool all_errors_ignored(std::set<std::string> const& errors, unicode::idna::idna_options const& options) {
+    //     if (errors.empty()) {
+    //         return true;
+    //     }
 
-        for (auto const& error : errors) {
-            char prefix       = error.empty() ? ' ' : error[0];
-            bool is_ignorable = false;
-            switch (prefix) {
-                case 'A': is_ignorable = !options.VerifyDnsLength; break;
-                case 'V': is_ignorable = !options.CheckHyphens && (error == "V2" || error == "V3"); break;
-                case 'C': is_ignorable = !options.CheckJoiners; break;
-                case 'B': is_ignorable = !options.CheckBidi; break;
-                case 'U': is_ignorable = !options.UseSTD3ASCIIRules; break;
-                default: is_ignorable = false; break; // Un-ignorable errors (e.g., Pn, Xn)
-            }
-            if (!is_ignorable) {
-                return false;
-            }
-        }
-        return true; // All errors were successfully ignored.
-    }
+    //     for (auto const& error : errors) {
+    //         char prefix       = error.empty() ? ' ' : error[0];
+    //         bool is_ignorable = false;
+    //         switch (prefix) {
+    //             case 'A': is_ignorable = !options.VerifyDnsLength; break;
+    //             case 'V': is_ignorable = !options.CheckHyphens && (error == "V2" || error == "V3"); break;
+    //             case 'C': is_ignorable = !options.CheckJoiners; break;
+    //             case 'B': is_ignorable = !options.CheckBidi; break;
+    //             case 'U': is_ignorable = !options.UseSTD3ASCIIRules; break;
+    //             default: is_ignorable = false; break; // Un-ignorable errors (e.g., Pn, Xn)
+    //         }
+    //         if (!is_ignorable) {
+    //             return false;
+    //         }
+    //     }
+    //     return true; // All errors were successfully ignored.
+    // }
 
     template <typename OutStrT, unsigned Flags, typename... Args>
     [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
