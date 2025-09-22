@@ -10,6 +10,8 @@
 #include "./normalization.hpp"
 #include "./unicode.hpp"
 
+#include <bit>
+
 namespace webpp::unicode::idna {
 
     using validity_criteria_status_type = stl::uint16_t;
@@ -75,18 +77,55 @@ namespace webpp::unicode::idna {
         // 9. Bidi Failure
         V9           = 0b1U << 9U,
         bidi_failure = V9,
+
+        // Flags:
+        bidi_domain_name = 0b1U << 10U, // it's a flag, and not a status
     };
+
+    /**
+     * Check if the status is valid (ignoring the information flags while at it)
+     */
+    [[nodiscard]] static constexpr bool is_valid(validity_criteria_status_type const status) noexcept {
+        using enum validity_criteria_status;
+        using stl::to_underlying;
+        return (status & static_cast<validity_criteria_status_type>(~to_underlying(bidi_domain_name))) ==
+               to_underlying(valid);
+    }
+
+    /**
+     * Check if the status code, has the flag you specify.
+     */
+    [[nodiscard]] static constexpr bool has_flag(validity_criteria_status_type const status,
+                                                 validity_criteria_status const      flag) noexcept {
+        using enum validity_criteria_status;
+        return (status & stl::to_underlying(flag)) != 0;
+    }
 
     [[nodiscard]] static constexpr stl::string_view to_string(validity_criteria_status const status) noexcept {
         using enum validity_criteria_status;
         switch (status) {
+            // Valid:
+            case valid: return {"Valid"};
+
+            // Errors:
+            case V1: return {"NFC Failure"};
+            case V2: return {"Hyphen character used in the 3rd or 4th position"};
+            case V4: return {"ACE prefix (xn--) found at the beginning of the label"};
+            case V5: return {"Label has a dot in it."};
+            case V6: return {"Label starts with a Unicode combining mark"};
+            case V7: return {"Failure in status values"};
+            case V8: return {"Failure in ContextJ Rules"};
+            case V9: return {"Failure in Bidi Rules"};
+
+            // Flags:
+            case bidi_domain_name: return {"Domain is bidirectional"};
             default: break;
         }
-        return "<unknown-validity-criteria-status>";
+        return {"<unknown-validity-criteria-status>"};
     }
 
     /**
-     * Is Domain Label Valid?
+     * Is Domain Label (not the whole domain, but each label of the domain) Valid?
      * Valid Criteria: https://www.unicode.org/reports/tr46/#Validity_Criteria
      *
      * Preconditions:
@@ -96,6 +135,9 @@ namespace webpp::unicode::idna {
      *    Section 5, IDNA Mapping Table
      *
      * Starting with Unicode 16.0, UseSTD3ASCIIRules=true is handled only in the Validity Criteria
+     *
+     * Attention: If CheckBidi is given, the caller MUST check for "Bidi Domain Name", and
+     *            ignore `bidi_failure` if it's in the results.
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr validity_criteria_status_type is_label_valid(Iter spos, Iter send) noexcept {
@@ -116,9 +158,15 @@ namespace webpp::unicode::idna {
 
 
         using enum checked::error_handling;
+        using enum validity_criteria_status;
 
-        bool       valid  = true;
-        auto const length = send - spos;
+        constexpr validate = [](bool const validity, validity_criteria_status const criteria) constexpr noexcept {
+            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(criteria));
+            return static_cast<validity_criteria_status_type>(validity) << bit_len;
+        };
+
+        validity_criteria_status_type status = true;
+        auto const                    length = send - spos;
         // if (length == 0) {
         //     return true;
         // }
@@ -126,7 +174,7 @@ namespace webpp::unicode::idna {
 
         // 1. Check if it's in NFC form (SKIPPED by default)
         if constexpr (Options.CheckNFC) {
-            valid &= isNFC(spos, send);
+            status |= validate(isNFC(spos, send), nfc_failure);
         }
 
         // 2,3,4. Check hyphens (default is false)
@@ -134,16 +182,16 @@ namespace webpp::unicode::idna {
             switch (length) {
                 [[likely]] default:
                 case 4:
-                    valid &= *stl::next(spos, 3) != '-';          // forth
+                    status |= validate(*stl::next(spos, 3) != '-', hyphen_34);              // forth
                     [[fallthrough]];
                 case 3:
-                    valid &= *stl::next(spos, 2) != '-';          // third
+                    status |= validate(*stl::next(spos, 2) != '-', hyphen_34);              // third
                     [[fallthrough]];
                 case 2:
-                    valid &= *stl::next(spos, length - 1) != '-'; // last
+                    status |= validate(*stl::next(spos, length - 1) != '-', hyphen_around); // last
                     [[fallthrough]];
                 case 1:
-                    valid &= *spos != '-';                        // first
+                    status |= validate(*spos != '-', hyphen_around);                        // first
                     [[fallthrough]];
                 case 0: break;
             }
@@ -151,7 +199,7 @@ namespace webpp::unicode::idna {
             auto pos = spos;
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            valid &= length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-';
+            status |= validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
         }
 
         // 5. Check if it includes any dots (SKIPPED by default)
@@ -159,7 +207,7 @@ namespace webpp::unicode::idna {
             // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
             // be optimizing for the failure path as opposed to optimizing for the happy path
             for (auto pos = spos; pos != send; ++pos) {
-                valid &= *pos != '.';
+                status |= validate(*pos != '.', dot_found);
             }
         }
 
@@ -168,7 +216,7 @@ namespace webpp::unicode::idna {
             auto const cur_cp = checked::next_code_point_copy<return_negated>(spos, send);
 
             // no need to check the length, it'll return 0, which is not GC, so it's fine.
-            valid &= !is_general_category_of(cur_cp, general_category::Mark);
+            status |= validate(!is_general_category_of(cur_cp, general_category::Mark), combining_mark_at_start);
         }
 
         // 7. Checking Status values (SKIPPED by default)
@@ -186,32 +234,62 @@ namespace webpp::unicode::idna {
 
                 // https://www.unicode.org/reports/tr46/#Deviations
                 // Deviations are considered valid in IDNA2008 and UTS #46.
-                valid &= status == details::valid;
+                status |= validate(status == details::valid, status_values_failure);
 
                 if constexpr (Options.UseSTD3ASCIIRules) {
-                    valid &= !is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp);
+                    status |= validate(!is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp), status_values_failure);
                 }
             }
         }
 
         // 8. Check joiners
         if constexpr (Options.CheckJoiners) {
-            valid &= validate_context_joiners(spos, send);
+            status |= validate(validate_context_joiners(spos, send), joiner_failure);
         }
 
         // 9. Check bidi rule
         if constexpr (Options.CheckBidi) {
-            // If CheckBidi, and if the domain name is a "Bidi domain name":
-            valid &= validate_bidi_rule(spos, send);
+            // The documentaiton asks us to "If CheckBidi, and if the domain name is a 'Bidi domain name'",
+            // but we don't yet know if the full domain is a bidi domain or not. It's on the caller to
+            // check the status code for bidi_failures.
+            auto const info  = get_bidi_info(spos, send);
+            status          |= validate(validate_bidi_rule(info), bidi_failure);
+            status          |= validate(is_bidi_domain_name(info), bidi_domain_name);
         }
 
-        return valid;
+        return status;
     }
 
     template <idna_options Options = idna_options{}, istl::StringViewifiable StrT>
     [[nodiscard]] static constexpr bool is_label_valid(StrT&& inp_str) noexcept {
         auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return is_label_valid<Options>(str.begin(), str.end());
+    }
+
+    /**
+     * Check Validity Criteria for the whole domain
+     */
+    template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool is_domain_valid(Iter spos, Iter const& send) noexcept {
+        using enum validity_criteria_status;
+
+        // todo: use sentinels to optimize the double passing
+        validity_criteria_status_type status = valid;
+        for (Iter beg = spos; spos != send;) {
+            if (*spos != '.') [[likely]] {
+                ++spos;
+                continue;
+            }
+            status |= is_label_valid(beg, spos);
+            beg     = ++spos;
+        }
+
+        // Remove the bidi_failure if the domain is a bidi domain name:
+        if (!has_flag(status, bidi_domain_name) && has_flag(status, bidi_failure)) {
+            status &= stl::to_underlying(bidi_failure);
+        }
+
+        return status;
     }
 
 
