@@ -28,10 +28,17 @@ namespace webpp::unicode::idna {
         switch (status) {
             case punycode_status::success: return "Success";
             case punycode_status::bad_input: return "Input is invalid";
-            case punycode_status::overflow: return "Input needs wider integers to process";
+            case punycode_status::overflow:
+                return "Input needs wider integers to process";
             [[unlikely]] default:
                 return "Unknown punycode error";
         }
+    }
+
+    /// Shortcut for `std::to_underlying(status)`
+    [[nodiscard]] static constexpr stl::underlying_type_t<punycode_status> operator+(
+      punycode_status const status) noexcept {
+        return stl::to_underlying(status);
     }
 
     /**

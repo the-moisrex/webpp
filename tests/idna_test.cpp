@@ -3,7 +3,10 @@
 #include "../webpp/unicode/idna.hpp"
 
 #include "../webpp/unicode/bidi.hpp"
+#include "../webpp/unicode/general_category.hpp"
 #include "../webpp/unicode/joiners.hpp"
+#include "../webpp/unicode/to_ascii.hpp"
+#include "../webpp/unicode/validity_criteria.hpp"
 #include "../webpp/uri/uri.hpp"
 #include "./common/bidi.hpp"
 #include "./common/tests_common_pch.hpp"

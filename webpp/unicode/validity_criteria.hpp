@@ -38,6 +38,8 @@ namespace webpp::unicode::idna {
      *   CheckJoiners:      Cn
      *   CheckBidi:         Bn
      *   UseSTD3ASCIIRules: U1
+     *
+     * If you ever needed to update this, make sure to update the `to_ascii_status` as well.
      */
     enum struct validity_criteria_status : validity_criteria_status_type {
         valid = 0,
@@ -88,8 +90,8 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr bool is_valid(validity_criteria_status_type const status) noexcept {
         using enum validity_criteria_status;
         using stl::to_underlying;
-        return (status & static_cast<validity_criteria_status_type>(~to_underlying(bidi_domain_name))) ==
-               to_underlying(valid);
+        constexpr auto not_bidi = static_cast<validity_criteria_status_type>(~to_underlying(bidi_domain_name));
+        return (status & not_bidi) == to_underlying(valid);
     }
 
     /**
@@ -97,7 +99,6 @@ namespace webpp::unicode::idna {
      */
     [[nodiscard]] static constexpr bool has_flag(validity_criteria_status_type const status,
                                                  validity_criteria_status const      flag) noexcept {
-        using enum validity_criteria_status;
         return (status & stl::to_underlying(flag)) != 0;
     }
 
@@ -118,8 +119,10 @@ namespace webpp::unicode::idna {
             case V9: return {"Failure in Bidi Rules"};
 
             // Flags:
-            case bidi_domain_name: return {"Domain is bidirectional"};
-            default: break;
+            case bidi_domain_name:
+                return {"Domain is bidirectional"};
+            [[unlikely]] default:
+                break;
         }
         return {"<unknown-validity-criteria-status>"};
     }
@@ -140,7 +143,7 @@ namespace webpp::unicode::idna {
      *            ignore `bidi_failure` if it's in the results.
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr validity_criteria_status_type is_label_valid(Iter spos, Iter send) noexcept {
+    [[nodiscard]] static constexpr validity_criteria_status_type label_validity_status(Iter spos, Iter send) noexcept {
         // 1. SKIPPED: The label must be in Unicode Normalization Form NFC.
         // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
         //    and fourth positions.
@@ -160,12 +163,15 @@ namespace webpp::unicode::idna {
         using enum checked::error_handling;
         using enum validity_criteria_status;
 
-        constexpr validate = [](bool const validity, validity_criteria_status const criteria) constexpr noexcept {
-            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(criteria));
-            return static_cast<validity_criteria_status_type>(validity) << bit_len;
+        constexpr auto validate =
+          [](bool const                     validity,
+             validity_criteria_status const criteria) constexpr noexcept -> validity_criteria_status_type {
+            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(stl::to_underlying(criteria)));
+            return static_cast<validity_criteria_status_type>(
+              static_cast<validity_criteria_status_type>(validity) << bit_len);
         };
 
-        validity_criteria_status_type status = true;
+        validity_criteria_status_type status = stl::to_underlying(valid);
         auto const                    length = send - spos;
         // if (length == 0) {
         //     return true;
@@ -229,12 +235,12 @@ namespace webpp::unicode::idna {
             //   in IDNA2008.)
             auto pos = spos;
             while (pos != send) {
-                auto const cur_cp = checked::next_code_point<return_negated>(pos, send);
-                auto const status = status_of(cur_cp);
+                auto const cur_cp    = checked::next_code_point<return_negated>(pos, send);
+                auto const cp_status = status_of(cur_cp);
 
                 // https://www.unicode.org/reports/tr46/#Deviations
                 // Deviations are considered valid in IDNA2008 and UTS #46.
-                status |= validate(status == details::valid, status_values_failure);
+                status |= validate(cp_status == details::valid, status_values_failure);
 
                 if constexpr (Options.UseSTD3ASCIIRules) {
                     status |= validate(!is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp), status_values_failure);
@@ -260,6 +266,12 @@ namespace webpp::unicode::idna {
         return status;
     }
 
+    template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr bool is_label_valid(Iter const& spos, Iter const& send) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        return is_valid(label_validity_status<Options>(spos, send));
+    }
+
     template <idna_options Options = idna_options{}, istl::StringViewifiable StrT>
     [[nodiscard]] static constexpr bool is_label_valid(StrT&& inp_str) noexcept {
         auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
@@ -280,7 +292,7 @@ namespace webpp::unicode::idna {
                 ++spos;
                 continue;
             }
-            status |= is_label_valid(beg, spos);
+            status  |= label_validity_status<Options>(beg, spos);
             beg     = ++spos;
         }
 

@@ -2,12 +2,14 @@
 #define WEBPP_UNICODE_TO_ASCII_HPP
 
 #include "../std/expected.hpp"
+#include "../strings/to_case.hpp"
 #include "./bidi.hpp"
 #include "./general_category.hpp"
 #include "./idna.hpp"
 #include "./joiners.hpp"
 #include "./normalization.hpp"
 #include "./punycodes.hpp"
+#include "./validity_criteria.hpp"
 
 #include <bit>
 #include <cassert>
@@ -16,7 +18,9 @@
 namespace webpp::unicode::idna {
 
 
-    using to_ascii_status_type = stl::underlying_type_t<punycode_status>;
+    // underlying_type_t<punycode_status> + validity_criteria_status_type
+    using to_ascii_status_type = stl::uint32_t;
+
     /**
      * ToASCII status values.
      * Attention: ToASCII function may return a combination of these errors
@@ -34,32 +38,85 @@ namespace webpp::unicode::idna {
 
 
         // More errors:
-        empty_domain_label       = 0b1U << 7U,
-        too_long_label           = 0b1U << 8U,  // the subdomain is more than 63
-        too_long_domain          = 0b1U << 9U,  // the whole domain is more than 253 without the last dot
-        failed_validity_criteria = 0b1U << 10U, // the label failed the validity criteria requirements.
-        unknown                  = 0b1U << 11U,
+        empty_domain_label = 0b1U << 7U,
+        too_long_label     = 0b1U << 8U, // the subdomain is more than 63
+        too_long_domain    = 0b1U << 9U, // the whole domain is more than 253 without the last dot
+        unknown            = 0b1U << 10U,
+
+        // Validity Criteria errors:
+        validity_nfc_failure             = stl::to_underlying(validity_criteria_status::nfc_failure) << 11U,
+        validity_hyphen_34               = stl::to_underlying(validity_criteria_status::hyphen_34) << 11U,
+        validity_hyphen_around           = stl::to_underlying(validity_criteria_status::hyphen_around) << 11U,
+        validity_ace_found               = stl::to_underlying(validity_criteria_status::ace_found) << 11U,
+        validity_dot_found               = stl::to_underlying(validity_criteria_status::dot_found) << 11U,
+        validity_combining_mark_at_start = stl::to_underlying(validity_criteria_status::combining_mark_at_start) << 11U,
+        validity_status_values_failure   = stl::to_underlying(validity_criteria_status::status_values_failure) << 11U,
+        validity_joiner_failure          = stl::to_underlying(validity_criteria_status::joiner_failure) << 11U,
+        validity_bidi_failure            = stl::to_underlying(validity_criteria_status::bidi_failure) << 11U,
+        bidi_domain_name = stl::to_underlying(validity_criteria_status::bidi_domain_name) << 11U, // flag, not an error
+
+        validity_criteria_failure =
+          validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
+          validity_combining_mark_at_start | validity_status_values_failure | validity_joiner_failure |
+          validity_bidi_failure,
     };
 
     [[nodiscard]] static constexpr stl::string_view to_string(to_ascii_status const status) noexcept {
         using enum to_ascii_status;
         switch (status) {
-            case valid: return {"valid"};
-            case invalid_code_point: return {"Bad input for punycode was given."};
-            case punycode_overflow: return {"Punycode overflow."};
-            case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode."};
-            case empty_punycode: return {"Empty punycode-encoded label was found."};
-            case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form."};
-            case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping."};
-            case empty_domain_label: return {"Empty domain labels are not valid."};
-            case too_long_label: return {"Label was too long."};
-            case too_long_domain: return {"The Domain was too long."};
-            case unknown:
-                return {"Unknown failure."};
+            case valid: return {"Valid ASCII"};
+            case invalid_code_point: return {"Bad input for punycode was given"};
+            case punycode_overflow: return {"Punycode overflow"};
+            case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode"};
+            case empty_punycode: return {"Empty punycode-encoded label was found"};
+            case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form"};
+            case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping"};
+            case empty_domain_label: return {"Empty domain labels are not valid"};
+            case too_long_label: return {"Label was too long"};
+            case too_long_domain: return {"The Domain was too long"};
+            case unknown: return {"Unknown failure"};
+
+            // Validity Criteria failures:
+            case validity_nfc_failure:
+            case validity_hyphen_34:
+            case validity_hyphen_around:
+            case validity_ace_found:
+            case validity_dot_found:
+            case validity_combining_mark_at_start:
+            case validity_status_values_failure:
+            case validity_joiner_failure:
+            case validity_bidi_failure:
+            case bidi_domain_name:
+                return to_string(static_cast<validity_criteria_status>(stl::to_underlying(status) >> 11U));
+
+            case validity_criteria_failure:
+                return {"Validity Criteria failure"};
+
             [[unlikely]] default:
                 break;
         }
+
+        // You most likely need `to_ascii_status_iterator` if you're seeing this:
         return {"<unknown-to-ascii-status>"};
+    }
+
+    /**
+     * Check if the status code, has the flag you specify.
+     */
+    [[nodiscard]] static constexpr bool has_flag(to_ascii_status_type const status,
+                                                 to_ascii_status const      flag) noexcept {
+        return (status & stl::to_underlying(flag)) != 0;
+    }
+
+    template <typename... T>
+        requires(stl::same_as<T, to_ascii_status> && ...)
+    [[nodiscard]] static constexpr bool has_flags(to_ascii_status_type const status, T const... flags) noexcept {
+        return (status & (stl::to_underlying(flags) | ...)) != 0;
+    }
+
+    /// Shortcut for `std::to_underlying(status)`
+    [[nodiscard]] static constexpr to_ascii_status_type operator+(to_ascii_status const status) noexcept {
+        return stl::to_underlying(status);
     }
 
     /**
@@ -282,6 +339,11 @@ namespace webpp::unicode::idna {
         }
     };
 
+    /// Shortcut for `std::to_underlying(status)`
+    [[nodiscard]] static constexpr to_ascii_info::flag_type operator+(to_ascii_info::flag_types const status) noexcept {
+        return stl::to_underlying(status);
+    }
+
     /**
      * The ToASCII operation takes a sequence of Unicode code points that
      * make up one label and transforms it into a sequence of code points in
@@ -307,7 +369,6 @@ namespace webpp::unicode::idna {
         using enum to_ascii_info::flag_types;
         using enum checked::error_handling;
         using istl::iter_append;
-        using stl::to_underlying;
         using unicode::norm_form;
         using flag_type = to_ascii_info::flag_type;
         using diff_type = stl::iter_difference_t<OIter>;
@@ -318,11 +379,11 @@ namespace webpp::unicode::idna {
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
         auto const  src_length          = iend - ipos;
-        auto        status              = to_underlying(valid);
+        auto        status              = +valid;
         OIter const out_beg             = out;
-        bool const  all_ascii           = (flags & to_underlying(non_ascii)) == 0;
-        bool const  might_have_punycode = (flags & to_underlying(ace)) != 0;
-        bool const  all_lower_ascii     = (flags & to_underlying(ascii_mask)) == to_underlying(ascii);
+        bool const  all_ascii           = (flags & +non_ascii) == 0;
+        bool const  might_have_punycode = (flags & +ace) != 0;
+        bool const  all_lower_ascii     = (flags & +ascii_mask) == +ascii;
         OIter       spos                = out;
         auto        send                = stl::next(spos, src_length); // init
         auto const  oend                = stl::next(out, static_cast<diff_type>(out_len));
@@ -353,7 +414,7 @@ namespace webpp::unicode::idna {
             // 1.1 Map (and/or copy to output)
             if (!idna::map(ipos, iend, out)) [[unlikely]] {
                 // Disallowed code point was found
-                status |= to_underlying(invalid_code_point);
+                status |= +invalid_code_point;
             }
 
             // 1.2. Normalize inplace
@@ -365,8 +426,7 @@ namespace webpp::unicode::idna {
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
-        stl::uint16_t accum_length   = 0;
-        bool          is_bidi_domain = false;
+        stl::uint16_t accum_length = 0;
         while (spos != send) {
             assert(spos <= send);
             auto const lcbeg = spos;
@@ -378,30 +438,27 @@ namespace webpp::unicode::idna {
               spos,
               send,
               [](flag_type const cur_flags) constexpr noexcept -> bool {
-                  return cur_flags >= to_underlying(dot); // we found a dot
+                  return cur_flags >= +dot; // we found a dot
               });
 
-            bool const contains_dot     = (flag & to_underlying(dot)) == to_underlying(dot);
+            bool const contains_dot     = (flag & +dot) == +dot;
             auto const lcend            = contains_dot ? stl::prev(spos) : spos;
             OIter      lend             = lcend;
             auto const src_label_length = lend - lbeg;
 
-            // todo: try to optimize this by merging it into the or_all_if loop above, one works on bytes, and this one works on code points
-            bidi_info info = get_bidi_info(lcbeg, lcend);
-
             // 1.4. Convert/Validate. For each label in the domain_name string:
-            switch (flag & to_underlying(clean)) {
+            switch (flag & +clean) {
                 [[unlikely]] case 0:
                     // If the label is empty, or ..., record that there was an error.
-                    status |= to_underlying(empty_domain_label);
+                    status |= +empty_domain_label;
                     break;
-                case to_underlying(ace):
+                case +ace:
                     if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {
                         // Found xn--.
                         // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
                         // than U+007F), record that there was an error, and continue with the next label.
-                        if ((flag & to_underlying(non_ascii)) != 0) [[unlikely]] {
-                            status |= to_underlying(invalid_code_point);
+                        if ((flag & +non_ascii) != 0) [[unlikely]] {
+                            status |= +invalid_code_point;
                             continue;
                         }
 
@@ -423,43 +480,41 @@ namespace webpp::unicode::idna {
                         if constexpr (!Options.IgnoreInvalidPunycode) {
                             if (pun_status != punycode_status::success) [[unlikely]] {
                                 // restore the original label:
-                                status       |= to_underlying(pun_status);
+                                status       |= +pun_status;
                                 accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
                                 continue;
                             }
                         }
-                        flag |= to_underlying(non_ascii); // make sure to re-convert it back to punycode
+                        flag |= +non_ascii; // make sure to re-convert it back to punycode
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
                         if (new_label_len == 0) [[unlikely]] {
-                            status |= to_underlying(empty_punycode);
+                            status |= +empty_punycode;
                         }
 
                         char32_t      accum   = 0;
                         stl::uint16_t map_pos = 0;
-                        Iter          pos     = lbeg;
+                        OIter         pos     = lbeg;
 
-                        info.first = direction_mask_of(checked::next_code_point<return_zero_char>(pos, lend));
 
                         while (pos != lend) {
                             auto const code_point  = checked::next_code_point<return_negated>(pos, lend);
                             map_pos               |= status_of(code_point);
-                            accum                 |= code_point;
-                            bidi_info_step(info, code_point);
+                            accum                  |= code_point;
                         }
 
                         if (is_ascii(accum)) [[unlikely]] {
-                            status |= to_underlying(ascii_only_punycode);
+                            status |= +ascii_only_punycode;
                         }
 
                         if (map_pos != details::valid) [[unlikely]] {
-                            status |= to_underlying(punycode_requires_idna_mapping);
+                            status |= +punycode_requires_idna_mapping;
                         }
 
                         // todo: optimize this into the above loop
                         if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
-                            status |= to_underlying(non_normalized_punycode);
+                            status |= +non_normalized_punycode;
                         }
                     }
                     [[fallthrough]];
@@ -467,10 +522,9 @@ namespace webpp::unicode::idna {
                     // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
                     // Criteria. If any of the validity criteria are not satisfied, record that there was
                     // an error.
-                    if (!is_label_valid<Options>(info)) [[unlikely]] {
-                        status |= to_underlying(failed_validity_criteria);
-                    }
-                    is_bidi_domain |= is_bidi_domain_name(info);
+                    //
+                    // Here we convert the status returned from validity criteria function to our own:
+                    status |= label_validity_status<Options>(lbeg, lend) << 11U;
                     break;
             }
 
@@ -478,8 +532,10 @@ namespace webpp::unicode::idna {
             // So, if the domain (the whole domain and not just a label) is not a bidi domain name, then we
             // need to remove the unnecessary error.
             // We're doing this so we don't have to do 2 passes to figure this out.
-            if (!is_bidi_domain) {
-                status &= ~to_underlying(failed_validity_criteria);
+            //
+            // Check if bidi_failure exists, but bidi_domain_name does not:
+            if ((status & (+bidi_domain_name | +validity_bidi_failure)) == +validity_bidi_failure) {
+                status &= static_cast<to_ascii_status_type>(~+validity_bidi_failure);
             }
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
@@ -489,7 +545,7 @@ namespace webpp::unicode::idna {
             // 3. Encode Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
-            if ((flag & to_underlying(non_ascii)) != 0) {
+            if ((flag & +non_ascii) != 0) {
                 out                = send;
                 auto const tmp_beg = out;
                 iter_append(out, 'x', 'n', '-', '-');
@@ -509,7 +565,7 @@ namespace webpp::unicode::idna {
 
                 if constexpr (!Options.IgnoreInvalidPunycode) {
                     if (p_status != punycode_status::success) [[unlikely]] {
-                        status |= to_underlying(p_status);
+                        status |= +p_status;
                     }
                 }
             }
@@ -530,10 +586,10 @@ namespace webpp::unicode::idna {
             constexpr auto max_domain  = 253U;
             auto const     cur_out_len = out - out_beg;
             if (accum_length > max_label) [[unlikely]] {
-                status |= to_underlying(too_long_label);
+                status |= +too_long_label;
             }
             if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || *stl::prev(out) != '.')) [[unlikely]] {
-                status |= to_underlying(too_long_domain);
+                status |= +too_long_domain;
             }
         }
 
@@ -546,7 +602,7 @@ namespace webpp::unicode::idna {
 
         // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
         // returned. No DNS lookup should be done.
-        if (status != to_underlying(valid)) [[unlikely]] {
+        if (status != +valid) [[unlikely]] {
             out = out_beg;
         }
         *out = '\0';
