@@ -59,6 +59,9 @@ namespace webpp::unicode::idna {
           validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
           validity_combining_mark_at_start | validity_status_values_failure | validity_joiner_failure |
           validity_bidi_failure,
+
+        // All flags (that are not states themselves)
+        all_flags = bidi_domain_name,
     };
 
     /// Shortcut for `std::to_underlying(status)`
@@ -116,6 +119,11 @@ namespace webpp::unicode::idna {
         requires(stl::same_as<T, to_ascii_status> && ...)
     [[nodiscard]] static constexpr bool has_flags(to_ascii_status_type const status, T const... flags) noexcept {
         return (status & (+flags | ...)) != 0;
+    }
+
+    [[nodiscard]] static constexpr bool is_valid(to_ascii_status_type const status) noexcept {
+        using enum to_ascii_status;
+        return (status & ~+all_flags) == +valid;
     }
 
     /**
@@ -280,6 +288,7 @@ namespace webpp::unicode::idna {
             using enum flag_types;
             using enum checked::error_handling;
             using details::idna_default_max_len_factor;
+            using stl::to_underlying;
             using inp_char_type = stl::iter_value_t<Iter>;
 
             auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
@@ -296,15 +305,15 @@ namespace webpp::unicode::idna {
             while (spos != send) {
                 flag_type const flag =
                   or_all_if(interesting_characters, spos, send, [](flag_type const cur_flag) constexpr noexcept {
-                      return (cur_flag & +length_police) != 0;
+                      return (cur_flag & to_underlying(length_police)) != 0;
                   });
 
                 flags |= flag;
 
-                if ((flag & +dot) == +dot) {
+                if ((flag & to_underlying(dot)) == to_underlying(dot)) {
                     biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
                     lbeg          = spos;
-                } else if ((flag & +non_ascii) != 0) {
+                } else if ((flag & to_underlying(non_ascii)) != 0) {
                     // or_all_if will go past that bad code point, so we need prev(spos)
                     --spos;
                     auto const code_point = checked::next_code_point<return_negated>(spos, send);
@@ -600,7 +609,7 @@ namespace webpp::unicode::idna {
 
         // 5. If an error was recorded in steps 1-4, then the operation has failed and a failure value is
         // returned. No DNS lookup should be done.
-        if (status != +valid) [[unlikely]] {
+        if (!is_valid(status)) [[unlikely]] {
             out = out_beg;
         }
         *out = '\0';
@@ -642,7 +651,7 @@ namespace webpp::unicode::idna {
         auto const str = istl::string_viewify(stl::forward<StrT>(src));
         OutStrT    out{stl::forward<Args>(args)...};
         auto const status = to_ascii<Options>(str.begin(), str.end(), out);
-        if (status == to_ascii_status::valid) {
+        if (is_valid(status)) [[likely]] {
             return out;
         }
         return stl::unexpected{status};

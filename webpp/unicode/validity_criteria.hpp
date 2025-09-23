@@ -170,12 +170,12 @@ namespace webpp::unicode::idna {
         constexpr auto validate =
           [](bool const                     validity,
              validity_criteria_status const criteria) constexpr noexcept -> validity_criteria_status_type {
-            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(stl::to_underlying(criteria)));
+            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(+criteria));
             return static_cast<validity_criteria_status_type>(
-              static_cast<validity_criteria_status_type>(validity) << bit_len);
+              static_cast<validity_criteria_status_type>(!validity) << bit_len);
         };
 
-        validity_criteria_status_type status = stl::to_underlying(valid);
+        validity_criteria_status_type status = +valid;
         auto const                    length = send - spos;
         // if (length == 0) {
         //     return true;
@@ -272,7 +272,6 @@ namespace webpp::unicode::idna {
 
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool is_label_valid(Iter const& spos, Iter const& send) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return is_valid(label_validity_status<Options>(spos, send));
     }
 
@@ -302,7 +301,7 @@ namespace webpp::unicode::idna {
 
         // Remove the bidi_failure if the domain is a bidi domain name:
         if (!has_flag(status, bidi_domain_name) && has_flag(status, bidi_failure)) {
-            status &= stl::to_underlying(bidi_failure);
+            status &= +bidi_failure;
         }
 
         return status;

@@ -207,7 +207,6 @@ namespace webpp::unicode {
      */
     template <stl::random_access_iterator IterT>
     [[nodiscard]] static constexpr bidi_info get_bidi_info(IterT const beg, IterT const endp) noexcept {
-        using stl::to_underlying;
         using enum direction;
         using enum checked::error_handling;
         using char_type = stl::iter_value_t<IterT>;
@@ -219,16 +218,17 @@ namespace webpp::unicode {
            .first = direction_mask_of(first_cp),
         };
         info.accum = info.first;
-        if (pos == endp) {
-            return info;
-        }
 
         if constexpr (UTF32<char_type>) {
-            // Will enable auto-vectorization since it's more simple
-            for (; pos != endp; ++pos) {
-                info.accum |= direction_mask_of(*pos);
+            if (pos != endp) {
+                for (;; ++pos) {
+                    info.accum |= direction_mask_of(*pos);
+                    if (pos == endp) {
+                        break;
+                    }
+                }
+                last_cp = *--pos;
             }
-            last_cp = *--pos;
         } else {
             while (pos != endp) {
                 last_cp     = checked::next_code_point<return_zero_char>(pos, endp);
@@ -291,7 +291,7 @@ namespace webpp::unicode {
             valid &= (info.accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 6. It ends with (semi-regex): (L|EN)NSM*
-            if ((info.last & bidi_mask(L, EN)) != 0) {
+            if ((info.last & bidi_mask(L, EN)) == 0) {
                 valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(L, EN)) != 0;
             }
 
@@ -300,7 +300,7 @@ namespace webpp::unicode {
             valid &= (info.accum & ~bidi_mask(R, AL, AN, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 3. It ends with (semi-regex): (R|AL|EN|AN)NSM*
-            if ((info.last & bidi_mask(R, AL, EN, AN)) != 0) {
+            if ((info.last & bidi_mask(R, AL, EN, AN)) == 0) {
                 // For Example, Every Dhivehi word ends with a combining mark (NSM)
                 valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(R, AL, EN, AN)) != 0;
             }

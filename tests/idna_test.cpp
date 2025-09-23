@@ -814,6 +814,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     };
 
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
+    EXPECT_TRUE(unicode::idna::is_label_valid(u8"correct"));
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
     EXPECT_FALSE(to_ascii(u8"xn--zn7c.com")); // invalid
     EXPECT_EQ(to_ascii(u8"x-.ß"), u8"x-.xn--zca");
