@@ -8,22 +8,18 @@
 
 namespace webpp::uri {
 
-    enum struct domain_name_status : uri_status_type { // NOLINT(*-enum-size)
-    // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(status) status = stl::to_underlying(uri_status::status)
-        webpp_def(unparsed),           // Not yet parsed
-        webpp_def(valid),              // valid ascii domain name
-        webpp_def(valid_punycode),     // valid domain name which is a punycode
-        webpp_def(invalid_character),  // found an invalid character
-        webpp_def(too_long),           // the domain is too long
-        webpp_def(subdomain_too_long), // the subdomain is too long
-        webpp_def(dot_at_end),         // the domain ended unexpectedly
-        webpp_def(begin_with_hyphen),  // the domain cannot start with hyphens
-        webpp_def(end_with_hyphen),    // the domain cannot end with hyphens
-        webpp_def(double_hyphen),      // the domain cannot have double hyphens unless it's a punycode
-        webpp_def(empty_subdomain),    // a domain/subdomain cannot be empty (no double dotting)
-#undef webpp_def
-        // NOLINTEND(*-macro-usage)
+    enum struct domain_name_status : uri_status_type {        // NOLINT(*-enum-size)
+        unparsed           = +uri_status::unparsed,           // Not yet parsed
+        valid              = +uri_status::valid,              // valid ascii domain name
+        valid_punycode     = +uri_status::valid_punycode,     // valid domain name which is a punycode
+        invalid_character  = +uri_status::invalid_character,  // found an invalid character
+        too_long           = +uri_status::too_long,           // the domain is too long
+        subdomain_too_long = +uri_status::subdomain_too_long, // the subdomain is too long
+        dot_at_end         = +uri_status::dot_at_end,         // the domain ended unexpectedly
+        begin_with_hyphen  = +uri_status::begin_with_hyphen,  // the domain cannot start with hyphens
+        end_with_hyphen    = +uri_status::end_with_hyphen,    // the domain cannot end with hyphens
+        double_hyphen      = +uri_status::double_hyphen, // the domain cannot have double hyphens unless it's a punycode
+        empty_subdomain    = +uri_status::empty_string,  // a domain/subdomain cannot be empty (no double dotting)
     };
 
     /**

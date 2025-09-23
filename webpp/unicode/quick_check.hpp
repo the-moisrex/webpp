@@ -43,13 +43,16 @@ namespace webpp::unicode {
         NFKC_NO   = NO | 0b100'0000U,
     };
 
+    [[nodiscard]] static constexpr stl::uint8_t operator+(quick_check_state const state) noexcept {
+        return stl::to_underlying(state);
+    }
+
     /**
      * Given a QC value, this function will simplify it to Yes, No, Maybe
      */
     template <norm_form Form = norm_form::NFC>
     [[nodiscard]] static constexpr quick_check_state qc_of(
       stl::underlying_type_t<quick_check_state> const code) noexcept {
-        using stl::to_underlying;
         using enum quick_check_state;
         using enum norm_form;
 
@@ -62,13 +65,13 @@ namespace webpp::unicode {
         static_assert(NFKC != Form || !details::exclude_kompatibility,
                       "Data required for QuickCheck is not included in the source code.");
         if constexpr (NFC == Form) {
-            return static_cast<quick_check_state>(code & to_underlying(NFC_NO) & to_underlying(simplify_mask));
+            return static_cast<quick_check_state>(code & +NFC_NO & +simplify_mask);
         } else if constexpr (NFD == Form) {
-            return static_cast<quick_check_state>(code & to_underlying(NFD_NO) & to_underlying(simplify_mask));
+            return static_cast<quick_check_state>(code & +NFD_NO & +simplify_mask);
         } else if constexpr (NFKD == Form) {
-            return static_cast<quick_check_state>(code & to_underlying(NFKD_NO) & to_underlying(simplify_mask));
+            return static_cast<quick_check_state>(code & +NFKD_NO & +simplify_mask);
         } else if constexpr (NFKC == Form) {
-            return static_cast<quick_check_state>(code & to_underlying(NFKC_NO) & to_underlying(simplify_mask));
+            return static_cast<quick_check_state>(code & +NFKC_NO & +simplify_mask);
         } else {
             return NO;
         }
@@ -79,12 +82,11 @@ namespace webpp::unicode {
      */
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter>
     [[nodiscard]] static constexpr quick_check_state quick_check(Iter spos, Iter const send) noexcept {
-        using stl::to_underlying;
         using enum quick_check_state;
         using enum checked::error_handling;
 
         stl::uint8_t prev_ccc = 0;
-        auto         result   = to_underlying(YES);
+        auto         result   = +YES;
         while (spos != send) {
             auto const code_point = checked::next_code_point<return_negated>(spos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
@@ -93,8 +95,8 @@ namespace webpp::unicode {
             auto const info    = qc_ccc_of(code_point);
             auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
             auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
-            result            |= to_underlying(qc_of<Form>(qc_val));
-            if ((prev_ccc > ccc && ccc != 0) || result == to_underlying(NO)) [[unlikely]] {
+            result             |= +qc_of<Form>(qc_val);
+            if ((prev_ccc > ccc && ccc != 0) || result == +NO) [[unlikely]] {
                 return NO;
             }
             prev_ccc = ccc;
@@ -107,26 +109,25 @@ namespace webpp::unicode {
      */
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter>
     [[nodiscard]] static constexpr quick_check_state quick_check_till_maybe(Iter& spos, Iter const send) noexcept {
-        using stl::to_underlying;
         using enum quick_check_state;
         using enum checked::error_handling;
 
         stl::uint8_t prev_ccc = 0;
-        auto         result   = to_underlying(YES);
+        auto         result   = +YES;
         Iter         starter  = spos;
         Iter         prev     = spos;
         for (; spos != send; prev = spos) {
             auto const code_point = checked::next_code_point<return_negated>(spos, send);
             if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                result = to_underlying(NO);
+                result = +NO;
                 break;
             }
             auto const info    = qc_ccc_of(code_point);
             auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
             auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
-            result            |= to_underlying(qc_of<Form>(qc_val));
+            result             |= +qc_of<Form>(qc_val);
 
-            if (result != to_underlying(YES)) [[unlikely]] {
+            if (result != +YES) [[unlikely]] {
                 break;
             }
 
@@ -134,14 +135,14 @@ namespace webpp::unicode {
             if (ccc == 0) {
                 starter = prev;
             } else if (prev_ccc > ccc) [[unlikely]] {
-                result = to_underlying(NO);
+                result = +NO;
                 break;
             }
             prev_ccc = ccc;
         }
-        if (result == to_underlying(MAYBE)) {
+        if (result == +MAYBE) {
             spos = starter; // restoring the lastest starter code point
-        } else if (result == to_underlying(NO)) {
+        } else if (result == +NO) {
             spos = prev;
         }
         return static_cast<quick_check_state>(result);
@@ -153,7 +154,6 @@ namespace webpp::unicode {
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
     static constexpr quick_check_state next_definite_starter(Iter& spos, EIter const send) noexcept {
-        using stl::to_underlying;
         using enum quick_check_state;
         using enum checked::error_handling;
 
@@ -167,10 +167,10 @@ namespace webpp::unicode {
             auto const info   = qc_ccc_of(code_point);
             auto const ccc    = static_cast<stl::uint8_t>(info & 0xFFU);
             auto const qc_val = static_cast<stl::uint8_t>(info >> 8U);
-            auto const result = to_underlying(qc_of<Form>(qc_val));
+            auto const result = +qc_of<Form>(qc_val);
 
             if (ccc == 0) {
-                if (result != to_underlying(MAYBE)) {
+                if (result != +MAYBE) {
                     return static_cast<quick_check_state>(result);
                 }
             } else if (prev_ccc > ccc) {

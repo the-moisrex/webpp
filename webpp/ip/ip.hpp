@@ -45,37 +45,41 @@ namespace webpp {
         invalid_colon_usage  = 246U  // the ip is using colon where it shouldn't
     };
 
+    [[nodiscard]] static constexpr stl::uint32_t operator+(ip_address_status const status) noexcept {
+        return stl::to_underlying(status);
+    }
+
     /**
      * Status of the result of an ipv4 parse.
      * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
      * able to use that uint8_t for an ipv4/ipv6 prefix (which only requires 0-128)
      */
     enum struct inet_pton4_status : stl::uint32_t { // NOLINT(*-enum-size)
-        valid = stl::to_underlying(ip_address_status::valid),
+        valid = +ip_address_status::valid,
 
         // valid ipv4, special character found at the end
-        valid_special = stl::to_underlying(ip_address_status::valid_special),
+        valid_special = +ip_address_status::valid_special,
 
         // not enough octets
-        too_little_octets = stl::to_underlying(ip_address_status::too_little_octets),
+        too_little_octets = +ip_address_status::too_little_octets,
 
         // found too many octets
-        too_many_octets = stl::to_underlying(ip_address_status::too_many_octets),
+        too_many_octets = +ip_address_status::too_many_octets,
 
         // at least one octet is not in range
-        invalid_octet_range = stl::to_underlying(ip_address_status::invalid_octet_range),
+        invalid_octet_range = +ip_address_status::invalid_octet_range,
 
         // the octet is starting with an invalid leading zero
-        invalid_leading_zero = stl::to_underlying(ip_address_status::invalid_leading_zero),
+        invalid_leading_zero = +ip_address_status::invalid_leading_zero,
 
         // found a non-standard character
-        invalid_character = stl::to_underlying(ip_address_status::invalid_character),
+        invalid_character = +ip_address_status::invalid_character,
 
         // The ip ended badly
-        bad_ending = stl::to_underlying(ip_address_status::bad_ending),
+        bad_ending = +ip_address_status::bad_ending,
 
         // The ip has and invalid prefix
-        invalid_prefix = stl::to_underlying(ip_address_status::invalid_prefix)
+        invalid_prefix = +ip_address_status::invalid_prefix
     };
 
     /**
@@ -84,25 +88,25 @@ namespace webpp {
      * able to use that uint8_t for an ipv4/ipv6 prefix (which only requires 0-128)
      */
     enum struct inet_pton6_status : stl::uint32_t { // NOLINT(*-enum-size)
-        valid = stl::to_underlying(ip_address_status::valid),
+        valid = +ip_address_status::valid,
 
         // valid ipv6, special character found at the end
-        valid_special = stl::to_underlying(ip_address_status::valid_special),
+        valid_special = +ip_address_status::valid_special,
 
         // found a non-standard character
-        invalid_character = stl::to_underlying(ip_address_status::invalid_character),
+        invalid_character = +ip_address_status::invalid_character,
 
         // The ip ended badly
-        bad_ending = stl::to_underlying(ip_address_status::bad_ending),
+        bad_ending = +ip_address_status::bad_ending,
 
         // The ip has and invalid prefix
-        invalid_prefix = stl::to_underlying(ip_address_status::invalid_prefix),
+        invalid_prefix = +ip_address_status::invalid_prefix,
 
         // at least one octet is not in range
-        invalid_octet_range = stl::to_underlying(ip_address_status::invalid_octet_range),
+        invalid_octet_range = +ip_address_status::invalid_octet_range,
 
         // the ip is using colon where it shouldn't
-        invalid_colon_usage = stl::to_underlying(ip_address_status::invalid_colon_usage)
+        invalid_colon_usage = +ip_address_status::invalid_colon_usage
     };
 
     [[nodiscard]] static constexpr bool is_valid(inet_pton4_status const status) noexcept {

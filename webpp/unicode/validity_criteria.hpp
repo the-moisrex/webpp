@@ -84,24 +84,6 @@ namespace webpp::unicode::idna {
         bidi_domain_name = 0b1U << 10U, // it's a flag, and not a status
     };
 
-    /**
-     * Check if the status is valid (ignoring the information flags while at it)
-     */
-    [[nodiscard]] static constexpr bool is_valid(validity_criteria_status_type const status) noexcept {
-        using enum validity_criteria_status;
-        using stl::to_underlying;
-        constexpr auto not_bidi = static_cast<validity_criteria_status_type>(~to_underlying(bidi_domain_name));
-        return (status & not_bidi) == to_underlying(valid);
-    }
-
-    /**
-     * Check if the status code, has the flag you specify.
-     */
-    [[nodiscard]] static constexpr bool has_flag(validity_criteria_status_type const status,
-                                                 validity_criteria_status const      flag) noexcept {
-        return (status & stl::to_underlying(flag)) != 0;
-    }
-
     [[nodiscard]] static constexpr stl::string_view to_string(validity_criteria_status const status) noexcept {
         using enum validity_criteria_status;
         switch (status) {
@@ -125,6 +107,28 @@ namespace webpp::unicode::idna {
                 break;
         }
         return {"<unknown-validity-criteria-status>"};
+    }
+
+    [[nodiscard]] static constexpr validity_criteria_status_type operator+(
+      validity_criteria_status const status) noexcept {
+        return stl::to_underlying(status);
+    }
+
+    /**
+     * Check if the status is valid (ignoring the information flags while at it)
+     */
+    [[nodiscard]] static constexpr bool is_valid(validity_criteria_status_type const status) noexcept {
+        using enum validity_criteria_status;
+        constexpr auto not_bidi = static_cast<validity_criteria_status_type>(~+bidi_domain_name);
+        return (status & not_bidi) == +valid;
+    }
+
+    /**
+     * Check if the status code, has the flag you specify.
+     */
+    [[nodiscard]] static constexpr bool has_flag(validity_criteria_status_type const status,
+                                                 validity_criteria_status const      flag) noexcept {
+        return (status & +flag) != 0;
     }
 
     /**

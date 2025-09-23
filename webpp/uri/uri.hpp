@@ -43,7 +43,7 @@ namespace webpp::uri {
         iterator                        end{}; // the end of the string
         out_type                        out{}; // the output uri components
         [[no_unique_address]] base_type base{};
-        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        state_type                      status = +uri_status::unparsed;
     };
 
     /**
@@ -199,7 +199,7 @@ namespace webpp::uri {
                       "so we don't have to specialize it for get_buffer and what not.");
 
       private:
-        status_type m_status = stl::to_underlying(uri_status::unparsed);
+        status_type m_status = +uri_status::unparsed;
 
         template <uri_parsing_options Options, typename Iter>
         constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status) noexcept(is_modifiable) {
@@ -210,7 +210,7 @@ namespace webpp::uri {
             ctx.pos    = beg;
             ctx.end    = end;
             ctx.out    = static_cast<components_type*>(this);
-            ctx.status = stl::to_underlying(status) | info_of(m_status);
+            ctx.status = +status | info_of(m_status);
             details::parse_uri_step<Options | state_override>(ctx);
             set_flags(m_status, flags_of(ctx.status));
             return m_status;
@@ -224,7 +224,7 @@ namespace webpp::uri {
             ctx.pos    = beg;
             ctx.end    = end;
             ctx.out    = static_cast<components_type*>(this);
-            ctx.status = stl::to_underlying(uri_status::unparsed);
+            ctx.status = +uri_status::unparsed;
             parse_uri<Options>(ctx);
             m_status = ctx.status;
             return m_status;
@@ -557,7 +557,7 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#dom-url-hostname
             // If this’s URL has an opaque path, then return.
             if (this->path().is_opaque()) [[unlikely]] {
-                return stl::to_underlying(uri_status::setting_hostname_on_opaque_path);
+                return +uri_status::setting_hostname_on_opaque_path;
             }
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);

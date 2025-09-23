@@ -29,8 +29,8 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        invalid_code_point             = stl::to_underlying(punycode_status::bad_input),
-        punycode_overflow              = stl::to_underlying(punycode_status::overflow),
+        invalid_code_point             = +punycode_status::bad_input,
+        punycode_overflow              = +punycode_status::overflow,
         ascii_only_punycode            = 0b1U << 3U,
         empty_punycode                 = 0b1U << 4U,
         non_normalized_punycode        = 0b1U << 5U,
@@ -44,22 +44,27 @@ namespace webpp::unicode::idna {
         unknown            = 0b1U << 10U,
 
         // Validity Criteria errors:
-        validity_nfc_failure             = stl::to_underlying(validity_criteria_status::nfc_failure) << 11U,
-        validity_hyphen_34               = stl::to_underlying(validity_criteria_status::hyphen_34) << 11U,
-        validity_hyphen_around           = stl::to_underlying(validity_criteria_status::hyphen_around) << 11U,
-        validity_ace_found               = stl::to_underlying(validity_criteria_status::ace_found) << 11U,
-        validity_dot_found               = stl::to_underlying(validity_criteria_status::dot_found) << 11U,
-        validity_combining_mark_at_start = stl::to_underlying(validity_criteria_status::combining_mark_at_start) << 11U,
-        validity_status_values_failure   = stl::to_underlying(validity_criteria_status::status_values_failure) << 11U,
-        validity_joiner_failure          = stl::to_underlying(validity_criteria_status::joiner_failure) << 11U,
-        validity_bidi_failure            = stl::to_underlying(validity_criteria_status::bidi_failure) << 11U,
-        bidi_domain_name = stl::to_underlying(validity_criteria_status::bidi_domain_name) << 11U, // flag, not an error
+        validity_nfc_failure             = +validity_criteria_status::nfc_failure << 11U,
+        validity_hyphen_34               = +validity_criteria_status::hyphen_34 << 11U,
+        validity_hyphen_around           = +validity_criteria_status::hyphen_around << 11U,
+        validity_ace_found               = +validity_criteria_status::ace_found << 11U,
+        validity_dot_found               = +validity_criteria_status::dot_found << 11U,
+        validity_combining_mark_at_start = +validity_criteria_status::combining_mark_at_start << 11U,
+        validity_status_values_failure   = +validity_criteria_status::status_values_failure << 11U,
+        validity_joiner_failure          = +validity_criteria_status::joiner_failure << 11U,
+        validity_bidi_failure            = +validity_criteria_status::bidi_failure << 11U,
+        bidi_domain_name                 = +validity_criteria_status::bidi_domain_name << 11U, // flag, not an error
 
         validity_criteria_failure =
           validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
           validity_combining_mark_at_start | validity_status_values_failure | validity_joiner_failure |
           validity_bidi_failure,
     };
+
+    /// Shortcut for `std::to_underlying(status)`
+    [[nodiscard]] static constexpr to_ascii_status_type operator+(to_ascii_status const status) noexcept {
+        return stl::to_underlying(status);
+    }
 
     [[nodiscard]] static constexpr stl::string_view to_string(to_ascii_status const status) noexcept {
         using enum to_ascii_status;
@@ -86,8 +91,7 @@ namespace webpp::unicode::idna {
             case validity_status_values_failure:
             case validity_joiner_failure:
             case validity_bidi_failure:
-            case bidi_domain_name:
-                return to_string(static_cast<validity_criteria_status>(stl::to_underlying(status) >> 11U));
+            case bidi_domain_name: return to_string(static_cast<validity_criteria_status>(+status >> 11U));
 
             case validity_criteria_failure:
                 return {"Validity Criteria failure"};
@@ -105,18 +109,13 @@ namespace webpp::unicode::idna {
      */
     [[nodiscard]] static constexpr bool has_flag(to_ascii_status_type const status,
                                                  to_ascii_status const      flag) noexcept {
-        return (status & stl::to_underlying(flag)) != 0;
+        return (status & +flag) != 0;
     }
 
     template <typename... T>
         requires(stl::same_as<T, to_ascii_status> && ...)
     [[nodiscard]] static constexpr bool has_flags(to_ascii_status_type const status, T const... flags) noexcept {
-        return (status & (stl::to_underlying(flags) | ...)) != 0;
-    }
-
-    /// Shortcut for `std::to_underlying(status)`
-    [[nodiscard]] static constexpr to_ascii_status_type operator+(to_ascii_status const status) noexcept {
-        return stl::to_underlying(status);
+        return (status & (+flags | ...)) != 0;
     }
 
     /**
@@ -154,7 +153,7 @@ namespace webpp::unicode::idna {
         constexpr to_ascii_status_iterator() noexcept = default;
 
         constexpr explicit to_ascii_status_iterator(to_ascii_status const inp_status) noexcept
-          : status{stl::to_underlying(inp_status)},
+          : status{+inp_status},
             current{static_cast<value_type>(stl::bit_floor(status))} {}
 
         constexpr explicit to_ascii_status_iterator(storage_type const inp_status) noexcept
@@ -281,7 +280,6 @@ namespace webpp::unicode::idna {
             using enum flag_types;
             using enum checked::error_handling;
             using details::idna_default_max_len_factor;
-            using stl::to_underlying;
             using inp_char_type = stl::iter_value_t<Iter>;
 
             auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
@@ -298,15 +296,15 @@ namespace webpp::unicode::idna {
             while (spos != send) {
                 flag_type const flag =
                   or_all_if(interesting_characters, spos, send, [](flag_type const cur_flag) constexpr noexcept {
-                      return (cur_flag & to_underlying(length_police)) != 0;
+                      return (cur_flag & +length_police) != 0;
                   });
 
                 flags |= flag;
 
-                if ((flag & to_underlying(dot)) == to_underlying(dot)) {
+                if ((flag & +dot) == +dot) {
                     biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
                     lbeg          = spos;
-                } else if ((flag & to_underlying(non_ascii)) != 0) {
+                } else if ((flag & +non_ascii) != 0) {
                     // or_all_if will go past that bad code point, so we need prev(spos)
                     --spos;
                     auto const code_point = checked::next_code_point<return_negated>(spos, send);
@@ -364,7 +362,7 @@ namespace webpp::unicode::idna {
       Iter const                     iend,
       OIter&                         out,
       stl::size_t                    out_len,
-      to_ascii_info::flag_type const flags = stl::to_underlying(to_ascii_info::flag_types::all)) noexcept {
+      to_ascii_info::flag_type const flags = +to_ascii_info::flag_types::all) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
         using enum checked::error_handling;
@@ -657,7 +655,7 @@ namespace webpp::unicode::idna {
     template <istl::String OutStrT>
     [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
                                                    to_ascii_status const                               rhs) noexcept {
-        to_ascii_status_type const status = lhs.has_value() ? stl::to_underlying(to_ascii_status::valid) : lhs.error();
+        to_ascii_status_type const status = lhs.has_value() ? +to_ascii_status::valid : lhs.error();
         return status == static_cast<to_ascii_status_type>(rhs);
     }
 

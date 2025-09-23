@@ -28,17 +28,20 @@ namespace webpp::uri {
 
     } // namespace details
 
-    static constexpr uri_status_type scheme_mask =
-      stl::to_underlying(uri_status::special_scheme) | stl::to_underlying(uri_status::file_scheme);
+    static constexpr uri_status_type scheme_mask = +uri_status::special_scheme | +uri_status::file_scheme;
 
-    enum struct scheme_type : uri_status_type {                          // NOLINT(*-enum-size)
-        not_special    = stl::to_underlying(uri_status::unparsed),       // everything else
-        special_scheme = stl::to_underlying(uri_status::special_scheme), // http(s), ws(s), ftp
-        file_scheme    = stl::to_underlying(uri_status::file_scheme),
+    enum struct scheme_type : uri_status_type {       // NOLINT(*-enum-size)
+        not_special    = +uri_status::unparsed,       // everything else
+        special_scheme = +uri_status::special_scheme, // http(s), ws(s), ftp
+        file_scheme    = +uri_status::file_scheme,
     };
 
+    [[nodiscard]] static constexpr uri_status_type operator+(scheme_type const scheme) noexcept {
+        return stl::to_underlying(scheme);
+    }
+
     [[nodiscard]] static constexpr scheme_type scheme_type_of(uri_status const status) noexcept {
-        return static_cast<scheme_type>(stl::to_underlying(status) & scheme_mask);
+        return static_cast<scheme_type>(+status & scheme_mask);
     }
 
     template <istl::StringLike StrT>
@@ -119,15 +122,15 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr bool is_special_scheme(uri_status const status) noexcept {
-        return is_special_scheme(stl::to_underlying(status));
+        return is_special_scheme(+status);
     }
 
     [[nodiscard]] static constexpr bool is_file_scheme(uri_status_type const status) noexcept {
-        return (status & stl::to_underlying(scheme_type::file_scheme)) == stl::to_underlying(scheme_type::file_scheme);
+        return (status & +scheme_type::file_scheme) == +scheme_type::file_scheme;
     }
 
     static constexpr void set_flag(uri_status_type& status, scheme_type const value) noexcept {
-        set_flag(status, static_cast<uri_status>(stl::to_underlying(value)));
+        set_flag(status, static_cast<uri_status>(+value));
     }
 
 } // namespace webpp::uri

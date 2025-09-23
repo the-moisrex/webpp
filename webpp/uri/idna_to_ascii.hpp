@@ -11,9 +11,9 @@
 namespace webpp::uri::idna {
 
     enum struct domain2ascii_status {
-        valid                     = stl::to_underlying(uri_status::valid),
-        invalid_domain_code_point = stl::to_underlying(uri_status::invalid_domain_code_point),
-        domain_to_ascii_error     = stl::to_underlying(uri_status::domain_to_ascii_error),
+        valid                     = +uri_status::valid,
+        invalid_domain_code_point = +uri_status::invalid_domain_code_point,
+        domain_to_ascii_error     = +uri_status::domain_to_ascii_error,
     };
 
     [[nodiscard]] static constexpr bool is_valid(domain2ascii_status const status) noexcept {

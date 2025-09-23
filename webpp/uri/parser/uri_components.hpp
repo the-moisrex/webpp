@@ -701,7 +701,7 @@ namespace webpp::uri {
         iterator                        end{}; // the end of the string
         out_type                        out{}; // the output uri components
         [[no_unique_address]] base_type base{};
-        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        state_type                      status = +uri_status::unparsed;
     };
 
     enum struct components : stl::uint8_t {
@@ -777,7 +777,7 @@ namespace webpp::uri {
         iterator                        end{};
         out_type                        out{}; // it's a pointer to string, string_view, vector, or a map
         [[no_unique_address]] base_type base{};
-        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        state_type                      status = +uri_status::unparsed;
     };
 
     using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, char const*>;

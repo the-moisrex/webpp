@@ -418,7 +418,7 @@ namespace webpp::uri {
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end) [[unlikely]] {
-            ctx.status = stl::to_underlying(empty_string);
+            ctx.status = +empty_string;
             return;
         }
 
