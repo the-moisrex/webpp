@@ -165,8 +165,12 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
+    [[nodiscard]] static constexpr stl::uint32_t direction_mask_of(direction const dir) noexcept {
+        return 0b1U << stl::to_underlying(dir);
+    }
+
     [[nodiscard]] static constexpr stl::uint32_t direction_mask_of(char32_t const code_point) noexcept {
-        return 0b1U << stl::to_underlying(direction_of(code_point));
+        return direction_mask_of(direction_of(code_point));
     }
 
     /**
@@ -185,20 +189,20 @@ namespace webpp::unicode {
     }
 
     struct bidi_info {
-        stl::uint32_t accum           = 0;
-        stl::uint32_t first           = 0;
-        stl::uint32_t last            = 0;
-        char32_t      last_non_nsm_cp = 0;
+        // These are the result of direction_mask_of(...) function:
+        stl::uint32_t accum        = 0;
+        stl::uint32_t first        = 0;
+        stl::uint32_t last_non_nsm = 0;
     };
 
     /// Run this while you're looping through a range to fill the bidi_info
     static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
         using enum direction;
 
-        info.accum |= direction_mask_of(code_point);
-        info.last   = direction_mask_of(code_point);
-        if (direction_of(info.last_non_nsm_cp) != NSM) {
-            info.last_non_nsm_cp = code_point;
+        info.last_non_nsm  = direction_mask_of(code_point);
+        info.accum        |= info.last_non_nsm;
+        if (direction_of(info.last_non_nsm) != NSM) {
+            info.last_non_nsm = direction_mask_of(code_point);
         }
     }
 
@@ -212,8 +216,8 @@ namespace webpp::unicode {
         using char_type = stl::iter_value_t<IterT>;
 
         auto       pos      = beg;
-        char32_t   last_cp  = 0;
         auto const first_cp = checked::next_code_point<return_zero_char>(pos, endp);
+        char32_t   last_cp  = first_cp;
         bidi_info  info{
            .first = direction_mask_of(first_cp),
         };
@@ -237,10 +241,9 @@ namespace webpp::unicode {
         }
 
 
-        info.last_non_nsm_cp = info.last = direction_mask_of(last_cp);
-
-        while (direction_of(info.last_non_nsm_cp) == NSM && pos != beg) {
-            info.last_non_nsm_cp = checked::prev_code_point<return_zero_char>(pos, beg);
+        info.last_non_nsm = direction_mask_of(last_cp);
+        while (direction_of(info.last_non_nsm) == NSM && pos != beg) {
+            info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_zero_char>(pos, beg));
         }
 
         return info;
@@ -288,19 +291,15 @@ namespace webpp::unicode {
             valid &= (info.accum & ~bidi_mask(L, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 6. It ends with (semi-regex): (L|EN)NSM*
-            if ((info.last & bidi_mask(L, EN)) == 0) {
-                valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(L, EN)) != 0;
-            }
+            valid &= (info.last_non_nsm & bidi_mask(L, EN)) != 0;
 
         } else {
             // 2. Checking RTL allowed characters
             valid &= (info.accum & ~bidi_mask(R, AL, AN, EN, ES, CS, ET, ON, BN, NSM)) == 0;
 
             // 3. It ends with (semi-regex): (R|AL|EN|AN)NSM*
-            if ((info.last & bidi_mask(R, AL, EN, AN)) == 0) {
-                // For Example, Every Dhivehi word ends with a combining mark (NSM)
-                valid &= (direction_mask_of(info.last_non_nsm_cp) & bidi_mask(R, AL, EN, AN)) != 0;
-            }
+            // For Example, Every Dhivehi word ends with a combining mark (NSM)
+            valid &= (info.last_non_nsm & bidi_mask(R, AL, EN, AN)) != 0;
 
             // 4. AN and EN should not be present together
             valid &= (info.accum & bidi_mask(AN, EN)) != bidi_mask(AN, EN);

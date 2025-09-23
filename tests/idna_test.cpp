@@ -685,7 +685,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
        }
     };
 
-    static constexpr array<opts, 25> tests{
+    static constexpr array<opts, 27> tests{
       opts{"", true, -1},
       {"a", true, -1},
       {"-", true, 0},
@@ -706,7 +706,9 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"שלום.1a", true, 2}, // LDH-only label cannot come after RTL label
 
       // Basic ASCII & LDH (Letter-Digit-Hyphen)
-      {"1", true, -1}, // Single digit
+      {"1", true, 2}, // Single digit
+      {"1", false, 0},
+      {"1", false, 1},
       {"a1", true, -1}, // Letter followed by digit
       {"1a", true, -1}, // Digit followed by letter
       {"a-b", true, -1}, // Hyphen in middle
@@ -813,6 +815,8 @@ TEST(BasicIDNATests, ToASCIITest) {
       {                                                                       "≠",              "xn--1ch"},
     };
 
+    EXPECT_FALSE(unicode::idna::is_label_valid(u8"1"));
+    EXPECT_FALSE(unicode::idna::is_label_valid(u8"1a"));
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"نامه‌ای"));
     EXPECT_TRUE(unicode::idna::is_label_valid(u8"correct"));
     EXPECT_EQ(to_ascii(u8"straße.de"), u8"xn--strae-oqa.de");
@@ -825,12 +829,13 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"example.org"), u8"example.org");
     EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
     EXPECT_EQ(to_ascii(u8"one"), u8"one");
+    EXPECT_EQ(to_ascii(u8"à.\u05D0\u0308"), u8"xn--0ca.xn--ssa73l");
     EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
 
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid).value_or(u8""), u8"") << invalid;
         string out;
-        EXPECT_NE(to_ascii(invalid, out), stl::to_underlying(valid)) << "'" << invalid << "'";
+        EXPECT_FALSE(unicode::idna::is_valid(to_ascii(invalid, out))) << "'" << invalid << "'";
     }
 
     for (auto const [raw, mappedTo] : valids) {
@@ -838,7 +843,7 @@ TEST(BasicIDNATests, ToASCIITest) {
         auto const res = to_ascii<string>(raw);
         EXPECT_EQ(res.value_or(""), mappedTo) << raw << "\n" << res.value_or("Nothing");
         string out;
-        EXPECT_EQ(to_ascii(raw, out), stl::to_underlying(valid)) << raw;
+        EXPECT_TRUE(unicode::idna::is_valid(to_ascii(raw, out))) << raw;
         EXPECT_EQ(out, mappedTo) << raw;
     }
 }
