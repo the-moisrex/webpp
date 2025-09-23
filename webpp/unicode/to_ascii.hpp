@@ -535,16 +535,6 @@ namespace webpp::unicode::idna {
                     break;
             }
 
-            // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names"
-            // So, if the domain (the whole domain and not just a label) is not a bidi domain name, then we
-            // need to remove the unnecessary error.
-            // We're doing this so we don't have to do 2 passes to figure this out.
-            //
-            // Check if bidi_failure exists, but bidi_domain_name does not:
-            if ((status & (+bidi_domain_name | +validity_bidi_failure)) == +validity_bidi_failure) {
-                status &= static_cast<to_ascii_status_type>(~+validity_bidi_failure);
-            }
-
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
             accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
@@ -584,7 +574,15 @@ namespace webpp::unicode::idna {
             // }
         }
 
-
+        // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names"
+        // So, if the domain (the whole domain and not just a label) is not a bidi domain name, then we
+        // need to remove the unnecessary error.
+        // We're doing this so we don't have to do 2 passes to figure this out.
+        //
+        // Check if bidi_failure exists, but bidi_domain_name does not:
+        if ((status & (+bidi_domain_name | +validity_bidi_failure)) == +validity_bidi_failure) {
+            status &= static_cast<to_ascii_status_type>(~+validity_bidi_failure);
+        }
 
         // 4. VerifyDnsLength
         if constexpr (Options.VerifyDnsLength) {

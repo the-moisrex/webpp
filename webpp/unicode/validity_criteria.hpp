@@ -264,7 +264,7 @@ namespace webpp::unicode::idna {
             // check the status code for bidi_failures.
             auto const info  = get_bidi_info(spos, send);
             status          |= validate(validate_bidi_rule(info), bidi_failure);
-            status          |= validate(is_bidi_domain_name(info), bidi_domain_name);
+            status           |= validate(!is_bidi_domain_name(info), bidi_domain_name);
         }
 
         return status;

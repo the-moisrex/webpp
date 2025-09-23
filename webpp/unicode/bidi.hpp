@@ -239,11 +239,8 @@ namespace webpp::unicode {
 
         info.last_non_nsm_cp = info.last = direction_mask_of(last_cp);
 
-        while (direction_of(info.last_non_nsm_cp) == NSM) {
+        while (direction_of(info.last_non_nsm_cp) == NSM && pos != beg) {
             info.last_non_nsm_cp = checked::prev_code_point<return_zero_char>(pos, beg);
-            if (info.last_non_nsm_cp == 0) [[unlikely]] {
-                break;
-            }
         }
 
         return info;
