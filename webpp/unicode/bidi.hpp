@@ -173,21 +173,6 @@ namespace webpp::unicode {
         return direction_mask_of(direction_of(code_point));
     }
 
-    /**
-     * An RTL label is a label that contains at least one character of type R, AL, or AN.
-     * From RFC: https://www.rfc-editor.org/rfc/rfc5893#section-1.4
-     */
-    template <stl::forward_iterator IterT>
-    [[nodiscard]] static constexpr bool is_rtl_label(IterT pos, IterT endp) noexcept {
-        using enum direction;
-
-        stl::uint32_t directions = 0U;
-        for (; pos != endp; ++pos) {
-            directions |= 0b1U << direction_of(*pos);
-        }
-        return (directions & bidi_mask(R, AL, AN)) != 0U;
-    }
-
     struct bidi_info {
         // These are the result of direction_mask_of(...) function:
         stl::uint32_t accum        = 0;
@@ -201,7 +186,7 @@ namespace webpp::unicode {
 
         info.last_non_nsm  = direction_mask_of(code_point);
         info.accum        |= info.last_non_nsm;
-        if (direction_of(info.last_non_nsm) != NSM) {
+        if (info.last_non_nsm != direction_mask_of(NSM)) {
             info.last_non_nsm = direction_mask_of(code_point);
         }
     }
@@ -242,7 +227,7 @@ namespace webpp::unicode {
 
 
         info.last_non_nsm = direction_mask_of(last_cp);
-        while (direction_of(info.last_non_nsm) == NSM && pos != beg) {
+        while (info.last_non_nsm == direction_mask_of(NSM) && pos != beg) {
             info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_zero_char>(pos, beg));
         }
 
@@ -281,7 +266,7 @@ namespace webpp::unicode {
         //     Bidi property NSM.
 
         // we don't need to check other things, the first rule will make sure it's not valid otherwise
-        bool const is_rtl = info.first != (0b1U << stl::to_underlying(L));
+        bool const is_rtl = info.first != direction_mask_of(L);
 
         // 1. The first character must be L, R, or AL:
         bool valid = (info.first & bidi_mask(L, R, AL)) != 0;
