@@ -114,13 +114,15 @@ namespace webpp::unicode::idna {
     template <punycode_options            Options = punycode_options{},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>
-    [[nodiscard]] static constexpr punycode_status punycode_encode(IterT const spos, IterT const send, OIterT &out)
+    [[nodiscard]] static constexpr punycode_status punycode_encode(IterT const &spos, IterT const &send, OIterT &out)
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
         using enum checked::error_handling;
         using istl::iter_append;
         using char_type = stl::iter_value_t<IterT>;
         using size_type = istl::size_type_of_t<OIterT>;
+
+        assert(send >= spos);
 
         // out can be an iterator
         auto const src_length = static_cast<size_type>(send - spos);
@@ -237,7 +239,7 @@ namespace webpp::unicode::idna {
     template <punycode_options            Options = punycode_options{},
               stl::random_access_iterator IterT   = char32_t const *,
               istl::Appendable            OIterT  = std::u8string::iterator>
-    [[nodiscard]] static constexpr punycode_status punycode_decode(IterT spos, IterT const send, OIterT &out)
+    [[nodiscard]] static constexpr punycode_status punycode_decode(IterT spos, IterT const &send, OIterT &out)
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
         using enum checked::error_handling;
@@ -253,9 +255,14 @@ namespace webpp::unicode::idna {
         punycode_uint i_val = 0;
         punycode_uint bias  = Options.initial_bias;
 
+        assert(send >= spos);
+        if (spos == send) [[unlikely]] {
+            return success;
+        }
+
         // Consume all code points before the last delimiter (if there is one)
         // and copy them to output, fail on any non-basic code point
-        auto last_delim = send;
+        auto last_delim = stl::prev(send);
         for (; last_delim != spos && *last_delim != Options.delimiter; --last_delim) {
             // finding the last '-' character
         }

@@ -170,3 +170,10 @@ TEST(PunycodeTests, IteratorTestU32ToU8) {
     insert_at(pos, out.end(), 3, U'd');
     EXPECT_EQ(out, u8"abcd");
 }
+
+TEST(PunycodeTests, PunycodeEncodeDecode) {
+    using webpp::unicode::idna::punycode_of;
+    using webpp::unicode::idna::unicode_of;
+    EXPECT_EQ(punycode_of("\u05D0\u0308"), "ssa73l");
+    EXPECT_EQ(unicode_of("ssa73l"), "\u05D0\u0308");
+}
