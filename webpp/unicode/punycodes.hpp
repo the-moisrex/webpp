@@ -263,7 +263,9 @@ namespace webpp::unicode::idna {
         if (last_delim != spos) {
             for (;; ++pos) {
                 if (pos == last_delim) {
-                    ++pos;
+                    if (last_delim != send) {
+                        ++pos; // skip the delimiter
+                    }
                     break;
                 }
                 if (is_ascii(*pos)) {

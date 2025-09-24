@@ -830,6 +830,8 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"example.org."), u8"example.org.");
     EXPECT_EQ(to_ascii(u8"one"), u8"one");
     EXPECT_EQ(to_ascii(u8"à.\u05D0\u0308"), u8"xn--0ca.xn--ssa73l");
+    EXPECT_EQ(to_ascii(u8"xn--0ca.xn--ssa73l"), u8"xn--0ca.xn--ssa73l");
+    EXPECT_EQ(to_ascii(u8"à.\u05D0\u0308"), u8"xn--0ca.xn--ssa73l");
     EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
 
     for (auto const invalid : invalids) {

@@ -368,7 +368,7 @@ namespace webpp::unicode::idna {
               stl::random_access_iterator OIter>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(
       Iter                           ipos,
-      Iter const                     iend,
+      Iter const&                    iend,
       OIter&                         out,
       stl::size_t                    out_len,
       to_ascii_info::flag_type const flags = +to_ascii_info::flag_types::all) noexcept {
@@ -407,7 +407,7 @@ namespace webpp::unicode::idna {
         if (all_lower_ascii) {
             stl::copy(ipos, iend, out);
             stl::advance(out, src_length);
-            if (!might_have_punycode) {
+            if (!might_have_punycode) [[likely]] {
                 return status;
             }
         } else if (all_ascii) {
@@ -508,7 +508,7 @@ namespace webpp::unicode::idna {
                         while (pos != lend) {
                             auto const code_point  = checked::next_code_point<return_negated>(pos, lend);
                             map_pos               |= status_of(code_point);
-                            accum                  |= code_point;
+                            accum                 |= code_point;
                         }
 
                         if (is_ascii(accum)) [[unlikely]] {
