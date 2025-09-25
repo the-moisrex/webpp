@@ -208,7 +208,7 @@ namespace webpp::unicode::idna {
                 case 0: break;
             }
         } else {
-            auto pos = spos;
+            Iter pos = spos;
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
             status |= validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);

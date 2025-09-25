@@ -1277,7 +1277,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
             if (v6_failure) {
                 EXPECT_EQ(ascii_relaxed_res.error(), unicode::idna::to_ascii_status::validity_combining_mark_at_start)
-                  << "V6 failures should always result in validity_combining_mark_at_start error.\nErrors:"
+                  << "V6 failures should always result in validity_combining_mark_at_start error.\nErrors: "
                   << error_string;
             } else {
                 EXPECT_TRUE(ascii_relaxed_res.has_value())
@@ -1299,6 +1299,17 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit4) {
 
     EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--?-c1g3623d.xn--1ug73gl146a").value_or(u8"Failed")),
               u8"xn--?-c1g3623d.xn--1ug73gl146a");
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
+    using unicode::idna::loose_idna_options;
+    using unicode::idna::to_ascii;
+
+    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"𑆀䁴񤧣．ⴕ𝟜\u200C\u0348").error()),
+              unicode::idna::to_ascii_status::validity_combining_mark_at_start);
+
+    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--1mnx647cg3x1b.xn--4-zfb502tlsl").error()),
+              unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

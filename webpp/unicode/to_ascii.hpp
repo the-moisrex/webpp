@@ -29,7 +29,7 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        invalid_code_point      = +punycode_status::bad_input,
+        punycode_bad_input      = +punycode_status::bad_input,
         punycode_overflow       = +punycode_status::overflow,
         ascii_only_punycode     = 0b1U << 3U,
         empty_punycode          = 0b1U << 4U,
@@ -37,6 +37,7 @@ namespace webpp::unicode::idna {
 
 
         // More errors:
+        invalid_code_point = 0b1U << 6U,
         empty_domain_label = 0b1U << 7U,
         too_long_label     = 0b1U << 8U, // the subdomain is more than 63
         too_long_domain    = 0b1U << 9U, // the whole domain is more than 253 without the last dot
@@ -72,7 +73,7 @@ namespace webpp::unicode::idna {
         using enum to_ascii_status;
         switch (status) {
             case valid: return {"Valid ASCII"};
-            case invalid_code_point: return {"Bad input for punycode was given"};
+            case punycode_bad_input: return {"Bad input for punycode was given"};
             case punycode_overflow: return {"Punycode overflow"};
             case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode"};
             case empty_punycode: return {"Empty punycode-encoded label was found"};
@@ -81,6 +82,7 @@ namespace webpp::unicode::idna {
             case too_long_label: return {"Label was too long"};
             case too_long_domain: return {"The Domain was too long"};
             case unknown: return {"Unknown failure"};
+            case invalid_code_point: return {"Invalid code point was found"};
 
             // Validity Criteria failures:
             case validity_nfc_failure:
@@ -417,10 +419,9 @@ namespace webpp::unicode::idna {
             }
         } else {
             // 1.1 Map (and/or copy to output)
-            if (!idna::map(ipos, iend, out)) [[unlikely]] {
-                // Disallowed code point was found
-                status |= +invalid_code_point;
-            }
+            // Note: The Convert/Validate step below checks for disallowed characters, after mapping and
+            //       normalization.
+            stl::ignore = idna::map(ipos, iend, out);
 
             // 1.2. Normalize inplace
             {
