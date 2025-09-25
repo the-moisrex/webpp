@@ -1226,32 +1226,69 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             auto relaxed_options = unicode::idna::strict_idna_options;
 
             // Disable checks corresponding to the errors on this line
+            SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
+            std::string debug_str;
+            bool        v6_failure = false;
             for (auto const& error_code : expected_errors) {
                 char prefix = error_code.empty() ? ' ' : error_code[0];
-                if (prefix == 'V') {
-                    relaxed_options.CheckHyphens = false;
+                // debug_str   += "Disable " + error_code + " check\n";
+                if (error_code == "V2" || error_code == "V3") {
+                    relaxed_options.CheckHyphens  = false;
+                    debug_str                    += "Disable Hyphens check, ";
+                } else if (error_code == "V7") {
+                    relaxed_options.CheckStatusValues  = false;
+                    debug_str                         += "Disable Status, ";
+                } else if (error_code == "V1") {
+                    relaxed_options.CheckNFC  = false;
+                    debug_str                += "Disable NFC, ";
+                } else if (error_code == "V6") {
+                    v6_failure  = true;
+                    debug_str  += "V6 failure (no option to disable), ";
                 }
                 if (prefix == 'B') {
-                    relaxed_options.CheckBidi = false;
+                    relaxed_options.CheckBidi  = false;
+                    debug_str                 += "Disable Bidi, ";
                 }
                 if (prefix == 'C') {
-                    relaxed_options.CheckJoiners = false;
+                    relaxed_options.CheckJoiners  = false;
+                    debug_str                    += "Disable Joiners check, ";
                 }
                 if (prefix == 'U') {
-                    relaxed_options.UseSTD3ASCIIRules = false;
+                    relaxed_options.UseSTD3ASCIIRules  = false;
+                    debug_str                         += "Disable STD3 ASCII Rules check, ";
                 }
                 if (prefix == 'A') {
-                    relaxed_options.VerifyDnsLength = false;
+                    relaxed_options.VerifyDnsLength  = false;
+                    debug_str                       += "Disable DNS Length check, ";
                 }
             }
+
+            SCOPED_TRACE(debug_str);
 
             // If all errors are ignorable by our relaxed options, this call should now succeed.
             // if (all_errors_ignored(expected_errors, relaxed_options)) {
             auto ascii_relaxed_res = to_ascii<std::string>(relaxed_options, source);
-            ASSERT_TRUE(ascii_relaxed_res.has_value()) << "to_ascii should succeed when relevant checks are disabled.";
-            EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
-              << "  Source: " << source << "\n  Relaxed options failed on line: " << line;
-            // }
+            error_string           = "";
+            if (!ascii_relaxed_res.has_value()) {
+                for (auto const status : unicode::idna::to_ascii_status_iterator{ascii_relaxed_res.error()}) {
+                    error_string += to_string(status);
+                    error_string += ", ";
+                }
+            }
+            if (v6_failure) {
+                EXPECT_EQ(ascii_relaxed_res.error(), unicode::idna::to_ascii_status::validity_combining_mark_at_start)
+                  << "V6 failures should always result in validity_combining_mark_at_start error.\nErrors:"
+                  << error_string;
+            } else {
+                EXPECT_TRUE(ascii_relaxed_res.has_value())
+                  << "to_ascii should succeed when relevant checks are disabled.";
+                if (ascii_relaxed_res.has_value()) {
+                    EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
+                      << "  Source: " << source << "\n  Relaxed options failed on line: " << line
+                      << "\n  Errors: " << error_string;
+                }
+                // }
+            }
         }
     }
 }

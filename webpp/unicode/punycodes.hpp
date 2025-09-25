@@ -26,12 +26,12 @@ namespace webpp::unicode::idna {
 
     static constexpr stl::string_view to_string(punycode_status const status) noexcept {
         switch (status) {
-            case punycode_status::success: return "Success";
-            case punycode_status::bad_input: return "Input is invalid";
+            case punycode_status::success: return {"Success"};
+            case punycode_status::bad_input: return {"Input is invalid"};
             case punycode_status::overflow:
-                return "Input needs wider integers to process";
+                return {"Input needs wider integers to process"};
             [[unlikely]] default:
-                return "Unknown punycode error";
+                return {"Unknown punycode error"};
         }
     }
 
