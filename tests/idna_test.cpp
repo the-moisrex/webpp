@@ -1236,8 +1236,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.CheckHyphens  = false;
                     debug_str                    += "Disable Hyphens check, ";
                 } else if (error_code == "V7") {
-                    relaxed_options.CheckStatusValues  = false;
-                    debug_str                         += "Disable Status, ";
+                    relaxed_options.CheckMappingRequired  = false;
+                    debug_str                            += "Disable Status, ";
                 } else if (error_code == "V1") {
                     relaxed_options.CheckNFC  = false;
                     debug_str                += "Disable NFC, ";
@@ -1281,7 +1281,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                   << error_string;
             } else {
                 EXPECT_TRUE(ascii_relaxed_res.has_value())
-                  << "to_ascii should succeed when relevant checks are disabled.";
+                  << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string;
                 if (ascii_relaxed_res.has_value()) {
                     EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
                       << "  Source: " << source << "\n  Relaxed options failed on line: " << line
@@ -1291,6 +1291,14 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
         }
     }
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit4) {
+    using unicode::idna::loose_idna_options;
+    using unicode::idna::to_ascii;
+
+    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--?-c1g3623d.xn--1ug73gl146a").value_or(u8"Failed")),
+              u8"xn--?-c1g3623d.xn--1ug73gl146a");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -18,14 +18,12 @@ namespace webpp::unicode::idna {
         bool UseSTD3ASCIIRules     = false;
         bool VerifyDnsLength       = false;
         bool IgnoreInvalidPunycode = false;
+        bool CheckNFC              = false;
+        bool CheckDotInclusions    = false;
+        bool CheckMappingRequired  = true; // rule 7 of the Validity Criteria
 
         // we don't support Transitional Processing since it's been deprecated.
         // bool Transitional_Processing = false;
-
-        // Skipped Steps:
-        bool CheckNFC           = false;
-        bool CheckDotInclusions = false;
-        bool CheckStatusValues  = false; // rule 7 of the Validity Criteria
     };
 
     static constexpr idna_options strict_idna_options{
@@ -37,7 +35,7 @@ namespace webpp::unicode::idna {
       .IgnoreInvalidPunycode = false,
       .CheckNFC              = true,
       .CheckDotInclusions    = true,
-      .CheckStatusValues     = true,
+      .CheckMappingRequired  = true,
     };
 
     static constexpr idna_options loose_idna_options{
@@ -49,7 +47,7 @@ namespace webpp::unicode::idna {
       .IgnoreInvalidPunycode = true,
       .CheckNFC              = false,
       .CheckDotInclusions    = false,
-      .CheckStatusValues     = false,
+      .CheckMappingRequired  = false,
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
@@ -62,7 +60,7 @@ namespace webpp::unicode::idna {
           .IgnoreInvalidPunycode = static_cast<bool>(flags >> 3U & 0b1U),
           .CheckNFC              = static_cast<bool>(flags >> 2U & 0b1U),
           .CheckDotInclusions    = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckStatusValues     = static_cast<bool>(flags >> 0U & 0b1U)};
+          .CheckMappingRequired  = static_cast<bool>(flags >> 0U & 0b1U)};
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
@@ -74,7 +72,7 @@ namespace webpp::unicode::idna {
           static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 3U |
           static_cast<stl::uint16_t>(options.CheckNFC) << 2U |
           static_cast<stl::uint16_t>(options.CheckDotInclusions) << 1U |
-          static_cast<stl::uint16_t>(options.CheckStatusValues) << 0U);
+          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 0U);
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria

@@ -29,7 +29,7 @@ void to_ascii_fuzz(std::string_view data) {
     run.operator()<idna_options{.IgnoreInvalidPunycode = true}>();
     // run.operator()<idna_options{.CheckNFC = false}>();
     run.operator()<idna_options{.CheckDotInclusions = true}>();
-    run.operator()<idna_options{.CheckStatusValues = true}>();
+    run.operator()<idna_options{.CheckMappingRequired = true}>();
     run.operator()<idna_options{.CheckHyphens          = true,
                                 .CheckBidi             = true,
                                 .CheckJoiners          = true,
@@ -38,7 +38,7 @@ void to_ascii_fuzz(std::string_view data) {
                                 .IgnoreInvalidPunycode = true,
                                 .CheckNFC              = false, // todo: enable it after implementation of isNFC
                                 .CheckDotInclusions    = true,
-                                .CheckStatusValues     = true}>();
+                                .CheckMappingRequired     = true}>();
 }
 
 register_fuzz(to_ascii_fuzz);

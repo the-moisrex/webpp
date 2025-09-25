@@ -69,8 +69,8 @@ namespace webpp::unicode::idna {
         combining_mark_at_start = V6,
 
         // 7. Status values failure
-        V7                    = 0b1U << 7U,
-        status_values_failure = V7,
+        V7                       = 0b1U << 7U,
+        requires_mapping_failure = V7,
 
         // 8. ContextJ Rules Failure
         V8             = 0b1U << 8U,
@@ -96,7 +96,7 @@ namespace webpp::unicode::idna {
             case V4: return {"ACE prefix (xn--) found at the beginning of the label"};
             case V5: return {"Label has a dot in it."};
             case V6: return {"Label starts with a Unicode combining mark"};
-            case V7: return {"Failure in status values"};
+            case V7: return {"The label requires mapping some code points"};
             case V8: return {"Failure in ContextJ Rules"};
             case V9: return {"Failure in Bidi Rules"};
 
@@ -155,7 +155,9 @@ namespace webpp::unicode::idna {
         // 4. If not CheckHyphens, the label must not begin with “xn--”.
         // 5. SKIPPED: The label must not contain a U+002E (.) FULL STOP.
         // 6. The label must not begin with a combining mark, that is: General_Category=Mark.
-        // 7. SKIPPED: ...
+        // 7. Each code point in the label must only have certain Status values according to IDNA Mapping Table
+        //    And, if UseSTD3ASCIIRules=true, each ASCII code point must be a lowercase letter (a–z), a digit, or a
+        //    hyphen,
         // 8. If CheckJoiners, the label must satisfy the ContextJ rules from Appendix A, in
         //    The Unicode Code Points and Internationalized Domain Names for Applications (IDNA) [IDNA2008].
         // 9. If CheckBidi, and if the domain name is a Bidi domain name,
@@ -229,8 +231,8 @@ namespace webpp::unicode::idna {
             status |= validate(!is_general_category_of(cur_cp, general_category::Mark), combining_mark_at_start);
         }
 
-        // 7. Checking Status values (SKIPPED by default)
-        if constexpr (Options.CheckStatusValues) {
+        // 7. Checking Status values
+        if constexpr (Options.CheckMappingRequired) {
             // - For Transitional Processing (deprecated)
             // - For Nontransitional Processing, each value must be either valid or deviation.
             // - In addition, if UseSTD3ASCIIRules=true and the code point is an ASCII code point
@@ -244,10 +246,11 @@ namespace webpp::unicode::idna {
 
                 // https://www.unicode.org/reports/tr46/#Deviations
                 // Deviations are considered valid in IDNA2008 and UTS #46.
-                status |= validate(cp_status == details::valid, status_values_failure);
+                status |= validate(cp_status == details::valid, requires_mapping_failure);
 
                 if constexpr (Options.UseSTD3ASCIIRules) {
-                    status |= validate(!is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp), status_values_failure);
+                    status |=
+                      validate(!is_ascii(cur_cp) || ASCII_STD3_RULES.contains(cur_cp), requires_mapping_failure);
                 }
             }
         }
@@ -264,7 +267,7 @@ namespace webpp::unicode::idna {
             // check the status code for bidi_failures.
             auto const info  = get_bidi_info(spos, send);
             status          |= validate(validate_bidi_rule(info), bidi_failure);
-            status           |= validate(!is_bidi_domain_name(info), bidi_domain_name);
+            status          |= validate(!is_bidi_domain_name(info), bidi_domain_name);
         }
 
         return status;
@@ -295,7 +298,7 @@ namespace webpp::unicode::idna {
                 ++spos;
                 continue;
             }
-            status  |= label_validity_status<Options>(beg, spos);
+            status |= label_validity_status<Options>(beg, spos);
             beg     = ++spos;
         }
 

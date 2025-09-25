@@ -29,12 +29,11 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        invalid_code_point             = +punycode_status::bad_input,
-        punycode_overflow              = +punycode_status::overflow,
-        ascii_only_punycode            = 0b1U << 3U,
-        empty_punycode                 = 0b1U << 4U,
-        non_normalized_punycode        = 0b1U << 5U,
-        punycode_requires_idna_mapping = 0b1U << 6U,
+        invalid_code_point      = +punycode_status::bad_input,
+        punycode_overflow       = +punycode_status::overflow,
+        ascii_only_punycode     = 0b1U << 3U,
+        empty_punycode          = 0b1U << 4U,
+        non_normalized_punycode = 0b1U << 5U,
 
 
         // More errors:
@@ -44,20 +43,20 @@ namespace webpp::unicode::idna {
         unknown            = 0b1U << 10U,
 
         // Validity Criteria errors:
-        validity_nfc_failure             = +validity_criteria_status::nfc_failure << 11U,
-        validity_hyphen_34               = +validity_criteria_status::hyphen_34 << 11U,
-        validity_hyphen_around           = +validity_criteria_status::hyphen_around << 11U,
-        validity_ace_found               = +validity_criteria_status::ace_found << 11U,
-        validity_dot_found               = +validity_criteria_status::dot_found << 11U,
-        validity_combining_mark_at_start = +validity_criteria_status::combining_mark_at_start << 11U,
-        validity_status_values_failure   = +validity_criteria_status::status_values_failure << 11U,
-        validity_joiner_failure          = +validity_criteria_status::joiner_failure << 11U,
-        validity_bidi_failure            = +validity_criteria_status::bidi_failure << 11U,
-        bidi_domain_name                 = +validity_criteria_status::bidi_domain_name << 11U, // flag, not an error
+        validity_nfc_failure              = +validity_criteria_status::nfc_failure << 11U,
+        validity_hyphen_34                = +validity_criteria_status::hyphen_34 << 11U,
+        validity_hyphen_around            = +validity_criteria_status::hyphen_around << 11U,
+        validity_ace_found                = +validity_criteria_status::ace_found << 11U,
+        validity_dot_found                = +validity_criteria_status::dot_found << 11U,
+        validity_combining_mark_at_start  = +validity_criteria_status::combining_mark_at_start << 11U,
+        validity_requires_mapping_failure = +validity_criteria_status::requires_mapping_failure << 11U,
+        validity_joiner_failure           = +validity_criteria_status::joiner_failure << 11U,
+        validity_bidi_failure             = +validity_criteria_status::bidi_failure << 11U,
+        bidi_domain_name                  = +validity_criteria_status::bidi_domain_name << 11U, // flag, not an error
 
         validity_criteria_failure =
           validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
-          validity_combining_mark_at_start | validity_status_values_failure | validity_joiner_failure |
+          validity_combining_mark_at_start | validity_requires_mapping_failure | validity_joiner_failure |
           validity_bidi_failure,
 
         // All flags (that are not states themselves)
@@ -78,7 +77,6 @@ namespace webpp::unicode::idna {
             case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode"};
             case empty_punycode: return {"Empty punycode-encoded label was found"};
             case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form"};
-            case punycode_requires_idna_mapping: return {"The punycode-encoded label requires IDNA mapping"};
             case empty_domain_label: return {"Empty domain labels are not valid"};
             case too_long_label: return {"Label was too long"};
             case too_long_domain: return {"The Domain was too long"};
@@ -91,7 +89,7 @@ namespace webpp::unicode::idna {
             case validity_ace_found:
             case validity_dot_found:
             case validity_combining_mark_at_start:
-            case validity_status_values_failure:
+            case validity_requires_mapping_failure:
             case validity_joiner_failure:
             case validity_bidi_failure:
             case bidi_domain_name: return to_string(static_cast<validity_criteria_status>(+status >> 11U));
@@ -500,23 +498,18 @@ namespace webpp::unicode::idna {
                             status |= +empty_punycode;
                         }
 
-                        char32_t      accum   = 0;
-                        stl::uint16_t map_pos = 0;
-                        OIter         pos     = lbeg;
+                        char32_t accum = 0;
+                        OIter    pos   = lbeg;
 
 
+                        // todo: we can optimize this:
                         while (pos != lend) {
                             auto const code_point  = checked::next_code_point<return_negated>(pos, lend);
-                            map_pos               |= status_of(code_point);
                             accum                 |= code_point;
                         }
 
                         if (is_ascii(accum)) [[unlikely]] {
                             status |= +ascii_only_punycode;
-                        }
-
-                        if (map_pos != details::valid) [[unlikely]] {
-                            status |= +punycode_requires_idna_mapping;
                         }
 
                         // todo: optimize this into the above loop
