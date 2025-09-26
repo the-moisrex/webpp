@@ -1228,7 +1228,6 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             // Disable checks corresponding to the errors on this line
             SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
             std::string debug_str;
-            bool        v6_failure = false;
             for (auto const& error_code : expected_errors) {
                 char prefix = error_code.empty() ? ' ' : error_code[0];
                 // debug_str   += "Disable " + error_code + " check\n";
@@ -1242,8 +1241,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.CheckNFC  = false;
                     debug_str                += "Disable NFC, ";
                 } else if (error_code == "V6") {
-                    v6_failure  = true;
-                    debug_str  += "V6 failure (no option to disable), ";
+                    relaxed_options.CheckCombiningMarkAtLabelStart  = false;
+                    debug_str                                      += "V6 failure (Combining Mark at start), ";
                 }
                 if (prefix == 'B') {
                     relaxed_options.CheckBidi  = false;
@@ -1275,20 +1274,14 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     error_string += ", ";
                 }
             }
-            if (v6_failure) {
-                EXPECT_EQ(ascii_relaxed_res.error(), unicode::idna::to_ascii_status::validity_combining_mark_at_start)
-                  << "V6 failures should always result in validity_combining_mark_at_start error.\nErrors: "
-                  << error_string;
-            } else {
-                EXPECT_TRUE(ascii_relaxed_res.has_value())
-                  << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string;
-                if (ascii_relaxed_res.has_value()) {
-                    EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
-                      << "  Source: " << source << "\n  Relaxed options failed on line: " << line
-                      << "\n  Errors: " << error_string;
-                }
-                // }
+            EXPECT_TRUE(ascii_relaxed_res.has_value())
+              << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string;
+            if (ascii_relaxed_res.has_value()) {
+                EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
+                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line
+                  << "\n  Errors: " << error_string;
             }
+            // }
         }
     }
 }
@@ -1302,21 +1295,48 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit4) {
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
-    using unicode::idna::loose_idna_options;
+    using unicode::idna::idna_options;
     using unicode::idna::to_ascii;
 
-    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"𑆀䁴񤧣．ⴕ𝟜\u200C\u0348").error()),
+    static constexpr idna_options options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
+
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"𑆀䁴񤧣．ⴕ𝟜\u200C\u0348").error()),
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 
-    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--1mnx647cg3x1b.xn--4-zfb502tlsl").error()),
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--1mnx647cg3x1b.xn--4-zfb502tlsl").error()),
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
-    using unicode::idna::loose_idna_options;
+    using unicode::idna::idna_options;
     using unicode::idna::to_ascii;
 
-    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--2g1d14o.xn--jti").error()),
+    static constexpr idna_options options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--2g1d14o.xn--jti").error()),
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 }
 

@@ -148,12 +148,12 @@ namespace webpp::unicode::idna {
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr validity_criteria_status_type label_validity_status(Iter spos, Iter send) noexcept {
-        // 1. SKIPPED: The label must be in Unicode Normalization Form NFC.
+        // 1. The label must be in Unicode Normalization Form NFC.
         // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
         //    and fourth positions.
         // 3. If CheckHyphens, the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
         // 4. If not CheckHyphens, the label must not begin with “xn--”.
-        // 5. SKIPPED: The label must not contain a U+002E (.) FULL STOP.
+        // 5. The label must not contain a U+002E (.) FULL STOP.
         // 6. The label must not begin with a combining mark, that is: General_Category=Mark.
         // 7. Each code point in the label must only have certain Status values according to IDNA Mapping Table
         //    And, if UseSTD3ASCIIRules=true, each ASCII code point must be a lowercase letter (a–z), a digit, or a
@@ -184,7 +184,7 @@ namespace webpp::unicode::idna {
         // }
 
 
-        // 1. Check if it's in NFC form (SKIPPED by default)
+        // 1. Check if it's in NFC form
         if constexpr (Options.CheckNFC) {
             status |= validate(isNFC(spos, send), nfc_failure);
         }
@@ -214,7 +214,7 @@ namespace webpp::unicode::idna {
             status |= validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
         }
 
-        // 5. Check if it includes any dots (SKIPPED by default)
+        // 5. Check if it includes any dots
         if constexpr (Options.CheckDotInclusions) {
             // we don't need to check for UTF encodings, nor we need early bailout since that would mean we'd
             // be optimizing for the failure path as opposed to optimizing for the happy path
@@ -224,7 +224,7 @@ namespace webpp::unicode::idna {
         }
 
         // 6. The label must not start with a combining mark
-        {
+        if constexpr (Options.CheckCombiningMarkAtLabelStart) {
             auto const cur_cp = checked::next_code_point_copy<return_negated>(spos, send);
 
             // no need to check the length, it'll return 0, which is not GC, so it's fine.

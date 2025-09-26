@@ -12,42 +12,47 @@
 namespace webpp::unicode::idna {
 
     struct idna_options { // NOLINT(*-struct-pack-align)
-        bool CheckHyphens          = false;
-        bool CheckBidi             = true;
-        bool CheckJoiners          = true;
-        bool UseSTD3ASCIIRules     = false;
-        bool VerifyDnsLength       = false;
-        bool IgnoreInvalidPunycode = false;
-        bool CheckNFC              = false;
-        bool CheckDotInclusions    = false;
-        bool CheckMappingRequired  = true; // rule 7 of the Validity Criteria
+        // We use default values given in URL Specs here:
+        //   https://url.spec.whatwg.org/#concept-domain-to-ascii
+        bool CheckHyphens                   = true;
+        bool CheckBidi                      = true;
+        bool CheckJoiners                   = true;
+        bool UseSTD3ASCIIRules              = true;
+        bool VerifyDnsLength                = true;
+        bool IgnoreInvalidPunycode          = false;
+        bool CheckNFC                       = true;
+        bool CheckDotInclusions             = true;
+        bool CheckMappingRequired           = true; // rule 7 of the Validity Criteria
+        bool CheckCombiningMarkAtLabelStart = true;
 
         // we don't support Transitional Processing since it's been deprecated.
         // bool Transitional_Processing = false;
     };
 
     static constexpr idna_options strict_idna_options{
-      .CheckHyphens          = true,
-      .CheckBidi             = true,
-      .CheckJoiners          = true,
-      .UseSTD3ASCIIRules     = true,
-      .VerifyDnsLength       = true,
-      .IgnoreInvalidPunycode = false,
-      .CheckNFC              = true,
-      .CheckDotInclusions    = true,
-      .CheckMappingRequired  = true,
+      .CheckHyphens                   = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
     };
 
     static constexpr idna_options loose_idna_options{
-      .CheckHyphens          = false,
-      .CheckBidi             = false,
-      .CheckJoiners          = false,
-      .UseSTD3ASCIIRules     = false,
-      .VerifyDnsLength       = false,
-      .IgnoreInvalidPunycode = true,
-      .CheckNFC              = false,
-      .CheckDotInclusions    = false,
-      .CheckMappingRequired  = false,
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
