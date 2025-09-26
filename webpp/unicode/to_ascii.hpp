@@ -29,11 +29,10 @@ namespace webpp::unicode::idna {
         valid = 0,
 
         // Punycode errors:
-        punycode_bad_input      = +punycode_status::bad_input,
-        punycode_overflow       = +punycode_status::overflow,
-        ascii_only_punycode     = 0b1U << 3U,
-        empty_punycode          = 0b1U << 4U,
-        non_normalized_punycode = 0b1U << 5U,
+        punycode_bad_input  = +punycode_status::bad_input,
+        punycode_overflow   = +punycode_status::overflow,
+        ascii_only_punycode = 0b1U << 3U,
+        empty_punycode      = 0b1U << 4U,
 
 
         // More errors:
@@ -77,7 +76,6 @@ namespace webpp::unicode::idna {
             case punycode_overflow: return {"Punycode overflow"};
             case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode"};
             case empty_punycode: return {"Empty punycode-encoded label was found"};
-            case non_normalized_punycode: return {"The punycode-encoded label was not in NFC form"};
             case empty_domain_label: return {"Empty domain labels are not valid"};
             case too_long_label: return {"Label was too long"};
             case too_long_domain: return {"The Domain was too long"};
@@ -501,11 +499,6 @@ namespace webpp::unicode::idna {
 
                         if (is_ascii(lbeg, lend)) [[unlikely]] {
                             status |= +ascii_only_punycode;
-                        }
-
-                        // todo: optimize this and the above is_ascii into one loop (not easy)
-                        if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
-                            status |= +non_normalized_punycode;
                         }
                     }
                     [[fallthrough]];
