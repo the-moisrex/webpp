@@ -57,27 +57,30 @@ namespace webpp::unicode::idna {
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
         return idna_options{
-          .CheckHyphens          = static_cast<bool>(flags >> 8U & 0b1U),
-          .CheckBidi             = static_cast<bool>(flags >> 7U & 0b1U),
-          .CheckJoiners          = static_cast<bool>(flags >> 6U & 0b1U),
-          .UseSTD3ASCIIRules     = static_cast<bool>(flags >> 5U & 0b1U),
-          .VerifyDnsLength       = static_cast<bool>(flags >> 4U & 0b1U),
-          .IgnoreInvalidPunycode = static_cast<bool>(flags >> 3U & 0b1U),
-          .CheckNFC              = static_cast<bool>(flags >> 2U & 0b1U),
-          .CheckDotInclusions    = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckMappingRequired  = static_cast<bool>(flags >> 0U & 0b1U)};
+          .CheckHyphens                   = static_cast<bool>(flags >> 9U & 0b1U),
+          .CheckBidi                      = static_cast<bool>(flags >> 8U & 0b1U),
+          .CheckJoiners                   = static_cast<bool>(flags >> 7U & 0b1U),
+          .UseSTD3ASCIIRules              = static_cast<bool>(flags >> 6U & 0b1U),
+          .VerifyDnsLength                = static_cast<bool>(flags >> 5U & 0b1U),
+          .IgnoreInvalidPunycode          = static_cast<bool>(flags >> 4U & 0b1U),
+          .CheckNFC                       = static_cast<bool>(flags >> 3U & 0b1U),
+          .CheckDotInclusions             = static_cast<bool>(flags >> 2U & 0b1U),
+          .CheckMappingRequired           = static_cast<bool>(flags >> 1U & 0b1U),
+          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U)};
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
         return static_cast<stl::uint16_t>(
-          static_cast<stl::uint16_t>(options.CheckHyphens) << 8U | static_cast<stl::uint16_t>(options.CheckBidi) << 7U |
-          static_cast<stl::uint16_t>(options.CheckJoiners) << 6U |
-          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 5U |
-          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 4U |
-          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 3U |
-          static_cast<stl::uint16_t>(options.CheckNFC) << 2U |
-          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 1U |
-          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 0U);
+                 static_cast<stl::uint16_t>(options.CheckHyphens) << 9U |
+                 static_cast<stl::uint16_t>(options.CheckBidi) << 8U |
+                 static_cast<stl::uint16_t>(options.CheckJoiners) << 7U |
+                 static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 6U |
+                 static_cast<stl::uint16_t>(options.VerifyDnsLength) << 5U |
+                 static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 4U |
+                 static_cast<stl::uint16_t>(options.CheckNFC) << 3U |
+                 static_cast<stl::uint16_t>(options.CheckDotInclusions) << 2U |
+                 static_cast<stl::uint16_t>(options.CheckMappingRequired) << 1U) |
+               static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 0U;
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria

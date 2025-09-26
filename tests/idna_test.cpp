@@ -1087,7 +1087,7 @@ namespace {
     [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
       webpp::unicode::idna::idna_options options,
       Args&&... args) {
-        constexpr size_t      NumFlags = 512; // 9-bit mask (adjust if wider)
+        constexpr size_t      NumFlags = 0b1 << 10; // 10-bit mask (adjust if wider)
         static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
 
         auto flags = idna_flags(options);
@@ -1236,7 +1236,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     debug_str                    += "Disable Hyphens check, ";
                 } else if (error_code == "V7") {
                     relaxed_options.CheckMappingRequired  = false;
-                    debug_str                            += "Disable Status, ";
+                    debug_str                            += "Disable Mapping Required Check, ";
                 } else if (error_code == "V1") {
                     relaxed_options.CheckNFC  = false;
                     debug_str                += "Disable NFC, ";
@@ -1338,6 +1338,27 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
 
     EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--2g1d14o.xn--jti").error()),
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit7) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--1mnx647cg3x1b.xn--4-zfb324h32o").value_or(u8"Failed")),
+              u8"xn--1mnx647cg3x1b.xn--4-zfb324h32o");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
