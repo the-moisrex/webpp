@@ -44,6 +44,7 @@ namespace webpp::istl {
     template <typename IterT>
     using begin_iterator = stl::conditional_t<stl::sentinel_for<begin_sentinel_t, IterT>, begin_sentinel_t, IterT>;
 
+    /// This is equivalant to std::ranges::input_range
     template <typename T>
     concept Iterable = requires(T iter) {
         {
@@ -54,6 +55,7 @@ namespace webpp::istl {
         } -> stl::input_iterator;
     };
 
+    /// This is equivalant to std::ranges::input_range but also requires that the begin and end functions are noexcept
     template <typename T>
     concept NothrowIterable = requires(T iter) {
         {

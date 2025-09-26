@@ -499,21 +499,11 @@ namespace webpp::unicode::idna {
                             status |= +empty_punycode;
                         }
 
-                        char32_t accum = 0;
-                        OIter    pos   = lbeg;
-
-
-                        // todo: we can optimize this:
-                        while (pos != lend) {
-                            auto const code_point  = checked::next_code_point<return_negated>(pos, lend);
-                            accum                 |= code_point;
-                        }
-
-                        if (is_ascii(accum)) [[unlikely]] {
+                        if (is_ascii(lbeg, lend)) [[unlikely]] {
                             status |= +ascii_only_punycode;
                         }
 
-                        // todo: optimize this into the above loop
+                        // todo: optimize this and the above is_ascii into one loop (not easy)
                         if (!is_normalized<norm_form::NFC>(lbeg, lend)) [[unlikely]] {
                             status |= +non_normalized_punycode;
                         }

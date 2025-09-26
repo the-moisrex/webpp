@@ -1312,4 +1312,12 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
+    using unicode::idna::loose_idna_options;
+    using unicode::idna::to_ascii;
+
+    EXPECT_EQ((to_ascii<std::u8string, loose_idna_options>(u8"xn--2g1d14o.xn--jti").error()),
+              unicode::idna::to_ascii_status::validity_combining_mark_at_start);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
