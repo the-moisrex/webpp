@@ -1243,20 +1243,16 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 } else if (error_code == "V6") {
                     relaxed_options.CheckCombiningMarkAtLabelStart  = false;
                     debug_str                                      += "V6 failure (Combining Mark at start), ";
-                }
-                if (prefix == 'B') {
+                } else if (prefix == 'B') {
                     relaxed_options.CheckBidi  = false;
                     debug_str                 += "Disable Bidi, ";
-                }
-                if (prefix == 'C') {
+                } else if (prefix == 'C') {
                     relaxed_options.CheckJoiners  = false;
                     debug_str                    += "Disable Joiners check, ";
-                }
-                if (prefix == 'U') {
+                } else if (prefix == 'U') {
                     relaxed_options.UseSTD3ASCIIRules  = false;
                     debug_str                         += "Disable STD3 ASCII Rules check, ";
-                }
-                if (prefix == 'A') {
+                } else if (prefix == 'A') {
                     relaxed_options.VerifyDnsLength  = false;
                     debug_str                       += "Disable DNS Length check, ";
                 }
@@ -1359,6 +1355,27 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit7) {
 
     EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--1mnx647cg3x1b.xn--4-zfb324h32o").value_or(u8"Failed")),
               u8"xn--1mnx647cg3x1b.xn--4-zfb324h32o");
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit8) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--2v9a.xn--ss-q40dp97m").value_or(u8"Failed")),
+              u8"xn--2v9a.xn--ss-q40dp97m");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

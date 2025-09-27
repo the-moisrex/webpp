@@ -66,21 +66,20 @@ namespace webpp::unicode::idna {
           .CheckNFC                       = static_cast<bool>(flags >> 3U & 0b1U),
           .CheckDotInclusions             = static_cast<bool>(flags >> 2U & 0b1U),
           .CheckMappingRequired           = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U)};
+          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 0U & 0b1U)};
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
         return static_cast<stl::uint16_t>(
-                 static_cast<stl::uint16_t>(options.CheckHyphens) << 9U |
-                 static_cast<stl::uint16_t>(options.CheckBidi) << 8U |
-                 static_cast<stl::uint16_t>(options.CheckJoiners) << 7U |
-                 static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 6U |
-                 static_cast<stl::uint16_t>(options.VerifyDnsLength) << 5U |
-                 static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 4U |
-                 static_cast<stl::uint16_t>(options.CheckNFC) << 3U |
-                 static_cast<stl::uint16_t>(options.CheckDotInclusions) << 2U |
-                 static_cast<stl::uint16_t>(options.CheckMappingRequired) << 1U) |
-               static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 0U;
+          static_cast<stl::uint16_t>(options.CheckHyphens) << 9U | static_cast<stl::uint16_t>(options.CheckBidi) << 8U |
+          static_cast<stl::uint16_t>(options.CheckJoiners) << 7U |
+          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 6U |
+          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 5U |
+          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 4U |
+          static_cast<stl::uint16_t>(options.CheckNFC) << 3U |
+          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 2U |
+          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 1U |
+          static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 0U);
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria
