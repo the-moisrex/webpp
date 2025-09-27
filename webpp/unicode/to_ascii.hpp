@@ -36,7 +36,8 @@ namespace webpp::unicode::idna {
 
 
         // More errors:
-        invalid_code_point = 0b1U << 6U,
+        invalid_code_point = 0b1U << 5U,
+        empty_root_label   = 0b1U << 6U,
         empty_domain_label = 0b1U << 7U,
         too_long_label     = 0b1U << 8U, // the subdomain is more than 63
         too_long_domain    = 0b1U << 9U, // the whole domain is more than 253 without the last dot
@@ -76,6 +77,7 @@ namespace webpp::unicode::idna {
             case punycode_overflow: return {"Punycode overflow"};
             case ascii_only_punycode: return {"The ASCII-Only label was unnecessarily encoded into punycode"};
             case empty_punycode: return {"Empty punycode-encoded label was found"};
+            case empty_root_label: return {"Empty root label found (the tailing dot)"};
             case empty_domain_label: return {"Empty domain labels are not valid"};
             case too_long_label: return {"Label was too long"};
             case too_long_domain: return {"The Domain was too long"};
@@ -453,8 +455,10 @@ namespace webpp::unicode::idna {
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
                 [[unlikely]] case 0:
-                    // If the label is empty, or ..., record that there was an error.
-                    status |= +empty_domain_label;
+                    if constexpr (VerifyDnsLength) {
+                        // If the label is empty, or ..., record that there was an error.
+                        status |= +empty_domain_label;
+                    }
                     break;
                 case +ace:
                     if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {
@@ -564,13 +568,18 @@ namespace webpp::unicode::idna {
         // 4. VerifyDnsLength
         if constexpr (Options.VerifyDnsLength) {
             // No need to bailout early
-            constexpr auto max_label   = 63U;
-            constexpr auto max_domain  = 253U;
-            auto const     cur_out_len = out - out_beg;
+            constexpr auto max_label            = 63U;
+            constexpr auto max_domain           = 253U;
+            auto const     cur_out_len          = out - out_beg;
+            bool const     has_empty_root_label = (cur_out_len != 0 && *stl::prev(out) == '.');
             if (accum_length > max_label) [[unlikely]] {
                 status |= +too_long_label;
             }
-            if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || *stl::prev(out) != '.')) [[unlikely]] {
+            // When VerifyDnsLength is true, the empty root label is disallowed.
+            if (has_empty_root_label) {
+                status |= +empty_root_label;
+            }
+            if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || !has_empty_root_label)) [[unlikely]] {
                 status |= +too_long_domain;
             }
         }

@@ -1378,4 +1378,35 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit8) {
               u8"xn--2v9a.xn--ss-q40dp97m");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit9) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    // From: https://www.unicode.org/reports/tr46/#ToASCII
+    // If the VerifyDnsLength flag is true, then verify DNS length restrictions. This may record an error. For more
+    // information, see [STD13] and [STD3].
+    //  - The length of the domain name, excluding the root label and its dot, is from 1 to 253.
+    //  - The length of each label is from 1 to 63.
+    //      Note: Technically, a complete domain name ends with an empty label for the DNS root (see [STD13] [RFC1034]
+    //      section 3). This empty label, and the trailing dot, is almost always omitted. When VerifyDnsLength is false,
+    //      the empty root label is passed through. When VerifyDnsLength is true, the empty root label is disallowed.
+    //      This corresponds to the syntax in [RFC1034] section 3.5 Preferred name syntax which also defines the label
+    //      length restrictions.
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--r97c.").error()),
+              unicode::idna::to_ascii_status::empty_root_label);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
