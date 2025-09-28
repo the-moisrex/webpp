@@ -180,16 +180,19 @@ namespace webpp::unicode {
         stl::uint32_t last_non_nsm = 0;
     };
 
-    /// Run this while you're looping through a range to fill the bidi_info
-    static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
-        using enum direction;
+    namespace details {
+        /// Run this while you're looping through a range to fill the bidi_info
+        static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
+            using enum direction;
 
-        info.last_non_nsm  = direction_mask_of(code_point);
-        info.accum        |= info.last_non_nsm;
-        if (info.last_non_nsm != direction_mask_of(NSM)) {
-            info.last_non_nsm = direction_mask_of(code_point);
+            info.last_non_nsm  = direction_mask_of(code_point);
+            info.accum        |= info.last_non_nsm;
+            if (info.last_non_nsm != direction_mask_of(NSM)) {
+                info.last_non_nsm = direction_mask_of(code_point);
+            }
         }
-    }
+
+    } // namespace details
 
     /**
      * Generate a bidi_info which is required to check if the specified range is compliant with the Bidi Rules.

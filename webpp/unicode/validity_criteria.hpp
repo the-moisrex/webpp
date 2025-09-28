@@ -240,6 +240,7 @@ namespace webpp::unicode::idna {
         [[maybe_unused]] Iter         prev     = spos;
         [[maybe_unused]] stl::uint8_t prev_ccc = 0;
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
+        [[maybe_unused]] bidi_info    b_info;
         for (Iter pos = spos; pos != send;) {
             char32_t const code_point = checked::next_code_point<return_negated>(pos, send);
 
@@ -328,6 +329,12 @@ namespace webpp::unicode::idna {
                         break;
                 }
             }
+
+
+            // 9. Check bidi rule (get the information)
+            if constexpr (Options.CheckBidi) {
+                unicode::details::bidi_info_step(b_info, code_point);
+            }
         }
 
 
@@ -336,9 +343,8 @@ namespace webpp::unicode::idna {
             // The documentaiton asks us to "If CheckBidi, and if the domain name is a 'Bidi domain name'",
             // but we don't yet know if the full domain is a bidi domain or not. It's on the caller to
             // check the status code for bidi_failures.
-            auto const info  = get_bidi_info(spos, send);
-            status          |= validate(validate_bidi_rule(info), bidi_failure);
-            status          |= validate(!is_bidi_domain_name(info), bidi_domain_name);
+            status |= validate(validate_bidi_rule(b_info), bidi_failure);
+            status |= validate(!is_bidi_domain_name(b_info), bidi_domain_name);
         }
 
         return status;
