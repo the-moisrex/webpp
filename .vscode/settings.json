@@ -63,7 +63,8 @@
     "ranges": "cpp",
     "stdexcept": "cpp",
     "__bit_reference": "cpp",
-    "execution": "cpp"
+    "execution": "cpp",
+    "socket": "cpp"
   },
   "cSpell.words": [
     "addr",

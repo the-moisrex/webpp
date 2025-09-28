@@ -1429,6 +1429,13 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
     // line: xn----ufo9661d.xn--1ug79cm620c71sh; ꡣ-≠.\u200D𞤹𐅢Ↄ; [B1, B6, C2, V7]; xn----ufo9661d.xn--1ug79cm620c71sh; ;
     EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn----ufo9661d.xn--1ug79cm620c71sh").value_or(u8"Failed")),
               u8"xn----ufo9661d.xn--1ug79cm620c71sh");
+
+    // line: 𐹸䚵-ꡡ。⺇; 𐹸䚵-ꡡ.⺇; [B1]; xn----bm3an932a1l5d.xn--xvj; ; ;
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"𐹸䚵-ꡡ。⺇").value_or(u8"Failed")), u8"xn----bm3an932a1l5d.xn--xvj");
+
+    // line: xn----bm3an932a1l5d.xn--xvj; 𐹸䚵-ꡡ.⺇; [B1]; xn----bm3an932a1l5d.xn--xvj; ; ;
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn----bm3an932a1l5d.xn--xvj").value_or(u8"Failed")),
+              u8"xn----bm3an932a1l5d.xn--xvj");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

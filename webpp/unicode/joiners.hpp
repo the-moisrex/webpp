@@ -64,6 +64,70 @@ namespace webpp::unicode {
         // NOLINTEND(*-pro-bounds-constant-array-index)
     }
 
+    namespace details {
+        /// ZERO WIDTH NON-JOINER
+        template <stl::random_access_iterator Iter>
+        [[nodiscard]] static constexpr bool
+        validate_zero_with_non_joiner(Iter const& sbeg, Iter const& spos, Iter const& send) noexcept {
+            using enum checked::error_handling;
+            using enum joiner_type;
+
+
+            bool       is_valid  = false;
+            auto       pos       = spos;
+            auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
+
+            // ccc_of(0) is not gonna be Virama, so we don't need to check for it
+            if (is_ccc_of(before_cp, ccc_props::Virama)) {
+                return true;
+            }
+
+            while (pos != sbeg) {
+                auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
+                auto const joining_type = joiner_type_of(cur_cp);
+                if (joining_type == transparent) {
+                    continue;
+                }
+                if (joining_type == left_joining || joining_type == dual_joining) {
+                    is_valid = true;
+                    break;
+                }
+            }
+
+            // let's not early bailout on the failure path:
+            // if (!is_ok) [[unlikely]] {
+            //     return false;
+            // }
+
+            pos         = spos;
+            auto cur_cp = checked::next_code_point<return_negated>(pos, send);
+            for (; cur_cp != 0; cur_cp = checked::next_code_point<return_negated>(pos, send)) {
+                auto const joining_type = joiner_type_of(cur_cp);
+                if (joining_type == transparent) {
+                    continue;
+                }
+                if (joining_type == right_joining || joining_type == dual_joining) {
+                    is_valid = true;
+                    break;
+                }
+            }
+            return is_valid;
+        }
+
+        /// ZERO WIDTH NON-JOINER
+        template <stl::random_access_iterator Iter>
+        [[nodiscard]] static constexpr bool validate_zero_with_joiner(Iter sbeg, Iter pos) noexcept {
+            using enum checked::error_handling;
+            using enum joiner_type;
+
+            auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
+
+            // ccc_of(0) is not gonna be Virama, so we don't need to check
+            return is_ccc_of(before_cp, ccc_props::Virama);
+        }
+
+    } // namespace details
+
     /**
      * Check if joiner code points are correct.
      * Attention: this function does only the lookup part of the appendix, and not the full check.
@@ -82,47 +146,8 @@ namespace webpp::unicode {
                     // language, for example. It also may occur in Indic scripts in a consonant-conjunct
                     // context (immediately following a virama), to control required display of such
                     // conjuncts.
-                case U'\x200C': {
-                    // ZERO WIDTH NON-JOINER
-                    bool       is_valid  = false;
-                    auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
-
-                    // ccc_of(0) is not gonna be Virama, so we don't need to check for it
-                    if (is_ccc_of(before_cp, ccc_props::Virama)) {
-                        continue;
-                    }
-
-                    while (pos != sbeg) {
-                        auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
-                        auto const joining_type = joiner_type_of(cur_cp);
-                        if (joining_type == transparent) {
-                            continue;
-                        }
-                        if (joining_type == left_joining || joining_type == dual_joining) {
-                            is_valid = true;
-                            break;
-                        }
-                    }
-
-                    // let's not early bailout on the failure path:
-                    // if (!is_ok) [[unlikely]] {
-                    //     return false;
-                    // }
-
-                    pos         = spos;
-                    auto cur_cp = checked::next_code_point<return_negated>(pos, send);
-                    for (; cur_cp != 0; cur_cp = checked::next_code_point<return_negated>(pos, send)) {
-                        auto const joining_type = joiner_type_of(cur_cp);
-                        if (joining_type == transparent) {
-                            continue;
-                        }
-                        if (joining_type == right_joining || joining_type == dual_joining) {
-                            is_valid = true;
-                            break;
-                        }
-                    }
-                    if (!is_valid) [[unlikely]] {
+                case U'\x200C': { // ZERO WIDTH NON-JOINER
+                    if (!details::validate_zero_with_non_joiner(sbeg, spos, send)) [[unlikely]] {
                         return false;
                     }
                     break;
@@ -131,10 +156,7 @@ namespace webpp::unicode {
                     // This may occur in Indic scripts in a consonant-conjunct context (immediately following
                     // a virama), to control the required display of such conjuncts.
                 case U'\x200D': { // ZERO WIDTH JOINER
-                    auto       pos       = spos;
-                    auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
-                    // ccc_of(0) is not gonna be Virama, so we don't need to check
-                    if (!is_ccc_of(before_cp, ccc_props::Virama)) {
+                    if (!details::validate_zero_with_joiner(sbeg, spos)) [[unlikely]] {
                         return false;
                     }
                     break;
