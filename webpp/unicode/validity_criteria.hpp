@@ -165,7 +165,7 @@ namespace webpp::unicode::idna {
         //    in [IDNA2008] RFC 5893, Section 2.
         //    https://www.rfc-editor.org/rfc/rfc5893#section-2
 
-
+        using checked::utf32_forward_iter;
         using enum checked::error_handling;
         using enum validity_criteria_status;
 
@@ -189,22 +189,41 @@ namespace webpp::unicode::idna {
             status |= validate(isNFC(spos, send), nfc_failure);
         }
 
-        // 2,3,4. Check hyphens (default is false)
+        // 2,3,4. Check hyphens
         if constexpr (Options.CheckHyphens) {
             switch (length) {
                 [[likely]] default:
-                case 4:
-                    status |= validate(*stl::next(spos, 3) != '-', hyphen_34);              // forth
-                    [[fallthrough]];
-                case 3:
-                    status |= validate(*stl::next(spos, 2) != '-', hyphen_34);              // third
-                    [[fallthrough]];
-                case 2:
-                    status |= validate(*stl::next(spos, length - 1) != '-', hyphen_around); // last
-                    [[fallthrough]];
+                case 4: {
+                    utf32_forward_iter pos{spos, send};
+                    char32_t const     cp1 = *pos++;
+                    ++pos;
+                    char32_t const cp3      = *pos++;
+                    char32_t const cp4      = *pos;
+                    char32_t const cp_back  = *(spos + length - 2);
+                    status                 |= validate(cp4 != '-' && cp3 != '-', hyphen_34);         // 3rd and 4th
+                    status                 |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first and last
+                    break;
+                }
+                case 3: {
+                    // we need to use utf32 iterator for 3 chars, because first 2 might be one code point
+                    utf32_forward_iter pos{spos, send};
+                    char32_t const     cp1 = *pos++;
+                    ++pos;
+                    char32_t const cp3  = *pos;
+                    status             |= validate(cp3 != '-', hyphen_34);     // 3rd
+                    status             |= validate(cp1 != '-', hyphen_around); // first
+                    break;
+                }
+                case 2: {
+                    // don't need to use utf32 iterator for 2 chars
+                    auto const cp1  = *spos++;
+                    auto const cp2  = *spos;
+                    status         |= validate(cp1 != '-' && cp2 != '-', hyphen_around); // first and last
+                    break;
+                }
                 case 1:
-                    status |= validate(*spos != '-', hyphen_around);                        // first
-                    [[fallthrough]];
+                    status |= validate(*spos != '-', hyphen_around); // first and last
+                    break;
                 case 0: break;
             }
         } else {

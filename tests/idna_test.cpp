@@ -1409,4 +1409,26 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit9) {
               unicode::idna::to_ascii_status::empty_root_label);
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    // line: xn----ufo9661d.xn--1ug79cm620c71sh; ꡣ-≠.\u200D𞤹𐅢Ↄ; [B1, B6, C2, V7]; xn----ufo9661d.xn--1ug79cm620c71sh; ;
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn----ufo9661d.xn--1ug79cm620c71sh").value_or(u8"Failed")),
+              u8"xn----ufo9661d.xn--1ug79cm620c71sh");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -455,7 +455,7 @@ namespace webpp::unicode::idna {
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
                 [[unlikely]] case 0:
-                    if constexpr (VerifyDnsLength) {
+                    if constexpr (Options.VerifyDnsLength) {
                         // If the label is empty, or ..., record that there was an error.
                         status |= +empty_domain_label;
                     }
