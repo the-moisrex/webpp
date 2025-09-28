@@ -166,6 +166,7 @@ namespace webpp::unicode::idna {
         //    https://www.rfc-editor.org/rfc/rfc5893#section-2
 
         using checked::utf32_forward_iter;
+        using unicode::details::isNFC_until_next_starter;
         using unicode::details::validate_zero_with_joiner;
         using unicode::details::validate_zero_with_non_joiner;
         using enum checked::error_handling;
@@ -181,15 +182,6 @@ namespace webpp::unicode::idna {
 
         validity_criteria_status_type status = +valid;
         auto const                    length = send - spos;
-        // if (length == 0) {
-        //     return true;
-        // }
-
-
-        // 1. Check if it's in NFC form
-        if constexpr (Options.CheckNFC) {
-            status |= validate(isNFC(spos, send), nfc_failure);
-        }
 
         // 2,3,4. Check hyphens
         if constexpr (Options.CheckHyphens) {
@@ -243,14 +235,54 @@ namespace webpp::unicode::idna {
             status |= validate(!is_general_category_of(cur_cp, general_category::Mark), combining_mark_at_start);
         }
 
-        Iter const sbeg = spos;
+        [[maybe_unused]] Iter const   sbeg     = spos;
+        [[maybe_unused]] Iter         starter  = spos;
+        [[maybe_unused]] Iter         prev     = spos;
+        [[maybe_unused]] stl::uint8_t prev_ccc = 0;
+        [[maybe_unused]] auto         result   = +quick_check_state::YES;
         for (Iter pos = spos; pos != send;) {
-            char32_t const cp = checked::next_code_point<return_negated>(pos, send);
+            char32_t const code_point = checked::next_code_point<return_negated>(pos, send);
 
+            // 1. Check if it's in NFC form
+            if constexpr (Options.CheckNFC) {
+                // We do hadve isNFC function, but we are already iterating through the string,
+                // so we might as well do it here.
+                // This is almost the implementation of QuickCheck:
+                if (result != +quick_check_state::NO) [[likely]] {
+                    for (;;) {
+                        if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
+                            status |= validate(false, nfc_failure);
+                            break;
+                        }
+                        auto const info    = qc_ccc_of(code_point);
+                        auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
+                        auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
+                        result            |= +qc_of<norm_form::NFC>(qc_val);
 
-            // 5. Check if it includes any dots
-            if constexpr (Options.CheckDotInclusions) {
-                status |= validate(cp != '.', dot_found);
+                        if (result != +quick_check_state::YES) [[unlikely]] {
+                            if (result == +quick_check_state::NO) {
+                                status |= validate(false, nfc_failure);
+                            }
+                            break;
+                        }
+
+                        if (ccc == 0) {
+                            starter = prev;
+                        } else if (prev_ccc > ccc) [[unlikely]] {
+                            status |= validate(false, nfc_failure);
+                            break;
+                        }
+                        prev_ccc = ccc;
+                        break;
+                    }
+
+                    if (result == +quick_check_state::MAYBE && !isNFC_until_next_starter(starter, send)) [[unlikely]] {
+                        result |= +quick_check_state::NO;
+                        status |= validate(false, nfc_failure);
+                    }
+
+                    prev = pos;
+                }
             }
 
 
@@ -262,14 +294,15 @@ namespace webpp::unicode::idna {
                 //   (U+0000..U+007F), then it must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus
                 //   (U+002D). (Note: This excludes uppercase ASCII A-Z which are mapped in UTS #46 and disallowed
                 //   in IDNA2008.)
-                auto const cp_status = status_of(cp);
+                auto const cp_status = status_of(code_point);
 
                 // https://www.unicode.org/reports/tr46/#Deviations
                 // Deviations are considered valid in IDNA2008 and UTS #46.
                 status |= validate(cp_status == details::valid, requires_mapping_failure);
 
                 if constexpr (Options.UseSTD3ASCIIRules) {
-                    status |= validate(!is_ascii(cp) || ASCII_STD3_RULES.contains(cp), requires_mapping_failure);
+                    status |= validate(!is_ascii(code_point) || ASCII_STD3_RULES.contains(code_point),
+                                       requires_mapping_failure);
                 }
             }
 
@@ -278,12 +311,18 @@ namespace webpp::unicode::idna {
             // 8. Check joiners
             if constexpr (Options.CheckJoiners) {
                 // read validate_context_joiners for details on how this works
-                switch (cp) {
+                switch (code_point) {
                     case U'\x200C': // ZERO WIDTH NON-JOINER
                         status |= validate(validate_zero_with_non_joiner(sbeg, pos, send), joiner_failure);
                         break;
                     case U'\x200D': // ZERO WIDTH JOINER
                         status |= validate(validate_zero_with_joiner(sbeg, pos), joiner_failure);
+                        break;
+                    case '.':
+                        // 5. Check if it includes any dots
+                        if constexpr (Options.CheckDotInclusions) {
+                            status |= validate(false, dot_found);
+                        }
                         break;
                     [[likely]] default:
                         break;

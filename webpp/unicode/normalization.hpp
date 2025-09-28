@@ -473,7 +473,7 @@ namespace webpp::unicode {
 
         bool has_error  = !is_code_point_valid(lhs);
         has_error      |= !is_code_point_valid(rhs);
-        has_error       |= static_cast<std::uint16_t>(lhs & details::composition::cp1_mask) != cp1_mask;
+        has_error      |= static_cast<std::uint16_t>(lhs & details::composition::cp1_mask) != cp1_mask;
         // has_error      |= lhs == 0;
         // has_error      |= rhs == 0;
         if (has_error) [[unlikely]] {
@@ -926,6 +926,35 @@ namespace webpp::unicode {
         return is_valid;
     }
 
+    namespace details {
+        /**
+         * Check if the specified input is in NFC form.
+         * Attention: this function is slow, use is_normalized<norm_form::NFC> instead.
+         */
+        template <stl::random_access_iterator Iter>
+        [[nodiscard]] static constexpr bool isNFC_until_next_starter(Iter& spos, Iter const& send) noexcept {
+            using enum quick_check_state;
+
+            Iter pos = spos;
+            switch (next_definite_starter(spos, send)) {
+                case NO: return false;
+                default: break;
+            }
+            checked::utf32_forward_iter const utf32_pos{pos, spos};
+            if (!is_composable_to(
+                  sorted_combining_marks_iterator{
+                    decompose_iterator{utf32_pos, stl::default_sentinel}
+            },
+                  stl::default_sentinel,
+                  utf32_pos,
+                  stl::default_sentinel))
+            {
+                return false;
+            }
+            return true;
+        }
+    } // namespace details
+
     /**
      * Is a normalized Unicode string
      * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
@@ -973,20 +1002,7 @@ namespace webpp::unicode {
                         return false;
                     case MAYBE: {
                         // Slow path:
-                        Iter pos = spos;
-                        switch (next_definite_starter(spos, send)) {
-                            case NO: return false;
-                            default: break;
-                        }
-                        checked::utf32_forward_iter const utf32_pos{pos, spos};
-                        if (!is_composable_to(
-                              sorted_combining_marks_iterator{
-                                decompose_iterator{utf32_pos, stl::default_sentinel}
-                        },
-                              stl::default_sentinel,
-                              utf32_pos,
-                              stl::default_sentinel))
-                        {
+                        if (!details::isNFC_until_next_starter(spos, send)) [[unlikely]] {
                             return false;
                         }
                         if (spos == send) {
