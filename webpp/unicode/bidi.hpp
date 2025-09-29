@@ -198,13 +198,18 @@ namespace webpp::unicode {
      * Generate a bidi_info which is required to check if the specified range is compliant with the Bidi Rules.
      */
     template <stl::random_access_iterator IterT>
-    [[nodiscard]] static constexpr bidi_info get_bidi_info(IterT const beg, IterT const endp) noexcept {
+    [[nodiscard]] static constexpr bidi_info get_bidi_info(IterT const& beg, IterT const& endp) noexcept {
         using enum direction;
         using enum checked::error_handling;
         using char_type = stl::iter_value_t<IterT>;
 
+        // Handle empty strings
+        if (beg == endp) [[unlikely]] {
+            return bidi_info{};
+        }
+
         auto       pos      = beg;
-        auto const first_cp = checked::next_code_point<return_zero_char>(pos, endp);
+        auto const first_cp = checked::next_code_point<return_replacement_char>(pos, endp);
         char32_t   last_cp  = first_cp;
         bidi_info  info{
            .first = direction_mask_of(first_cp),
@@ -223,7 +228,7 @@ namespace webpp::unicode {
             }
         } else {
             while (pos != endp) {
-                last_cp     = checked::next_code_point<return_zero_char>(pos, endp);
+                last_cp     = checked::next_code_point<return_replacement_char>(pos, endp);
                 info.accum |= direction_mask_of(last_cp);
             }
         }
@@ -231,7 +236,7 @@ namespace webpp::unicode {
 
         info.last_non_nsm = direction_mask_of(last_cp);
         while (info.last_non_nsm == direction_mask_of(NSM) && pos != beg) {
-            info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_zero_char>(pos, beg));
+            info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_replacement_char>(pos, beg));
         }
 
         return info;
@@ -268,7 +273,12 @@ namespace webpp::unicode {
         //     Bidi property L or EN, followed by zero or more characters with
         //     Bidi property NSM.
 
-        // we don't need to check other things, the first rule will make sure it's not valid otherwise
+        // Handle empty strings:
+        if (info.accum == 0) [[unlikely]] {
+            return true;
+        }
+
+        // We don't need to check other things, the first rule will make sure it's not valid otherwise
         bool const is_rtl = info.first != direction_mask_of(L);
 
         // 1. The first character must be L, R, or AL:
