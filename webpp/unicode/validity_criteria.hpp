@@ -319,7 +319,7 @@ namespace webpp::unicode::idna {
                     case U'\x200D': // ZERO WIDTH JOINER
                         status |= validate(validate_zero_with_joiner(sbeg, pos), joiner_failure);
                         break;
-                    case '.':
+                    case U'.':
                         // 5. Check if it includes any dots
                         if constexpr (Options.CheckDotInclusions) {
                             status |= validate(false, dot_found);

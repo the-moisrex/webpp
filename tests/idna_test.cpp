@@ -1155,7 +1155,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
       << "Could not open IdnaTestV2.txt. Make sure it's in the same directory as the test executable.";
 
     std::string line;
-    int         line_num = 0;
+    int         line_num     = 0;
+    int         failed_tests = 0;
     while (std::getline(file, line)) {
         line_num++;
         if (line.empty() || line[0] == '#') {
@@ -1214,8 +1215,13 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             error_string = "No error.";
         }
 
+        if (to_ascii_can_fail == ascii_n_res.has_value()) {
+            failed_tests++;
+        }
         EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
-          << "If we should fail, there should be no value.\n  Error: " << error_string;
+          << "If we should fail, there should be no value.\n  Error: " << error_string
+          << "\n  Failed Tests so far: " << failed_tests;
+
         if (ascii_n_res) {
             EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
         }
@@ -1270,12 +1276,17 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     error_string += ", ";
                 }
             }
+            if (!ascii_relaxed_res.has_value()) {
+                failed_tests++;
+            }
             EXPECT_TRUE(ascii_relaxed_res.has_value())
-              << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string;
+              << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string
+              << "\n  Failed Tests so far: " << failed_tests;
+
             if (ascii_relaxed_res.has_value()) {
                 EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
                   << "  Source: " << source << "\n  Relaxed options failed on line: " << line
-                  << "\n  Errors: " << error_string;
+                  << "\n  Errors: " << error_string << "\n  Failed Tests so far: " << failed_tests;
             }
             // }
         }
