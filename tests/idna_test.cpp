@@ -1449,4 +1449,49 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
               u8"xn----bm3an932a1l5d.xn--xvj");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit11) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test bidirectional character handling - these should fail with strict options due to Bidi rules
+    // From the failing test: 𐫀．ډ𑌀 and 𐫀.ډ𑌀 and xn--pw9c.xn--fjb8658k
+    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀．ډ𑌀")));
+    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀.ډ𑌀")));
+    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"xn--pw9c.xn--fjb8658k")));
+
+    // With Bidi checking disabled, these should succeed
+    static constexpr idna_options bidi_disabled_options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = false, // Bidi check disabled
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
+    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"𐫀．ډ𑌀")));
+    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"𐫀.ډ𑌀")));
+    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"xn--pw9c.xn--fjb8658k")));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Additional bidirectional character tests to match the failing examples
+    static constexpr idna_options strict_options = unicode::idna::strict_idna_options;
+
+    // These should fail due to bidirectional character rules
+    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"𐫀．ډ𑌀").error()),
+              unicode::idna::to_ascii_status::validity_bidi_failure);
+    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"𐫀.ډ𑌀").error()),
+              unicode::idna::to_ascii_status::validity_bidi_failure);
+    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"xn--pw9c.xn--fjb8658k").error()),
+              unicode::idna::to_ascii_status::validity_bidi_failure);
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
