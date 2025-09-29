@@ -185,13 +185,23 @@ namespace webpp::unicode {
         static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
             using enum direction;
 
-            info.last_non_nsm  = direction_mask_of(code_point);
-            info.accum        |= info.last_non_nsm;
-            if (info.last_non_nsm != direction_mask_of(NSM)) {
-                info.last_non_nsm = direction_mask_of(code_point);
+            auto const last  = direction_mask_of(code_point);
+            info.accum      |= last;
+            if (last != direction_mask_of(NSM)) {
+                info.last_non_nsm = last;
             }
         }
 
+        static constexpr void bidi_info_first(bidi_info& info, char32_t code_point) noexcept {
+            using enum direction;
+
+            auto const first = direction_mask_of(code_point);
+            info.first       = first;
+            info.accum       = first;
+            if (first != direction_mask_of(NSM)) {
+                info.last_non_nsm = first;
+            }
+        }
     } // namespace details
 
     /**

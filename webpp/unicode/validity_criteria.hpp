@@ -227,22 +227,31 @@ namespace webpp::unicode::idna {
             status |= validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
         }
 
-        // 6. The label must not start with a combining mark
-        if constexpr (Options.CheckCombiningMarkAtLabelStart) {
-            auto const cur_cp = checked::next_code_point_copy<return_negated>(spos, send);
-
-            // no need to check the length, it'll return 0, which is not GC, so it's fine.
-            status |= validate(!is_general_category_of(cur_cp, general_category::Mark), combining_mark_at_start);
-        }
-
         [[maybe_unused]] Iter const   sbeg     = spos;
         [[maybe_unused]] Iter         starter  = spos;
         [[maybe_unused]] Iter         prev     = spos;
         [[maybe_unused]] stl::uint8_t prev_ccc = 0;
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
-        [[maybe_unused]] bidi_info    b_info;
+        [[maybe_unused]] bidi_info    b_info{};
+        auto const                    first_cp = checked::next_code_point_copy<return_replacement_char>(spos, send);
+
+        // 9. (partially) initialize bidi information
+        if constexpr (Options.CheckBidi) {
+            if (spos != send) [[likely]] {
+                unicode::details::bidi_info_first(b_info, first_cp);
+            }
+        }
+
+        // 6. The label must not start with a combining mark
+        if constexpr (Options.CheckCombiningMarkAtLabelStart) {
+            // no need to check the length, it'll return 0, which is not GC, so it's fine.
+            status |= validate(!is_general_category_of(first_cp, general_category::Mark), combining_mark_at_start);
+        }
+
+
         for (Iter pos = spos; pos != send;) {
-            char32_t const code_point = checked::next_code_point<return_negated>(pos, send);
+            // return replacement character because an invalid code point is not NFC failure
+            char32_t const code_point = checked::next_code_point<return_replacement_char>(pos, send);
 
             // 1. Check if it's in NFC form
             if constexpr (Options.CheckNFC) {
@@ -251,10 +260,6 @@ namespace webpp::unicode::idna {
                 // This is almost the implementation of QuickCheck:
                 if (result != +quick_check_state::NO) [[likely]] {
                     for (;;) {
-                        if (static_cast<stl::int32_t>(code_point) < 0) [[unlikely]] {
-                            status |= validate(false, nfc_failure);
-                            break;
-                        }
                         auto const info    = qc_ccc_of(code_point);
                         auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
                         auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
