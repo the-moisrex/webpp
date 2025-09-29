@@ -92,7 +92,8 @@ namespace webpp::unicode::idna {
 
             // Errors:
             case V1: return {"NFC Failure"};
-            case V2: return {"Hyphen character used in the 3rd or 4th position"};
+            case V2: return {"Hyphen character used in the 3rd and 4th position"};
+            case V3: return {"Hyphen character found in the beginning or ending of the label"};
             case V4: return {"ACE prefix (xn--) found at the beginning of the label"};
             case V5: return {"Label has a dot in it."};
             case V6: return {"Label starts with a Unicode combining mark"};
@@ -194,7 +195,9 @@ namespace webpp::unicode::idna {
                     char32_t const cp3      = *pos++;
                     char32_t const cp4      = *pos;
                     char32_t const cp_back  = *(spos + length - 2);
-                    status                 |= validate(cp3 != '-' && cp4 != '-', hyphen_34);         // 3rd and 4th
+                    // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
+                    status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
+                    // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
                     status                 |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first and last
                     break;
                 }
@@ -204,8 +207,7 @@ namespace webpp::unicode::idna {
                     char32_t const     cp1 = *pos++;
                     ++pos;
                     char32_t const cp3  = *pos;
-                    status             |= validate(cp3 != '-', hyphen_34);     // 3rd
-                    status             |= validate(cp1 != '-', hyphen_around); // first
+                    status             |= validate(cp1 != '-' && cp3 != '-', hyphen_around); // first
                     break;
                 }
                 case 2: {
@@ -296,10 +298,7 @@ namespace webpp::unicode::idna {
             if constexpr (Options.CheckMappingRequired) {
                 // - For Transitional Processing (deprecated)
                 // - For Nontransitional Processing, each value must be either valid or deviation.
-                // - In addition, if UseSTD3ASCIIRules=true and the code point is an ASCII code point
-                //   (U+0000..U+007F), then it must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus
-                //   (U+002D). (Note: This excludes uppercase ASCII A-Z which are mapped in UTS #46 and disallowed
-                //   in IDNA2008.)
+                // - In addition,
                 auto const cp_status = status_of(code_point);
 
                 // https://www.unicode.org/reports/tr46/#Deviations
@@ -307,6 +306,9 @@ namespace webpp::unicode::idna {
                 status |= validate(cp_status == details::valid, requires_mapping_failure);
 
                 if constexpr (Options.UseSTD3ASCIIRules) {
+                    // if UseSTD3ASCIIRules=true and the code point is an ASCII code point (U+0000..U+007F), then it
+                    // must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus (U+002D). (Note: This excludes
+                    // uppercase ASCII A-Z which are mapped in UTS #46 and disallowed in IDNA2008.)
                     status |= validate(!is_ascii(code_point) || ASCII_STD3_RULES.contains(code_point),
                                        requires_mapping_failure);
                 }

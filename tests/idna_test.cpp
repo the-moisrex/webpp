@@ -1246,9 +1246,15 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 } else if (error_code == "V1") {
                     relaxed_options.CheckNFC  = false;
                     debug_str                += "Disable NFC, ";
+                } else if (error_code == "V4") {
+                    relaxed_options.CheckHyphens  = true; // todo: this is not correct
+                    debug_str                    += "Disable xn-- checking, ";
                 } else if (error_code == "V6") {
                     relaxed_options.CheckCombiningMarkAtLabelStart  = false;
                     debug_str                                      += "V6 failure (Combining Mark at start), ";
+                } else if (error_code == "A3") {
+                    relaxed_options.IgnoreInvalidPunycode  = true;
+                    debug_str                             += "Ignore punycode failures, ";
                 } else if (prefix == 'B') {
                     relaxed_options.CheckBidi  = false;
                     debug_str                 += "Disable Bidi, ";
@@ -1258,9 +1264,11 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 } else if (prefix == 'U') {
                     relaxed_options.UseSTD3ASCIIRules  = false;
                     debug_str                         += "Disable STD3 ASCII Rules check, ";
-                } else if (prefix == 'A') {
+                } else if (error_code.starts_with("A4") || error_code == "P4") {
                     relaxed_options.VerifyDnsLength  = false;
                     debug_str                       += "Disable DNS Length check, ";
+                } else {
+                    throw stl::runtime_error("Unknown error code: " + error_code + "; line: " + line);
                 }
             }
 
