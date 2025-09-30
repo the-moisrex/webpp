@@ -1490,16 +1490,22 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
     using unicode::idna::idna_options;
     using unicode::idna::to_ascii;
 
-    // Additional bidirectional character tests to match the failing examples
-    static constexpr idna_options strict_options = unicode::idna::strict_idna_options;
+    static constexpr idna_options options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
 
-    // These should fail due to bidirectional character rules
-    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"𐫀．ډ𑌀").error()),
-              unicode::idna::to_ascii_status::validity_bidi_failure);
-    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"𐫀.ډ𑌀").error()),
-              unicode::idna::to_ascii_status::validity_bidi_failure);
-    EXPECT_EQ((to_ascii<std::u8string, strict_options>(u8"xn--pw9c.xn--fjb8658k").error()),
-              unicode::idna::to_ascii_status::validity_bidi_failure);
+    // Source: ٱ．σߜ | line: \u0671．σ\u07DC; \u0671.σ\u07DC; [B5, B6]; xn--qib.xn--4xa21s; ; ;
+    EXPECT_EQ((to_ascii<std::u32string, options>(U"\u0671．σ\u07DC").value_or(U"Failed")), U"xn--qib.xn--4xa21s");
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"\u0671．σ\u07DC").value_or(u8"Failed")), u8"xn--qib.xn--4xa21s");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

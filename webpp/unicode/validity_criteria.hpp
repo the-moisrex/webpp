@@ -212,8 +212,8 @@ namespace webpp::unicode::idna {
                 }
                 case 2: {
                     // don't need to use utf32 iterator for 2 chars
-                    auto const cp1  = *spos++;
-                    auto const cp2  = *spos;
+                    auto const cp1  = *spos;
+                    auto const cp2  = *stl::next(spos);
                     status         |= validate(cp1 != '-' && cp2 != '-', hyphen_around); // first and last
                     break;
                 }
