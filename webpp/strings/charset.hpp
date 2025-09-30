@@ -856,15 +856,16 @@ namespace webpp {
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
+        using char_type = stl::iter_value_t<Iter>;
         T res{};
         while (stl::next(pos, 4) <= end) {
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos++)]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
         }
         for (; pos != end; ++pos) {
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos)]);
+            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U))]);
         }
         return res;
     }
@@ -872,11 +873,13 @@ namespace webpp {
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
+        using char_type = stl::iter_value_t<Iter>;
         T res{};
         // todo: this can be optimized
         for (; pos != end && !func(res); ++pos) {
             // unsigned char must be used to make sure the Unicode Code Units don't show up as negative
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(*pos)]);
+            auto const index  = static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U));
+            res              |= static_cast<T>(arr[index]);
         }
         return res;
     }
