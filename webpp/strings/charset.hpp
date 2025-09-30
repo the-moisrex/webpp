@@ -878,8 +878,13 @@ namespace webpp {
         // todo: this can be optimized
         for (; pos != end && !func(res); ++pos) {
             // unsigned char must be used to make sure the Unicode Code Units don't show up as negative
-            auto const index  = static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U));
-            res              |= static_cast<T>(arr[index]);
+            if constexpr (sizeof(char8_t) == sizeof(char_type)) {
+                auto const index  = static_cast<stl::uint8_t>(*pos);
+                res              |= static_cast<T>(arr[index]);
+            } else {
+                auto const index  = static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U));
+                res              |= static_cast<T>(arr[index]);
+            }
         }
         return res;
     }
