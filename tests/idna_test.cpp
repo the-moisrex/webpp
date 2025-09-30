@@ -1508,4 +1508,42 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
     EXPECT_EQ((to_ascii<std::u8string, options>(u8"\u0671．σ\u07DC").value_or(u8"Failed")), u8"xn--qib.xn--4xa21s");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
+    static constexpr idna_options options2{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
+    //  Line: 6023 | Source: .xn----938f | line: .xn----938f; .쮇-; [V3, X4_2]; .xn----938f; [V3, A4_2]; ;
+    EXPECT_EQ((to_ascii<std::u32string, options>(U".xn----938f").value_or(U"Failed")), U"Failed");
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8".xn----938f").value_or(u8"Failed")), u8"Failed");
+
+    EXPECT_EQ((to_ascii<std::u32string, options2>(U".xn----938f").value_or(U"Failed")), U".xn----938f");
+    EXPECT_EQ((to_ascii<std::u8string, options2>(u8".xn----938f").value_or(u8"Failed")), u8".xn----938f");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

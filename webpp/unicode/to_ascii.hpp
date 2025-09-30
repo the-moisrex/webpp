@@ -235,13 +235,13 @@ namespace webpp::unicode::idna {
      * algorithm.
      */
     struct to_ascii_info {
-        using flag_type = stl::uint_fast8_t;
+        using flag_type = stl::uint8_t;
         enum struct flag_types : flag_type {
             // ASCII and Non-ASCII:
             non_ascii   = 0b1000U,
             ascii       = 0b1'0000U,
             ascii_upper = 0b10'0000U | ascii,
-            dot         = 0b100'0000U | ascii,
+            dot         = 0b100'0000U, // Assume dot is not ASCII
 
             // xn-- (Called ACE Prefix):
             x    = 0b1U | ascii,
@@ -250,7 +250,7 @@ namespace webpp::unicode::idna {
             ace  = x | n | dash, // ACE prefix
 
             // Misc:
-            clean         = static_cast<flag_type>(~dot | ascii),
+            clean         = static_cast<flag_type>(~dot),
             length_police = (dot | non_ascii) & ~ascii,
             ascii_mask    = non_ascii | ascii | ascii_upper,
             all           = 0b1111'1111U, // all possibilities
@@ -263,7 +263,7 @@ namespace webpp::unicode::idna {
           cat{.set = "nN", .value = flag_types::n},
           cat{.set = "-", .value = flag_types::dash},
           cat{.set = NON_ASCII_CODE_UNITS, .value = flag_types::non_ascii},
-          cat{.set = ALL_ASCII<char8_t>, .value = flag_types::ascii},
+          cat{.set = ALL_ASCII<char8_t>.except(charset{u8'.'}), .value = flag_types::ascii},
           cat{.set = UPPER_ALPHA<char8_t>, .value = flag_types::ascii_upper});
 
 
@@ -455,6 +455,7 @@ namespace webpp::unicode::idna {
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
                 [[unlikely]] case 0:
+                [[unlikely]] case +dot:
                     if constexpr (Options.VerifyDnsLength) {
                         // If the label is empty, or ..., record that there was an error.
                         status |= +empty_domain_label;
