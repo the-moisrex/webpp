@@ -461,6 +461,7 @@ namespace webpp::unicode::idna {
                         status |= +empty_domain_label;
                     }
                     break;
+                [[unlikely]] case +ace | +non_ascii:
                 case +ace:
                     if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {
                         // Found xn--.
