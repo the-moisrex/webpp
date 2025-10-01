@@ -1571,4 +1571,29 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit14) {
               u8"xn--0ugba05538b.xn--o8e4044k");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit15) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    // Line: 5707 | Source: ڣ．്‍ϟ | line: \u06A3．\u0D4D\u200Dϟ; \u06A3.\u0D4D\u200Dϟ; [B1, V6];
+    // xn--5jb.xn--xya149bpvp; ; xn--5jb.xn--xya149b;
+    EXPECT_EQ((to_ascii<std::u32string, options>(U"\u06A3．\u0D4D\u200Dϟ").value_or(U"Failed")),
+              U"xn--5jb.xn--xya149bpvp");
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"\u06A3．\u0D4D\u200Dϟ").value_or(u8"Failed")),
+              u8"xn--5jb.xn--xya149bpvp");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

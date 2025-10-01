@@ -116,7 +116,7 @@ namespace webpp::unicode {
 
         /// ZERO WIDTH NON-JOINER
         template <stl::random_access_iterator Iter>
-        [[nodiscard]] static constexpr bool validate_zero_with_joiner(Iter sbeg, Iter pos) noexcept {
+        [[nodiscard]] static constexpr bool validate_zero_with_joiner(Iter const& sbeg, Iter pos) noexcept {
             using enum checked::error_handling;
             using enum joiner_type;
 
@@ -134,7 +134,7 @@ namespace webpp::unicode {
      * RFC: https://www.rfc-editor.org/rfc/rfc5892.html#appendix-A
      */
     template <stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool validate_context_joiners(Iter sbeg, Iter send) noexcept {
+    [[nodiscard]] static constexpr bool validate_context_joiners(Iter const& sbeg, Iter const& send) noexcept {
         using enum checked::error_handling;
         using enum joiner_type;
 

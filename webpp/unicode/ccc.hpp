@@ -48,8 +48,7 @@ namespace webpp::unicode {
     /**
      * Usage: is_ccc_of(cp, ccc_props::Virama);
      */
-    template <UTF CharT = char32_t>
-    [[nodiscard]] static constexpr bool is_ccc_of(CharT const code_point, stl::uint8_t const alias) noexcept {
+    [[nodiscard]] static constexpr bool is_ccc_of(char32_t const code_point, stl::uint8_t const alias) noexcept {
         return ccc_of(code_point) == alias;
     }
 

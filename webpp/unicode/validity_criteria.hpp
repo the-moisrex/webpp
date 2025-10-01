@@ -316,25 +316,27 @@ namespace webpp::unicode::idna {
 
 
 
-            // 8. Check joiners
-            if constexpr (Options.CheckJoiners) {
-                // read validate_context_joiners for details on how this works
-                switch (code_point) {
-                    case U'\x200C': // ZERO WIDTH NON-JOINER
+            // 8. and 5. Check joiners and if it includes a dot
+            // read validate_context_joiners for details on how this works
+            switch (code_point) {
+                case U'\x200C': // ZERO WIDTH NON-JOINER
+                    if constexpr (Options.CheckJoiners) {
                         status |= validate(validate_zero_with_non_joiner(sbeg, pos, send), joiner_failure);
-                        break;
-                    case U'\x200D': // ZERO WIDTH JOINER
+                    }
+                    break;
+                case U'\x200D': // ZERO WIDTH JOINER
+                    if constexpr (Options.CheckJoiners) {
                         status |= validate(validate_zero_with_joiner(sbeg, pos), joiner_failure);
-                        break;
-                    case U'.':
-                        // 5. Check if it includes any dots
-                        if constexpr (Options.CheckDotInclusions) {
-                            status |= validate(false, dot_found);
-                        }
-                        break;
-                    [[likely]] default:
-                        break;
-                }
+                    }
+                    break;
+                case U'.':
+                    // 5. Check if it includes any dots
+                    if constexpr (Options.CheckDotInclusions) {
+                        status |= validate(false, dot_found);
+                    }
+                    break;
+                [[likely]] default:
+                    break;
             }
 
 
