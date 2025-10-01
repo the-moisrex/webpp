@@ -236,6 +236,7 @@ namespace webpp::unicode::idna {
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
         [[maybe_unused]] bidi_info    b_info{};
         auto const                    first_cp = checked::next_code_point_copy<return_replacement_char>(spos, send);
+        char32_t                      last_cp  = 0;
 
         // 9. (partially) initialize bidi information
         if constexpr (Options.CheckBidi) {
@@ -249,6 +250,7 @@ namespace webpp::unicode::idna {
             // no need to check the length, it'll return 0, which is not GC, so it's fine.
             status |= validate(!is_general_category_of(first_cp, general_category::Mark), combining_mark_at_start);
         }
+
 
 
         for (Iter pos = spos; pos != send;) {
@@ -321,12 +323,12 @@ namespace webpp::unicode::idna {
             switch (code_point) {
                 case U'\x200C': // ZERO WIDTH NON-JOINER
                     if constexpr (Options.CheckJoiners) {
-                        status |= validate(validate_zero_with_non_joiner(sbeg, pos, send), joiner_failure);
+                        status |= validate(validate_zero_with_non_joiner(sbeg, pos, send, last_cp), joiner_failure);
                     }
                     break;
                 case U'\x200D': // ZERO WIDTH JOINER
                     if constexpr (Options.CheckJoiners) {
-                        status |= validate(validate_zero_with_joiner(sbeg, pos), joiner_failure);
+                        status |= validate(validate_zero_with_joiner(last_cp), joiner_failure);
                     }
                     break;
                 case U'.':
@@ -344,6 +346,8 @@ namespace webpp::unicode::idna {
             if constexpr (Options.CheckBidi) {
                 unicode::details::bidi_info_step(b_info, code_point);
             }
+
+            last_cp = code_point;
         }
 
 

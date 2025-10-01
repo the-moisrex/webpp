@@ -67,21 +67,23 @@ namespace webpp::unicode {
     namespace details {
         /// ZERO WIDTH NON-JOINER
         template <stl::random_access_iterator Iter>
-        [[nodiscard]] static constexpr bool
-        validate_zero_with_non_joiner(Iter const& sbeg, Iter const& spos, Iter const& send) noexcept {
+        [[nodiscard]] static constexpr bool validate_zero_with_non_joiner(
+          Iter const&    sbeg,
+          Iter const&    spos,
+          Iter const&    send,
+          char32_t const last_code_point) noexcept {
             using enum checked::error_handling;
             using enum joiner_type;
 
 
-            bool       is_valid  = false;
-            auto       pos       = spos;
-            auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
-
             // ccc_of(0) is not gonna be Virama, so we don't need to check for it
-            if (is_ccc_of(before_cp, ccc_props::Virama)) {
+            if (is_ccc_of(last_code_point, ccc_props::Virama)) {
                 return true;
             }
 
+            bool is_valid = false;
+            Iter pos      = spos;
+            stl::ignore   = checked::prev_code_point(pos, sbeg);
             while (pos != sbeg) {
                 auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
                 auto const joining_type = joiner_type_of(cur_cp);
@@ -115,15 +117,9 @@ namespace webpp::unicode {
         }
 
         /// ZERO WIDTH NON-JOINER
-        template <stl::random_access_iterator Iter>
-        [[nodiscard]] static constexpr bool validate_zero_with_joiner(Iter const& sbeg, Iter pos) noexcept {
-            using enum checked::error_handling;
-            using enum joiner_type;
-
-            auto const before_cp = checked::prev_code_point<return_negated>(pos, sbeg);
-
+        [[nodiscard]] static constexpr bool validate_zero_with_joiner(char32_t last_code_point) noexcept {
             // ccc_of(0) is not gonna be Virama, so we don't need to check
-            return is_ccc_of(before_cp, ccc_props::Virama);
+            return is_ccc_of(last_code_point, ccc_props::Virama);
         }
 
     } // namespace details
@@ -138,16 +134,18 @@ namespace webpp::unicode {
         using enum checked::error_handling;
         using enum joiner_type;
 
-        Iter spos = sbeg;
-        while (spos != send) {
-            switch (checked::next_code_point<return_negated>(spos, send)) {
+        Iter     spos       = sbeg;
+        char32_t code_point = 0;
+        for (char32_t last_cp = 0; spos != send; last_cp = code_point) {
+            code_point = checked::next_code_point<return_negated>(spos, send);
+            switch (code_point) {
                     // This may occur in a formally cursive script (such as Arabic) in a context where it
                     // breaks a cursive connection as required for orthographic rules, as in the Persian
                     // language, for example. It also may occur in Indic scripts in a consonant-conjunct
                     // context (immediately following a virama), to control required display of such
                     // conjuncts.
                 case U'\x200C': { // ZERO WIDTH NON-JOINER
-                    if (!details::validate_zero_with_non_joiner(sbeg, spos, send)) [[unlikely]] {
+                    if (!details::validate_zero_with_non_joiner(sbeg, spos, send, last_cp)) [[unlikely]] {
                         return false;
                     }
                     break;
@@ -156,7 +154,7 @@ namespace webpp::unicode {
                     // This may occur in Indic scripts in a consonant-conjunct context (immediately following
                     // a virama), to control the required display of such conjuncts.
                 case U'\x200D': { // ZERO WIDTH JOINER
-                    if (!details::validate_zero_with_joiner(sbeg, spos)) [[unlikely]] {
+                    if (!details::validate_zero_with_joiner(last_cp)) [[unlikely]] {
                         return false;
                     }
                     break;
