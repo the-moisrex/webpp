@@ -1546,4 +1546,29 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
     EXPECT_EQ((to_ascii<std::u8string, options2>(u8".xn----938f").value_or(u8"Failed")), u8".xn----938f");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit14) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+    };
+
+    // Line: 5759 | Source: xn--0ugba05538b.xn--o8e4044k | line: xn--0ugba05538b.xn--o8e4044k;
+    // \u200D\u200D𞵪\u200C.ᡘ𑲭; [B1, C1, C2, V7]; xn--0ugba05538b.xn--o8e4044k; ; ;
+    EXPECT_EQ((to_ascii<std::u32string, options>(U"xn--0ugba05538b.xn--o8e4044k").value_or(U"Failed")),
+              U"xn--0ugba05538b.xn--o8e4044k");
+    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--0ugba05538b.xn--o8e4044k").value_or(u8"Failed")),
+              u8"xn--0ugba05538b.xn--o8e4044k");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

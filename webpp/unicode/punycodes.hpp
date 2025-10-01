@@ -53,7 +53,7 @@ namespace webpp::unicode::idna {
         punycode_uint damp         = 700U;
         punycode_uint initial_bias = 72U;
         punycode_uint initial_n    = 0x80U;
-        punycode_uint delimiter    = 0x2DU;
+        punycode_uint delimiter    = 0x2DU; // Hyphen
     };
 
     /**
@@ -250,10 +250,11 @@ namespace webpp::unicode::idna {
             out.reserve(src_length + out.size());
         }
 
-        punycode_uint out_len{0};
-        punycode_uint n_val = Options.initial_n;
-        punycode_uint i_val = 0;
-        punycode_uint bias  = Options.initial_bias;
+        [[maybe_unused]] stl::size_t unit_length = 0; // UTF-N length: number of code units written to output
+        punycode_uint                out_len{0};      // UTF-32 length
+        punycode_uint                n_val = Options.initial_n;
+        punycode_uint                i_val = 0;
+        punycode_uint                bias  = Options.initial_bias;
 
         assert(send >= spos);
         if (spos == send) [[unlikely]] {
@@ -287,6 +288,9 @@ namespace webpp::unicode::idna {
         if constexpr (!istl::String<OIterT>) {
             stl::advance(out, -static_cast<stl::int32_t>(out_len));
         }
+
+
+        unit_length = out_len;
 
         // Main decoding loop: Start just after the last delimiter if any
         // basic code points were copied; start at the beginning otherwise.
@@ -324,31 +328,31 @@ namespace webpp::unicode::idna {
                 }
                 w_val *= Options.base - t_val;
             }
-            bias = adapt(i_val - oldi, out_len + 1, oldi == 0);
+            auto const next_len = out_len + 1;
+            bias                = adapt(i_val - oldi, next_len, oldi == 0);
 
             // "i" was supposed to wrap around from out+1 to 0,
             // incrementing n each time, so we'll fix that now:
-            if (i_val / (out_len + 1) > max_utf32 - n_val) [[unlikely]] {
+            if (i_val / next_len > max_utf32 - n_val) [[unlikely]] {
                 return overflow;
             }
-            n_val += i_val / (out_len + 1);
-            i_val %= out_len + 1;
+            n_val += i_val / next_len;
+            i_val %= next_len;
             if (n_val < 0x80) [[unlikely]] { // fail if it's ascii
                 return bad_input;
             }
             if constexpr (istl::String<OIterT>) {
                 checked::insert(out, i_val, n_val);
             } else {
-                // todo: try to optimize this
-                // todo: is using src_length okay? source and output types may not be the same!
-                checked::insert_at(out, stl::next(out, src_length), i_val, n_val);
+                unit_length += checked::insert_between_at(out, unit_length, i_val, n_val);
             }
             ++out_len;
             ++i_val;
+            assert(out_len <= src_length);
         }
         if constexpr (!istl::String<OIterT>) {
-            // stl::advance(out, -static_cast<int32_t>(ascii_len));
-            unchecked::next_char(out, out_len);
+            stl::advance(out, unit_length);
+            // unchecked::next_char(out, out_len);
         }
         return success;
     }
