@@ -1596,4 +1596,12 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit15) {
               u8"xn--5jb.xn--xya149bpvp");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit16) {
+    using unicode::idna::to_ascii;
+
+    // Line: 4334 | Source: 齙--4.Ss | line: 齙--4.Ss; 齙--4.ss; ; xn----4-p16k.ss; ; ;
+    EXPECT_EQ((to_ascii<std::u32string>(U"齙--4.Ss").value_or(U"Failed")), U"xn----4-p16k.ss");
+    EXPECT_EQ((to_ascii<std::u8string>(u8"齙--4.Ss").value_or(u8"Failed")), u8"xn----4-p16k.ss");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

@@ -194,7 +194,7 @@ namespace webpp::unicode::idna {
                     ++pos;
                     char32_t const cp3      = *pos++;
                     char32_t const cp4      = *pos;
-                    char32_t const cp_back  = *(spos + length - 2);
+                    char32_t const cp_back  = *stl::prev(send); // spos + length - 1
                     // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
                     status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
                     // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
