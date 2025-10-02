@@ -1604,4 +1604,12 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit16) {
     EXPECT_EQ((to_ascii<std::u8string>(u8"齙--4.Ss").value_or(u8"Failed")), u8"xn----4-p16k.ss");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit17) {
+    using unicode::idna::to_ascii;
+
+    //  Source: .. | line: ..; ; [X4_2]; ; [A4_2]; ;
+    EXPECT_FALSE(to_ascii<std::u32string>(U"..").has_value());
+    EXPECT_FALSE(to_ascii<std::u8string>(u8"..").has_value());
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
