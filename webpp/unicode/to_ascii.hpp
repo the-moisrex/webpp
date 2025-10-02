@@ -385,15 +385,15 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const  src_length          = iend - ipos;
-        auto        status              = +valid;
-        OIter const out_beg             = out;
-        bool const  all_ascii           = (flags & +non_ascii) == 0;
-        bool const  might_have_punycode = (flags & +ace) != 0;
-        bool const  all_lower_ascii     = (flags & +ascii_mask) == +ascii;
-        OIter       spos                = out;
-        auto        send                = stl::next(spos, src_length); // init
-        auto const  oend                = stl::next(out, static_cast<diff_type>(out_len));
+        auto const  src_length = iend - ipos;
+        auto        status     = +valid;
+        OIter const out_beg    = out;
+        bool const  all_ascii  = (flags & +non_ascii) == 0;
+        // bool const  might_have_punycode = (flags & +ace) != 0;
+        // bool const all_lower_ascii = (flags & +ascii_mask) == +ascii;
+        OIter      spos        = out;
+        auto       send        = stl::next(spos, src_length); // init
+        auto const oend        = stl::next(out, static_cast<diff_type>(out_len));
 
         // If output is in between the input, it's a disaster waiting to happen.
         if constexpr (stl::same_as<Iter, OIter>) {
@@ -404,19 +404,10 @@ namespace webpp::unicode::idna {
 
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
-        if (all_lower_ascii) {
-            stl::copy(ipos, iend, out);
-            stl::advance(out, src_length);
-            if (!might_have_punycode) [[likely]] {
-                return status;
-            }
-        } else if (all_ascii) {
+        if (all_ascii) {
             // 1.1 ASCII Map (and/or copy to output)
             ascii::lower_to(ipos, iend, out);
             stl::advance(out, src_length);
-            if (!might_have_punycode) {
-                return status;
-            }
         } else {
             // 1.1 Map (and/or copy to output)
             // Note: The Convert/Validate step below checks for disallowed characters, after mapping and
@@ -532,6 +523,8 @@ namespace webpp::unicode::idna {
                 [[maybe_unused]] auto const p_status         = punycode_encode(lbeg, lend, out);
                 auto const                  out_label_length = stl::distance(tmp_beg, out);
 
+                accum_length |= static_cast<stl::uint16_t>(out_label_length);
+
                 // We ran out of space
                 assert(out <= oend);
 
@@ -549,7 +542,6 @@ namespace webpp::unicode::idna {
                     }
                 }
             }
-
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
             // if (contains_dot) {
