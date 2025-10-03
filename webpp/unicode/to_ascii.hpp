@@ -336,12 +336,6 @@ namespace webpp::unicode::idna {
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
             // slower.
-            //
-            // if constexpr (Options.VerifyDnsLength) {
-            //     // The length of the domain name, excluding the root label and its dot, is from 1 to 253.
-            //     max_size = stl::max<stl::size_t>(max_size, 254U); // NOLINT(*-magic-numbers)
-            // }
-
             return flags;
         }
     };

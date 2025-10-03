@@ -1,28 +1,36 @@
 {
     "configurations": [
         {
-            "name": "Build-GCC",
+            "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/core/include"
-            ],
-            "defines": [],
-            "compilerPath": "/usr/bin/g++",
-            "cStandard": "${default}",
-            "cppStandard": "c++23",
-            "intelliSenseMode": "gcc-x64",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
-        },
-        {
-            "name": "Build-Clang",
-            "includePath": [
-                "${workspaceFolder}/core/include"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/webpp"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
-            "cStandard": "${default}",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "clang-x64",
-            "compileCommands": "${workspaceFolder}/build-clang/compile_commands.json"
+            "cStandard": "c23",
+            "cppStandard": "c++26",
+            "intelliSenseMode": "${default}",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": [
+                "${workspaceFolder}/build-dev-clang/compile_commands.json"
+            ]
+        },
+        {
+            "name": "Linux-gcc",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/webpp"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c23",
+            "cppStandard": "c++26",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": [
+                "${workspaceFolder}/build-dev-clang/compile_commands.json"
+            ]
         }
     ],
     "version": 4

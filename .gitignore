@@ -32,7 +32,7 @@ Testing/
 .vscode/*
 !.vscode/launch.json
 !.vscode/c_cpp_properties.json
-!.vscode/settings.json
+.vscode/settings.json
 
 # Visual Studio
 /.vs
