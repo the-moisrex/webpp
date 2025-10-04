@@ -157,7 +157,7 @@ async function reloadGithubActions() {
         }, {
             uses: 'awalsh128/cache-apt-pkgs-action@latest',
             with: {
-                packages: 'libboost-all-dev zlib1g-dev googletest g++-12 ninja-build',
+                packages: 'zlib1g-dev googletest g++-12 ninja-build',
                 version: 1.0
             }
         }

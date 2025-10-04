@@ -1,0 +1,49 @@
+services:
+  webpp-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-tests
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Debug
+      - WEBPP_DEV=ON
+    command: >
+      bash -c "
+        cd /app &&
+        echo 'Configuring project for tests...' &&
+        cmake --preset=dev-default &&
+        echo 'Building all tests...' &&
+        cmake --build --preset=default-build --target tests &&
+        echo 'Running all tests...' &&
+        cd build && ctest --output-on-failure --parallel
+      "
+    networks:
+      - webpp-tests
+
+  webpp-benchmarks:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-benchmarks
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Release
+    command: >
+      bash -c "
+        cd /app &&
+        echo 'Configuring project for benchmarks...' &&
+        cmake --preset=default-release &&
+        echo 'Building benchmarks...' &&
+        cmake --build --preset=benchmarks &&
+        echo 'Running benchmarks...' &&
+        cd build && ./webpp-benchmarks
+      "
+    networks:
+      - webpp-tests
+
+networks:
+  webpp-tests:
+    driver: bridge

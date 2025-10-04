@@ -39,7 +39,7 @@ Look at the [Core Readme file](./webpp/README.md) for the core concepts of the p
 | CGI Server                                      | Run other CGI application                                 | ❌         |
 | [FastCGI Client](./webpp/fcgi)                  | It's based on CGI                                         | 40%       |
 | FastCGI Server                                  | Pass requests to other FastCGI applications               | ❌         |
-| [HTTP 1.0 Server](./webpp/beast)                | HTTP 1.0 and HTTP 1.1 Server (using boost::Beast)         | ✅ (buggy) |
+| [HTTP 1.0 Server](./webpp/beast)                | HTTP 1.0 and HTTP 1.1 Server                              | ❌         |
 | HTTP/2 Server                                   | HTTP 2.0                                                  | ❌         |
 | HTTP/3 Server                                   | HTTP 3.0 and the QUIC protocol                            | ❌         |
 | HTTP 1.0 Client                                 | HTTP 1.0 and HTTP 1.1 client                              | ❌         |

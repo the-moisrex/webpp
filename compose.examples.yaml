@@ -1,0 +1,30 @@
+services:
+  webpp-beast-json:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-beast-json
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Debug
+    command: >
+      bash -c "
+        cd /app &&
+        if [ ! -f 'build/compile_commands.json' ]; then
+          echo 'Configuring project with default preset...' &&
+          cmake --preset=default
+        fi &&
+        echo 'Building beast-json example...' &&
+        cmake --build --preset=beast-json &&
+        echo 'Starting beast-json server...' &&
+        cd build && ./beast-json
+      "
+    networks:
+      - webpp-examples
+
+networks:
+  webpp-examples:
+    driver: bridge

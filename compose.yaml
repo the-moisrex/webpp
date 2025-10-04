@@ -1,0 +1,19 @@
+services:
+  webpp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Debug
+      - WEBPP_DEV=ON
+    networks:
+      - webpp
+
+networks:
+  webpp:
+    driver: bridge

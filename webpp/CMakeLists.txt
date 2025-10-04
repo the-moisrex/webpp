@@ -16,7 +16,6 @@ set(ALL_SOURCES_SHORT
         configs/config_concepts.hpp
         configs/constants.hpp
 
-        libs/asio.hpp
         libs/brotli.hpp
         libs/cryptopp.hpp
         libs/eve.hpp
@@ -84,22 +83,17 @@ set(ALL_SOURCES_SHORT
         std/concepts_impl.hpp
         std/coroutine.hpp
         std/enum.hpp
-        std/executor.hpp
         std/expected.hpp
         std/expected_impl.hpp
         std/filesystem.hpp
         std/format.hpp
         std/function_ref.hpp
         std/functional.hpp
-        std/internet.hpp
-        std/io_context.hpp
         std/iterator.hpp
         std/iterator_impl.hpp
         std/map.hpp
         std/memory.hpp
         std/memory_resource.hpp
-        std/net.hpp
-        std/netfwd.hpp
         std/optional.hpp
         std/ranges.hpp
         std/set.hpp
@@ -111,7 +105,6 @@ set(ALL_SOURCES_SHORT
         std/string_like.hpp
         std/string_view.hpp
         std/tag_invoke.hpp
-        std/timer.hpp
         std/tuple.hpp
         std/type_traits.hpp
         std/types.hpp
@@ -245,12 +238,6 @@ set(ALL_SOURCES_SHORT
         fcgi/fcgi_protocols.hpp
         fcgi/fcgi_request.hpp
 
-        beast/beast.hpp
-        beast/beast_body_communicator.hpp
-        beast/beast_request.hpp
-        beast/beast_server.hpp
-        beast/beast_string_body.hpp
-
         http/protocol/common_http_protocol.hpp
 
         http/app_wrapper.hpp
@@ -358,7 +345,6 @@ target_sources(${LIB_NAME} PUBLIC
         FILES ${ALL_SOURCES})
 
 target_link_libraries(${LIB_NAME}
-        PUBLIC Boost::asio
         PUBLIC fmt::fmt
         PUBLIC ${PROJECT_NAME}::json
         ${BROTLI_SHARED_LIBS}

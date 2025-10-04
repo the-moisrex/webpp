@@ -26,7 +26,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Configure CMake
         run: cmake --preset=dev-default
@@ -44,7 +44,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build All Benchmarks
         run: cmake --build --preset benchmarks
@@ -65,7 +65,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build All Tests
         run: cmake --build --preset tests
@@ -84,7 +84,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run All Tests
         run: ctest --preset tests
@@ -103,7 +103,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-async
         run: cmake --build --preset test-async
@@ -122,7 +122,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-async
         run: cmake --build --preset test-async
@@ -143,7 +143,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-bodies
         run: cmake --build --preset test-bodies
@@ -162,7 +162,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-bodies
         run: cmake --build --preset test-bodies
@@ -183,7 +183,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-cache
         run: cmake --build --preset test-cache
@@ -202,7 +202,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-cache
         run: cmake --build --preset test-cache
@@ -223,7 +223,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-charset
         run: cmake --build --preset test-charset
@@ -242,7 +242,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-charset
         run: cmake --build --preset test-charset
@@ -263,7 +263,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-concurrency
         run: cmake --build --preset test-concurrency
@@ -282,7 +282,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-concurrency
         run: cmake --build --preset test-concurrency
@@ -303,7 +303,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-const-list
         run: cmake --build --preset test-const-list
@@ -322,7 +322,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-const-list
         run: cmake --build --preset test-const-list
@@ -343,7 +343,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-context
         run: cmake --build --preset test-context
@@ -362,7 +362,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-context
         run: cmake --build --preset test-context
@@ -383,7 +383,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-convert
         run: cmake --build --preset test-convert
@@ -402,7 +402,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-convert
         run: cmake --build --preset test-convert
@@ -423,7 +423,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-cookies
         run: cmake --build --preset test-cookies
@@ -442,7 +442,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-cookies
         run: cmake --build --preset test-cookies
@@ -463,7 +463,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-crypto
         run: cmake --build --preset test-crypto
@@ -482,7 +482,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-crypto
         run: cmake --build --preset test-crypto
@@ -503,7 +503,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-domain
         run: cmake --build --preset test-domain
@@ -522,7 +522,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-domain
         run: cmake --build --preset test-domain
@@ -543,7 +543,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-dynamic-router
         run: cmake --build --preset test-dynamic-router
@@ -562,7 +562,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-dynamic-router
         run: cmake --build --preset test-dynamic-router
@@ -583,7 +583,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-endpoint
         run: cmake --build --preset test-endpoint
@@ -602,7 +602,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-endpoint
         run: cmake --build --preset test-endpoint
@@ -623,7 +623,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-extensions
         run: cmake --build --preset test-extensions
@@ -642,7 +642,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-extensions
         run: cmake --build --preset test-extensions
@@ -663,7 +663,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-find-str
         run: cmake --build --preset test-find-str
@@ -682,7 +682,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-find-str
         run: cmake --build --preset test-find-str
@@ -703,7 +703,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-functional
         run: cmake --build --preset test-functional
@@ -722,7 +722,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-functional
         run: cmake --build --preset test-functional
@@ -743,7 +743,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-header-accept-encoding
         run: cmake --build --preset test-header-accept-encoding
@@ -762,7 +762,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-header-accept-encoding
         run: cmake --build --preset test-header-accept-encoding
@@ -783,7 +783,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-headers
         run: cmake --build --preset test-headers
@@ -802,7 +802,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-headers
         run: cmake --build --preset test-headers
@@ -823,7 +823,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-http-parser
         run: cmake --build --preset test-http-parser
@@ -842,7 +842,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-http-parser
         run: cmake --build --preset test-http-parser
@@ -863,7 +863,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-idna-all
         run: cmake --build --preset test-idna-all
@@ -882,7 +882,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-idna-all
         run: cmake --build --preset test-idna-all
@@ -903,7 +903,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-idna-punycode
         run: cmake --build --preset test-idna-punycode
@@ -922,7 +922,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-idna-punycode
         run: cmake --build --preset test-idna-punycode
@@ -943,7 +943,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-idna
         run: cmake --build --preset test-idna
@@ -962,7 +962,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-idna
         run: cmake --build --preset test-idna
@@ -983,7 +983,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-io
         run: cmake --build --preset test-io
@@ -1002,7 +1002,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-io
         run: cmake --build --preset test-io
@@ -1023,7 +1023,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-ip-address
         run: cmake --build --preset test-ip-address
@@ -1042,7 +1042,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-ip-address
         run: cmake --build --preset test-ip-address
@@ -1063,7 +1063,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-ipv4
         run: cmake --build --preset test-ipv4
@@ -1082,7 +1082,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-ipv4
         run: cmake --build --preset test-ipv4
@@ -1103,7 +1103,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-ipv6
         run: cmake --build --preset test-ipv6
@@ -1122,7 +1122,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-ipv6
         run: cmake --build --preset test-ipv6
@@ -1143,7 +1143,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-istring
         run: cmake --build --preset test-istring
@@ -1162,7 +1162,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-istring
         run: cmake --build --preset test-istring
@@ -1183,7 +1183,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-json
         run: cmake --build --preset test-json
@@ -1202,7 +1202,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-json
         run: cmake --build --preset test-json
@@ -1223,7 +1223,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-logger
         run: cmake --build --preset test-logger
@@ -1242,7 +1242,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-logger
         run: cmake --build --preset test-logger
@@ -1263,7 +1263,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-memory
         run: cmake --build --preset test-memory
@@ -1282,7 +1282,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-memory
         run: cmake --build --preset test-memory
@@ -1303,7 +1303,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-meta
         run: cmake --build --preset test-meta
@@ -1322,7 +1322,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-meta
         run: cmake --build --preset test-meta
@@ -1343,7 +1343,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-request
         run: cmake --build --preset test-request
@@ -1362,7 +1362,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-request
         run: cmake --build --preset test-request
@@ -1383,7 +1383,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-response
         run: cmake --build --preset test-response
@@ -1402,7 +1402,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-response
         run: cmake --build --preset test-response
@@ -1423,7 +1423,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-router
         run: cmake --build --preset test-router
@@ -1442,7 +1442,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-router
         run: cmake --build --preset test-router
@@ -1463,7 +1463,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-routes
         run: cmake --build --preset test-routes
@@ -1482,7 +1482,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-routes
         run: cmake --build --preset test-routes
@@ -1503,7 +1503,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-server
         run: cmake --build --preset test-server
@@ -1522,7 +1522,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-server
         run: cmake --build --preset test-server
@@ -1543,7 +1543,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-sockets
         run: cmake --build --preset test-sockets
@@ -1562,7 +1562,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-sockets
         run: cmake --build --preset test-sockets
@@ -1583,7 +1583,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-sql
         run: cmake --build --preset test-sql
@@ -1602,7 +1602,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-sql
         run: cmake --build --preset test-sql
@@ -1623,7 +1623,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-stopwatch
         run: cmake --build --preset test-stopwatch
@@ -1642,7 +1642,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-stopwatch
         run: cmake --build --preset test-stopwatch
@@ -1663,7 +1663,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-string
         run: cmake --build --preset test-string
@@ -1682,7 +1682,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-string
         run: cmake --build --preset test-string
@@ -1703,7 +1703,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-structured-uri
         run: cmake --build --preset test-structured-uri
@@ -1722,7 +1722,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-structured-uri
         run: cmake --build --preset test-structured-uri
@@ -1743,7 +1743,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-time
         run: cmake --build --preset test-time
@@ -1762,7 +1762,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-time
         run: cmake --build --preset test-time
@@ -1783,7 +1783,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-tokenizer
         run: cmake --build --preset test-tokenizer
@@ -1802,7 +1802,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-tokenizer
         run: cmake --build --preset test-tokenizer
@@ -1823,7 +1823,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-traits
         run: cmake --build --preset test-traits
@@ -1842,7 +1842,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-traits
         run: cmake --build --preset test-traits
@@ -1863,7 +1863,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-tuple
         run: cmake --build --preset test-tuple
@@ -1882,7 +1882,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-tuple
         run: cmake --build --preset test-tuple
@@ -1903,7 +1903,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-type-traits
         run: cmake --build --preset test-type-traits
@@ -1922,7 +1922,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-type-traits
         run: cmake --build --preset test-type-traits
@@ -1943,7 +1943,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-unicode-algos
         run: cmake --build --preset test-unicode-algos
@@ -1962,7 +1962,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-unicode-algos
         run: cmake --build --preset test-unicode-algos
@@ -1983,7 +1983,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-unicode
         run: cmake --build --preset test-unicode
@@ -2002,7 +2002,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-unicode
         run: cmake --build --preset test-unicode
@@ -2023,7 +2023,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-uri-host-authority
         run: cmake --build --preset test-uri-host-authority
@@ -2042,52 +2042,12 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-uri-host-authority
         run: cmake --build --preset test-uri-host-authority
       - name: Run test-uri-host-authority
         run: ./build/test-uri-host-authority
-  build-test-uri-string:
-    name: Build test-uri-string
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Build test-uri-string
-        run: cmake --build --preset test-uri-string
-  run-test-uri-string:
-    name: Run test-uri-string
-    needs: build-test-uri-string
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Run test-uri-string
-        run: cmake --build --preset test-uri-string
-      - name: Run test-uri-string
-        run: ./build/test-uri-string
   build-test-uri:
     name: Build test-uri
     needs: install
@@ -2103,7 +2063,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-uri
         run: cmake --build --preset test-uri
@@ -2122,7 +2082,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-uri
         run: cmake --build --preset test-uri
@@ -2143,7 +2103,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-uri-whatwg
         run: cmake --build --preset test-uri-whatwg
@@ -2162,7 +2122,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-uri-whatwg
         run: cmake --build --preset test-uri-whatwg
@@ -2183,7 +2143,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-ustring
         run: cmake --build --preset test-ustring
@@ -2202,7 +2162,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-ustring
         run: cmake --build --preset test-ustring
@@ -2223,7 +2183,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-utils-casts
         run: cmake --build --preset test-utils-casts
@@ -2242,7 +2202,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-utils-casts
         run: cmake --build --preset test-utils-casts
@@ -2263,7 +2223,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-utils-strings
         run: cmake --build --preset test-utils-strings
@@ -2282,7 +2242,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-utils-strings
         run: cmake --build --preset test-utils-strings
@@ -2303,7 +2263,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-utils
         run: cmake --build --preset test-utils
@@ -2322,7 +2282,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-utils
         run: cmake --build --preset test-utils
@@ -2343,7 +2303,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-validations
         run: cmake --build --preset test-validations
@@ -2362,7 +2322,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-validations
         run: cmake --build --preset test-validations
@@ -2383,7 +2343,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-valves
         run: cmake --build --preset test-valves
@@ -2402,7 +2362,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-valves
         run: cmake --build --preset test-valves
@@ -2423,7 +2383,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build test-views
         run: cmake --build --preset test-views
@@ -2442,7 +2402,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Run test-views
         run: cmake --build --preset test-views
@@ -2472,7 +2432,7 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          packages: zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Build Example ${{ matrix.target }}
         run: cmake --build --preset ${{ matrix.target }}

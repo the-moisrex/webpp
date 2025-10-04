@@ -1,0 +1,38 @@
+services:
+  webpp-dev-clang:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-dev-clang
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Debug
+      - WEBPP_DEV=ON
+      - CC=clang
+      - CXX=clang++
+    networks:
+      - webpp-dev
+
+  webpp-dev-gcc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webpp-dev-gcc
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./:/app:rw
+    environment:
+      - CMAKE_BUILD_TYPE=Debug
+      - WEBPP_DEV=ON
+      - CC=gcc
+      - CXX=g++
+    networks:
+      - webpp-dev
+
+networks:
+  webpp-dev:
+    driver: bridge

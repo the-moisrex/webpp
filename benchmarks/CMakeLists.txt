@@ -46,7 +46,6 @@ set(FILE_SOURCES
 file(GLOB FILE_PCH *_pch.hpp)
 
 
-find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 
 
@@ -75,7 +74,6 @@ add_executable(${exec_name}
         ${FILE_SOURCES}
 )
 target_link_libraries(${exec_name}
-        PRIVATE Boost::boost
         PRIVATE benchmark
         PRIVATE benchmark_main
         PRIVATE Threads::Threads
