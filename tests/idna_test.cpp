@@ -1799,4 +1799,26 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit27) {
     EXPECT_TRUE((to_ascii<std::string, relaxed_options>("Xn--A-Ä.pt").has_value()));
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit28) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: xn--ASCII-.pt
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_EQ((to_ascii<std::string, relaxed_options>("xn--ASCII-.pt").value_or("Failed")), "ascii.pt");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

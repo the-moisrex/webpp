@@ -436,7 +436,7 @@ namespace webpp::unicode::idna {
             bool const contains_dot     = (flag & +dot) == +dot;
             auto const lcend            = contains_dot ? stl::prev(spos) : spos;
             OIter      lend             = lcend;
-            auto const src_label_length = lend - lbeg;
+            auto const src_label_length = stl::distance(lbeg, lend);
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
@@ -456,7 +456,7 @@ namespace webpp::unicode::idna {
                         if constexpr (Options.CheckDecodeAndValidateLabels) {
                             if ((flag & +non_ascii) != 0) [[unlikely]] {
                                 status       |= +invalid_code_point;
-                                accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
+                                accum_length |= static_cast<stl::uint16_t>(stl::distance(lbeg, lend));
                                 continue;
                             }
                         }
@@ -478,31 +478,31 @@ namespace webpp::unicode::idna {
                         assert(plend <= oend);
                         accum_length |= static_cast<stl::uint16_t>(new_label_len);
 
-                        if (pun_status == punycode_status::success) {
-                            lbeg  = plbeg;
-                            lend  = plend;
-                            flag |= +non_ascii; // make sure to re-convert it back to punycode
-                        } else if constexpr (!Options.IgnoreInvalidPunycode && Options.CheckDecodeAndValidateLabels)
-                          [[unlikely]]
-                        {
+                        if (pun_status != punycode_status::success) [[unlikely]] {
                             // restore the original label:
-                            status |= +pun_status;
-                            continue;
-                        }
-
-                        if constexpr (Options.CheckDecodeAndValidateLabels) {
-                            // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
-                            // record that there was an error.
-                            if (new_label_len == 0) [[unlikely]] {
-                                status |= +empty_punycode;
-                            }
-
-                            if (is_ascii(lbeg, lend)) [[unlikely]] {
-                                status |= +ascii_only_punycode;
-                            }
-                        } else {
+                            status |=
+                              !Options.IgnoreInvalidPunycode && Options.CheckDecodeAndValidateLabels ? +pun_status : 0;
                             break;
                         }
+
+                        // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
+                        // record that there was an error.
+                        if (new_label_len == 0) [[unlikely]] {
+                            status |= Options.CheckDecodeAndValidateLabels ? +empty_punycode : 0;
+                            break;
+                        }
+
+                        if (is_ascii(plbeg, plend)) [[unlikely]] {
+                            // prevent converting an ascii string into punycode (xn--ascii-):
+                            flag   &= static_cast<flag_type>(~+non_ascii);
+                            status |= Options.CheckDecodeAndValidateLabels ? +ascii_only_punycode : 0;
+                        } else {
+                            flag |= +non_ascii; // make sure to re-convert it back to punycode
+                        }
+
+                        // Replace the original label with the result of the conversion:
+                        lbeg = plbeg;
+                        lend = plend;
                     }
                     [[fallthrough]];
                 [[likely]] default:
@@ -517,36 +517,37 @@ namespace webpp::unicode::idna {
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
-            accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
+            accum_length |= static_cast<stl::uint16_t>(stl::distance(lbeg, lend));
 
             // 3. Encode Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
             // This may record an error.
             if ((flag & +non_ascii) != 0) {
-                out                = send;
-                auto const tmp_beg = out;
-                iter_append(out, 'x', 'n', '-', '-');
-                [[maybe_unused]] auto const p_status         = punycode_encode(lbeg, lend, out);
-                auto const                  out_label_length = stl::distance(tmp_beg, out);
+                OIter      outend = send;
+                auto const outbeg = outend;
+                iter_append(outend, 'x', 'n', '-', '-');
+                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, outend);
+                lbeg                                 = outbeg;
+                lend                                 = outend;
 
-                accum_length |= static_cast<stl::uint16_t>(out_label_length);
+                assert(outend <= oend); // We ran out of space
+                if (p_status != punycode_status::success) [[unlikely]] {
+                    status |= !Options.IgnoreInvalidPunycode ? +p_status : 0;
+                }
+            }
 
-                // We ran out of space
-                assert(out <= oend);
+            if (lbeg != lcbeg) {
+                auto const new_length  = stl::distance(lbeg, lend);
+                auto const diff_len    = new_length - src_label_length;
+                accum_length          |= static_cast<stl::uint16_t>(new_length);
 
                 // Move the new generated label to its rightful place:
-                lbeg = lcbeg;
-                stl::rotate(lcend, tmp_beg, out);
-                stl::shift_left(lbeg, out, src_label_length);
-                stl::advance(out, -src_label_length);
-                stl::advance(spos, out_label_length - src_label_length);
-                send = out;
-
-                if constexpr (!Options.IgnoreInvalidPunycode) {
-                    if (p_status != punycode_status::success) [[unlikely]] {
-                        status |= +p_status;
-                    }
-                }
+                stl::rotate(lcend, lbeg, lend);
+                OIter beg = lcbeg;
+                stl::shift_left(beg, lend, src_label_length);
+                stl::advance(spos, diff_len);
+                stl::advance(send, diff_len);
+                out = send;
             }
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
