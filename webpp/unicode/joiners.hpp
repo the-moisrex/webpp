@@ -81,39 +81,41 @@ namespace webpp::unicode {
                 return true;
             }
 
-            bool is_valid = false;
-            Iter pos      = spos;
-            stl::ignore   = checked::prev_code_point(pos, sbeg);
-            while (pos != sbeg) {
-                auto const cur_cp       = checked::prev_code_point<return_negated>(pos, sbeg);
-                auto const joining_type = joiner_type_of(cur_cp);
-                if (joining_type == transparent) {
-                    continue;
+            // If RegExpMatch((L|D)(T)*\u200C(T)*(R|D)) Then True;
+            Iter pos    = spos;
+            stl::ignore = checked::prev_code_point(pos, sbeg);
+            for (;;) {
+                if (pos == sbeg) [[unlikely]] {
+                    return false;
                 }
-                if (joining_type == left_joining || joining_type == dual_joining) {
-                    is_valid = true;
-                    break;
+                switch (joiner_type_of(checked::prev_code_point<return_negated>(pos, sbeg))) {
+                    case transparent: continue;
+                    case left_joining:
+                    case dual_joining:
+                        break;
+                    [[unlikely]] default:
+                        return false;
                 }
+                break;
             }
-
-            // let's not early bailout on the failure path:
-            // if (!is_ok) [[unlikely]] {
-            //     return false;
-            // }
 
             pos         = spos;
-            auto cur_cp = checked::next_code_point<return_negated>(pos, send);
-            for (; cur_cp != 0; cur_cp = checked::next_code_point<return_negated>(pos, send)) {
-                auto const joining_type = joiner_type_of(cur_cp);
-                if (joining_type == transparent) {
-                    continue;
+            stl::ignore = checked::next_code_point<return_negated>(pos, send);
+            for (;;) {
+                if (pos == send) [[unlikely]] {
+                    return false;
                 }
-                if (joining_type == right_joining || joining_type == dual_joining) {
-                    is_valid = true;
-                    break;
+                switch (joiner_type_of(checked::next_code_point<return_negated>(pos, send))) {
+                    case transparent: continue;
+                    case right_joining:
+                    case dual_joining:
+                        break;
+                    [[unlikely]] default:
+                        return false;
                 }
+                break;
             }
-            return is_valid;
+            [[likely]] { return true; }
         }
 
         /// ZERO WIDTH NON-JOINER

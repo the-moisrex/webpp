@@ -1821,4 +1821,12 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit28) {
     EXPECT_EQ((to_ascii<std::string, relaxed_options>("xn--ASCII-.pt").value_or("Failed")), "ascii.pt");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit29) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    //  Line: 527 | Source: ۯ‌ۯ | line: \u06EF\u200C\u06EF; ; [C1]; xn--cmba004q; ; xn--cmba; []
+    EXPECT_FALSE((to_ascii<std::u32string>(U"\u06EF\u200C\u06EF").has_value()));
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
