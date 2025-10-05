@@ -385,6 +385,7 @@ namespace webpp::unicode::idna {
         bool const  all_ascii  = (flags & +non_ascii) == 0;
         // bool const  might_have_punycode = (flags & +ace) != 0;
         // bool const all_lower_ascii = (flags & +ascii_mask) == +ascii;
+        // bool const all_labels_are_clean = all_ascii && !might_have_punycode;
         OIter      spos        = out;
         auto       send        = stl::next(spos, src_length); // init
         auto const oend        = stl::next(out, static_cast<diff_type>(out_len));
@@ -452,9 +453,12 @@ namespace webpp::unicode::idna {
                         // Found xn--.
                         // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
                         // than U+007F), record that there was an error, and continue with the next label.
-                        if ((flag & +non_ascii) != 0) [[unlikely]] {
-                            status |= +invalid_code_point;
-                            continue;
+                        if constexpr (Options.CheckDecodeAndValidateLabels) {
+                            if ((flag & +non_ascii) != 0) [[unlikely]] {
+                                status       |= +invalid_code_point;
+                                accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
+                                continue;
+                            }
                         }
 
                         // Decode Punycode
@@ -467,29 +471,37 @@ namespace webpp::unicode::idna {
                         // No need to take xn-- into account, it's already in 'src length'.
                         // todo: optimize this to use UTF-32 storage since it's completely temporary
                         auto const max_punycode_len = src_label_length * (4 - 1);
-                        lend                        = stl::next(send, max_punycode_len);
-                        lbeg                        = lend;
-                        auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, lend);
-                        auto const new_label_len    = lend - send;
-                        assert(lend <= oend);
-                        if constexpr (!Options.IgnoreInvalidPunycode) {
-                            if (pun_status != punycode_status::success) [[unlikely]] {
-                                // restore the original label:
-                                status       |= +pun_status;
-                                accum_length |= static_cast<stl::uint16_t>(lend - lbeg);
-                                continue;
+                        auto       plend            = stl::next(send, max_punycode_len);
+                        auto const plbeg            = plend;
+                        auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, plend);
+                        auto const new_label_len    = plend - plbeg;
+                        assert(plend <= oend);
+                        accum_length |= static_cast<stl::uint16_t>(new_label_len);
+
+                        if (pun_status == punycode_status::success) {
+                            lbeg  = plbeg;
+                            lend  = plend;
+                            flag |= +non_ascii; // make sure to re-convert it back to punycode
+                        } else if constexpr (!Options.IgnoreInvalidPunycode && Options.CheckDecodeAndValidateLabels)
+                          [[unlikely]]
+                        {
+                            // restore the original label:
+                            status |= +pun_status;
+                            continue;
+                        }
+
+                        if constexpr (Options.CheckDecodeAndValidateLabels) {
+                            // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
+                            // record that there was an error.
+                            if (new_label_len == 0) [[unlikely]] {
+                                status |= +empty_punycode;
                             }
-                        }
-                        flag |= +non_ascii; // make sure to re-convert it back to punycode
 
-                        // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
-                        // record that there was an error.
-                        if (new_label_len == 0) [[unlikely]] {
-                            status |= +empty_punycode;
-                        }
-
-                        if (is_ascii(lbeg, lend)) [[unlikely]] {
-                            status |= +ascii_only_punycode;
+                            if (is_ascii(lbeg, lend)) [[unlikely]] {
+                                status |= +ascii_only_punycode;
+                            }
+                        } else {
+                            break;
                         }
                     }
                     [[fallthrough]];
@@ -538,9 +550,6 @@ namespace webpp::unicode::idna {
             }
 
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
-            // if (contains_dot) {
-            //     *lcend = '.';
-            // }
         }
 
         // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names"

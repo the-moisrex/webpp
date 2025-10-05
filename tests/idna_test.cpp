@@ -1032,38 +1032,6 @@ namespace {
         return codes;
     }
 
-    /**
-     * @brief Checks if all errors in the set are ignored by the given options.
-     *
-     * This function maps the error codes from IdnaTestV2.txt to the corresponding
-     * boolean flags in the idna_options struct.
-     *
-     * @return True if every error in the set corresponds to a check that is
-     * disabled in the options struct. False otherwise.
-     */
-    // bool all_errors_ignored(std::set<std::string> const& errors, unicode::idna::idna_options const& options) {
-    //     if (errors.empty()) {
-    //         return true;
-    //     }
-
-    //     for (auto const& error : errors) {
-    //         char prefix       = error.empty() ? ' ' : error[0];
-    //         bool is_ignorable = false;
-    //         switch (prefix) {
-    //             case 'A': is_ignorable = !options.VerifyDnsLength; break;
-    //             case 'V': is_ignorable = !options.CheckHyphens && (error == "V2" || error == "V3"); break;
-    //             case 'C': is_ignorable = !options.CheckJoiners; break;
-    //             case 'B': is_ignorable = !options.CheckBidi; break;
-    //             case 'U': is_ignorable = !options.UseSTD3ASCIIRules; break;
-    //             default: is_ignorable = false; break; // Un-ignorable errors (e.g., Pn, Xn)
-    //         }
-    //         if (!is_ignorable) {
-    //             return false;
-    //         }
-    //     }
-    //     return true; // All errors were successfully ignored.
-    // }
-
     template <typename OutStrT, unsigned Flags, typename... Args>
     [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
     to_ascii_impl(Args&&... args) {
@@ -1087,7 +1055,7 @@ namespace {
     [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
       webpp::unicode::idna::idna_options options,
       Args&&... args) {
-        constexpr size_t      NumFlags = 0b1 << 10; // 10-bit mask (adjust if wider)
+        constexpr size_t      NumFlags = 0b1 << 11; // 11-bit mask (adjust if wider)
         static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
 
         auto flags = idna_flags(options);
@@ -1264,9 +1232,12 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 } else if (prefix == 'U') {
                     relaxed_options.UseSTD3ASCIIRules  = false;
                     debug_str                         += "Disable STD3 ASCII Rules check, ";
-                } else if (error_code.starts_with("A4") || error_code == "P4") {
+                } else if (error_code.starts_with("A4")) {
                     relaxed_options.VerifyDnsLength  = false;
                     debug_str                       += "Disable DNS Length check, ";
+                } else if (error_code == "P4") {
+                    relaxed_options.CheckDecodeAndValidateLabels  = false;
+                    debug_str                                    += "Disable Decode and Validate labels, ";
                 } else {
                     throw stl::runtime_error("Unknown error code: " + error_code + "; line: " + line);
                 }
@@ -1619,6 +1590,213 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit18) {
     // 1234567890ä1234567890123456789012345678901234567890123456; ; ;
     // xn--12345678901234567890123456789012345678901234567890123456-fxe; [A4_2]; ;
     EXPECT_FALSE(to_ascii<std::u32string>(U"1234567890ä1234567890123456789012345678901234567890123456").has_value());
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit19) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 302: xn--0.pt
+    // Error: The ASCII-Only label was unnecessarily encoded into punycode
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_EQ((to_ascii<std::string, relaxed_options>("xn--0.pt").value_or("Failed")), "xn--0.pt");
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit20) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 304: xn--a-Ä.pt
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-Ä.pt").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit21) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 305: xn--a-Ä.pt (with combining mark)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-A\u0308.pt").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit22) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 306: xn--a-ä.pt (with combining mark)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-a\u0308.pt").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit23) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 307: xn--a-ä.pt
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-ä.pt").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit24) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 308: XN--A-Ä.PT (uppercase)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("XN--A-Ä.PT").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit25) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 309: XN--A-Ä.PT (with combining mark)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("XN--A-A\u0308.PT").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit26) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 310: Xn--A-Ä.pt (mixed case)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("Xn--A-A\u0308.pt").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit27) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Test case from failing test: Line 311: Xn--A-Ä.pt (mixed case)
+    // Error: Invalid code point was found
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = false,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = true,
+      .CheckNFC                       = false,
+      .CheckDotInclusions             = false,
+      .CheckMappingRequired           = false,
+      .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = false,
+    };
+
+    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("Xn--A-Ä.pt").has_value()));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

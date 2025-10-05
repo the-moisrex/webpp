@@ -24,6 +24,7 @@ namespace webpp::unicode::idna {
         bool CheckDotInclusions             = true;
         bool CheckMappingRequired           = true; // rule 7 of the Validity Criteria
         bool CheckCombiningMarkAtLabelStart = true;
+        bool CheckDecodeAndValidateLabels   = true;
 
         // we don't support Transitional Processing since it's been deprecated.
         // bool Transitional_Processing = false;
@@ -40,6 +41,7 @@ namespace webpp::unicode::idna {
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
       .CheckCombiningMarkAtLabelStart = true,
+      .CheckDecodeAndValidateLabels   = true,
     };
 
     static constexpr idna_options loose_idna_options{
@@ -53,33 +55,36 @@ namespace webpp::unicode::idna {
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
       .CheckCombiningMarkAtLabelStart = false,
+      .CheckDecodeAndValidateLabels   = true,
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
         return idna_options{
-          .CheckHyphens                   = static_cast<bool>(flags >> 9U & 0b1U),
-          .CheckBidi                      = static_cast<bool>(flags >> 8U & 0b1U),
-          .CheckJoiners                   = static_cast<bool>(flags >> 7U & 0b1U),
-          .UseSTD3ASCIIRules              = static_cast<bool>(flags >> 6U & 0b1U),
-          .VerifyDnsLength                = static_cast<bool>(flags >> 5U & 0b1U),
-          .IgnoreInvalidPunycode          = static_cast<bool>(flags >> 4U & 0b1U),
-          .CheckNFC                       = static_cast<bool>(flags >> 3U & 0b1U),
-          .CheckDotInclusions             = static_cast<bool>(flags >> 2U & 0b1U),
-          .CheckMappingRequired           = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 0U & 0b1U)};
+          .CheckHyphens                   = static_cast<bool>(flags >> 10U & 0b1U),
+          .CheckBidi                      = static_cast<bool>(flags >> 9U & 0b1U),
+          .CheckJoiners                   = static_cast<bool>(flags >> 8U & 0b1U),
+          .UseSTD3ASCIIRules              = static_cast<bool>(flags >> 7U & 0b1U),
+          .VerifyDnsLength                = static_cast<bool>(flags >> 6U & 0b1U),
+          .IgnoreInvalidPunycode          = static_cast<bool>(flags >> 5U & 0b1U),
+          .CheckNFC                       = static_cast<bool>(flags >> 4U & 0b1U),
+          .CheckDotInclusions             = static_cast<bool>(flags >> 3U & 0b1U),
+          .CheckMappingRequired           = static_cast<bool>(flags >> 2U & 0b1U),
+          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U),
+          .CheckDecodeAndValidateLabels   = static_cast<bool>(flags >> 0U & 0b1U)};
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
         return static_cast<stl::uint16_t>(
-          static_cast<stl::uint16_t>(options.CheckHyphens) << 9U | static_cast<stl::uint16_t>(options.CheckBidi) << 8U |
-          static_cast<stl::uint16_t>(options.CheckJoiners) << 7U |
-          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 6U |
-          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 5U |
-          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 4U |
-          static_cast<stl::uint16_t>(options.CheckNFC) << 3U |
-          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 2U |
-          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 1U |
-          static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 0U);
+          static_cast<stl::uint16_t>(options.CheckHyphens) << 10U |
+          static_cast<stl::uint16_t>(options.CheckBidi) << 9U | static_cast<stl::uint16_t>(options.CheckJoiners) << 8U |
+          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 7U |
+          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 6U |
+          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 5U |
+          static_cast<stl::uint16_t>(options.CheckNFC) << 4U |
+          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 3U |
+          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 2U |
+          static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 1U |
+          static_cast<stl::uint16_t>(options.CheckDecodeAndValidateLabels) << 0U);
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria
