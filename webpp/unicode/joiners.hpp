@@ -66,6 +66,7 @@ namespace webpp::unicode {
 
     namespace details {
         /// ZERO WIDTH NON-JOINER
+        /// spos points to the next code point
         template <stl::random_access_iterator Iter>
         [[nodiscard]] static constexpr bool validate_zero_with_non_joiner(
           Iter const&    sbeg,
@@ -99,8 +100,7 @@ namespace webpp::unicode {
                 break;
             }
 
-            pos         = spos;
-            stl::ignore = checked::next_code_point<return_negated>(pos, send);
+            pos = spos;
             for (;;) {
                 if (pos == send) [[unlikely]] {
                     return false;
