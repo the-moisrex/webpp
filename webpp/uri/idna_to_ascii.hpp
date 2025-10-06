@@ -45,13 +45,13 @@ namespace webpp::uri::idna {
         using enum domain2ascii_status;
         using unicode::norm_form;
 
-        auto const status = unicode::idna::to_ascii(spos, send, out);
+        // auto const status = unicode::idna::to_ascii(spos, send, out);
 
         if constexpr (Options.verify_dns_length) {
             // todo
         }
 
-        return status;
+        return domain2ascii_status::valid;
     }
 
 

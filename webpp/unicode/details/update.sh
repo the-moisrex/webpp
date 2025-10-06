@@ -54,7 +54,7 @@ remove "$curdir/DerivedBidiClass.txt"
 remove "$curdir/ReadMe.txt"
 remove "$curdir/UnicodeData.txt"
 remove "$curdir/DerivedJoiningType.txt"
-remove "$curdir/IDNAMappingTable.txt"
+remove "$curdir/IdnaMappingTable.txt"
 
 echo
 

@@ -1829,4 +1829,27 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit29) {
     EXPECT_FALSE((to_ascii<std::u32string>(U"\u06EF\u200C\u06EF").has_value()));
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit30) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = false,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+      .CheckDecodeAndValidateLabels   = true,
+    };
+
+    // Line: 4408 | Source: xn--9-i0j5967eg3qz.xn--ss-l1t | line: xn--9-i0j5967eg3qz.xn--ss-l1t;
+    // 𲮚9ꍩ\u17D3.\u200Dss; [C2]; xn--9-i0j5967eg3qz.xn--ss-l1t; ; ;
+    EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"xn--9-i0j5967eg3qz.xn--ss-l1t").has_value()));
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
