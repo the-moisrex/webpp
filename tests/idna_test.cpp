@@ -1272,7 +1272,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         }
 
 
-        std::string const source                = unescape(trim(parts[0]));
+        std::string       source                = unescape(trim(parts[0]));
         std::string       to_unicode_exp        = unescape(trim(parts[1]));
         std::string const to_unicode_status     = std::string(trim(parts[2]));
         std::string       to_ascii_n_exp        = unescape(trim(parts[3]));
@@ -1289,7 +1289,15 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         if (to_ascii_n_status_str.empty()) {
             to_ascii_n_status_str = to_unicode_status;
         }
-
+        if (source == "\"\"") {
+            source = "";
+        }
+        if (to_ascii_n_status_str == "\"\"") {
+            to_ascii_n_status_str = "";
+        }
+        if (to_ascii_n_exp == "\"\"") {
+            to_ascii_n_exp = "";
+        }
         // Note: Transitional Processing (columns 5, 6) is skipped as per the idna_options struct.
 
         // --- Test toASCII with default (strict) options ---
@@ -1317,7 +1325,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         }
         EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
           << "If we should fail, there should be no value.\n  Error: " << error_string
-          << "\n  Failed Tests so far: " << failed_tests;
+          << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
 
         if (ascii_n_res) {
             EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
@@ -1389,14 +1397,13 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
             EXPECT_TRUE(ascii_relaxed_res.has_value())
               << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string
-              << "\n  Failed Tests so far: " << failed_tests;
+              << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
 
             if (ascii_relaxed_res.has_value()) {
                 EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
-                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line
-                  << "\n  Errors: " << error_string << "\n  Failed Tests so far: " << failed_tests;
+                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line << "\n  Errors: "
+                  << error_string << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
             }
-            // }
         }
     }
 }
@@ -2006,6 +2013,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit31) {
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
     using unicode::idna::idna_options;
+    using unicode::idna::strict_idna_options;
     using unicode::idna::to_ascii;
 
     static constexpr idna_options relaxed_options{
@@ -2019,11 +2027,15 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
       .CheckCombiningMarkAtLabelStart = true,
-      .CheckDecodeAndValidateLabels   = true,
+      .CheckDecodeAndValidateLabels   = false,
     };
 
     // Line: 204 | Source: "" | line: ""; ; [X4_2]; ; [A4_1, A4_2]; ;
+    EXPECT_FALSE((to_ascii<std::u32string, strict_idna_options>(U"").has_value()));
     EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"").has_value()));
+
+    // Line: 550 | Source: xn-- | line: xn--; ""; [P4, X4_2]; ; [P4, A4_1, A4_2]; ;
+    EXPECT_EQ((to_ascii<std::u32string, relaxed_options>(U"xn--").value_or(U"Failed")), U"");
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit33) {

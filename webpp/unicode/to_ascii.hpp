@@ -489,7 +489,6 @@ namespace webpp::unicode::idna {
                         // record that there was an error.
                         if (new_label_len == 0) [[unlikely]] {
                             status |= Options.CheckDecodeAndValidateLabels ? +empty_punycode : 0;
-                            break;
                         }
 
                         if (is_ascii(plbeg, plend)) [[unlikely]] {
@@ -570,11 +569,14 @@ namespace webpp::unicode::idna {
             constexpr auto max_domain           = 253U;
             auto const     cur_out_len          = out - out_beg;
             bool const     has_empty_root_label = (cur_out_len != 0 && *stl::prev(out) == '.');
+            if (accum_length == 0) [[unlikely]] {
+                status |= +empty_domain_label;
+            }
             if (accum_length > max_label) [[unlikely]] {
                 status |= +too_long_label;
             }
             // When VerifyDnsLength is true, the empty root label is disallowed.
-            if (has_empty_root_label) {
+            if (has_empty_root_label) [[unlikely]] {
                 status |= +empty_root_label;
             }
             if (cur_out_len > max_domain && (cur_out_len != max_domain + 1 || !has_empty_root_label)) [[unlikely]] {
