@@ -2,7 +2,7 @@
 
 
 #include "../webpp/concurrency/atomic_counter.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <thread>
 

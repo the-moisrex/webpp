@@ -4,7 +4,7 @@
 #include "../webpp/logs/spdlog_logger.hpp"
 #include "../webpp/logs/std_logger.hpp"
 #include "../webpp/logs/void_logger.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <cstdio>
 

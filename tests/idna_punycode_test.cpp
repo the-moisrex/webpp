@@ -1,5 +1,5 @@
 #include "../webpp/unicode/punycodes.hpp"
-#include "./common/tests_common_pch.hpp"
+#include "./common/test.hpp"
 
 TEST(PunycodeTests, BasicEncoding) {
     using webpp::unicode::idna::punycode_of;

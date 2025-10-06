@@ -5,7 +5,7 @@
 #include "../webpp/ip/ipv4.hpp"
 #include "../webpp/uri/parser/iiequals.hpp"
 #include "../webpp/uri/path_traverser.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <ranges>
 

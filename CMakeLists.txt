@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23...3.31.5)
+cmake_minimum_required(VERSION 3.23...4.1.2)
 
 project(webpp
         VERSION 1.0.0
@@ -62,7 +62,7 @@ endif ()
 
 if (WEBPP_DEV)
 
-    if (IS_CLANG AND IS_DEBUG)
+    if (IS_CLANG)
         option(FUZZ_TESTS "Enable Building of fuzz tests" ON)
     else ()
         option(FUZZ_TESTS "Enable Building of fuzz tests" OFF)
@@ -93,30 +93,21 @@ if (WEBPP_DEV)
 
 
     add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
+    enable_testing()
 
-    if (IS_DEBUG)
-        enable_testing()
-
-        if (IS_CLANG OR IS_GCC)
-            # For libstdc++ (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html)
-            set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR")
-        endif ()
+    if (IS_CLANG OR IS_GCC)
+        # For libstdc++ (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_SANITIZE_VECTOR")
     endif ()
 
-    # if (IS_CLANG AND LIBCXX)
-    #     # This is not the perfect way to do this, but ...
-    #     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
-    #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-    # endif ()
-
-    if (IS_GCC AND IS_DEBUG)
+    if (IS_GCC)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -fconcepts-diagnostics-depth=10 -ftemplate-backtrace-limit=0 -Wall -Wpedantic -Wextra -Wconversion -Wshadow")
 
         # For profiling (https://www.jetbrains.com/help/clion/cpu-profiler.html#UsingTheProfiler)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-omit-frame-pointer")
 
         # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ftime-report")
-    elseif (IS_CLANG AND IS_DEBUG)
+    elseif (IS_CLANG)
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -Wall -Wpedantic -Wextra -Wconversion -Wshadow")
 
         # For profiling (https://www.jetbrains.com/help/clion/cpu-profiler.html#UsingTheProfiler)
@@ -126,22 +117,7 @@ if (WEBPP_DEV)
     endif ()
 
 
-    if (IS_CLANG)
-        set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-    endif ()
-
-
-    option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
-
-    if (${FORCE_COLORED_OUTPUT})
-        if (IS_GCC)
-            add_compile_options(-fdiagnostics-color=always)
-        elseif (IS_CLANG)
-            add_compile_options(-fcolor-diagnostics)
-        endif ()
-    endif ()
-
-
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif () # Development
 
 include(./cmake/import.cmake)

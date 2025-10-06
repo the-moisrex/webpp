@@ -3,7 +3,7 @@
 #ifndef WEBPP_FUZZ_COMMON_PCH_HPP
 #define WEBPP_FUZZ_COMMON_PCH_HPP
 
-#include "./tests_common_pch.hpp"
+#include "./test.hpp"
 
 template <typename T>
 void fuzz_passer(T&& fuzzer, uint8_t const* data, size_t const size) {

@@ -1,6 +1,6 @@
 #include "../webpp/unicode/unicode.hpp"
 #include "../webpp/unicode/utf_reducer.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <string>
 

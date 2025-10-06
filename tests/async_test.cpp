@@ -2,7 +2,7 @@
 
 #include "../webpp/async/run_loop.hpp"
 #include "../webpp/async/task_chain.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <array>
 #include <sstream>

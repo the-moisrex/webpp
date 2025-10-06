@@ -3,7 +3,7 @@
 #include "../webpp/ip/inet_ntop.hpp"
 #include "../webpp/ip/inet_pton.hpp"
 #include "../webpp/ip/ip_validators.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 
 
@@ -119,7 +119,7 @@ TEST(IPv4Tests, CIDR) {
 
 TEST(IPv4Tests, ToString) {
     constexpr ipv4 ip_addr{192, 168, 1, 1};
-    stl::string str{"ip is: "};
+    stl::string    str{"ip is: "};
     ip_addr.to_string(str);
     EXPECT_EQ(str, "ip is: 192.168.1.1");
     EXPECT_EQ(str.size(), ascii::size("ip is: 192.168.1.1"));
@@ -204,7 +204,7 @@ TEST(IPv4Tests, PureIpv4) {
     EXPECT_TRUE(pure_ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
 
     constexpr pure_ipv4 ip_addr{192, 168, 1, 1};
-    stl::string     str{"ip is: "};
+    stl::string         str{"ip is: "};
     ip_addr.to_string(str);
     EXPECT_EQ(str, "ip is: 192.168.1.1");
     EXPECT_EQ(str.size(), ascii::size("ip is: 192.168.1.1"));

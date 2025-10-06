@@ -3,7 +3,7 @@
 
 #include "../webpp/common/meta.hpp"
 
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 TEST(MetaTest, AssumeTest) {
     // EXPECT_TRUE(std::is_void_v<decltype(webpp_assume(true))>);

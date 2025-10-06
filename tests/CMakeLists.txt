@@ -4,28 +4,12 @@ include(GoogleTest)
 include(../cmake/coverage.cmake)
 include(../cmake/common.cmake)
 
-add_library(test-commons)
-set_target_properties(test-commons PROPERTIES EXCLUDE_FROM_ALL TRUE)
-target_sources(test-commons PUBLIC common/tests_common_pch.hpp)
-# target_precompile_headers(test-commons PUBLIC common/tests_common_pch.hpp)
-if (TARGET gtest AND TARGET gtest_main)
-    target_link_libraries(test-commons
-            PUBLIC gtest         # GTest::GTest
-            PUBLIC gtest_main    # GTest::Main
-    )
-elseif (TARGET GTest::GTest AND TARGET GTest::Main)
-    target_link_libraries(test-commons
-            PUBLIC GTest::GTest
-            PUBLIC GTest::Main
-    )
-endif ()
-setup_library(test-commons)
-
-
 function(setup_fuzz name)
     target_link_libraries(${name}
             PRIVATE ${LIB_NAME}
-            PRIVATE test-commons
+            PRIVATE gtest         # GTest::GTest
+            PRIVATE gtest_main    # GTest::Main
+            # PRIVATE test-commons
                 -fsanitize=fuzzer,address
                 -coverage
     )
@@ -45,7 +29,9 @@ endfunction()
 function(setup_test name)
     target_link_libraries(${name}
             PRIVATE ${LIB_NAME}
-            PRIVATE test-commons
+            PRIVATE gtest         # GTest::GTest
+            PRIVATE gtest_main    # GTest::Main
+            # PRIVATE test-commons
     )
     add_test(
         NAME ${name}

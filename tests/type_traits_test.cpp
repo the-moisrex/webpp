@@ -5,7 +5,7 @@
 #include "../webpp/std/concepts.hpp"
 #include "../webpp/std/optional.hpp"
 #include "../webpp/std/tuple.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <cmath>
 #include <functional>

@@ -4,7 +4,7 @@
 #include "../webpp/ip/endpoint.hpp"
 
 #include "../webpp/ip/default_endpoints.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 using namespace webpp;
 
 inline constexpr stl::uint16_t test_port = 12'332;

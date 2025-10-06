@@ -7,7 +7,7 @@
 #include "../webpp/http/routes/methods.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 
 using namespace webpp;

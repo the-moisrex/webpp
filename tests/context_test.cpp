@@ -3,7 +3,7 @@
 
 #include "../webpp/http/bodies/string.hpp"
 #include "common/fake_protocol.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 using namespace webpp;
 using namespace webpp::http;

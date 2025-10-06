@@ -4,7 +4,7 @@
 #include "../webpp/http/request_view.hpp"
 #include "../webpp/traits/default_traits.hpp"
 #include "common/fake_protocol.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 
 using namespace webpp;

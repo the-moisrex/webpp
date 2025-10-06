@@ -8,7 +8,7 @@
 #include "../webpp/traits/enable_traits.hpp"
 #include "../webpp/traits/std_pmr_traits.hpp"
 #include "../webpp/traits/std_traits.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <vector>
 

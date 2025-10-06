@@ -1,7 +1,7 @@
 // Created by moisrex on 8/31/23.
 
 #include "../webpp/utils/version.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 using namespace webpp;
 

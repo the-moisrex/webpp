@@ -1,6 +1,6 @@
 #include "../webpp/strings/charset.hpp"
 #include "../webpp/strings/string_tokenizer.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 using namespace webpp;
 

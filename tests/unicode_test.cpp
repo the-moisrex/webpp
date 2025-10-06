@@ -4,7 +4,7 @@
 #include "../webpp/std/format.hpp"
 #include "../webpp/unicode/idna.hpp"
 #include "../webpp/unicode/normalization.hpp"
-#include "./common/tests_common_pch.hpp"
+#include "./common/test.hpp"
 #include "./unicode_fuzz.hpp"
 
 #include <filesystem>

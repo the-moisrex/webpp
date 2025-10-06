@@ -1,6 +1,6 @@
 // Created by moisrex on 6/4/24.
 #include "../webpp/http/status_code.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 
 using namespace webpp;

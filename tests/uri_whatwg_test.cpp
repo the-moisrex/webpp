@@ -5,7 +5,7 @@
 // make sure to update the link in the assets/whatwg/README.md file as well.
 
 #include "../webpp/uri/uri.hpp"
-#include "./common/tests_common_pch.hpp"
+#include "./common/test.hpp"
 
 using namespace webpp;
 
@@ -6419,7 +6419,8 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters1) {
 // 366 - # unknown scheme with non-URL characters (2)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters2) {
     static constexpr auto details =
-      "\n{\n    \"input\": \"http://example.com/\\ud800𐟾\\udfff﷐﷏﷯ﷰ￾￿?\\ud800𐟾\\udfff﷐﷏﷯ﷰ￾￿\",\n "
+      "\n{\n    \"input\": "
+      "\"http://example.com/\\ud800𐟾\\udfff﷐﷏﷯ﷰ￾￿?\\ud800𐟾\\udfff﷐﷏﷯ﷰ￾￿\",\n "
       "   \"base\": null,\n    \"href\": "
       "\"http://example.com/"
       "%EF%BF%BD%F0%90%9F%BE%EF%BF%BD%EF%B7%90%EF%B7%8F%EF%B7%AF%EF%B7%B0%EF%BF%BE%EF%BF%BF?%EF%BF%BD%F0%90%9F%BE%EF%"

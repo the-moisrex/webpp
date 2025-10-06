@@ -1,7 +1,7 @@
 // Created by moisrex on 9/24/20.
 #include "../webpp/http/codec/http_lexer.hpp"
 #include "../webpp/http/codec/request_parser.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 #include <ranges>
 

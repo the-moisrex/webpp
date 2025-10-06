@@ -3,7 +3,7 @@
 #include "../webpp/ip/inet_pton.hpp"
 #include "../webpp/ip/ip_validators.hpp"
 #include "../webpp/traits/std_traits.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 
 
@@ -336,7 +336,7 @@ TEST(IPv6Tests, IPv4MappedDeprecated) {
 }
 
 TEST(IPv6Tests, PrefixesTest) {
-    stl::array const              valid_prefixes{0, 1, 2, 10, 99, 100, 128};
+    stl::array const                      valid_prefixes{0, 1, 2, 10, 99, 100, 128};
     stl::array<stl::string_view, 7> const invalid_prefixes{"00", "01", "2a", "129", "-1", "001", "259"};
 
     for (auto _ip : some_valid_ipv6s) {
@@ -395,7 +395,7 @@ TEST(IPv6Tests, PureIpv6) {
     EXPECT_EQ(pure_ipv6{ip_addr.octets64()}, ip_addr);
 
     constexpr pure_ipv6 ip_addr2{"::1"};
-    stl::string     str{"ip is: "};
+    stl::string         str{"ip is: "};
     ip_addr2.to_string(str);
     EXPECT_EQ(str, "ip is: ::1");
     EXPECT_EQ(str.size(), ascii::size("ip is: ::1"));

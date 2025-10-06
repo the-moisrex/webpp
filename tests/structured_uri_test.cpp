@@ -2,7 +2,7 @@
 
 #include "../webpp/uri/domain.hpp"
 #include "../webpp/uri/uri.hpp"
-#include "common/tests_common_pch.hpp"
+#include "common/test.hpp"
 
 using namespace webpp;
 

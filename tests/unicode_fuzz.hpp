@@ -6,7 +6,7 @@
 #include "../webpp/std/format.hpp"
 #include "../webpp/strings/hex.hpp"
 #include "../webpp/unicode/normalization.hpp"
-#include "./common/tests_common_pch.hpp"
+#include "./common/test.hpp"
 
 namespace webpp::tests {
 

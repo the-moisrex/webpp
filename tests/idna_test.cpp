@@ -9,7 +9,7 @@
 #include "../webpp/unicode/validity_criteria.hpp"
 #include "../webpp/uri/uri.hpp"
 #include "./common/bidi.hpp"
-#include "./common/tests_common_pch.hpp"
+#include "./common/test.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -1849,6 +1849,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit30) {
 
     // Line: 4408 | Source: xn--9-i0j5967eg3qz.xn--ss-l1t | line: xn--9-i0j5967eg3qz.xn--ss-l1t;
     // 𲮚9ꍩ\u17D3.\u200Dss; [C2]; xn--9-i0j5967eg3qz.xn--ss-l1t; ; ;
+    EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"xn--9-i0j5967eg3qz.xn--ss-l1t").has_value()));
     EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"xn--9-i0j5967eg3qz.xn--ss-l1t").has_value()));
 }
 
