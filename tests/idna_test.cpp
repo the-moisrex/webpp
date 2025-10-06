@@ -1032,36 +1032,165 @@ namespace {
         return codes;
     }
 
-    template <typename OutStrT, unsigned Flags, typename... Args>
-    [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
-    to_ascii_impl(Args&&... args) {
-        // Your actual implementation here, dependent on Flags at compile time
-        return webpp::unicode::idna::to_ascii<OutStrT, webpp::unicode::idna::idna_flags(Flags)>(
-          std::forward<Args>(args)...);
-    }
+    // template <typename OutStrT, unsigned Flags, typename... Args>
+    // [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
+    // to_ascii_impl(Args&&... args) {
+    //     // dependent on Flags at compile time
+    //     return webpp::unicode::idna::to_ascii<OutStrT, webpp::unicode::idna::idna_flags(Flags)>(
+    //       std::forward<Args>(args)...);
+    // }
 
-    // Helper alias for function pointer type
-    template <typename OutStrT, typename... Args>
-    using to_ascii_fn = webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> (*)(Args&&...);
+    // // Helper alias for function pointer type
+    // template <typename OutStrT, typename... Args>
+    // using to_ascii_fn = webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> (*)(Args&&...);
 
-    // Build a constexpr lookup table for all possible flag values
-    template <typename OutStrT, typename... Args, size_t... Is>
-    constexpr auto make_to_ascii_table(std::index_sequence<Is...>) {
-        return std::array<to_ascii_fn<OutStrT, Args...>, sizeof...(Is)>{&to_ascii_impl<OutStrT, Is, Args...>...};
-    }
+    // // Build a constexpr lookup table for all possible flag values
+    // template <typename OutStrT, typename... Args, size_t... Is>
+    // constexpr auto make_to_ascii_table(std::index_sequence<Is...>) {
+    //     return std::array<to_ascii_fn<OutStrT, Args...>, sizeof...(Is)>{&to_ascii_impl<OutStrT, Is, Args...>...};
+    // }
+    //
+    // // Main entry point: runtime flags -> compile-time dispatch
+    // template <typename OutStrT = stl::u8string, typename... Args>
+    // [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
+    //   webpp::unicode::idna::idna_options options,
+    //   Args&&... args) {
+    //     constexpr size_t      NumFlags = 0b1 << 12; // 12-bit mask (adjust if wider)
+    //     static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
+
+    //     auto flags = idna_flags(options);
+    //     if (flags < table.size()) {
+    //         return table[flags](std::forward<Args>(args)...);
+    //     }
+    //     return webpp::stl::unexpected(webpp::stl::to_underlying(webpp::unicode::idna::to_ascii_status::unknown));
+    // }
 
     // Main entry point: runtime flags -> compile-time dispatch
     template <typename OutStrT = stl::u8string, typename... Args>
     [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
       webpp::unicode::idna::idna_options options,
       Args&&... args) {
-        constexpr size_t      NumFlags = 0b1 << 12; // 12-bit mask (adjust if wider)
-        static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
+        using webpp::unicode::idna::idna_flags;
+        using webpp::unicode::idna::to_ascii;
 
-        auto flags = idna_flags(options);
-        if (flags < table.size()) {
-            return table[flags](std::forward<Args>(args)...);
+        auto const flags = idna_flags(options);
+#define webpp_to_ascii_case(flag) \
+    case flag: return to_ascii<OutStrT, idna_flags(flag)>(std::forward<Args>(args)...)
+        switch (flags) {
+            webpp_to_ascii_case(0b0000'0000'0000);
+            webpp_to_ascii_case(0b0000'0000'0001);
+            webpp_to_ascii_case(0b0000'0000'0010);
+            webpp_to_ascii_case(0b0000'0000'0100);
+            webpp_to_ascii_case(0b0000'0000'1000);
+            webpp_to_ascii_case(0b0000'0001'0000);
+            webpp_to_ascii_case(0b0000'0010'0000);
+            webpp_to_ascii_case(0b0000'0100'0000);
+            webpp_to_ascii_case(0b0000'1000'0000);
+            webpp_to_ascii_case(0b0001'0000'0000);
+            webpp_to_ascii_case(0b0010'0000'0000);
+            webpp_to_ascii_case(0b0100'0000'0000);
+            webpp_to_ascii_case(0b1000'0000'0000);
+
+            webpp_to_ascii_case(0b0100'0010'0001); // loose
+            webpp_to_ascii_case(0b1111'1101'1111); // strict
+
+            webpp_to_ascii_case(0b1101'1101'1111); // strict|CheckBidi=false
+            webpp_to_ascii_case(0b0111'1101'1111);
+            webpp_to_ascii_case(0b1011'1101'1111);
+            webpp_to_ascii_case(0b1110'1101'1111);
+            webpp_to_ascii_case(0b1111'0101'1111);
+            webpp_to_ascii_case(0b1111'1001'1111);
+            webpp_to_ascii_case(0b1111'1100'1111);
+            webpp_to_ascii_case(0b1111'1101'0111);
+            webpp_to_ascii_case(0b1111'1101'1011);
+            webpp_to_ascii_case(0b1111'1101'1101);
+            webpp_to_ascii_case(0b1111'1101'1110);
+
+            // Special cases, run the debugger and watch for `idna_flags(relaxed_options)` or `flags`:
+            // Or comment out the throw statement, replace it with a `break`, add a debugger log
+            // `webpp_to_ascii_case({flags});`.
+            webpp_to_ascii_case(3549);
+            webpp_to_ascii_case(3293);
+            webpp_to_ascii_case(3295);
+            webpp_to_ascii_case(991);
+            webpp_to_ascii_case(3743);
+            webpp_to_ascii_case(1951);
+            webpp_to_ascii_case(1503);
+            webpp_to_ascii_case(3231);
+            webpp_to_ascii_case(4091);
+            webpp_to_ascii_case(3998);
+            webpp_to_ascii_case(2011);
+            webpp_to_ascii_case(1499);
+            webpp_to_ascii_case(3547);
+            webpp_to_ascii_case(3803);
+            webpp_to_ascii_case(1243);
+            webpp_to_ascii_case(1183);
+            webpp_to_ascii_case(1439);
+            webpp_to_ascii_case(3997);
+            webpp_to_ascii_case(3739);
+            webpp_to_ascii_case(3995);
+            webpp_to_ascii_case(3483);
+            webpp_to_ascii_case(3805);
+            webpp_to_ascii_case(3545);
+            webpp_to_ascii_case(4057);
+            webpp_to_ascii_case(3487);
+            webpp_to_ascii_case(1179);
+            webpp_to_ascii_case(1241);
+            webpp_to_ascii_case(1245);
+            webpp_to_ascii_case(1247);
+            webpp_to_ascii_case(1371);
+            webpp_to_ascii_case(1433);
+            webpp_to_ascii_case(1435);
+            webpp_to_ascii_case(1497);
+            webpp_to_ascii_case(1501);
+            webpp_to_ascii_case(1629);
+            webpp_to_ascii_case(1691);
+            webpp_to_ascii_case(1693);
+            webpp_to_ascii_case(1695);
+            webpp_to_ascii_case(1753);
+            webpp_to_ascii_case(1755);
+            webpp_to_ascii_case(1757);
+            webpp_to_ascii_case(1759);
+            webpp_to_ascii_case(1883);
+            webpp_to_ascii_case(1885);
+            webpp_to_ascii_case(1887);
+            webpp_to_ascii_case(1945);
+            webpp_to_ascii_case(1947);
+            webpp_to_ascii_case(1949);
+            webpp_to_ascii_case(2009);
+            webpp_to_ascii_case(2013);
+            webpp_to_ascii_case(3103);
+            webpp_to_ascii_case(3163);
+            webpp_to_ascii_case(3165);
+            webpp_to_ascii_case(3167);
+            webpp_to_ascii_case(3225);
+            webpp_to_ascii_case(3227);
+            webpp_to_ascii_case(3229);
+            webpp_to_ascii_case(3289);
+            webpp_to_ascii_case(3291);
+            webpp_to_ascii_case(3359);
+            webpp_to_ascii_case(3417);
+            webpp_to_ascii_case(3419);
+            webpp_to_ascii_case(3421);
+            webpp_to_ascii_case(3423);
+            webpp_to_ascii_case(3481);
+            webpp_to_ascii_case(3485);
+            webpp_to_ascii_case(3673);
+            webpp_to_ascii_case(3675);
+            webpp_to_ascii_case(3677);
+            webpp_to_ascii_case(3679);
+            webpp_to_ascii_case(3741);
+            webpp_to_ascii_case(3801);
+            webpp_to_ascii_case(3867);
+            webpp_to_ascii_case(3929);
+            webpp_to_ascii_case(3931);
+            webpp_to_ascii_case(3933);
+            webpp_to_ascii_case(3993);
+            default:
+                throw stl::runtime_error(
+                  "The specified option at run-time is not present at compile time; add it above.");
         }
+#undef webpp_to_ascii_case
         return webpp::stl::unexpected(webpp::stl::to_underlying(webpp::unicode::idna::to_ascii_status::unknown));
     }
 
@@ -1873,6 +2002,28 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit31) {
     // Line: 4725 | Source: xn--lgb32f2753cosb.xn--jkb91hlz1azih | line: xn--lgb32f2753cosb.xn--jkb91hlz1azih;
     // \u07BB𐹳\u0626𑁆.\u08A7\u06B0\u200Cᢒ; [B2, B3, V7]; xn--lgb32f2753cosb.xn--jkb91hlz1azih; ; ;
     EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"xn--lgb32f2753cosb.xn--jkb91hlz1azih").has_value()));
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = false,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+      .CheckDecodeAndValidateLabels   = true,
+    };
+
+    // Line: 204 | Source: "" | line: ""; ; [X4_2]; ; [A4_1, A4_2]; ;
+    EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"").has_value()));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
