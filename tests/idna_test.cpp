@@ -1055,7 +1055,7 @@ namespace {
     [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
       webpp::unicode::idna::idna_options options,
       Args&&... args) {
-        constexpr size_t      NumFlags = 0b1 << 11; // 11-bit mask (adjust if wider)
+        constexpr size_t      NumFlags = 0b1 << 12; // 12-bit mask (adjust if wider)
         static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
 
         auto flags = idna_flags(options);
@@ -1215,8 +1215,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.CheckNFC  = false;
                     debug_str                += "Disable NFC, ";
                 } else if (error_code == "V4") {
-                    relaxed_options.CheckHyphens  = true; // todo: this is not correct
-                    debug_str                    += "Disable xn-- checking, ";
+                    relaxed_options.CheckACE  = false;
+                    debug_str                += "Disable xn-- checking, ";
                 } else if (error_code == "V6") {
                     relaxed_options.CheckCombiningMarkAtLabelStart  = false;
                     debug_str                                      += "V6 failure (Combining Mark at start), ";

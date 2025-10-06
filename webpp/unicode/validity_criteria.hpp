@@ -222,7 +222,7 @@ namespace webpp::unicode::idna {
                     break;
                 case 0: break;
             }
-        } else {
+        } else if constexpr (Options.CheckACE) {
             Iter pos = spos;
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
