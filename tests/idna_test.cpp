@@ -2026,4 +2026,31 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
     EXPECT_TRUE((to_ascii<std::u32string, relaxed_options>(U"").has_value()));
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit33) {
+    using unicode::idna::idna_options;
+    using unicode::idna::strict_idna_options;
+    using unicode::idna::to_ascii;
+
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = false,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .IgnoreInvalidPunycode          = false,
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = true,
+      .CheckCombiningMarkAtLabelStart = true,
+      .CheckDecodeAndValidateLabels   = true,
+    };
+
+    // V3 = Starting or ending with a hyphen
+    // Line: 3285 | Source: xn----zmb.xn--rlj2573p | line: xn----zmb.xn--rlj2573p; σ-.ⴣ𦟙; [V3]; xn----zmb.xn--rlj2573p;
+    EXPECT_FALSE((to_ascii<std::u32string, strict_idna_options>(U"xn----zmb.xn--rlj2573p").has_value()));
+    EXPECT_FALSE((to_ascii<std::u8string, strict_idna_options>(u8"xn----zmb.xn--rlj2573p").has_value()));
+    EXPECT_EQ((to_ascii<std::u32string, relaxed_options>(U"xn----zmb.xn--rlj2573p").value_or(U"Failed")),
+              U"xn----zmb.xn--rlj2573p");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

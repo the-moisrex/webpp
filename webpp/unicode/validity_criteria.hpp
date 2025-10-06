@@ -194,7 +194,7 @@ namespace webpp::unicode::idna {
                     ++pos;
                     char32_t const cp3      = *pos++;
                     char32_t const cp4      = *pos;
-                    char32_t const cp_back  = *stl::prev(send); // spos + length - 1
+                    auto const     cp_back  = *stl::prev(send); // spos + length - 1
                     // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
                     status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
                     // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
@@ -202,12 +202,9 @@ namespace webpp::unicode::idna {
                     break;
                 }
                 case 3: {
-                    // we need to use utf32 iterator for 3 chars, because first 2 might be one code point
-                    utf32_forward_iter pos{spos, send};
-                    char32_t const     cp1 = *pos++;
-                    ++pos;
-                    char32_t const cp3  = *pos;
-                    status             |= validate(cp1 != '-' && cp3 != '-', hyphen_around); // first
+                    auto const cp1      = *spos;
+                    auto const cp_back  = *stl::prev(send);
+                    status             |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first
                     break;
                 }
                 case 2: {
