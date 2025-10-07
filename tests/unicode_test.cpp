@@ -166,8 +166,8 @@ TEST(Unicode, AppendAllowedBMPCodePoints) {
     for (char32_t codePoint = 0x0001; codePoint <= webpp::unicode::max_bmp; ++codePoint) {
         bool const res = append(utf16String, codePoint);
         if (webpp::unicode::is_surrogate(codePoint)) {
-            ASSERT_FALSE(res) << "0x" << std::hex << static_cast<uint16_t>(codePoint)
-                              << " != " << static_cast<uint16_t>(utf16String.back()) << std::dec;
+            auto const back = utf16String.empty() ? 0 : static_cast<uint16_t>(utf16String.back());
+            ASSERT_FALSE(res) << "0x" << std::hex << static_cast<uint16_t>(codePoint) << " != " << back << std::dec;
             continue;
         }
         EXPECT_TRUE(res);

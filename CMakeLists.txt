@@ -93,7 +93,6 @@ if (WEBPP_DEV)
 
 
     add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
-    enable_testing()
 
     if (IS_CLANG OR IS_GCC)
         # For libstdc++ (https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_macros.html)

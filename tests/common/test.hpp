@@ -1,13 +1,12 @@
 // Created by moisrex on 11/12/20.
 
-#ifndef WEBPP_TESTS_COMMON_PCH_HPP
-#define WEBPP_TESTS_COMMON_PCH_HPP
+#ifndef WEBPP_TESTS_HPP
+#define WEBPP_TESTS_HPP
 
-#if __has_include(<gtest/gtest.h>)
+#ifdef WEBPP_USE_GTEST
 #    include <gtest/gtest.h>
 #else
-#    error "We don't have access to google test library (gtest)"
+#    include "test_impl.hpp"
 #endif
 
-
-#endif // WEBPP_TESTS_COMMON_PCH_HPP
+#endif // WEBPP_TESTS_HPP

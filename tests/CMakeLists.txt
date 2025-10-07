@@ -1,5 +1,4 @@
 enable_testing()
-include(GoogleTest)
 
 include(../cmake/coverage.cmake)
 include(../cmake/common.cmake)
@@ -39,7 +38,7 @@ function(setup_test name)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
     setup_executable(${name})
     target_code_coverage("${name}")
-    gtest_discover_tests(${name})
+    # gtest_discover_tests(${name})
 
     message(STATUS "Test available: ${name}")
 endfunction()
