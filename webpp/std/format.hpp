@@ -6,7 +6,7 @@
 #include "../libs/fmt.hpp"
 #include "std.hpp"
 
-#if __cpp_lib_format
+#if defined(__cpp_lib_format)
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
 

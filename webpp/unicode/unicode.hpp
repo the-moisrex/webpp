@@ -168,7 +168,7 @@ namespace webpp::unicode {
                code_point <= static_cast<CharT>(trail_surrogate_max);
     }
 
-    [[nodiscard]] static bool is_bmp(char32_t const code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_bmp(char32_t const code_point) noexcept {
         return static_cast<stl::int32_t>(code_point) >= 0 && code_point <= 0xFFFF;
     }
 
@@ -177,7 +177,7 @@ namespace webpp::unicode {
      * characters are those with code points in the range from U+10000 to U+10FFFF, which are beyond the Basic
      * Multilingual Plane (BMP) that covers U+0000 to U+FFFF.
      */
-    [[nodiscard]] static bool is_supplementary(char32_t const codePoint) noexcept {
+    [[nodiscard]] static constexpr bool is_supplementary(char32_t const codePoint) noexcept {
         return codePoint > 0xFFFF && codePoint <= 0x10'FFFF;
     }
 

@@ -345,11 +345,13 @@ target_sources(${LIB_NAME} PUBLIC
         FILES ${ALL_SOURCES})
 
 target_link_libraries(${LIB_NAME}
-        PUBLIC fmt::fmt
         PUBLIC ${PROJECT_NAME}::json
         ${BROTLI_SHARED_LIBS}
-        INTERFACE ZLIB::ZLIB
-        )
+        INTERFACE ZLIB::ZLIB)
+if (NOT HAS_CPP_LIB_FORMAT)
+    target_link_libraries(${LIB_NAME} PUBLIC fmt::fmt)
+endif()
+
 
 # liburing
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
