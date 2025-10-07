@@ -3,8 +3,12 @@
 #ifndef WEBPP_FMT_HPP
 #define WEBPP_FMT_HPP
 
-#if __has_include(<fmt/format.h>)
-#    define WEBPP_FMT
+#include <version>
+
+#ifndef __cpp_lib_format
+#    if __has_include(<fmt/format.h>)
+#        define WEBPP_FMT
+#    endif
 #endif
 
 #endif // WEBPP_FMT_HPP
