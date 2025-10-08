@@ -7,8 +7,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <mutex>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -28,10 +30,10 @@ namespace testing {
 #if defined(__GNUG__)
         int   status = 0;
         char* dem    = abi::__cxa_demangle(name, nullptr, nullptr, &status);
-        if (dem) {
-            std::string s(dem);
-            free(dem);
-            return s;
+        if (dem != nullptr) {
+            std::string copy(dem);
+            ::free(dem);
+            return copy;
         }
         return std::string(name);
 #else
@@ -109,8 +111,8 @@ namespace testing {
         {
             // Print UTF-16/32 string as hex sequence
             oss << "[";
-            for (auto ch : value) {
-                oss << "0x" << std::hex << std::uppercase << static_cast<uint32_t>(ch) << " ";
+            for (auto ch_val : value) {
+                oss << "0x" << std::hex << std::uppercase << static_cast<uint32_t>(ch_val) << " ";
             }
             oss << "]";
         } else if constexpr (requires { oss << value; }) {
@@ -132,7 +134,7 @@ namespace testing {
         std::int64_t          duration_ns = 0;
         bool                  failed      = false;
 
-        std::string full_name() const {
+        [[nodiscard]] std::string full_name() const {
             return suite + "." + name;
         }
     };
@@ -145,27 +147,26 @@ namespace testing {
         }
 
         void RegisterTest(std::string const& suite, std::string const& name, std::function<void()> fn) {
-            std::lock_guard<std::mutex> lk(mu_);
-            tests_.push_back(
-              TestInfo{.suite = suite, .name = name, .func = std::move(fn), .duration_ns = 0, .failed = false});
+            // std::lock_guard<std::mutex> lk(mu_);
+            tests_.emplace_back(suite, name, std::move(fn), 0, false);
         }
 
         std::vector<TestInfo>& tests() {
             return tests_;
         }
 
-        void AddFailure(std::string const& suite, std::string const& test) {
-            std::lock_guard<std::mutex> lk(mu_);
-            for (auto& t : tests_) {
-                if (t.suite == suite && t.name == test) {
-                    t.failed = true;
+        void AddFailure(std::string const& suite, std::string const& inp_test) {
+            // std::lock_guard<std::mutex> lk(mu_);
+            for (auto& test : tests_) {
+                if (test.suite == suite && test.name == inp_test) {
+                    test.failed = true;
                     break;
                 }
             }
         }
 
       private:
-        std::mutex            mu_;
+        // std::mutex            mu_;
         std::vector<TestInfo> tests_;
     };
 
@@ -233,9 +234,9 @@ namespace testing {
         }
 
         template <typename T>
-        AssertionResult& operator<<(T&& v) {
+        AssertionResult& operator<<(T&& value) {
             std::ostringstream tmp;
-            tmp << std::forward<T>(v);
+            tmp << std::forward<T>(value);
             if (!ctx_.extra.empty()) {
                 ctx_.extra += " ";
             }
@@ -283,37 +284,50 @@ namespace testing {
     }
 
     inline int RunAllTests() {
-        auto& reg   = Registry::Instance();
-        auto& tests = reg.tests();
-        std::cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
+        using clock = std::chrono::high_resolution_clock;
 
-        using clock           = std::chrono::high_resolution_clock;
-        std::int64_t total_ns = 0;
-        for (auto& t : tests) {
-            std::cout << color::BLUE << "[ RUN      ] " << color::RESET << t.full_name() << "\n";
-            current_test().suite = t.suite.c_str();
-            current_test().test  = t.name.c_str();
-            auto start           = clock::now();
+        auto&                          reg      = Registry::Instance();
+        auto&                          tests    = reg.tests();
+        std::int64_t                   total_ns = 0;
+        float                          index    = 0;
+        auto const                     length   = static_cast<float>(tests.size());
+        std::chrono::time_point<clock> start{};
+        std::chrono::time_point<clock> endp{};
+
+        std::cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
+        for (auto& test : tests) {
+            auto const percentage = static_cast<int>(index / length * 100.0F);
+            auto const test_name  = test.full_name();
+            std::cout << color::BLUE << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
+                      << std::flush;
+            current_test().suite = test.suite.c_str();
+            current_test().test  = test.name.c_str();
             try {
-                t.func();
+                start = clock::now();
+                test.func();
+                endp = clock::now();
             } catch (std::exception const& ex) {
-                std::cerr << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
-                Registry::Instance().AddFailure(t.suite, t.name);
+                std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
+                reg.AddFailure(test.suite, test.name);
             } catch (...) {
-                std::cerr << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
-                Registry::Instance().AddFailure(t.suite, t.name);
+                std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
+                reg.AddFailure(test.suite, test.name);
             }
-            auto end       = clock::now();
-            auto ns        = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-            t.duration_ns  = ns;
-            total_ns      += ns;
-            if (t.failed) {
-                std::cout << color::RED << "[  FAILED  ] " << color::RESET << t.full_name() << " (" << ns << " ns, "
-                          << (ns / 1000) << " us)\n";
+            auto const dur_ns  = std::chrono::duration_cast<std::chrono::nanoseconds>(endp - start).count();
+            test.duration_ns   = dur_ns;
+            total_ns          += dur_ns;
+            if (test.failed) {
+                std::cout << "\n"
+                          << color::RED << "[  FAILED  ] " << color::RESET << test_name << color::CYAN << " (" << dur_ns
+                          << " ns, " << (dur_ns / 1000) << " us)\n"
+                          << color::RESET;
             } else {
-                std::cout << color::GREEN << "[       OK ] " << color::RESET << t.full_name() << " (" << ns << " ns, "
-                          << (ns / 1000) << " us)\n";
+                std::cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << color::CYAN << " ("
+                          << dur_ns << " ns, " << (dur_ns / 1000) << " us)\n"
+                          << color::RESET;
             }
+
+            ++index;
         }
 
         std::cout << color::CYAN << "[==========] " << tests.size() << " tests ran. Total: " << total_ns << " ns ("
@@ -324,13 +338,13 @@ namespace testing {
         std::cout << ((failures != 0) ? color::RED : color::GREEN) << "[  SUMMARY ] " << tests.size() << " tests, "
                   << assertions << " assertions, " << failures << " failures." << color::RESET << "\n";
 
-        std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
-        for (auto& t : tests) {
-            std::cout << "  " << t.full_name() << ": " << t.duration_ns << " ns, " << (t.duration_ns / 1000) << " us"
-                      << (t.failed ? " [FAILED]" : "") << "\n";
-        }
+        // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
+        // for (auto& t : tests) {
+        //     std::cout << "  " << t.full_name() << ": " << t.duration_ns << " ns, " << (t.duration_ns / 1000) << " us"
+        //               << (t.failed ? " [FAILED]" : "") << "\n";
+        // }
 
-        return failures ? 1 : 0;
+        return (failures != 0) ? 1 : 0;
     }
 
     // -------------------- Typed TEST support --------------------
