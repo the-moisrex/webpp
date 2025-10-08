@@ -29,7 +29,7 @@ namespace testing {
         bool                     failed = false;
     };
 
-    [[nodiscard]] std::string full_name(test_info const& info) {
+    [[nodiscard]] inline std::string full_name(test_info const& info) {
         return std::string{info.suite.data(), info.suite.size()} + "." +
                std::string{info.name.data(), info.name.size()};
     }
@@ -64,7 +64,7 @@ namespace testing {
         std::vector<test_info> tests_;
     };
 
-    inline void RegisterTest(std::string const& suite, std::string const& name, std::function<void()> func) {
+    inline void register_test(std::string_view suite, std::string_view name, std::function<void()> func) {
         registry::instance().register_test(suite, name, std::move(func));
     }
 
@@ -165,9 +165,9 @@ namespace testing {
     struct Test {
         virtual ~Test() = default;
 
-        virtual void SetUp() {}
+        virtual void setup() {}
 
-        virtual void TearDown() {}
+        virtual void teardown() {}
     };
 
     struct alignas(32) CurrentTestInfo {
@@ -303,22 +303,22 @@ namespace testing {
 #define WEBPP_CONCAT(a, b)           WEBPP_CONCAT_INTERNAL_(a, b)
 #define WEBPP_UNIQUE_NAME(base)      WEBPP_CONCAT(base, __COUNTER__)
 
-#define TEST(test_suite_name, test_name)                                                    \
-    struct WEBPP_CONCAT(test_suite_name, _##test_name##_Test) : public ::testing::Test {    \
-        void        TestBody();                                                             \
-        static void RunIt() {                                                               \
-            WEBPP_CONCAT(test_suite_name, _##test_name##_Test) t;                           \
-            t.SetUp();                                                                      \
-            t.TestBody();                                                                   \
-            t.TearDown();                                                                   \
-        }                                                                                   \
-    };                                                                                      \
-    static int WEBPP_UNIQUE_NAME(_reg_) =                                                   \
-      (::testing::RegisterTest(#test_suite_name,                                            \
-                               #test_name,                                                  \
-                               &WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::RunIt), \
-       0);                                                                                  \
-    void WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::TestBody()
+#define TEST(test_suite_name, test_name)                                                     \
+    struct WEBPP_CONCAT(test_suite_name, _##test_name##_Test) : public ::testing::Test {     \
+        void        body();                                                                  \
+        static void runit() {                                                                \
+            WEBPP_CONCAT(test_suite_name, _##test_name##_Test) t;                            \
+            t.setup();                                                                       \
+            t.body();                                                                        \
+            t.teardown();                                                                    \
+        }                                                                                    \
+    };                                                                                       \
+    static int WEBPP_UNIQUE_NAME(_reg_) =                                                    \
+      (::testing::register_test(#test_suite_name,                                            \
+                                #test_name,                                                  \
+                                &WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::runit), \
+       0);                                                                                   \
+    void WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::body()
 
 #define TEST_F(test_fixture, test_name) TEST(test_fixture, test_name)
 
@@ -426,7 +426,7 @@ namespace testing {
                 using TL = WEBPP_CONCAT(test_suite_name, _Types);                                           \
                 ::testing::ForEachType<TL>::apply([&]<typename T>() {                                       \
                     std::string composed = std::string(#test_name) + "<" + ::testing::type_name<T>() + ">"; \
-                    ::testing::RegisterTest(#test_suite_name, composed.c_str(), []() {                      \
+                    ::testing::register_test(#test_suite_name, composed.c_str(), []() {                     \
                         WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)<T>();                       \
                     });                                                                                     \
                 });                                                                                         \
