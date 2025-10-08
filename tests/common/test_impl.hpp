@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -127,31 +128,30 @@ namespace testing {
     }
 
     // -------------------- Test Registry --------------------
-    struct TestInfo {
-        std::string           suite;
-        std::string           name;
-        std::function<void()> func;
-        std::int64_t          duration_ns = 0;
-        bool                  failed      = false;
+    struct test_info {
+        std::string              suite;
+        std::string              name;
+        std::function<void()>    func;
+        std::chrono::nanoseconds duration_ns{};
+        bool                     failed = false;
 
         [[nodiscard]] std::string full_name() const {
             return suite + "." + name;
         }
     };
 
-    class Registry {
-      public:
-        static Registry& Instance() {
-            static Registry inst;
+    struct registry {
+        static registry& Instance() {
+            static registry inst;
             return inst;
         }
 
         void RegisterTest(std::string const& suite, std::string const& name, std::function<void()> fn) {
             // std::lock_guard<std::mutex> lk(mu_);
-            tests_.emplace_back(suite, name, std::move(fn), 0, false);
+            tests_.emplace_back(suite, name, std::move(fn), std::chrono::nanoseconds{}, false);
         }
 
-        std::vector<TestInfo>& tests() {
+        std::vector<test_info>& tests() {
             return tests_;
         }
 
@@ -167,11 +167,11 @@ namespace testing {
 
       private:
         // std::mutex            mu_;
-        std::vector<TestInfo> tests_;
+        std::vector<test_info> tests_;
     };
 
     inline void RegisterTest(char const* suite, char const* name, std::function<void()> fn) {
-        Registry::Instance().RegisterTest(suite, name, std::move(fn));
+        registry::Instance().RegisterTest(suite, name, std::move(fn));
     }
 
     // -------------------- Assertion infra --------------------
@@ -247,7 +247,7 @@ namespace testing {
         ~AssertionResult() {
             if (!ctx_.success) {
                 std::cerr << ctx_.message() << "\n";
-                Registry::Instance().AddFailure(suite_, test_);
+                registry::Instance().AddFailure(suite_, test_);
                 ++internal::global_failures;
             }
             ++internal::global_assertions;
@@ -283,14 +283,52 @@ namespace testing {
         return info;
     }
 
+    inline std::string format_duration(std::chrono::nanoseconds dur) {
+        using namespace std::chrono;
+
+        // Candidate units in increasing order
+        struct Unit {
+            char const* name;
+            double      factor; // how many nanoseconds per unit
+            char const* color;
+        };
+
+        static constexpr std::array<Unit, 6> units{
+          Unit{ .name = "ns",                      .factor = 1.0,  .color = color::GREEN},
+          { .name = "µs",                  .factor = 1'000.0,   .color = color::CYAN},
+          { .name = "ms",              .factor = 1'000'000.0, .color = color::YELLOW},
+          {  .name = "s",          .factor = 1'000'000'000.0,    .color = color::RED},
+          {.name = "min",   .factor = 60.0 * 1'000'000'000.0,    .color = color::RED},
+          {  .name = "h", .factor = 3600.0 * 1'000'000'000.0,    .color = color::RED},
+        };
+
+        auto value = static_cast<double>(dur.count());
+        auto unit  = units.begin();
+
+        for (auto& cur_unit : units) {
+            double const val = value / cur_unit.factor;
+            if (std::fabs(val) < 1.0) {
+                break; // too small to switch to this unit
+            }
+            value = val;
+            unit  = &cur_unit;
+        }
+
+        std::ostringstream oss;
+        oss << unit->color << "(" << std::fixed << std::setprecision(value < 10 ? 3 : (value < 100.0 ? 2 : 1)) << value
+            << " " << unit->name << ")" << color::RESET;
+        return oss.str();
+    }
+
     inline int RunAllTests() {
         using clock = std::chrono::high_resolution_clock;
+        using std::chrono::nanoseconds;
 
-        auto&                          reg      = Registry::Instance();
-        auto&                          tests    = reg.tests();
-        std::int64_t                   total_ns = 0;
-        float                          index    = 0;
-        auto const                     length   = static_cast<float>(tests.size());
+        auto&                          reg   = registry::Instance();
+        auto&                          tests = reg.tests();
+        nanoseconds                    total_ns{};
+        float                          index  = 0;
+        auto const                     length = static_cast<float>(tests.size());
         std::chrono::time_point<clock> start{};
         std::chrono::time_point<clock> endp{};
 
@@ -298,7 +336,7 @@ namespace testing {
         for (auto& test : tests) {
             auto const percentage = static_cast<int>(index / length * 100.0F);
             auto const test_name  = test.full_name();
-            std::cout << color::BLUE << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
+            std::cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
                       << std::flush;
             current_test().suite = test.suite.c_str();
             current_test().test  = test.name.c_str();
@@ -313,30 +351,27 @@ namespace testing {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
                 reg.AddFailure(test.suite, test.name);
             }
-            auto const dur_ns  = std::chrono::duration_cast<std::chrono::nanoseconds>(endp - start).count();
-            test.duration_ns   = dur_ns;
-            total_ns          += dur_ns;
+            auto const dur    = std::chrono::duration_cast<nanoseconds>(endp - start);
+            test.duration_ns  = dur;
+            total_ns         += dur;
             if (test.failed) {
                 std::cout << "\n"
-                          << color::RED << "[  FAILED  ] " << color::RESET << test_name << color::CYAN << " (" << dur_ns
-                          << " ns, " << (dur_ns / 1000) << " us)\n"
-                          << color::RESET;
+                          << color::RED << "[  FAILED  ] " << color::RESET << test_name << " " << format_duration(dur)
+                          << "\n";
             } else {
-                std::cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << color::CYAN << " ("
-                          << dur_ns << " ns, " << (dur_ns / 1000) << " us)\n"
-                          << color::RESET;
+                std::cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << " "
+                          << format_duration(dur) << "\n";
             }
-
+            std::cout << std::flush;
             ++index;
         }
 
-        std::cout << color::CYAN << "[==========] " << tests.size() << " tests ran. Total: " << total_ns << " ns ("
-                  << (total_ns / 1000) << " us)." << color::RESET << "\n";
-
-        int failures   = static_cast<int>(internal::global_failures.load());
-        int assertions = static_cast<int>(internal::global_assertions.load());
-        std::cout << ((failures != 0) ? color::RED : color::GREEN) << "[  SUMMARY ] " << tests.size() << " tests, "
-                  << assertions << " assertions, " << failures << " failures." << color::RESET << "\n";
+        int        failures   = static_cast<int>(internal::global_failures.load());
+        int        assertions = static_cast<int>(internal::global_assertions.load());
+        auto const color      = failures != 0 ? color::RED : color::GREEN;
+        std::cout << color::CYAN << "[ ======== ] Run Time: " << format_duration(total_ns) << color::RESET << "\n";
+        std::cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
+                  << " failures." << color::RESET << "\n";
 
         // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
         // for (auto& t : tests) {
