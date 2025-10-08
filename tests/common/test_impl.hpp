@@ -1,14 +1,12 @@
 #ifndef WEBPP_TEST_IMPL_HPP
 #define WEBPP_TEST_IMPL_HPP
 
+#include "./test_utilities.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <cmath>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <functional>
-#include <iomanip>
 #include <iostream>
 #include <mutex>
 #include <ostream>
@@ -17,145 +15,41 @@
 #include <string_view>
 #include <tuple>
 #include <type_traits>
-#include <typeinfo>
+#include <utility>
 #include <vector>
-
-#if defined(__GNUG__)
-#    include <cxxabi.h>
-#endif
 
 namespace testing {
 
-    // -------------------- Utilities --------------------
-    inline std::string demangle(char const* name) {
-#if defined(__GNUG__)
-        int   status = 0;
-        char* dem    = abi::__cxa_demangle(name, nullptr, nullptr, &status);
-        if (dem != nullptr) {
-            std::string copy(dem);
-            ::free(dem);
-            return copy;
-        }
-        return std::string(name);
-#else
-        return std::string(name);
-#endif
-    }
-
-    template <typename T>
-    inline std::string TypeName() {
-        return demangle(typeid(T).name());
-    }
-
-    // ANSI colors
-    namespace color {
-        constexpr char const* RESET  = "\033[0m";
-        constexpr char const* RED    = "\033[31m";
-        constexpr char const* GREEN  = "\033[32m";
-        constexpr char const* YELLOW = "\033[33m";
-        constexpr char const* BLUE   = "\033[34m";
-        constexpr char const* CYAN   = "\033[36m";
-    } // namespace color
-
-    // -------------------- Stream Helper --------------------
-    template <typename T>
-    std::string stream_to_string(T const& value) {
-        std::ostringstream oss;
-        oss << std::boolalpha;
-
-        // Detect types with .data() and .size()
-        if constexpr (requires {
-                          value.data();
-                          value.size();
-                      })
-        {
-            using CharT = std::remove_cv_t<std::remove_pointer_t<decltype(value.data())>>;
-
-            if constexpr (std::is_same_v<CharT, char>) {
-                // Regular string-like data
-                oss << std::string(value.data(), value.size());
-            } else if constexpr (std::is_same_v<CharT, char8_t>) {
-                // UTF-8
-                oss << std::string(reinterpret_cast<char const*>(value.data()), value.size());
-            } else if constexpr (std::is_same_v<CharT, char16_t> || std::is_same_v<CharT, char32_t>) {
-                // UTF-16 / UTF-32: print as hex code units
-                oss << "[";
-                for (size_t i = 0; i < value.size(); ++i) {
-                    if (i) {
-                        oss << " ";
-                    }
-                    oss << "0x" << std::hex << std::uppercase << static_cast<uint32_t>(value[i]) << std::dec;
-                }
-                oss << "]";
-            } else {
-                // Generic container of streamable elements
-                oss << "[";
-                for (size_t i = 0; i < value.size(); ++i) {
-                    if (i) {
-                        oss << ", ";
-                    }
-                    if constexpr (requires { oss << value[i]; }) {
-                        oss << value[i];
-                    } else {
-                        oss << "?";
-                    }
-                }
-                oss << "]";
-            }
-
-        } else if constexpr (std::is_same_v<T, char8_t const*> || std::is_same_v<T, char8_t*>) {
-            oss << reinterpret_cast<char const*>(value);
-        } else if constexpr (std::is_same_v<T, std::u8string> || std::is_same_v<T, std::u8string_view>) {
-            oss << std::string(reinterpret_cast<char const*>(value.data()), value.size());
-        } else if constexpr (std::is_same_v<T, std::u16string> || std::is_same_v<T, std::u16string_view> ||
-                             std::is_same_v<T, std::u32string> || std::is_same_v<T, std::u32string_view>)
-        {
-            // Print UTF-16/32 string as hex sequence
-            oss << "[";
-            for (auto ch_val : value) {
-                oss << "0x" << std::hex << std::uppercase << static_cast<uint32_t>(ch_val) << " ";
-            }
-            oss << "]";
-        } else if constexpr (requires { oss << value; }) {
-            // Fallback: streamable type
-            oss << value;
-        } else {
-            // Final fallback: unprintable type
-            oss << "<unprintable type: " << typeid(T).name() << ">";
-        }
-
-        return oss.str();
-    }
-
     // -------------------- Test Registry --------------------
-    struct test_info {
-        std::string              suite;
-        std::string              name;
+    struct alignas(128) test_info {
+        std::string_view         suite;
+        std::string_view         name;
         std::function<void()>    func;
         std::chrono::nanoseconds duration_ns{};
         bool                     failed = false;
-
-        [[nodiscard]] std::string full_name() const {
-            return suite + "." + name;
-        }
     };
 
-    struct registry {
-        static registry& Instance() {
+    [[nodiscard]] std::string full_name(test_info const& info) {
+        return std::string{info.suite.data(), info.suite.size()} + "." +
+               std::string{info.name.data(), info.name.size()};
+    }
+
+    struct alignas(32) registry {
+        static registry& instance() {
             static registry inst;
             return inst;
         }
 
-        void RegisterTest(std::string const& suite, std::string const& name, std::function<void()> fn) {
+        void register_test(std::string_view suite, std::string_view name, std::function<void()> fn) {
             // std::lock_guard<std::mutex> lk(mu_);
             tests_.emplace_back(suite, name, std::move(fn), std::chrono::nanoseconds{}, false);
         }
 
-        std::vector<test_info>& tests() {
+        [[nodiscard]] std::vector<test_info>& tests() noexcept {
             return tests_;
         }
 
-        void AddFailure(std::string const& suite, std::string const& inp_test) {
+        void add_failure(std::string_view suite, std::string_view inp_test) {
             // std::lock_guard<std::mutex> lk(mu_);
             for (auto& test : tests_) {
                 if (test.suite == suite && test.name == inp_test) {
@@ -170,58 +64,62 @@ namespace testing {
         std::vector<test_info> tests_;
     };
 
-    inline void RegisterTest(char const* suite, char const* name, std::function<void()> fn) {
-        registry::Instance().RegisterTest(suite, name, std::move(fn));
+    inline void RegisterTest(std::string const& suite, std::string const& name, std::function<void()> func) {
+        registry::instance().register_test(suite, name, std::move(func));
     }
 
     // -------------------- Assertion infra --------------------
-    struct AssertionContext {
-        char const* file = "";
-        int         line = 0;
-        std::string expr1;
-        std::string expr2;
-        std::string macro_name;
-        std::string extra;
-        bool        success = true;
-
-        [[nodiscard]] std::string message() const {
-            std::ostringstream ss;
-            if (!success) {
-                ss << color::RED << macro_name << " failed: " << color::RESET;
-                ss << expr1;
-                if (!expr2.empty()) {
-                    ss << " vs " << expr2;
-                }
-                if (!extra.empty()) {
-                    ss << "\n  " << extra;
-                }
-                ss << "\n  (" << file << ":" << line << ")";
-            } else {
-                ss << color::GREEN << macro_name << " OK: " << color::RESET << expr1;
-                if (!expr2.empty()) {
-                    ss << " vs " << expr2;
-                }
-            }
-            return ss.str();
-        }
+    struct alignas(128) assert_context {
+        std::string_view file;
+        int              line = 0;
+        std::string      expr1;
+        std::string      expr2;
+        std::string_view macro_name;
+        std::string      extra;
+        bool             success = true;
     };
+
+    [[nodiscard]] std::string message(assert_context const& ctx) {
+        std::ostringstream oss;
+        if (!ctx.success) {
+            oss << color::RED << ctx.macro_name << " failed: " << color::RESET;
+            oss << ctx.expr1;
+            if (!ctx.expr2.empty()) {
+                oss << " vs " << ctx.expr2;
+            }
+            if (!ctx.extra.empty()) {
+                oss << "\n  " << ctx.extra;
+            }
+            oss << "\n  (" << ctx.file << ":" << ctx.line << ")";
+        } else {
+            oss << color::GREEN << ctx.macro_name << " OK: " << color::RESET << ctx.expr1;
+            if (!ctx.expr2.empty()) {
+                oss << " vs " << ctx.expr2;
+            }
+        }
+        return oss.str();
+    }
 
     namespace internal {
         inline std::atomic<int> global_assertions{0};
         inline std::atomic<int> global_failures{0};
     } // namespace internal
 
-    class AssertionResult {
-      public:
-        AssertionResult(
-          bool        success,
-          char const* file,
-          int         line,
-          std::string expr1,
-          std::string expr2,
-          std::string macro_name,
-          char const* suite,
-          char const* test)
+    struct assert_result {
+        assert_result(assert_result const&)            = default;
+        assert_result(assert_result&&)                 = delete;
+        assert_result& operator=(assert_result const&) = default;
+        assert_result& operator=(assert_result&&)      = delete;
+
+        assert_result(
+          bool             success,
+          std::string_view file,
+          int              line,
+          std::string      expr1,
+          std::string      expr2,
+          std::string_view macro_name,
+          std::string_view suite,
+          std::string_view test)
           : ctx_(),
             suite_(suite),
             test_(test) {
@@ -230,11 +128,11 @@ namespace testing {
             ctx_.line       = line;
             ctx_.expr1      = std::move(expr1);
             ctx_.expr2      = std::move(expr2);
-            ctx_.macro_name = std::move(macro_name);
+            ctx_.macro_name = macro_name;
         }
 
         template <typename T>
-        AssertionResult& operator<<(T&& value) {
+        assert_result& operator<<(T&& value) {
             std::ostringstream tmp;
             tmp << std::forward<T>(value);
             if (!ctx_.extra.empty()) {
@@ -244,10 +142,10 @@ namespace testing {
             return *this;
         }
 
-        ~AssertionResult() {
+        ~assert_result() {
             if (!ctx_.success) {
-                std::cerr << ctx_.message() << "\n";
-                registry::Instance().AddFailure(suite_, test_);
+                std::cerr << message(ctx_) << "\n";
+                registry::instance().add_failure(suite_, test_);
                 ++internal::global_failures;
             }
             ++internal::global_assertions;
@@ -258,14 +156,13 @@ namespace testing {
         }
 
       private:
-        AssertionContext ctx_;
-        char const*      suite_;
-        char const*      test_;
+        assert_context   ctx_;
+        std::string_view suite_;
+        std::string_view test_;
     };
 
     // -------------------- TEST machinery --------------------
-    class Test {
-      public:
+    struct Test {
         virtual ~Test() = default;
 
         virtual void SetUp() {}
@@ -273,9 +170,9 @@ namespace testing {
         virtual void TearDown() {}
     };
 
-    struct CurrentTestInfo {
-        char const* suite = "";
-        char const* test  = "";
+    struct alignas(32) CurrentTestInfo {
+        std::string_view suite;
+        std::string_view test;
     };
 
     inline CurrentTestInfo& current_test() {
@@ -287,10 +184,10 @@ namespace testing {
         using namespace std::chrono;
 
         // Candidate units in increasing order
-        struct Unit {
-            char const* name;
-            double      factor; // how many nanoseconds per unit
-            char const* color;
+        struct alignas(64) Unit {
+            std::string_view name;
+            double           factor; // how many nanoseconds per unit
+            std::string_view color;
         };
 
         static constexpr std::array<Unit, 6> units{
@@ -321,10 +218,11 @@ namespace testing {
     }
 
     inline int RunAllTests() {
+        using std::cout;
         using clock = std::chrono::high_resolution_clock;
         using std::chrono::nanoseconds;
 
-        auto&                          reg   = registry::Instance();
+        auto&                          reg   = registry::instance();
         auto&                          tests = reg.tests();
         nanoseconds                    total_ns{};
         float                          index  = 0;
@@ -332,46 +230,47 @@ namespace testing {
         std::chrono::time_point<clock> start{};
         std::chrono::time_point<clock> endp{};
 
-        std::cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
+        cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
         for (auto& test : tests) {
             auto const percentage = static_cast<int>(index / length * 100.0F);
-            auto const test_name  = test.full_name();
-            std::cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
-                      << std::flush;
-            current_test().suite = test.suite.c_str();
-            current_test().test  = test.name.c_str();
+            auto const test_name  = full_name(test);
+            cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
+                 << std::flush;
+            current_test().suite = test.suite;
+            current_test().test  = test.name;
             try {
                 start = clock::now();
                 test.func();
                 endp = clock::now();
             } catch (std::exception const& ex) {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
-                reg.AddFailure(test.suite, test.name);
+                reg.add_failure(test.suite, test.name);
             } catch (...) {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
-                reg.AddFailure(test.suite, test.name);
+                reg.add_failure(test.suite, test.name);
             }
             auto const dur    = std::chrono::duration_cast<nanoseconds>(endp - start);
             test.duration_ns  = dur;
             total_ns         += dur;
             if (test.failed) {
-                std::cout << "\n"
-                          << color::RED << "[  FAILED  ] " << color::RESET << test_name << " " << format_duration(dur)
-                          << "\n";
+                cout << "\n"
+                     << color::RED << "[  FAILED  ] " << color::RESET << test_name << " " << format_duration(dur)
+                     << "\n";
             } else {
-                std::cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << " "
-                          << format_duration(dur) << "\n";
+                cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << " "
+                     << format_duration(dur) << "\n";
             }
-            std::cout << std::flush;
+            cout << std::flush;
             ++index;
         }
 
         int        failures   = static_cast<int>(internal::global_failures.load());
         int        assertions = static_cast<int>(internal::global_assertions.load());
         auto const color      = failures != 0 ? color::RED : color::GREEN;
-        std::cout << color::CYAN << "[ ======== ] Run Time: " << format_duration(total_ns) << color::RESET << "\n";
-        std::cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
-                  << " failures." << color::RESET << "\n";
+
+        cout << color << "[ ======== ] Run Time: " << color::RESET << format_duration(total_ns) << "\n";
+        cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
+             << " failures." << color::RESET << "\n";
 
         // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
         // for (auto& t : tests) {
@@ -425,17 +324,17 @@ namespace testing {
 
     // Generalized helpers to reduce duplication across make_* functions
     template <typename A, typename B, typename Predicate>
-    inline AssertionResult make_binary_assertion(
-      A const&    lhs,
-      B const&    rhs,
-      char const* file,
-      int         line,
-      char const* exprA,
-      char const* exprB,
-      char const* macro_name,
-      Predicate&& predicate) {
-        bool is_ok = static_cast<bool>(std::forward<Predicate>(predicate)(lhs, rhs));
-        return AssertionResult(
+    inline assert_result make_binary_assertion(
+      A const&         lhs,
+      B const&         rhs,
+      std::string_view file,
+      int              line,
+      std::string_view exprA,
+      std::string_view exprB,
+      std::string_view macro_name,
+      Predicate const& predicate) {
+        bool const is_ok = static_cast<bool>(predicate(lhs, rhs));
+        return assert_result{
           is_ok,
           file,
           line,
@@ -443,16 +342,16 @@ namespace testing {
           std::string(exprB) + " (" + stream_to_string(rhs) + ")",
           macro_name,
           ::testing::current_test().suite,
-          ::testing::current_test().test);
+          ::testing::current_test().test};
     }
 
-    inline AssertionResult make_unary_assertion(
-      bool        value,
-      bool        expect_true,
-      char const* file,
-      int         line,
-      char const* expr,
-      char const* macro_name) {
+    inline assert_result make_unary_assertion(
+      bool             value,
+      bool             expect_true,
+      std::string_view file,
+      int              line,
+      std::string_view expr,
+      std::string_view macro_name) {
         bool const is_ok = expect_true ? value : !value;
         return {is_ok,
                 file,
@@ -464,54 +363,14 @@ namespace testing {
                 ::testing::current_test().test};
     }
 
-#define EXPECT_EQ(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_EQ",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs == rhs;                 \
-      }))
-#define ASSERT_EQ(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_EQ",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs == rhs;                 \
-      }))
-#define EXPECT_NE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_NE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs != rhs;                 \
-      }))
-#define ASSERT_NE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_NE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs != rhs;                 \
-      }))
+#define EXPECT_EQ(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_EQ", ::testing::cmp_equal{}))
+#define ASSERT_EQ(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_EQ", ::testing::cmp_equal{}))
+#define EXPECT_NE(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_NE", ::testing::cmp_not_equal{}))
+#define ASSERT_NE(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_NE", ::testing::cmp_not_equal{}))
 #define EXPECT_TRUE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), true, __FILE__, __LINE__, #x, "EXPECT_TRUE"))
 #define ASSERT_TRUE(x) \
@@ -522,124 +381,60 @@ namespace testing {
 #define ASSERT_FALSE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), false, __FILE__, __LINE__, #x, "ASSERT_FALSE"))
 
-#define EXPECT_LT(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_LT",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs < rhs;                  \
-      }))
-#define ASSERT_LT(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_LT",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs < rhs;                  \
-      }))
-#define EXPECT_LE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_LE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs <= rhs;                 \
-      }))
-#define ASSERT_LE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_LE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs <= rhs;                 \
-      }))
-#define EXPECT_GT(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_GT",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs > rhs;                  \
-      }))
-#define ASSERT_GT(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_GT",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs > rhs;                  \
-      }))
-#define EXPECT_GE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "EXPECT_GE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs >= rhs;                 \
-      }))
-#define ASSERT_GE(a, b)                      \
-    (::testing::make_binary_assertion(       \
-      (a),                                   \
-      (b),                                   \
-      __FILE__,                              \
-      __LINE__,                              \
-      #a,                                    \
-      #b,                                    \
-      "ASSERT_GE",                           \
-      [](auto const& lhs, auto const& rhs) { \
-          return lhs >= rhs;                 \
-      }))
+#define EXPECT_LT(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_LT", ::testing::cmp_less{}))
+#define ASSERT_LT(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_LT", ::testing::cmp_less{}))
+#define EXPECT_LE(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_LE", ::testing::cmp_less_equal{}))
+#define ASSERT_LE(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_LE", ::testing::cmp_less_equal{}))
+#define EXPECT_GT(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_GT", ::testing::cmp_greater{}))
+#define ASSERT_GT(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_GT", ::testing::cmp_greater{}))
+#define EXPECT_GE(a, b)                \
+    (::testing::make_binary_assertion( \
+      (a),                             \
+      (b),                             \
+      __FILE__,                        \
+      __LINE__,                        \
+      #a,                              \
+      #b,                              \
+      "EXPECT_GE",                     \
+      ::testing::cmp_greater_equal{}))
+#define ASSERT_GE(a, b)                \
+    (::testing::make_binary_assertion( \
+      (a),                             \
+      (b),                             \
+      __FILE__,                        \
+      __LINE__,                        \
+      #a,                              \
+      #b,                              \
+      "ASSERT_GE",                     \
+      ::testing::cmp_greater_equal{}))
 
 
 #define TYPED_TEST_SUITE(test_suite_name, ...) using WEBPP_CONCAT(test_suite_name, _Types) = __VA_ARGS__;
 
-#define TYPED_TEST(test_suite_name, test_name)                                                             \
-    template <typename TypeParam>                                                                          \
-    void WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)();                                        \
-    namespace {                                                                                            \
-        struct WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) {                                   \
-            WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar)() {                                    \
-                using TL = WEBPP_CONCAT(test_suite_name, _Types);                                          \
-                ::testing::ForEachType<TL>::apply([&]<typename T>() {                                      \
-                    std::string composed = std::string(#test_name) + "<" + ::testing::TypeName<T>() + ">"; \
-                    ::testing::RegisterTest(#test_suite_name, composed.c_str(), []() {                     \
-                        WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)<T>();                      \
-                    });                                                                                    \
-                });                                                                                        \
-            }                                                                                              \
-        };                                                                                                 \
-        static WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) WEBPP_UNIQUE_NAME(_typed_reg_);     \
-    }                                                                                                      \
-    template <typename TypeParam>                                                                          \
+#define TYPED_TEST(test_suite_name, test_name)                                                              \
+    template <typename TypeParam>                                                                           \
+    void WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)();                                         \
+    namespace {                                                                                             \
+        struct WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) {                                    \
+            WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar)() {                                     \
+                using TL = WEBPP_CONCAT(test_suite_name, _Types);                                           \
+                ::testing::ForEachType<TL>::apply([&]<typename T>() {                                       \
+                    std::string composed = std::string(#test_name) + "<" + ::testing::type_name<T>() + ">"; \
+                    ::testing::RegisterTest(#test_suite_name, composed.c_str(), []() {                      \
+                        WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)<T>();                       \
+                    });                                                                                     \
+                });                                                                                         \
+            }                                                                                               \
+        };                                                                                                  \
+        static WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) WEBPP_UNIQUE_NAME(_typed_reg_);      \
+    }                                                                                                       \
+    template <typename TypeParam>                                                                           \
     void WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)()
 
 } // namespace testing
