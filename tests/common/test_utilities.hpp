@@ -406,9 +406,164 @@ namespace testing {
             }
         }
 
+// Build-mode selection macros:
+// - If PERF_COUNTERS_FORCE_DEBUG is defined, treat as debug.
+// - If PERF_COUNTERS_FORCE_RELEASE is defined, treat as release.
+// - Otherwise, follow the standard NDEBUG convention: NDEBUG => release, else debug.
+#    if defined(PERF_COUNTERS_FORCE_DEBUG)
+#        define PERF_COUNTERS_DEBUG_BUILD 1
+#    elif defined(PERF_COUNTERS_FORCE_RELEASE)
+#        define PERF_COUNTERS_RELEASE_BUILD 1
+#    elif defined(NDEBUG)
+#        define PERF_COUNTERS_RELEASE_BUILD 1
+#    else
+#        define PERF_COUNTERS_DEBUG_BUILD 1
+#    endif
+
+// Thresholds controlled by build mode (macros pick one set).
+#    if defined(PERF_COUNTERS_DEBUG_BUILD)
+        // Debug: lenient thresholds, avoid noisy reports.
+        static constexpr double PERF_TC_MIN_IPC                   = 0.10;
+        static constexpr double PERF_TC_MAX_IPC                   = 8.00;
+        static constexpr double PERF_TC_CACHE_MISS_THRESH         = 0.25; // 25% - very permissive
+        static constexpr double PERF_TC_BRANCH_MISS_THRESH        = 0.20; // 20% - permissive
+        static constexpr double PERF_TC_REF_CYC_LOW               = 0.25;
+        static constexpr double PERF_TC_REF_CYC_HIGH              = 4.00;
+        // Require at least this many different anomaly conditions to print in debug to avoid trivial noise.
+        static constexpr int PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT = 2;
+#    else
+        // Release: stricter thresholds to surface real issues.
+        static constexpr double PERF_TC_MIN_IPC                   = 0.50;
+        static constexpr double PERF_TC_MAX_IPC                   = 4.00;
+        static constexpr double PERF_TC_CACHE_MISS_THRESH         = 0.05; // 5%
+        static constexpr double PERF_TC_BRANCH_MISS_THRESH        = 0.05; // 5%
+        static constexpr double PERF_TC_REF_CYC_LOW               = 0.50;
+        static constexpr double PERF_TC_REF_CYC_HIGH              = 1.50;
+        // Print any anomaly in release builds.
+        static constexpr int PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT = 1;
+#    endif
+
+        // Print only counters/derived metrics that are suspicious / out-of-balance.
+        // This function uses simple, conservative heuristics:
+        //  - IPC (instructions / cycles) outside [min_ipc, max_ipc]
+        //  - Cache miss rate (cache_misses / cache_refs) above cache_miss_threshold
+        //  - Branch miss rate (branch_misses / branch_instructions) above branch_miss_threshold
+        //  - Inconsistent zeros (e.g., instructions > 0 but cycles == 0)
+        //  - Large discrepancy between cycles and ref-cpu-cycles (ratio outside [0.5, 1.5])
+        void print_anomalies(std::ostream& oss = std::cout) const noexcept {
+            constexpr std::size_t IDX_CYCLES = 0;
+            constexpr std::size_t IDX_INS    = 1;
+            constexpr std::size_t IDX_CREF   = 2;
+            constexpr std::size_t IDX_CMISS  = 3;
+            constexpr std::size_t IDX_BRINS  = 4;
+            constexpr std::size_t IDX_BRMISS = 5;
+            constexpr std::size_t IDX_REFC   = 6;
+
+            auto const cycles = counters[IDX_CYCLES].value;
+            auto const ins    = counters[IDX_INS].value;
+            auto const cref   = counters[IDX_CREF].value;
+            auto const cmiss  = counters[IDX_CMISS].value;
+            auto const brins  = counters[IDX_BRINS].value;
+            auto const brmiss = counters[IDX_BRMISS].value;
+            auto const refc   = counters[IDX_REFC].value;
+
+            // Quick no-data check
+            bool any_nonzero = false;
+            for (auto const& c : counters) {
+                if (c.value != 0) {
+                    any_nonzero = true;
+                    break;
+                }
+            }
+            if (!any_nonzero) {
+                // oss << "No performance data collected (all counters are zero).";
+                return;
+            }
+
+            int              anomaly_count = 0;
+            constexpr double eps           = 1e-12;
+
+            // 1) inconsistent zero checks
+            if (cycles == 0 && ins > 0) {
+                oss << "[ANOMALY] instructions > 0 but CPU cycles == 0 (ins=" << ins << ", cycles=" << cycles << ")";
+                ++anomaly_count;
+            }
+            if (ins == 0 && cycles > 0) {
+                oss << "[ANOMALY] CPU cycles > 0 but instructions == 0 (cycles=" << cycles << ", ins=" << ins << ")";
+                ++anomaly_count;
+            }
+
+            // 2) IPC range check
+            if (cycles > 0 && ins > 0) {
+                double const ipc = static_cast<double>(ins) / static_cast<double>(cycles);
+                if (!(ipc >= PERF_TC_MIN_IPC && ipc <= PERF_TC_MAX_IPC)) {
+                    oss << "[ANOMALY] IPC out of range: " << ipc << " (ins=" << ins << ", cycles=" << cycles << ")";
+                    ++anomaly_count;
+                }
+            }
+
+            // 3) Cache miss rate
+            if (cref == 0 && cmiss > 0) {
+                oss << "[ANOMALY] cache_misses > 0 but cache_references == 0 (cmiss=" << cmiss << ", cref=" << cref
+                    << ")";
+                ++anomaly_count;
+            } else if (cref > 0) {
+                double const miss_rate = static_cast<double>(cmiss) / static_cast<double>(cref);
+                if (miss_rate > (PERF_TC_CACHE_MISS_THRESH + eps)) {
+                    oss << "[ANOMALY] High cache miss rate: " << (miss_rate * 100.0) << "% (misses=" << cmiss
+                        << ", refs=" << cref << ")";
+                    ++anomaly_count;
+                }
+            }
+
+            // 4) Branch miss rate
+            if (brins == 0 && brmiss > 0) {
+                oss << "[ANOMALY] branch_misses > 0 but branch_instructions == 0 (brmiss=" << brmiss
+                    << ", brins=" << brins << ")";
+                ++anomaly_count;
+            } else if (brins > 0) {
+                double const br_miss_rate = static_cast<double>(brmiss) / static_cast<double>(brins);
+                if (br_miss_rate > (PERF_TC_BRANCH_MISS_THRESH + eps)) {
+                    oss << "[ANOMALY] High branch miss rate: " << (br_miss_rate * 100.0) << "% (misses=" << brmiss
+                        << ", branch_inst=" << brins << ")";
+                    ++anomaly_count;
+                }
+            }
+
+            // 5) cycles vs ref-cpu-cycles discrepancy
+            if (refc > 0 && cycles > 0) {
+                double const ratio = static_cast<double>(cycles) / static_cast<double>(refc);
+                if (!(ratio >= PERF_TC_REF_CYC_LOW && ratio <= PERF_TC_REF_CYC_HIGH)) {
+                    oss << "[ANOMALY] cycles vs ref-cpu-cycles ratio suspicious: " << ratio << " (cycles=" << cycles
+                        << ", ref_cycles=" << refc << ")";
+                    ++anomaly_count;
+                }
+            }
+
+            // 6) member zero while leader nonzero (quick heuristic)
+            for (std::size_t i = 0; i < counters.size(); ++i) {
+                if (i != IDX_CYCLES && counters[IDX_CYCLES].value > 0 && counters[i].value == 0) {
+                    oss << "[ANOMALY] '" << counters[i].name << "' is zero while CPU Cycles > 0";
+                    ++anomaly_count;
+                }
+            }
+
+            // Decide whether to actually print summary vs being quiet (debug builds prefer being quiet).
+#    if defined(PERF_COUNTERS_DEBUG_BUILD)
+            const int required = PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT;
+#    else
+            const int required = PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT;
+#    endif
+
+            if (anomaly_count < required) {
+                // In debug we avoid printing trivial results; in release required==1 so this will not suppress.
+                // oss << "No significant anomalies detected (anomaly_count=" << anomaly_count << ").";
+            }
+        }
+
         void print_verbose(std::ostream& oss = std::cout) const noexcept {
             for (auto const& info : counters) {
-                oss << std::setw(25) << std::left << info.name << " : " << info.value << '\n';
+                oss << std::setw(25) << std::left << info.name << " : " << info.value;
             }
         }
     };

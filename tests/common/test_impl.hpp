@@ -243,7 +243,7 @@ namespace testing {
             }
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
             cout << color::PURPLE << " (";
-            counter.print_short(cout);
+            counter.print_anomalies(cout);
             cout << ")" << color::RESET;
 #endif
             cout << '\n' << std::flush;

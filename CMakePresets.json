@@ -51,6 +51,17 @@
             }
         },
         {
+            "name": "dev-gcc-release",
+            "inherits": "gcc",
+            "displayName": "GCC Dev Release",
+            "description": "Development using GCC",
+            "binaryDir": "${sourceDir}/build-dev-gcc-release",
+            "cacheVariables": {
+                "WEBPP_DEV": "ON",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
             "name": "gcc-vcpkg",
             "displayName": "Debug GCC VCPkg",
             "generator": "Unix Makefiles",
