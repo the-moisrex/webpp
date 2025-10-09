@@ -202,10 +202,19 @@ namespace testing {
             int failures   = reg.failures();
             int assertions = reg.assertions();
             int successes  = reg.successes();
+#ifdef WEBPP_SUPPORTS_PERF_COUNTERS
+            perf_counters counter;
+#endif
             try {
+#ifdef WEBPP_SUPPORTS_PERF_COUNTERS
+                counter.start();
+#endif
                 start = clock::now();
                 (*test.func)();
                 endp = clock::now();
+#ifdef WEBPP_SUPPORTS_PERF_COUNTERS
+                counter.stop();
+#endif
             } catch (std::exception const& ex) {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
                 failed_tests.emplace_back(&test);
@@ -232,6 +241,11 @@ namespace testing {
             } else {
                 cout << color::GREY << " (" << successes << " asserts)" << color::RESET;
             }
+#ifdef WEBPP_SUPPORTS_PERF_COUNTERS
+            cout << color::PURPLE << " (";
+            counter.print_short(cout);
+            cout << ")" << color::RESET;
+#endif
             cout << '\n' << std::flush;
             ++index;
         }

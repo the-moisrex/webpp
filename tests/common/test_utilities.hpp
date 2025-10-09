@@ -16,9 +16,13 @@
 #endif
 
 #if defined(__linux__)
+#    include <array>
 #    include <asm/unistd.h>
+#    include <iomanip>
 #    include <linux/perf_event.h>
+#    include <string>
 #    include <sys/ioctl.h>
+#    include <sys/syscall.h>
 #    include <unistd.h>
 #endif
 
@@ -176,6 +180,7 @@ namespace testing {
         constexpr std::string_view BLUE   = "\033[34m";
         constexpr std::string_view CYAN   = "\033[36m";
         constexpr std::string_view GREY   = "\033[38;5;8m";
+        constexpr std::string_view PURPLE = "\033[38;5;5m";
     } // namespace color
 
     // -------------------- Stream Helper --------------------
@@ -287,48 +292,128 @@ namespace testing {
 
 
 #if defined(__linux__)
-    struct perf_counter {
-        int      fd{-1};
-        uint64_t start_value{0};
+#    define WEBPP_SUPPORTS_PERF_COUNTERS
 
-        perf_counter() {
-            struct perf_event_attr pe{};
-            std::memset(&pe, 0, sizeof(pe));
-            pe.type           = PERF_TYPE_HARDWARE;
-            pe.size           = sizeof(pe);
-            pe.config         = PERF_COUNT_HW_INSTRUCTIONS;
-            pe.disabled       = 1;
-            pe.exclude_kernel = 1;
-            pe.exclude_hv     = 1;
+    class perf_counters {
+      public:
+        struct alignas(64) counter_info {
+            std::string_view name;
+            std::uint32_t    type;
+            std::uint64_t    config;
+            std::uint64_t    value{0};
+        };
 
-            fd = static_cast<int>(syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0));
-            if (fd == -1) {
-                return; // fallback to disabled state
+      private:
+        static constexpr std::size_t           num_counters = 7;
+        std::array<counter_info, num_counters> counters{
+          {
+           {.name = "CPU Cycles", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_CPU_CYCLES},
+           {.name = "Instructions", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_INSTRUCTIONS},
+           {.name = "Cache References", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_CACHE_REFERENCES},
+           {.name = "Cache Misses", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_CACHE_MISSES},
+           {.name = "Branch Instructions", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_INSTRUCTIONS},
+           {.name = "Branch Misses", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_BRANCH_MISSES},
+           {.name = "Ref CPU Cycles", .type = PERF_TYPE_HARDWARE, .config = PERF_COUNT_HW_REF_CPU_CYCLES},
+           }
+        };
+
+        std::array<int, num_counters> fds_{};
+        int                           group_fd_{-1};
+
+      public:
+        perf_counters() noexcept = default;
+
+        // RAII: cleanup
+        ~perf_counters() noexcept {
+            if (group_fd_ != -1) {
+                ::close(group_fd_);
             }
-
-            ioctl(fd, PERF_EVENT_IOC_RESET, 0);
-            ioctl(fd, PERF_EVENT_IOC_ENABLE, 0);
-            read(fd, &start_value, sizeof(start_value));
         }
 
-        uint64_t stop() {
-            if (fd == -1) {
-                return 0;
-            }
-            uint64_t end_value = 0;
-            ioctl(fd, PERF_EVENT_IOC_DISABLE, 0);
-            read(fd, &end_value, sizeof(end_value));
-            close(fd);
-            return end_value - start_value;
+        perf_counters(perf_counters const&)                = delete;
+        perf_counters(perf_counters&&) noexcept            = delete;
+        perf_counters& operator=(perf_counters const&)     = delete;
+        perf_counters& operator=(perf_counters&&) noexcept = delete;
+
+        [[nodiscard]] bool valid() const noexcept {
+            return group_fd_ != -1;
         }
 
-        ~perf_counter() {
-            if (fd != -1) {
-                close(fd);
+        void start() noexcept {
+            struct perf_event_attr attr{};
+            std::memset(&attr, 0, sizeof(attr));
+            attr.size           = sizeof(attr);
+            attr.disabled       = 1;
+            attr.exclude_kernel = 1;
+            attr.exclude_hv     = 1;
+            attr.read_format    = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // ✅ required for grouped read
+
+            // Open group leader
+            attr.type   = counters[0].type;
+            attr.config = counters[0].config;
+            fds_[0]     = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, -1, 0));
+            group_fd_   = fds_[0];
+
+            if (group_fd_ == -1) {
+                return;
+            }
+
+            // Open remaining counters in the same group (keep fds open!)
+            for (std::size_t i = 1; i < counters.size(); ++i) {
+                attr.type   = counters[i].type;
+                attr.config = counters[i].config;
+                fds_[i]     = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, group_fd_, 0));
+            }
+
+            ioctl(group_fd_, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+            ioctl(group_fd_, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+        }
+
+        void stop() noexcept {
+            if (group_fd_ == -1) {
+                return;
+            }
+
+            ioctl(group_fd_, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+
+            struct {
+                std::uint64_t nr;
+
+                struct {
+                    std::uint64_t value;
+                    std::uint64_t id;
+                } values[num_counters];
+            } data{};
+
+            ssize_t const bytes = ::read(group_fd_, &data, sizeof(data));
+            if (bytes <= 0) {
+                return;
+            }
+
+            for (std::size_t i = 0; i < data.nr && i < counters.size(); ++i) {
+                counters[i].value = data.values[i].value;
+            }
+        }
+
+        void print_short(std::ostream& oss = std::cout) const noexcept {
+            bool first = true;
+            for (auto const& c : counters) {
+                if (!first) {
+                    oss << " | ";
+                }
+                oss << c.name << ": " << c.value;
+                first = false;
+            }
+        }
+
+        void print_verbose(std::ostream& oss = std::cout) const noexcept {
+            for (auto const& info : counters) {
+                oss << std::setw(25) << std::left << info.name << " : " << info.value << '\n';
             }
         }
     };
-#endif
+
+#endif // __linux__
 
 
 } // namespace testing
