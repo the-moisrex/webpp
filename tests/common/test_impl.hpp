@@ -117,12 +117,8 @@ namespace testing {
           int              line,
           std::string      expr1,
           std::string      expr2,
-          std::string_view macro_name,
-          std::string_view suite,
-          std::string_view test)
-          : ctx_(),
-            suite_(suite),
-            test_(test) {
+          std::string_view macro_name)
+          : ctx_() {
             ctx_.success    = success;
             ctx_.file       = file;
             ctx_.line       = line;
@@ -142,23 +138,12 @@ namespace testing {
             return *this;
         }
 
-        ~assert_result() {
-            if (!ctx_.success) {
-                std::cerr << message(ctx_) << "\n";
-                registry::instance().add_failure(suite_, test_);
-                ++internal::global_failures;
-            }
-            ++internal::global_assertions;
-        }
-
         [[nodiscard]] bool ok() const {
             return ctx_.success;
         }
 
       private:
-        assert_context   ctx_;
-        std::string_view suite_;
-        std::string_view test_;
+        assert_context ctx_;
     };
 
     // -------------------- TEST machinery --------------------
@@ -174,11 +159,6 @@ namespace testing {
         std::string_view suite;
         std::string_view test;
     };
-
-    inline CurrentTestInfo& current_test() {
-        static thread_local CurrentTestInfo info;
-        return info;
-    }
 
     inline std::string format_duration(std::chrono::nanoseconds dur) {
         using namespace std::chrono;
@@ -236,8 +216,6 @@ namespace testing {
             auto const test_name  = full_name(test);
             cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
                  << std::flush;
-            current_test().suite = test.suite;
-            current_test().test  = test.name;
             try {
                 start = clock::now();
                 test.func();
@@ -264,8 +242,8 @@ namespace testing {
             ++index;
         }
 
-        int        failures   = static_cast<int>(internal::global_failures.load());
-        int        assertions = static_cast<int>(internal::global_assertions.load());
+        int const  failures   = static_cast<int>(internal::global_failures.load());
+        int const  assertions = static_cast<int>(internal::global_assertions.load());
         auto const color      = failures != 0 ? color::RED : color::GREEN;
 
         cout << color << "[ ======== ] Run Time: " << color::RESET << format_duration(total_ns) << "\n";
@@ -338,11 +316,9 @@ namespace testing {
           is_ok,
           file,
           line,
-          std::string(exprA) + " (" + stream_to_string(lhs) + ")",
-          std::string(exprB) + " (" + stream_to_string(rhs) + ")",
-          macro_name,
-          ::testing::current_test().suite,
-          ::testing::current_test().test};
+          !is_ok ? std::string(exprA) + " (" + stream_to_string(lhs) + ")" : "",
+          !is_ok ? std::string(exprB) + " (" + stream_to_string(rhs) + ")" : "",
+          macro_name};
     }
 
     inline assert_result make_unary_assertion(
@@ -356,11 +332,9 @@ namespace testing {
         return {is_ok,
                 file,
                 line,
-                std::string(expr) + " (" + (value ? "true" : "false") + ")",
+                !is_ok ? std::string(expr) + " (" + (value ? "true" : "false") + ")" : "",
                 "",
-                macro_name,
-                ::testing::current_test().suite,
-                ::testing::current_test().test};
+                macro_name};
     }
 
 #define EXPECT_EQ(a, b) \
