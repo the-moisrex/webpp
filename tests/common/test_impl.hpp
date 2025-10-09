@@ -5,68 +5,26 @@
 
 #include <atomic>
 #include <chrono>
-#include <cmath>
-#include <functional>
 #include <iostream>
-#include <mutex>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <utility>
-#include <vector>
 
 namespace testing {
 
     // -------------------- Test Registry --------------------
-    struct alignas(128) test_info {
+    struct alignas(64) test_info {
+        using func_type = void (*)();
+
         std::string_view         suite;
         std::string_view         name;
-        std::function<void()>    func;
+        func_type                func{};
         std::chrono::nanoseconds duration_ns{};
         bool                     failed = false;
     };
-
-    [[nodiscard]] inline std::string full_name(test_info const& info) {
-        return std::string{info.suite.data(), info.suite.size()} + "." +
-               std::string{info.name.data(), info.name.size()};
-    }
-
-    struct alignas(32) registry {
-        static registry& instance() {
-            static registry inst;
-            return inst;
-        }
-
-        void register_test(std::string_view suite, std::string_view name, std::function<void()> fn) {
-            // std::lock_guard<std::mutex> lk(mu_);
-            tests_.emplace_back(suite, name, std::move(fn), std::chrono::nanoseconds{}, false);
-        }
-
-        [[nodiscard]] std::vector<test_info>& tests() noexcept {
-            return tests_;
-        }
-
-        void add_failure(std::string_view suite, std::string_view inp_test) {
-            // std::lock_guard<std::mutex> lk(mu_);
-            for (auto& test : tests_) {
-                if (test.suite == suite && test.name == inp_test) {
-                    test.failed = true;
-                    break;
-                }
-            }
-        }
-
-      private:
-        // std::mutex            mu_;
-        std::vector<test_info> tests_;
-    };
-
-    inline void register_test(std::string_view suite, std::string_view name, std::function<void()> func) {
-        registry::instance().register_test(suite, name, std::move(func));
-    }
 
     // -------------------- Assertion infra --------------------
     struct alignas(128) assert_context {
@@ -79,7 +37,12 @@ namespace testing {
         bool             success = true;
     };
 
-    [[nodiscard]] std::string message(assert_context const& ctx) {
+    inline test_info& current_test() {
+        static test_info test;
+        return test;
+    }
+
+    [[nodiscard]] inline std::string message(assert_context const& ctx) {
         std::ostringstream oss;
         if (!ctx.success) {
             oss << color::RED << ctx.macro_name << " failed: " << color::RESET;
@@ -100,10 +63,67 @@ namespace testing {
         return oss.str();
     }
 
-    namespace internal {
-        inline std::atomic<int> global_assertions{0};
-        inline std::atomic<int> global_failures{0};
-    } // namespace internal
+    struct registry {
+        using func_type = test_info::func_type;
+#if WEBPP_MULTI_THREADING_ENABLED
+        using atomic_int_type = std::atomic<int>;
+#else
+        using atomic_int_type = int;
+#endif
+
+        static registry& instance() {
+            static registry reg{};
+            return reg;
+        }
+
+        void register_test(std::string_view suite, std::string_view name, func_type func) {
+            all_tests.emplace_back(suite, name, func);
+        }
+
+        std::vector<test_info>& tests() {
+            return all_tests;
+        }
+
+        void asserted(bool status) {
+            ++m_assertions;
+            if (status) {
+                ++m_successes;
+            } else [[unlikely]] {
+                ++m_failures;
+                current_test().failed = true;
+            }
+        }
+
+        [[nodiscard]] int assertions() const noexcept {
+#if WEBPP_MULTI_THREADING_ENABLED
+            return m_assertions.load();
+#else
+            return m_assertions;
+#endif
+        }
+
+        [[nodiscard]] int successes() const noexcept {
+#if WEBPP_MULTI_THREADING_ENABLED
+            return m_successes.load();
+#else
+            return m_successes;
+#endif
+        }
+
+        [[nodiscard]] int failures() const noexcept {
+#if WEBPP_MULTI_THREADING_ENABLED
+            return m_failures.load();
+#else
+            return m_failures;
+#endif
+        }
+
+      private:
+        std::vector<test_info> all_tests;
+        atomic_int_type        m_assertions{}; // NOLINT
+        atomic_int_type        m_failures{};   // NOLINT
+        atomic_int_type        m_successes{};  // NOLINT
+    };
 
     struct assert_result {
         assert_result(assert_result const&)            = default;
@@ -129,6 +149,11 @@ namespace testing {
 
         template <typename T>
         assert_result& operator<<(T&& value) {
+            // We don't need to print anything when the test is passed
+            if (ctx_.success) [[likely]] {
+                return *this;
+            }
+
             std::ostringstream tmp;
             tmp << std::forward<T>(value);
             if (!ctx_.extra.empty()) {
@@ -136,6 +161,12 @@ namespace testing {
             }
             ctx_.extra += tmp.str();
             return *this;
+        }
+
+        ~assert_result() {
+            if (!ctx_.success) {
+                std::cerr << message(ctx_) << "\n";
+            }
         }
 
         [[nodiscard]] bool ok() const {
@@ -147,57 +178,7 @@ namespace testing {
     };
 
     // -------------------- TEST machinery --------------------
-    struct Test {
-        virtual ~Test() = default;
-
-        virtual void setup() {}
-
-        virtual void teardown() {}
-    };
-
-    struct alignas(32) CurrentTestInfo {
-        std::string_view suite;
-        std::string_view test;
-    };
-
-    inline std::string format_duration(std::chrono::nanoseconds dur) {
-        using namespace std::chrono;
-
-        // Candidate units in increasing order
-        struct alignas(64) Unit {
-            std::string_view name;
-            double           factor; // how many nanoseconds per unit
-            std::string_view color;
-        };
-
-        static constexpr std::array<Unit, 6> units{
-          Unit{ .name = "ns",                      .factor = 1.0,  .color = color::GREEN},
-          { .name = "µs",                  .factor = 1'000.0,   .color = color::CYAN},
-          { .name = "ms",              .factor = 1'000'000.0, .color = color::YELLOW},
-          {  .name = "s",          .factor = 1'000'000'000.0,    .color = color::RED},
-          {.name = "min",   .factor = 60.0 * 1'000'000'000.0,    .color = color::RED},
-          {  .name = "h", .factor = 3600.0 * 1'000'000'000.0,    .color = color::RED},
-        };
-
-        auto value = static_cast<double>(dur.count());
-        auto unit  = units.begin();
-
-        for (auto& cur_unit : units) {
-            double const val = value / cur_unit.factor;
-            if (std::fabs(val) < 1.0) {
-                break; // too small to switch to this unit
-            }
-            value = val;
-            unit  = &cur_unit;
-        }
-
-        std::ostringstream oss;
-        oss << unit->color << "(" << std::fixed << std::setprecision(value < 10 ? 3 : (value < 100.0 ? 2 : 1)) << value
-            << " " << unit->name << ")" << color::RESET;
-        return oss.str();
-    }
-
-    inline int RunAllTests() {
+    inline int run_all_tests() {
         using std::cout;
         using clock = std::chrono::high_resolution_clock;
         using std::chrono::nanoseconds;
@@ -209,46 +190,61 @@ namespace testing {
         auto const                     length = static_cast<float>(tests.size());
         std::chrono::time_point<clock> start{};
         std::chrono::time_point<clock> endp{};
+        std::vector<test_info*>        failed_tests;
 
         cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
-        for (auto& test : tests) {
+        for (test_info& test : tests) {
             auto const percentage = static_cast<int>(index / length * 100.0F);
-            auto const test_name  = full_name(test);
-            cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test_name
-                 << std::flush;
+
+            current_test() = test;
+            cout << color::YELLOW << "[ " << std::setw(7U) << percentage << "% ] " << color::RESET << test.suite << '.'
+                 << test.name << std::flush;
+            int failures   = reg.failures();
+            int assertions = reg.assertions();
+            int successes  = reg.successes();
             try {
                 start = clock::now();
-                test.func();
+                (*test.func)();
                 endp = clock::now();
             } catch (std::exception const& ex) {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
-                reg.add_failure(test.suite, test.name);
+                failed_tests.emplace_back(&test);
             } catch (...) {
                 std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
-                reg.add_failure(test.suite, test.name);
+                failed_tests.emplace_back(&test);
             }
+            failures          = reg.failures() - failures;
+            assertions        = reg.assertions() - assertions;
+            successes         = reg.successes() - successes;
             auto const dur    = std::chrono::duration_cast<nanoseconds>(endp - start);
+            auto const color  = failures != 0 ? color::RED : color::GREEN;
             test.duration_ns  = dur;
             total_ns         += dur;
             if (test.failed) {
-                cout << "\n"
-                     << color::RED << "[  FAILED  ] " << color::RESET << test_name << " " << format_duration(dur)
-                     << "\n";
+                cout << "\n" << color << "[  FAILED  ] ";
             } else {
-                cout << "\r" << color::GREEN << "[       OK ] " << color::RESET << test_name << " "
-                     << format_duration(dur) << "\n";
+                cout << "\r" << color << "[       OK ] ";
             }
-            cout << std::flush;
+            cout << color::RESET << test.suite << '.' << test.name << " " << format_duration(dur);
+            if (failures != 0) {
+                cout << " (" << color::RED << failures << color::RESET << "/" << color::GREEN << successes
+                     << color::RESET << "/" << color::CYAN << assertions << color::RESET << " asserts)";
+            } else {
+                cout << color::GREY << " (" << successes << " asserts)" << color::RESET;
+            }
+            cout << '\n' << std::flush;
             ++index;
         }
 
-        int const  failures   = static_cast<int>(internal::global_failures.load());
-        int const  assertions = static_cast<int>(internal::global_assertions.load());
+        int const  failures   = reg.failures();
+        int const  assertions = reg.assertions();
+        int const  successes  = reg.successes();
         auto const color      = failures != 0 ? color::RED : color::GREEN;
 
         cout << color << "[ ======== ] Run Time: " << color::RESET << format_duration(total_ns) << "\n";
         cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
-             << " failures." << color::RESET << "\n";
+             << " failed assertions, " << color::GREEN << successes << color << " success assersions." << color::RESET
+             << "\n";
 
         // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
         // for (auto& t : tests) {
@@ -259,44 +255,15 @@ namespace testing {
         return (failures != 0) ? 1 : 0;
     }
 
-    // -------------------- Typed TEST support --------------------
-    template <typename... Ts>
-    struct Types {
-        using type_list = std::tuple<Ts...>;
-    };
-
-    template <typename TypeList>
-    struct ForEachType;
-
-    template <typename... Ts>
-    struct ForEachType<Types<Ts...>> {
-        template <typename F>
-        static void apply(F&& f) {
-            (f.template operator()<Ts>(), ...);
-        }
-    };
-
 // -------------------- Macros --------------------
-#define WEBPP_CONCAT_INTERNAL_(a, b) a##b
-#define WEBPP_CONCAT(a, b)           WEBPP_CONCAT_INTERNAL_(a, b)
-#define WEBPP_UNIQUE_NAME(base)      WEBPP_CONCAT(base, __COUNTER__)
-
-#define TEST(test_suite_name, test_name)                                                     \
-    struct WEBPP_CONCAT(test_suite_name, _##test_name##_Test) : public ::testing::Test {     \
-        void        body();                                                                  \
-        static void runit() {                                                                \
-            WEBPP_CONCAT(test_suite_name, _##test_name##_Test) t;                            \
-            t.setup();                                                                       \
-            t.body();                                                                        \
-            t.teardown();                                                                    \
-        }                                                                                    \
-    };                                                                                       \
-    static int WEBPP_UNIQUE_NAME(_reg_) =                                                    \
-      (::testing::register_test(#test_suite_name,                                            \
-                                #test_name,                                                  \
-                                &WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::runit), \
-       0);                                                                                   \
-    void WEBPP_CONCAT(test_suite_name, _##test_name##_Test)::body()
+#define TEST(test_suite_name, test_name)                                                                             \
+    void test_suite_name##test_name();                                                                               \
+    namespace details {                                                                                              \
+        static int test_suite_name##test_name##Detail =                                                              \
+          (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name), \
+           0);                                                                                                       \
+    }                                                                                                                \
+    void test_suite_name##test_name()
 
 #define TEST_F(test_fixture, test_name) TEST(test_fixture, test_name)
 
@@ -312,6 +279,7 @@ namespace testing {
       std::string_view macro_name,
       Predicate const& predicate) {
         bool const is_ok = static_cast<bool>(predicate(lhs, rhs));
+        registry::instance().asserted(is_ok);
         return assert_result{
           is_ok,
           file,
@@ -329,6 +297,7 @@ namespace testing {
       std::string_view expr,
       std::string_view macro_name) {
         bool const is_ok = expect_true ? value : !value;
+        registry::instance().asserted(is_ok);
         return {is_ok,
                 file,
                 line,
@@ -388,6 +357,22 @@ namespace testing {
       "ASSERT_GE",                     \
       ::testing::cmp_greater_equal{}))
 
+    // -------------------- Typed TEST support --------------------
+    template <typename... Ts>
+    struct Types {
+        using type_list = std::tuple<Ts...>;
+    };
+
+    template <typename TypeList>
+    struct ForEachType;
+
+    template <typename... Ts>
+    struct ForEachType<Types<Ts...>> {
+        template <typename F>
+        static void apply(F&& f) {
+            (f.template operator()<Ts>(), ...);
+        }
+    };
 
 #define TYPED_TEST_SUITE(test_suite_name, ...) using WEBPP_CONCAT(test_suite_name, _Types) = __VA_ARGS__;
 
@@ -417,7 +402,7 @@ namespace testing {
 int main(int argc, char** argv) {
     (void) argc;
     (void) argv;
-    return ::testing::RunAllTests();
+    return ::testing::run_all_tests();
 }
 #endif
 
