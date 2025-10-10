@@ -119,9 +119,9 @@ namespace testing {
         if (!ctx.rhs_expr.empty()) {
             cerr << "  RHS:      " << color::YELLOW << ctx.rhs_expr << color::RESET << '\n';
         }
-        cerr << "  Value:    " << color::RED << ctx.lhs_value << color::RESET << '\n';
+        cerr << "  Value:    " << ctx.lhs_value << '\n';
         if (!ctx.rhs_value.empty()) {
-            cerr << "  Expected: " << color::RED << ctx.rhs_value << color::RESET << '\n';
+            cerr << "  Expected: " << ctx.rhs_value << '\n';
         }
         cerr << color::GREY << ctx.extra << color::RESET << '\n';
     }

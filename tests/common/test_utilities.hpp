@@ -5,28 +5,36 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
+#include <map>
+#include <optional>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
 #include <vector>
+
+#if __has_include(<expected>)
+#    include <expected>
+#endif
 
 #if defined(__GNUG__)
 #    include <cxxabi.h>
 #endif
 
 #if defined(__linux__)
-#    include <array>
 #    include <asm/unistd.h>
-#    include <iomanip>
 #    include <linux/perf_event.h>
-#    include <string>
 #    include <sys/ioctl.h>
 #    include <sys/syscall.h>
 #    include <unistd.h>
@@ -60,6 +68,66 @@ namespace testing {
     template <typename T>
     inline std::string type_name() {
         return demangle(typeid(T).name());
+    }
+
+    // Replace all occurrences of `from` with `to` in-place
+    static void replace_all(std::string& str, std::string_view from, std::string_view to) {
+        size_t fromLen = from.size();
+        size_t toLen   = to.size();
+        size_t pos     = 0;
+
+        while ((pos = str.find(from, pos)) != std::string::npos) {
+            str.replace(pos, fromLen, to);
+            pos += toLen;
+        }
+    }
+
+    inline std::string cleanup_typename(std::string typeName) {
+        // 1. Remove known useless namespace prefixes
+        static std::array<std::string_view, 3> builtin_namespaces{
+          {"std::__cxx11::", "std::", "webpp::"}
+        };
+        for (auto const ns_str : builtin_namespaces) {
+            replace_all(typeName, ns_str, "");
+        }
+
+        // 2. Replace common verbose STL template types with shorthand
+        // --- strings ---
+        replace_all(typeName, "basic_string<char, char_traits<char>, allocator<char> >", "string");
+        replace_all(typeName, "basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> >", "wstring");
+        replace_all(typeName, "basic_string<char8_t, char_traits<char8_t>, allocator<char8_t> >", "u8string");
+        replace_all(typeName, "basic_string<char16_t, char_traits<char16_t>, allocator<char16_t> >", "u16string");
+        replace_all(typeName, "basic_string<char32_t, char_traits<char32_t>, allocator<char32_t> >", "u32string");
+
+        // --- string_views ---
+        replace_all(typeName, "basic_string_view<char, char_traits<char> >", "string_view");
+        replace_all(typeName, "basic_string_view<wchar_t, char_traits<wchar_t> >", "wstring_view");
+        replace_all(typeName, "basic_string_view<char8_t, char_traits<char8_t> >", "u8string_view");
+        replace_all(typeName, "basic_string_view<char16_t, char_traits<char16_t> >", "u16string_view");
+        replace_all(typeName, "basic_string_view<char32_t, char_traits<char32_t> >", "u32string_view");
+
+        // --- stringstream/iostream types ---
+        replace_all(typeName, "basic_ostringstream<char, char_traits<char>, allocator<char> >", "ostringstream");
+        replace_all(typeName, "basic_istringstream<char, char_traits<char>, allocator<char> >", "istringstream");
+        replace_all(typeName, "basic_stringstream<char, char_traits<char>, allocator<char> >", "stringstream");
+        replace_all(typeName, "basic_ostream<char, char_traits<char> >", "ostream");
+        replace_all(typeName, "basic_istream<char, char_traits<char> >", "istream");
+
+        // --- common containers (if you allow) ---
+        replace_all(typeName, "std::vector<", "vector<");
+        replace_all(typeName, "std::optional<", "optional<");
+        replace_all(typeName, "std::unique_ptr<", "unique_ptr<");
+        replace_all(typeName, "std::shared_ptr<", "shared_ptr<");
+
+        // 3. Clean up simple whitespace (optional, minimal)
+        while (!typeName.empty() && typeName.front() == ' ') {
+            typeName.erase(typeName.begin());
+        }
+        while (!typeName.empty() && typeName.back() == ' ') {
+            typeName.pop_back();
+        }
+
+        return typeName;
     }
 
     // -------------------- Traits --------------------
@@ -573,71 +641,289 @@ namespace testing {
 
 
 
-    template <typename T>
-    inline std::string serialize(T const& value);
 
-    template <typename T>
-    concept StringLike = std::is_convertible_v<T, std::string_view>;
+    namespace detail {
 
-    template <typename T>
-    concept CharType = std::is_same_v<T, char> || std::is_same_v<T, unsigned char> || std::is_same_v<T, signed char> ||
-                       std::is_same_v<T, char32_t> || std::is_same_v<T, char8_t> || std::is_same_v<T, char16_t>;
+        // is_specialization_of helper
+        template <template <typename...> class Template, typename T>
+        struct is_specialization_of_impl : std::false_type {};
 
-    template <typename T>
-    concept Iterable = requires(T t) {
-        std::begin(t);
-        std::end(t);
-    };
+        template <template <typename...> class Template, typename... Args>
+        struct is_specialization_of_impl<Template, Template<Args...>> : std::true_type {};
 
-    template <typename T>
-    concept Streamable = requires(std::ostream& os, T const& v) {
-        {
-            os << v
-        } -> std::same_as<std::ostream&>;
-    };
+        template <template <typename...> class Template, typename T>
+        constexpr bool is_specialization_of_v = is_specialization_of_impl<Template, std::remove_cvref_t<T>>::value;
+
+        // Detect free to_string via ADL, but exclude arithmetic and string-like types so we don't override
+        // numbers/strings.
+        template <typename T>
+        concept StringLike = std::is_convertible_v<T, std::string_view>;
+
+        template <typename T>
+        concept CharLike =
+          std::same_as<std::remove_cv_t<T>, char> || std::same_as<std::remove_cv_t<T>, unsigned char> ||
+          std::same_as<std::remove_cv_t<T>, signed char> || std::same_as<std::remove_cv_t<T>, char16_t> ||
+          std::same_as<std::remove_cv_t<T>, char8_t> || std::same_as<std::remove_cv_t<T>, char32_t> ||
+          std::same_as<std::remove_cv_t<T>, wchar_t>;
+
+        // arrays of character types (e.g. char32_t[4])
+        template <typename T>
+        concept CharArrayLike = std::is_array_v<T> && CharLike<std::remove_all_extents_t<T>>;
+
+        // Free to_string via ADL but exclude arithmetic and string-like
+        template <typename T>
+        concept HasFreeToString = (!std::is_arithmetic_v<T> && !StringLike<T>) && requires(T const& v) {
+            {
+                to_string(v)
+            } -> std::convertible_to<std::string>;
+        };
+
+        // Streamable
+        template <typename T>
+        concept Streamable = requires(std::ostream& os, T const& v) {
+            {
+                os << v
+            } -> std::same_as<std::ostream&>;
+        };
+
+        // Iterable (has begin/end)
+        template <typename T>
+        concept Iterable = requires(T t) {
+            std::begin(t);
+            std::end(t);
+        };
+
+        // Safely detect tuple_size existence without instantiating tuple_size_v unguarded
+        template <typename T>
+        concept HasTupleSize = requires { typename std::tuple_size<T>::type; };
+
+        // optional-like detection
+        template <typename T>
+        concept OptionalLike = is_specialization_of_v<std::optional, T>;
+
+#if __has_include(<expected>)
+        template <typename T>
+        concept ExpectedLike = is_specialization_of_v<std::expected, T>;
+#else
+        template <typename T>
+        concept ExpectedLike = false;
+#endif
+
+        // helpers for escaping
+        inline std::string hex_u32(uint32_t const uch, int const digits) {
+            std::ostringstream oss;
+            oss << std::hex << std::uppercase << std::setfill('0') << std::setw(digits)
+                << (uch & ((digits == 8) ? 0xFFFF'FFFFU : (digits == 4 ? 0xFFFFU : 0xFFU)));
+            return oss.str();
+        }
+
+        template <typename C>
+        std::string escape_codepoint(C const inp) {
+            if (inp == 0) {
+                return {"\\0"};
+            }
+            // produce either printable char (if ascii printable) or an escape (\x, \u, \U)
+            if constexpr (sizeof(C) == 1) {
+                auto const uch = static_cast<unsigned char>(inp);
+                if (std::isprint(uch)) {
+                    return {1, static_cast<char>(uch)};
+                }
+                std::ostringstream oss;
+                oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(uch);
+                return oss.str();
+
+            } else if constexpr (sizeof(C) == 2) {
+                // 16-bit: \uXXXX
+                auto const uch = static_cast<std::uint16_t>(inp);
+                if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
+                    return {1, static_cast<char>(uch)};
+                }
+                return std::string("\\u") + hex_u32(uch, 4);
+
+            } else { // sizeof >= 4
+                auto const uch = static_cast<uint32_t>(inp);
+                if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
+                    return {1, static_cast<char>(uch)};
+                }
+                return std::string("\\U") + hex_u32(uch, 8);
+            }
+        }
+
+        template <typename C>
+        char const* char_literal_prefix() {
+            if constexpr (std::same_as<std::remove_cv_t<C>, char>) {
+                return "";
+            }
+            if constexpr (std::same_as<std::remove_cv_t<C>, char16_t>) {
+                return "u";
+            }
+            if constexpr (std::same_as<std::remove_cv_t<C>, char32_t>) {
+                return "U";
+            }
+            if constexpr (std::same_as<std::remove_cv_t<C>, wchar_t>) {
+                return "L";
+            }
+            return "";
+        }
+
+    } // namespace detail
 
     template <typename T>
     inline std::string serialize(T const& value) {
-        std::ostringstream oss;
-        if constexpr (StringLike<T>) {
-            // Escape non-printable chars
+        using U = std::remove_cvref_t<T>;
+
+        // demangle the static type once and prefix with color
+        std::string demangled_type = cleanup_typename(type_name<U>());
+        std::string type_prefix    = std::string(color::GREY) + demangled_type + std::string(color::RESET) + " ";
+
+        // 1) ADL to_string for non-arithmetic non-stringlike types
+        if constexpr (detail::HasFreeToString<U>) {
+            return type_prefix + to_string(value);
+        }
+
+        else if constexpr (std::same_as<U, bool>)
+        {
+            return type_prefix + (value ? "true" : "false");
+        }
+
+        // 2) char-array-like (e.g. char[N], char16_t[N], char32_t[N]) -> treat as string of codepoints
+        else if constexpr (detail::CharArrayLike<U>)
+        {
+            using Elem                = std::remove_all_extents_t<U>;
+            constexpr auto     Length = std::extent_v<U>;
+            std::ostringstream oss;
+            oss << detail::char_literal_prefix<Elem>() << '"';
+            for (std::size_t i = 0; i < Length; ++i) {
+                // value is array, get element via pointer arithmetic
+                // We can't index with value[i] because T may decay — so cast
+                Elem const* base = reinterpret_cast<Elem const*>(&value);
+                oss << detail::escape_codepoint(base[i]);
+            }
             oss << '"';
-            for (unsigned char c : std::string_view(value)) {
-                if (std::isprint(c)) {
-                    oss << c;
+            return type_prefix + oss.str();
+        }
+
+        // 3) string-like (std::string, std::string_view, C-style char const*)
+        else if constexpr (detail::StringLike<U>)
+        {
+            std::ostringstream oss;
+            oss << '"';
+            for (auto const uch : std::string_view(value)) {
+                if (std::isprint(uch)) {
+                    oss << uch;
                 } else {
-                    oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+                    oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(uch);
+                    oss << std::dec << std::setfill(' ');
                 }
             }
             oss << '"';
-            return oss.str();
-        } else if constexpr (CharType<T>) {
-            if (std::isprint(static_cast<unsigned char>(value))) {
-                return std::string("'") + std::to_string(static_cast<std::int32_t>(value)) + "'";
-            }
-            oss << "'\\x" << std::hex << std::setw(2) << std::setfill('0')
-                << static_cast<int>(static_cast<unsigned char>(value)) << "'";
-            return oss.str();
+            return type_prefix + oss.str();
+        }
 
-        } else if constexpr (std::is_pointer_v<T>) {
-            if (value == nullptr) {
-                return "nullptr";
+        // 4) single character types (char, char16_t, char32_t, wchar_t, signed/unsigned char)
+        else if constexpr (detail::CharLike<U> && !std::is_array_v<U>)
+        {
+            std::ostringstream oss;
+            char const*        pfx = detail::char_literal_prefix<U>();
+            oss << pfx;
+            // printable only reliably works for ASCII; for non-ascii we'll use escapes
+            if constexpr (sizeof(U) == 1) {
+                auto const uch = static_cast<unsigned char>(value);
+                if (std::isprint(uch)) {
+                    oss << '\'' << static_cast<char>(value) << '\'';
+                } else {
+                    oss << "'\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(uch) << '\'';
+                }
+            } else if constexpr (sizeof(U) == 2) {
+                auto const uch = static_cast<uint16_t>(value);
+                if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
+                    oss << '\'' << static_cast<char>(uch) << '\'';
+                } else {
+                    oss << "'\\u" << detail::hex_u32(uch, 4) << '\'';
+                }
+            } else {
+                auto const uch = static_cast<uint32_t>(value);
+                if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
+                    oss << '\'' << static_cast<char>(uch) << '\'';
+                } else {
+                    oss << "'\\U" << detail::hex_u32(uch, 8) << '\'';
+                }
             }
+            return type_prefix + oss.str();
+        }
+
+        // 5) null pointer / pointer
+        else if constexpr (std::is_pointer_v<U>)
+        {
+            if (value == nullptr) {
+                return type_prefix + std::string("nullptr");
+            }
+            std::ostringstream oss;
             oss << "ptr(" << static_cast<void const*>(value) << ")";
-            return oss.str();
-        } else if constexpr (std::is_arithmetic_v<T>) {
-            // Numbers
-            if constexpr (std::is_floating_point_v<T>) {
+            return type_prefix + oss.str();
+        }
+
+        // 6) arithmetic
+        else if constexpr (std::is_arithmetic_v<U>)
+        {
+            std::ostringstream oss;
+            if constexpr (std::is_floating_point_v<U>) {
                 oss << std::setprecision(8);
             }
             oss << value;
-            return oss.str();
-        } else if constexpr (std::is_enum_v<T>) {
-            using U = std::underlying_type_t<T>;
-            oss << static_cast<U>(value);
-            return oss.str();
-        } else if constexpr (Iterable<T> && !StringLike<T>) {
-            // Containers (vector, array, set, map, etc.)
+            return type_prefix + oss.str();
+        }
+
+        // 7) enum
+        else if constexpr (std::is_enum_v<U>)
+        {
+            using EU = std::underlying_type_t<U>;
+            std::ostringstream oss;
+            oss << static_cast<EU>(value);
+            return type_prefix + oss.str();
+        }
+
+        // 8) optional
+        else if constexpr (detail::OptionalLike<U>)
+        {
+            if (value.has_value()) {
+                return type_prefix + std::string("optional(") + serialize(*value) + ")";
+            }
+            return type_prefix + std::string("nullopt");
+
+        }
+
+        // 9) expected (guarded by include availability)
+#if __has_include(<expected>)
+        else if constexpr (detail::ExpectedLike<U>)
+        {
+            if (value.has_value()) {
+                return type_prefix + std::string("expected(value=") + serialize(value.value()) + ")";
+            }
+            return type_prefix + std::string("expected(error=") + serialize(value.error()) + ")";
+
+        }
+#endif
+
+        // 10) tuple-like (only when std::tuple_size<T> exists and apply works)
+        else if constexpr (detail::HasTupleSize<U> && requires { std::apply([](auto&&...) {}, std::declval<U>()); })
+        {
+            std::ostringstream oss;
+            oss << "(";
+            bool first = true;
+            std::apply(
+              [&](auto const&... elems) {
+                  ((oss << (first ? "" : ", ") << serialize(elems), first = false), ...);
+              },
+              value);
+            oss << ")";
+            return type_prefix + oss.str();
+        }
+
+        // 11) iterable containers (but not string-like)
+        else if constexpr (detail::Iterable<U> && !detail::StringLike<U>)
+        {
+            std::ostringstream oss;
             oss << "{";
             bool first = true;
             for (auto const& elem : value) {
@@ -648,19 +934,25 @@ namespace testing {
                 oss << serialize(elem);
             }
             oss << "}";
-            return oss.str();
-        } else if constexpr (Streamable<T>) {
-            // Anything with operator<<
+            return type_prefix + oss.str();
+        }
+
+        // 12) streamable fallback
+        else if constexpr (detail::Streamable<U>)
+        {
+            std::ostringstream oss;
             oss << value;
-            return oss.str();
-        } else {
-            // Fallback: show typeid and address
-            oss << "<" << typeid(T).name() << "@" << &value << ">";
-            return oss.str();
+            return type_prefix + oss.str();
+        }
+
+        // 13) ultimate fallback
+        else
+        {
+            std::ostringstream oss;
+            oss << "<" << demangled_type << "@" << &value << ">";
+            return std::string(color::YELLOW) + oss.str() + std::string(color::RESET);
         }
     }
-
-
 
 } // namespace testing
 
