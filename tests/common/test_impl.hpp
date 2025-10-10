@@ -23,7 +23,6 @@ namespace testing {
         std::string_view         name;
         func_type                func{};
         std::chrono::nanoseconds duration_ns{};
-        bool                     failed = false;
     };
 
     // -------------------- Assertion infra --------------------
@@ -71,7 +70,6 @@ namespace testing {
                 ++m_successes;
             } else [[unlikely]] {
                 ++m_failures;
-                current_test().failed = true;
             }
         }
 
@@ -231,14 +229,15 @@ namespace testing {
                 handle_failure();
                 // failed_tests.emplace_back(&test);
             }
-            failures          = reg.failures() - failures;
-            assertions        = reg.assertions() - assertions;
-            successes         = reg.successes() - successes;
-            auto const dur    = std::chrono::duration_cast<nanoseconds>(endp - start);
-            auto const color  = failures != 0 ? color::RED : color::GREEN;
-            test.duration_ns  = dur;
-            total_ns         += dur;
-            if (test.failed) {
+            failures              = reg.failures() - failures;
+            assertions            = reg.assertions() - assertions;
+            successes             = reg.successes() - successes;
+            bool const is_failed  = failures != 0;
+            auto const dur        = std::chrono::duration_cast<nanoseconds>(endp - start);
+            auto const color      = is_failed ? color::RED : color::GREEN;
+            test.duration_ns      = dur;
+            total_ns             += dur;
+            if (is_failed) {
                 cout << "\n" << color << "[  FAILED  ] ";
             } else {
                 cout << "\r" << color << "[       OK ] ";
