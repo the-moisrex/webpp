@@ -30,8 +30,10 @@ namespace testing {
     struct alignas(128) assert_context {
         std::string_view file;
         int              line = 0;
-        std::string      expr1;
-        std::string      expr2;
+        std::string_view lhs_expr;
+        std::string_view rhs_expr;
+        std::string      lhs_value;
+        std::string      rhs_value;
         std::string_view macro_name;
         std::string      extra;
         bool             success = true;
@@ -40,27 +42,6 @@ namespace testing {
     inline test_info& current_test() {
         static test_info test;
         return test;
-    }
-
-    [[nodiscard]] inline std::string message(assert_context const& ctx) {
-        std::ostringstream oss;
-        if (!ctx.success) {
-            oss << color::RED << ctx.macro_name << " failed: " << color::RESET;
-            oss << ctx.expr1;
-            if (!ctx.expr2.empty()) {
-                oss << " vs " << ctx.expr2;
-            }
-            if (!ctx.extra.empty()) {
-                oss << "\n  " << ctx.extra;
-            }
-            oss << "\n  (" << ctx.file << ":" << ctx.line << ")";
-        } else {
-            oss << color::GREEN << ctx.macro_name << " OK: " << color::RESET << ctx.expr1;
-            if (!ctx.expr2.empty()) {
-                oss << " vs " << ctx.expr2;
-            }
-        }
-        return oss.str();
     }
 
     struct registry {
@@ -125,6 +106,30 @@ namespace testing {
         atomic_int_type        m_successes{};  // NOLINT
     };
 
+    inline void handle_failure(std::exception const& err) {
+        std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << color::RESET << err.what() << "\n";
+    }
+
+    inline void handle_failure(assert_context const& ctx) {
+        using std::cerr;
+
+        cerr << '\n' << color::RED << ctx.macro_name << " Failed: " << color::RESET;
+        cerr << ctx.file << ":" << ctx.line << '\n';
+        cerr << "  LHS:      " << color::YELLOW << ctx.lhs_expr << color::RESET << '\n';
+        if (!ctx.rhs_expr.empty()) {
+            cerr << "  RHS:      " << color::YELLOW << ctx.rhs_expr << color::RESET << '\n';
+        }
+        cerr << "  Value:    " << color::RED << ctx.lhs_value << color::RESET << '\n';
+        if (!ctx.rhs_value.empty()) {
+            cerr << "  Expected: " << color::RED << ctx.rhs_value << color::RESET << '\n';
+        }
+        cerr << color::GREY << ctx.extra << color::RESET << '\n';
+    }
+
+    inline void handle_failure() {
+        std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
+    }
+
     struct assert_result {
         assert_result(assert_result const&)            = default;
         assert_result(assert_result&&)                 = delete;
@@ -135,46 +140,50 @@ namespace testing {
           bool             success,
           std::string_view file,
           int              line,
-          std::string      expr1,
-          std::string      expr2,
+          std::string_view lhs_expr,
+          std::string_view rhs_expr,
+          std::string      lhs_val,
+          std::string      rhs_val,
           std::string_view macro_name)
-          : ctx_() {
-            ctx_.success    = success;
-            ctx_.file       = file;
-            ctx_.line       = line;
-            ctx_.expr1      = std::move(expr1);
-            ctx_.expr2      = std::move(expr2);
-            ctx_.macro_name = macro_name;
+          : ctx() {
+            ctx.success    = success;
+            ctx.file       = file;
+            ctx.line       = line;
+            ctx.lhs_expr   = lhs_expr;
+            ctx.rhs_expr   = rhs_expr;
+            ctx.lhs_value  = std::move(lhs_val);
+            ctx.rhs_value  = std::move(rhs_val);
+            ctx.macro_name = macro_name;
         }
 
         template <typename T>
         assert_result& operator<<(T&& value) {
             // We don't need to print anything when the test is passed
-            if (ctx_.success) [[likely]] {
+            if (ctx.success) [[likely]] {
                 return *this;
             }
 
             std::ostringstream tmp;
             tmp << std::forward<T>(value);
-            if (!ctx_.extra.empty()) {
-                ctx_.extra += " ";
+            if (!ctx.extra.empty()) {
+                ctx.extra += " ";
             }
-            ctx_.extra += tmp.str();
+            ctx.extra += tmp.str();
             return *this;
         }
 
         ~assert_result() {
-            if (!ctx_.success) {
-                std::cerr << message(ctx_) << "\n";
+            if (!ctx.success) {
+                handle_failure(ctx);
             }
         }
 
         [[nodiscard]] bool ok() const {
-            return ctx_.success;
+            return ctx.success;
         }
 
       private:
-        assert_context ctx_;
+        assert_context ctx;
     };
 
     // -------------------- TEST machinery --------------------
@@ -190,9 +199,9 @@ namespace testing {
         auto const                     length = static_cast<float>(tests.size());
         std::chrono::time_point<clock> start{};
         std::chrono::time_point<clock> endp{};
-        std::vector<test_info*>        failed_tests;
+        // std::vector<test_info*>        failed_tests;
 
-        cout << color::CYAN << "[==========] Running " << tests.size() << " tests.\n" << color::RESET;
+        cout << color::CYAN << "[ ======== ] Running " << tests.size() << " tests.\n" << color::RESET;
         for (test_info& test : tests) {
             auto const percentage = static_cast<int>(index / length * 100.0F);
 
@@ -215,12 +224,12 @@ namespace testing {
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
                 counter.stop();
 #endif
-            } catch (std::exception const& ex) {
-                std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << ex.what() << color::RESET << "\n";
-                failed_tests.emplace_back(&test);
+            } catch (std::exception const& err) {
+                handle_failure(err);
+                // failed_tests.emplace_back(&test);
             } catch (...) {
-                std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
-                failed_tests.emplace_back(&test);
+                handle_failure();
+                // failed_tests.emplace_back(&test);
             }
             failures          = reg.failures() - failures;
             assertions        = reg.assertions() - assertions;
@@ -311,8 +320,10 @@ namespace testing {
           is_ok,
           file,
           line,
-          !is_ok ? std::string(exprA) + " (" + stream_to_string(lhs) + ")" : "",
-          !is_ok ? std::string(exprB) + " (" + stream_to_string(rhs) + ")" : "",
+          exprA,
+          exprB,
+          !is_ok ? serialize(lhs) : "",
+          !is_ok ? serialize(rhs) : "",
           macro_name};
     }
 
@@ -325,12 +336,7 @@ namespace testing {
       std::string_view macro_name) {
         bool const is_ok = expect_true ? value : !value;
         registry::instance().asserted(is_ok);
-        return {is_ok,
-                file,
-                line,
-                !is_ok ? std::string(expr) + " (" + (value ? "true" : "false") + ")" : "",
-                "",
-                macro_name};
+        return {is_ok, file, line, expr, "", !is_ok ? serialize(value) : "", "", macro_name};
     }
 
 #define EXPECT_EQ(a, b) \

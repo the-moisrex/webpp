@@ -1,15 +1,21 @@
 #ifndef WEBPP_TESTS_TEST_UTILITIES_HPP
 #define WEBPP_TESTS_TEST_UTILITIES_HPP
 
+#include <array>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 #if defined(__GNUG__)
 #    include <cxxabi.h>
@@ -564,6 +570,96 @@ namespace testing {
     };
 
 #endif // __linux__
+
+
+
+    template <typename T>
+    inline std::string serialize(T const& value);
+
+    template <typename T>
+    concept StringLike = std::is_convertible_v<T, std::string_view>;
+
+    template <typename T>
+    concept CharType = std::is_same_v<T, char> || std::is_same_v<T, unsigned char> || std::is_same_v<T, signed char> ||
+                       std::is_same_v<T, char32_t> || std::is_same_v<T, char8_t> || std::is_same_v<T, char16_t>;
+
+    template <typename T>
+    concept Iterable = requires(T t) {
+        std::begin(t);
+        std::end(t);
+    };
+
+    template <typename T>
+    concept Streamable = requires(std::ostream& os, T const& v) {
+        {
+            os << v
+        } -> std::same_as<std::ostream&>;
+    };
+
+    template <typename T>
+    inline std::string serialize(T const& value) {
+        std::ostringstream oss;
+        if constexpr (StringLike<T>) {
+            // Escape non-printable chars
+            oss << '"';
+            for (unsigned char c : std::string_view(value)) {
+                if (std::isprint(c)) {
+                    oss << c;
+                } else {
+                    oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+                }
+            }
+            oss << '"';
+            return oss.str();
+        } else if constexpr (CharType<T>) {
+            if (std::isprint(static_cast<unsigned char>(value))) {
+                return std::string("'") + std::to_string(static_cast<std::int32_t>(value)) + "'";
+            }
+            oss << "'\\x" << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(static_cast<unsigned char>(value)) << "'";
+            return oss.str();
+
+        } else if constexpr (std::is_pointer_v<T>) {
+            if (value == nullptr) {
+                return "nullptr";
+            }
+            oss << "ptr(" << static_cast<void const*>(value) << ")";
+            return oss.str();
+        } else if constexpr (std::is_arithmetic_v<T>) {
+            // Numbers
+            if constexpr (std::is_floating_point_v<T>) {
+                oss << std::setprecision(8);
+            }
+            oss << value;
+            return oss.str();
+        } else if constexpr (std::is_enum_v<T>) {
+            using U = std::underlying_type_t<T>;
+            oss << static_cast<U>(value);
+            return oss.str();
+        } else if constexpr (Iterable<T> && !StringLike<T>) {
+            // Containers (vector, array, set, map, etc.)
+            oss << "{";
+            bool first = true;
+            for (auto const& elem : value) {
+                if (!first) {
+                    oss << ", ";
+                }
+                first = false;
+                oss << serialize(elem);
+            }
+            oss << "}";
+            return oss.str();
+        } else if constexpr (Streamable<T>) {
+            // Anything with operator<<
+            oss << value;
+            return oss.str();
+        } else {
+            // Fallback: show typeid and address
+            oss << "<" << typeid(T).name() << "@" << &value << ">";
+            return oss.str();
+        }
+    }
+
 
 
 } // namespace testing
