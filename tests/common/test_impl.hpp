@@ -242,9 +242,9 @@ namespace testing {
                 cout << color::GREY << " (" << successes << " asserts)" << color::RESET;
             }
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
-            cout << color::PURPLE << " (";
+            cout << color::PURPLE << " ";
             counter.print_anomalies(cout);
-            cout << ")" << color::RESET;
+            cout << color::RESET;
 #endif
             cout << '\n' << std::flush;
             ++index;
@@ -270,16 +270,29 @@ namespace testing {
     }
 
 // -------------------- Macros --------------------
+// NOLINTBEGIN(*)
 #define TEST(test_suite_name, test_name)                                                                             \
-    void test_suite_name##test_name();                                                                               \
-    namespace details {                                                                                              \
-        static int test_suite_name##test_name##Detail =                                                              \
-          (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name), \
-           0);                                                                                                       \
-    }                                                                                                                \
-    void test_suite_name##test_name()
+    static void      test_suite_name##test_name();                                                                   \
+    static const int test_suite_name##test_name##Detail =                                                            \
+      (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name), 0); \
+    static void test_suite_name##test_name()
+    // NOLINTEND(*)
 
-#define TEST_F(test_fixture, test_name) TEST(test_fixture, test_name)
+// NOLINTBEGIN(*)
+#define TEST_F(test_suite_name, test_name)                                                                             \
+    struct test_suite_name##test_name : test_suite_name {                                                              \
+        void body();                                                                                                   \
+    };                                                                                                                 \
+    static constinit test_suite_name##test_name test_suite_name##test_name##Instance;                                  \
+    static void                                 test_suite_name##test_name##Func() {                                   \
+        test_suite_name##test_name##Instance.body();                                   \
+    }                                                                                                                  \
+    static const int test_suite_name##test_name##Detail =                                                              \
+      (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name##Func), \
+       0);                                                                                                             \
+    void test_suite_name##test_name::body()
+
+    // NOLINTEND(*)
 
     // Generalized helpers to reduce duplication across make_* functions
     template <typename A, typename B, typename Predicate>
@@ -383,32 +396,44 @@ namespace testing {
     template <typename... Ts>
     struct ForEachType<Types<Ts...>> {
         template <typename F>
-        static void apply(F&& f) {
-            (f.template operator()<Ts>(), ...);
+        static void apply(F&& func) {
+            (func.template operator()<Ts>(), ...);
         }
     };
 
-#define TYPED_TEST_SUITE(test_suite_name, ...) using WEBPP_CONCAT(test_suite_name, _Types) = __VA_ARGS__;
+    struct Test {
+        virtual void SetUp() {}
 
-#define TYPED_TEST(test_suite_name, test_name)                                                              \
-    template <typename TypeParam>                                                                           \
-    void WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)();                                         \
-    namespace {                                                                                             \
-        struct WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) {                                    \
-            WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar)() {                                     \
-                using TL = WEBPP_CONCAT(test_suite_name, _Types);                                           \
-                ::testing::ForEachType<TL>::apply([&]<typename T>() {                                       \
-                    std::string composed = std::string(#test_name) + "<" + ::testing::type_name<T>() + ">"; \
-                    ::testing::register_test(#test_suite_name, composed.c_str(), []() {                     \
-                        WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)<T>();                       \
-                    });                                                                                     \
-                });                                                                                         \
-            }                                                                                               \
-        };                                                                                                  \
-        static WEBPP_CONCAT(test_suite_name, _##test_name##_Registrar) WEBPP_UNIQUE_NAME(_typed_reg_);      \
-    }                                                                                                       \
-    template <typename TypeParam>                                                                           \
-    void WEBPP_CONCAT(test_suite_name, _##test_name##_TypedTest)()
+        virtual void TearDown() {}
+    };
+
+#define TYPED_TEST_SUITE(test_suite_name, ...) using test_suite_name##Types = __VA_ARGS__;
+
+// NOLINTBEGIN(*)
+#define TYPED_TEST(test_suite_name, test_name)                                                     \
+    template <typename TypeParam>                                                                  \
+    struct test_suite_name##test_name : test_suite_name<TypeParam> {                               \
+        void body();                                                                               \
+    };                                                                                             \
+    template <typename TypeParam>                                                                  \
+    static void test_suite_name##test_name##Func() {                                               \
+        test_suite_name##test_name<TypeParam> instance;                                            \
+        instance.SetUp();                                                                          \
+        instance.body();                                                                           \
+        instance.TearDown();                                                                       \
+    }                                                                                              \
+    static const int test_suite_name##test_name##Detail =                                          \
+      (::testing::ForEachType<test_suite_name##Types>::apply([]<typename T>() {                    \
+           std::string composed = std::string(#test_name) + "<" + ::testing::type_name<T>() + ">"; \
+           ::testing::registry::instance().register_test(                                          \
+             #test_suite_name,                                                                     \
+             #test_name,                                                                           \
+             &test_suite_name##test_name##Func<T>);                                                \
+       }),                                                                                         \
+       0);                                                                                         \
+    template <typename TypeParam>                                                                  \
+    void test_suite_name##test_name<TypeParam>::body()
+    // NOLINTEND(*)
 
 } // namespace testing
 

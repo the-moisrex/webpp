@@ -496,7 +496,7 @@ namespace testing {
             // 2) IPC range check
             if (cycles > 0 && ins > 0) {
                 double const ipc = static_cast<double>(ins) / static_cast<double>(cycles);
-                if (!(ipc >= PERF_TC_MIN_IPC && ipc <= PERF_TC_MAX_IPC)) {
+                if (ipc < PERF_TC_MIN_IPC || ipc > PERF_TC_MAX_IPC) {
                     oss << "[ANOMALY] IPC out of range: " << ipc << " (ins=" << ins << ", cycles=" << cycles << ")";
                     ++anomaly_count;
                 }
@@ -533,7 +533,7 @@ namespace testing {
             // 5) cycles vs ref-cpu-cycles discrepancy
             if (refc > 0 && cycles > 0) {
                 double const ratio = static_cast<double>(cycles) / static_cast<double>(refc);
-                if (!(ratio >= PERF_TC_REF_CYC_LOW && ratio <= PERF_TC_REF_CYC_HIGH)) {
+                if (ratio < PERF_TC_REF_CYC_LOW || ratio > PERF_TC_REF_CYC_HIGH) {
                     oss << "[ANOMALY] cycles vs ref-cpu-cycles ratio suspicious: " << ratio << " (cycles=" << cycles
                         << ", ref_cycles=" << refc << ")";
                     ++anomaly_count;
@@ -549,16 +549,11 @@ namespace testing {
             }
 
             // Decide whether to actually print summary vs being quiet (debug builds prefer being quiet).
-#    if defined(PERF_COUNTERS_DEBUG_BUILD)
-            const int required = PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT;
-#    else
-            const int required = PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT;
-#    endif
-
-            if (anomaly_count < required) {
-                // In debug we avoid printing trivial results; in release required==1 so this will not suppress.
-                // oss << "No significant anomalies detected (anomaly_count=" << anomaly_count << ").";
-            }
+            // int const required = PERF_TC_DEBUG_MIN_ANOMALIES_TO_PRINT;
+            // if (anomaly_count < required) {
+            //     // In debug we avoid printing trivial results; in release required==1 so this will not suppress.
+            //     // oss << "No significant anomalies detected (anomaly_count=" << anomaly_count << ").";
+            // }
         }
 
         void print_verbose(std::ostream& oss = std::cout) const noexcept {

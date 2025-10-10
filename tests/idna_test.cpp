@@ -13,6 +13,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <set>
 
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
 using namespace webpp;
@@ -1278,7 +1279,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         std::string       to_ascii_n_exp        = unescape(trim(parts[3]));
         std::string       to_ascii_n_status_str = std::string(trim(parts[4]));
 
-        SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + source + " | line: " + line);
+        // SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + source + " | line: " + line);
 
         if (to_unicode_exp.empty() && source != "\"\"") {
             to_unicode_exp = source;
@@ -1337,7 +1338,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             auto relaxed_options = unicode::idna::strict_idna_options;
 
             // Disable checks corresponding to the errors on this line
-            SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
+            // SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
             std::string debug_str;
             for (auto const& error_code : expected_errors) {
                 char prefix = error_code.empty() ? ' ' : error_code[0];
@@ -1380,7 +1381,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 }
             }
 
-            SCOPED_TRACE(debug_str);
+            // SCOPED_TRACE(debug_str);
 
             // If all errors are ignorable by our relaxed options, this call should now succeed.
             // if (all_errors_ignored(expected_errors, relaxed_options)) {
