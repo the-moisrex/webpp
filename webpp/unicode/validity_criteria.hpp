@@ -379,7 +379,7 @@ namespace webpp::unicode::idna {
         using enum validity_criteria_status;
 
         // todo: use sentinels to optimize the double passing
-        validity_criteria_status_type status = valid;
+        validity_criteria_status_type status = +valid;
         for (Iter beg = spos; spos != send;) {
             if (*spos != '.') [[likely]] {
                 ++spos;

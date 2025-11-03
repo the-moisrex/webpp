@@ -52,11 +52,12 @@ namespace testing {
     // -------------------- Utilities --------------------
     inline std::string demangle(std::string_view name) {
 #if defined(__GNUG__)
-        int   status = 0;
-        char* dem    = abi::__cxa_demangle(name.data(), nullptr, nullptr, &status);
+        int status = 0;
+        // NOLINTNEXTLINE(*-data-usage)
+        char* dem  = abi::__cxa_demangle(name.data(), nullptr, nullptr, &status);
         if (dem != nullptr) {
             std::string copy(dem);
-            ::free(dem);
+            ::free(dem); // NOLINT(*-malloc, *-memory)
             return copy;
         }
         return std::string(name);
@@ -151,17 +152,14 @@ namespace testing {
 
     // -------------------- Helper --------------------
     template <typename L, typename R, typename Op>
-    constexpr bool safe_compare_op(L const& lhs, R const& rhs, Op&& op) noexcept {
-        if constexpr (both_standard_integers_v<L, R>) {
-            // Use std::cmp_* for safe mixed signedness integer comparison
-            return op(lhs, rhs);
-        } else if constexpr (std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
+    constexpr bool safe_compare_op(L const& lhs, R const& rhs, Op&& opr) noexcept {
+        if constexpr (!both_standard_integers_v<L, R> && std::is_arithmetic_v<L> && std::is_arithmetic_v<R>) {
             // Safe numeric fallback for char32_t, float, etc.
             using Common = std::common_type_t<L, R>;
-            return op(static_cast<Common>(lhs), static_cast<Common>(rhs));
+            return std::forward<Op>(opr)(static_cast<Common>(lhs), static_cast<Common>(rhs));
         } else {
             // Generic types (strings, etc.)
-            return op(lhs, rhs);
+            return std::forward<Op>(opr)(lhs, rhs);
         }
     }
 
@@ -170,11 +168,11 @@ namespace testing {
     struct cmp_equal {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_equal(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_equal(left, right);
                 } else {
-                    return a == b;
+                    return left == right;
                 }
             });
         }
@@ -183,11 +181,11 @@ namespace testing {
     struct cmp_not_equal {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_not_equal(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_not_equal(left, right);
                 } else {
-                    return a != b;
+                    return left != right;
                 }
             });
         }
@@ -196,11 +194,11 @@ namespace testing {
     struct cmp_less {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_less(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_less(left, right);
                 } else {
-                    return a < b;
+                    return left < right;
                 }
             });
         }
@@ -209,11 +207,11 @@ namespace testing {
     struct cmp_greater {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_greater(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_greater(left, right);
                 } else {
-                    return a > b;
+                    return left > right;
                 }
             });
         }
@@ -222,11 +220,11 @@ namespace testing {
     struct cmp_less_equal {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_less_equal(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_less_equal(left, right);
                 } else {
-                    return a <= b;
+                    return left <= right;
                 }
             });
         }
@@ -235,11 +233,11 @@ namespace testing {
     struct cmp_greater_equal {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
-            return safe_compare_op(lhs, rhs, [](auto a, auto b) {
-                if constexpr (both_standard_integers_v<decltype(a), decltype(b)>) {
-                    return std::cmp_greater_equal(a, b);
+            return safe_compare_op(lhs, rhs, [](auto const& left, auto const& right) {
+                if constexpr (both_standard_integers_v<decltype(left), decltype(right)>) {
+                    return std::cmp_greater_equal(left, right);
                 } else {
-                    return a >= b;
+                    return left >= right;
                 }
             });
         }
@@ -359,6 +357,7 @@ namespace testing {
         }
 
         std::ostringstream oss;
+        // NOLINTNEXTLINE(*-nested-*)
         oss << unit->color << "(" << std::fixed << std::setprecision(value < 10 ? 3 : (value < 100.0 ? 2 : 1)) << value
             << " " << unit->name << ")" << color::RESET;
         return oss.str();
@@ -414,6 +413,7 @@ namespace testing {
         }
 
         void start() noexcept {
+            // NOLINTBEGIN(*-vararg)
             struct perf_event_attr attr{};
             std::memset(&attr, 0, sizeof(attr));
             attr.size           = sizeof(attr);
@@ -434,26 +434,28 @@ namespace testing {
 
             // Open remaining counters in the same group (keep fds open!)
             for (std::size_t i = 1; i < counters.size(); ++i) {
-                attr.type   = counters[i].type;
-                attr.config = counters[i].config;
-                fds_[i]     = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, group_fd_, 0));
+                attr.type   = counters.at(i).type;
+                attr.config = counters.at(i).config;
+                fds_.at(i)  = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, group_fd_, 0));
             }
 
             ioctl(group_fd_, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
             ioctl(group_fd_, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+            // NOLINTEND(*-vararg)
         }
 
         void stop() noexcept {
+            // NOLINTBEGIN(*-vararg)
             if (group_fd_ == -1) {
                 return;
             }
 
             ioctl(group_fd_, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
 
-            struct {
+            struct alignas(128) {
                 std::uint64_t nr;
 
-                struct {
+                struct alignas(16) {
                     std::uint64_t value;
                     std::uint64_t id;
                 } values[num_counters];
@@ -467,6 +469,7 @@ namespace testing {
             for (std::size_t i = 0; i < data.nr && i < counters.size(); ++i) {
                 counters[i].value = data.values[i].value;
             }
+            // NOLINTEND(*-vararg)
         }
 
         void print_short(std::ostream& oss = std::cout) const noexcept {
@@ -673,24 +676,20 @@ namespace testing {
         // Free to_string via ADL but exclude arithmetic and string-like
         template <typename T>
         concept HasFreeToString = (!std::is_arithmetic_v<T> && !StringLike<T>) && requires(T const& v) {
-            {
-                to_string(v)
-            } -> std::convertible_to<std::string>;
+            { to_string(v) } -> std::convertible_to<std::string>;
         };
 
         // Streamable
         template <typename T>
-        concept Streamable = requires(std::ostream& os, T const& v) {
-            {
-                os << v
-            } -> std::same_as<std::ostream&>;
+        concept Streamable = requires(std::ostream& out, T const& value) {
+            { out << value } -> std::same_as<std::ostream&>;
         };
 
         // Iterable (has begin/end)
         template <typename T>
-        concept Iterable = requires(T t) {
-            std::begin(t);
-            std::end(t);
+        concept Iterable = requires(T obj) {
+            std::begin(obj);
+            std::end(obj);
         };
 
         // Safely detect tuple_size existence without instantiating tuple_size_v unguarded
@@ -713,7 +712,7 @@ namespace testing {
         inline std::string hex_u32(uint32_t const uch, int const digits) {
             std::ostringstream oss;
             oss << std::hex << std::uppercase << std::setfill('0') << std::setw(digits)
-                << (uch & ((digits == 8) ? 0xFFFF'FFFFU : (digits == 4 ? 0xFFFFU : 0xFFU)));
+                << (uch & ((digits == 8) ? 0xFFFF'FFFFU : (digits == 4 ? 0xFFFFU : 0xFFU))); // NOLINT(*-nested-*)
             return oss.str();
         }
 
@@ -779,16 +778,10 @@ namespace testing {
         // 1) ADL to_string for non-arithmetic non-stringlike types
         if constexpr (detail::HasFreeToString<U>) {
             return type_prefix + to_string(value);
-        }
-
-        else if constexpr (std::same_as<U, bool>)
-        {
+        } else if constexpr (std::same_as<U, bool>) {
             return type_prefix + (value ? "true" : "false");
-        }
-
-        // 2) char-array-like (e.g. char[N], char16_t[N], char32_t[N]) -> treat as string of codepoints
-        else if constexpr (detail::CharArrayLike<U>)
-        {
+        } else if constexpr (detail::CharArrayLike<U>) {
+            // 2) char-array-like (e.g. char[N], char16_t[N], char32_t[N]) -> treat as string of codepoints
             using Elem                = std::remove_all_extents_t<U>;
             constexpr auto     Length = std::extent_v<U>;
             std::ostringstream oss;
@@ -801,11 +794,8 @@ namespace testing {
             }
             oss << '"';
             return type_prefix + oss.str();
-        }
-
-        // 3) string-like (std::string, std::string_view, C-style char const*)
-        else if constexpr (detail::StringLike<U>)
-        {
+        } else if constexpr (detail::StringLike<U>) {
+            // 3) string-like (std::string, std::string_view, C-style char const*)
             std::ostringstream oss;
             oss << '"';
             for (auto const uch : std::string_view(value)) {
@@ -818,11 +808,8 @@ namespace testing {
             }
             oss << '"';
             return type_prefix + oss.str();
-        }
-
-        // 4) single character types (char, char16_t, char32_t, wchar_t, signed/unsigned char)
-        else if constexpr (detail::CharLike<U> && !std::is_array_v<U>)
-        {
+        } else if constexpr (detail::CharLike<U> && !std::is_array_v<U>) {
+            // 4) single character types (char, char16_t, char32_t, wchar_t, signed/unsigned char)
             std::ostringstream oss;
             char const*        pfx = detail::char_literal_prefix<U>();
             oss << pfx;
@@ -850,53 +837,40 @@ namespace testing {
                 }
             }
             return type_prefix + oss.str();
-        }
-
-        // 5) null pointer / pointer
-        else if constexpr (std::is_pointer_v<U>)
-        {
+        } else if constexpr (std::is_pointer_v<U>) {
+            // 5) null pointer / pointer
             if (value == nullptr) {
                 return type_prefix + std::string("nullptr");
             }
             std::ostringstream oss;
             oss << "ptr(" << static_cast<void const*>(value) << ")";
             return type_prefix + oss.str();
-        }
-
-        // 6) arithmetic
-        else if constexpr (std::is_arithmetic_v<U>)
-        {
+        } else if constexpr (std::is_arithmetic_v<U>) {
+            // 6) arithmetic
             std::ostringstream oss;
             if constexpr (std::is_floating_point_v<U>) {
                 oss << std::setprecision(8);
             }
             oss << value;
             return type_prefix + oss.str();
-        }
-
-        // 7) enum
-        else if constexpr (std::is_enum_v<U>)
-        {
+        } else if constexpr (std::is_enum_v<U>) {
+            // 7) enum
             using EU = std::underlying_type_t<U>;
             std::ostringstream oss;
             oss << static_cast<EU>(value);
             return type_prefix + oss.str();
-        }
-
-        // 8) optional
-        else if constexpr (detail::OptionalLike<U>)
-        {
+        } else if constexpr (detail::OptionalLike<U>) {
+            // 8) optional
             if (value.has_value()) {
                 return type_prefix + std::string("optional(") + serialize(*value) + ")";
             }
             return type_prefix + std::string("nullopt");
 
         }
-
-        // 9) expected (guarded by include availability)
 #if __has_include(<expected>)
         else if constexpr (detail::ExpectedLike<U>)
         {
+            // 9) expected (guarded by include availability)
             if (value.has_value()) {
                 return type_prefix + std::string("expected(value=") + serialize(value.value()) + ")";
             }
@@ -905,9 +879,9 @@ namespace testing {
         }
 #endif
 
-        // 10) tuple-like (only when std::tuple_size<T> exists and apply works)
         else if constexpr (detail::HasTupleSize<U> && requires { std::apply([](auto&&...) {}, std::declval<U>()); })
         {
+            // 10) tuple-like (only when std::tuple_size<T> exists and apply works)
             std::ostringstream oss;
             oss << "(";
             bool first = true;
@@ -918,11 +892,8 @@ namespace testing {
               value);
             oss << ")";
             return type_prefix + oss.str();
-        }
-
-        // 11) iterable containers (but not string-like)
-        else if constexpr (detail::Iterable<U> && !detail::StringLike<U>)
-        {
+        } else if constexpr (detail::Iterable<U> && !detail::StringLike<U>) {
+            // 11) iterable containers (but not string-like)
             std::ostringstream oss;
             oss << "{";
             bool first = true;
@@ -935,19 +906,13 @@ namespace testing {
             }
             oss << "}";
             return type_prefix + oss.str();
-        }
-
-        // 12) streamable fallback
-        else if constexpr (detail::Streamable<U>)
-        {
+        } else if constexpr (detail::Streamable<U>) {
+            // 12) streamable fallback
             std::ostringstream oss;
             oss << value;
             return type_prefix + oss.str();
-        }
-
-        // 13) ultimate fallback
-        else
-        {
+        } else {
+            // 13) ultimate fallback
             std::ostringstream oss;
             oss << "<" << demangled_type << "@" << &value << ">";
             return std::string(color::YELLOW) + oss.str() + std::string(color::RESET);
