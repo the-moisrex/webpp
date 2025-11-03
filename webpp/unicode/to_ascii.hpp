@@ -21,6 +21,10 @@ namespace webpp::unicode::idna {
     // underlying_type_t<punycode_status> + validity_criteria_status_type
     using to_ascii_status_type = stl::uint32_t;
 
+    namespace details {
+        static constexpr std::size_t validity_criteria_shift = 11U;
+    }
+
     /**
      * ToASCII status values.
      * Attention: ToASCII function may return a combination of these errors
@@ -44,16 +48,19 @@ namespace webpp::unicode::idna {
         unknown            = 0b1U << 10U,
 
         // Validity Criteria errors:
-        validity_nfc_failure              = +validity_criteria_status::nfc_failure << 11U,
-        validity_hyphen_34                = +validity_criteria_status::hyphen_34 << 11U,
-        validity_hyphen_around            = +validity_criteria_status::hyphen_around << 11U,
-        validity_ace_found                = +validity_criteria_status::ace_found << 11U,
-        validity_dot_found                = +validity_criteria_status::dot_found << 11U,
-        validity_combining_mark_at_start  = +validity_criteria_status::combining_mark_at_start << 11U,
-        validity_requires_mapping_failure = +validity_criteria_status::requires_mapping_failure << 11U,
-        validity_joiner_failure           = +validity_criteria_status::joiner_failure << 11U,
-        validity_bidi_failure             = +validity_criteria_status::bidi_failure << 11U,
-        bidi_domain_name                  = +validity_criteria_status::bidi_domain_name << 11U, // flag, not an error
+        validity_nfc_failure   = +validity_criteria_status::nfc_failure << details::validity_criteria_shift,
+        validity_hyphen_34     = +validity_criteria_status::hyphen_34 << details::validity_criteria_shift,
+        validity_hyphen_around = +validity_criteria_status::hyphen_around << details::validity_criteria_shift,
+        validity_ace_found     = +validity_criteria_status::ace_found << details::validity_criteria_shift,
+        validity_dot_found     = +validity_criteria_status::dot_found << details::validity_criteria_shift,
+        validity_combining_mark_at_start =
+          +validity_criteria_status::combining_mark_at_start << details::validity_criteria_shift,
+        validity_requires_mapping_failure =
+          +validity_criteria_status::requires_mapping_failure << details::validity_criteria_shift,
+        validity_joiner_failure = +validity_criteria_status::joiner_failure << details::validity_criteria_shift,
+        validity_bidi_failure   = +validity_criteria_status::bidi_failure << details::validity_criteria_shift,
+        bidi_domain_name = +validity_criteria_status::bidi_domain_name << details::validity_criteria_shift, // flag, not
+                                                                                                            // an error
 
         validity_criteria_failure =
           validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
@@ -94,7 +101,8 @@ namespace webpp::unicode::idna {
             case validity_requires_mapping_failure:
             case validity_joiner_failure:
             case validity_bidi_failure:
-            case bidi_domain_name: return to_string(static_cast<validity_criteria_status>(+status >> 11U));
+            case bidi_domain_name:
+                return to_string(static_cast<validity_criteria_status>(+status >> details::validity_criteria_shift));
 
             case validity_criteria_failure:
                 return {"Validity Criteria failure"};
@@ -236,6 +244,8 @@ namespace webpp::unicode::idna {
      */
     struct to_ascii_info {
         using flag_type = stl::uint8_t;
+
+        // NOLINTBEGIN(*-signed-bitwise)
         enum struct flag_types : flag_type {
             // ASCII and Non-ASCII:
             non_ascii   = 0b1000U,
@@ -255,6 +265,7 @@ namespace webpp::unicode::idna {
             ascii_mask    = non_ascii | ascii | ascii_upper,
             all           = 0b1111'1111U, // all possibilities
         };
+        // NOLINTEND(*-signed-bitwise)
 
         // array<flag_types, 256>
         static constexpr auto interesting_characters = categorize<256U>(
@@ -273,7 +284,7 @@ namespace webpp::unicode::idna {
         [[nodiscard]] static constexpr stl::uint8_t best_factor_of(char32_t const code_point) noexcept {
             constexpr stl::uint32_t split = 24U;
             constexpr stl::uint32_t mask  = (0b1U << split) - 1U;
-            auto const              inf   = details::idna_max_len_factors[code_point % details::idna_rem];
+            auto const              inf   = details::idna_max_len_factors.at(code_point % details::idna_rem);
             if ((inf & mask) == code_point) [[unlikely]] {
                 return static_cast<stl::uint8_t>(inf >> split);
             }
@@ -510,7 +521,7 @@ namespace webpp::unicode::idna {
                     // an error.
                     //
                     // Here we convert the status returned from validity criteria function to our own:
-                    status |= label_validity_status<Options>(lbeg, lend) << 11U;
+                    status |= label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift;
                     break;
             }
 
@@ -559,7 +570,7 @@ namespace webpp::unicode::idna {
         //
         // Check if bidi_failure exists, but bidi_domain_name does not:
         if ((status & (+bidi_domain_name | +validity_bidi_failure)) == +validity_bidi_failure) {
-            status &= static_cast<to_ascii_status_type>(~+validity_bidi_failure);
+            status &= ~+validity_bidi_failure;
         }
 
         // 4. VerifyDnsLength

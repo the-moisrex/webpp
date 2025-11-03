@@ -29,6 +29,12 @@ namespace webpp::uri {
         domain_name_status status = domain_name_status::unparsed;
 
       public:
+        basic_domain(basic_domain const&)                = default;
+        basic_domain(basic_domain&&) noexcept            = default;
+        basic_domain& operator=(basic_domain const&)     = default;
+        basic_domain& operator=(basic_domain&&) noexcept = default;
+        ~basic_domain()                                  = default;
+
         template <typename... Args>
         explicit constexpr basic_domain(Args&&... args) noexcept(stl::is_nothrow_constructible_v<storage_type, Args...>)
           : storage{stl::forward<Args>(args)...},

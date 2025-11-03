@@ -35,6 +35,7 @@ Checks: >
   -*-struct-pack-align,
   -*-math-missing-parentheses,
   -*-readability-todo,
+  -*-cognitive-complexity,
 CheckOptions:
   - key: readability-function-cognitive-complexity.Threshold
     value: 50 # default is 25

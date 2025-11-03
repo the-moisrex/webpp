@@ -8,6 +8,7 @@
 
 #include <compare>
 #include <cstdint>
+#include <iterator>
 #include <variant>
 
 namespace webpp::uri {
@@ -82,6 +83,7 @@ namespace webpp::uri {
         constexpr host_authority& operator=(host_authority&&) noexcept      = default;
 
         explicit constexpr host_authority(stl::string_view const hostname) noexcept {
+            using diff_type = stl::string_view::difference_type;
             if (hostname.empty()) {
                 return;
             }
@@ -97,8 +99,8 @@ namespace webpp::uri {
                     ip_addr.remove_suffix(static_cast<stl::size_t>(ip_end - ip_addr.rbegin()) + 1);
                     endpoint.emplace<webpp::ipv6>(ip_addr); // parse and set ipv6
                     status_code            = host_status::valid;
-                    auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - hostname.data());
-                    parse_port(hostname.data() + bracket_pos + 1, hostname.data() + hostname.size());
+                    auto const bracket_pos = static_cast<diff_type>(ip_end.operator->() - hostname.begin());
+                    parse_port(stl::next(hostname.begin(), bracket_pos + 1), hostname.end());
                     return;
                 }
                 status_code = host_status::invalid_ipv6;
@@ -129,19 +131,19 @@ namespace webpp::uri {
                             parse_port(host_ptr, host_end);
                         } else {
                             // it's not ipv4, let's see if it's a domain or not
-                            parse_domain(hostname.data(), hostname.data() + hostname.size());
+                            parse_domain(hostname.begin(), hostname.end());
                         }
                         break;
                     }
                     default: {
                         // it's not ipv4, let's see if it's a domain or not
-                        parse_domain(hostname.data(), hostname.data() + hostname.size());
+                        parse_domain(hostname.begin(), hostname.end());
                         return;
                     }
                 }
             } else {
                 // it is not an IP, it's a host name
-                parse_domain(hostname.data(), hostname.data() + hostname.size());
+                parse_domain(hostname.begin(), hostname.end());
                 return;
             }
         }
@@ -273,7 +275,7 @@ namespace webpp::uri {
             if (auto const* domain_ptr = stl::get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
                 return *domain_ptr;
             }
-            return {default_domain};
+            return default_domain;
         }
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::uint16_t const rhs_port) const noexcept {
