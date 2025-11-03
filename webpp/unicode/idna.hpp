@@ -62,6 +62,7 @@ namespace webpp::unicode::idna {
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
+        // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
         return idna_options{
           .CheckHyphens                   = static_cast<bool>(flags >> 11U & 0b1U),
           .CheckACE                       = static_cast<bool>(flags >> 10U & 0b1U),
@@ -75,9 +76,11 @@ namespace webpp::unicode::idna {
           .CheckMappingRequired           = static_cast<bool>(flags >> 2U & 0b1U),
           .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U),
           .CheckDecodeAndValidateLabels   = static_cast<bool>(flags >> 0U & 0b1U)};
+        // NOLINTEND(*-signed-bitwise, *-magic-numbers)
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
+        // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
         return static_cast<stl::uint16_t>(
           static_cast<stl::uint16_t>(options.CheckHyphens) << 11U |
           static_cast<stl::uint16_t>(options.CheckACE) << 10U | static_cast<stl::uint16_t>(options.CheckBidi) << 9U |
@@ -90,6 +93,7 @@ namespace webpp::unicode::idna {
           static_cast<stl::uint16_t>(options.CheckMappingRequired) << 2U |
           static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 1U |
           static_cast<stl::uint16_t>(options.CheckDecodeAndValidateLabels) << 0U);
+        // NOLINTEND(*-signed-bitwise, *-magic-numbers)
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria
@@ -169,10 +173,11 @@ namespace webpp::unicode::idna {
                 unchecked::append(out, code_point);
                 return true;
 
-            default: { // mapped or ignored
-                auto ptr = idna_mappings.begin() + pos;
+            default: {
+                // Mapped or ignored:
+                auto const* ptr = std::next(idna_mappings.begin(), pos);
                 if constexpr (UTF8String<OutStrT>) {
-                    for (; *ptr != u8'\0'; ++ptr) {
+                    for (; *ptr != u8'\0'; ++ptr) { // NOLINT(*-arithmetic)
                         iter_append(out, *ptr);
                     }
                 } else {
@@ -208,7 +213,7 @@ namespace webpp::unicode::idna {
         switch (auto const pos = status_of(code_point)) {
             case disallowed: return end;
             case valid: return beg;
-            default: return details::idna_mappings.begin() + pos; // mapped
+            default: return stl::next(details::idna_mappings.begin(), pos); // mapped
         }
     }
 
