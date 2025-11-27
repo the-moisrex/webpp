@@ -179,7 +179,7 @@ TEST(BasicIDNATests, MostMappings) {
     EXPECT_EQ(status_of(1519), valid);
     EXPECT_EQ(status_of(1520), valid);
 
-    EXPECT_EQ(status_of(205'744), disallowed);
+    EXPECT_EQ(status_of(205'744), valid);                 // Unicode 17.0 made it valid "323B0"
     EXPECT_EQ(status_of(205'742), valid);
 
     EXPECT_EQ(mapped<std::u32string>(173), U"");          // ignored
@@ -299,7 +299,10 @@ TEST(BasicIDNATests, MostMappings) {
     EXPECT_EQ(status_of(1569), valid);
     EXPECT_EQ(mapped<std::u32string>(12'644), U""); // ignored
     EXPECT_EQ(status_of(66'289), valid);
-    EXPECT_EQ(status_of(72'548), disallowed);
+
+    // 11B60..11B67  ; valid                      # 17.0 SHARADA VOWEL SIGN OE..SHARADA VOWEL SIGN CANDRA O
+    EXPECT_EQ(status_of(72'548), valid);                   // 11B64; Unicode 17.0 made it valid
+
     EXPECT_EQ(status_of(127'128), disallowed);
     EXPECT_EQ(mapped<std::u32string>(12'614), U"\x110A");  // mapped
     EXPECT_EQ(mapped<std::u32string>(42'824), U"\xA749");  // mapped

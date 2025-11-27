@@ -1,4 +1,5 @@
 #include "../webpp/unicode/idna.hpp"
+#include "../webpp/unicode/to_ascii.hpp"
 #include "./common/fuzz_common.hpp"
 
 void to_ascii_fuzz(std::string_view data) {
@@ -38,7 +39,7 @@ void to_ascii_fuzz(std::string_view data) {
                                 .IgnoreInvalidPunycode = true,
                                 .CheckNFC              = false, // todo: enable it after implementation of isNFC
                                 .CheckDotInclusions    = true,
-                                .CheckMappingRequired     = true}>();
+                                .CheckMappingRequired  = true}>();
 }
 
 register_fuzz(to_ascii_fuzz);
