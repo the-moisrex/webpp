@@ -12,34 +12,89 @@
 namespace webpp::unicode::idna {
 
     struct idna_options { // NOLINT(*-struct-pack-align)
-        // We use default values given in URL Specs here:
-        //   https://url.spec.whatwg.org/#concept-domain-to-ascii
-        bool CheckHyphens          = true; // 3rd and 4th hyphens are not allowed, otherwise only xn-- is not allowed
-        bool CheckACE              = true; // ACE is `xn--`
-        bool CheckBidi             = true; // Bidirectional
-        bool CheckJoiners          = true; // ContextJ
-        bool UseSTD3ASCIIRules     = true; // lowercase English, digits, and hypens
-        bool VerifyDnsLength       = true; // 1-253 for all domain, and 1-63 for each domain
-        bool IgnoreInvalidPunycode = false;
-        bool CheckNFC              = true; // Unicode Normalization Form C
-        bool CheckDotInclusions    = true;
-        bool CheckMappingRequired  = true; // rule 7 of the Validity Criteria
-        bool CheckCombiningMarkAtLabelStart = true;
-        bool CheckDecodeAndValidateLabels   = true;
 
-        // we don't support Transitional Processing since it's been deprecated.
+        // ===================================================================
+        // Options following the WHATWG URL Standard (Domain to ASCII)
+        // https://url.spec.whatwg.org/#concept-domain-to-ascii
+        // ===================================================================
+
+        // Controls strictness level (beStrict flag in the spec).
+        // false for special schemes (http, https, ws, wss, ftp, file)
+        // true  for all others (e.g., when registering domains)
+        // Default: false — optimized for typical web URL parsing use case
+        bool CheckHyphens = false;
+        // Disallows:
+        // - Hyphens in 3rd and 4th positions (e.g., "xn--")
+        // - Leading, trailing, or consecutive hyphens in labels
+
+        bool UseSTD3ASCIIRules = false;
+        // When true: only allows ASCII letters (a–z), digits (0–9), and hyphen
+        // When false: more permissive (typical for browsers)
+
+        bool VerifyDnsLength = false;
+        // Enforces:
+        // - Total domain length: 1..253
+        // - Each label length: 1..63
+        // Usually disabled in browsers, enabled in registrars
+
+        // ===================================================================
+        // Always-enabled checks (not affected by beStrict)
+        // ===================================================================
+
+        bool CheckACE = true;
+        // Ensures proper ACE prefix ("xn--") handling and forbids it in invalid positions
+
+        bool CheckBidi = true;
+        // Enforces bidirectional (RTL/LTR) domain label rules per RFC 5893
+
+        bool CheckJoiners = true;
+        // Disallows zero-width joiners/non-joiners and other ContextJ code points
+        // that could be used for spoofing
+
+        bool IgnoreInvalidPunycode = false;
+        // If true, would accept malformed Punycode (not allowed by spec)
+        // Always false — spec requires failure on invalid Punycode
+
+        bool CheckNFC = true;
+        // Enforces Unicode NFC normalization and rejects non-NFC input
+        // Required by UTS #46 and URL standard
+
+        // ===================================================================
+        // Additional UTS #46 validity checks (non-transitional mode)
+        // ===================================================================
+
+        bool CheckDotInclusions = true;
+        // Prevents confusing dot-like characters (e.g., fullwidth period)
+        // that could masquerade as label separators
+
+        bool CheckMappingRequired = true;
+        // UTS #46 Validity Criterion #7:
+        // Characters marked "disallowed_STD3_mapped" or "deviation" must be mapped
+        // (e.g., ß → ss, ẞ → SS) — otherwise invalid in non-transitional mode
+
+        bool CheckCombiningMarkAtLabelStart = true;
+        // UTS #46 rule: a label must not begin with a combining mark
+
+        bool CheckDecodeAndValidateLabels = true;
+        // For A-labels (xn--...), decode Punycode and validate resulting U-label
+        // Required for security (prevents encoded invalid/invisible domains)
+
+        // Transitional_Processing is intentionally not supported
+        // (Deprecated in UTS #46 since 2016; removed from modern IDNA)
         // bool Transitional_Processing = false;
     };
 
     static constexpr idna_options strict_idna_options{
-      .CheckHyphens                   = true,
-      .CheckACE                       = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
-      .UseSTD3ASCIIRules              = true,
-      .VerifyDnsLength                = true,
-      .IgnoreInvalidPunycode          = false,
-      .CheckNFC                       = true,
+      .CheckHyphens      = true,
+      .UseSTD3ASCIIRules = true,
+      .VerifyDnsLength   = true,
+
+      .CheckACE              = true,
+      .CheckBidi             = true,
+      .CheckJoiners          = true,
+      .IgnoreInvalidPunycode = false,
+      .CheckNFC              = true,
+
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
       .CheckCombiningMarkAtLabelStart = true,
@@ -47,35 +102,40 @@ namespace webpp::unicode::idna {
     };
 
     static constexpr idna_options loose_idna_options{
-      .CheckHyphens                   = false,
-      .CheckACE                       = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
+      .CheckHyphens      = false,
+      .UseSTD3ASCIIRules = false,
+      .VerifyDnsLength   = false,
+
+      .CheckACE              = true,
+      .CheckBidi             = false, // Browsers typically disable full Bidi checks for compatibility
+      .CheckJoiners          = false, // Often relaxed in practice
+      .IgnoreInvalidPunycode = true,  // Some parsers are more forgiving
+      .CheckNFC              = false, // Many browsers skip NFC check on input
+
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
       .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = true,
+      .CheckDecodeAndValidateLabels   = true, // Still critical for security
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
         // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
         return idna_options{
-          .CheckHyphens                   = static_cast<bool>(flags >> 11U & 0b1U),
-          .CheckACE                       = static_cast<bool>(flags >> 10U & 0b1U),
-          .CheckBidi                      = static_cast<bool>(flags >> 9U & 0b1U),
-          .CheckJoiners                   = static_cast<bool>(flags >> 8U & 0b1U),
-          .UseSTD3ASCIIRules              = static_cast<bool>(flags >> 7U & 0b1U),
-          .VerifyDnsLength                = static_cast<bool>(flags >> 6U & 0b1U),
-          .IgnoreInvalidPunycode          = static_cast<bool>(flags >> 5U & 0b1U),
-          .CheckNFC                       = static_cast<bool>(flags >> 4U & 0b1U),
+          .CheckHyphens      = static_cast<bool>(flags >> 11U & 0b1U),
+          .UseSTD3ASCIIRules = static_cast<bool>(flags >> 10U & 0b1U),
+          .VerifyDnsLength   = static_cast<bool>(flags >> 9U & 0b1U),
+
+          .CheckACE              = static_cast<bool>(flags >> 8U & 0b1U),
+          .CheckBidi             = static_cast<bool>(flags >> 7U & 0b1U),
+          .CheckJoiners          = static_cast<bool>(flags >> 6U & 0b1U),
+          .IgnoreInvalidPunycode = static_cast<bool>(flags >> 5U & 0b1U),
+          .CheckNFC              = static_cast<bool>(flags >> 4U & 0b1U),
+
           .CheckDotInclusions             = static_cast<bool>(flags >> 3U & 0b1U),
           .CheckMappingRequired           = static_cast<bool>(flags >> 2U & 0b1U),
           .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckDecodeAndValidateLabels   = static_cast<bool>(flags >> 0U & 0b1U)};
+          .CheckDecodeAndValidateLabels   = static_cast<bool>(flags >> 0U & 0b1U),
+        };
         // NOLINTEND(*-signed-bitwise, *-magic-numbers)
     }
 
@@ -83,12 +143,14 @@ namespace webpp::unicode::idna {
         // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
         return static_cast<stl::uint16_t>(
           static_cast<stl::uint16_t>(options.CheckHyphens) << 11U |
-          static_cast<stl::uint16_t>(options.CheckACE) << 10U | static_cast<stl::uint16_t>(options.CheckBidi) << 9U |
-          static_cast<stl::uint16_t>(options.CheckJoiners) << 8U |
-          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 7U |
-          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 6U |
+          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 10U |
+          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 9U |
+
+          static_cast<stl::uint16_t>(options.CheckACE) << 8U | static_cast<stl::uint16_t>(options.CheckBidi) << 7U |
+          static_cast<stl::uint16_t>(options.CheckJoiners) << 6U |
           static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 5U |
           static_cast<stl::uint16_t>(options.CheckNFC) << 4U |
+
           static_cast<stl::uint16_t>(options.CheckDotInclusions) << 3U |
           static_cast<stl::uint16_t>(options.CheckMappingRequired) << 2U |
           static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 1U |

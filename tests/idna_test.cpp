@@ -1426,10 +1426,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1451,10 +1451,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1472,10 +1472,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit7) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1493,10 +1493,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit8) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1514,10 +1514,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit9) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1545,10 +1545,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1581,10 +1581,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit11) {
     // With Bidi checking disabled, these should succeed
     static constexpr idna_options bidi_disabled_options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = false, // Bidi check disabled
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1603,10 +1603,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1625,10 +1625,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1638,10 +1638,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
 
     static constexpr idna_options options2{
       .CheckHyphens                   = false,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1663,10 +1663,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit14) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1688,10 +1688,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit15) {
 
     static constexpr idna_options options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1740,10 +1740,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit19) {
     // Error: The ASCII-Only label was unnecessarily encoded into punycode
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1763,10 +1763,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit20) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1786,10 +1786,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit21) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1809,10 +1809,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit22) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1832,10 +1832,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit23) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1855,10 +1855,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit24) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1878,10 +1878,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit25) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1901,10 +1901,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit26) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1924,10 +1924,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit27) {
     // Error: Invalid code point was found
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1946,10 +1946,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit28) {
     // Test case from failing test: xn--ASCII-.pt
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = false,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
@@ -1975,10 +1975,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit30) {
 
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = false,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = false,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -1998,10 +1998,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit31) {
 
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = false,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -2022,10 +2022,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
 
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = false,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
@@ -2049,10 +2049,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit33) {
 
     static constexpr idna_options relaxed_options{
       .CheckHyphens                   = false,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
       .UseSTD3ASCIIRules              = true,
       .VerifyDnsLength                = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
       .IgnoreInvalidPunycode          = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
