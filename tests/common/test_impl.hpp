@@ -223,9 +223,11 @@ namespace testing {
                 counter.stop();
 #endif
             } catch (std::exception const& err) {
+                reg.asserted(false);
                 handle_failure(err);
                 // failed_tests.emplace_back(&test);
             } catch (...) {
+                reg.asserted(false);
                 handle_failure();
                 // failed_tests.emplace_back(&test);
             }
