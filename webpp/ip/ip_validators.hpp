@@ -43,7 +43,7 @@ namespace webpp::is {
             if (octet_str.size() > 3UL || !ascii::is::digit(octet_str)) {
                 return false;
             }
-            if (auto octet_int = to_uint(octet_str); octet_int > 255U || subnet_octet(octet_int)) {
+            if (unsigned const octet_int = to_uint(octet_str); octet_int > 255U || subnet_octet(octet_int)) {
                 return false;
             }
             str.remove_prefix(octet_str.size() + (octet_index != 3U));
