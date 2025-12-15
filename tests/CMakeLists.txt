@@ -9,8 +9,8 @@ function(setup_fuzz name)
             PRIVATE gtest         # GTest::GTest
             PRIVATE gtest_main    # GTest::Main
             # PRIVATE test-commons
-                -fsanitize=fuzzer,address
-                -coverage
+            -fsanitize=fuzzer,address
+            -coverage
     )
     # link_fuzztest(${name})
     add_test(
@@ -32,17 +32,15 @@ function(setup_test name)
             PRIVATE gtest_main    # GTest::Main
             # PRIVATE test-commons
     )
-    add_test(
-        NAME ${name}
-        COMMAND $<TARGET_FILE:${name}>)
+    add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
     setup_executable(${name})
     target_code_coverage("${name}")
+    target_compile_features(${name} PUBLIC cxx_std_23)
     # gtest_discover_tests(${name})
 
     message(STATUS "Test available: ${name}")
 endfunction()
-
 
 
 # All the tests in one single executable
@@ -54,10 +52,9 @@ set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME tests)
 setup_test(${TEST_NAME})
 
 
-
 # Each file is a test-suite of its own
 # I did this because we might have compile-time errors for the newly added tests
-foreach(source ${TEST_SOURCES})
+foreach (source ${TEST_SOURCES})
     get_filename_component(identifier "${source}" NAME)
     string(REPLACE "_test.cpp" "" identifier "${identifier}")
     string(REPLACE "_" "-" identifier "${identifier}")
@@ -67,12 +64,11 @@ foreach(source ${TEST_SOURCES})
     target_sources(${name} PRIVATE ${source})
 
     if ("${identifier}" STREQUAL "sql")
-            target_link_libraries(${name}
-                    PRIVATE sqlite3)
+        target_link_libraries(${name} PRIVATE sqlite3)
     endif ()
 
     setup_test(${name})
-endforeach()
+endforeach ()
 
 
 ############################## Fuzzing Tests ##############################
@@ -91,10 +87,9 @@ if (IS_CLANG AND FUZZ_TESTS)
     setup_fuzz(${FUZZ_NAME})
 
 
-
     # Each file is a fuzz-test-suite of its own
     # I did this because we might have compile-time errors for the newly added tests
-    foreach(source ${FUZZ_SOURCES})
+    foreach (source ${FUZZ_SOURCES})
         get_filename_component(identifier "${source}" NAME)
         string(REPLACE "_fuzz.cpp" "" identifier "${identifier}")
         string(REPLACE "_" "-" identifier "${identifier}")
@@ -103,5 +98,5 @@ if (IS_CLANG AND FUZZ_TESTS)
         add_executable(${name})
         target_sources(${name} PRIVATE ${source})
         setup_fuzz(${name})
-    endforeach()
-endif()
+    endforeach ()
+endif ()

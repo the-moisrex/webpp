@@ -32,7 +32,7 @@ namespace webpp::uri::details {
     static constexpr bool is_possible_ends_with_ipv4(Iter beg, Iter fin, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#ends-in-a-number-checker
 
-        webpp_assume(fin != ctx.end);
+        // webpp_assume(fin != ctx.end);
 
         // Pruning last dot characters (considering them as empty IPv4 octets)
         // todo: move this to the end of the algorithm if possible

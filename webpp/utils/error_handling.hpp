@@ -12,7 +12,9 @@ namespace webpp {
     enum struct error_handling_strategy : stl::uint_fast8_t {
         assume_safe,  // assume there will be no errors, if there are, it's undefined behaviour
         throw_errors, // throw the mistakes
+#ifdef __cpp_lib_expected
         use_expected  // std::expected<Value, Error>
+#endif
     };
 
     /**
@@ -28,10 +30,12 @@ namespace webpp {
         using type = Value;
     };
 
+#ifdef __cpp_lib_expected
     template <typename Value, typename Error>
     struct expected_strategy<error_handling_strategy::use_expected, Value, Error> {
         using type = stl::expected<Value, Error>;
     };
+#endif
 
     template <error_handling_strategy Strategy, typename Value, typename Error>
     using expected_strategy_t = typename expected_strategy<Strategy, Value, Error>::type;

@@ -1,6 +1,12 @@
 #ifndef WEBPP_TESTS_TEST_UTILITIES_HPP
 #define WEBPP_TESTS_TEST_UTILITIES_HPP
 
+#include <version>
+#if defined(__cpp_lib_expected) && !defined(WEBPP_EXPECTED_IMPL)
+#    define WEBPP_EXPECTED_IMPL
+#    include <expected>
+#endif
+
 #include <array>
 #include <cctype>
 #include <chrono>
@@ -22,36 +28,23 @@
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
-#include <vector>
 
-#if __has_include(<expected>)
-#    include <expected>
-#endif
-
-#if defined(__GNUG__)
+#ifdef __GNUG__
 #    include <cxxabi.h>
 #endif
 
-#if defined(__linux__)
+#ifdef __linux__
 #    include <asm/unistd.h>
 #    include <linux/perf_event.h>
 #    include <sys/ioctl.h>
-#    include <sys/syscall.h>
 #    include <unistd.h>
 #endif
-
-#if defined(_REENTRANT) || defined(_MT) || defined(__MT__) || defined(_PTHREADS) || defined(__STDCPP_THREADS__)
-#    define WEBPP_MULTI_THREADING_ENABLED 1
-#else
-#    define WEBPP_MULTI_THREADING_ENABLED 0
-#endif
-
 
 namespace testing {
 
     // -------------------- Utilities --------------------
     inline std::string demangle(std::string_view name) {
-#if defined(__GNUG__)
+#ifdef __GNUG__
         int status = 0;
         // NOLINTNEXTLINE(*-data-usage)
         char* dem  = abi::__cxa_demangle(name.data(), nullptr, nullptr, &status);
@@ -67,18 +60,18 @@ namespace testing {
     }
 
     template <typename T>
-    inline std::string type_name() {
+    std::string type_name() {
         return demangle(typeid(T).name());
     }
 
     // Replace all occurrences of `from` with `to` in-place
-    static void replace_all(std::string& str, std::string_view from, std::string_view to) {
-        size_t fromLen = from.size();
-        size_t toLen   = to.size();
-        size_t pos     = 0;
+    static void replace_all(std::string& str, std::string_view const from, std::string_view const to_str) {
+        auto const  fromLen = from.size();
+        auto const  toLen   = to_str.size();
+        std::size_t pos     = 0;
 
         while ((pos = str.find(from, pos)) != std::string::npos) {
-            str.replace(pos, fromLen, to);
+            str.replace(pos, fromLen, to_str);
             pos += toLen;
         }
     }
@@ -364,7 +357,7 @@ namespace testing {
     }
 
 
-#if defined(__linux__)
+#ifdef __linux__
 #    define WEBPP_SUPPORTS_PERF_COUNTERS
 
     class perf_counters {
@@ -423,10 +416,10 @@ namespace testing {
             attr.read_format    = PERF_FORMAT_GROUP | PERF_FORMAT_ID; // ✅ required for grouped read
 
             // Open group leader
-            attr.type   = counters[0].type;
-            attr.config = counters[0].config;
-            fds_[0]     = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, -1, 0));
-            group_fd_   = fds_[0];
+            attr.type   = counters.at(0).type;
+            attr.config = counters.at(0).config;
+            fds_.at(0)  = static_cast<int>(syscall(__NR_perf_event_open, &attr, 0, -1, -1, 0));
+            group_fd_   = fds_.at(0);
 
             if (group_fd_ == -1) {
                 return;
@@ -455,10 +448,12 @@ namespace testing {
             struct alignas(128) {
                 std::uint64_t nr;
 
-                struct alignas(16) {
+                struct alignas(16) value_type {
                     std::uint64_t value;
                     std::uint64_t id;
-                } values[num_counters];
+                };
+
+                std::array<value_type, num_counters> values;
             } data{};
 
             ssize_t const bytes = ::read(group_fd_, &data, sizeof(data));
@@ -467,18 +462,18 @@ namespace testing {
             }
 
             for (std::size_t i = 0; i < data.nr && i < counters.size(); ++i) {
-                counters[i].value = data.values[i].value;
+                counters.at(i).value = data.values.at(i).value;
             }
             // NOLINTEND(*-vararg)
         }
 
         void print_short(std::ostream& oss = std::cout) const noexcept {
             bool first = true;
-            for (auto const& c : counters) {
+            for (auto const& counter_info : counters) {
                 if (!first) {
                     oss << " | ";
                 }
-                oss << c.name << ": " << c.value;
+                oss << counter_info.name << ": " << counter_info.value;
                 first = false;
             }
         }
@@ -487,7 +482,7 @@ namespace testing {
 // - If PERF_COUNTERS_FORCE_DEBUG is defined, treat as debug.
 // - If PERF_COUNTERS_FORCE_RELEASE is defined, treat as release.
 // - Otherwise, follow the standard NDEBUG convention: NDEBUG => release, else debug.
-#    if defined(PERF_COUNTERS_FORCE_DEBUG)
+#    ifdef PERF_COUNTERS_FORCE_DEBUG
 #        define PERF_COUNTERS_DEBUG_BUILD 1
 #    elif defined(PERF_COUNTERS_FORCE_RELEASE)
 #        define PERF_COUNTERS_RELEASE_BUILD 1
@@ -498,7 +493,7 @@ namespace testing {
 #    endif
 
 // Thresholds controlled by build mode (macros pick one set).
-#    if defined(PERF_COUNTERS_DEBUG_BUILD)
+#    ifdef PERF_COUNTERS_DEBUG_BUILD
         // Debug: lenient thresholds, avoid noisy reports.
         static constexpr double PERF_TC_MIN_IPC                   = 0.10;
         static constexpr double PERF_TC_MAX_IPC                   = 8.00;
@@ -536,18 +531,18 @@ namespace testing {
             constexpr std::size_t IDX_BRMISS = 5;
             constexpr std::size_t IDX_REFC   = 6;
 
-            auto const cycles = counters[IDX_CYCLES].value;
-            auto const ins    = counters[IDX_INS].value;
-            auto const cref   = counters[IDX_CREF].value;
-            auto const cmiss  = counters[IDX_CMISS].value;
-            auto const brins  = counters[IDX_BRINS].value;
-            auto const brmiss = counters[IDX_BRMISS].value;
-            auto const refc   = counters[IDX_REFC].value;
+            auto const cycles = counters.at(IDX_CYCLES).value;
+            auto const ins    = counters.at(IDX_INS).value;
+            auto const cref   = counters.at(IDX_CREF).value;
+            auto const cmiss  = counters.at(IDX_CMISS).value;
+            auto const brins  = counters.at(IDX_BRINS).value;
+            auto const brmiss = counters.at(IDX_BRMISS).value;
+            auto const refc   = counters.at(IDX_REFC).value;
 
             // Quick no-data check
             bool any_nonzero = false;
-            for (auto const& c : counters) {
-                if (c.value != 0) {
+            for (auto const& counter_info : counters) {
+                if (counter_info.value != 0) {
                     any_nonzero = true;
                     break;
                 }
@@ -557,17 +552,14 @@ namespace testing {
                 return;
             }
 
-            int              anomaly_count = 0;
-            constexpr double eps           = 1e-12;
+            constexpr double eps = 1e-12;
 
             // 1) inconsistent zero checks
             if (cycles == 0 && ins > 0) {
                 oss << "[ANOMALY] instructions > 0 but CPU cycles == 0 (ins=" << ins << ", cycles=" << cycles << ")";
-                ++anomaly_count;
             }
             if (ins == 0 && cycles > 0) {
                 oss << "[ANOMALY] CPU cycles > 0 but instructions == 0 (cycles=" << cycles << ", ins=" << ins << ")";
-                ++anomaly_count;
             }
 
             // 2) IPC range check
@@ -575,7 +567,6 @@ namespace testing {
                 double const ipc = static_cast<double>(ins) / static_cast<double>(cycles);
                 if (ipc < PERF_TC_MIN_IPC || ipc > PERF_TC_MAX_IPC) {
                     oss << "[ANOMALY] IPC out of range: " << ipc << " (ins=" << ins << ", cycles=" << cycles << ")";
-                    ++anomaly_count;
                 }
             }
 
@@ -583,13 +574,11 @@ namespace testing {
             if (cref == 0 && cmiss > 0) {
                 oss << "[ANOMALY] cache_misses > 0 but cache_references == 0 (cmiss=" << cmiss << ", cref=" << cref
                     << ")";
-                ++anomaly_count;
             } else if (cref > 0) {
                 double const miss_rate = static_cast<double>(cmiss) / static_cast<double>(cref);
                 if (miss_rate > (PERF_TC_CACHE_MISS_THRESH + eps)) {
                     oss << "[ANOMALY] High cache miss rate: " << (miss_rate * 100.0) << "% (misses=" << cmiss
                         << ", refs=" << cref << ")";
-                    ++anomaly_count;
                 }
             }
 
@@ -597,13 +586,11 @@ namespace testing {
             if (brins == 0 && brmiss > 0) {
                 oss << "[ANOMALY] branch_misses > 0 but branch_instructions == 0 (brmiss=" << brmiss
                     << ", brins=" << brins << ")";
-                ++anomaly_count;
             } else if (brins > 0) {
                 double const br_miss_rate = static_cast<double>(brmiss) / static_cast<double>(brins);
                 if (br_miss_rate > (PERF_TC_BRANCH_MISS_THRESH + eps)) {
                     oss << "[ANOMALY] High branch miss rate: " << (br_miss_rate * 100.0) << "% (misses=" << brmiss
                         << ", branch_inst=" << brins << ")";
-                    ++anomaly_count;
                 }
             }
 
@@ -613,15 +600,13 @@ namespace testing {
                 if (ratio < PERF_TC_REF_CYC_LOW || ratio > PERF_TC_REF_CYC_HIGH) {
                     oss << "[ANOMALY] cycles vs ref-cpu-cycles ratio suspicious: " << ratio << " (cycles=" << cycles
                         << ", ref_cycles=" << refc << ")";
-                    ++anomaly_count;
                 }
             }
 
             // 6) member zero while leader nonzero (quick heuristic)
             for (std::size_t i = 0; i < counters.size(); ++i) {
-                if (i != IDX_CYCLES && counters[IDX_CYCLES].value > 0 && counters[i].value == 0) {
-                    oss << "[ANOMALY] '" << counters[i].name << "' is zero while CPU Cycles > 0";
-                    ++anomaly_count;
+                if (i != IDX_CYCLES && counters.at(IDX_CYCLES).value > 0 && counters.at(i).value == 0) {
+                    oss << "[ANOMALY] '" << counters.at(i).name << "' is zero while CPU Cycles > 0";
                 }
             }
 
@@ -675,8 +660,8 @@ namespace testing {
 
         // Free to_string via ADL but exclude arithmetic and string-like
         template <typename T>
-        concept HasFreeToString = (!std::is_arithmetic_v<T> && !StringLike<T>) && requires(T const& v) {
-            { to_string(v) } -> std::convertible_to<std::string>;
+        concept HasFreeToString = (!std::is_arithmetic_v<T> && !StringLike<T>) && requires(T const& value) {
+            { to_string(value) } -> std::convertible_to<std::string>;
         };
 
         // Streamable
@@ -700,7 +685,7 @@ namespace testing {
         template <typename T>
         concept OptionalLike = is_specialization_of_v<std::optional, T>;
 
-#if __has_include(<expected>)
+#ifdef __cpp_lib_expected
         template <typename T>
         concept ExpectedLike = is_specialization_of_v<std::expected, T>;
 #else
@@ -768,7 +753,7 @@ namespace testing {
     } // namespace detail
 
     template <typename T>
-    inline std::string serialize(T const& value) {
+    std::string serialize(T const& value) {
         using U = std::remove_cvref_t<T>;
 
         // demangle the static type once and prefix with color
@@ -867,7 +852,7 @@ namespace testing {
             return type_prefix + std::string("nullopt");
 
         }
-#if __has_include(<expected>)
+#ifdef __cpp_lib_expected
         else if constexpr (detail::ExpectedLike<U>)
         {
             // 9) expected (guarded by include availability)

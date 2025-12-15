@@ -7,8 +7,7 @@
 
 #if __has_include(<expected>) && defined(__cpp_lib_expected)
 #    include <expected>
-#else
-#    include "./expected_impl.hpp"
+// we have intentionally removed our fallback std::expected implementation
 #endif
 
 #endif // WEBPP_STD_EXPECTED_HPP

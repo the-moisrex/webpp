@@ -129,8 +129,8 @@ namespace webpp::unicode {
      * Attention: the code point MUST be a valid Hangul code point.
      */
     [[nodiscard]] static constexpr std::size_t hangul_decompose_length_utf32(char32_t const code_point) noexcept {
-        webpp_assume(is_hangul_code_point(code_point));
-        if ((code_point - hangul_syllable_base) % hangul_trailing_count) {
+        // webpp_assume(is_hangul_code_point(code_point));
+        if (((code_point - hangul_syllable_base) % hangul_trailing_count) != 0U) {
             return 3U;
         }
         return 2U;

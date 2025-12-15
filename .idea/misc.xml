@@ -5,6 +5,11 @@
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
+    <libraryRoots>
+      <file path="$USER_HOME$/.cache/CPM/brotli/828f7a155abb48059691633d4b3d7f3085eee92a" />
+      <file path="$USER_HOME$/.cache/CPM/liburing/8b577446140660855f385aadf2774708c8755c77" />
+      <file path="$USER_HOME$/.cache/CPM/rapidjson/cd691dc921e188c783f6dc5a96e2c13a6959725b" />
+    </libraryRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/.ccls-cache" />
       <file path="$PROJECT_DIR$/.github" />

@@ -1491,9 +1491,9 @@ namespace webpp::unicode {
             using diff_type     = stl::iter_difference_t<OIterT>;
 
             // determine how many code units we must make room for
-            diff_type const cp_len = static_cast<diff_type>(utf_length_from<out_char_type>(val));
+            auto const cp_len = static_cast<diff_type>(utf_length_from<out_char_type>(val));
             assert(cp_len >= 0 && cp_len <= 4);
-            auto const oend = stl::next(out, out_len + cp_len);
+            auto const oend = stl::next(out, static_cast<diff_type>(out_len) + cp_len);
 
             advance(out, oend, index);
             stl::copy_backward(out, oend, stl::next(oend, cp_len));

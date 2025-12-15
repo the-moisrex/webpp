@@ -521,7 +521,8 @@ namespace webpp::unicode::idna {
                     // an error.
                     //
                     // Here we convert the status returned from validity criteria function to our own:
-                    status |= label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift;
+                    status |= static_cast<to_ascii_status_type>(
+                      label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift);
                     break;
             }
 
@@ -638,6 +639,15 @@ namespace webpp::unicode::idna {
         return to_ascii<Options>(src_v.begin(), src_v.end(), out);
     }
 
+    [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
+        return lhs == static_cast<to_ascii_status_type>(rhs);
+    }
+
+    [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
+        return lhs != static_cast<to_ascii_status_type>(rhs);
+    }
+
+#ifdef __cpp_lib_expected
     template <istl::String            OutStrT = stl::u8string,
               idna_options            Options = idna_options{},
               istl::StringViewifiable StrT,
@@ -650,10 +660,6 @@ namespace webpp::unicode::idna {
             return out;
         }
         return stl::unexpected{status};
-    }
-
-    [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
-        return lhs == static_cast<to_ascii_status_type>(rhs);
     }
 
     template <istl::String OutStrT>
@@ -672,10 +678,7 @@ namespace webpp::unicode::idna {
         }
         return false;
     }
-
-    [[nodiscard]] static constexpr bool operator!=(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
-        return lhs != static_cast<to_ascii_status_type>(rhs);
-    }
+#endif
 
     [[nodiscard]] static constexpr to_ascii_status_type operator&(
       to_ascii_status_type const lhs,

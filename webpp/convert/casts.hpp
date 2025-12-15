@@ -21,7 +21,7 @@ namespace webpp {
             case invalid_character: return {"Invalid character found"};
             case invalid_base: return {"The specified string contains characters that are not in the valid base"};
         }
-        return {}; // to get rid of warnings; it's 2023 for God sake!
+        return {}; // to get rid of warnings; it's 2023 for God’s sake!
     }
 
     /**

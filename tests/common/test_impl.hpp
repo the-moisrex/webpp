@@ -306,15 +306,15 @@ namespace testing {
 
     // Generalized helpers to reduce duplication across make_* functions
     template <typename A, typename B, typename Predicate>
-    inline assert_result make_binary_assertion(
-      A const&         lhs,
-      B const&         rhs,
-      std::string_view file,
-      int              line,
-      std::string_view exprA,
-      std::string_view exprB,
-      std::string_view macro_name,
-      Predicate const& predicate) {
+    assert_result make_binary_assertion(
+      A const&               lhs,
+      B const&               rhs,
+      std::string_view const file,
+      int const              line,
+      std::string_view const exprA,
+      std::string_view const exprB,
+      std::string_view const macro_name,
+      Predicate const&       predicate) {
         bool const is_ok = static_cast<bool>(predicate(lhs, rhs));
         registry::instance().asserted(is_ok);
         return assert_result{
@@ -445,9 +445,7 @@ namespace testing {
 } // namespace testing
 
 #ifndef WEBPP_NO_DEFAULT_MAIN
-int main(int argc, char** argv) {
-    (void) argc;
-    (void) argv;
+int main() {
     return ::testing::run_all_tests();
 }
 #endif

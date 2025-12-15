@@ -37,7 +37,7 @@ namespace webpp::uri {
             using ctx_type = CtxT;
             using iterator = typename ctx_type::iterator;
 
-            webpp_assume(ctx.pos < ctx.end);
+            // webpp_assume(ctx.pos < ctx.end);
 
             set_warning(ctx.status, uri_status::has_credentials);
             auto const atsign_pos = ctx.pos;
