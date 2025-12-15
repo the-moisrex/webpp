@@ -10,6 +10,7 @@
 #include "../webpp/uri/uri.hpp"
 #include "./common/bidi.hpp"
 #include "./common/test.hpp"
+#include "./webpp/std/format.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -942,47 +943,49 @@ namespace {
     /**
      * Converts a Unicode code point to a UTF-8 encoded string.
      */
-    void codepoint_to_utf8(char32_t cp, std::string& out) {
-        if (cp <= 0x7F) {
-            out += static_cast<char>(cp);
-        } else if (cp <= 0x7FF) {
-            out += static_cast<char>(0xC0 | (cp >> 6));
-            out += static_cast<char>(0x80 | (cp & 0x3F));
-        } else if (cp <= 0xFFFF) {
-            out += static_cast<char>(0xE0 | (cp >> 12));
-            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-            out += static_cast<char>(0x80 | (cp & 0x3F));
-        } else if (cp <= 0x10'FFFF) {
-            out += static_cast<char>(0xF0 | (cp >> 18));
-            out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
-            out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-            out += static_cast<char>(0x80 | (cp & 0x3F));
+    void codepoint_to_utf8(char32_t const code_point, std::string& out) {
+        // NOLINTBEGIN(*-signed-bitwise)
+        if (code_point <= 0x7F) {
+            out += static_cast<char>(code_point);
+        } else if (code_point <= 0x7FF) {
+            out += static_cast<char>(0xC0 | (code_point >> 6));
+            out += static_cast<char>(0x80 | (code_point & 0x3F));
+        } else if (code_point <= 0xFFFF) {
+            out += static_cast<char>(0xE0 | (code_point >> 12));
+            out += static_cast<char>(0x80 | ((code_point >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (code_point & 0x3F));
+        } else if (code_point <= 0x10'FFFF) {
+            out += static_cast<char>(0xF0 | (code_point >> 18));
+            out += static_cast<char>(0x80 | ((code_point >> 12) & 0x3F));
+            out += static_cast<char>(0x80 | ((code_point >> 6) & 0x3F));
+            out += static_cast<char>(0x80 | (code_point & 0x3F));
         }
+        // NOLINTEND(*-signed-bitwise)
     }
 
     /**
      * Unescapes a string containing \\uXXXX or \\x{XXXX} sequences.
      */
-    std::string unescape(std::string_view s) {
+    std::string unescape(std::string_view const src) {
         std::string res;
-        res.reserve(s.length());
-        for (size_t i = 0; i < s.length(); ++i) {
-            if (s[i] == '\\' && i + 1 < s.length()) {
+        res.reserve(src.length());
+        for (size_t i = 0; i < src.length(); ++i) {
+            if (src.at(i) == '\\' && i + 1 < src.length()) {
                 char32_t codepoint = 0;
                 size_t   len       = 0;
                 try {
-                    if (s[i + 1] == 'u') {
-                        codepoint  = static_cast<char32_t>(std::stoul(std::string(s.substr(i + 2, 4)), &len, 16));
+                    if (src.at(i + 1) == 'u') {
+                        codepoint  = static_cast<char32_t>(std::stoul(std::string(src.substr(i + 2, 4)), &len, 16));
                         i         += 5; // Skip '\u' and 4 hex digits
-                    } else if (s[i + 1] == 'x' && s[i + 2] == '{') {
-                        size_t end_pos = s.find('}', i + 3);
+                    } else if (src.at(i + 1) == 'x' && src.at(i + 2) == '{') {
+                        size_t end_pos = src.find('}', i + 3);
                         if (end_pos != std::string_view::npos) {
-                            auto hex_part = s.substr(i + 3, end_pos - (i + 3));
+                            auto hex_part = src.substr(i + 3, end_pos - (i + 3));
                             codepoint     = static_cast<char32_t>(std::stoul(std::string(hex_part), &len, 16));
                             i             = end_pos; // Move index to '}'
                         }
                     } else {
-                        res += s[i];                 // Not a unicode escape, treat as literal
+                        res += src.at(i);            // Not a unicode escape, treat as literal
                         continue;
                     }
                     codepoint_to_utf8(codepoint, res);
@@ -991,7 +994,7 @@ namespace {
                     res += '?'; // Add replacement character on error
                 }
             } else {
-                res += s[i];
+                res += src.at(i);
             }
         }
         return res;
@@ -1006,7 +1009,7 @@ namespace {
         }
         // Add empty strings for any trailing delimiters
         if (!line.empty() && line.back() == delimiter) {
-            tokens.push_back("");
+            tokens.emplace_back("");
         }
         return tokens;
     }
@@ -1257,11 +1260,9 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
       << "Could not open IdnaTestV2.txt. Make sure it's in the same directory as the test executable.";
 
     std::string line;
-    int         line_num     = 0;
     int         failed_tests = 0;
     while (std::getline(file, line)) {
-        line_num++;
-        if (line.empty() || line[0] == '#') {
+        if (line.empty() || line.at(0) == '#') {
             continue;
         }
 
@@ -1277,11 +1278,11 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         }
 
 
-        std::string       source                = unescape(trim(parts[0]));
-        std::string       to_unicode_exp        = unescape(trim(parts[1]));
-        std::string const to_unicode_status     = std::string(trim(parts[2]));
-        std::string       to_ascii_n_exp        = unescape(trim(parts[3]));
-        std::string       to_ascii_n_status_str = std::string(trim(parts[4]));
+        std::string       source                = unescape(trim(parts.at(0)));
+        std::string       to_unicode_exp        = unescape(trim(parts.at(1)));
+        std::string const to_unicode_status     = std::string(trim(parts.at(2)));
+        std::string       to_ascii_n_exp        = unescape(trim(parts.at(3)));
+        std::string       to_ascii_n_status_str = std::string(trim(parts.at(4)));
 
         // SCOPED_TRACE("Line: " + std::to_string(line_num) + " | Source: " + source + " | line: " + line);
 
@@ -1381,7 +1382,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.CheckDecodeAndValidateLabels  = false;
                     debug_str                                    += "Disable Decode and Validate labels, ";
                 } else {
-                    throw stl::runtime_error("Unknown error code: " + error_code + "; line: " + line);
+                    throw stl::runtime_error(stl::format("Unknown error code: {}; line: {}", error_code, line));
                 }
             }
 
