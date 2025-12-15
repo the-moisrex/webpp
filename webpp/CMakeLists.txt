@@ -144,7 +144,6 @@ set(ALL_SOURCES_SHORT
         utils/bits.hpp
         utils/const_list.hpp
         utils/debounce.hpp
-        utils/error_handling.hpp
         utils/version.hpp
 
         memory/allocator_concepts.hpp

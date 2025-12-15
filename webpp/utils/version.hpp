@@ -177,7 +177,7 @@ namespace webpp {
                     }
                 }
                 auto const val_str = str.substr(0, stl::min(dot, str.size()));
-                if (auto const value = to<integer_type, 10, error_handling_strategy::use_expected>(val_str)) {
+                if (auto const value = to<integer_type>(val_str)) {
                     *octet = value.value();
                 } else {
                     return false;
