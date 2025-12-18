@@ -727,13 +727,13 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
     for (auto const [str, is_valid, opts_index] : tests) {
         switch (opts_index) {
             case -1:
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str;
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str;
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts[2]>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(0)>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(1)>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(2)>(str.begin(), str.end())) << str;
                 break;
-            case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts[0]>(str.begin(), str.end())) << str; break;
-            case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts[1]>(str.begin(), str.end())) << str; break;
-            case 2: EXPECT_EQ(is_valid, is_label_valid<idna_opts[2]>(str.begin(), str.end())) << str; break;
+            case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(0)>(str.begin(), str.end())) << str; break;
+            case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(1)>(str.begin(), str.end())) << str; break;
+            case 2: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(2)>(str.begin(), str.end())) << str; break;
             default: break;
         }
     }

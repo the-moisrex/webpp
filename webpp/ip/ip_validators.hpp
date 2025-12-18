@@ -58,6 +58,7 @@ namespace webpp::is {
      * valid ipv4 subnet mask or not
      */
     [[nodiscard]] constexpr bool subnet(stl::array<stl::uint8_t, ipv4_byte_count> const octets) noexcept {
+        // std::ranges::all_of
         for (auto const& octet : octets) {
             if (!subnet_octet(octet)) {
                 return false;
