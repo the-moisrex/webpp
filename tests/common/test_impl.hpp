@@ -135,15 +135,14 @@ namespace testing {
         assert_result& operator=(assert_result&&)      = delete;
 
         assert_result(
-          bool             success,
-          std::string_view file,
-          int              line,
-          std::string_view lhs_expr,
-          std::string_view rhs_expr,
-          std::string      lhs_val,
-          std::string      rhs_val,
-          std::string_view macro_name)
-          : ctx() {
+          bool const             success,
+          std::string_view const file,
+          int const              line,
+          std::string_view const lhs_expr,
+          std::string_view const rhs_expr,
+          std::string            lhs_val,
+          std::string            rhs_val,
+          std::string_view const macro_name) {
             ctx.success    = success;
             ctx.file       = file;
             ctx.line       = line;
@@ -185,18 +184,19 @@ namespace testing {
     };
 
     // -------------------- TEST machinery --------------------
-    inline int run_all_tests() {
+    inline int run_all_tests(bool const run_perfs = false) {
         using std::cout;
         using clock = std::chrono::high_resolution_clock;
         using std::chrono::nanoseconds;
+        using std::chrono::time_point;
 
-        auto&                          reg   = registry::instance();
-        auto&                          tests = reg.tests();
-        nanoseconds                    total_ns{};
-        float                          index  = 0;
-        auto const                     length = static_cast<float>(tests.size());
-        std::chrono::time_point<clock> start{};
-        std::chrono::time_point<clock> endp{};
+        auto&             reg   = registry::instance();
+        auto&             tests = reg.tests();
+        nanoseconds       total_ns{};
+        float             index  = 0;
+        auto const        length = static_cast<float>(tests.size());
+        time_point<clock> start{};
+        time_point<clock> endp{};
         // std::vector<test_info*>        failed_tests;
 
         cout << color::CYAN << "[ ======== ] Running " << tests.size() << " tests.\n" << color::RESET;
@@ -214,13 +214,17 @@ namespace testing {
 #endif
             try {
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
-                counter.start();
+                if (run_perfs) {
+                    counter.start();
+                }
 #endif
                 start = clock::now();
                 (*test.func)();
                 endp = clock::now();
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
-                counter.stop();
+                if (run_perfs) {
+                    counter.stop();
+                }
 #endif
             } catch (std::exception const& err) {
                 reg.asserted(false);
@@ -252,9 +256,11 @@ namespace testing {
                 cout << color::GREY << " (" << successes << " asserts)" << color::RESET;
             }
 #ifdef WEBPP_SUPPORTS_PERF_COUNTERS
-            cout << color::PURPLE << " ";
-            counter.print_anomalies(cout);
-            cout << color::RESET;
+            if (run_perfs) {
+                cout << color::PURPLE << " ";
+                counter.print_anomalies(cout);
+                cout << color::RESET;
+            }
 #endif
             cout << '\n' << std::flush;
             ++index;
@@ -329,12 +335,12 @@ namespace testing {
     }
 
     inline assert_result make_unary_assertion(
-      bool             value,
-      bool             expect_true,
-      std::string_view file,
-      int              line,
-      std::string_view expr,
-      std::string_view macro_name) {
+      bool const             value,
+      bool const             expect_true,
+      std::string_view const file,
+      int const              line,
+      std::string_view const expr,
+      std::string_view const macro_name) {
         bool const is_ok = expect_true ? value : !value;
         registry::instance().asserted(is_ok);
         return {is_ok, file, line, expr, "", !is_ok ? serialize(value) : "", "", macro_name};
@@ -445,8 +451,15 @@ namespace testing {
 } // namespace testing
 
 #ifndef WEBPP_NO_DEFAULT_MAIN
-int main() {
-    return ::testing::run_all_tests();
+int main(int const argc, char** argv) {
+    bool enable_perf = false;
+    for (int i = 1; i < argc; i++) {
+        std::string_view const arg{argv[i]};
+        if (arg == "--perf" || arg == "-perf") {
+            enable_perf = true;
+        }
+    }
+    return ::testing::run_all_tests(enable_perf);
 }
 #endif
 
