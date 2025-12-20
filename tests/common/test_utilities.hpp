@@ -702,34 +702,35 @@ namespace testing {
         }
 
         template <typename C>
-        std::string escape_codepoint(C const inp) {
+        void escape_codepoint(std::ostringstream& oss, C const inp) {
             if (inp == 0) {
-                return {"\\0"};
+                oss << "\\0";
+                return;
             }
             // produce either printable char (if ascii printable) or an escape (\x, \u, \U)
             if constexpr (sizeof(C) == 1) {
                 auto const uch = static_cast<unsigned char>(inp);
                 if (std::isprint(uch)) {
-                    return {1, static_cast<char>(uch)};
+                    oss << static_cast<char>(uch);
+                    return;
                 }
-                std::ostringstream oss;
                 oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(uch);
-                return oss.str();
-
             } else if constexpr (sizeof(C) == 2) {
                 // 16-bit: \uXXXX
                 auto const uch = static_cast<std::uint16_t>(inp);
                 if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
-                    return {1, static_cast<char>(uch)};
+                    oss << static_cast<char>(uch);
+                    return;
                 }
-                return std::string("\\u") + hex_u32(uch, 4);
+                oss << "\\u" << hex_u32(uch, 4);
 
             } else { // sizeof >= 4
                 auto const uch = static_cast<uint32_t>(inp);
                 if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
-                    return {1, static_cast<char>(uch)};
+                    oss  << static_cast<char>(uch);
+                    return;
                 }
-                return std::string("\\U") + hex_u32(uch, 8);
+                oss << "\\U" << hex_u32(uch, 8);
             }
         }
 
@@ -753,7 +754,7 @@ namespace testing {
     } // namespace detail
 
     template <typename T>
-    std::string serialize(T const& value) {
+    [[nodiscard]] std::string serialize(T const& value) {
         using U = std::remove_cvref_t<T>;
 
         // demangle the static type once and prefix with color
@@ -774,8 +775,8 @@ namespace testing {
             for (std::size_t i = 0; i < Length; ++i) {
                 // value is array, get element via pointer arithmetic
                 // We can't index with value[i] because T may decay — so cast
-                Elem const* base = reinterpret_cast<Elem const*>(&value);
-                oss << detail::escape_codepoint(base[i]);
+                // oss << detail::escape_codepoint(value[i]);
+                detail::escape_codepoint(oss, value[i]);
             }
             oss << '"';
             return type_prefix + oss.str();
@@ -783,9 +784,9 @@ namespace testing {
             // 3) string-like (std::string, std::string_view, C-style char const*)
             std::ostringstream oss;
             oss << '"';
-            for (auto const uch : std::string_view(value)) {
+            for (auto const uch : value) {
                 if (std::isprint(uch)) {
-                    oss << uch;
+                    oss << static_cast<char>(uch);
                 } else {
                     oss << "\\x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(uch);
                     oss << std::dec << std::setfill(' ');

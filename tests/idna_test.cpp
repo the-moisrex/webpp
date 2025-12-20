@@ -690,7 +690,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
        }
     };
 
-    static constexpr array<opts, 27> tests{
+    static constexpr array<opts, 28> tests{
       opts{"", true, -1},
       {"a", true, -1},
       {"-", true, 0},
@@ -715,7 +715,8 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"1", false, 0},
       {"1", false, 1},
       {"a1", true, -1}, // Letter followed by digit
-      {"1a", true, -1}, // Digit followed by letter
+      {"1a", false, 1}, // Digit followed by letter
+      {"1a", true, 2}, // Digit followed by letter
       {"a-b", true, -1}, // Hyphen in middle
 
       {"ABC", true, 0}, // STD3 Rule
