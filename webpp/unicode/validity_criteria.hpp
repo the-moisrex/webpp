@@ -80,8 +80,12 @@ namespace webpp::unicode::idna {
         V9           = 0b1U << 9U,
         bidi_failure = V9,
 
+        // 10. Empty Label (... must be satisfied for a non-empty label)
+        V10           = 0b1U << 10U,
+        empty_label = V10,
+
         // Flags:
-        bidi_domain_name = 0b1U << 10U, // it's a flag, and not a status
+        bidi_domain_name = 0b1U << 11U, // it's a flag, and not a status
     };
 
     [[nodiscard]] static constexpr stl::string_view to_string(validity_criteria_status const status) noexcept {
@@ -100,6 +104,7 @@ namespace webpp::unicode::idna {
             case V7: return {"The label requires mapping some code points"};
             case V8: return {"Failure in ContextJ Rules"};
             case V9: return {"Failure in Bidi Rules"};
+            case V10: return {"Empty Label"};
 
             // Flags:
             case bidi_domain_name:
@@ -183,6 +188,10 @@ namespace webpp::unicode::idna {
 
         validity_criteria_status_type status = +valid;
         auto const                    length = send - spos;
+
+        if (length == 0) [[unlikely]] {
+            status |= Options.CheckEmptyLabels ? +empty_label : +valid;
+        }
 
         // 2,3,4. Check hyphens
         if constexpr (Options.CheckHyphens) {
@@ -350,7 +359,7 @@ namespace webpp::unicode::idna {
 
         // 9. Check bidi rule
         if constexpr (Options.CheckBidi) {
-            // The documentaiton asks us to "If CheckBidi, and if the domain name is a 'Bidi domain name'",
+            // The documentation asks us to "If CheckBidi, and if the domain name is a 'Bidi domain name'",
             // but we don't yet know if the full domain is a bidi domain or not. It's on the caller to
             // check the status code for bidi_failures.
             status |= validate(validate_bidi_rule(b_info), bidi_failure);

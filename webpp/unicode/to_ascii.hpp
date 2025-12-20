@@ -453,10 +453,8 @@ namespace webpp::unicode::idna {
             switch (flag & +clean) {
                 [[unlikely]] case 0:
                 [[unlikely]] case +dot:
-                    if constexpr (Options.VerifyDnsLength) {
-                        // If the label is empty, or ..., record that there was an error.
-                        status |= +empty_domain_label;
-                    }
+                    // If the label is empty, or ..., record that there was an error.
+                    status |= Options.VerifyDnsLength ? +empty_domain_label : 0;
                     break;
                 [[unlikely]] case +ace | +non_ascii:
                 case +ace:
@@ -514,17 +512,18 @@ namespace webpp::unicode::idna {
                         lbeg = plbeg;
                         lend = plend;
                     }
-                    [[fallthrough]];
+                    break;
                 [[likely]] default:
-                    // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
-                    // Criteria. If any of the validity criteria are not satisfied, record that there was
-                    // an error.
-                    //
-                    // Here we convert the status returned from validity criteria function to our own:
-                    status |= static_cast<to_ascii_status_type>(
-                      label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift);
                     break;
             }
+
+            // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity
+            // Criteria. If any of the validity criteria are not satisfied, record that there was
+            // an error.
+            //
+            // Here we convert the status returned from validity criteria function to our own:
+            status |= static_cast<to_ascii_status_type>(
+              label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift);
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
@@ -564,7 +563,7 @@ namespace webpp::unicode::idna {
             // 6. Join the labels using U+002E FULL STOP as a separator and return the result
         }
 
-        // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names"
+        // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names";
         // So, if the domain (the whole domain and not just a label) is not a bidi domain name, then we
         // need to remove the unnecessary error.
         // We're doing this so we don't have to do 2 passes to figure this out.

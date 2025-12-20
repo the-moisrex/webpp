@@ -37,6 +37,11 @@ namespace webpp::unicode::idna {
         // - Each label length: 1..63
         // Usually disabled in browsers, enabled in registrars
 
+        bool CheckEmptyLabels = true;
+        // Since VerifyDnsLength is disabled by default, but empty labels are still a sin,
+        // we have to have another option so the default toASCII algorithm will check for empty labels even
+        // though the VerifyDnsLength is disabled.
+
         // ===================================================================
         // Always-enabled checks (not affected by beStrict)
         // ===================================================================
@@ -88,6 +93,7 @@ namespace webpp::unicode::idna {
       .CheckHyphens      = true,
       .UseSTD3ASCIIRules = true,
       .VerifyDnsLength   = true,
+      .CheckEmptyLabels  = true,
 
       .CheckACE              = true,
       .CheckBidi             = true,
@@ -105,6 +111,7 @@ namespace webpp::unicode::idna {
       .CheckHyphens      = false,
       .UseSTD3ASCIIRules = false,
       .VerifyDnsLength   = false,
+      .CheckEmptyLabels  = false,
 
       .CheckACE              = true,
       .CheckBidi             = false, // Browsers typically disable full Bidi checks for compatibility
@@ -119,43 +126,48 @@ namespace webpp::unicode::idna {
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
-        // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
-        return idna_options{
-          .CheckHyphens      = static_cast<bool>(flags >> 11U & 0b1U),
-          .UseSTD3ASCIIRules = static_cast<bool>(flags >> 10U & 0b1U),
-          .VerifyDnsLength   = static_cast<bool>(flags >> 9U & 0b1U),
-
-          .CheckACE              = static_cast<bool>(flags >> 8U & 0b1U),
-          .CheckBidi             = static_cast<bool>(flags >> 7U & 0b1U),
-          .CheckJoiners          = static_cast<bool>(flags >> 6U & 0b1U),
-          .IgnoreInvalidPunycode = static_cast<bool>(flags >> 5U & 0b1U),
-          .CheckNFC              = static_cast<bool>(flags >> 4U & 0b1U),
-
-          .CheckDotInclusions             = static_cast<bool>(flags >> 3U & 0b1U),
-          .CheckMappingRequired           = static_cast<bool>(flags >> 2U & 0b1U),
-          .CheckCombiningMarkAtLabelStart = static_cast<bool>(flags >> 1U & 0b1U),
-          .CheckDecodeAndValidateLabels   = static_cast<bool>(flags >> 0U & 0b1U),
+        static constexpr auto to_bool = [](std::uint16_t const value) constexpr noexcept -> bool {
+            return static_cast<bool>(value & 0b1U);
         };
-        // NOLINTEND(*-signed-bitwise, *-magic-numbers)
+        return idna_options{
+          .CheckHyphens      = to_bool(flags >> 12U),
+          .UseSTD3ASCIIRules = to_bool(flags >> 11U),
+          .VerifyDnsLength   = to_bool(flags >> 10U),
+          .CheckEmptyLabels  = to_bool(flags >> 9U),
+
+          .CheckACE              = to_bool(flags >> 8U),
+          .CheckBidi             = to_bool(flags >> 7U),
+          .CheckJoiners          = to_bool(flags >> 6U),
+          .IgnoreInvalidPunycode = to_bool(flags >> 5U),
+          .CheckNFC              = to_bool(flags >> 4U),
+
+          .CheckDotInclusions             = to_bool(flags >> 3U),
+          .CheckMappingRequired           = to_bool(flags >> 2U),
+          .CheckCombiningMarkAtLabelStart = to_bool(flags >> 1U),
+          .CheckDecodeAndValidateLabels   = to_bool(flags >> 0U),
+        };
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
-        // NOLINTBEGIN(*-signed-bitwise, *-magic-numbers)
+        static constexpr auto to_option = [](bool const value) constexpr noexcept -> std::uint32_t {
+            return value ? 0b1U : 0b0U;
+        };
         return static_cast<stl::uint16_t>(
-          static_cast<stl::uint16_t>(options.CheckHyphens) << 11U |
-          static_cast<stl::uint16_t>(options.UseSTD3ASCIIRules) << 10U |
-          static_cast<stl::uint16_t>(options.VerifyDnsLength) << 9U |
+          to_option(options.CheckHyphens) << 12U |                  //
+          to_option(options.UseSTD3ASCIIRules) << 11U |             //
+          to_option(options.VerifyDnsLength) << 10U |               //
+          to_option(options.CheckEmptyLabels) << 9U |               //
 
-          static_cast<stl::uint16_t>(options.CheckACE) << 8U | static_cast<stl::uint16_t>(options.CheckBidi) << 7U |
-          static_cast<stl::uint16_t>(options.CheckJoiners) << 6U |
-          static_cast<stl::uint16_t>(options.IgnoreInvalidPunycode) << 5U |
-          static_cast<stl::uint16_t>(options.CheckNFC) << 4U |
+          to_option(options.CheckACE) << 8U |                       //
+          to_option(options.CheckBidi) << 7U |                      //
+          to_option(options.CheckJoiners) << 6U |                   //
+          to_option(options.IgnoreInvalidPunycode) << 5U |          //
+          to_option(options.CheckNFC) << 4U |                       //
 
-          static_cast<stl::uint16_t>(options.CheckDotInclusions) << 3U |
-          static_cast<stl::uint16_t>(options.CheckMappingRequired) << 2U |
-          static_cast<stl::uint16_t>(options.CheckCombiningMarkAtLabelStart) << 1U |
-          static_cast<stl::uint16_t>(options.CheckDecodeAndValidateLabels) << 0U);
-        // NOLINTEND(*-signed-bitwise, *-magic-numbers)
+          to_option(options.CheckDotInclusions) << 3U |             //
+          to_option(options.CheckMappingRequired) << 2U |           //
+          to_option(options.CheckCombiningMarkAtLabelStart) << 1U | //
+          to_option(options.CheckDecodeAndValidateLabels) << 0U);
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria

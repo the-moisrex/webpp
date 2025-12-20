@@ -1376,8 +1376,9 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.UseSTD3ASCIIRules  = false;
                     debug_str                         += "Disable STD3 ASCII Rules check, ";
                 } else if (error_code.starts_with("A4")) {
-                    relaxed_options.VerifyDnsLength  = false;
-                    debug_str                       += "Disable DNS Length check, ";
+                    relaxed_options.VerifyDnsLength   = false;
+                    relaxed_options.CheckEmptyLabels  = false;
+                    debug_str                        += "Disable DNS Length check, ";
                 } else if (error_code == "P4") {
                     relaxed_options.CheckDecodeAndValidateLabels  = false;
                     debug_str                                    += "Disable Decode and Validate labels, ";
@@ -1403,7 +1404,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             }
             EXPECT_TRUE(ascii_relaxed_res.has_value())
               << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string
-              << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
+              << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp
+              << "\n  Line: " << line;
 
             if (ascii_relaxed_res.has_value()) {
                 EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
@@ -1574,29 +1576,9 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit11) {
     using unicode::idna::idna_options;
     using unicode::idna::to_ascii;
 
-    // Test bidirectional character handling - these should fail with strict options due to Bidi rules
-    // From the failing test: 𐫀．ډ𑌀 and 𐫀.ډ𑌀 and xn--pw9c.xn--fjb8658k
-    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀．ډ𑌀")));
-    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀.ډ𑌀")));
-    EXPECT_FALSE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"xn--pw9c.xn--fjb8658k")));
-
-    // With Bidi checking disabled, these should succeed
-    static constexpr idna_options bidi_disabled_options{
-      .CheckHyphens                   = true,
-      .UseSTD3ASCIIRules              = true,
-      .VerifyDnsLength                = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = false,
-      .CheckNFC                       = true,
-      .CheckDotInclusions             = true,
-      .CheckMappingRequired           = true,
-      .CheckCombiningMarkAtLabelStart = true,
-    };
-
-    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"𐫀．ډ𑌀")));
-    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"𐫀.ډ𑌀")));
-    EXPECT_TRUE((to_ascii<std::u8string, bidi_disabled_options>(u8"xn--pw9c.xn--fjb8658k")));
+    EXPECT_TRUE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀．ډ𑌀")));
+    EXPECT_TRUE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"𐫀.ډ𑌀")));
+    EXPECT_TRUE((to_ascii<std::u8string, unicode::idna::strict_idna_options>(u8"xn--pw9c.xn--fjb8658k")));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
@@ -1723,6 +1705,8 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit17) {
     //  Source: .. | line: ..; ; [X4_2]; ; [A4_2]; ;
     EXPECT_FALSE(to_ascii<std::u32string>(U"..").has_value());
     EXPECT_FALSE(to_ascii<std::u8string>(u8"..").has_value());
+
+    EXPECT_FALSE(to_ascii<std::u8string>(u8"a..b").has_value());
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit18) {
