@@ -773,9 +773,6 @@ namespace testing {
             std::ostringstream oss;
             oss << detail::char_literal_prefix<Elem>() << '"';
             for (std::size_t i = 0; i < Length; ++i) {
-                // value is array, get element via pointer arithmetic
-                // We can't index with value[i] because T may decay — so cast
-                // oss << detail::escape_codepoint(value[i]);
                 detail::escape_codepoint(oss, value[i]);
             }
             oss << '"';

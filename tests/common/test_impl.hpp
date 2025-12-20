@@ -64,7 +64,7 @@ namespace testing {
             return all_tests;
         }
 
-        void asserted(bool status) {
+        void asserted(bool const status) {
             ++m_assertions;
             if (status) {
                 ++m_successes;
@@ -105,27 +105,29 @@ namespace testing {
     };
 
     inline void handle_failure(std::exception const& err) {
-        std::cerr << "\n" << color::RED << "[  EXC     ] Exception: " << color::RESET << err.what() << "\n";
+        std::cout << "\n"
+                  << color::RED << "[  EXC     ] Exception: " << color::RESET << err.what() << "\n"
+                  << std::flush;
     }
 
     inline void handle_failure(assert_context const& ctx) {
-        using std::cerr;
+        using std::cout;
 
-        cerr << '\n' << color::RED << ctx.macro_name << " Failed: " << color::RESET;
-        cerr << ctx.file << ":" << ctx.line << '\n';
-        cerr << "  LHS:      " << color::YELLOW << ctx.lhs_expr << color::RESET << '\n';
+        cout << '\n' << color::RED << ctx.macro_name << " Failed: " << color::RESET;
+        cout << ctx.file << ":" << ctx.line << '\n';
+        cout << "  LHS:      " << color::YELLOW << ctx.lhs_expr << color::RESET << '\n';
         if (!ctx.rhs_expr.empty()) {
-            cerr << "  RHS:      " << color::YELLOW << ctx.rhs_expr << color::RESET << '\n';
+            cout << "  RHS:      " << color::YELLOW << ctx.rhs_expr << color::RESET << '\n';
         }
-        cerr << "  Value:    " << ctx.lhs_value << '\n';
+        cout << "  Value:    " << ctx.lhs_value << '\n';
         if (!ctx.rhs_value.empty()) {
-            cerr << "  Expected: " << ctx.rhs_value << '\n';
+            cout << "  Expected: " << ctx.rhs_value << '\n';
         }
-        cerr << color::GREY << ctx.extra << color::RESET << '\n';
+        cout << color::GREY << ctx.extra << color::RESET << '\n' << std::flush;
     }
 
     inline void handle_failure() {
-        std::cerr << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n";
+        std::cout << "\n" << color::RED << "[  EXC     ] Unknown exception" << color::RESET << "\n" << std::flush;
     }
 
     struct assert_result {
@@ -199,7 +201,7 @@ namespace testing {
         time_point<clock> endp{};
         // std::vector<test_info*>        failed_tests;
 
-        cout << color::CYAN << "[ ======== ] Running " << tests.size() << " tests.\n" << color::RESET;
+        cout << color::CYAN << "[ ======== ] Running " << tests.size() << " tests.\n" << color::RESET << std::flush;
         for (test_info& test : tests) {
             auto const percentage = static_cast<int>(index / length * 100.0F);
 
@@ -273,7 +275,7 @@ namespace testing {
 
         cout << color << "[ ======== ] Run Time: " << color::RESET << format_duration(total_ns) << "\n";
         cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
-             << " failed assertions, " << color::GREEN << successes << color << " success assersions." << color::RESET
+             << " failed assertions, " << color::GREEN << successes << color << " success assertions." << color::RESET
              << "\n";
 
         // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;

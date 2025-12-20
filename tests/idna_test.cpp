@@ -1711,12 +1711,15 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit17) {
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit18) {
+    using unicode::idna::strict_idna_options;
     using unicode::idna::to_ascii;
 
     // Line: 209 | Source: 1234567890ä1234567890123456789012345678901234567890123456 | line:
     // 1234567890ä1234567890123456789012345678901234567890123456; ; ;
     // xn--12345678901234567890123456789012345678901234567890123456-fxe; [A4_2]; ;
-    EXPECT_FALSE(to_ascii<std::u32string>(U"1234567890ä1234567890123456789012345678901234567890123456").has_value());
+    EXPECT_FALSE(
+      (to_ascii<std::u32string, strict_idna_options>(U"1234567890ä1234567890123456789012345678901234567890123456")
+         .has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit19) {
