@@ -37,11 +37,6 @@ namespace webpp::unicode::idna {
         // - Each label length: 1..63
         // Usually disabled in browsers, enabled in registrars
 
-        bool CheckEmptyLabels = true;
-        // Since VerifyDnsLength is disabled by default, but empty labels are still a sin,
-        // we have to have another option so the default toASCII algorithm will check for empty labels even
-        // though the VerifyDnsLength is disabled.
-
         // ===================================================================
         // Always-enabled checks (not affected by beStrict)
         // ===================================================================
@@ -56,7 +51,7 @@ namespace webpp::unicode::idna {
         // Disallows zero-width joiners/non-joiners and other ContextJ code points
         // that could be used for spoofing
 
-        bool IgnoreInvalidPunycode = false;
+        bool CheckInvalidPunycode = true;
         // If true, would accept malformed Punycode (not allowed by spec)
         // Always false — spec requires failure on invalid Punycode
 
@@ -93,13 +88,12 @@ namespace webpp::unicode::idna {
       .CheckHyphens      = true,
       .UseSTD3ASCIIRules = true,
       .VerifyDnsLength   = true,
-      .CheckEmptyLabels  = true,
 
-      .CheckACE              = true,
-      .CheckBidi             = true,
-      .CheckJoiners          = true,
-      .IgnoreInvalidPunycode = false,
-      .CheckNFC              = true,
+      .CheckACE             = true,
+      .CheckBidi            = true,
+      .CheckJoiners         = true,
+      .CheckInvalidPunycode = true,
+      .CheckNFC             = true,
 
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -107,22 +101,23 @@ namespace webpp::unicode::idna {
       .CheckDecodeAndValidateLabels   = true,
     };
 
+    /// Relaxed options
+    /// Warning: Using these set of options will open you to security vulnerabilities
     static constexpr idna_options loose_idna_options{
       .CheckHyphens      = false,
       .UseSTD3ASCIIRules = false,
       .VerifyDnsLength   = false,
-      .CheckEmptyLabels  = false,
 
-      .CheckACE              = true,
-      .CheckBidi             = false, // Browsers typically disable full Bidi checks for compatibility
-      .CheckJoiners          = false, // Often relaxed in practice
-      .IgnoreInvalidPunycode = true,  // Some parsers are more forgiving
-      .CheckNFC              = false, // Many browsers skip NFC check on input
+      .CheckACE             = false,
+      .CheckBidi            = false, // Browsers typically disable full Bidi checks for compatibility
+      .CheckJoiners         = false, // Often relaxed in practice
+      .CheckInvalidPunycode = false, // Some parsers are more forgiving
+      .CheckNFC             = false, // Many browsers skip NFC check on input
 
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
       .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = true, // Still critical for security
+      .CheckDecodeAndValidateLabels   = false, // Warning: this is not secure
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
@@ -130,16 +125,15 @@ namespace webpp::unicode::idna {
             return static_cast<bool>(value & 0b1U);
         };
         return idna_options{
-          .CheckHyphens      = to_bool(flags >> 12U),
-          .UseSTD3ASCIIRules = to_bool(flags >> 11U),
-          .VerifyDnsLength   = to_bool(flags >> 10U),
-          .CheckEmptyLabels  = to_bool(flags >> 9U),
+          .CheckHyphens      = to_bool(flags >> 11U),
+          .UseSTD3ASCIIRules = to_bool(flags >> 10U),
+          .VerifyDnsLength   = to_bool(flags >> 9U),
 
-          .CheckACE              = to_bool(flags >> 8U),
-          .CheckBidi             = to_bool(flags >> 7U),
-          .CheckJoiners          = to_bool(flags >> 6U),
-          .IgnoreInvalidPunycode = to_bool(flags >> 5U),
-          .CheckNFC              = to_bool(flags >> 4U),
+          .CheckACE             = to_bool(flags >> 8U),
+          .CheckBidi            = to_bool(flags >> 7U),
+          .CheckJoiners         = to_bool(flags >> 6U),
+          .CheckInvalidPunycode = to_bool(flags >> 5U),
+          .CheckNFC             = to_bool(flags >> 4U),
 
           .CheckDotInclusions             = to_bool(flags >> 3U),
           .CheckMappingRequired           = to_bool(flags >> 2U),
@@ -153,15 +147,14 @@ namespace webpp::unicode::idna {
             return value ? 0b1U : 0b0U;
         };
         return static_cast<stl::uint16_t>(
-          to_option(options.CheckHyphens) << 12U |                  //
-          to_option(options.UseSTD3ASCIIRules) << 11U |             //
-          to_option(options.VerifyDnsLength) << 10U |               //
-          to_option(options.CheckEmptyLabels) << 9U |               //
+          to_option(options.CheckHyphens) << 11U |                  //
+          to_option(options.UseSTD3ASCIIRules) << 10U |             //
+          to_option(options.VerifyDnsLength) << 9U |                //
 
           to_option(options.CheckACE) << 8U |                       //
           to_option(options.CheckBidi) << 7U |                      //
           to_option(options.CheckJoiners) << 6U |                   //
-          to_option(options.IgnoreInvalidPunycode) << 5U |          //
+          to_option(options.CheckInvalidPunycode) << 5U |           //
           to_option(options.CheckNFC) << 4U |                       //
 
           to_option(options.CheckDotInclusions) << 3U |             //

@@ -454,7 +454,7 @@ namespace webpp::unicode::idna {
                 [[unlikely]] case 0:
                 [[unlikely]] case +dot:
                     // If the label is empty, or ..., record that there was an error.
-                    status |= Options.VerifyDnsLength ? +empty_domain_label : 0;
+                    status |= Options.VerifyDnsLength ? +empty_domain_label : +valid;
                     break;
                 [[unlikely]] case +ace | +non_ascii:
                 case +ace:
@@ -489,21 +489,22 @@ namespace webpp::unicode::idna {
 
                         if (pun_status != punycode_status::success) [[unlikely]] {
                             // restore the original label:
-                            status |=
-                              !Options.IgnoreInvalidPunycode && Options.CheckDecodeAndValidateLabels ? +pun_status : 0;
+                            status |= Options.CheckInvalidPunycode && Options.CheckDecodeAndValidateLabels
+                                        ? +pun_status
+                                        : +valid;
                             break;
                         }
 
                         // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                         // record that there was an error.
                         if (new_label_len == 0) [[unlikely]] {
-                            status |= Options.CheckDecodeAndValidateLabels ? +empty_punycode : 0;
+                            status |= Options.CheckDecodeAndValidateLabels ? +empty_punycode : +valid;
                         }
 
                         if (is_ascii(plbeg, plend)) [[unlikely]] {
                             // prevent converting an ascii string into punycode (xn--ascii-):
                             flag   &= static_cast<flag_type>(~+non_ascii);
-                            status |= Options.CheckDecodeAndValidateLabels ? +ascii_only_punycode : 0;
+                            status |= Options.CheckDecodeAndValidateLabels ? +ascii_only_punycode : +valid;
                         } else {
                             flag |= +non_ascii; // make sure to re-convert it back to punycode
                         }
@@ -542,7 +543,7 @@ namespace webpp::unicode::idna {
 
                 assert(outend <= oend); // We ran out of space
                 if (p_status != punycode_status::success) [[unlikely]] {
-                    status |= !Options.IgnoreInvalidPunycode ? +p_status : 0;
+                    status |= Options.CheckInvalidPunycode ? +p_status : +valid;
                 }
             }
 

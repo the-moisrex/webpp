@@ -190,11 +190,11 @@ namespace webpp::unicode::idna {
         auto const                    length = send - spos;
 
         if (length == 0) [[unlikely]] {
-            status |= Options.CheckEmptyLabels ? +empty_label : +valid;
+            status |= Options.VerifyDnsLength ? +empty_label : +valid;
         }
 
         // 2,3,4. Check hyphens
-        if constexpr (Options.CheckHyphens) {
+        if constexpr (Options.CheckHyphens && Options.CheckDecodeAndValidateLabels) {
             switch (length) {
                 [[likely]] default:
                 case 4: {
@@ -228,7 +228,7 @@ namespace webpp::unicode::idna {
                     break;
                 case 0: break;
             }
-        } else if constexpr (Options.CheckACE) {
+        } else if constexpr (Options.CheckACE && Options.CheckDecodeAndValidateLabels) {
             Iter pos = spos;
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)

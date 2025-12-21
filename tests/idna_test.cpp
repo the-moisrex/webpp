@@ -839,7 +839,7 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"xn--0ca.xn--ssa73l"), u8"xn--0ca.xn--ssa73l");
     EXPECT_EQ(to_ascii(u8"à.\u05D0\u0308"), u8"xn--0ca.xn--ssa73l");
     EXPECT_EQ(to_ascii(u8"\u05D0\u0308"), u8"xn--ssa73l");
-    EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty string is invalid
+    EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty label is invalid
 
     for (auto const invalid : invalids) {
         EXPECT_EQ(to_ascii(invalid).value_or(u8""), u8"") << invalid;
@@ -1114,87 +1114,95 @@ namespace {
             // Special cases, run the debugger and watch for `idna_flags(relaxed_options)` or `flags`:
             // Or comment out the throw statement, replace it with a `break`, add a debugger log
             // `webpp_to_ascii_case({flags});`.
-            webpp_to_ascii_case(1307);
-            webpp_to_ascii_case(1311);
-            webpp_to_ascii_case(1369);
-            webpp_to_ascii_case(1371);
-            webpp_to_ascii_case(1375);
-            webpp_to_ascii_case(1435);
-            webpp_to_ascii_case(1437);
-            webpp_to_ascii_case(1439);
-            webpp_to_ascii_case(1497);
-            webpp_to_ascii_case(1499);
-            webpp_to_ascii_case(1501);
-            webpp_to_ascii_case(1503);
-            webpp_to_ascii_case(1759);
-            webpp_to_ascii_case(1817);
-            webpp_to_ascii_case(1819);
-            webpp_to_ascii_case(1821);
-            webpp_to_ascii_case(1823);
-            webpp_to_ascii_case(1881);
-            webpp_to_ascii_case(1883);
-            webpp_to_ascii_case(1885);
-            webpp_to_ascii_case(1887);
-            webpp_to_ascii_case(1945);
-            webpp_to_ascii_case(1947);
-            webpp_to_ascii_case(1949);
-            webpp_to_ascii_case(1951);
-            webpp_to_ascii_case(2009);
-            webpp_to_ascii_case(2011);
-            webpp_to_ascii_case(2013);
-            webpp_to_ascii_case(2335);
-            webpp_to_ascii_case(2399);
-            webpp_to_ascii_case(2523);
-            webpp_to_ascii_case(2527);
-            webpp_to_ascii_case(2843);
-            webpp_to_ascii_case(2845);
-            webpp_to_ascii_case(2847);
-            webpp_to_ascii_case(2905);
-            webpp_to_ascii_case(2907);
-            webpp_to_ascii_case(2909);
-            webpp_to_ascii_case(2911);
-            webpp_to_ascii_case(2969);
-            webpp_to_ascii_case(2971);
-            webpp_to_ascii_case(2973);
-            webpp_to_ascii_case(2975);
-            webpp_to_ascii_case(3033);
-            webpp_to_ascii_case(3035);
-            webpp_to_ascii_case(3037);
-            webpp_to_ascii_case(3353);
-            webpp_to_ascii_case(3355);
-            webpp_to_ascii_case(3357);
-            webpp_to_ascii_case(3359);
-            webpp_to_ascii_case(3417);
-            webpp_to_ascii_case(3419);
-            webpp_to_ascii_case(3421);
-            webpp_to_ascii_case(3423);
-            webpp_to_ascii_case(3483);
-            webpp_to_ascii_case(3485);
-            webpp_to_ascii_case(3487);
-            webpp_to_ascii_case(351);
-            webpp_to_ascii_case(3545);
-            webpp_to_ascii_case(3547);
-            webpp_to_ascii_case(3549);
-            webpp_to_ascii_case(3550);
-            webpp_to_ascii_case(3865);
-            webpp_to_ascii_case(3867);
-            webpp_to_ascii_case(3869);
-            webpp_to_ascii_case(3871);
-            webpp_to_ascii_case(3929);
-            webpp_to_ascii_case(3931);
-            webpp_to_ascii_case(3933);
-            webpp_to_ascii_case(3993);
-            webpp_to_ascii_case(3995);
-            webpp_to_ascii_case(3997);
-            webpp_to_ascii_case(4057);
-            webpp_to_ascii_case(4063);
+            webpp_to_ascii_case(383);
+            webpp_to_ascii_case(511);
+            webpp_to_ascii_case(891);
+            webpp_to_ascii_case(957);
+            webpp_to_ascii_case(1019);
+            webpp_to_ascii_case(1021);
+            webpp_to_ascii_case(1023);
+            webpp_to_ascii_case(1339);
+            webpp_to_ascii_case(1343);
+            webpp_to_ascii_case(1401);
+            webpp_to_ascii_case(1403);
+            webpp_to_ascii_case(1407);
+            webpp_to_ascii_case(1467);
+            webpp_to_ascii_case(1469);
+            webpp_to_ascii_case(1471);
+            webpp_to_ascii_case(1529);
+            webpp_to_ascii_case(1531);
+            webpp_to_ascii_case(1533);
+            webpp_to_ascii_case(1535);
+            webpp_to_ascii_case(1791);
+            webpp_to_ascii_case(1849);
+            webpp_to_ascii_case(1851);
+            webpp_to_ascii_case(1853);
+            webpp_to_ascii_case(1855);
+            webpp_to_ascii_case(1913);
+            webpp_to_ascii_case(1915);
+            webpp_to_ascii_case(1917);
+            webpp_to_ascii_case(1919);
+            webpp_to_ascii_case(1977);
+            webpp_to_ascii_case(1979);
+            webpp_to_ascii_case(1981);
+            webpp_to_ascii_case(1983);
+            webpp_to_ascii_case(2041);
+            webpp_to_ascii_case(2043);
+            webpp_to_ascii_case(2045);
+            webpp_to_ascii_case(2047);
+            webpp_to_ascii_case(2367);
+            webpp_to_ascii_case(2431);
+            webpp_to_ascii_case(2555);
+            webpp_to_ascii_case(2559);
+            webpp_to_ascii_case(2875);
+            webpp_to_ascii_case(2877);
+            webpp_to_ascii_case(2879);
+            webpp_to_ascii_case(2937);
+            webpp_to_ascii_case(2939);
+            webpp_to_ascii_case(2941);
+            webpp_to_ascii_case(2943);
+            webpp_to_ascii_case(3001);
+            webpp_to_ascii_case(3003);
+            webpp_to_ascii_case(3005);
+            webpp_to_ascii_case(3007);
+            webpp_to_ascii_case(3065);
+            webpp_to_ascii_case(3067);
+            webpp_to_ascii_case(3069);
+            webpp_to_ascii_case(3071);
+            webpp_to_ascii_case(3385);
+            webpp_to_ascii_case(3387);
+            webpp_to_ascii_case(3389);
+            webpp_to_ascii_case(3391);
+            webpp_to_ascii_case(3449);
+            webpp_to_ascii_case(3451);
+            webpp_to_ascii_case(3453);
+            webpp_to_ascii_case(3455);
+            webpp_to_ascii_case(3515);
+            webpp_to_ascii_case(3517);
+            webpp_to_ascii_case(3519);
+            webpp_to_ascii_case(3577);
+            webpp_to_ascii_case(3579);
+            webpp_to_ascii_case(3581);
+            webpp_to_ascii_case(3582);
+            webpp_to_ascii_case(3583);
+            webpp_to_ascii_case(3897);
+            webpp_to_ascii_case(3899);
+            webpp_to_ascii_case(3901);
+            webpp_to_ascii_case(3903);
+            webpp_to_ascii_case(3961);
+            webpp_to_ascii_case(3963);
+            webpp_to_ascii_case(3965);
+            webpp_to_ascii_case(3967);
+            webpp_to_ascii_case(4025);
+            webpp_to_ascii_case(4027);
+            webpp_to_ascii_case(4029);
+            webpp_to_ascii_case(4031);
+            webpp_to_ascii_case(4079);
+            webpp_to_ascii_case(4089);
             webpp_to_ascii_case(4091);
-            webpp_to_ascii_case(479);
-            webpp_to_ascii_case(859);
-            webpp_to_ascii_case(925);
-            webpp_to_ascii_case(987);
-            webpp_to_ascii_case(989);
-            webpp_to_ascii_case(991);
+            webpp_to_ascii_case(4093);
+            webpp_to_ascii_case(4094);
+            webpp_to_ascii_case(4095);
             default:
                 throw stl::runtime_error(
                   "The specified option at run-time is not present at compile time; add it above.");
@@ -1347,7 +1355,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             // SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
             std::string debug_str;
             for (auto const& error_code : expected_errors) {
-                char prefix = error_code.empty() ? ' ' : error_code[0];
+                char prefix = error_code.empty() ? ' ' : error_code.at(0);
                 // debug_str   += "Disable " + error_code + " check\n";
                 if (error_code == "V2" || error_code == "V3") {
                     relaxed_options.CheckHyphens  = false;
@@ -1365,8 +1373,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.CheckCombiningMarkAtLabelStart  = false;
                     debug_str                                      += "V6 failure (Combining Mark at start), ";
                 } else if (error_code == "A3") {
-                    relaxed_options.IgnoreInvalidPunycode  = true;
-                    debug_str                             += "Ignore punycode failures, ";
+                    relaxed_options.CheckInvalidPunycode  = false;
+                    debug_str                            += "Ignore punycode failures, ";
                 } else if (prefix == 'B') {
                     relaxed_options.CheckBidi  = false;
                     debug_str                 += "Disable Bidi, ";
@@ -1377,9 +1385,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     relaxed_options.UseSTD3ASCIIRules  = false;
                     debug_str                         += "Disable STD3 ASCII Rules check, ";
                 } else if (error_code.starts_with("A4")) {
-                    relaxed_options.VerifyDnsLength   = false;
-                    relaxed_options.CheckEmptyLabels  = false;
-                    debug_str                        += "Disable DNS Length check, ";
+                    relaxed_options.VerifyDnsLength  = false;
+                    debug_str                       += "Disable DNS Length check, ";
                 } else if (error_code == "P4") {
                     relaxed_options.CheckDecodeAndValidateLabels  = false;
                     debug_str                                    += "Disable Decode and Validate labels, ";
@@ -1404,7 +1411,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                 failed_tests++;
             }
             EXPECT_TRUE(ascii_relaxed_res.has_value())
-              << "to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string
+              << "  to_ascii should succeed when relevant checks are disabled.\n  Error: " << error_string
               << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp
               << "\n  Line: " << line;
 
@@ -1435,7 +1442,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
+      .CheckInvalidPunycode           = false,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1460,7 +1467,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = true,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1481,7 +1488,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit7) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1502,7 +1509,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit8) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1523,7 +1530,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit9) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1554,7 +1561,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1592,7 +1599,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit12) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = false,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = true,
+      .CheckInvalidPunycode           = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1614,7 +1621,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = true,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = true,
+      .CheckInvalidPunycode           = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1627,7 +1634,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit13) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = true,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = true,
+      .CheckInvalidPunycode           = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1652,7 +1659,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit14) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = false,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = false,
       .CheckDotInclusions             = false,
       .CheckMappingRequired           = false,
@@ -1677,7 +1684,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit15) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = false,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = true,
+      .CheckInvalidPunycode           = false,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1704,10 +1711,10 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit17) {
     using unicode::idna::to_ascii;
 
     //  Source: .. | line: ..; ; [X4_2]; ; [A4_2]; ;
-    EXPECT_FALSE(to_ascii<std::u32string>(U"..").has_value());
-    EXPECT_FALSE(to_ascii<std::u8string>(u8"..").has_value());
+    EXPECT_TRUE(to_ascii<std::u32string>(U"..").has_value());
+    EXPECT_TRUE(to_ascii<std::u8string>(u8"..").has_value());
 
-    EXPECT_FALSE(to_ascii<std::u8string>(u8"a..b").has_value());
+    EXPECT_TRUE(to_ascii<std::u8string>(u8"a..b").has_value());
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit18) {
@@ -1724,231 +1731,101 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit18) {
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit19) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 302: xn--0.pt
     // Error: The ASCII-Only label was unnecessarily encoded into punycode
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_EQ((to_ascii<std::string, relaxed_options>("xn--0.pt").value_or("Failed")), "xn--0.pt");
+    EXPECT_EQ((to_ascii<std::string, loose_idna_options>("xn--0.pt").value_or("Failed")), "xn--0.pt");
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit20) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 304: xn--a-Ä.pt
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-Ä.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("xn--a-Ä.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit21) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 305: xn--a-Ä.pt (with combining mark)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-A\u0308.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("xn--a-A\u0308.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit22) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 306: xn--a-ä.pt (with combining mark)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-a\u0308.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("xn--a-a\u0308.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit23) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 307: xn--a-ä.pt
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("xn--a-ä.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("xn--a-ä.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit24) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 308: XN--A-Ä.PT (uppercase)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("XN--A-Ä.PT").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("XN--A-Ä.PT").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit25) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 309: XN--A-Ä.PT (with combining mark)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("XN--A-A\u0308.PT").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("XN--A-A\u0308.PT").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit26) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 310: Xn--A-Ä.pt (mixed case)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("Xn--A-A\u0308.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("Xn--A-A\u0308.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit27) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: Line 311: Xn--A-Ä.pt (mixed case)
     // Error: Invalid code point was found
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_TRUE((to_ascii<std::string, relaxed_options>("Xn--A-Ä.pt").has_value()));
+    EXPECT_TRUE((to_ascii<std::string, loose_idna_options>("Xn--A-Ä.pt").has_value()));
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit28) {
     using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
     // Test case from failing test: xn--ASCII-.pt
-    static constexpr idna_options relaxed_options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = false,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-      .CheckDecodeAndValidateLabels   = false,
-    };
-
-    EXPECT_EQ((to_ascii<std::string, relaxed_options>("xn--ASCII-.pt").value_or("Failed")), "ascii.pt");
+    EXPECT_EQ((to_ascii<std::string, loose_idna_options>("xn--ASCII-.pt").value_or("Failed")), "ascii.pt");
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit29) {
@@ -1969,7 +1846,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit30) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = true,
       .CheckJoiners                   = false,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -1992,7 +1869,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit31) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = false,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = false,
@@ -2016,7 +1893,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit32) {
       .VerifyDnsLength                = false,
       .CheckBidi                      = true,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,
@@ -2043,7 +1920,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit33) {
       .VerifyDnsLength                = true,
       .CheckBidi                      = true,
       .CheckJoiners                   = true,
-      .IgnoreInvalidPunycode          = false,
+      .CheckInvalidPunycode           = true,
       .CheckNFC                       = true,
       .CheckDotInclusions             = true,
       .CheckMappingRequired           = true,

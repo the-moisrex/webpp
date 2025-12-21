@@ -27,7 +27,7 @@ void to_ascii_fuzz(std::string_view data) {
     run.operator()<idna_options{.VerifyDnsLength = true}>();
     run.operator()<idna_options{.CheckHyphens = true}>();
     run.operator()<idna_options{.UseSTD3ASCIIRules = true}>();
-    run.operator()<idna_options{.IgnoreInvalidPunycode = true}>();
+    run.operator()<idna_options{.CheckInvalidPunycode = true}>();
     // run.operator()<idna_options{.CheckNFC = false}>();
     run.operator()<idna_options{.CheckDotInclusions = true}>();
     run.operator()<idna_options{.CheckMappingRequired = true}>();
@@ -36,7 +36,7 @@ void to_ascii_fuzz(std::string_view data) {
                                 .CheckJoiners          = true,
                                 .UseSTD3ASCIIRules     = true,
                                 .VerifyDnsLength       = true,
-                                .IgnoreInvalidPunycode = true,
+                                .CheckInvalidPunycode = true,
                                 .CheckNFC              = false, // todo: enable it after implementation of isNFC
                                 .CheckDotInclusions    = true,
                                 .CheckMappingRequired  = true}>();
