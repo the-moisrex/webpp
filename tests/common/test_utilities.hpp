@@ -138,7 +138,7 @@ namespace testing {
     };
 
     template <typename T>
-    inline constexpr bool is_standard_integer_v = is_standard_integer<T>::value;
+    inline constexpr bool is_standard_integer_v = is_standard_integer<std::remove_cvref_t<T>>::value;
 
     template <typename T, typename U>
     inline constexpr bool both_standard_integers_v = is_standard_integer_v<T> && is_standard_integer_v<U>;
@@ -468,11 +468,11 @@ namespace testing {
 
         void print_short(std::ostream& oss = std::cout) const noexcept {
             bool first = true;
-            for (auto const& counter_info : counters) {
+            for (auto const& info : counters) {
                 if (!first) {
                     oss << " | ";
                 }
-                oss << counter_info.name << ": " << counter_info.value;
+                oss << info.name << ": " << info.value;
                 first = false;
             }
         }
@@ -540,8 +540,8 @@ namespace testing {
 
             // Quick no-data check
             bool any_nonzero = false;
-            for (auto const& counter_info : counters) {
-                if (counter_info.value != 0) {
+            for (auto const& info : counters) {
+                if (info.value != 0) {
                     any_nonzero = true;
                     break;
                 }
