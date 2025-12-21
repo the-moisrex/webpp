@@ -3,10 +3,7 @@
 
 #include "../std/expected.hpp"
 #include "../strings/to_case.hpp"
-#include "./bidi.hpp"
-#include "./general_category.hpp"
 #include "./idna.hpp"
-#include "./joiners.hpp"
 #include "./normalization.hpp"
 #include "./punycodes.hpp"
 #include "./validity_criteria.hpp"
@@ -59,13 +56,13 @@ namespace webpp::unicode::idna {
           +validity_criteria_status::requires_mapping_failure << details::validity_criteria_shift,
         validity_joiner_failure = +validity_criteria_status::joiner_failure << details::validity_criteria_shift,
         validity_bidi_failure   = +validity_criteria_status::bidi_failure << details::validity_criteria_shift,
-        bidi_domain_name = +validity_criteria_status::bidi_domain_name << details::validity_criteria_shift, // flag, not
-                                                                                                            // an error
+        validity_empty_label    = +validity_criteria_status::empty_label << details::validity_criteria_shift,
+        bidi_domain_name = +validity_criteria_status::bidi_domain_name << details::validity_criteria_shift, // not err
 
         validity_criteria_failure =
           validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
           validity_combining_mark_at_start | validity_requires_mapping_failure | validity_joiner_failure |
-          validity_bidi_failure,
+          validity_empty_label | validity_bidi_failure,
 
         // All flags (that are not states themselves)
         all_flags = bidi_domain_name,
@@ -101,6 +98,7 @@ namespace webpp::unicode::idna {
             case validity_requires_mapping_failure:
             case validity_joiner_failure:
             case validity_bidi_failure:
+            case validity_empty_label:
             case bidi_domain_name:
                 return to_string(static_cast<validity_criteria_status>(+status >> details::validity_criteria_shift));
 
@@ -153,7 +151,7 @@ namespace webpp::unicode::idna {
      *     string error_string2 = status | transform(...) | join_with('\n') | to<string>();
      * @endcode
      */
-    struct to_ascii_status_iterator {
+    struct [[nodiscard]] to_ascii_status_iterator {
         using value_type   = to_ascii_status;
         using storage_type = stl::underlying_type_t<value_type>;
 
@@ -242,7 +240,7 @@ namespace webpp::unicode::idna {
      * This class helps you get information about your string before you allocate enough storage for toASCII
      * algorithm.
      */
-    struct to_ascii_info {
+    struct [[nodiscard]] to_ascii_info {
         using flag_type = stl::uint8_t;
 
         // NOLINTBEGIN(*-signed-bitwise)
@@ -451,11 +449,11 @@ namespace webpp::unicode::idna {
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
-                [[unlikely]] case 0:
-                [[unlikely]] case +dot:
-                    // If the label is empty, or ..., record that there was an error.
-                    status |= Options.VerifyDnsLength ? +empty_domain_label : +valid;
-                    break;
+                // [[unlikely]] case 0:
+                // [[unlikely]] case +dot:
+                //     // If the label is empty, or ..., record that there was an error.
+                //     status |= Options.VerifyDnsLength ? +empty_domain_label : +valid;
+                //     break;
                 [[unlikely]] case +ace | +non_ascii:
                 case +ace:
                     if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {

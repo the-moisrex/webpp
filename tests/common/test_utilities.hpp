@@ -318,7 +318,7 @@ namespace testing {
         return oss.str();
     }
 
-    inline std::string format_duration(std::chrono::nanoseconds dur) {
+    inline void format_duration(std::ostream& oss, std::chrono::nanoseconds const dur) {
         using namespace std::chrono;
 
         // Candidate units in increasing order
@@ -329,31 +329,30 @@ namespace testing {
         };
 
         static constexpr std::array<Unit, 6> units{
-          Unit{ .name = "ns",                      .factor = 1.0,  .color = color::GREEN},
-          { .name = "µs",                  .factor = 1'000.0,   .color = color::CYAN},
-          { .name = "ms",              .factor = 1'000'000.0, .color = color::YELLOW},
-          {  .name = "s",          .factor = 1'000'000'000.0,    .color = color::RED},
-          {.name = "min",   .factor = 60.0 * 1'000'000'000.0,    .color = color::RED},
-          {  .name = "h", .factor = 3600.0 * 1'000'000'000.0,    .color = color::RED},
+          {
+           {.name = "ns", .factor = 1.0, .color = color::GREEN},
+           {.name = "µs", .factor = 1'000.0, .color = color::CYAN},
+           {.name = "ms", .factor = 1'000'000.0, .color = color::YELLOW},
+           {.name = "s", .factor = 1'000'000'000.0, .color = color::RED},
+           {.name = "min", .factor = 60.0 * 1'000'000'000.0, .color = color::RED},
+           {.name = "h", .factor = 3600.0 * 1'000'000'000.0, .color = color::RED},
+           }
         };
 
-        auto value = static_cast<double>(dur.count());
-        auto unit  = units.begin();
+        auto   value = static_cast<double>(dur.count());
+        Unit const* unit  = &units.front();
 
-        for (auto& cur_unit : units) {
-            double const val = value / cur_unit.factor;
-            if (std::fabs(val) < 1.0) {
-                break; // too small to switch to this unit
+        for (auto const& cur_unit : units) {
+            double const scaled = value / cur_unit.factor;
+            if (scaled >= 1.0) { // switch if >=1
+                unit = &cur_unit;
             }
-            value = val;
-            unit  = &cur_unit;
         }
+        value /= unit->factor;
 
-        std::ostringstream oss;
         // NOLINTNEXTLINE(*-nested-*)
         oss << unit->color << "(" << std::fixed << std::setprecision(value < 10 ? 3 : (value < 100.0 ? 2 : 1)) << value
             << " " << unit->name << ")" << color::RESET;
-        return oss.str();
     }
 
 
@@ -727,7 +726,7 @@ namespace testing {
             } else { // sizeof >= 4
                 auto const uch = static_cast<uint32_t>(inp);
                 if (uch <= 0x7F && std::isprint(static_cast<int>(uch))) {
-                    oss  << static_cast<char>(uch);
+                    oss << static_cast<char>(uch);
                     return;
                 }
                 oss << "\\U" << hex_u32(uch, 8);

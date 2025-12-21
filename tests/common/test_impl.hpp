@@ -250,7 +250,8 @@ namespace testing {
             } else {
                 cout << "\r" << color << "[       OK ] ";
             }
-            cout << color::RESET << test.suite << '.' << test.name << " " << format_duration(dur);
+            cout << color::RESET << test.suite << '.' << test.name << " ";
+            format_duration(cout, dur);
             if (failures != 0) {
                 cout << " (" << color::RED << failures << color::RESET << "/" << color::GREEN << successes
                      << color::RESET << "/" << color::CYAN << assertions << color::RESET << " asserts)";
@@ -273,7 +274,9 @@ namespace testing {
         int const  successes  = reg.successes();
         auto const color      = failures != 0 ? color::RED : color::GREEN;
 
-        cout << color << "[ ======== ] Run Time: " << color::RESET << format_duration(total_ns) << "\n";
+        cout << color << "[ ======== ] Run Time: " << color::RESET;
+        format_duration(cout, total_ns);
+        cout << "\n";
         cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
              << " failed assertions, " << color::GREEN << successes << color << " success assertions." << color::RESET
              << "\n";
