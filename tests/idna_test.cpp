@@ -1936,4 +1936,21 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit33) {
               U"xn----zmb.xn--rlj2573p");
 }
 
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit34) {
+    using unicode::idna::idna_options;
+    using unicode::idna::loose_idna_options;
+    using unicode::idna::to_ascii;
+
+    // LHS:      *ascii_relaxed_res
+    // RHS:      to_ascii_n_exp
+    // Value:    string "xn--az-gg4naa"
+    // Expected: string "a\xffffffed\xffffffa4\xffffff80z"
+    // Source:  A�Z
+    // Relaxed options failed on line:  A\uD900Z; a\uD900z; [V7]; ; [V7, A3]; ;
+    // Errors:
+    // Failed Tests so far:  0
+    // Expected:  a�z
+    EXPECT_EQ((to_ascii<std::u32string, loose_idna_options>(U"A\xD900Z").value_or(U"Failed")), U"a\xD900z");
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
