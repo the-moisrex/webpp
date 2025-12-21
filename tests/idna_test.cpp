@@ -705,7 +705,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"--", false, 1},
       {"-", false, 1},
       {"correct", true, -1},
-      {"a--b", false, 1},
+      {"a--b", true, 1},
       {"a--b", true, 2},
       {"שלום.1a", false, 1},
       {"שלום.1a", true, 2}, // LDH-only label cannot come after RTL label
