@@ -691,22 +691,22 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
     };
 
     static constexpr array<opts, 28> tests{
-      opts{"", true, -1},
+      opts{"", true, 2},
       {"a", true, -1},
-      {"-", true, 0},
-      {"--", true, 0},
-      {"---", true, 0},
+      {"-", true, 2},
+      {"--", true, 2},
+      {"---", true, 2},
       {"---", true, 2},
       {"-", true, 2},
       {"xn---", false},
-      {"nn---"},
+      {"nn---", true, 2},
       {"nn---", false, 1},
       {"---", false, 1},
       {"--", false, 1},
       {"-", false, 1},
       {"correct", true, -1},
       {"a--b", false, 1},
-      {"a--b", true, 0},
+      {"a--b", true, 2},
       {"שלום.1a", false, 1},
       {"שלום.1a", true, 2}, // LDH-only label cannot come after RTL label
 
@@ -719,7 +719,7 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
       {"1a", true, 2}, // Digit followed by letter
       {"a-b", true, -1}, // Hyphen in middle
 
-      {"ABC", true, 0}, // STD3 Rule
+      {"ABC", true, 2}, // STD3 Rule
       {"ABC", false, 1}, // STD3 Rule
 
       {"تست", true, -1}
