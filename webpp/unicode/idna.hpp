@@ -271,7 +271,7 @@ namespace webpp::unicode::idna {
       idna_mappings_string_type const& src) noexcept {
         using details::disallowed;
         using details::valid;
-        using enum checked::error_handling;
+        using enum err_policy;
         auto const* beg        = stl::begin(src);
         auto const* end        = stl::end(src);
         auto const  code_point = checked::next_code_point<return_negated>(beg, end);
@@ -289,7 +289,7 @@ namespace webpp::unicode::idna {
      */
     template <stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool requires_idna_mapping(Iter pos, Iter const end) noexcept {
-        using enum checked::error_handling;
+        using enum err_policy;
         using checked::next_code_point;
         using details::valid;
         while (pos != end) {
@@ -315,7 +315,7 @@ namespace webpp::unicode::idna {
         using details::valid;
         using istl::iter_append;
         using istl::iter_append_range;
-        using enum checked::error_handling;
+        using enum err_policy;
         using inp_char_type = stl::iter_value_t<Iter>;
         using out_char_type = istl::appendable_value_type_t<OutStrT>;
 

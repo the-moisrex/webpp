@@ -175,7 +175,7 @@ namespace webpp::unicode::idna {
         using unicode::details::isNFC_until_next_starter;
         using unicode::details::validate_zero_with_joiner;
         using unicode::details::validate_zero_with_non_joiner;
-        using enum checked::error_handling;
+        using enum err_policy;
         using enum validity_criteria_status;
 
         constexpr auto validate =

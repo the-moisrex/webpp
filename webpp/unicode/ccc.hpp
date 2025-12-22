@@ -133,14 +133,15 @@ namespace webpp::unicode {
      *       No                    ccc(A) < ccc(B)
      *       Yes                   ccc(A) > ccc(B)
      */
-    template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
+    template <stl::indirectly_swappable Iter   = char8_t*,
+              typename EIter                   = Iter>
         requires stl::sentinel_for<EIter, Iter>
     static constexpr void canonically_reorder(Iter const& start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {
         using checked::next_code_point;
         using checked::prev_code_point;
         using unchecked::swap_code_points;
-        using enum checked::error_handling;
+        using enum err_policy;
 
         // using replacement character here in this function does not change the length of the string.
 
@@ -185,7 +186,7 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr bool is_canonically_ordered(Iter const& start, EIter const& end) noexcept {
         using checked::next_code_point;
         using checked::prev_code_point;
-        using enum checked::error_handling;
+        using enum err_policy;
 
         if (start == end) {
             return true;

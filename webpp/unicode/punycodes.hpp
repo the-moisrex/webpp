@@ -117,7 +117,7 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr punycode_status punycode_encode(IterT const &spos, IterT const &send, OIterT &out)
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
-        using enum checked::error_handling;
+        using enum err_policy;
         using istl::iter_append;
         using char_type = stl::iter_value_t<IterT>;
         using size_type = istl::size_type_of_t<OIterT>;
@@ -242,7 +242,7 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr punycode_status punycode_decode(IterT spos, IterT const &send, OIterT &out)
       noexcept(istl::NothrowAppendable<OIterT>) {
         using enum punycode_status;
-        using enum checked::error_handling;
+        using enum err_policy;
         using istl::iter_append;
 
         auto const src_length = send - spos;

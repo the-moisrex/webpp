@@ -66,7 +66,7 @@ using webpp::unicode::details::decomp_indices;
 using webpp::unicode::details::decomp_values;
 using webpp::unicode::details::trailing_mapped_decomps;
 using webpp::unicode::details::trailing_zero_cccs;
-using enum webpp::unicode::checked::error_handling;
+using enum webpp::unicode::err_policy;
 using webpp::unicode::checked::utf32_bidi_iter;
 using webpp::unicode::checked::utf32_forward_iter;
 

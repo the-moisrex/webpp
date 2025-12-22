@@ -73,7 +73,7 @@ namespace webpp::unicode {
           Iter const&    spos,
           Iter const&    send,
           char32_t const last_code_point) noexcept {
-            using enum checked::error_handling;
+            using enum err_policy;
             using enum joiner_type;
 
 
@@ -133,7 +133,7 @@ namespace webpp::unicode {
      */
     template <stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr bool validate_context_joiners(Iter const& sbeg, Iter const& send) noexcept {
-        using enum checked::error_handling;
+        using enum err_policy;
         using enum joiner_type;
 
         Iter     spos       = sbeg;

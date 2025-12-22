@@ -210,7 +210,7 @@ namespace webpp::unicode {
     template <stl::random_access_iterator IterT>
     [[nodiscard]] static constexpr bidi_info get_bidi_info(IterT const& beg, IterT const& endp) noexcept {
         using enum direction;
-        using enum checked::error_handling;
+        using enum err_policy;
         using char_type = stl::iter_value_t<IterT>;
 
         // Handle empty strings

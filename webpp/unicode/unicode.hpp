@@ -61,6 +61,18 @@ namespace webpp::unicode {
     static constexpr auto half_base  = 0x001'0000UL;
     static constexpr auto half_mask  = 0x3FFUL;
 
+
+    /**
+     *  Error Handling solution for how to handle invalid Unicode Code Points or invalid UTF encodings
+     */
+    enum struct [[nodiscard]] err_policy : stl::uint8_t {
+        return_replacement_char = 0,
+        return_unchanged        = 1,
+        return_negated          = 2,
+        return_zero_char        = 3,
+        return_max_utf32        = 4,
+    };
+
     /// Match the max length of two strings based on their character type
     template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
     [[nodiscard]] static constexpr stl::size_t adjust_utf_output_size(stl::size_t inp_size) noexcept {
@@ -946,17 +958,9 @@ namespace webpp::unicode {
             return true;
         }
 
-        enum struct error_handling : stl::uint8_t {
-            return_replacement_char = 0,
-            return_unchanged        = 1,
-            return_negated          = 2,
-            return_zero_char        = 3,
-            return_max_utf32        = 4,
-        };
-
-        template <error_handling ErrorHandling>
+        template <err_policy ErrorHandling>
         [[nodiscard]] static constexpr char32_t to_error(char32_t const code_point) noexcept {
-            using enum error_handling;
+            using enum err_policy;
             if constexpr (ErrorHandling == return_replacement_char) {
                 return replacement_char;
             } else if constexpr (ErrorHandling == return_max_utf32) {
@@ -974,17 +978,17 @@ namespace webpp::unicode {
             }
         }
 
-        template <error_handling ErrorHandling>
+        template <err_policy ErrorHandling>
         [[nodiscard]] static constexpr char32_t validate_code_point(char32_t const code_point) noexcept {
             return is_code_point_valid(code_point) ? code_point : to_error<ErrorHandling>(code_point);
         }
 
-        template <error_handling        ErrorHandling = error_handling::return_unchanged,
+        template <err_policy        ErrorHandling = err_policy::return_unchanged,
                   stl::forward_iterator Iter          = char8_t const*,
                   typename EIter                      = char32_t const*>
             requires(stl::sentinel_for<EIter, Iter>)
         [[nodiscard]] static constexpr char32_t next_code_point(Iter& pos, EIter const& end) noexcept {
-            using enum error_handling;
+            using enum err_policy;
             using code_point_type    = char32_t;
             using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
@@ -1139,7 +1143,7 @@ namespace webpp::unicode {
             return to_error<ErrorHandling>(code_point);
         }
 
-        template <error_handling        ErrorHandling = error_handling::return_unchanged,
+        template <err_policy        ErrorHandling = err_policy::return_unchanged,
                   stl::forward_iterator Iter          = char8_t const*,
                   typename EIter                      = Iter>
             requires stl::sentinel_for<EIter, Iter>
@@ -1150,7 +1154,7 @@ namespace webpp::unicode {
         template <stl::forward_iterator Iter = char8_t*, typename EIter = Iter>
             requires stl::sentinel_for<EIter, Iter>
         static constexpr bool next_char(Iter& pos, EIter const& end) noexcept {
-            using enum error_handling;
+            using enum err_policy;
             // todo: is there a way to optimize this?
             static_cast<void>(next_code_point<return_negated, Iter, EIter>(pos, end));
             return pos != end;
@@ -1178,12 +1182,12 @@ namespace webpp::unicode {
             };
         } // namespace details
 
-        template <error_handling              ErrorHandling = error_handling::return_unchanged,
+        template <err_policy              ErrorHandling = err_policy::return_unchanged,
                   stl::bidirectional_iterator Iter          = char8_t const*,
                   typename EIter                            = Iter>
             requires stl::sentinel_for<EIter, Iter>
         [[nodiscard]] static constexpr char32_t prev_code_point(Iter& pos, EIter const& beg) noexcept {
-            using enum error_handling;
+            using enum err_policy;
             using code_point_type    = char32_t;
             using char_type          = stl::iter_value_t<Iter>;
             using unsigned_char_type = stl::make_unsigned_t<char_type>;
@@ -1377,7 +1381,7 @@ namespace webpp::unicode {
             return to_error<ErrorHandling>(code_point);
         }
 
-        template <error_handling              ErrorHandling = error_handling::return_unchanged,
+        template <err_policy              ErrorHandling = err_policy::return_unchanged,
                   stl::bidirectional_iterator Iter          = char8_t const*,
                   typename EIter                            = Iter>
             requires stl::sentinel_for<EIter, Iter>

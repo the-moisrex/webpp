@@ -295,7 +295,7 @@ namespace webpp::unicode::idna {
         template <UTF OutCharT, stl::random_access_iterator Iter>
         [[nodiscard]] constexpr flag_type operator()(Iter spos, Iter send) noexcept {
             using enum flag_types;
-            using enum checked::error_handling;
+            using enum err_policy;
             using details::idna_default_max_len_factor;
             using stl::to_underlying;
             using inp_char_type = stl::iter_value_t<Iter>;
@@ -377,7 +377,7 @@ namespace webpp::unicode::idna {
       to_ascii_info::flag_type const flags = +to_ascii_info::flag_types::all) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
-        using enum checked::error_handling;
+        using enum err_policy;
         using istl::iter_append;
         using unicode::norm_form;
         using flag_type = to_ascii_info::flag_type;
@@ -421,7 +421,7 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             {
                 send = spos;
-                normalize<norm_form::NFC>(out_beg, out, send); // inplace normalization
+                normalize<norm_form::NFC, return_unchanged>(out_beg, out, send); // inplace normalization
             }
             assert(out <= oend);                               // we ran out of space.
         }

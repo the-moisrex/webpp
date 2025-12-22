@@ -83,7 +83,7 @@ namespace webpp::unicode {
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter>
     [[nodiscard]] static constexpr quick_check_state quick_check(Iter spos, Iter const send) noexcept {
         using enum quick_check_state;
-        using enum checked::error_handling;
+        using enum err_policy;
 
         stl::uint8_t prev_ccc = 0;
         auto         result   = +YES;
@@ -110,7 +110,7 @@ namespace webpp::unicode {
     template <norm_form Form = norm_form::NFC, stl::forward_iterator Iter>
     [[nodiscard]] static constexpr quick_check_state quick_check_till_maybe(Iter& spos, Iter const send) noexcept {
         using enum quick_check_state;
-        using enum checked::error_handling;
+        using enum err_policy;
 
         stl::uint8_t prev_ccc = 0;
         auto         result   = +YES;
@@ -155,7 +155,7 @@ namespace webpp::unicode {
         requires stl::sentinel_for<EIter, Iter>
     static constexpr quick_check_state next_definite_starter(Iter& spos, EIter const send) noexcept {
         using enum quick_check_state;
-        using enum checked::error_handling;
+        using enum err_policy;
 
         checked::next_char(spos, send);
         stl::uint8_t prev_ccc = 0;
