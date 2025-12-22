@@ -6,13 +6,13 @@
 #include "../libs/fmt.hpp"
 #include "std.hpp"
 
-#if defined(__cpp_lib_format)
+#ifdef __cpp_lib_format
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
 
 namespace webpp::fmt {
     using namespace ::std; // to mame std::format available
-}
+} // namespace webpp::fmt
 #elif __has_include(<fmt/format.h>)
 #    include <fmt/chrono.h>
 #    include <fmt/compile.h>
@@ -64,96 +64,6 @@ namespace webpp::stl {
 #else
 #    define webpp_no_fmt
 #    error "We don't have access to <format> nor {fmt} library."
-#endif
-
-
-#ifndef webpp_no_fmt
-#    include <chrono>
-
-namespace webpp::istl {
-#    if WEBPP_FMT_LIB
-    template <typename... Args>
-    inline auto safe_localtime(Args&&... args) {
-        return ::fmt::localtime(stl::forward<Args>(args)...);
-    }
-
-#    else
-    namespace fmt::detail {};
-
-    // A fallback for when the fmt library is not available
-
-    namespace details {
-
-// Prevents expansion of a preceding token as a function-style macro.
-// Usage: f FMT_NOMACRO()
-#        define WEBPP_FMT_NOMACRO
-
-        template <typename T = void>
-        struct null {};
-
-        inline null<> localtime_r WEBPP_FMT_NOMACRO(...) {
-            return null<>();
-        }
-
-        inline null<> localtime_s(...) {
-            return null<>();
-        }
-
-    } // namespace details
-
-    // Thread-safe replacement for std::localtime
-    inline std::tm safe_localtime(std::time_t const time) {
-        struct dispatcher {
-            std::time_t time_;
-            std::tm     tm_;
-
-            explicit dispatcher(std::time_t const inp_time) : time_(inp_time) {}
-
-            bool run() {
-                using namespace details;
-                return handle(localtime_r(&time_, &tm_));
-            }
-
-            bool handle(std::tm const* tm) {
-                return tm != nullptr;
-            }
-
-            bool handle(details::null<>) {
-                using namespace details;
-                return fallback(localtime_s(&tm_, &time_));
-            }
-
-            bool fallback(int const res) {
-                return res == 0;
-            }
-
-#        if !_MSC_VER
-            bool fallback(details::null<>) {
-                using namespace fmt::detail;
-                std::tm* tm = std::localtime(&time_);
-                if (tm) {
-                    tm_ = *tm;
-                }
-                return tm != nullptr;
-            }
-#        endif
-        };
-
-        dispatcher lt(time);
-        // Too big time values may be unsupported.
-        if (!lt.run()) {
-            throw stl::invalid_argument("time_t value out of range");
-        }
-        return lt.tm_;
-    }
-
-    inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> const time_point) {
-        auto const time = std::chrono::system_clock::to_time_t(time_point);
-        return *localtime(stl::addressof(time));
-    }
-
-#    endif
-} // namespace webpp::istl
 #endif
 
 
