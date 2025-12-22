@@ -1417,8 +1417,9 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
 
             if (ascii_relaxed_res.has_value()) {
                 EXPECT_EQ(*ascii_relaxed_res, to_ascii_n_exp)
-                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line << "\n  Errors: "
-                  << error_string << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
+                  << "  Source: " << source << "\n  Relaxed options failed on line: " << line
+                  << "\n  Errors: " << error_string << "\n  Failed Tests so far: " << failed_tests
+                  << "\n  Expected: " << to_ascii_n_exp << "\n  Options: " << debug_str;
             }
         }
     }
@@ -1941,9 +1942,22 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit34) {
     using unicode::idna::loose_idna_options;
     using unicode::idna::to_ascii;
 
+    static constexpr idna_options relaxed_options{
+      .CheckHyphens                   = true,
+      .UseSTD3ASCIIRules              = true,
+      .VerifyDnsLength                = true,
+      .CheckBidi                      = true,
+      .CheckJoiners                   = true,
+      .CheckInvalidPunycode           = false, // [A3]
+      .CheckNFC                       = true,
+      .CheckDotInclusions             = true,
+      .CheckMappingRequired           = false, // [V7]
+      .CheckCombiningMarkAtLabelStart = true,
+    };
+
     // LHS:      *ascii_relaxed_res
     // RHS:      to_ascii_n_exp
-    // Value:    string "xn--az-gg4naa"
+    // Value:    string "xn--az-ba7loo"
     // Expected: string "a\xffffffed\xffffffa4\xffffff80z"
     // Source:  A�Z
     // Relaxed options failed on line:  A\uD900Z; a\uD900z; [V7]; ; [V7, A3]; ;
@@ -1951,6 +1965,7 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit34) {
     // Failed Tests so far:  0
     // Expected:  a�z
     EXPECT_EQ((to_ascii<std::u32string, loose_idna_options>(U"A\xD900Z").value_or(U"Failed")), U"a\xD900z");
+    EXPECT_EQ((to_ascii<std::u32string, relaxed_options>(U"A\xD900Z").value_or(U"Failed")), U"a\xD900z");
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)
