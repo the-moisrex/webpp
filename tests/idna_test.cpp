@@ -1,16 +1,15 @@
 // Created by moisrex on Fri 2024/02/09
 
-#include "../webpp/unicode/idna.hpp"
-
+#include "../webpp/std/format.hpp"
 #include "../webpp/unicode/bidi.hpp"
 #include "../webpp/unicode/general_category.hpp"
+#include "../webpp/unicode/idna.hpp"
 #include "../webpp/unicode/joiners.hpp"
 #include "../webpp/unicode/to_ascii.hpp"
 #include "../webpp/unicode/validity_criteria.hpp"
 #include "../webpp/uri/uri.hpp"
 #include "./common/bidi.hpp"
 #include "./common/test.hpp"
-#include "./webpp/std/format.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -1015,10 +1014,10 @@ namespace {
         return tokens;
     }
 
-    std::string_view trim(std::string_view s) {
-        s.remove_prefix(std::min(s.find_first_not_of(" \t"), s.size()));
-        s.remove_suffix(std::min(s.size() - s.find_last_not_of(" \t") - 1, s.size()));
-        return s;
+    std::string_view trim(std::string_view str) noexcept {
+        str.remove_prefix(std::min(str.find_first_not_of(" \t"), str.size()));
+        str.remove_suffix(std::min(str.size() - str.find_last_not_of(" \t") - 1, str.size()));
+        return str;
     }
 
     // Parses a status string like "[B1, V2]" into a set of codes.
@@ -1032,46 +1031,13 @@ namespace {
         status_str.remove_prefix(1);
         status_str.remove_suffix(1);
 
-        std::stringstream ss(std::string(status_str.data(), status_str.size()));
+        std::stringstream oss(std::string(status_str.data(), status_str.size()));
         std::string       code;
-        while (std::getline(ss, code, ',')) {
+        while (std::getline(oss, code, ',')) {
             codes.insert(std::string(trim(code)));
         }
         return codes;
     }
-
-    // template <typename OutStrT, unsigned Flags, typename... Args>
-    // [[nodiscard]] static constexpr webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type>
-    // to_ascii_impl(Args&&... args) {
-    //     // dependent on Flags at compile time
-    //     return webpp::unicode::idna::to_ascii<OutStrT, webpp::unicode::idna::idna_flags(Flags)>(
-    //       std::forward<Args>(args)...);
-    // }
-
-    // // Helper alias for function pointer type
-    // template <typename OutStrT, typename... Args>
-    // using to_ascii_fn = webpp::stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> (*)(Args&&...);
-
-    // // Build a constexpr lookup table for all possible flag values
-    // template <typename OutStrT, typename... Args, size_t... Is>
-    // constexpr auto make_to_ascii_table(std::index_sequence<Is...>) {
-    //     return std::array<to_ascii_fn<OutStrT, Args...>, sizeof...(Is)>{&to_ascii_impl<OutStrT, Is, Args...>...};
-    // }
-    //
-    // // Main entry point: runtime flags -> compile-time dispatch
-    // template <typename OutStrT = stl::u8string, typename... Args>
-    // [[nodiscard]] stl::expected<OutStrT, webpp::unicode::idna::to_ascii_status_type> to_ascii(
-    //   webpp::unicode::idna::idna_options options,
-    //   Args&&... args) {
-    //     constexpr size_t      NumFlags = 0b1 << 12; // 12-bit mask (adjust if wider)
-    //     static constexpr auto table    = make_to_ascii_table<OutStrT, Args...>(std::make_index_sequence<NumFlags>{});
-
-    //     auto flags = idna_flags(options);
-    //     if (flags < table.size()) {
-    //         return table[flags](std::forward<Args>(args)...);
-    //     }
-    //     return webpp::stl::unexpected(webpp::stl::to_underlying(webpp::unicode::idna::to_ascii_status::unknown));
-    // }
 
     // Main entry point: runtime flags -> compile-time dispatch
     template <typename OutStrT = stl::u8string, typename... Args>
@@ -1082,6 +1048,8 @@ namespace {
         using webpp::unicode::idna::to_ascii;
 
         auto const flags = idna_flags(options);
+
+// NOLINTNEXTLINE(*-macro-usage)
 #define webpp_to_ascii_case(flag) \
     case flag: return to_ascii<OutStrT, idna_flags(flag)>(std::forward<Args>(args)...)
         switch (flags) {
