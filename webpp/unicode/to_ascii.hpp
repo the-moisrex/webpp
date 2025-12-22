@@ -20,7 +20,7 @@ namespace webpp::unicode::idna {
 
     namespace details {
         static constexpr std::size_t validity_criteria_shift = 11U;
-    }
+    } // namespace details
 
     /**
      * ToASCII status values.

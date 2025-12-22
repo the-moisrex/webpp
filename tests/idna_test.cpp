@@ -1319,8 +1319,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         auto const expected_errors = parse_status_codes(to_ascii_n_status_str);
 
         // error, if "[<non-empty>]"
-        bool const to_ascii_can_fail = to_ascii_n_status_str.length() >= 3 && to_ascii_n_status_str[0] == '[' &&
-                                       to_ascii_n_status_str[to_ascii_n_status_str.length() - 1] == ']';
+        bool const to_ascii_can_fail = to_ascii_n_status_str.length() >= 3 && to_ascii_n_status_str.at(0) == '[' &&
+                                       to_ascii_n_status_str.at(to_ascii_n_status_str.length() - 1) == ']';
 
         auto        default_options = unicode::idna::strict_idna_options;
         auto        ascii_n_res     = to_ascii<std::string>(default_options, source);
@@ -1407,7 +1407,7 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     error_string += ", ";
                 }
             }
-            if (!ascii_relaxed_res.has_value()) {
+            if (!ascii_relaxed_res.has_value() || *ascii_relaxed_res != to_ascii_n_exp) {
                 failed_tests++;
             }
             EXPECT_TRUE(ascii_relaxed_res.has_value())

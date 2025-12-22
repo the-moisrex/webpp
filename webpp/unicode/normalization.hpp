@@ -154,17 +154,15 @@ namespace webpp::unicode {
             return decompose_hangul<Iter>(out, code_point);
         }
 
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
         auto const chunk         = static_cast<std::uint32_t>(code_point) >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
         if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
             return append<Iter>(out, code_point);
         }
-        auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+        assert(section_index < decomp_breakpoints.size());
+        auto const [starting, ending, offset] = decomp_breakpoints.at(section_index);
         decomp_index const code =
-          chunk < starting || chunk >= ending
-            ? decomp_common_pos
-            : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+          chunk < starting || chunk >= ending ? decomp_common_pos : decomp_indices.at(chunk - offset);
 
         // Not mapped at all, that means the code point is mapped to itself.
         if (code.max_length == 0) {
@@ -174,7 +172,6 @@ namespace webpp::unicode {
         auto const* const start_ptr = decomp_ptr(code, code_point);
         auto const*       ptr       = start_ptr;
         auto const* const end_ptr   = start_ptr + code.max_length;
-        // NOLINTEND(*-pro-bounds-constant-array-index, *-pro-bounds-pointer-arithmetic)
 
         webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
         while (*ptr != u8'\0' && ptr != end_ptr) {
@@ -251,11 +248,10 @@ namespace webpp::unicode {
             if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
                 continue;
             }
-            auto const [starting, ending, offset] = decomp_breakpoints[section_index];
+            assert(section_index < decomp_breakpoints.size());
+            auto const [starting, ending, offset] = decomp_breakpoints.at(section_index);
             decomp_index const code =
-              chunk < starting || chunk >= ending
-                ? decomp_common_pos
-                : decomp_indices[static_cast<stl::uint16_t>(chunk - offset)];
+              chunk < starting || chunk >= ending ? decomp_common_pos : decomp_indices.at(chunk - offset);
 
             // Not mapped at all; that means the code point is mapped to itself.
             if (code.max_length == 0) {
@@ -470,8 +466,9 @@ namespace webpp::unicode {
         if (pos2 >= cp2s.size()) [[unlikely]] {
             return error;
         }
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
-        auto const [cp2, cp1_pos, cp1_rem] = cp2s[pos2];
+
+        assert(pos2 < cp2s.size());
+        auto const [cp2, cp1_pos, cp1_rem] = cp2s.at(pos2);
 
         // todo: use -1 as invalid values for cp2 instead of 0 to eliminate the necessity of cp2 == 0 comparison
         if (cp2 == 0 || cp2 != rhs) {
@@ -479,11 +476,11 @@ namespace webpp::unicode {
             return hangul != 0 ? hangul : error;
         }
 
-        stl::size_t const pos              = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
+        stl::size_t const pos = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
         // there's no need to check if the position here is valid or not, the `cp1s` table is guaranteed to
         // have the max number of elements.
-        auto const [cp1_mask, replacement] = cp1s[pos];
-        // NOLINTEND(*-pro-bounds-constant-array-index)
+        assert(pos < cp1s.size());
+        auto const [cp1_mask, replacement] = cp1s.at(pos);
 
         bool has_error  = !is_code_point_valid(lhs);
         has_error      |= !is_code_point_valid(rhs);
@@ -964,18 +961,11 @@ namespace webpp::unicode {
                 case NO: return false;
                 default: break;
             }
-            checked::utf32_forward_iter const utf32_pos{pos, spos};
-            if (!is_composable_to(
-                  sorted_combining_marks_iterator{
-                    decompose_iterator{utf32_pos, stl::default_sentinel}
-            },
-                  stl::default_sentinel,
-                  utf32_pos,
-                  stl::default_sentinel))
-            {
-                return false;
-            }
-            return true;
+            checked::utf32_forward_iter const     utf32_pos{pos, spos};
+            sorted_combining_marks_iterator const marks_iterator{
+              decompose_iterator{utf32_pos, stl::default_sentinel}
+            };
+            return is_composable_to(marks_iterator, stl::default_sentinel, utf32_pos, stl::default_sentinel);
         }
     } // namespace details
 
