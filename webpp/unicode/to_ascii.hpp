@@ -423,7 +423,7 @@ namespace webpp::unicode::idna {
                 send = spos;
                 normalize<norm_form::NFC, return_unchanged>(out_beg, out, send); // inplace normalization
             }
-            assert(out <= oend);                               // we ran out of space.
+            assert(out <= oend);                                                 // we ran out of space.
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -535,12 +535,13 @@ namespace webpp::unicode::idna {
                 OIter      outend = send;
                 auto const outbeg = outend;
                 iter_append(outend, 'x', 'n', '-', '-');
-                [[maybe_unused]] auto const p_status = punycode_encode(lbeg, lend, outend);
-                lbeg                                 = outbeg;
-                lend                                 = outend;
 
-                assert(outend <= oend); // We ran out of space
-                if (p_status != punycode_status::success) [[unlikely]] {
+                if (auto const p_status = punycode_encode(lbeg, lend, outend); p_status == punycode_status::success) {
+                    lbeg = outbeg;
+                    lend = outend;
+
+                    assert(outend <= oend); // We ran out of space
+                } else [[unlikely]] {
                     status |= Options.CheckInvalidPunycode ? +p_status : +valid;
                 }
             }

@@ -150,7 +150,8 @@ namespace webpp::unicode::idna {
                 ++handled_len;
                 ++pos;
             } else {
-                auto const code_point = checked::next_code_point<return_replacement_char>(pos, send);
+                // Use "return negated" strategy so the invalid Code Points will cause us to return bad input error
+                auto const code_point = checked::next_code_point<return_negated>(pos, send);
                 if (code_point == 0) {
                     break;
                 }
