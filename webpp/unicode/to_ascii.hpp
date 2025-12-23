@@ -421,7 +421,7 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             {
                 send = spos;
-                normalize<norm_form::NFC, return_unchanged>(out_beg, out, send); // inplace normalization
+                normalize<norm_form::NFC, leave_broken>(out_beg, out, send); // inplace normalization
             }
             assert(out <= oend);                                                 // we ran out of space.
         }

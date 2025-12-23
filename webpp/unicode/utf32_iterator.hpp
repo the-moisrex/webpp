@@ -13,7 +13,7 @@ namespace webpp::unicode::checked {
      */
     template <stl::bidirectional_iterator Iter,
               typename EIter               = stl::default_sentinel_t,
-              err_policy ErrorHandling = err_policy::return_replacement_char>
+              err_policy ErrPolicy = err_policy::return_replacement>
         requires std::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_bidi_iter {
         using difference_type   = stl::iter_difference_t<Iter>;
@@ -39,7 +39,7 @@ namespace webpp::unicode::checked {
             lpos{stl::move(inp_pos)},
             upos{stl::move(inp_pos)},
             send{stl::move(inp_end)},
-            code_point{checked::next_code_point<ErrorHandling>(upos, send)} {}
+            code_point{checked::next_code_point<ErrPolicy>(upos, send)} {}
 
         constexpr utf32_bidi_iter()                                      = default;
         constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
@@ -50,13 +50,13 @@ namespace webpp::unicode::checked {
 
         constexpr utf32_bidi_iter& operator++() noexcept {
             lpos       = upos;
-            code_point = checked::next_code_point<ErrorHandling>(upos, send);
+            code_point = checked::next_code_point<ErrPolicy>(upos, send);
             return *this;
         }
 
         constexpr utf32_bidi_iter& operator--() noexcept {
             upos       = lpos;
-            code_point = checked::prev_code_point<ErrorHandling>(lpos, beg);
+            code_point = checked::prev_code_point<ErrPolicy>(lpos, beg);
             return *this;
         }
 
@@ -124,9 +124,9 @@ namespace webpp::unicode::checked {
     /**
      * UTF-32 Specialization of bidirectional UTF iterator wrapper.
      */
-    template <stl::bidirectional_iterator Iter, typename EIter, err_policy ErrorHandling>
+    template <stl::bidirectional_iterator Iter, typename EIter, err_policy ErrPolicy>
         requires(UTF32<stl::iter_value_t<Iter>> && stl::sentinel_for<EIter, Iter>)
-    struct [[nodiscard]] utf32_bidi_iter<Iter, EIter, ErrorHandling> {
+    struct [[nodiscard]] utf32_bidi_iter<Iter, EIter, ErrPolicy> {
         using difference_type   = stl::iter_difference_t<Iter>;
         using value_type        = char32_t;
         using traits            = stl::iterator_traits<Iter>;
@@ -149,7 +149,7 @@ namespace webpp::unicode::checked {
           : beg{istl::begin_sentinel(inp_pos)},
             pos{inp_pos},
             send{stl::move(inp_end)},
-            code_point{pos != send ? checked::validate_code_point<ErrorHandling>(*pos) : 0} {}
+            code_point{pos != send ? checked::validate_code_point<ErrPolicy>(*pos) : 0} {}
 
         constexpr utf32_bidi_iter()                                      = default;
         constexpr utf32_bidi_iter(utf32_bidi_iter const&)                = default;
@@ -159,12 +159,12 @@ namespace webpp::unicode::checked {
         constexpr ~utf32_bidi_iter() noexcept                            = default;
 
         constexpr utf32_bidi_iter& operator++() noexcept {
-            code_point = checked::validate_code_point<ErrorHandling>(*++pos);
+            code_point = checked::validate_code_point<ErrPolicy>(*++pos);
             return *this;
         }
 
         constexpr utf32_bidi_iter& operator--() noexcept {
-            code_point = checked::validate_code_point<ErrorHandling>(*--pos);
+            code_point = checked::validate_code_point<ErrPolicy>(*--pos);
             return *this;
         }
 
@@ -239,7 +239,7 @@ namespace webpp::unicode::checked {
      */
     template <stl::forward_iterator Iter,
               typename EIter               = stl::default_sentinel_t,
-              err_policy ErrorHandling = err_policy::return_replacement_char>
+              err_policy ErrPolicy = err_policy::return_replacement>
         requires stl::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_forward_iter {
         using difference_type   = stl::iter_difference_t<Iter>;
@@ -261,7 +261,7 @@ namespace webpp::unicode::checked {
         explicit constexpr utf32_forward_iter(Iter inp_pos, EIter inp_end) noexcept
           : pos{stl::move(inp_pos)},
             send{stl::move(inp_end)},
-            code_point{checked::next_code_point_copy<ErrorHandling>(pos, send)} {}
+            code_point{checked::next_code_point_copy<ErrPolicy>(pos, send)} {}
 
         constexpr utf32_forward_iter()                                         = default;
         constexpr utf32_forward_iter(utf32_forward_iter const&)                = default;
@@ -272,7 +272,7 @@ namespace webpp::unicode::checked {
 
         constexpr utf32_forward_iter& operator++() noexcept {
             if (checked::next_char(pos, send)) {
-                code_point = checked::next_code_point_copy<ErrorHandling>(pos, send);
+                code_point = checked::next_code_point_copy<ErrPolicy>(pos, send);
             } else {
                 code_point = U'\0';
             }

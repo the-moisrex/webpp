@@ -191,7 +191,7 @@ namespace webpp::unicode {
      * This function is not the same as taking char32_t as input since bad UTF-8 code units that have
      * been turned into UTF-32 will not go back to being UTF-8 the same way they came in.
      */
-    template <err_policy            Policy = err_policy::return_replacement_char,
+    template <err_policy            Policy = err_policy::return_replacement,
               istl::Appendable      Iter   = std::u8string::iterator,
               stl::forward_iterator SIter,
               typename SEIter = SIter>
@@ -205,7 +205,7 @@ namespace webpp::unicode {
         return canonical_decompose_to(out, code_point);
     }
 
-    template <err_policy            Policy = err_policy::return_replacement_char,
+    template <err_policy            Policy = err_policy::return_replacement,
               istl::Appendable      Iter   = std::u8string::iterator,
               stl::forward_iterator SIter,
               typename SEIter = SIter>
@@ -288,7 +288,7 @@ namespace webpp::unicode {
         return adjust_utf_output_size<InCharT, OutCharT>(orig_size * details::max_decomp_expand_factor);
     }
 
-    template <err_policy                  Policy = err_policy::return_replacement_char,
+    template <err_policy                  Policy = err_policy::return_replacement,
               stl::random_access_iterator Iter,
               stl::random_access_iterator OIter = Iter>
     static constexpr void canonical_decompose(Iter spos, Iter send, OIter& ptr, stl::size_t const max_length) noexcept {
@@ -331,7 +331,7 @@ namespace webpp::unicode {
         assert(max_length >= static_cast<stl::size_t>(ptr - ptr_beg));
     }
 
-    template <err_policy                  Policy = err_policy::return_replacement_char,
+    template <err_policy                  Policy = err_policy::return_replacement,
               istl::Appendable            StrT   = stl::u32string,
               stl::random_access_iterator Iter>
     static constexpr void canonical_decompose(Iter spos, Iter send, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
@@ -386,7 +386,7 @@ namespace webpp::unicode {
         }
     }
 
-    template <err_policy              Policy = err_policy::return_replacement_char,
+    template <err_policy              Policy = err_policy::return_replacement,
               istl::Appendable        StrT   = stl::u32string,
               istl::StringViewifiable InpStrT>
     static constexpr void canonical_decompose(InpStrT&& src, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
@@ -397,7 +397,7 @@ namespace webpp::unicode {
     /**
      * Decompose inplace
      */
-    template <err_policy Policy = err_policy::return_replacement_char, istl::String StrT = stl::u32string>
+    template <err_policy Policy = err_policy::return_replacement, istl::String StrT = stl::u32string>
     static constexpr void canonical_decompose(StrT& out) {
         using size_type = typename StrT::size_type;
         using diff_type = typename StrT::difference_type;
@@ -440,13 +440,13 @@ namespace webpp::unicode {
     }
 
     template <istl::String            OStrT         = stl::u32string,
-              err_policy              ErrorHandling = err_policy::return_replacement_char,
+              err_policy              ErrPolicy = err_policy::return_replacement,
               istl::StringViewifiable InpStr,
               typename... Args>
     [[nodiscard]] static constexpr OStrT canonical_decomposed(InpStr&& src, Args&&... args) {
         auto const strv = istl::string_viewify(stl::forward<InpStr>(src));
         OStrT      out{stl::forward<Args>(args)...};
-        canonical_decompose<ErrorHandling>(strv.begin(), strv.end(), out);
+        canonical_decompose<ErrPolicy>(strv.begin(), strv.end(), out);
         return out;
     }
 
@@ -505,7 +505,7 @@ namespace webpp::unicode {
      *
      * @returns The new length of the string. Specified end is no longer valid.
      */
-    template <err_policy                  Policy = err_policy::return_replacement_char,
+    template <err_policy                  Policy = err_policy::return_replacement,
               stl::random_access_iterator Iter   = char32_t*,
               typename EIter                     = char32_t const* const>
         requires stl::sentinel_for<EIter, Iter>
@@ -643,7 +643,7 @@ namespace webpp::unicode {
      * reduce the size of the string, and it cannot make the string bigger, thus no allocations
      * would be required.
      */
-    template <err_policy   Policy    = err_policy::return_replacement_char,
+    template <err_policy   Policy    = err_policy::return_replacement,
               istl::String StrT      = stl::u32string,
               bool         isNothrow = true>
     static constexpr void canonical_compose(StrT& out) noexcept(isNothrow) {
@@ -653,7 +653,7 @@ namespace webpp::unicode {
         out.resize(canonical_compose<Policy>(ptr, end));
     }
 
-    template <istl::String StrT = stl::u32string, err_policy Policy = err_policy::return_replacement_char>
+    template <istl::String StrT = stl::u32string, err_policy Policy = err_policy::return_replacement>
     [[nodiscard(
       "Use unicode::canonical_compose instead of this if you wanted to compose inplace")]] static constexpr StrT
     canonical_composed(StrT out) {
@@ -676,7 +676,7 @@ namespace webpp::unicode {
      * @param out the string you want to be normalized
      */
     template <norm_form    Form   = norm_form::NFC,
-              err_policy   Policy = err_policy::return_replacement_char,
+              err_policy   Policy = err_policy::return_replacement,
               istl::String StrT   = stl::u32string>
     static constexpr void normalize(StrT& out) {
         // We don't need to reserve it, canonical_decompose will do it.
@@ -710,7 +710,7 @@ namespace webpp::unicode {
      *    https://www.unicode.org/faq/normalization.html
      */
     template <norm_form                   Form   = norm_form::NFC,
-              err_policy                  Policy = err_policy::return_replacement_char,
+              err_policy                  Policy = err_policy::return_replacement,
               istl::Appendable            StrT   = stl::u32string,
               stl::random_access_iterator Iter>
     static constexpr void normalize(Iter spos, Iter send, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
@@ -771,7 +771,7 @@ namespace webpp::unicode {
         using const_reference = value_type const&;
 
         static constexpr bool is_bidi        = stl::bidirectional_iterator<Iter>;
-        static constexpr auto error_handling = err_policy::return_replacement_char;
+        static constexpr auto error_handling = err_policy::return_replacement;
 
         using iterator_category =
           stl::conditional_t<is_bidi, stl::bidirectional_iterator_tag, stl::forward_iterator_tag>;

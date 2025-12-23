@@ -241,7 +241,7 @@ namespace webpp::unicode::idna {
         [[maybe_unused]] stl::uint8_t prev_ccc = 0;
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
         [[maybe_unused]] bidi_info    b_info{};
-        auto const                    first_cp = checked::next_code_point_copy<return_replacement_char>(spos, send);
+        auto const                    first_cp = checked::next_code_point_copy<return_replacement>(spos, send);
         char32_t                      last_cp  = 0;
 
         // 9. (partially) initialize bidi information
@@ -261,7 +261,7 @@ namespace webpp::unicode::idna {
 
         for (Iter pos = spos; pos != send;) {
             // return replacement character because an invalid code point is not NFC failure
-            char32_t const code_point = checked::next_code_point<return_replacement_char>(pos, send);
+            char32_t const code_point = checked::next_code_point<return_replacement>(pos, send);
 
             // 1. Check if it's in NFC form
             if constexpr (Options.CheckNFC) {

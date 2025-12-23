@@ -6717,9 +6717,9 @@ TEST(Unicode, NormalizationTests) {
 
 TEST(Unicode, CheckedNextCodePoint) {
     std::u8string str = u8"\xac";
-    EXPECT_EQ(next_code_point_copy<return_unchanged>(str.begin(), str.end()), U'\xac');
+    EXPECT_EQ(next_code_point_copy<leave_broken>(str.begin(), str.end()), U'\xac');
     EXPECT_EQ(next_code_point_copy<return_negated>(str.begin(), str.end()), -U'\xac');
-    EXPECT_EQ(next_code_point_copy<return_replacement_char>(str.begin(), str.end()), replacement_char);
+    EXPECT_EQ(next_code_point_copy<return_replacement>(str.begin(), str.end()), replacement_char);
 
     std::u8string str2 = u8"\xac\xac";
     EXPECT_EQ(next_code_point_copy<return_negated>(str2.begin(), str2.end()), -U'\xac');

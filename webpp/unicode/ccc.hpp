@@ -153,7 +153,7 @@ namespace webpp::unicode {
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             Iter       back_pos = pos;
-            auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
+            auto       cur_cp   = next_code_point<return_replacement>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 if (pos == end) {
@@ -167,7 +167,7 @@ namespace webpp::unicode {
             // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 Iter       prev    = back_pos;
-                auto const prev_cp = prev_code_point<return_replacement_char>(prev, start);
+                auto const prev_cp = prev_code_point<return_replacement>(prev, start);
                 if (ccc_of(prev_cp) <= ccc) {
                     break;
                 }
@@ -196,7 +196,7 @@ namespace webpp::unicode {
         static_cast<void>(next_code_point(pos, end));
         while (pos != end) {
             Iter       back_pos = pos;
-            auto       cur_cp   = next_code_point<return_replacement_char>(pos, end);
+            auto       cur_cp   = next_code_point<return_replacement>(pos, end);
             auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
                 if (pos == end) {
@@ -209,7 +209,7 @@ namespace webpp::unicode {
 
             while (back_pos != start) {
                 Iter       prev     = back_pos;
-                auto const prev_cp  = prev_code_point<return_replacement_char>(prev, start);
+                auto const prev_cp  = prev_code_point<return_replacement>(prev, start);
                 auto const prev_ccc = ccc_of(prev_cp);
                 if (prev_ccc <= ccc) {
                     break;

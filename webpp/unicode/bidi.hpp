@@ -219,7 +219,7 @@ namespace webpp::unicode {
         }
 
         auto       pos      = beg;
-        auto const first_cp = checked::next_code_point<return_replacement_char>(pos, endp);
+        auto const first_cp = checked::next_code_point<return_replacement>(pos, endp);
         char32_t   last_cp  = first_cp;
         bidi_info  info{
            .first = direction_mask_of(first_cp),
@@ -238,7 +238,7 @@ namespace webpp::unicode {
             }
         } else {
             while (pos != endp) {
-                last_cp     = checked::next_code_point<return_replacement_char>(pos, endp);
+                last_cp     = checked::next_code_point<return_replacement>(pos, endp);
                 info.accum |= direction_mask_of(last_cp);
             }
         }
@@ -246,7 +246,7 @@ namespace webpp::unicode {
 
         info.last_non_nsm = direction_mask_of(last_cp);
         while (info.last_non_nsm == direction_mask_of(NSM) && pos != beg) {
-            info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_replacement_char>(pos, beg));
+            info.last_non_nsm = direction_mask_of(checked::prev_code_point<return_replacement>(pos, beg));
         }
 
         return info;
