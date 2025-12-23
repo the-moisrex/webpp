@@ -6,8 +6,8 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "./checked.hpp"
 #include "./details/idna_mapping_tables.hpp"
-#include "./unicode.hpp"
 
 namespace webpp::unicode::idna {
 

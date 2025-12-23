@@ -5,7 +5,7 @@
 
 #include "../common/meta.hpp"
 #include "../std/iterator.hpp"
-#include "./unicode.hpp"
+#include "./unchecked.hpp"
 
 namespace webpp::unicode {
 
@@ -236,7 +236,7 @@ namespace webpp::unicode {
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
             char32_t const leading_pos       = lhs - hangul_leading_base;
             char32_t const vowel_pos         = rhs - hangul_vowel_base;
-            char32_t const leading_vowel_pos = leading_pos * hangul_block_count + vowel_pos * hangul_trailing_count;
+            char32_t const leading_vowel_pos = (leading_pos * hangul_block_count) + (vowel_pos * hangul_trailing_count);
             return hangul_syllable_base + leading_vowel_pos;
         }
 

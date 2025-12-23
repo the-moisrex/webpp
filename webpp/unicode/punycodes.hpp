@@ -5,7 +5,7 @@
 #include "../std/iterator.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "./unicode.hpp"
+#include "./checked.hpp"
 
 #include <cstdint>
 
@@ -91,7 +91,7 @@ namespace webpp::unicode::idna {
      */
     template <punycode_options Options = punycode_options{}>
     static constexpr punycode_uint
-    adapt(punycode_uint delta, punycode_uint const num_points, bool const first_time) noexcept {
+      adapt(punycode_uint delta, punycode_uint const num_points, bool const first_time) noexcept {
         delta                = first_time ? delta / Options.damp : delta / 2;
         delta               += delta / num_points;
         punycode_uint k_val  = 0;

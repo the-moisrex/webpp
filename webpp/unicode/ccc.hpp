@@ -3,8 +3,9 @@
 #ifndef WEBPP_UNICODE_CCC_HPP
 #define WEBPP_UNICODE_CCC_HPP
 
+#include "../std/utility.hpp"
+#include "./checked.hpp"
 #include "./details/ccc_tables.hpp"
-#include "./unicode.hpp"
 
 namespace webpp::unicode {
 
@@ -24,13 +25,15 @@ namespace webpp::unicode {
             return 0;
         }
 
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         // Look at the ccc_index table for how this works:
-        auto const code = ccc_indices[static_cast<stl::uint32_t>(code_point) >> ccc_index::chunk_shift];
+        auto const pos = static_cast<stl::uint32_t>(code_point) >> ccc_index::chunk_shift;
+        assert(pos < ccc_indices.size());
+        auto const code = ccc_indices.at(pos);
 
         // calculating the position of the value in the ccc_values table:
-        return ccc_values[code.get_position(code_point)];
-        // NOLINTEND(*-pro-bounds-constant-array-index)
+        auto const ccc_pos = code.get_position(code_point);
+        assert(ccc_pos < ccc_values.size());
+        return ccc_values.at(ccc_pos);
     }
 
     /// Canonical Combining Class
@@ -133,8 +136,7 @@ namespace webpp::unicode {
      *       No                    ccc(A) < ccc(B)
      *       Yes                   ccc(A) > ccc(B)
      */
-    template <stl::indirectly_swappable Iter   = char8_t*,
-              typename EIter                   = Iter>
+    template <stl::indirectly_swappable Iter = char8_t*, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
     static constexpr void canonically_reorder(Iter const& start, EIter const& end)
       noexcept(stl::is_nothrow_swappable_v<stl::iter_value_t<Iter>>) {

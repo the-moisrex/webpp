@@ -3,7 +3,7 @@
 #ifndef WEBPP_UNICODE_UTF32_ITERATOR_HPP
 #define WEBPP_UNICODE_UTF32_ITERATOR_HPP
 
-#include "./unicode.hpp"
+#include "./checked.hpp"
 
 namespace webpp::unicode::checked {
 

@@ -107,11 +107,11 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
+#include "./checked.hpp"
 #include "./details/composition_tables.hpp"
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./quick_check.hpp"
-#include "./unicode.hpp"
 #include "./utf32_iterator.hpp"
 
 #include <cassert>
@@ -439,7 +439,7 @@ namespace webpp::unicode {
           });
     }
 
-    template <istl::String            OStrT         = stl::u32string,
+    template <istl::String            OStrT     = stl::u32string,
               err_policy              ErrPolicy = err_policy::return_replacement,
               istl::StringViewifiable InpStr,
               typename... Args>

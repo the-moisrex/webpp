@@ -4,11 +4,11 @@
 #include "../std/iterator.hpp"
 #include "../std/string.hpp"
 #include "./bidi.hpp"
+#include "./checked.hpp"
 #include "./general_category.hpp"
 #include "./idna.hpp"
 #include "./joiners.hpp"
 #include "./normalization.hpp"
-#include "./unicode.hpp"
 
 #include <bit>
 
@@ -81,7 +81,7 @@ namespace webpp::unicode::idna {
         bidi_failure = V9,
 
         // 10. Empty Label (... must be satisfied for a non-empty label)
-        V10           = 0b1U << 10U,
+        V10         = 0b1U << 10U,
         empty_label = V10,
 
         // Flags:

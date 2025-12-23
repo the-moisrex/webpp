@@ -6,7 +6,6 @@
 #include "../std/string_view.hpp"
 #include "./ccc.hpp"
 #include "./details/joiners_tables.hpp"
-#include "./unicode.hpp"
 
 namespace webpp::unicode {
 

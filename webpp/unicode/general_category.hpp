@@ -4,7 +4,6 @@
 #define WEBPP_UNICODE_GENERAL_CATEGORY_HPP
 
 #include "./details/gc_tables.hpp"
-#include "./unicode.hpp"
 
 namespace webpp::unicode {
 

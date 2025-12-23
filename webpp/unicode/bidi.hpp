@@ -1,9 +1,9 @@
 #ifndef WEBPP_UNICODE_BIDI_HPP
 #define WEBPP_UNICODE_BIDI_HPP
 
+#include "./checked.hpp"
 #include "./details/bidi_tables.hpp"
 #include "./details/idna_mapping_tables.hpp"
-#include "./unicode.hpp"
 
 #include <climits>
 

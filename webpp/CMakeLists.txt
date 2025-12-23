@@ -48,6 +48,7 @@ set(ALL_SOURCES_SHORT
 
         unicode/bidi.hpp
         unicode/ccc.hpp
+        unicode/checked.hpp
         unicode/details/bidi_tables.hpp
         unicode/details/ccc_tables.hpp
         unicode/details/composition_tables.hpp
@@ -55,6 +56,7 @@ set(ALL_SOURCES_SHORT
         unicode/details/gc_tables.hpp
         unicode/details/idna_mapping_tables.hpp
         unicode/details/joiners_tables.hpp
+        unicode/error_handling.hpp
         unicode/general_category.hpp
         unicode/hangul.hpp
         unicode/idna.hpp
@@ -63,6 +65,7 @@ set(ALL_SOURCES_SHORT
         unicode/punycodes.hpp
         unicode/quick_check.hpp
         unicode/to_ascii.hpp
+        unicode/unchecked.hpp
         unicode/unicode.hpp
         unicode/unicode_concepts.hpp
         unicode/utf32_iterator.hpp
