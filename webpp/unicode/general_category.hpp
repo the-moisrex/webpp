@@ -3,13 +3,16 @@
 #ifndef WEBPP_UNICODE_GENERAL_CATEGORY_HPP
 #define WEBPP_UNICODE_GENERAL_CATEGORY_HPP
 
+#include "../std/utility.hpp"
 #include "./details/gc_tables.hpp"
+
+#include <cassert>
 
 namespace webpp::unicode {
 
     [[nodiscard]] static constexpr stl::underlying_type_t<general_category> operator+(
-      general_category const gc) noexcept {
-        return stl::to_underlying(gc);
+      general_category const gcat) noexcept {
+        return stl::to_underlying(gcat);
     }
 
     /**
@@ -23,20 +26,20 @@ namespace webpp::unicode {
         using details::gc_indices;
         using details::gc_values;
 
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
         auto const chunk         = code_point >> gc_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::gc_breakpoint_shift);
         if (chunk >= static_cast<char32_t>(details::gc_last_breakpoint)) [[unlikely]] {
             return general_category::Unassigned;
         }
-        auto const [starting, ending, offset] = details::gc_breakpoints[section_index];
+        assert(section_index < details::gc_breakpoints.size());
+        auto const [starting, ending, offset] = details::gc_breakpoints.at(section_index);
 
-        gc_index const pos = chunk < starting || chunk >= ending
-                               ? details::gc_common_pos
-                               : gc_indices[static_cast<stl::uint16_t>(chunk - offset)];
+        gc_index const pos =
+          chunk < starting || chunk >= ending ? details::gc_common_pos : gc_indices.at(chunk - offset);
 
-        return static_cast<general_category>(gc_values[pos.get_position(code_point)]);
-        // NOLINTEND(*-pro-bounds-constant-array-index)
+        auto const gc_pos = pos.get_position(code_point);
+        assert(gc_pos < gc_values.size());
+        return static_cast<general_category>(gc_values.at(gc_pos));
     }
 
     /**
@@ -48,7 +51,7 @@ namespace webpp::unicode {
      */
     [[nodiscard]] static constexpr bool is_general_category_of(char32_t const         code_point,
                                                                general_category const cat) noexcept {
-        constexpr stl::uint8_t mask   = 31U; // 32 - 1
+        constexpr stl::uint8_t mask   = 32U - 1U;
         auto const             gc_val = general_category_of(code_point);
 
         // If you specify the "single-letter" category, we'd make sure the subsequence 2-letter ones are a

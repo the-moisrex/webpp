@@ -12,7 +12,7 @@ namespace webpp::unicode::checked {
      * UTF-32 Bidirectional Iterator
      */
     template <stl::bidirectional_iterator Iter,
-              typename EIter               = stl::default_sentinel_t,
+              typename EIter       = stl::default_sentinel_t,
               err_policy ErrPolicy = err_policy::return_replacement>
         requires std::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_bidi_iter {
@@ -238,7 +238,7 @@ namespace webpp::unicode::checked {
      * UTF-32 Forward Iterator Wrapper.
      */
     template <stl::forward_iterator Iter,
-              typename EIter               = stl::default_sentinel_t,
+              typename EIter       = stl::default_sentinel_t,
               err_policy ErrPolicy = err_policy::return_replacement>
         requires stl::sentinel_for<EIter, Iter>
     struct [[nodiscard]] utf32_forward_iter {
@@ -314,8 +314,8 @@ namespace webpp::unicode::checked {
         /// Return the start of the next Code Point
         [[nodiscard]] constexpr Iter upper_base() const noexcept {
             // return stl::next(*this).base();
-            Iter upos = pos;
-            auto _    = checked::next_code_point(upos, send);
+            Iter                        upos = pos;
+            [[maybe_unused]] auto const _    = checked::next_code_point(upos, send);
             return upos;
         }
 

@@ -72,10 +72,6 @@ namespace webpp::unicode {
     /// Max valid value for a Unicode code point
     static constexpr char32_t max_legal_utf32 = 0x0010'FFFF;
 
-    static constexpr int  half_shift = 10; // used for shifting by 10 bits
-    static constexpr auto half_base  = 0x001'0000UL;
-    static constexpr auto half_mask  = 0x3FFUL;
-
 } // namespace webpp::unicode
 
 #endif // WEBPP_UNICODE_UNICODE_CONCEPTS_HPP

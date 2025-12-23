@@ -46,21 +46,20 @@ namespace webpp::unicode {
         using details::joiners_indices;
         using details::joiners_values;
 
-        // NOLINTBEGIN(*-pro-bounds-constant-array-index)
 
         auto const chunk         = code_point >> joiners_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::joiners_breakpoint_shift);
         if (chunk >= static_cast<char32_t>(details::joiners_last_breakpoint)) [[unlikely]] {
             return non_joining;
         }
-        auto const [starting, ending, offset] = details::joiners_breakpoints[section_index];
+        assert(section_index < details::joiners_breakpoints.size());
+        auto const [starting, ending, offset] = details::joiners_breakpoints.at(section_index);
         joiners_index const pos =
-          chunk < starting || chunk >= ending
-            ? details::joiners_common_pos
-            : joiners_indices[static_cast<stl::uint16_t>(chunk - offset)];
+          chunk < starting || chunk >= ending ? details::joiners_common_pos : joiners_indices.at(chunk - offset);
 
-        return static_cast<joiner_type>(joiners_values[pos.get_position(code_point)]);
-        // NOLINTEND(*-pro-bounds-constant-array-index)
+        auto const joiner_pos = pos.get_position(code_point);
+        assert(joiner_pos < joiners_values.size());
+        return static_cast<joiner_type>(joiners_values.at(joiner_pos));
     }
 
     namespace details {
