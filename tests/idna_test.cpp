@@ -869,6 +869,9 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     using webpp::unicode::idna::to_ascii;
 
     EXPECT_EQ(to_ascii<string>("128.0,0.1"), "128.0,0.1");
+
+    EXPECT_FALSE(to_ascii<u32string>("\xFF"));
+
     EXPECT_FALSE(to_ascii<u16string>("\232"));
     EXPECT_FALSE(to_ascii<u16string>("\330"));
     EXPECT_FALSE(to_ascii<u16string>("\012\241"));

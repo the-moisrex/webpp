@@ -327,14 +327,15 @@ namespace webpp::unicode::idna {
         auto is_valid = true;
         for (Iter pos = beg; pos != end;) {
             Iter const cp_beg     = pos;
-            auto       code_point = next_code_point<return_negated>(pos, end);
+            auto       code_point = next_code_point<return_replacement>(pos, end);
             auto const map_pos    = status_of(code_point);
 
             // ignored code points are mapped to nothing, so no special code is needed
             switch (map_pos) {
                 case disallowed:
-                    code_point = to_positive(code_point); // fix `return_negative` for bad Code Points
-                    [[fallthrough]];
+                    // code_point = to_positive(code_point); // fix `return_negative` for bad Code Points
+                    // code_point = replacement_char;
+                    // [[fallthrough]];
                 case valid: // Or deviation
                     // Disallowed: Leave the code point unchanged in the string. Note: The Convert/Validate
                     //             step below checks for disallowed characters, after mapping
