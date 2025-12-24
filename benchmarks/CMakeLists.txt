@@ -42,6 +42,7 @@ set(FILE_SOURCES
         path_dots/path_dots_benchmark.cpp
         bidi/bidi_benchmark.cpp
         sorted_combining_marks/sorted_combining_marks_benchmark.cpp
+        to_ascii/to_ascii_benchmark.cpp
 )
 file(GLOB FILE_PCH *_pch.hpp)
 

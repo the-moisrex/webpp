@@ -7,6 +7,8 @@
 #include "../std/iterator.hpp"
 #include "./unicode.hpp"
 
+#include <algorithm>
+
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp::unicode::unchecked {
 

@@ -84,8 +84,8 @@ static std::u32string str32_generator(std::size_t size = 10'000) {
 }
 
 template <std::size_t count>
-static std::array<std::string, count> str8_array_generator(std::size_t const size = 10'000) {
-    std::array<std::string, count> strs;
+static std::array<std::u8string, count> str8_array_generator(std::size_t const size = 10'000) {
+    std::array<std::u8string, count> strs;
     for (auto& str : strs) {
         str = str8_generator(size);
     }
