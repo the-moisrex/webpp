@@ -59,8 +59,7 @@ namespace webpp::unicode::checked {
         } else if constexpr (ErrPolicy == return_max_legal_utf32) {
             return max_legal_utf32;
         } else if constexpr (ErrPolicy == return_negated) {
-            auto const icp = static_cast<stl::int32_t>(code_point);
-            return static_cast<char32_t>(icp > 0 ? -icp : icp);
+            return to_negative(code_point);
         } else if constexpr (ErrPolicy == return_null_char) {
             return U'\0';
         } else if constexpr (ErrPolicy == return_recoverable) {
@@ -74,12 +73,13 @@ namespace webpp::unicode::checked {
 
             auto icp = static_cast<std::uint32_t>(code_point);
             if constexpr (UTF8<CharT>) {
+                assert((icp & mask) == 0);
                 icp |= utf8_identifier;
             } else if (UTF16<CharT>) {
+                assert((icp & mask) == 0);
                 icp |= utf16_identifier;
             } else {
-                auto const ucp = static_cast<stl::uint32_t>(code_point);
-                if ((ucp & mask) != 0) [[unlikely]] {
+                if ((icp & mask) != 0) [[unlikely]] {
                     // The number is too big, but we know it's at least how big it is, so we just subtract that much
                     // from the number and later in recovery, we do the add this much back to recover the original.
                     icp -= ~mask;
@@ -114,24 +114,25 @@ namespace webpp::unicode::checked {
         ucp                 &= ~mask;
         if constexpr (UTF8<CharT> || UTF16<CharT>) {
             stl::array<CharT, UTF8<CharT> ? 4U : 2U> units{};
+            auto                                     ptr = units.data();
             switch (ucp_mask) {
                 case utf8_identifier:
-                    // The encoder must not have generated anything like that
+                    // Probably improperly encoded Code Point
                     assert(ucp <= std::numeric_limits<char8_t>::max());
                     units[0] = static_cast<CharT>(ucp);
                     break;
                 case utf16_identifier:
                     assert(ucp <= std::numeric_limits<char16_t>::max());
-                    unchecked::append(units.data(), static_cast<char16_t>(ucp));
+                    unchecked::append(ptr, static_cast<char16_t>(ucp));
                     break;
                 case utf32_identifier:
                     // Input is UTF32, but the output is UTF-8/16
-                    unchecked::append(units.data(), static_cast<char32_t>(ucp));
+                    unchecked::append(ptr, static_cast<char32_t>(ucp));
                     break;
                 case utf32_reverse_identifier:
                     // Recover what we subtracted from the number in the encoding process
                     ucp += ~mask;
-                    unchecked::append(units.data(), static_cast<char32_t>(ucp));
+                    unchecked::append(ptr, static_cast<char32_t>(ucp));
                     break;
                 default: stl::unreachable();
             }
@@ -139,7 +140,7 @@ namespace webpp::unicode::checked {
         } else {
             switch (ucp_mask) {
                 case utf8_identifier:
-                    // The encoder must not have generated anything like that
+                    // Probably improperly encoded Code Point
                     assert(ucp <= stl::numeric_limits<char8_t>::max());
                     return static_cast<CharT>(ucp);
                 case utf16_identifier:
@@ -162,13 +163,14 @@ namespace webpp::unicode::checked {
      * @ref to_error
      */
     template <istl::Appendable Ptr>
-    static constexpr void append_recovering(Ptr& out, char32_t code_point) noexcept {
+    static constexpr stl::size_t append_recovering(Ptr& out, char32_t code_point) noexcept {
         using istl::iter_append;
         using char_type = istl::appendable_value_type_t<Ptr>;
 
         static constexpr stl::uint32_t mask = 0b111U << 29U;
         if ((static_cast<std::uint32_t>(code_point) & mask) != 0U) [[unlikely]] {
             // Append the error code points
+            stl::size_t count = 0U;
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 auto const code_units = recover_error<char_type>(code_point);
                 for (auto const unit : code_units) {
@@ -176,16 +178,26 @@ namespace webpp::unicode::checked {
                         break;
                     }
                     iter_append(out, unit);
+                    ++count;
                 }
             } else {
                 // UTF-32
                 iter_append(out, recover_error<char_type>(code_point));
+                ++count;
             }
-            return;
+            return count;
         }
-        unchecked::append(out, code_point);
+        return unchecked::append(out, code_point);
     }
 
+    template <err_policy Policy, istl::Appendable Ptr>
+    static constexpr stl::size_t append(Ptr& out, char32_t code_point) noexcept {
+        if constexpr (err_policy::return_recoverable == Policy) {
+            return append_recovering(out, code_point);
+        } else {
+            return unchecked::append(out, code_point);
+        }
+    }
 } // namespace webpp::unicode::checked
 
 #endif // WEBPP_UNICODE_ERROR_HANDLING_HPP

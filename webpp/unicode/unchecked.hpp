@@ -524,11 +524,11 @@ namespace webpp::unicode::unchecked {
         using out_char_type = istl::appendable_value_type_t<StrT>;
         using src_char_type = stl::iter_value_t<Iter>;
         if constexpr (UTF32<src_char_type>) {
-            return append<StrT>(out, *src++);
+            return append(out, *src++);
         } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
             return unchecked::copy_next_into(out, src);
         } else {
-            return append<StrT>(out, next_code_point(src));
+            return append(out, next_code_point(src));
         }
     }
 

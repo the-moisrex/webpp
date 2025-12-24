@@ -171,6 +171,22 @@ namespace webpp::unicode {
         // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));
     }
 
+    [[nodiscard]] static constexpr char32_t negate(char32_t const code_point) noexcept {
+        return static_cast<char32_t>(-static_cast<stl::int32_t>(code_point));
+    }
+
+    /// Convert to a negative number if it's not already
+    [[nodiscard]] static constexpr char32_t to_negative(char32_t const code_point) noexcept {
+        auto const icp = static_cast<stl::int32_t>(code_point);
+        return icp <= 0 ? code_point : static_cast<char32_t>(-icp);
+    }
+
+    /// Convert to a positive number if it's not already
+    [[nodiscard]] static constexpr char32_t to_positive(char32_t const code_point) noexcept {
+        auto const icp = static_cast<stl::int32_t>(code_point);
+        return icp >= 0 ? code_point : static_cast<char32_t>(-icp);
+    }
+
     namespace details {
 
         // from glib/gutf8.c

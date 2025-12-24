@@ -134,9 +134,10 @@ namespace webpp::unicode {
      * @tparam Iter Iter can be an array, iterator, string, or similar types.
      * @returns the UTF-8 length of mapped values
      */
-    template <istl::Appendable Iter = std::u8string::iterator>
+    template <err_policy Policy = err_policy::return_replacement, istl::Appendable Iter = std::u8string::iterator>
     static constexpr stl::size_t canonical_decompose_to(Iter& out, char32_t const code_point)
       noexcept(istl::NothrowAppendable<Iter>) {
+        using checked::append;
         using details::decomp_breakpoints;
         using details::decomp_common_pos;
         using details::decomp_index;
@@ -157,7 +158,7 @@ namespace webpp::unicode {
         auto const chunk         = static_cast<std::uint32_t>(code_point) >> decomp_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::decomp_breakpoint_shift);
         if (chunk >= details::decomp_last_breakpoint) [[unlikely]] {
-            return append<Iter>(out, code_point);
+            return append<Policy>(out, code_point);
         }
         assert(section_index < decomp_breakpoints.size());
         auto const [starting, ending, offset] = decomp_breakpoints.at(section_index);
@@ -165,8 +166,8 @@ namespace webpp::unicode {
           chunk < starting || chunk >= ending ? decomp_common_pos : decomp_indices.at(chunk - offset);
 
         // Not mapped at all, that means the code point is mapped to itself.
-        if (code.max_length == 0) {
-            return append<Iter>(out, code_point);
+        if (code.max_length == 0) [[likely]] {
+            return append<Policy>(out, code_point);
         }
 
         auto const* const start_ptr = decomp_ptr(code, code_point);
@@ -175,13 +176,13 @@ namespace webpp::unicode {
 
         webpp_assume(code.max_length <= decomp_index::max_utf8_mapped_length);
         while (*ptr != u8'\0' && ptr != end_ptr) {
-            append<Iter>(out, ptr); // append increments ptr
+            append(out, ptr); // append increments ptr
         }
         webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_utf8_mapped_length);
 
         auto const len = static_cast<stl::size_t>(ptr - start_ptr);
         if (len == 0) {
-            return append<Iter>(out, code_point);
+            return append<Policy>(out, code_point);
         }
         return len; // UTF-8 Length regardless of the output type.
     }
@@ -202,7 +203,7 @@ namespace webpp::unicode {
 
         assert(spos != send);
         auto const code_point = checked::next_code_point<Policy>(spos, send);
-        return canonical_decompose_to(out, code_point);
+        return canonical_decompose_to<Policy>(out, code_point);
     }
 
     template <err_policy            Policy = err_policy::return_replacement,
@@ -215,7 +216,7 @@ namespace webpp::unicode {
         using enum err_policy;
 
         auto const code_point = checked::prev_code_point<Policy>(spos, sbeg);
-        return canonical_decompose_to(out, code_point);
+        return canonical_decompose_to<Policy>(out, code_point);
     }
 
     /**

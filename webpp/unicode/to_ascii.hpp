@@ -421,9 +421,9 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             {
                 send = spos;
-                normalize<norm_form::NFC, leave_broken>(out_beg, out, send); // inplace normalization
+                normalize<norm_form::NFC, return_recoverable>(out_beg, out, send); // inplace normalization
             }
-            assert(out <= oend);                                                 // we ran out of space.
+            assert(out <= oend);                                                   // we ran out of space.
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -469,10 +469,11 @@ namespace webpp::unicode::idna {
                         }
 
                         // Decode Punycode
-                        // 1.4.2. Attempt to convert the rest odiff <(sed 's/webpp/foresight/' CMakeLists.txt ) CMakeLists.txtf the label to Unicode according to Punycode
-                        // [RFC3492]. If that conversion fails and if not IgnoreInvalidPunycode, record that
-                        // there was an error, and continue with the next label. Otherwise, replace the
-                        // original label in the string by the results of the conversion.
+                        // 1.4.2. Attempt to convert the rest odiff <(sed 's/webpp/foresight/' CMakeLists.txt )
+                        // CMakeLists.txtf the label to Unicode according to Punycode [RFC3492]. If that conversion
+                        // fails and if not IgnoreInvalidPunycode, record that there was an error, and continue with the
+                        // next label. Otherwise, replace the original label in the string by the results of the
+                        // conversion.
 
                         // Give enough room for re-conversion
                         // No need to take xn-- into account, it's already in 'src length'.
