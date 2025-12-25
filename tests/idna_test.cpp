@@ -1,9 +1,10 @@
 // Created by moisrex on Fri 2024/02/09
 
+#include "../webpp/unicode/idna.hpp"
+
 #include "../webpp/std/format.hpp"
 #include "../webpp/unicode/bidi.hpp"
 #include "../webpp/unicode/general_category.hpp"
-#include "../webpp/unicode/idna.hpp"
 #include "../webpp/unicode/joiners.hpp"
 #include "../webpp/unicode/to_ascii.hpp"
 #include "../webpp/unicode/validity_criteria.hpp"
@@ -727,13 +728,13 @@ TEST(BasicIDNATests, CheckValidiyCriteria) {
     for (auto const [str, is_valid, opts_index] : tests) {
         switch (opts_index) {
             case -1:
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(0)>(str.begin(), str.end())) << str;
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(1)>(str.begin(), str.end())) << str;
-                EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(2)>(str.begin(), str.end())) << str;
+                EXPECT_EQ(is_label_valid<idna_opts.at(0)>(str.begin(), str.end()), is_valid) << str;
+                EXPECT_EQ(is_label_valid<idna_opts.at(1)>(str.begin(), str.end()), is_valid) << str;
+                EXPECT_EQ(is_label_valid<idna_opts.at(2)>(str.begin(), str.end()), is_valid) << str;
                 break;
-            case 0: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(0)>(str.begin(), str.end())) << str; break;
-            case 1: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(1)>(str.begin(), str.end())) << str; break;
-            case 2: EXPECT_EQ(is_valid, is_label_valid<idna_opts.at(2)>(str.begin(), str.end())) << str; break;
+            case 0: EXPECT_EQ(is_label_valid<idna_opts.at(0)>(str.begin(), str.end()), is_valid) << str; break;
+            case 1: EXPECT_EQ(is_label_valid<idna_opts.at(1)>(str.begin(), str.end()), is_valid) << str; break;
+            case 2: EXPECT_EQ(is_label_valid<idna_opts.at(2)>(str.begin(), str.end()), is_valid) << str; break;
             default: break;
         }
     }
@@ -1296,6 +1297,8 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         auto        default_options = unicode::idna::strict_idna_options;
         auto        ascii_n_res     = to_ascii<std::string>(default_options, source);
         std::string error_string;
+        auto        relaxed_options = unicode::idna::strict_idna_options;
+        std::string debug_str;
 
         if (!ascii_n_res.has_value()) {
             for (auto const status : unicode::idna::to_ascii_status_iterator{ascii_n_res.error()}) {
@@ -1306,25 +1309,9 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
             error_string = "No error.";
         }
 
-        if (to_ascii_can_fail == ascii_n_res.has_value()) {
-            failed_tests++;
-        }
-        EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
-          << "If we should fail, there should be no value.\n  Error: " << error_string
-          << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp;
-
-        if (ascii_n_res) {
-            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
-        }
-
-
-        // --- If it failed, test again with relaxed options to see if it passes ---
         if (to_ascii_can_fail) {
-            auto relaxed_options = unicode::idna::strict_idna_options;
-
             // Disable checks corresponding to the errors on this line
             // SCOPED_TRACE("Expected Errors: " + to_ascii_n_status_str);
-            std::string debug_str;
             for (auto const& error_code : expected_errors) {
                 char prefix = error_code.empty() ? ' ' : error_code.at(0);
                 // debug_str   += "Disable " + error_code + " check\n";
@@ -1365,7 +1352,22 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
                     throw stl::runtime_error(stl::format("Unknown error code: {}; line: {}", error_code, line));
                 }
             }
+        }
+        if (to_ascii_can_fail == ascii_n_res.has_value()) {
+            failed_tests++;
+        }
+        EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
+          << "If we should fail, there should be no value.\n  Error: " << error_string
+          << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp
+          << "\n  Options: " << debug_str << "\n  Value: " << ascii_n_res.value_or("Failed");
 
+        if (ascii_n_res) {
+            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
+        }
+
+
+        // --- If it failed, test again with relaxed options to see if it passes ---
+        if (to_ascii_can_fail) {
             // SCOPED_TRACE(debug_str);
 
             // If all errors are ignorable by our relaxed options, this call should now succeed.
@@ -1937,6 +1939,15 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit34) {
     // Expected:  a�z
     EXPECT_EQ((to_ascii<std::u32string, loose_idna_options>(U"A\xD900Z").value_or(U"Failed")), U"a\xD900z");
     EXPECT_EQ((to_ascii<std::u32string, relaxed_options>(U"A\xD900Z").value_or(U"Failed")), U"a\xD900z");
+}
+
+TEST(BasicIDNATests, IDNAComplianceTestsExplicit35) {
+    using unicode::idna::idna_options;
+    using unicode::idna::strict_idna_options;
+    using unicode::idna::to_ascii;
+
+    // bidi should fail it:
+    EXPECT_FALSE((to_ascii<std::u32string, strict_idna_options>(U"0a.xn--4db").has_value()));
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

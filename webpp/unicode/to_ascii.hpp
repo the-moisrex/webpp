@@ -293,15 +293,15 @@ namespace webpp::unicode::idna {
             while (spos != send) {
                 flag_type const flag =
                   or_all_if(interesting_characters, spos, send, [](flag_type const cur_flag) constexpr noexcept {
-                      return (cur_flag & to_underlying(length_police)) != 0;
+                      return (cur_flag & +length_police) != 0;
                   });
 
                 flags |= flag;
 
-                if ((flag & to_underlying(dot)) == to_underlying(dot)) {
+                if ((flag & +dot) == +dot) {
                     biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
                     lbeg          = spos;
-                } else if ((flag & to_underlying(non_ascii)) != 0) {
+                } else if ((flag & +non_ascii) != 0) {
                     // or_all_if will go past that bad code point, so we need prev(spos)
                     --spos;
                     auto const code_point = checked::next_code_point<return_negated>(spos, send);
@@ -420,6 +420,9 @@ namespace webpp::unicode::idna {
             auto const lcend            = contains_dot ? stl::prev(spos) : spos;
             OIter      lend             = lcend;
             auto const src_label_length = stl::distance(lbeg, lend);
+
+            // Remove the dot since the label now does not include any dot anymore
+            flag &= static_cast<flag_type>(~+dot);
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {

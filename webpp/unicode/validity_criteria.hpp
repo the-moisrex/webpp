@@ -106,10 +106,12 @@ namespace webpp::unicode::idna {
         ace  = x | n | dash, // ACE prefix
 
         // Misc:
-        clean         = static_cast<validity_flag_type>(~dot),
+        misc          = dot,
+        clean         = static_cast<validity_flag_type>(~misc),
         length_police = (dot | non_ascii) & ~ascii,
         ascii_mask    = non_ascii | ascii | ascii_upper,
         all           = 0b1111'1111U, // all possibilities
+        valid_label   = all & clean,  // a valid label
     };
 
     // NOLINTEND(*-signed-bitwise)
@@ -120,9 +122,11 @@ namespace webpp::unicode::idna {
         return stl::to_underlying(flags);
     }
 
-    /// Check if `flags` has a `flag` in it
-    [[nodiscard]] static constexpr bool has_flag(validity_flag_type const flags, validity_flags const flag) noexcept {
-        return (flags & +flag) != 0U;
+    /// Check if `all_flags` has at least of of the `flags` in it
+    template <typename... T>
+        requires((stl::convertible_to<T, validity_flags> && ...))
+    [[nodiscard]] static constexpr bool has_flag(validity_flag_type const all_flags, T const... flags) noexcept {
+        return (all_flags & static_cast<validity_flag_type>((+flags | ...))) != 0U;
     }
 
     [[nodiscard]] static constexpr stl::string_view to_string(validity_criteria_status const status) noexcept {
@@ -155,6 +159,12 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr validity_criteria_status_type operator+(
       validity_criteria_status const status) noexcept {
         return stl::to_underlying(status);
+    }
+
+    [[nodiscard]] static consteval validity_criteria_status_type operator~(
+      validity_criteria_status const status) noexcept {
+        auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(+status));
+        return static_cast<validity_criteria_status_type>(0b1U << bit_len);
     }
 
     /**
@@ -190,8 +200,10 @@ namespace webpp::unicode::idna {
      *            ignore `bidi_failure` if it's in the results.
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr validity_criteria_status_type
-      label_validity_status(Iter spos, Iter send, validity_flag_type const flags = +validity_flags::all) noexcept {
+    [[nodiscard]] static constexpr validity_criteria_status_type label_validity_status(
+      Iter                     spos,
+      Iter                     send,
+      validity_flag_type const flags = +validity_flags::valid_label) noexcept {
         // 1. The label must be in Unicode Normalization Form NFC.
         // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
         //    and fourth positions.
@@ -215,22 +227,14 @@ namespace webpp::unicode::idna {
         using unicode::details::validate_zero_with_non_joiner;
         using enum err_policy;
         using enum validity_criteria_status;
+        using enum validity_flags;
 
-        constexpr auto validate =
-          [](bool const                     validity,
-             validity_criteria_status const criteria) constexpr noexcept -> validity_criteria_status_type {
-            auto const bit_len = static_cast<stl::uint8_t>(stl::countr_zero(+criteria));
-            return static_cast<validity_criteria_status_type>(
-              static_cast<validity_criteria_status_type>(!validity) << bit_len);
-        };
-
-        validity_criteria_status_type status = +valid;
+        validity_criteria_status_type status = ~valid;
         auto const                    length = send - spos;
 
-        status |= Options.VerifyDnsLength && length == 0 ? +empty_label : +valid;
 
         // 2,3,4. Check hyphens
-        if (has_flag(flags, validity_flags::dash)) {
+        if (has_flag(flags, dash)) {
             if constexpr (Options.CheckHyphens && Options.CheckDecodeAndValidateLabels) {
                 switch (length) {
                     [[likely]] default:
@@ -242,35 +246,37 @@ namespace webpp::unicode::idna {
                         char32_t const cp4      = *pos;
                         auto const     cp_back  = *stl::prev(send); // spos + length - 1
                         // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
-                        status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
+                        status                 |= cp3 == '-' && cp4 == '-' ? ~hyphen_34 : ~valid; // 3rd and 4th
                         // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
-                        status |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first and last
+                        status |= cp1 == '-' || cp_back == '-' ? ~hyphen_around : ~valid; // first or last
                         break;
                     }
                     case 3: {
                         auto const cp1      = *spos;
                         auto const cp_back  = *stl::prev(send);
-                        status             |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first
+                        status             |= cp1 == '-' || cp_back == '-' ? ~hyphen_around : ~valid; // first or last
                         break;
                     }
                     case 2: {
                         // don't need to use utf32 iterator for 2 chars
                         auto const cp1  = *spos;
                         auto const cp2  = *stl::next(spos);
-                        status         |= validate(cp1 != '-' && cp2 != '-', hyphen_around); // first and last
+                        status         |= cp1 == '-' || cp2 == '-' ? ~hyphen_around : ~valid; // first or last
                         break;
                     }
                     case 1:
-                        status |= validate(*spos != '-', hyphen_around); // first and last
+                        status |= *spos == '-' ? ~hyphen_around : ~valid; // first or last
                         break;
                     case 0: break;
                 }
             } else if constexpr (Options.CheckACE && Options.CheckDecodeAndValidateLabels) {
                 Iter pos = spos;
 
-                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
                 status |=
-                  validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
+                  // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                  has_flag(flags, ace) && length >= 4 && *pos++ == 'x' && *pos++ == 'n' && *pos++ == '-' && *pos == '-'
+                    ? ~ace_found
+                    : ~valid;
             }
         }
 
@@ -280,115 +286,110 @@ namespace webpp::unicode::idna {
         [[maybe_unused]] stl::uint8_t prev_ccc = 0;
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
         [[maybe_unused]] bidi_info    b_info{};
-        auto const                    first_cp = checked::next_code_point_copy<return_replacement>(spos, send);
-        char32_t                      last_cp  = 0;
+        auto const                    first_cp      = checked::next_code_point_copy<return_replacement>(spos, send);
+        char32_t                      last_cp       = 0;
+        bool const                    has_non_ascii = has_flag(flags, non_ascii);
+        bool const check_bidi = Options.CheckBidi && (has_non_ascii || DIGIT<char>.contains(first_cp));
 
-        // 9. (partially) initialize bidi information
-        if constexpr (Options.CheckBidi) {
-            if (spos != send) [[likely]] {
-                unicode::details::bidi_info_first(b_info, first_cp);
-            }
-        }
+        // 5. Check if it includes any dots
+        status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;
 
         // 6. The label must not start with a combining mark
-        if constexpr (Options.CheckCombiningMarkAtLabelStart) {
-            // no need to check the length, it'll return 0, which is not GC, so it's fine.
-            status |= validate(!is_general_category_of(first_cp, general_category::Mark), combining_mark_at_start);
+        // no need to check the length, it'll return 0, which is not GC, so it's fine.
+        status |= Options.CheckCombiningMarkAtLabelStart && has_non_ascii &&
+                      is_general_category_of(first_cp, general_category::Mark)
+                    ? ~combining_mark_at_start
+                    : ~valid;
+
+        // Length check
+        status |= Options.VerifyDnsLength && length == 0 ? ~empty_label : ~valid;
+
+        // 9. (partially) initialize bidi information
+        if (check_bidi && spos != send) [[likely]] {
+            unicode::details::bidi_info_first(b_info, first_cp);
         }
-
-
 
         for (Iter pos = spos; pos != send;) {
             // return replacement character because an invalid code point is not NFC failure
             char32_t const code_point = checked::next_code_point<return_replacement>(pos, send);
 
             // 1. Check if it's in NFC form
-            if constexpr (Options.CheckNFC) {
-                // We do have isNFC function, but we are already iterating through the string,
-                // so we might as well do it here.
-                // This is almost the implementation of QuickCheck:
-                if (result != +quick_check_state::NO) [[likely]] {
-                    for (;;) {
-                        auto const info    = qc_ccc_of(code_point);
-                        auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
-                        auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
-                        result            |= +qc_of<norm_form::NFC>(qc_val);
+            // We do have isNFC function, but we are already iterating through the string,
+            // so we might as well do it here.
+            // This is almost the implementation of QuickCheck:
+            if (Options.CheckNFC && has_non_ascii && result != +quick_check_state::NO) {
+                for (;;) {
+                    auto const info    = qc_ccc_of(code_point);
+                    auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
+                    auto const qc_val  = static_cast<stl::uint8_t>(info >> 8U);
+                    result            |= +qc_of<norm_form::NFC>(qc_val);
 
-                        if (result != +quick_check_state::YES) [[unlikely]] {
-                            if (result == +quick_check_state::NO) {
-                                status |= validate(false, nfc_failure);
-                            }
-                            break;
-                        }
-
-                        if (ccc == 0) {
-                            starter = prev;
-                        } else if (prev_ccc > ccc) [[unlikely]] {
-                            status |= validate(false, nfc_failure);
-                            break;
-                        }
-                        prev_ccc = ccc;
+                    if (result != +quick_check_state::YES) [[unlikely]] {
+                        status |= result == +quick_check_state::NO ? ~nfc_failure : ~valid;
                         break;
                     }
 
-                    if (result == +quick_check_state::MAYBE && !isNFC_until_next_starter(starter, send)) [[unlikely]] {
-                        result |= +quick_check_state::NO;
-                        status |= validate(false, nfc_failure);
+                    if (ccc == 0) {
+                        starter = prev;
+                    } else if (prev_ccc > ccc) [[unlikely]] {
+                        status |= ~nfc_failure;
+                        break;
                     }
-
-                    prev = pos;
+                    prev_ccc = ccc;
+                    break;
                 }
+
+                if (result == +quick_check_state::MAYBE && !isNFC_until_next_starter(starter, send)) [[unlikely]] {
+                    result |= +quick_check_state::NO;
+                    status |= ~nfc_failure;
+                }
+
+                prev = pos;
             }
 
 
             // 7. Checking Status values
             if constexpr (Options.CheckMappingRequired) {
+                // https://www.unicode.org/reports/tr46/#Deviations
+                // Deviations are considered valid in IDNA2008 and UTS #46.
                 // - For Transitional Processing (deprecated)
                 // - For Nontransitional Processing, each value must be either valid or deviation.
                 // - In addition,
-                auto const cp_status = status_of(code_point);
+                status |= has_flag(flags, non_ascii, ascii_upper) && status_of(code_point) != details::valid
+                            ? ~requires_mapping_failure
+                            : ~valid;
 
-                // https://www.unicode.org/reports/tr46/#Deviations
-                // Deviations are considered valid in IDNA2008 and UTS #46.
-                status |= validate(cp_status == details::valid, requires_mapping_failure);
+                // if UseSTD3ASCIIRules=true and the code point is an ASCII code point (U+0000..U+007F), then it
+                // must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus (U+002D). (Note: This excludes
+                // uppercase ASCII A-Z which are mapped in UTS #46 and disallowed in IDNA2008.)
+                status |= !Options.UseSTD3ASCIIRules || !is_ascii(code_point) || ASCII_STD3_RULES.contains(code_point)
+                            ? ~valid
+                            : ~requires_mapping_failure;
+            }
 
-                if constexpr (Options.UseSTD3ASCIIRules) {
-                    // if UseSTD3ASCIIRules=true and the code point is an ASCII code point (U+0000..U+007F), then it
-                    // must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus (U+002D). (Note: This excludes
-                    // uppercase ASCII A-Z which are mapped in UTS #46 and disallowed in IDNA2008.)
-                    status |= validate(!is_ascii(code_point) || ASCII_STD3_RULES.contains(code_point),
-                                       requires_mapping_failure);
+
+
+            // 8. and 5. Check joiners
+            // read validate_context_joiners for details on how this works
+            if (has_non_ascii) {
+                switch (code_point) {
+                    case U'\x200C': // ZERO WIDTH NON-JOINER
+                        status |= Options.CheckJoiners && !validate_zero_with_non_joiner(sbeg, pos, send, last_cp)
+                                    ? ~joiner_failure
+                                    : ~valid;
+                        break;
+                    case U'\x200D': // ZERO WIDTH JOINER
+                        status |=
+                          Options.CheckJoiners && !validate_zero_with_joiner(last_cp) ? ~joiner_failure : ~valid;
+                        break;
+                    [[likely]] default:
+                        break;
                 }
             }
 
 
-
-            // 8. and 5. Check joiners and if it includes a dot
-            // read validate_context_joiners for details on how this works
-            switch (code_point) {
-                case U'\x200C': // ZERO WIDTH NON-JOINER
-                    if constexpr (Options.CheckJoiners) {
-                        status |= validate(validate_zero_with_non_joiner(sbeg, pos, send, last_cp), joiner_failure);
-                    }
-                    break;
-                case U'\x200D': // ZERO WIDTH JOINER
-                    if constexpr (Options.CheckJoiners) {
-                        status |= validate(validate_zero_with_joiner(last_cp), joiner_failure);
-                    }
-                    break;
-                case U'.':
-                    // 5. Check if it includes any dots
-                    if constexpr (Options.CheckDotInclusions) {
-                        status |= validate(false, dot_found);
-                    }
-                    break;
-                [[likely]] default:
-                    break;
-            }
-
-
             // 9. Check bidi rule (get the information)
-            if constexpr (Options.CheckBidi) {
+            if (check_bidi) {
                 unicode::details::bidi_info_step(b_info, code_point);
             }
 
@@ -397,12 +398,12 @@ namespace webpp::unicode::idna {
 
 
         // 9. Check bidi rule
-        if constexpr (Options.CheckBidi) {
+        if (check_bidi) {
             // The documentation asks us to "If CheckBidi, and if the domain name is a 'Bidi domain name'",
             // but we don't yet know if the full domain is a bidi domain or not. It's on the caller to
             // check the status code for bidi_failures.
-            status |= validate(validate_bidi_rule(b_info), bidi_failure);
-            status |= validate(!is_bidi_domain_name(b_info), bidi_domain_name);
+            status |= !validate_bidi_rule(b_info) ? ~bidi_failure : ~valid;
+            status |= is_bidi_domain_name(b_info) ? ~bidi_domain_name : ~valid;
         }
 
         return status;
