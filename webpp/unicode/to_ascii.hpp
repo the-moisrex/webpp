@@ -238,32 +238,11 @@ namespace webpp::unicode::idna {
 
     /**
      * This class helps you get information about your string before you allocate enough storage for toASCII
-     * algorithm.
+     * algorithm. And also to help you check some simple things in one go.
      */
     struct [[nodiscard]] to_ascii_info {
-        using flag_type = stl::uint8_t;
-
-        // NOLINTBEGIN(*-signed-bitwise)
-        enum struct flag_types : flag_type {
-            // ASCII and Non-ASCII:
-            non_ascii   = 0b1000U,
-            ascii       = 0b1'0000U,
-            ascii_upper = 0b10'0000U | ascii,
-            dot         = 0b100'0000U, // Assume dot is not ASCII
-
-            // xn-- (Called ACE Prefix):
-            x    = 0b1U | ascii,
-            n    = 0b10U | ascii,
-            dash = 0b100U | ascii,
-            ace  = x | n | dash, // ACE prefix
-
-            // Misc:
-            clean         = static_cast<flag_type>(~dot),
-            length_police = (dot | non_ascii) & ~ascii,
-            ascii_mask    = non_ascii | ascii | ascii_upper,
-            all           = 0b1111'1111U, // all possibilities
-        };
-        // NOLINTEND(*-signed-bitwise)
+        using flag_type  = validity_flag_type;
+        using flag_types = validity_flags;
 
         // array<flag_types, 256>
         static constexpr auto interesting_characters = categorize<256U>(
@@ -348,11 +327,6 @@ namespace webpp::unicode::idna {
             return flags;
         }
     };
-
-    /// Shortcut for `std::to_underlying(status)`
-    [[nodiscard]] static constexpr to_ascii_info::flag_type operator+(to_ascii_info::flag_types const status) noexcept {
-        return stl::to_underlying(status);
-    }
 
     /**
      * The ToASCII operation takes a sequence of Unicode code points that
@@ -461,7 +435,7 @@ namespace webpp::unicode::idna {
                         // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
                         // than U+007F), record that there was an error, and continue with the next label.
                         if constexpr (Options.CheckDecodeAndValidateLabels) {
-                            if ((flag & +non_ascii) != 0) [[unlikely]] {
+                            if (has_flag(flag, non_ascii)) [[unlikely]] {
                                 status       |= +invalid_code_point;
                                 accum_length |= static_cast<stl::uint16_t>(stl::distance(lbeg, lend));
                                 continue;
@@ -486,30 +460,25 @@ namespace webpp::unicode::idna {
                         accum_length |= static_cast<stl::uint16_t>(new_label_len);
 
                         if (pun_status != punycode_status::success) [[unlikely]] {
-                            // restore the original label:
                             status |= Options.CheckInvalidPunycode && Options.CheckDecodeAndValidateLabels
                                         ? +pun_status
                                         : +valid;
                             break;
                         }
 
-                        // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
-                        // record that there was an error.
-                        if (new_label_len == 0) [[unlikely]] {
-                            status |= Options.CheckDecodeAndValidateLabels ? +empty_punycode : +valid;
-                        }
-
-                        if (is_ascii(plbeg, plend)) [[unlikely]] {
-                            // prevent converting an ascii string into punycode (xn--ascii-):
-                            flag   &= static_cast<flag_type>(~+non_ascii);
-                            status |= Options.CheckDecodeAndValidateLabels ? +ascii_only_punycode : +valid;
-                        } else {
-                            flag |= +non_ascii; // make sure to re-convert it back to punycode
-                        }
-
                         // Replace the original label with the result of the conversion:
                         lbeg = plbeg;
                         lend = plend;
+
+                        // Re-calculate the flag based on the new decoded label
+                        flag = or_all(to_ascii_info::interesting_characters, lbeg, lend);
+
+                        // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
+                        // record that there was an error.
+                        status |= Options.CheckDecodeAndValidateLabels && new_label_len == 0 ? +empty_punycode : +valid;
+                        status |= Options.CheckDecodeAndValidateLabels && !has_flag(flag, non_ascii)
+                                    ? +ascii_only_punycode
+                                    : +valid;
                     }
                     break;
                 [[likely]] default:
@@ -522,7 +491,7 @@ namespace webpp::unicode::idna {
             //
             // Here we convert the status returned from validity criteria function to our own:
             status |= static_cast<to_ascii_status_type>(
-              label_validity_status<Options>(lbeg, lend) << details::validity_criteria_shift);
+              label_validity_status<Options>(lbeg, lend, flag) << details::validity_criteria_shift);
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.

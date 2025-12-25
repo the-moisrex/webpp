@@ -11,6 +11,7 @@
 #include "./normalization.hpp"
 
 #include <bit>
+#include <cstdint>
 
 namespace webpp::unicode::idna {
 
@@ -88,6 +89,42 @@ namespace webpp::unicode::idna {
         bidi_domain_name = 0b1U << 11U, // it's a flag, and not a status
     };
 
+    using validity_flag_type = stl::uint8_t;
+
+    // NOLINTBEGIN(*-signed-bitwise)
+    enum struct validity_flags : validity_flag_type {
+        // ASCII and Non-ASCII:
+        non_ascii   = 0b1000U,
+        ascii       = 0b1'0000U,
+        ascii_upper = 0b10'0000U | ascii,
+        dot         = 0b100'0000U, // Assume dot is not ASCII
+
+        // xn-- (Called ACE Prefix):
+        x    = 0b1U | ascii,
+        n    = 0b10U | ascii,
+        dash = 0b100U | ascii,
+        ace  = x | n | dash, // ACE prefix
+
+        // Misc:
+        clean         = static_cast<validity_flag_type>(~dot),
+        length_police = (dot | non_ascii) & ~ascii,
+        ascii_mask    = non_ascii | ascii | ascii_upper,
+        all           = 0b1111'1111U, // all possibilities
+    };
+
+    // NOLINTEND(*-signed-bitwise)
+
+
+    /// Shortcut for `std::to_underlying(status)`
+    [[nodiscard]] static constexpr validity_flag_type operator+(validity_flags const flags) noexcept {
+        return stl::to_underlying(flags);
+    }
+
+    /// Check if `flags` has a `flag` in it
+    [[nodiscard]] static constexpr bool has_flag(validity_flag_type const flags, validity_flags const flag) noexcept {
+        return (flags & +flag) != 0U;
+    }
+
     [[nodiscard]] static constexpr stl::string_view to_string(validity_criteria_status const status) noexcept {
         using enum validity_criteria_status;
         switch (status) {
@@ -153,7 +190,8 @@ namespace webpp::unicode::idna {
      *            ignore `bidi_failure` if it's in the results.
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr validity_criteria_status_type label_validity_status(Iter spos, Iter send) noexcept {
+    [[nodiscard]] static constexpr validity_criteria_status_type
+      label_validity_status(Iter spos, Iter send, validity_flag_type const flags = +validity_flags::all) noexcept {
         // 1. The label must be in Unicode Normalization Form NFC.
         // 2. If CheckHyphens, the label must not contain a U+002D HYPHEN-MINUS character in both the third
         //    and fourth positions.
@@ -189,50 +227,51 @@ namespace webpp::unicode::idna {
         validity_criteria_status_type status = +valid;
         auto const                    length = send - spos;
 
-        if (length == 0) [[unlikely]] {
-            status |= Options.VerifyDnsLength ? +empty_label : +valid;
-        }
+        status |= Options.VerifyDnsLength && length == 0 ? +empty_label : +valid;
 
         // 2,3,4. Check hyphens
-        if constexpr (Options.CheckHyphens && Options.CheckDecodeAndValidateLabels) {
-            switch (length) {
-                [[likely]] default:
-                case 4: {
-                    utf32_forward_iter pos{spos, send};
-                    char32_t const     cp1 = *pos++;
-                    ++pos;
-                    char32_t const cp3      = *pos++;
-                    char32_t const cp4      = *pos;
-                    auto const     cp_back  = *stl::prev(send); // spos + length - 1
-                    // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
-                    status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
-                    // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
-                    status                 |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first and last
-                    break;
+        if (has_flag(flags, validity_flags::dash)) {
+            if constexpr (Options.CheckHyphens && Options.CheckDecodeAndValidateLabels) {
+                switch (length) {
+                    [[likely]] default:
+                    case 4: {
+                        utf32_forward_iter pos{spos, send};
+                        char32_t const     cp1 = *pos++;
+                        ++pos;
+                        char32_t const cp3      = *pos++;
+                        char32_t const cp4      = *pos;
+                        auto const     cp_back  = *stl::prev(send); // spos + length - 1
+                        // the label must not contain a U+002D HYPHEN-MINUS in both the third and fourth positions
+                        status                 |= validate(cp3 != '-' || cp4 != '-', hyphen_34); // 3rd and 4th
+                        // the label must neither begin nor end with a U+002D HYPHEN-MINUS character.
+                        status |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first and last
+                        break;
+                    }
+                    case 3: {
+                        auto const cp1      = *spos;
+                        auto const cp_back  = *stl::prev(send);
+                        status             |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first
+                        break;
+                    }
+                    case 2: {
+                        // don't need to use utf32 iterator for 2 chars
+                        auto const cp1  = *spos;
+                        auto const cp2  = *stl::next(spos);
+                        status         |= validate(cp1 != '-' && cp2 != '-', hyphen_around); // first and last
+                        break;
+                    }
+                    case 1:
+                        status |= validate(*spos != '-', hyphen_around); // first and last
+                        break;
+                    case 0: break;
                 }
-                case 3: {
-                    auto const cp1      = *spos;
-                    auto const cp_back  = *stl::prev(send);
-                    status             |= validate(cp1 != '-' && cp_back != '-', hyphen_around); // first
-                    break;
-                }
-                case 2: {
-                    // don't need to use utf32 iterator for 2 chars
-                    auto const cp1  = *spos;
-                    auto const cp2  = *stl::next(spos);
-                    status         |= validate(cp1 != '-' && cp2 != '-', hyphen_around); // first and last
-                    break;
-                }
-                case 1:
-                    status |= validate(*spos != '-', hyphen_around); // first and last
-                    break;
-                case 0: break;
-            }
-        } else if constexpr (Options.CheckACE && Options.CheckDecodeAndValidateLabels) {
-            Iter pos = spos;
+            } else if constexpr (Options.CheckACE && Options.CheckDecodeAndValidateLabels) {
+                Iter pos = spos;
 
-            // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            status |= validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
+                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                status |=
+                  validate(length < 4 || *pos++ != 'x' || *pos++ != 'n' || *pos++ != '-' || *pos != '-', ace_found);
+            }
         }
 
         [[maybe_unused]] Iter const   sbeg     = spos;
@@ -265,7 +304,7 @@ namespace webpp::unicode::idna {
 
             // 1. Check if it's in NFC form
             if constexpr (Options.CheckNFC) {
-                // We do hadve isNFC function, but we are already iterating through the string,
+                // We do have isNFC function, but we are already iterating through the string,
                 // so we might as well do it here.
                 // This is almost the implementation of QuickCheck:
                 if (result != +quick_check_state::NO) [[likely]] {

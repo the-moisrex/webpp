@@ -168,9 +168,7 @@ namespace webpp {
 
     /**
      * Convert IPv6 Presentation string into network order binary form.
-     *
      * This implementation is very similar to the one in glibc, but our version has different side effects.
-     *
      * @returns status of the parsing
      **/
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
