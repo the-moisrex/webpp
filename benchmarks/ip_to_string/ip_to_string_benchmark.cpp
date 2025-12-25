@@ -1,5 +1,6 @@
 #include "../../webpp/common/meta.hpp"
 #include "../../webpp/ip/inet_pton.hpp"
+#include "../../webpp/ip/inet_ntop.hpp"
 #include "../benchmark.hpp"
 
 #include <arpa/inet.h> // ntohl
@@ -980,7 +981,8 @@ static void IPv4ToStrApple(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv4s) {
-        inet_pton4(_ip.data(), _ip.data() + _ip.size(), (stl::uint8_t*) (&(ip++)->s_addr));
+        auto ptr = _ip.data();
+        inet_pton4(ptr, _ip.data() + _ip.size(), (stl::uint8_t*) (&(ip++)->s_addr));
     }
     array<char, sizeof "255.255.255.255"> new_ip{};
 
@@ -1000,7 +1002,8 @@ static void IPv4ToStrGlibc(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv4s) {
-        inet_pton4(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton4(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, sizeof "255.255.255.255"> new_ip{};
 
@@ -1020,7 +1023,8 @@ static void IPv4ToStrManual(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv4s) {
-        inet_pton4(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton4(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, sizeof "255.255.255.255"> new_ip{};
 
@@ -1034,6 +1038,27 @@ static void IPv4ToStrManual(benchmark::State& state) {
 }
 
 BENCHMARK(IPv4ToStrManual);
+
+static void IPv4ToStrWebpp(benchmark::State& state) {
+    array<array<uint8_t, 4>, sizeof(valid_ipv4s) / sizeof(string_view)> ips;
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv4s) {
+        auto ptr = _ip.data();
+        inet_pton4(ptr, _ip.data() + _ip.size(), (ip++)->data());
+    }
+    array<char, sizeof "255.255.255.255"> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            inet_ntop4(_ip.data(), new_ip.data());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+
+BENCHMARK(IPv4ToStrWebpp);
 
 
 ////////////////////////////// IPv6 //////////////////////////////
@@ -1167,7 +1192,8 @@ static void IPv6ToStrApple(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->s6_addr);
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->s6_addr);
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1187,7 +1213,8 @@ static void IPv6ToStrGlibc(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1207,7 +1234,8 @@ static void IPv6ToStrManualV1(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1230,7 +1258,8 @@ static void IPv6ToStrManualV2(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1250,7 +1279,8 @@ static void IPv6ToStrManualV3(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1270,7 +1300,8 @@ static void IPv6ToStrManualV4(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 
@@ -1290,7 +1321,8 @@ static void IPv6ToStrManualV5(benchmark::State& state) {
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
-        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+        auto ptr = _ip.data();
+        inet_pton6(ptr, _ip.data() + _ip.size(), (ip++)->data());
     }
     array<char, ipv6_bytes> new_ip{};
 

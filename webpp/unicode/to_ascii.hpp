@@ -469,11 +469,10 @@ namespace webpp::unicode::idna {
                         }
 
                         // Decode Punycode
-                        // 1.4.2. Attempt to convert the rest odiff <(sed 's/webpp/foresight/' CMakeLists.txt )
-                        // CMakeLists.txtf the label to Unicode according to Punycode [RFC3492]. If that conversion
-                        // fails and if not IgnoreInvalidPunycode, record that there was an error, and continue with the
-                        // next label. Otherwise, replace the original label in the string by the results of the
-                        // conversion.
+                        // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode [RFC3492].
+                        // If that conversion fails and if not IgnoreInvalidPunycode, record that there was an error,
+                        // and continue with the next label. Otherwise, replace the original label in the string by the
+                        // results of the conversion.
 
                         // Give enough room for re-conversion
                         // No need to take xn-- into account, it's already in 'src length'.

@@ -2,6 +2,7 @@
 #define WEBPP_CASTS_HPP
 
 #include "../std/string_view.hpp"
+#include "../std/utility.hpp"
 
 #include <cassert>
 #include <cstdint>
