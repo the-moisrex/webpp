@@ -1,4 +1,4 @@
-#include "../../webpp/unicode/unicode.hpp"
+#include "../../webpp/unicode/checked.hpp"
 #include "../benchmark.hpp"
 #include "../common_utils_pch.hpp"
 
@@ -124,11 +124,11 @@ namespace v2 {
     using namespace webpp::unicode;
     using namespace webpp::unicode::checked;
 
-    template <error_handling              ErrorHandling = error_handling::return_unchanged,
+    template <err_policy                  ErrorHandling = err_policy::leave_broken,
               UTF32                       CodePointType = char32_t,
               stl::random_access_iterator Iter          = char8_t const*>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, Iter const& end) noexcept {
-        using enum error_handling;
+        using enum err_policy;
         using code_point_type    = CodePointType;
         using iter_traits        = stl::iterator_traits<Iter>;
         using char_type          = typename iter_traits::value_type;
@@ -244,8 +244,8 @@ namespace v2 {
         }
 
         // handle errors:
-        if constexpr (ErrorHandling == return_replacement_char) {
-            return replacement_char<code_point_type>;
+        if constexpr (ErrorHandling == return_replacement) {
+            return replacement_char;
         } else if constexpr (ErrorHandling == return_negated) {
             static_assert(stl::is_unsigned_v<code_point_type>,
                           "The code point type should support negative values if you want us to return "

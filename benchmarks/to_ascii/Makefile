@@ -18,8 +18,8 @@ else
     ADA_SOURCES =
 endif
 
-flags = -std=c++23 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark $(ADA_FLAGS)
-optflags = -flto -Ofast -DNDEBUG -march=native
+flags = -std=c++23 -isystem /usr/local/include -L/usr/local/lib -lbenchmark_main -lbenchmark $(ADA_FLAGS)
+optflags = -flto -O3 -ffast-math -DNDEBUG -march=native
 files = to_ascii_benchmark.cpp
 
 all: gcc

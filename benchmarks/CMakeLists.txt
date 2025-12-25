@@ -3,8 +3,8 @@ set(exec_name webpp-benchmarks)
 include(../cmake/compilers.cmake)
 
 if (IS_GCC OR IS_CLANG)
-    set(OPTIMIZATION_FLAGS "-s" "-Ofast" "-flto" "-DNDEBUG" "-Qy" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
-    if (NATIVE_ARCH AND IS_GCC)
+    set(OPTIMIZATION_FLAGS "-s" "-O3" "-ffast-math" "-flto" "-DNDEBUG" "-Qy" "-ffunction-sections" "-fdata-sections" "-Wl,--gc-sections")
+    if (NATIVE_ARCH)
         set(OPTIMIZATION_FLAGS "${OPTIMIZATION_FLAGS}" "-march=native" "-mtune=native")
     endif ()
 else ()
@@ -112,24 +112,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif ()
 
 target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
-
-#install(TARGETS ${exec_name}
-#        EXPORT "${exec_name}Config"
-#        LIBRARY DESTINATION ${INSTALL_LIBDIR}
-#        ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-#        RUNTIME DESTINATION ${INSTALL_BINDIR}
-#        INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
-#        )
-#export(TARGETS ${exec_name}
-#        NAMESPACE ${PROJECT_NAME}::${exec_name}
-#        FILE "${CMAKE_CURRENT_BINARY_DIR}/${exec_name}InternalConfig.cmake"
-#        )
-#install(EXPORT "${exec_name}Config"
-#        FILE "${exec_name}Config.cmake"
-#        NAMESPACE ${PROJECT_NAME}::
-#        DESTINATION "${CMAKE_INSTALL_DATADIR}/${exec_name}"
-#        )
-
 
 # don't compile this if you don't need it
 set_target_properties(${exec_name} PROPERTIES EXCLUDE_FROM_ALL TRUE)

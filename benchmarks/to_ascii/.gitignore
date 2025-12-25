@@ -1,1 +1,7 @@
 ada_idna/
+a.out
+
+# residuals of running profilers:
+*.gcda
+*.data
+*.old

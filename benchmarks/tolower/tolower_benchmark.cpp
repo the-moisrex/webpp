@@ -461,12 +461,12 @@ BENCHMARK(TLR_SIMDToLowerString2);
 ////////////////////////////////
 
 
-#if __has_include(<eve/eve.hpp> )
-#    include <eve/eve.hpp>
-#    include <eve/function/add.hpp>
-#    include <eve/function/store.hpp>
-// #include <eve/function/load.hpp>
-#endif
+// #if __has_include(<eve/eve.hpp> )
+// #    include <eve/eve.hpp>
+// #    include <eve/function/add.hpp>
+// #    include <eve/function/store.hpp>
+// // #include <eve/function/load.hpp>
+// #endif
 
 //
 // inline void eve_to_lower(auto &str) noexcept {
