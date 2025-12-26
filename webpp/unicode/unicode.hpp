@@ -14,6 +14,7 @@
 namespace webpp::unicode {
 
     /// Match the max length of two strings based on their character type
+    /// For example 1 UTF-32 code point at max will require 4 UTF-8 code point
     template <UTF InCharT = char32_t, UTF OutCharT = InCharT>
     [[nodiscard]] static constexpr stl::size_t adjust_utf_output_size(stl::size_t inp_size) noexcept {
         webpp_static_constexpr auto inp = sizeof(InCharT);

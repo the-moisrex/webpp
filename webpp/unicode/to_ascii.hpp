@@ -258,68 +258,26 @@ namespace webpp::unicode::idna {
         stl::size_t max_size = 0; // not adjusted to the output size if the input and output's character types
                                   // are different.
 
-        [[nodiscard]] static constexpr stl::uint8_t best_factor_of(char32_t const code_point) noexcept {
-            constexpr stl::uint32_t split = 24U;
-            constexpr stl::uint32_t mask  = (0b1U << split) - 1U;
-            auto const              inf   = details::idna_max_len_factors.at(code_point % details::idna_rem);
-            if ((inf & mask) == code_point) [[unlikely]] {
-                return static_cast<stl::uint8_t>(inf >> split);
-            }
-            return details::idna_default_max_len_factor;
-        }
-
         /**
          * @returns maximum required storage length for conversion; zero if no need for conversion.
          */
         template <UTF OutCharT, stl::random_access_iterator Iter>
         [[nodiscard]] constexpr flag_type operator()(Iter spos, Iter send) noexcept {
-            using enum flag_types;
-            using enum err_policy;
             using details::idna_default_max_len_factor;
-            using stl::to_underlying;
             using inp_char_type = stl::iter_value_t<Iter>;
 
             auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
-            flag_type  flags   = 0U;
-            stl::size_t biggest_label = 0U;
-            auto        lbeg          = spos;
 
-            max_size  = cur_len;
-            max_size *= static_cast<stl::size_t>(idna_default_max_len_factor);
+            max_size = (cur_len * static_cast<stl::size_t>(idna_default_max_len_factor + 3));
+            max_size += 4; // At least one UTF-8 code point
+
+            // We only care about the biggest label because punycode conversions happen on each label, and the
+            // biggest label would become the maximum required length for processing.
 
             // We can't rely on finding dots and using them as label lengths since this is before IDNA Mapping
             // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
             // consider the whole string as one big label.
-            while (spos != send) {
-                flag_type const flag =
-                  or_all_if(interesting_characters, spos, send, [](flag_type const cur_flag) constexpr noexcept {
-                      return (cur_flag & +length_police) != 0;
-                  });
-
-                flags |= flag;
-
-                if ((flag & +dot) == +dot) {
-                    biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
-                    lbeg          = spos;
-                } else if ((flag & +non_ascii) != 0) {
-                    // or_all_if will go past that bad code point, so we need prev(spos)
-                    --spos;
-                    auto const code_point = checked::next_code_point<return_negated>(spos, send);
-
-                    // Update the max size
-                    auto map_count  = adjust_utf_output_size<char32_t, OutCharT>(best_factor_of(code_point));
-                    map_count      *= 4; // For punycode: each code point at max may turn into N ascii chars
-                    max_size       += map_count;
-                    max_size       -= idna_default_max_len_factor; // remove the default max len factor
-                    max_size       += 4;                           // each label can have an ACE Prefix (xn--)
-                }
-            }
-
-            biggest_label = stl::max<stl::size_t>(biggest_label, static_cast<stl::size_t>(spos - lbeg));
-
-            // We only care about the biggest label because punycode conversions happen on each label, and the
-            // biggest label would become the maximum required length for processing.
-            max_size += biggest_label * 3U; // max punycode
+            flag_type const flags = or_all(interesting_characters, spos, send);
 
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
@@ -362,16 +320,16 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const  src_length = iend - ipos;
-        auto        status     = +valid;
-        OIter const out_beg    = out;
-        bool const  all_ascii  = (flags & +non_ascii) == 0;
-        // bool const  might_have_punycode = (flags & +ace) != 0;
-        // bool const all_lower_ascii = (flags & +ascii_mask) == +ascii;
-        // bool const all_labels_are_clean = all_ascii && !might_have_punycode;
-        OIter      spos        = out;
-        auto       send        = stl::next(spos, src_length); // init
-        auto const oend        = stl::next(out, static_cast<diff_type>(out_len));
+        auto const  src_length      = iend - ipos;
+        auto        status          = +valid;
+        OIter const out_beg         = out;
+        OIter       spos            = out;
+        auto        send            = stl::next(spos, src_length); // init
+        auto const  oend            = stl::next(out, static_cast<diff_type>(out_len));
+        bool const  all_ascii       = (flags & +non_ascii) == 0;
+        bool const  all_lower_ascii = (flags & +ascii_mask) == +ascii;
+        // bool const  might_have_punycode  = (flags & +ace) != 0;
+        // bool const  all_labels_are_clean = all_ascii && !might_have_punycode;
 
         // If output is in between the input, it's a disaster waiting to happen.
         if constexpr (stl::same_as<Iter, OIter>) {
@@ -383,8 +341,12 @@ namespace webpp::unicode::idna {
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
         if (all_ascii) {
-            // 1.1 ASCII Map (and/or copy to output)
-            ascii::lower_to(ipos, iend, out);
+            if (all_lower_ascii) {
+                stl::copy(ipos, iend, out);
+            } else {
+                // 1.1 ASCII Map (and/or copy to output)
+                ascii::lower_to(ipos, iend, out);
+            }
             stl::advance(out, src_length);
         } else {
             // 1.1 Map (and/or copy to output)
@@ -393,11 +355,9 @@ namespace webpp::unicode::idna {
             stl::ignore = idna::map(ipos, iend, out);
 
             // 1.2. Normalize inplace
-            {
-                send = spos;
-                normalize<norm_form::NFC, return_recoverable>(out_beg, out, send); // inplace normalization
-            }
-            assert(out <= oend);                                                   // we ran out of space.
+            send = spos;
+            normalize<norm_form::NFC, return_recoverable>(out_beg, out, send); // inplace normalization
+            assert(out <= oend);                                               // we ran out of space.
         }
 
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -426,11 +386,6 @@ namespace webpp::unicode::idna {
 
             // 1.4. Convert/Validate. For each label in the domain_name string:
             switch (flag & +clean) {
-                // [[unlikely]] case 0:
-                // [[unlikely]] case +dot:
-                //     // If the label is empty, or ..., record that there was an error.
-                //     status |= Options.VerifyDnsLength ? +empty_domain_label : +valid;
-                //     break;
                 [[unlikely]] case +ace | +non_ascii:
                 case +ace:
                     if (src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' && lbeg[3] == '-') {
