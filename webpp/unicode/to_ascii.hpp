@@ -496,9 +496,15 @@ namespace webpp::unicode::idna {
             status |= static_cast<to_ascii_status_type>(
               label_validity_status<Options>(lbeg, lend, flag) << details::validity_criteria_shift);
 
+            // Early bailout
+            if (!is_valid(status & ~+validity_bidi_failure)) [[unlikely]] {
+                break;
+            }
+
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
             accum_length |= static_cast<stl::uint16_t>(stl::distance(lbeg, lend));
+
 
             // 3. Encode Punycode
             // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
