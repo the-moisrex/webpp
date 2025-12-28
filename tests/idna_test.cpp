@@ -872,6 +872,13 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_EQ(to_ascii<string>("128.0,0.1"), "128.0,0.1");
 
     EXPECT_FALSE(to_ascii<u32string>("\xFF"));
+    EXPECT_EQ(to_ascii<u32string>("a。。b"), U"a..b");
+
+    // Line: 550 | Source: xn-- | line: xn--; ""; [P4, X4_2]; ; [P4, A4_1, A4_2]; ;
+    EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"xn--").value_or(U"Failed")), U"");
+    EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"à\u05D0").value_or(U"Failed")),
+              U"xn--0ca24w");
+    EXPECT_EQ((to_ascii<std::u32string, unicode::idna::strict_idna_options>(U"ꭠ").value_or(U"Failed")), U"xn--3y9a");
 
     EXPECT_FALSE(to_ascii<u16string>("\232"));
     EXPECT_FALSE(to_ascii<u16string>("\330"));
@@ -1359,10 +1366,13 @@ TEST(BasicIDNATests, IDNAComplianceTests) {
         EXPECT_NE(ascii_n_res.has_value(), to_ascii_can_fail)
           << "If we should fail, there should be no value.\n  Error: " << error_string
           << "\n  Failed Tests so far: " << failed_tests << "\n  Expected: " << to_ascii_n_exp
-          << "\n  Options: " << debug_str << "\n  Value: " << ascii_n_res.value_or("Failed");
+          << "\n  Options: " << debug_str << "\n  Value: " << ascii_n_res.value_or("Failed") << "\n  Line: " << line;
 
         if (ascii_n_res) {
-            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp);
+            EXPECT_EQ(*ascii_n_res, to_ascii_n_exp)
+              << "  Error: " << error_string << "\n  Failed Tests so far: " << failed_tests
+              << "\n  Expected: " << to_ascii_n_exp << "\n  Options: " << debug_str
+              << "\n  Value: " << ascii_n_res.value_or("Failed") << "\n  Line: " << line;
         }
 
 

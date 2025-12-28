@@ -95,23 +95,18 @@ namespace webpp::unicode::idna {
     enum struct validity_flags : validity_flag_type {
         // ASCII and Non-ASCII:
         non_ascii   = 0b1000U,
-        ascii       = 0b1'0000U,
-        ascii_upper = 0b10'0000U | ascii,
-        dot         = 0b100'0000U, // Assume dot is not ASCII
+        ascii_upper = 0b1'0000U,
+        dot         = 0b10'0000U, // Assume dot is not ASCII
 
         // xn-- (Called ACE Prefix):
-        x    = 0b1U | ascii,
-        n    = 0b10U | ascii,
-        dash = 0b100U | ascii,
+        x    = 0b1U,
+        n    = 0b10U,
+        dash = 0b100U,
         ace  = x | n | dash, // ACE prefix
 
         // Misc:
-        misc          = dot,
-        clean         = static_cast<validity_flag_type>(~misc),
-        length_police = (dot | non_ascii) & ~ascii,
-        ascii_mask    = non_ascii | ascii | ascii_upper,
-        all           = 0b1111'1111U, // all possibilities
-        valid_label   = all & clean,  // a valid label
+        all         = 0b1111'1111U, // all possibilities
+        valid_label = all & ~dot,
     };
 
     // NOLINTEND(*-signed-bitwise)

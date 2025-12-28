@@ -28,15 +28,9 @@ namespace webpp {
         requires requires(typename stl::remove_cvref_t<T>::value_type const* beg,
                           typename stl::remove_cvref_t<T>::value_type const* end,
                           typename stl::remove_cvref_t<T>::value_type        a_char) {
-            {
-                set.size()
-            } noexcept -> stl::same_as<stl::size_t>;
-            {
-                set.contains(a_char)
-            } noexcept -> stl::same_as<bool>;
-            {
-                set.contains(beg)
-            } noexcept -> stl::same_as<bool>;
+            { set.size() } noexcept -> stl::same_as<stl::size_t>;
+            { set.contains(a_char) } noexcept -> stl::same_as<bool>;
+            { set.contains(beg) } noexcept -> stl::same_as<bool>;
             {
                 set.find_first_in(beg, end)
             } noexcept -> stl::same_as<typename stl::remove_cvref_t<T>::value_type const*>;
@@ -44,9 +38,7 @@ namespace webpp {
                 set.find_first_not_in(beg, end)
             } noexcept -> stl::same_as<typename stl::remove_cvref_t<T>::value_type const*>;
             set.set(1);
-            {
-                set.empty()
-            } noexcept -> stl::same_as<bool>;
+            { set.empty() } noexcept -> stl::same_as<bool>;
         };
 
         // Depends on CharSet itself:
@@ -384,6 +376,9 @@ namespace webpp {
 
     template <istl::CharType CharT = char>
     static constexpr auto ALPHA_DIGIT = charset(ALPHA<CharT>, DIGIT<CharT>);
+
+    template <istl::CharType CharT = char>
+    static constexpr auto LOWER_ALPHA_DIGIT = charset(LOWER_ALPHA<CharT>, DIGIT<CharT>);
 
     ////////////////////////////// CHAR MAP //////////////////////////////
 
@@ -845,6 +840,13 @@ namespace webpp {
         return categorize<T, len>(sets...);
     }
 
+    template <stl::integral T = stl::uint32_t, stl::size_t N, typename CharT = char32_t>
+    [[nodiscard]] static constexpr T or_one(stl::array<T, N> const& arr, CharT const code_point) noexcept {
+        static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
+        using char_type = stl::make_unsigned_t<CharT>;
+        return arr[static_cast<stl::uint8_t>(stl::min<char_type>(code_point, N - 1U))];
+    }
+
     /**
      * Usage:
      *   auto mapping = categorize(...);
@@ -859,13 +861,13 @@ namespace webpp {
         using char_type = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
         T res{};
         while (stl::next(pos, 4) <= end) {
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))]);
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
         }
         for (; pos != end; ++pos) {
-            res |= static_cast<T>(arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U))]);
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U))];
         }
         return res;
     }
