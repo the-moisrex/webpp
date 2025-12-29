@@ -511,6 +511,16 @@ namespace webpp {
             return this->operator[](static_cast<stl::uint16_t>(character));
         }
 
+        template <typename Iter>
+        [[nodiscard]] constexpr bool contains(Iter spos, Iter const& send) const noexcept {
+            for (; spos != send; ++spos) {
+                if (!contains(*spos)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         /**
          * @brief checks if all the chars in the inp_set is in the chars list or not
          * @param inp_set

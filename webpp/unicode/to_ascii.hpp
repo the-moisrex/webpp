@@ -308,7 +308,8 @@ namespace webpp::unicode::idna {
             // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
             // than U+007F), record that there was an error, and continue with the next label.
             if (had_unicode) [[unlikely]] {
-                status |= Options.CheckDecodeAndValidateLabels ? +invalid_code_point : +valid;
+                status |=
+                  Options.CheckInvalidPunycode && Options.CheckDecodeAndValidateLabels ? +invalid_code_point : +valid;
             } else {
                 // Decode Punycode
                 // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode [RFC3492].

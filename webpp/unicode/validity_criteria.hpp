@@ -225,7 +225,7 @@ namespace webpp::unicode::idna {
         using enum validity_flags;
 
         validity_criteria_status_type status = ~valid;
-        auto const                    length = send - spos;
+        auto const                    length = stl::distance(spos, send);
 
 
         // 2,3,4. Check hyphens
@@ -275,29 +275,40 @@ namespace webpp::unicode::idna {
             }
         }
 
+        auto const first_cp    = checked::next_code_point_copy<return_replacement>(spos, send);
+        bool const has_unicode = has_flag(flags, non_ascii);
+        bool const check_bidi  = Options.CheckBidi && (has_unicode || DIGIT<char32_t>.contains(first_cp));
+
+        // 5. Check if it includes any dots
+        status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;
+
+        // Length check
+        status |= Options.VerifyDnsLength && length == 0 ? ~empty_label : ~valid;
+
+        if (!has_unicode) [[likely]] {
+            if constexpr (Options.CheckBidi) {
+                using enum direction;
+                bool const valid_first  = (direction_mask_of(first_cp) & bidi_mask(L, R, AL)) != 0;
+                status                 |= check_bidi && !valid_first ? ~bidi_failure : ~valid;
+            }
+            status |=
+              !Options.UseSTD3ASCIIRules || ASCII_STD3_RULES.contains(spos, send) ? ~valid : ~requires_mapping_failure;
+            return status;
+        }
+
+        // 6. The label must not start with a combining mark
+        // no need to check the length, it'll return 0, which is not GC, so it's fine.
+        status |= Options.CheckCombiningMarkAtLabelStart && is_general_category_of(first_cp, general_category::Mark)
+                    ? ~combining_mark_at_start
+                    : ~valid;
+
         [[maybe_unused]] Iter const   sbeg     = spos;
         [[maybe_unused]] Iter         starter  = spos;
         [[maybe_unused]] Iter         prev     = spos;
         [[maybe_unused]] stl::uint8_t prev_ccc = 0;
         [[maybe_unused]] auto         result   = +quick_check_state::YES;
         [[maybe_unused]] bidi_info    b_info{};
-        auto const                    first_cp      = checked::next_code_point_copy<return_replacement>(spos, send);
-        char32_t                      last_cp       = 0;
-        bool const                    has_non_ascii = has_flag(flags, non_ascii);
-        bool const check_bidi = Options.CheckBidi && (has_non_ascii || DIGIT<char32_t>.contains(first_cp));
-
-        // 5. Check if it includes any dots
-        status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;
-
-        // 6. The label must not start with a combining mark
-        // no need to check the length, it'll return 0, which is not GC, so it's fine.
-        status |= Options.CheckCombiningMarkAtLabelStart && has_non_ascii &&
-                      is_general_category_of(first_cp, general_category::Mark)
-                    ? ~combining_mark_at_start
-                    : ~valid;
-
-        // Length check
-        status |= Options.VerifyDnsLength && length == 0 ? ~empty_label : ~valid;
+        char32_t                      last_cp = 0;
 
         // 9. (partially) initialize bidi information
         if (check_bidi && spos != send) [[likely]] {
@@ -312,7 +323,7 @@ namespace webpp::unicode::idna {
             // We do have isNFC function, but we are already iterating through the string,
             // so we might as well do it here.
             // This is almost the implementation of QuickCheck:
-            if (Options.CheckNFC && has_non_ascii && result != +quick_check_state::NO) {
+            if (Options.CheckNFC && result != +quick_check_state::NO) {
                 for (;;) {
                     auto const info    = qc_ccc_of(code_point);
                     auto const ccc     = static_cast<stl::uint8_t>(info & 0xFFU);
@@ -366,20 +377,17 @@ namespace webpp::unicode::idna {
 
             // 8. and 5. Check joiners
             // read validate_context_joiners for details on how this works
-            if (has_non_ascii) {
-                switch (code_point) {
-                    case U'\x200C': // ZERO WIDTH NON-JOINER
-                        status |= Options.CheckJoiners && !validate_zero_with_non_joiner(sbeg, pos, send, last_cp)
-                                    ? ~joiner_failure
-                                    : ~valid;
-                        break;
-                    case U'\x200D': // ZERO WIDTH JOINER
-                        status |=
-                          Options.CheckJoiners && !validate_zero_with_joiner(last_cp) ? ~joiner_failure : ~valid;
-                        break;
-                    [[likely]] default:
-                        break;
-                }
+            switch (code_point) {
+                case U'\x200C': // ZERO WIDTH NON-JOINER
+                    status |= Options.CheckJoiners && !validate_zero_with_non_joiner(sbeg, pos, send, last_cp)
+                                ? ~joiner_failure
+                                : ~valid;
+                    break;
+                case U'\x200D': // ZERO WIDTH JOINER
+                    status |= Options.CheckJoiners && !validate_zero_with_joiner(last_cp) ? ~joiner_failure : ~valid;
+                    break;
+                [[likely]] default:
+                    break;
             }
 
 
