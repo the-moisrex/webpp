@@ -347,8 +347,10 @@ namespace webpp::unicode::idna {
 
         if (has_flag(status, validity_nfc_failure)) [[unlikely]] {
             // 1.2. Normalize inplace
-            normalize<norm_form::NFC, return_recoverable>(lbeg, lend, lbeg); // inplace normalization
-            assert(lend <= oend);                                            // we ran out of space.
+            Iter cur_lend = lend;
+            lend          = lbeg;
+            normalize<norm_form::NFC, return_recoverable>(lbeg, cur_lend, lend); // inplace normalization
+            assert(lend <= oend);                                                // we ran out of space.
             status &= ~+validity_nfc_failure;
         }
 
