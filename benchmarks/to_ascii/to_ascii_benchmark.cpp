@@ -9,7 +9,7 @@ using namespace webpp;
 
 auto const strs32 = str32_array_generator<1000>(100);
 auto const strs8  = str8_array_generator<1000>(100);
-auto const strs   = str_array_generator<1000>(100);
+auto const strs   = str_array_generator<1000>(100, "0123456789abcdefghijklmnopqrstuvwxyz-");
 
 static void PunycodeEncode_webpp(benchmark::State& state) {
     std::size_t index = 0;
