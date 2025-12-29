@@ -873,6 +873,13 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     EXPECT_FALSE(to_ascii<u32string>("\xFF"));
     EXPECT_EQ(to_ascii<u32string>("a。。b"), U"a..b");
+    EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"xn--a-Ä.pt").value_or(U"Failed")),
+              U"xn--xn--a--gua.pt");
+    EXPECT_FALSE((to_ascii<std::u32string, unicode::idna::strict_idna_options>(
+                    U"1234567890ä1234567890123456789012345678901234567890123456")
+                    .has_value()));
+    EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"A\xD900Z").value_or(U"Failed")),
+              U"a\xD900z");
 
     // Line: 550 | Source: xn-- | line: xn--; ""; [P4, X4_2]; ; [P4, A4_1, A4_2]; ;
     EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"xn--").value_or(U"Failed")), U"");

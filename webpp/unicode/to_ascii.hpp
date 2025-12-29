@@ -307,52 +307,52 @@ namespace webpp::unicode::idna {
             // Found xn--.
             // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
             // than U+007F), record that there was an error, and continue with the next label.
-            if (Options.CheckDecodeAndValidateLabels && had_unicode) [[unlikely]] {
-                return +invalid_code_point;
-            }
+            if (had_unicode) [[unlikely]] {
+                status |= Options.CheckDecodeAndValidateLabels ? +invalid_code_point : +valid;
+            } else {
+                // Decode Punycode
+                // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode [RFC3492].
+                // If that conversion fails and if not IgnoreInvalidPunycode, record that there was an error,
+                // and continue with the next label. Otherwise, replace the original label in the string by the
+                // results of the conversion.
 
-            // Decode Punycode
-            // 1.4.2. Attempt to convert the rest of the label to Unicode according to Punycode [RFC3492].
-            // If that conversion fails and if not IgnoreInvalidPunycode, record that there was an error,
-            // and continue with the next label. Otherwise, replace the original label in the string by the
-            // results of the conversion.
+                // Give enough room for re-conversion
+                // No need to take xn-- into account, it's already in 'src length'.
+                // todo: optimize this to use UTF-32 storage since it's completely temporary
+                auto const max_punycode_len = src_label_length * (4 - 1);
+                auto       plend            = stl::next(lend, max_punycode_len);
+                auto const plbeg            = plend;
+                auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, plend);
+                auto const new_label_len    = stl::distance(plbeg, plend);
+                assert(plend <= oend);
 
-            // Give enough room for re-conversion
-            // No need to take xn-- into account, it's already in 'src length'.
-            // todo: optimize this to use UTF-32 storage since it's completely temporary
-            auto const max_punycode_len = src_label_length * (4 - 1);
-            auto       plend            = stl::next(lend, max_punycode_len);
-            auto const plbeg            = plend;
-            auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, plend);
-            auto const new_label_len    = stl::distance(plbeg, plend);
-            assert(plend <= oend);
+                if (pun_status != punycode_status::success) [[unlikely]] {
+                    return Options.CheckInvalidPunycode && Options.CheckDecodeAndValidateLabels ? +pun_status : +valid;
+                }
 
-            if (pun_status != punycode_status::success) [[unlikely]] {
-                return Options.CheckInvalidPunycode && Options.CheckDecodeAndValidateLabels ? +pun_status : +valid;
-            }
+                // Replace the original label with the result of the conversion:
+                lbeg = plbeg;
+                lend = plend;
 
-            // Replace the original label with the result of the conversion:
-            lbeg = plbeg;
-            lend = plend;
+                // Re-calculate the flag based on the new decoded label
+                flag = or_all(to_ascii_info::interesting_characters, lbeg, lend);
 
-            // Re-calculate the flag based on the new decoded label
-            flag = or_all(to_ascii_info::interesting_characters, lbeg, lend);
+                // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
+                // record that there was an error.
+                bool const     all_ascii = !has_flag(flag, non_ascii);
+                constexpr auto max_label = 63U;
+                status |= Options.CheckDecodeAndValidateLabels && new_label_len == 0 ? +empty_punycode : +valid;
+                status |= Options.CheckDecodeAndValidateLabels && all_ascii ? +ascii_only_punycode : +valid;
+                status |= Options.VerifyDnsLength && new_label_len > max_label ? +too_long_label : +valid;
 
-            // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
-            // record that there was an error.
-            bool const     all_ascii = !has_flag(flag, non_ascii);
-            constexpr auto max_label = 63U;
-            status |= Options.CheckDecodeAndValidateLabels && new_label_len == 0 ? +empty_punycode : +valid;
-            status |= Options.CheckDecodeAndValidateLabels && all_ascii ? +ascii_only_punycode : +valid;
-            status |= Options.VerifyDnsLength && new_label_len > max_label ? +too_long_label : +valid;
+                // the label might be empty, so we have to manually add it back
+                // flag |= +non_ascii;
 
-            // the label might be empty, so we have to manually add it back
-            // flag |= +non_ascii;
-
-            // All ascii labels, like `xn--ascii` or `xn--` will need to turn back to ascii without `xn--`
-            if (all_ascii) [[unlikely]] {
-                lend = stl::copy(lbeg, lend, lcbeg);
-                lbeg = lcbeg;
+                // All ascii labels, like `xn--ascii` or `xn--` will need to turn back to ascii without `xn--`
+                if (all_ascii) [[unlikely]] {
+                    lend = stl::copy(lbeg, lend, lcbeg);
+                    lbeg = lcbeg;
+                }
             }
         }
 
@@ -419,6 +419,9 @@ namespace webpp::unicode::idna {
         using diff_type     = stl::iter_difference_t<Iter>;
         using out_char_type = stl::iter_value_t<OIter>;
 
+        constexpr auto max_label  = static_cast<stl::uint16_t>(63U);
+        constexpr auto max_domain = static_cast<stl::uint16_t>(253U);
+
         // We can't rely on finding dots and using them as label lengths since this is before IDNA Mapping
         // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
         // consider the whole string as one big label.
@@ -484,10 +487,11 @@ namespace webpp::unicode::idna {
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
-            accum_length |= static_cast<stl::uint16_t>(stl::distance(label_start, out));
-            auto lstatus  = label_to_ascii<Options>(label_start, out, out_end, label_flags);
-            status       |= lstatus;
-            lstatus      &= ~+validity_bidi_failure;
+            auto const label_length  = stl::distance(label_start, out);
+            accum_length            |= static_cast<stl::uint16_t>(stl::min<diff_type>(label_length, max_label + 1));
+            auto lstatus             = label_to_ascii<Options>(label_start, out, out_end, label_flags);
+            status                  |= lstatus;
+            lstatus                 &= ~+validity_bidi_failure;
             if (!is_valid(lstatus)) [[unlikely]] {
                 if (lstatus != +invalid_code_point) {
                     // early bailout
@@ -502,8 +506,7 @@ namespace webpp::unicode::idna {
         }
 
         // Convert the last label as well:
-        status       |= label_to_ascii<Options>(label_start, out, out_end, label_flags);
-        accum_length |= static_cast<stl::uint16_t>(stl::distance(label_start, out));
+        status |= label_to_ascii<Options>(label_start, out, out_end, label_flags);
 
         // Validity Criteria are only need to be checked if the domain is a "Bidi Domain Names";
         // So, if the domain (the whole domain and not just a label) is not a bidi domain name, then we
@@ -521,18 +524,18 @@ namespace webpp::unicode::idna {
         if constexpr (Options.VerifyDnsLength) {
             // No need to bailout early
             // The punycode-encoded labels have these restrictions as well
-            constexpr auto max_label            = 63U;
-            constexpr auto max_domain           = 253U;
-            auto const     cur_out_len          = stl::distance(out_beg, out);
-            bool const     has_empty_root_label = (cur_out_len != 0 && *stl::prev(out) == '.');
+            auto const last_label_len       = stl::distance(label_start, out);
+            auto const domain_len           = stl::distance(out_beg, out);
+            bool const has_empty_root_label = (domain_len != 0 && *stl::prev(out) == '.');
 
-            status |= accum_length == 0 ? +empty_domain_label : +valid;
-            status |= accum_length > max_label ? +too_long_label : +valid;
+            accum_length |= static_cast<stl::uint16_t>(stl::min<diff_type>(last_label_len, max_label + 1));
+            status       |= accum_length == 0 ? +empty_domain_label : +valid;
+            status       |= accum_length > max_label ? +too_long_label : +valid;
             // When VerifyDnsLength is true, the empty root label is disallowed.
-            status |= has_empty_root_label ? +empty_root_label : +valid;
-            status |= cur_out_len > max_domain && (cur_out_len != max_domain + 1 || !has_empty_root_label)
-                        ? +too_long_domain
-                        : +valid;
+            status       |= has_empty_root_label ? +empty_root_label : +valid;
+            status       |= domain_len > max_domain && (domain_len != max_domain + 1 || !has_empty_root_label)
+                              ? +too_long_domain
+                              : +valid;
         }
 
 
