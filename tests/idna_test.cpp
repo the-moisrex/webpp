@@ -876,6 +876,12 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"xn--a-Ä.pt").value_or(U"Failed")),
               U"xn--xn--a--gua.pt");
     EXPECT_FALSE((to_ascii<std::u32string, unicode::idna::strict_idna_options>(
+                    U"123456789012345678901234567890123456789012345678901234567890123."
+                    U"1234567890ä1234567890123456789012345678901234567890123456."
+                    U"123456789012345678901234567890123456789012345678901234567890123."
+                    U"12345678901234567890123456789012345678901234567890123456789a")
+                    .has_value()));
+    EXPECT_FALSE((to_ascii<std::u32string, unicode::idna::strict_idna_options>(
                     U"1234567890ä1234567890123456789012345678901234567890123456")
                     .has_value()));
     EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"A\xD900Z").value_or(U"Failed")),

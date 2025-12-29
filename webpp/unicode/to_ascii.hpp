@@ -345,9 +345,6 @@ namespace webpp::unicode::idna {
                 status |= Options.CheckDecodeAndValidateLabels && all_ascii ? +ascii_only_punycode : +valid;
                 status |= Options.VerifyDnsLength && new_label_len > max_label ? +too_long_label : +valid;
 
-                // the label might be empty, so we have to manually add it back
-                // flag |= +non_ascii;
-
                 // All ascii labels, like `xn--ascii` or `xn--` will need to turn back to ascii without `xn--`
                 if (all_ascii) [[unlikely]] {
                     lend = stl::copy(lbeg, lend, lcbeg);
@@ -487,9 +484,9 @@ namespace webpp::unicode::idna {
 
             // don't worry about length being longer than uint16_t, it'll require it to be more than the max
             // size for that to happen.
+            auto       lstatus       = label_to_ascii<Options>(label_start, out, out_end, label_flags);
             auto const label_length  = stl::distance(label_start, out);
             accum_length            |= static_cast<stl::uint16_t>(stl::min<diff_type>(label_length, max_label + 1));
-            auto lstatus             = label_to_ascii<Options>(label_start, out, out_end, label_flags);
             status                  |= lstatus;
             lstatus                 &= ~+validity_bidi_failure;
             if (!is_valid(lstatus)) [[unlikely]] {
