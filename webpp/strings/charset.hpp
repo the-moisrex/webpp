@@ -843,8 +843,9 @@ namespace webpp {
     template <stl::integral T = stl::uint32_t, stl::size_t N, typename CharT = char32_t>
     [[nodiscard]] static constexpr T or_one(stl::array<T, N> const& arr, CharT const code_point) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
-        using char_type = stl::make_unsigned_t<CharT>;
-        return arr[static_cast<stl::uint8_t>(stl::min<char_type>(code_point, N - 1U))];
+        using char_type        = stl::make_unsigned_t<CharT>;
+        constexpr auto last_el = static_cast<char_type>(N - 1U);
+        return arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(code_point), last_el))];
     }
 
     /**
@@ -858,16 +859,17 @@ namespace webpp {
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
-        using char_type = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
-        T res{};
+        using char_type        = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
+        constexpr auto last_el = static_cast<char_type>(N - 1U);
+        T              res{};
         while (stl::next(pos, 4) <= end) {
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos++, N - 1U))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos++), last_el))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos++), last_el))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos++), last_el))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos++), last_el))];
         }
         for (; pos != end; ++pos) {
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(*pos, N - 1U))];
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos), last_el))];
         }
         return res;
     }

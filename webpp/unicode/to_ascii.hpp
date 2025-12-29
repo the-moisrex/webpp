@@ -290,6 +290,15 @@ namespace webpp::unicode::idna {
         Iter const lcbeg            = lbeg;
         Iter const lcend            = lend;
         auto const src_label_length = stl::distance(lbeg, lend);
+        bool const had_unicode      = has_flag(flag, non_ascii); // flags will change later
+
+        if (had_unicode) {
+            // 1.2. Normalize inplace
+            Iter const cur_lend = lend;
+            lend                = lbeg;
+            normalize<norm_form::NFC, return_recoverable>(lbeg, cur_lend, lend);
+            assert(lend <= oend); // we ran out of space.
+        }
 
         // 1.4. Convert/Validate. For each label in the domain_name string:
         if (has_flag(flag, ace) && src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
@@ -298,10 +307,8 @@ namespace webpp::unicode::idna {
             // Found xn--.
             // 1.4.1. If the label contains any non-ASCII code point (i.e., a Code Point greater
             // than U+007F), record that there was an error, and continue with the next label.
-            if constexpr (Options.CheckDecodeAndValidateLabels) {
-                if (has_flag(flag, non_ascii)) [[unlikely]] {
-                    return +invalid_code_point;
-                }
+            if (Options.CheckDecodeAndValidateLabels && had_unicode) [[unlikely]] {
+                return +invalid_code_point;
             }
 
             // Decode Punycode
@@ -317,7 +324,7 @@ namespace webpp::unicode::idna {
             auto       plend            = stl::next(lend, max_punycode_len);
             auto const plbeg            = plend;
             auto const pun_status       = punycode_decode(stl::next(lcbeg, 4), lcend, plend);
-            auto const new_label_len    = plend - plbeg;
+            auto const new_label_len    = stl::distance(plbeg, plend);
             assert(plend <= oend);
 
             if (pun_status != punycode_status::success) [[unlikely]] {
@@ -333,9 +340,20 @@ namespace webpp::unicode::idna {
 
             // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
             // record that there was an error.
+            bool const     all_ascii = !has_flag(flag, non_ascii);
+            constexpr auto max_label = 63U;
             status |= Options.CheckDecodeAndValidateLabels && new_label_len == 0 ? +empty_punycode : +valid;
-            status |=
-              Options.CheckDecodeAndValidateLabels && !has_flag(flag, non_ascii) ? +ascii_only_punycode : +valid;
+            status |= Options.CheckDecodeAndValidateLabels && all_ascii ? +ascii_only_punycode : +valid;
+            status |= Options.VerifyDnsLength && new_label_len > max_label ? +too_long_label : +valid;
+
+            // the label might be empty, so we have to manually add it back
+            // flag |= +non_ascii;
+
+            // All ascii labels, like `xn--ascii` or `xn--` will need to turn back to ascii without `xn--`
+            if (all_ascii) [[unlikely]] {
+                lend = stl::copy(lbeg, lend, lcbeg);
+                lbeg = lcbeg;
+            }
         }
 
         // 1.4.4. Verify that the label meets the validity criteria in Section 4.1, Validity Criteria.
@@ -344,15 +362,6 @@ namespace webpp::unicode::idna {
         // Here we convert the status returned from validity criteria function to our own:
         status |= static_cast<to_ascii_status_type>(
           label_validity_status<Options>(lbeg, lend, flag) << details::validity_criteria_shift);
-
-        if (has_flag(status, validity_nfc_failure)) [[unlikely]] {
-            // 1.2. Normalize inplace
-            Iter cur_lend = lend;
-            lend          = lbeg;
-            normalize<norm_form::NFC, return_recoverable>(lbeg, cur_lend, lend); // inplace normalization
-            assert(lend <= oend);                                                // we ran out of space.
-            status &= ~+validity_nfc_failure;
-        }
 
         // Early bailout
         if (!is_valid(status & ~+validity_bidi_failure)) [[unlikely]] {
@@ -406,7 +415,9 @@ namespace webpp::unicode::idna {
         using enum to_ascii_info::flag_types;
         using enum err_policy;
         using unicode::norm_form;
-        using flag_type = to_ascii_info::flag_type;
+        using flag_type     = to_ascii_info::flag_type;
+        using diff_type     = stl::iter_difference_t<Iter>;
+        using out_char_type = stl::iter_value_t<OIter>;
 
         // We can't rely on finding dots and using them as label lengths since this is before IDNA Mapping
         // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
@@ -420,7 +431,7 @@ namespace webpp::unicode::idna {
         auto const    src_length   = stl::distance(ipos, iend);
         auto          status       = +valid;
         OIter const   out_beg      = out;
-        auto const    out_end      = stl::next(out, out_len);
+        auto const    out_end      = stl::next(out, static_cast<diff_type>(out_len));
         flag_type     label_flags  = 0U;
         OIter         label_start  = out_beg;
         stl::uint16_t accum_length = 0;
@@ -437,9 +448,14 @@ namespace webpp::unicode::idna {
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
         while (ipos != iend) {
             auto const unit = *ipos;
-            if (ALL_ASCII<char32_t>.except(UPPER_ALPHA<char32_t>).except(charset{U'.'}).contains(unit)) [[likely]] {
+
+            // we're using char32_t so by accident we won't accept big code points as valid,
+            // and also we don't want to have multiple versions of this in the executable and create bloatware.
+            constexpr auto lower_ascii = ALL_ASCII<char32_t>.except(UPPER_ALPHA<char32_t>).except(charset{U'.'});
+            if (lower_ascii.contains(static_cast<char32_t>(unit))) [[likely]] {
                 label_flags |= or_one(to_ascii_info::interesting_characters, unit);
-                *out++       = *ipos++;
+                // this cast is safe since they're all guaranteed to be ASCII values and can be hold in a char8_t
+                *out++       = static_cast<out_char_type>(*ipos++);
                 continue;
             }
 
@@ -504,6 +520,7 @@ namespace webpp::unicode::idna {
         // 4. VerifyDnsLength
         if constexpr (Options.VerifyDnsLength) {
             // No need to bailout early
+            // The punycode-encoded labels have these restrictions as well
             constexpr auto max_label            = 63U;
             constexpr auto max_domain           = 253U;
             auto const     cur_out_len          = stl::distance(out_beg, out);
