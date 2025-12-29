@@ -277,7 +277,7 @@ namespace webpp::unicode::idna {
 
         auto const first_cp    = checked::next_code_point_copy<return_replacement>(spos, send);
         bool const has_unicode = has_flag(flags, non_ascii);
-        bool const check_bidi  = Options.CheckBidi && (has_unicode || DIGIT<char32_t>.contains(first_cp));
+        bool const check_bidi  = Options.CheckBidi && (has_unicode || charmap_half{DIGIT<char>}.contains(first_cp));
 
         // 5. Check if it includes any dots
         status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;

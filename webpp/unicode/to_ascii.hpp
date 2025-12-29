@@ -452,8 +452,9 @@ namespace webpp::unicode::idna {
 
             // we're using char32_t so by accident we won't accept big code points as valid,
             // and also we don't want to have multiple versions of this in the executable and create bloatware.
-            constexpr auto lower_ascii = ALL_ASCII<char32_t>.except(UPPER_ALPHA<char32_t>).except(charset{U'.'});
-            if (lower_ascii.contains(static_cast<char32_t>(unit))) [[likely]] {
+            webpp_static_constexpr auto lower_ascii =
+              charmap_full{ALL_ASCII<char>.except(UPPER_ALPHA<char>).except(charset{'.'})};
+            if (lower_ascii.contains(unit)) [[likely]] {
                 label_flags |= or_one(to_ascii_info::interesting_characters, unit);
                 // this cast is safe since they're all guaranteed to be ASCII values and can be hold in a char8_t
                 *out++       = static_cast<out_char_type>(*ipos++);
