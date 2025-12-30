@@ -263,7 +263,7 @@ namespace webpp::unicode::idna {
 
             auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
             stl::size_t max_size  = (cur_len * static_cast<stl::size_t>(idna_default_max_len_factor + 3));
-            max_size             += 4; // At least one UTF-8 code point
+            max_size             += 4 * 10; // At least one UTF-8 code point
 
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
@@ -296,7 +296,7 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             Iter const cur_lend = lend;
             lend                = lbeg;
-            normalize<norm_form::NFC, return_replacement>(lbeg, cur_lend, lend);
+            normalize<norm_form::NFC, return_recoverable>(lbeg, cur_lend, lend);
             assert(lend <= oend); // we ran out of space.
         }
 
@@ -462,11 +462,11 @@ namespace webpp::unicode::idna {
 
             // Handle Unicode code points:
             if (unit != '.') [[unlikely]] {
-                auto code_point = checked::next_code_point<return_replacement>(ipos, iend);
+                auto code_point = checked::next_code_point<return_recoverable>(ipos, iend);
 
                 // 1.1 Map (and/or copy to output)
                 OIter c_out = out;
-                idna::map(code_point, out);
+                idna::map<return_recoverable>(code_point, out);
 
                 // First mapped/decomposed/composed code point.
                 // Don't use unchecked version since we might have removed/ignored a code point.

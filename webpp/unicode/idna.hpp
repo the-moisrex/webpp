@@ -236,7 +236,7 @@ namespace webpp::unicode::idna {
      * Perform the mapping for a single character
      * @returns false if the code point is not allowed to be in a URL
      */
-    template <istl::Appendable OutStrT = stl::u8string>
+    template <err_policy Policy = err_policy::leave_broken, istl::Appendable OutStrT = stl::u8string>
     static constexpr bool map(char32_t const code_point, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
         using details::disallowed;
         using details::idna_mappings;
@@ -250,11 +250,11 @@ namespace webpp::unicode::idna {
                 // Disallowed: Leave the code point unchanged in the string.
                 // Note: The Convert/Validate step below checks for disallowed characters,
                 //       after mapping and normalization.
-                unchecked::append(out, code_point);
+                checked::append<Policy>(out, code_point);
                 return false; // it's not allowed
             case valid:       // or deviation
                 // todo: you can optimize this, we don't have to re-convert the code point
-                unchecked::append(out, code_point);
+                checked::append<Policy>(out, code_point);
                 return true;
 
             default: {
