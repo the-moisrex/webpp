@@ -316,7 +316,7 @@ namespace webpp::unicode::idna {
             unicode::details::bidi_info_first(b_info, first_cp);
         }
 
-        for (Iter pos = spos; pos != send;) {
+        for (Iter pos = spos; pos != send && is_valid(status);) {
             // return replacement character because an invalid code point is not NFC failure
             char32_t const code_point = checked::next_code_point<return_replacement>(pos, send);
 
