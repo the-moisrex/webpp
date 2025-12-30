@@ -421,9 +421,7 @@ namespace webpp::unicode::idna {
         constexpr auto max_domain = static_cast<stl::uint16_t>(253U);
 
         // We can't rely on finding dots and using them as label lengths since this is before IDNA Mapping
-        // takes place and here, the dots may be in Unicode. But, if the dots are in Unicode, then we
-        // consider the whole string as one big label.
-        // flag_type const flags = or_all(to_ascii_info::interesting_characters, ipos, iend);
+        // takes place and here, the dots may be in Unicode.
 
         // Normalization is guaranteed to not require more space than 3 times the input.
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
@@ -444,6 +442,9 @@ namespace webpp::unicode::idna {
         assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
         assert(out_len < stl::numeric_limits<stl::uint32_t>::max());
 
+        webpp_static_constexpr auto lower_ascii =
+          charmap_full{ALL_ASCII<char>.except(UPPER_ALPHA<char>).except(charset{'.'})};
+
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -452,8 +453,6 @@ namespace webpp::unicode::idna {
 
             // we're using char32_t so by accident we won't accept big code points as valid,
             // and also we don't want to have multiple versions of this in the executable and create bloatware.
-            webpp_static_constexpr auto lower_ascii =
-              charmap_full{ALL_ASCII<char>.except(UPPER_ALPHA<char>).except(charset{'.'})};
             if (lower_ascii.contains(unit)) [[likely]] {
                 label_flags |= or_one(to_ascii_info::interesting_characters, unit);
                 // this cast is safe since they're all guaranteed to be ASCII values and can be hold in a char8_t

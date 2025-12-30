@@ -503,12 +503,8 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
-            if constexpr (stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max())) {
-                if (character < 0 || static_cast<stl::uint16_t>(character) > N) {
-                    return false;
-                }
-            }
-            return this->operator[](static_cast<stl::uint16_t>(character));
+            auto const uc = static_cast<unsigned>(character);
+            return uc <= N && this->operator[](uc);
         }
 
         template <typename Iter>
@@ -753,6 +749,12 @@ namespace webpp {
     bitmap(SetN&&...) -> bitmap<stl::max({SetN::array_size...})>;
 #endif
 
+
+    // Half Table (excluding negative chars)
+    using bitmap_half = bitmap<stl::numeric_limits<char>::max() + 1>;
+
+    // Full Table
+    using bitmap_full = bitmap<stl::numeric_limits<unsigned char>::max() + 1>;
 
     template <auto First, auto Last, stl::size_t Size = static_cast<stl::size_t>(Last) + 1>
     [[nodiscard]] static consteval auto bitmap_range() noexcept {
