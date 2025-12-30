@@ -188,6 +188,11 @@ namespace webpp::unicode {
         return icp >= 0 ? code_point : static_cast<char32_t>(-icp);
     }
 
+    [[nodiscard]] static constexpr bool is_negative(char32_t const code_point) noexcept {
+        auto const icp = static_cast<stl::int32_t>(code_point);
+        return icp < 0;
+    }
+
     namespace details {
 
         // from glib/gutf8.c

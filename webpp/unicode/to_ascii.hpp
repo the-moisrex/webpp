@@ -296,7 +296,7 @@ namespace webpp::unicode::idna {
             // 1.2. Normalize inplace
             Iter const cur_lend = lend;
             lend                = lbeg;
-            normalize<norm_form::NFC, return_recoverable>(lbeg, cur_lend, lend);
+            normalize<norm_form::NFC, return_replacement>(lbeg, cur_lend, lend);
             assert(lend <= oend); // we ran out of space.
         }
 
