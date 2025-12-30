@@ -177,10 +177,10 @@ namespace webpp::unicode::idna {
      */
     [[nodiscard]] static constexpr stl::uint16_t status_of(char32_t const code_point) noexcept {
         using details::disallowed;
+        using details::idna_breakpoints;
         using details::idna_index;
         using details::not_mapped;
 
-        // NOLINTBEGIN(*-array-index, *-avoid-nested-conditional-operator, *-unchecked-container-access)
         auto const chunk         = code_point >> idna_index::chunk_shift;
         auto const section_index = static_cast<stl::uint16_t>(chunk >> details::idna_breakpoint_shift);
 
@@ -188,11 +188,23 @@ namespace webpp::unicode::idna {
             return disallowed;
         }
 
-        auto const [starting, ending, offset, common_value] = details::idna_breakpoints[section_index];
-        stl::uint16_t const index =
-          chunk >= ending    ? common_value
-          : chunk < starting ? details::idna_breakpoints[section_index - 1].common_value
-                             : details::idna_mapping_ref[static_cast<stl::uint16_t>(chunk - offset)];
+        assert(section_index < idna_breakpoints.size());
+        auto const [starting, ending, offset, common_value] = idna_breakpoints.at(section_index);
+        stl::uint16_t index                                 = 0;
+        // We want the "lookup" path (the else block) to be the fallthrough path
+        // to avoid taking a jump for the common case.
+        if (chunk < starting) [[unlikely]] {
+            // Edge case: Chunk belongs to the previous section's common value
+            index = idna_breakpoints.at(section_index - 1).common_value;
+        } else if (chunk >= ending) [[unlikely]] {
+            // Edge case: Chunk is past the end of this section's range
+            index = common_value;
+        } else {
+            // HOT PATH: Fallthrough (No Jump)
+            // Calculate specific mapping reference
+            index = details::idna_mapping_ref.at(chunk - offset);
+        }
+
 
         auto const remaining_pos = static_cast<stl::uint16_t>(code_point & idna_index::chunk_mask);
         auto const pos           = static_cast<stl::uint16_t>((index & idna_index::pos_mask) + remaining_pos);
@@ -203,16 +215,21 @@ namespace webpp::unicode::idna {
 
             // the bits in the integer are stored in reverse order, so we don't have to do additional
             // calculations to get the bit that we need.
-            auto const          bpos       = pos / pack_size;
-            auto const          remaining  = pos % pack_size;
-            stl::uint16_t const status_bit = 0b1U & details::idna_mappings_bools[bpos] >> remaining;
+            auto const bpos      = pos / pack_size;
+            auto const remaining = pos % pack_size;
+
+            // stl::uint16_t const status_bit = 0b1U & details::idna_mappings_bools.at(bpos) >> remaining;
+            // Force Shift-and-Mask instead of `bt`.
+            // 'bt' has high latency (3 cycles). 'shr' + 'and' is faster (1+1 cycles).
+            // We explicitly cast to unsigned int to ensure logical shift.
+            auto const bitmap_val = details::idna_mappings_bools.at(bpos);
+            auto const status_bit = static_cast<stl::uint16_t>((bitmap_val >> remaining) & 0x1U);
 
             // if it's 1, it'll become valid, otherwise it'll stay disallowed
             return disallowed | status_bit;
         }
 
-        return details::idna_mapping_blocks[pos];
-        // NOLINTEND(*-array-index, *-avoid-nested-conditional-operator, *-unchecked-container-access)
+        return details::idna_mapping_blocks.at(pos);
     }
 
     /**
