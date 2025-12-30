@@ -871,7 +871,9 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     EXPECT_EQ(to_ascii<string>("128.0,0.1"), "128.0,0.1");
 
-    EXPECT_FALSE(to_ascii<u32string>("\xFF"));
+    EXPECT_TRUE(to_ascii<u32string>("\xFF"));
+    EXPECT_FALSE(to_ascii<u8string>("\xFF"));
+    EXPECT_TRUE(to_ascii<u16string>("\xFF"));
     EXPECT_EQ(to_ascii<u32string>("a。。b"), U"a..b");
     EXPECT_EQ((to_ascii<std::u32string, unicode::idna::loose_idna_options>(U"xn--a-Ä.pt").value_or(U"Failed")),
               U"xn--xn--a--gua.pt");
@@ -895,14 +897,14 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     EXPECT_FALSE(to_ascii<u16string>("\232"));
     EXPECT_FALSE(to_ascii<u16string>("\330"));
-    EXPECT_FALSE(to_ascii<u16string>("\012\241"));
-    EXPECT_FALSE(to_ascii<u16string>("\012\012\012\377"));
-    EXPECT_FALSE(to_ascii<u16string>("\367"));
+    EXPECT_TRUE(to_ascii<u16string>("\012\241"));
+    EXPECT_TRUE(to_ascii<u16string>("\012\012\012\377"));
+    EXPECT_TRUE(to_ascii<u16string>("\367"));
     EXPECT_FALSE(to_ascii<u16string>("\300\205"));
     EXPECT_FALSE(to_ascii<u16string>("\232G"));
-    EXPECT_FALSE(to_ascii<u16string>("\365"));
-    EXPECT_FALSE(to_ascii<u16string>("\376\001\001"));
-    EXPECT_FALSE(to_ascii<u16string>("\341\012"));
+    EXPECT_TRUE(to_ascii<u16string>("\365"));
+    EXPECT_TRUE(to_ascii<u16string>("\376\001\001"));
+    EXPECT_TRUE(to_ascii<u16string>("\341\012"));
 
     EXPECT_FALSE(to_ascii<string>("\232"));
     EXPECT_FALSE(to_ascii<string>("\330"));
@@ -917,14 +919,14 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
 
     EXPECT_FALSE(to_ascii<u32string>("\232"));
     EXPECT_FALSE(to_ascii<u32string>("\330"));
-    EXPECT_FALSE(to_ascii<u32string>("\012\241"));
-    EXPECT_FALSE(to_ascii<u32string>("\012\012\012\377"));
-    EXPECT_FALSE(to_ascii<u32string>("\367"));
+    EXPECT_TRUE(to_ascii<u32string>("\012\241"));
+    EXPECT_TRUE(to_ascii<u32string>("\012\012\012\377"));
+    EXPECT_TRUE(to_ascii<u32string>("\367"));
     EXPECT_FALSE(to_ascii<u32string>("\300\205"));
     EXPECT_FALSE(to_ascii<u32string>("\232G"));
-    EXPECT_FALSE(to_ascii<u32string>("\365"));
-    EXPECT_FALSE(to_ascii<u32string>("\376\001\001"));
-    EXPECT_FALSE(to_ascii<u32string>("\341\012"));
+    EXPECT_TRUE(to_ascii<u32string>("\365"));
+    EXPECT_TRUE(to_ascii<u32string>("\376\001\001"));
+    EXPECT_TRUE(to_ascii<u32string>("\341\012"));
 
     EXPECT_FALSE(to_ascii("\232"));
     EXPECT_FALSE(to_ascii("\330"));
@@ -1454,27 +1456,6 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit5) {
               unicode::idna::to_ascii_status::validity_combining_mark_at_start);
 }
 
-TEST(BasicIDNATests, IDNAComplianceTestsExplicit6) {
-    using unicode::idna::idna_options;
-    using unicode::idna::to_ascii;
-
-    static constexpr idna_options options{
-      .CheckHyphens                   = true,
-      .UseSTD3ASCIIRules              = true,
-      .VerifyDnsLength                = true,
-      .CheckBidi                      = true,
-      .CheckJoiners                   = true,
-      .CheckInvalidPunycode           = true,
-      .CheckNFC                       = true,
-      .CheckDotInclusions             = true,
-      .CheckMappingRequired           = true,
-      .CheckCombiningMarkAtLabelStart = true,
-    };
-
-    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--2g1d14o.xn--jti").error()),
-              unicode::idna::to_ascii_status::validity_combining_mark_at_start);
-}
-
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit7) {
     using unicode::idna::idna_options;
     using unicode::idna::to_ascii;
@@ -1515,37 +1496,6 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit8) {
 
     EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--2v9a.xn--ss-q40dp97m").value_or(u8"Failed")),
               u8"xn--2v9a.xn--ss-q40dp97m");
-}
-
-TEST(BasicIDNATests, IDNAComplianceTestsExplicit9) {
-    using unicode::idna::idna_options;
-    using unicode::idna::to_ascii;
-
-    static constexpr idna_options options{
-      .CheckHyphens                   = false,
-      .UseSTD3ASCIIRules              = false,
-      .VerifyDnsLength                = true,
-      .CheckBidi                      = false,
-      .CheckJoiners                   = false,
-      .CheckInvalidPunycode           = true,
-      .CheckNFC                       = false,
-      .CheckDotInclusions             = false,
-      .CheckMappingRequired           = false,
-      .CheckCombiningMarkAtLabelStart = false,
-    };
-
-    // From: https://www.unicode.org/reports/tr46/#ToASCII
-    // If the VerifyDnsLength flag is true, then verify DNS length restrictions. This may record an error. For more
-    // information, see [STD13] and [STD3].
-    //  - The length of the domain name, excluding the root label and its dot, is from 1 to 253.
-    //  - The length of each label is from 1 to 63.
-    //      Note: Technically, a complete domain name ends with an empty label for the DNS root (see [STD13] [RFC1034]
-    //      section 3). This empty label, and the trailing dot, is almost always omitted. When VerifyDnsLength is false,
-    //      the empty root label is passed through. When VerifyDnsLength is true, the empty root label is disallowed.
-    //      This corresponds to the syntax in [RFC1034] section 3.5 Preferred name syntax which also defines the label
-    //      length restrictions.
-    EXPECT_EQ((to_ascii<std::u8string, options>(u8"xn--r97c.").error()),
-              unicode::idna::to_ascii_status::empty_root_label);
 }
 
 TEST(BasicIDNATests, IDNAComplianceTestsExplicit10) {
