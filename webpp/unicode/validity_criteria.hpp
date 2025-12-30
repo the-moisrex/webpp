@@ -275,9 +275,10 @@ namespace webpp::unicode::idna {
             }
         }
 
-        auto const first_cp    = checked::next_code_point_copy<return_replacement>(spos, send);
-        bool const has_unicode = has_flag(flags, non_ascii);
-        bool const check_bidi  = Options.CheckBidi && (has_unicode || charmap_half{DIGIT<char>}.contains(first_cp));
+        auto const first_cp     = checked::next_code_point_copy<return_replacement>(spos, send);
+        bool const has_unicode  = has_flag(flags, non_ascii);
+        bool const check_bidi   = Options.CheckBidi && (has_unicode || charmap_half{DIGIT<char>}.contains(first_cp));
+        bool const has_mappable = has_flag(flags, non_ascii, ascii_upper);
 
         // 5. Check if it includes any dots
         status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;
@@ -361,9 +362,7 @@ namespace webpp::unicode::idna {
                 // - For Transitional Processing (deprecated)
                 // - For Nontransitional Processing, each value must be either valid or deviation.
                 // - In addition,
-                status |= has_flag(flags, non_ascii, ascii_upper) && status_of(code_point) != details::valid
-                            ? ~requires_mapping_failure
-                            : ~valid;
+                status |= has_mappable && status_of(code_point) != details::valid ? ~requires_mapping_failure : ~valid;
 
                 // if UseSTD3ASCIIRules=true and the code point is an ASCII code point (U+0000..U+007F), then it
                 // must be a lowercase letter (a-z), a digit (0-9), or a hyphen-minus (U+002D). (Note: This excludes
