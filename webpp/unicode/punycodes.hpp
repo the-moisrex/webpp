@@ -152,9 +152,6 @@ namespace webpp::unicode::idna {
             } else {
                 // Use "return negated" strategy so the invalid Code Points will cause us to return bad input error
                 auto const code_point = checked::next_code_point<return_negated>(pos, send);
-                if (code_point == 0) {
-                    break;
-                }
                 ++utf32_size;
                 if (!is_code_point_valid(code_point)) [[unlikely]] {
                     return bad_input;
@@ -171,11 +168,8 @@ namespace webpp::unicode::idna {
         while (handled_len < utf32_size) {
             // Find the next larger non-ascii code point:
             punycode_uint max_m = max_legal_utf32;
-            for (auto pos = spos;;) {
+            for (auto pos = spos; pos != send;) {
                 auto const code_point = checked::next_code_point<return_replacement>(pos, send);
-                if (code_point == 0) {
-                    break;
-                }
                 if (code_point >= n_val && code_point < max_m) {
                     max_m = code_point;
                 }
@@ -191,11 +185,8 @@ namespace webpp::unicode::idna {
             delta += static_cast<punycode_uint>(diff * (handled_len + 1));
             n_val  = max_m;
 
-            for (auto pos = spos;;) {
+            for (auto pos = spos; pos != send;) {
                 auto const code_point = checked::next_code_point<return_replacement>(pos, send);
-                if (code_point == 0) {
-                    break;
-                }
 
                 if (code_point < n_val) {
                     if (delta == max_utf32) [[unlikely]] {
@@ -246,7 +237,7 @@ namespace webpp::unicode::idna {
         using enum err_policy;
         using istl::iter_append;
 
-        auto const src_length = send - spos;
+        auto const src_length = static_cast<stl::size_t>(stl::distance(spos, send));
         if constexpr (istl::String<OIterT>) {
             out.reserve(src_length + out.size());
         }

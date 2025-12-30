@@ -108,7 +108,7 @@ TEST(PunycodeTests, BasicDecodingIterator) {
     string_view const inp = "MajiKoi5-783gue6qz075azm5e";
     auto              ptr = out.begin();
     EXPECT_EQ(punycode_decode(inp.begin(), inp.end(), ptr), webpp::unicode::idna::punycode_status::success);
-    out.resize(ptr - out.begin());
+    out.resize(static_cast<std::size_t>(ptr - out.begin()));
     EXPECT_EQ(out, U"MajiでKoiする5秒前");
 }
 
@@ -122,7 +122,7 @@ TEST(PunycodeTests, BasicDecodingIteratorU8) {
     string_view const inp = "MajiKoi5-783gue6qz075azm5e";
     auto              ptr = out.begin();
     EXPECT_EQ(punycode_decode(inp.begin(), inp.end(), ptr), webpp::unicode::idna::punycode_status::success);
-    out.resize(ptr - out.begin());
+    out.resize(static_cast<std::size_t>(ptr - out.begin()));
     EXPECT_EQ(out, u8"MajiでKoiする5秒前");
 }
 

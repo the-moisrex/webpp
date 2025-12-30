@@ -482,8 +482,9 @@ namespace webpp::unicode::checked {
     template <istl::String StrT = stl::u8string, UTF CharT = char32_t>
     static constexpr void insert(StrT& out, stl::size_t const index, CharT const val) {
         using out_char_type = istl::char_type_of_t<StrT>;
+        using diff_type     = typename StrT::difference_type;
         if constexpr (UTF32<out_char_type>) {
-            out.insert(out.begin() + index, static_cast<out_char_type>(val));
+            out.insert(stl::next(out.begin(), static_cast<diff_type>(index)), static_cast<out_char_type>(val));
         } else {
             auto       pos  = out.begin();
             auto const pend = out.end();
