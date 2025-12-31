@@ -187,19 +187,6 @@ namespace webpp::uri::details {
                         set_error(ctx.status, invalid_domain_code_point);
                         return;
                     }
-
-                // handling tabs and newlines
-                [[unlikely]] case '\t':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\r':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, invalid_character);
-                        ignore_character(ctx);
-                        continue;
-                    } else {
-                        set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
-                        return;
-                    }
                 case '@':
                     must_contain_credentials = false;
                     if constexpr (Options.parse_credentials) {
@@ -215,22 +202,6 @@ namespace webpp::uri::details {
                         set_warning(ctx.status, invalid_character);
                         return;
                     }
-                [[unlikely]] case '\0':
-                    // invalid port
-                    if (must_contain_credentials) {
-                        return;
-                    }
-                    if constexpr (Options.eof_is_valid) {
-                        if constexpr (Options.empty_host_is_error) {
-                            if (ctx.pos == host_begin) {
-                                set_error(ctx.status, host_missing);
-                                return;
-                            }
-                        }
-                        set_valid(ctx.status, valid_path);
-                        break;
-                    }
-                    [[fallthrough]];
                 default: set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point); return;
             }
             if (must_contain_credentials) {

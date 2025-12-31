@@ -163,20 +163,6 @@ namespace webpp::uri {
                     skip_separator(ctx, out);
                     next_query(ctx, key_buffer, value_buffer, seg_beg);
                     continue;
-                [[unlikely]] case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        break;
-                    }
-                    [[fallthrough]];
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, invalid_character);
-                        ignore_character(ctx);
-                        continue;
-                    }
-                    [[fallthrough]];
                 default: {
                     if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);

@@ -47,13 +47,6 @@ namespace webpp::uri {
                         return;
                     }
                     break;
-                case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        break;
-                    } else {
-                        set_error_if<Options.empty_host_is_error>(ctx.status, host_missing);
-                        return;
-                    }
                 case '?':
                     if (!is_special_scheme(ctx.status)) {
                         break;
@@ -73,15 +66,6 @@ namespace webpp::uri {
                         return;
                     }
                     break;
-                [[unlikely]] case '\t':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\r':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, invalid_character);
-                        ++ctx.pos;
-                        continue;
-                    }
-                    [[fallthrough]];
                 default: break;
             }
             break;
@@ -152,15 +136,6 @@ namespace webpp::uri {
                             set_warning(ctx.status, invalid_character);
                         }
                         return;
-                    [[unlikely]] case '\t':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\r':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, invalid_character);
-                            ++ctx.pos;
-                            continue;
-                        }
-                        [[fallthrough]];
                     default:
                         set_valid(ctx.status, valid_path);
                         clear<components::path>(ctx);

@@ -21,10 +21,6 @@ namespace webpp::uri {
     /// These options are designed to
     /// Default values are WHATWG-Compliant values (if relevant)
     static constexpr struct uri_options {
-        /// Consider `\0` (EOF) as a valid end-of-string character; you may want to disable it if you already
-        /// know the end of your string, and you may enable if you're working with a stream
-        bool eof_is_valid = true;
-
         /// Parse username and password part of the authority (you may want to disable it if you're trying to
         /// parse Host Authority, which doesn't have credentials)
         bool parse_credentials = true;
@@ -106,7 +102,6 @@ namespace webpp::uri {
     } standard_uri_parsing_options{};
 
     static constexpr uri_options strict_uri_parsing_options{
-      .eof_is_valid                              = false,
       .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_port                                = true,
@@ -127,7 +122,6 @@ namespace webpp::uri {
     };
 
     static constexpr uri_options loose_uri_parsing_options{
-      .eof_is_valid                              = true,
       .parse_credentials                         = true,
       .empty_host_is_error                       = true,
       .parse_port                                = true,
@@ -721,16 +715,14 @@ namespace webpp::uri {
         return {};
     }
 
-    [[nodiscard]] static consteval uri_options operator|(
-      uri_options                  options,
-      [[maybe_unused]] state_override_type override) noexcept {
+    [[nodiscard]] static consteval uri_options operator|(uri_options                          options,
+                                                         [[maybe_unused]] state_override_type override) noexcept {
         options.state_override = true;
         return options;
     }
 
-    [[nodiscard]] static consteval uri_options operator&(
-      uri_options                  options,
-      [[maybe_unused]] state_override_type override) noexcept {
+    [[nodiscard]] static consteval uri_options operator&(uri_options                          options,
+                                                         [[maybe_unused]] state_override_type override) noexcept {
         options.state_override = false;
         return options;
     }

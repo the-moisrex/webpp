@@ -294,15 +294,6 @@ namespace webpp::uri {
                 break;
             }
             switch (*ctx.pos) {
-                [[unlikely]] case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        set_valid(ctx.status, valid);
-                        break;
-                    } else {
-                        ++ctx.pos;
-                        set_warning(ctx.status, invalid_character);
-                        continue;
-                    }
                 case '?':
                     clear<components::queries>(ctx);
                     set_valid(ctx.status, valid_queries);
@@ -316,9 +307,6 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
                 default:
                     ++ctx.pos;
                     set_warning(ctx.status, invalid_character);
@@ -408,22 +396,6 @@ namespace webpp::uri {
                     }
                     set_warning(ctx.status, invalid_character);
                     continue;
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t': {
-                    set_warning(ctx.status, invalid_character);
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        ignore_character(ctx);
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
-                [[unlikely]] case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        break;
-                    }
-                    [[fallthrough]];
                 default: set_warning(ctx.status, invalid_character); break;
             }
             break;
@@ -433,7 +405,7 @@ namespace webpp::uri {
         set_component_value<components::path>(ctx, seg_beg);
 
         // ignore the last "?" or "#" character
-        if (ctx.pos != ctx.end && (Options.eof_is_valid && *ctx.pos != '\0')) {
+        if (ctx.pos != ctx.end) {
             ++ctx.pos;
         } else {
             // handling empty paths

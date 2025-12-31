@@ -33,9 +33,7 @@ namespace webpp::uri {
         template <URIContext CtxT, stl::size_t N>
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
-            using ctx_type = CtxT;
-
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (CtxT::is_modifiable) {
                 set_value<components::scheme>(ctx, scheme.begin(), scheme.end());
             } else {
                 set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
@@ -79,19 +77,6 @@ namespace webpp::uri {
                         set_warning(ctx.status, reverse_solidus_used);
                     }
                     break;
-                case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        set_valid(ctx.status, valid);
-                        return;
-                    } else {
-                        set_warning(ctx.status, invalid_character);
-                    }
-                    break;
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
-                    set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
-                    [[fallthrough]];
                 default: break;
             }
             ++ctx.pos;
@@ -123,19 +108,6 @@ namespace webpp::uri {
                     set_valid(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
-                case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        set_valid(ctx.status, valid);
-                        return;
-                    } else {
-                        set_warning(ctx.status, invalid_character);
-                    }
-                    break;
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
-                    set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
-                    [[fallthrough]];
                 default: break;
             }
             clear<queries>(ctx);
@@ -152,14 +124,7 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/':
-                        set_valid(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
-                        return;
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\t':
-                        set_warning_if<Options.ignore_tabs_or_newlines>(ctx.status, invalid_character);
-                        [[fallthrough]];
+                    case '/': set_valid(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path); return;
                     default: break;
                 }
             }
@@ -208,26 +173,7 @@ namespace webpp::uri {
 
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/':
-                        file_slash_state<Options>(ctx);
-                        return;
-                    [[unlikely]] case '\0':
-                        if constexpr (Options.eof_is_valid) {
-                            // todo: is this valid?
-                            set_valid(ctx.status, valid);
-                            return;
-                        } else {
-                            set_warning(ctx.status, invalid_character);
-                        }
-                        break;
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, invalid_character);
-                            continue;
-                        }
-                        [[fallthrough]];
+                    case '/': file_slash_state<Options>(ctx); return;
                     default: break;
                 }
                 if constexpr (Options.allow_file_hosts) {
@@ -256,34 +202,17 @@ namespace webpp::uri {
             if constexpr (ctx_type::has_base_uri) {
                 if (ctx.base.has_path()) { // todo: specs say opaque path
                     for (; ctx.pos != ctx.end; ++ctx.pos) {
-                        switch (*ctx.pos) {
-                            case '#':
-                                if constexpr (Options.parse_fragment) {
-                                    set_value<components::scheme>(ctx, ctx.base.get_scheme());
-                                    set_value<components::path>(ctx, ctx.base.get_path());
-                                    set_value<components::queries>(ctx, ctx.base.get_queries());
-                                    clear<components::fragment>(ctx);
-                                    set_valid(ctx.status, valid_fragment);
-                                    return;
-                                } else {
-                                    break;
-                                }
-
-                            [[unlikely]] case '\0':
-                                if constexpr (Options.eof_is_valid) {
-                                    set_error(ctx.status, empty_string);
-                                    return;
-                                }
+                        if (*ctx.pos == '#') {
+                            if constexpr (Options.parse_fragment) {
+                                set_value<components::scheme>(ctx, ctx.base.get_scheme());
+                                set_value<components::path>(ctx, ctx.base.get_path());
+                                set_value<components::queries>(ctx, ctx.base.get_queries());
+                                clear<components::fragment>(ctx);
+                                set_valid(ctx.status, valid_fragment);
+                                return;
+                            } else {
                                 break;
-                            [[unlikely]] case '\r':
-                            [[unlikely]] case '\n':
-                            [[unlikely]] case '\t':
-                                if constexpr (Options.ignore_tabs_or_newlines) {
-                                    set_warning(ctx.status, invalid_character);
-                                    continue;
-                                }
-                                [[fallthrough]];
-                            default: break;
+                            }
                         }
                         break;
                     }
@@ -310,20 +239,6 @@ namespace webpp::uri {
                     case '/':
                         set_warning(ctx.status, missing_following_solidus);
                         continue;
-                    [[unlikely]] case '\0':
-                        if constexpr (Options.eof_is_valid) {
-                            set_error(ctx.status, scheme_ended_unexpectedly);
-                            return;
-                        }
-                        break;
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, invalid_character);
-                            continue;
-                        }
-                        [[fallthrough]];
                     [[likely]] default:
                         break;
                 }
@@ -372,13 +287,6 @@ namespace webpp::uri {
         // handling of the first character:
         for (;;) {
             if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
-                if constexpr (Options.ignore_tabs_or_newlines) {
-                    if (ascii::inc_until_any(ctx.pos, ctx.end, '\n', '\t', '\r')) {
-                        set_warning(ctx.status, invalid_character);
-                        continue;
-                    }
-                }
-
                 // if state override is not given, set buffer to the empty string, state to no
                 // scheme state, and start over (from the first code point in input).
                 //
@@ -410,17 +318,6 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case ':':
                     break;
-                [[unlikely]] case '\0':
-                    set_error(ctx.status, Options.eof_is_valid ? scheme_ended_unexpectedly : invalid_scheme_character);
-                    return;
-                [[unlikely]] case '\r':
-                [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, invalid_character);
-                        continue;
-                    }
-                    [[fallthrough]];
                 [[likely]] default: {
                     if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
                         set_error(ctx.status, invalid_scheme_character);
