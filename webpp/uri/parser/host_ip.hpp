@@ -9,17 +9,13 @@
 
 namespace webpp::uri::details {
 
-    template <typename CharT>
     static constexpr charset VALID_IPV4{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
                                         'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F'};
-    template <typename CharT>
-    static constexpr auto INVALID_IPV4 = inverse(VALID_IPV4<CharT>);
+    static constexpr auto    INVALID_IPV4 = inverse(VALID_IPV4);
 
-    template <typename CharT>
     static constexpr charset VALID_IPV6{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                                         'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F', '[', ']', ':'};
-    template <typename CharT>
-    static constexpr auto INVALID_IPV6 = inverse(VALID_IPV6<CharT>);
+    static constexpr auto    INVALID_IPV6 = inverse(VALID_IPV6);
 
     /// Checks the last octet of a possible ipv4 address to see if we should parse the host as an ipv4, or
     /// we should parse it normally.

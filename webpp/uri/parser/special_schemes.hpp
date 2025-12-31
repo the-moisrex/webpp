@@ -46,8 +46,7 @@ namespace webpp::uri {
 
     template <istl::StringLike StrT>
     [[nodiscard]] static constexpr bool is_file_scheme(StrT scheme) noexcept {
-        using char_type = istl::char_type_of_t<StrT>;
-        return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>("file", stl::forward<StrT>(scheme));
+        return iiequals_fl<details::TABS_OR_NEWLINES>("file", stl::forward<StrT>(scheme));
     }
 
     [[nodiscard]] static constexpr bool is_file_scheme(scheme_type const scheme) noexcept {

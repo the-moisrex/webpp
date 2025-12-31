@@ -182,9 +182,9 @@ namespace webpp::uri {
         template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
-                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
+                return iiequals_fl<details::TABS_OR_NEWLINES>(storage, stl::forward<NStrT>(inp_str));
             } else {
-                return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
+                return iiequals<details::TABS_OR_NEWLINES>(storage, stl::forward<NStrT>(inp_str));
             }
         }
 

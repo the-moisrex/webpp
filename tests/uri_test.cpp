@@ -24,7 +24,7 @@ static_assert(std::ranges::input_range<uri::uri_status_iterator>, "Input range")
 
 TEST(URIHelperTests, IIEquals) {
     EXPECT_TRUE(
-      uri::iiequals<uri::details::TABS_OR_NEWLINES<char>>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
+      uri::iiequals<uri::details::TABS_OR_NEWLINES>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
 }
 
 using Types =

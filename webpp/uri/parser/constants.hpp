@@ -9,8 +9,7 @@ namespace webpp::uri::details {
 
     // NOLINTBEGIN(*-magic-numbers)
 
-    template <istl::CharType CharT>
-    static constexpr auto TABS_OR_NEWLINES = charset<CharT, 3>{'\n', '\t', '\r'};
+    static constexpr auto TABS_OR_NEWLINES = charset{'\n', '\t', '\r'};
 
     /**
      * source:

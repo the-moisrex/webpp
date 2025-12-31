@@ -13,8 +13,7 @@ namespace webpp::uri {
 
     template <istl::StringLike T>
     [[nodiscard]] static constexpr bool is_localhost_string(T&& host) noexcept {
-        using char_type = istl::char_type_of_t<T>;
-        return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>("localhost", stl::forward<T>(host));
+        return iiequals_fl<details::TABS_OR_NEWLINES>("localhost", stl::forward<T>(host));
     }
 
     /**
@@ -161,9 +160,9 @@ namespace webpp::uri {
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS, .value = forb_val},
           cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = forb_val},
-          cat{.set = details::INVALID_IPV4<char8_t>, .value = no_ipv4_val},
-          cat{.set = details::INVALID_IPV6<char8_t>, .value = no_ipv6_val},
-          cat{.set = details::TABS_OR_NEWLINES<char8_t>, .value = nt_val},
+          cat{.set = details::INVALID_IPV4, .value = no_ipv4_val},
+          cat{.set = details::INVALID_IPV6, .value = no_ipv6_val},
+          cat{.set = details::TABS_OR_NEWLINES, .value = nt_val},
           cat{.set = UPPER_ALPHA<char8_t>, .value = upper_val},
           cat{.set = u8"xX", .value = x_val},
           cat{.set = u8"nN", .value = n_val},
