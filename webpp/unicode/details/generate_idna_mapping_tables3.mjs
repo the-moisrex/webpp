@@ -24,7 +24,8 @@ import {DISALLOWED, flagsStatus, isDisallowed, isMapped, NOT_MAPPED, refPrinter,
 
 const verbose = process.argv.includes("--verbose");
 const printInfo = process.argv.includes("--info");
-const enableMaxLenTable = true;
+const enableMaxLenTable = false;
+const useBLT = false;
 
 const start = async () => {
     await readme.download();
@@ -108,7 +109,11 @@ class IDNAMappings {
                     res.trailing_comment = vals.trailing_comment;
 
                     for (let i = 0; i !== vals.length; ++i) {
-                        res[i] = refPrinter(vals[i], self.tablePickMask, 'iblt');
+                        if (useBLT) {
+                            res[i] =  refPrinter(vals[i], self.tablePickMask, 'iblt');
+                        } else {
+                            res[i] =  vals[i]; // refPrinter(vals[i], self.tablePickMask, 'iblt');
+                        }
                     }
 
                     return res;
@@ -226,7 +231,7 @@ class IDNAMappings {
             const curLen = utf8MappedTo.length;
             const curCPLen = utf8CodePoint.length;
             const curDiff = curLen - curCPLen;
-            const curFactor = Math.ceil(curLen / curCPLen);
+            const curFactor = mappedTo.length;
             if (curLen > this.#maxMappedLength) {
                 this.#maxMappedLength = curLen;
             }
@@ -263,12 +268,14 @@ class IDNAMappings {
     }
 
     render() {
+        const prettyPrint = val => `\\x${Number(val).toString(16).toUpperCase()}`;
         return `
     /// Max UTF-8 IDNA mapping length change
     /// When Code Points are being mapped, this is the maximum length change.
     /// This can be used to calculate the necessary space required for mapping a string.
-    /// ${this.#maxMappedCP.codePoint.toString(16).toUpperCase()} => ${this.#maxMappedCP.mappedTo.map(val => Number(val).toString(16).toUpperCase()).join(", ")}
-    /// ${this.#maxMappedCP.utf8CodePoint.join(', ')} => ${this.#maxMappedCP.utf8MappedTo.join(", ")}
+    /// ${prettyPrint(this.#maxMappedCP.codePoint)} => ${this.#maxMappedCP.mappedTo.map(prettyPrint).join(" ")}.
+    ///
+    /// ${this.#maxMappedCP.utf8CodePoint.join(', ')} => ${this.#maxMappedCP.utf8MappedTo.map(prettyPrint).join(" ")}.
     static constexpr std::size_t max_mapping_factor = ${this.#maxMappedFactor}UL; // times of the original string
     static constexpr std::size_t max_mapping_diff = ${this.#maxMappedDiff}UL;
     static constexpr std::size_t max_mapping_length = ${this.#maxMappedLength}UL;
@@ -280,7 +287,7 @@ class IDNAMappings {
 
     // Pick the table with this mask (between bools table and the block table)
     static constexpr ${this.tables.indices.type.description} table_pick_mask = 0b${this.tablePickMask.toString(2)}U;
-    static constexpr auto iblt = table_pick_mask; // (IDNA Boolean Table) shortcut
+    ${useBLT ? `static constexpr auto iblt = table_pick_mask; // (IDNA Boolean Table) shortcut` : ``}
 
 ${this.tables.render()}
         `;
@@ -357,10 +364,11 @@ namespace webpp::unicode::idna::details {
     static constexpr ${table.tables.values.type.description} ${flagsStatus(VALID)} = 0b${VALID.toString(2)}U;
     static constexpr ${table.tables.values.type.description} ${flagsStatus(DISALLOWED)} = 0b${DISALLOWED.toString(2)}U;
  
+${!enableMaxLenTable ? '' : `
     /// 'CodePoint % idna_rem' is used to get the max length of IDNA Mapping you're about to do.
     static constexpr std::uint8_t idna_rem = ${table.lenTableRem}U;
     static constexpr std::uint8_t idna_default_max_len_factor = ${table.tooLongStartingFactor}U;
-    
+
     /**
      * IDNA Mapping Max Length
      * This table helps you figure out the maximum length of a string that can be mapped.
@@ -377,7 +385,7 @@ namespace webpp::unicode::idna::details {
         type: uint32,
         printableValues: table.compactLenTable.map(({pos, val}) => `${val}U << 24U | ${pos}U`),
     })}
-    
+`}
 
 ${tableContent}
 

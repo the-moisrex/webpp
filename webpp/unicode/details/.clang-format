@@ -10,7 +10,10 @@ BreakArrays: false
 BinPackArguments: true
 BinPackParameters: true
 AlignArrayOfStructures: Right
-AlignAfterOpenBracket: Align
 AllowAllArgumentsOnNextLine: false
 PackConstructorInitializers: BinPack
 BreakConstructorInitializers: AfterColon
+BinPackLongBracedList: true
+ExperimentalAutoDetectBinPacking: false
+AlignAfterOpenBracket: DontAlign
+Cpp11BracedListStyle: true

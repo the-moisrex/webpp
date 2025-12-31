@@ -6,6 +6,7 @@
 #include "../std/string.hpp"
 #include "../unicode/idna.hpp"
 #include "../unicode/normalization.hpp"
+#include "../unicode/to_ascii.hpp"
 #include "uri_status.hpp"
 
 namespace webpp::uri::idna {
@@ -45,13 +46,15 @@ namespace webpp::uri::idna {
         using enum domain2ascii_status;
         using unicode::norm_form;
 
-        // auto const status = unicode::idna::to_ascii(spos, send, out);
+        constexpr auto to_ascii_options = []() consteval {
+            unicode::idna::idna_options options;
+            options.VerifyDnsLength   = Options.verify_dns_length;
+            options.UseSTD3ASCIIRules = Options.use_std3_ascii_rules;
+            return options;
+        };
 
-        if constexpr (Options.verify_dns_length) {
-            // todo
-        }
-
-        return domain2ascii_status::valid;
+        auto const status = unicode::idna::to_ascii<to_ascii_options>(spos, send, out);
+        return is_valid(status) ? valid : domain_to_ascii_error;
     }
 
 

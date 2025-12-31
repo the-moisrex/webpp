@@ -1923,4 +1923,53 @@ TEST(BasicIDNATests, IDNAComplianceTestsExplicit35) {
     EXPECT_FALSE((to_ascii<std::u32string, strict_idna_options>(U"0a.xn--4db").has_value()));
 }
 
+TEST(BasicIDNATests, MaxLengthTest) {
+    using unicode::idna::idna_options;
+    using unicode::idna::to_ascii;
+
+    // Testing max length
+    EXPECT_TRUE((to_ascii<std::u32string>(U"﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u16string>(U"﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u8string>(U"﷼").has_value()));
+
+    EXPECT_TRUE((to_ascii<std::u32string>("﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u16string>("﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u8string>("﷼").has_value()));
+
+    EXPECT_TRUE((to_ascii<std::u32string>("﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u16string>("﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u8string>("﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼").has_value()));
+    EXPECT_TRUE((to_ascii<std::u8string>("﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼﷼").has_value()));
+
+
+    EXPECT_FALSE((to_ascii<std::u32string>(U"\xFDFA").has_value()));
+    EXPECT_FALSE((to_ascii<std::u16string>(U"\xFDFA").has_value()));
+    EXPECT_FALSE((to_ascii<std::u8string>(U"\xFDFA").has_value()));
+
+    EXPECT_FALSE((to_ascii<std::u32string>("\uFDFA").has_value()));
+    EXPECT_FALSE((to_ascii<std::u16string>("\uFDFA").has_value()));
+    EXPECT_FALSE((to_ascii<std::u8string>("\uFDFA").has_value()));
+
+    EXPECT_FALSE(
+      (to_ascii<std::u32string>(
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa"
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa")
+         .has_value()));
+    EXPECT_FALSE(
+      (to_ascii<std::u16string>(
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa"
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa")
+         .has_value()));
+    EXPECT_FALSE(
+      (to_ascii<std::u8string>(
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa"
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa")
+         .has_value()));
+    EXPECT_FALSE(
+      (to_ascii<std::u8string>(
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa"
+         "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa")
+         .has_value()));
+}
+
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

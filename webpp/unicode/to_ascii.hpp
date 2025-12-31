@@ -254,16 +254,39 @@ namespace webpp::unicode::idna {
           cat{.set = UPPER_ALPHA<char8_t>, .value = flag_types::ascii_upper});
 
         /**
-         * @returns maximum required storage length for conversion; zero if no need for conversion.
+         * @returns maximum required storage length for conversion
          */
         template <UTF OutCharT, stl::random_access_iterator Iter>
-        [[nodiscard]] static constexpr stl::size_t operator()(Iter spos, Iter send) noexcept {
-            using details::idna_default_max_len_factor;
+        [[nodiscard]] static constexpr stl::size_t max_required_size(Iter spos, Iter send) noexcept {
             using inp_char_type = stl::iter_value_t<Iter>;
+            using details::max_mapping_factor;
 
-            auto const cur_len = adjust_utf_output_size<inp_char_type, OutCharT>(static_cast<stl::size_t>(send - spos));
-            stl::size_t max_size  = (cur_len * static_cast<stl::size_t>(idna_default_max_len_factor + 3));
-            max_size             += 4 * 10; // At least one UTF-8 code point
+            constexpr auto prefix_len = stl::size("xn--"); // 4
+
+            // Calculate input length (adjusted for encoding)
+            auto const input_len = static_cast<stl::size_t>(send - spos);
+
+            // Start with the adjusted input size
+            stl::size_t max_size = adjust_utf_output_size<inp_char_type, OutCharT>(input_len);
+
+            // 1. Apply Mapping Expansion
+            max_size *= max_mapping_factor;
+
+            // 2. Apply Normalization Expansion
+            max_size *= 4;
+
+            // 3. Apply Punycode Expansion
+            // Punycode worst case is roughly 3-4 bytes per code point
+            max_size *= 3;
+
+            // 4. Add the Prefix
+            max_size += prefix_len;
+
+            // Punycode encode needs twice storage when the input requires mapping:
+            max_size *= 2;
+            max_size += prefix_len;
+
+            max_size += 1; // null character
 
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
@@ -381,12 +404,13 @@ namespace webpp::unicode::idna {
                 } else {
                     lend = outend;
                 }
-
-                assert(outend <= oend); // We ran out of space
-                assert(lend <= oend);   // We ran out of space
             } else [[unlikely]] {
                 status |= Options.CheckInvalidPunycode ? +p_status : +valid;
             }
+
+            // We ran out of space
+            assert(outend <= oend);
+            assert(lend <= oend);
         }
 
         return status;
@@ -558,11 +582,9 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
-        to_ascii_info        info;
-        auto const           max_size = info.operator()<output_char_type>(spos, send);
         istl::resize_and_overwrite(
           out,
-          max_size,
+          to_ascii_info::max_required_size<output_char_type>(spos, send),
           [&](output_char_type* buf, stl::size_t const max_len) constexpr noexcept {
               auto const beg = buf;
               status         = to_ascii<Options>(spos, send, buf, max_len);
