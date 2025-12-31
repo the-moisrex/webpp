@@ -39,10 +39,11 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string_view>
     struct basic_username {
-        using string_type = StringType;
-        using char_type   = typename string_type::value_type;
-        using iterator    = typename string_type::iterator;
-        using size_type   = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = typename string_type::value_type;
+        using iterator         = typename string_type::iterator;
+        using size_type        = typename string_type::size_type;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
@@ -71,12 +72,12 @@ namespace webpp::uri {
             requires(!needs_allocator)
         explicit constexpr basic_username([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         explicit constexpr basic_username(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         constexpr basic_username& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
@@ -98,21 +99,20 @@ namespace webpp::uri {
             istl::clear(storage);
         }
 
-        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
+        constexpr void assign(iterator beg, iterator end) noexcept(is_nothrow) {
             istl::assign(storage, beg, end);
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
-        [[nodiscard]] constexpr StrVT view() const noexcept {
-            return StrVT{storage.data(), storage.size()};
+        [[nodiscard]] constexpr string_view_type view() const noexcept {
+            return string_view_type{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringLike NStrT = string_view_type>
         constexpr void to_string(NStrT& out) const noexcept(!istl::ModifiableString<NStrT>) {
             render_username(storage, out);
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        template <istl::StringLike NStrT = string_view_type, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
@@ -133,7 +133,7 @@ namespace webpp::uri {
 
         /// Equality check
         /// Attention: this function doesn't parse your input
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             return storage == stl::forward<NStrT>(inp_str);
         }
@@ -149,10 +149,11 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string_view>
     struct basic_password {
-        using string_type = StringType;
-        using char_type   = typename string_type::value_type;
-        using iterator    = typename string_type::iterator;
-        using size_type   = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = typename string_type::value_type;
+        using iterator         = typename string_type::iterator;
+        using size_type        = typename string_type::size_type;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
@@ -182,12 +183,12 @@ namespace webpp::uri {
             requires(!needs_allocator)
         explicit constexpr basic_password([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         explicit constexpr basic_password(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         constexpr basic_password& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
@@ -205,17 +206,17 @@ namespace webpp::uri {
             istl::assign(storage, beg, end);
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr StrVT view() const noexcept {
             return StrVT{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringLike NStrT = string_view_type>
         constexpr void to_string(NStrT& out) const noexcept(!istl::ModifiableString<NStrT>) {
             render_password(storage, out);
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        template <istl::StringLike NStrT = string_view_type, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
@@ -244,7 +245,7 @@ namespace webpp::uri {
 
         /// Equality check
         /// Attention: this function doesn't parse your input
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             return storage == stl::forward<NStrT>(inp_str);
         }

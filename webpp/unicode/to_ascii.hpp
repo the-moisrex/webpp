@@ -255,6 +255,7 @@ namespace webpp::unicode::idna {
 
         /**
          * @returns maximum required storage length for conversion
+         * todo: this returns way too much storage for each code, optimize it.
          */
         template <UTF OutCharT, stl::random_access_iterator Iter>
         [[nodiscard]] static constexpr stl::size_t max_required_size(Iter spos, Iter send) noexcept {

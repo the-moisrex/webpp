@@ -214,7 +214,7 @@ namespace webpp::uri {
      *     The encoded element is returned.
      *
      *
-     * @details this function is almost the same as "encodeURIComponent" in javascript
+     * @details this function is almost the same as "encodeURIComponent" in JavaScript
      */
     template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
               istl::StringViewifiable InpStrT = stl::string_view>

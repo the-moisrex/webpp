@@ -32,10 +32,12 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string_view>
     struct basic_scheme {
-        using string_type = StringType;
-        using char_type   = istl::char_type_of_t<string_type>;
-        using iterator    = typename string_type::iterator;
-        using size_type   = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = istl::char_type_of_t<string_type>;
+        using iterator         = typename string_type::iterator;
+        using size_type        = typename string_type::size_type;
+        using allocator_type   = allocator_type_from_t<string_type>;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
@@ -48,7 +50,7 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type
-        parse(Iter beg, Iter end, uri_status_type const initial_status = +uri_status::unparsed) noexcept(is_nothrow) {
+          parse(Iter beg, Iter end, uri_status_type const initial_status = +uri_status::unparsed) noexcept(is_nothrow) {
             parsing_uri_component_context<components::scheme, basic_scheme*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg    = beg;
             ctx.pos    = beg;
@@ -59,48 +61,44 @@ namespace webpp::uri {
             return ctx.status;
         }
 
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
+        explicit constexpr basic_scheme(allocator_type const& alloc = {}) noexcept
             requires needs_allocator
-        explicit constexpr basic_scheme(AllocT const& alloc = {}) noexcept : storage{alloc} {}
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires(!needs_allocator)
-        explicit constexpr basic_scheme([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires needs_allocator
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, AllocT const& alloc) noexcept
           : storage{alloc} {}
 
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
+        explicit constexpr basic_scheme([[maybe_unused]] allocator_type const& alloc = {}) noexcept
             requires(!needs_allocator)
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
-                               [[maybe_unused]] AllocT const&        alloc) noexcept {}
+        {}
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
-        explicit constexpr basic_scheme(InpStr const& inp_str) noexcept(is_nothrow) {
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, allocator_type const& alloc) noexcept
+            requires needs_allocator
+          : storage{alloc} {}
+
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t  tag,
+                               [[maybe_unused]] allocator_type const& alloc) noexcept
+            requires(!needs_allocator)
+        {}
+
+        explicit constexpr basic_scheme(string_view_type const inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <Allocator        AllocT = allocator_type_from_t<string_type>,
-                  istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
+                               allocator_type const&                 alloc,
+                               string_view_type const&               inp_str) noexcept(is_nothrow)
             requires needs_allocator
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, AllocT const& alloc, InpStr const& inp_str)
-          noexcept(is_nothrow)
           : storage{alloc} {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <Allocator        AllocT = allocator_type_from_t<string_type>,
-                  istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t  tag,
+                               [[maybe_unused]] allocator_type const& alloc,
+                               string_view_type const&                inp_str) noexcept(is_nothrow)
             requires(!needs_allocator)
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
-                               [[maybe_unused]] AllocT const&        alloc,
-                               InpStr const&                         inp_str) noexcept(is_nothrow) {
+        {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         constexpr basic_scheme& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
@@ -142,7 +140,7 @@ namespace webpp::uri {
             istl::assign(storage, beg, end);
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr StrVT view() const noexcept {
             return StrVT{storage.data(), storage.size()};
         }
@@ -159,13 +157,13 @@ namespace webpp::uri {
             return !storage.empty();
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringLike NStrT = string_view_type>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
             render_scheme(storage, out, append_separators);
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        template <istl::StringLike NStrT = string_view_type, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
@@ -180,7 +178,7 @@ namespace webpp::uri {
             return storage;
         }
 
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
                 return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));

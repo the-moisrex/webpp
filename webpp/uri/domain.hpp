@@ -11,18 +11,19 @@
 #include <compare>
 
 namespace webpp::uri {
+
     /**
      * Structured Domain Name
      */
     template <istl::StringLike StorageT = stl::string_view>
     struct basic_domain {
-        using string_type  = StorageT;
-        using char_type    = typename string_type::value_type;
-        using storage_type = StorageT;
+        using string_type      = StorageT;
+        using char_type        = typename string_type::value_type;
+        using storage_type     = StorageT;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
-        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
-        static constexpr bool is_nothrow      = !is_modifiable;
-        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow    = !is_modifiable;
 
       private:
         storage_type       storage;
@@ -36,7 +37,7 @@ namespace webpp::uri {
         ~basic_domain()                                  = default;
 
         template <typename... Args>
-        explicit constexpr basic_domain(Args&&... args) noexcept(stl::is_nothrow_constructible_v<storage_type, Args...>)
+        explicit constexpr basic_domain(Args&&... args) noexcept(is_nothrow)
           : storage{stl::forward<Args>(args)...},
             status{parse_domain_name(storage.begin(), storage.end())} {}
 
@@ -53,7 +54,7 @@ namespace webpp::uri {
             return is_valid();
         }
 
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
                 return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
@@ -69,11 +70,10 @@ namespace webpp::uri {
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(basic_domain const& other) const noexcept = default;
 
         /// Top-Level-Domain
-        template <istl::StringLike StrT = storage_type>
-        [[nodiscard]] constexpr StrT tld() const noexcept {
+        [[nodiscard]] constexpr string_view_type tld() const noexcept {
             // todo: this does not handle label separators (only in string_view probably)
             // https://www.unicode.org/reports/tr46/#Notation
-            if (auto const pos = storage.rfind('.'); pos != StrT::npos) {
+            if (auto const pos = storage.rfind('.'); pos != string_view_type::npos) {
                 return storage.substr(pos + 1);
             }
             return storage; // the whole thing is a TLD

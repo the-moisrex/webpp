@@ -329,10 +329,9 @@ namespace webpp::uri {
         /**
          * Top Level Domain; sometimes called the extension
          */
-        template <istl::StringView StrV = string_view_type>
-        [[nodiscard]] constexpr StrV tld() const noexcept {
+        [[nodiscard]] constexpr string_view_type tld() const noexcept {
             if (auto* domain = as_domain()) {
-                return domain_labels(*domain).begin().template value<StrV>();
+                return domain_labels(*domain).begin().template value<string_view_type>();
             }
             return {};
         }

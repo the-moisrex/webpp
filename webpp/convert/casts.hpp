@@ -46,7 +46,7 @@ namespace webpp {
 
       public:
         consteval explicit(false) integer_cast_result(integer_casting_errors const err) noexcept
-          : result{error_start + stl::to_underlying(err)} {}
+          : result{static_cast<T>(error_start + stl::to_underlying(err))} {}
 
         constexpr explicit(false) integer_cast_result(T const inp_value) noexcept : result{inp_value} {
             assert(has_value());

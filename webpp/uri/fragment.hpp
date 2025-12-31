@@ -20,10 +20,8 @@ namespace webpp::uri {
         if (storage.empty()) {
             return;
         }
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(static_cast<char_type>('#'));
-            }
+        if (istl::ModifiableString<StrT> && add_separators) {
+            out.push_back(static_cast<char_type>('#'));
         }
         istl::append(out, storage);
     }
@@ -34,10 +32,11 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string_view>
     struct basic_fragment {
-        using string_type = StringType;
-        using char_type   = typename string_type::value_type;
-        using iterator    = typename string_type::iterator;
-        using size_type   = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = typename string_type::value_type;
+        using iterator         = typename string_type::iterator;
+        using size_type        = typename string_type::size_type;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
@@ -67,12 +66,12 @@ namespace webpp::uri {
             requires(!needs_allocator)
         explicit constexpr basic_fragment([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         explicit constexpr basic_fragment(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
         }
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringLike InpStr = string_view_type>
         constexpr basic_fragment& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
@@ -86,19 +85,18 @@ namespace webpp::uri {
             istl::clear(storage);
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr StrVT view() const noexcept {
             return StrVT{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
-        constexpr void to_string(NStrT& out, bool const append_separators = false) const
-          noexcept(!istl::ModifiableString<NStrT>) {
+        template <istl::StringLike NStrT = string_view_type>
+        constexpr void to_string(NStrT& out, bool const append_separators = false) const noexcept(is_nothrow) {
             render_fragment(storage, out, append_separators);
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
-        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
+        template <istl::StringLike NStrT = string_view_type, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(is_nothrow) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
             return out;
@@ -133,7 +131,7 @@ namespace webpp::uri {
             return storage;
         }
 
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
                 return iiequals_fl<uri::details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
