@@ -10,7 +10,6 @@
 #include "../uri_status.hpp"
 #include "./special_schemes.hpp"
 #include "./uri_components.hpp"
-#include "./uri_helpers.hpp"
 
 namespace webpp::uri {
 
@@ -391,7 +390,7 @@ namespace webpp::uri {
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
-            if (safely_inc_if<Options>(ctx, '/', '/')) {
+            if (ascii::inc_if<Options>(ctx, '/', '/')) {
                 special_authority_ignore_slashes_state<Options>(ctx);
                 return;
             }
@@ -407,7 +406,6 @@ namespace webpp::uri {
     template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::encoded_scheme;
-        using details::safely_inc_if;
 
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
@@ -528,7 +526,7 @@ namespace webpp::uri {
                 ++ctx.pos;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
-                if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
+                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
                 details::file_state<Options>(ctx);
@@ -545,9 +543,9 @@ namespace webpp::uri {
                 details::set_scheme<Options>(ctx);
                 ++ctx.pos;
                 set_flag(ctx.status, scheme_type::not_special);
-                if (safely_inc_if<Options>(ctx, '/')) {
+                if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                     // https://url.spec.whatwg.org/#path-or-authority-state
-                    if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
+                    if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
                         set_valid(ctx.status, valid_authority);
                         return;
                     }
@@ -580,7 +578,7 @@ namespace webpp::uri {
         }
 
         /// https://url.spec.whatwg.org/#special-authority-slashes-state
-        if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
+        if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
             set_warning(ctx.status, missing_following_solidus);
         }
         details::special_authority_ignore_slashes_state<Options>(ctx);

@@ -25,23 +25,6 @@ namespace webpp::uri {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
-
-        // handling tabs and newlines
-        // if constexpr (Options.ignore_tabs_or_newlines) {
-        //     while (ctx.pos != ctx.end) {
-        //         switch (*ctx.pos) {
-        //             [[unlikely]] case '\t':
-        //             [[unlikely]] case '\n':
-        //             [[unlikely]] case '\r':
-        //                 set_warning(ctx.status, uri_status::invalid_character);
-        //                 ++ctx.pos;
-        //                 continue;
-        //             default: break;
-        //         }
-        //         break;
-        //     }
-        // }
-
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
                 for (;;) {
@@ -65,7 +48,7 @@ namespace webpp::uri {
         }
 
         webpp_static_constexpr auto parsing_options = []() consteval {
-            uri_options options = Options;
+            uri_options options         = Options;
             options.parse_credentials   = false;
             options.empty_host_is_error = false;
             options.parse_port          = false;
@@ -87,59 +70,7 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <bool IgnoreWhitespaces = true, typename Iter>
-        static constexpr auto head(Iter& pos, [[maybe_unused]] Iter end) noexcept {
-            using char_type = stl::iter_value_t<Iter>;
-            if constexpr (IgnoreWhitespaces) {
-                for (;; ++pos) {
-                    if (pos == end) {
-                        return static_cast<char_type>('\0');
-                    }
-                    switch (*pos) {
-                        [[unlikely]] case '\r':
-                        [[unlikely]] case '\n':
-                        [[unlikely]] case '\t':
-                            continue;
-                        default: break;
-                    }
-                    break;
-                }
-                return *pos;
-            } else {
-                if (pos == end) [[unlikely]] {
-                    return static_cast<char_type>('\0');
-                }
-                return *pos;
-            }
-        }
-
-        template <bool IgnoreWhitespaces = true, typename Iter>
-        static constexpr auto tail(Iter& pos, [[maybe_unused]] Iter beg) noexcept {
-            using char_type = stl::iter_value_t<Iter>;
-            if constexpr (IgnoreWhitespaces) {
-                for (;; --pos) {
-                    if (pos == beg) [[unlikely]] {
-                        return static_cast<char_type>('\0');
-                    }
-                    switch (*pos) {
-                        [[unlikely]] case '\r':
-                        [[unlikely]] case '\n':
-                        [[unlikely]] case '\t':
-                            continue;
-                        default: break;
-                    }
-                    break;
-                }
-                return *pos;
-            } else {
-                if (pos == beg) [[unlikely]] {
-                    return static_cast<char_type>('\0');
-                }
-                return *pos;
-            }
-        }
-
-        template <bool IgnoreWhitespaces = true, typename Iter>
+        template <typename Iter>
         [[nodiscard]] static constexpr bool starts_with(Iter& pos, Iter end, auto str) noexcept {
             auto spos = stl::begin(str);
             auto send = stl::end(str);
@@ -147,7 +78,7 @@ namespace webpp::uri {
                 return false;
             }
             for (; pos != end && spos != send; ++pos, ++spos) {
-                if (head<IgnoreWhitespaces>(pos, end) != *pos) {
+                if (head(pos, end) != *pos) {
                     return false;
                 }
             }
@@ -156,12 +87,13 @@ namespace webpp::uri {
 
         /// @returns should continue parsing or not
         /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
-        template <bool IgnoreWhitespaces = true, typename Iter, URIContext CtxT>
+        template <typename Iter, URIContext CtxT>
         [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
+            assert(pos != end);
 
-            if (head<IgnoreWhitespaces>(pos, end) == '[') {
-                if (tail<IgnoreWhitespaces>(stl::prev(end), pos) != ']') [[unlikely]] {
+            if (*pos == '[') {
+                if (*stl::prev(end) != ']') [[unlikely]] {
                     set_error(ctx.status, ipv6_unclosed);
                     return false;
                 }
@@ -180,7 +112,7 @@ namespace webpp::uri {
 
         // in opaque hosts, IPv6 should work also; in specs, it's being checked in `host parsing` before
         // we get into opaque parsing.
-        if (!details::handle_ipv6<Options.ignore_tabs_or_newlines>(ctx, pos, end)) {
+        if (!details::handle_ipv6(ctx, pos, end)) {
             // either found a valid ipv6, an error occurred, or it's an empty string.
             return;
         }
@@ -271,7 +203,7 @@ namespace webpp::uri {
             [[unlikely]] default:
                 // 'x', 'n' and '-' were found
                 if ((status & no_ipv6_val) == 0) {
-                    if (!details::handle_ipv6<Options.ignore_tabs_or_newlines>(ctx, pos, end)) {
+                    if (!details::handle_ipv6(ctx, pos, end)) {
                         // either found a valid ipv6, an error occurred, or it's an empty string.
                         return;
                     }
@@ -279,7 +211,7 @@ namespace webpp::uri {
 
                 if ((status | xnd_val) == status) {
                     // if it starts with `xn-`, then we go the slow path
-                    if (starts_with<Options.ignore_tabs_or_newlines>(pos, end, "xn-")) {
+                    if (starts_with(pos, end, "xn-")) {
                         // todo: we already know if newlines and tabs exist or not
                         break;
                     }
