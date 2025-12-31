@@ -103,6 +103,41 @@ namespace webpp::uri {
           stl::forward<RT>(rhs));
     }
 
+    /// Auto Lowered
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iiequals_auto_lowered(LT&& lhs, RT&& rhs) noexcept {
+        constexpr auto lowered =
+          istl::ModifiableString<LT> && istl::ModifiableString<RT> ? ascii::char_case_side::both_lowered
+          : istl::ModifiableString<LT>                             ? ascii::char_case_side::first_lowered
+                                                                   : ascii::char_case_side::second_lowered;
+        return iiequals<IgnoreCharacters, lowered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// Auto Upper
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iiequals_auto_upper(LT&& lhs, RT&& rhs) noexcept {
+        constexpr auto uppered =
+          istl::ModifiableString<LT> && istl::ModifiableString<RT> ? ascii::char_case_side::both_uppered
+          : istl::ModifiableString<LT>                             ? ascii::char_case_side::first_uppered
+                                                                   : ascii::char_case_side::second_uppered;
+        return iiequals<IgnoreCharacters, uppered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// Auto First Lowered
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iiequals_afl(LT&& lhs, RT&& rhs) noexcept {
+        constexpr auto lowered =
+          istl::ModifiableString<LT> ? ascii::char_case_side::first_lowered : ascii::char_case_side::both_unknown;
+        return iiequals<IgnoreCharacters, lowered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// Auto First Upper
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iiequals_afu(LT&& lhs, RT&& rhs) noexcept {
+        constexpr auto uppered =
+          istl::ModifiableString<LT> ? ascii::char_case_side::first_uppered : ascii::char_case_side::both_unknown;
+        return iiequals<IgnoreCharacters, uppered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
 } // namespace webpp::uri
 
 #endif // URI_IIEQUALS_HPP

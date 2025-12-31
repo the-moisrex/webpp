@@ -377,11 +377,7 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             using details::TABS_OR_NEWLINES;
             if (auto const* domain = as_domain()) {
-                if constexpr (is_modifiable) {
-                    return iiequals_fl<TABS_OR_NEWLINES>(*domain, stl::forward<NStrT>(inp_str));
-                } else {
-                    return iiequals<TABS_OR_NEWLINES>(*domain, stl::forward<NStrT>(inp_str));
-                }
+                return iiequals_afl<TABS_OR_NEWLINES>(*domain, stl::forward<NStrT>(inp_str));
             }
             if (auto const* ip4 = as_ipv4()) {
                 return *ip4 == stl::forward<NStrT>(inp_str);
@@ -393,7 +389,7 @@ namespace webpp::uri {
         }
 
         // [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
-        //     return iiequals<details::TABS_OR_NEWLINES>(storage, other.storage_ref());
+        //     return iiequals_afl(storage, other.storage_ref());
         // }
 
         friend constexpr string_type get_buffer(basic_host const& host) noexcept
@@ -414,10 +410,10 @@ namespace webpp::uri {
     [[nodiscard]] static constexpr bool is_localhost_string(basic_host<T...> const& host) noexcept {
         using string_type = typename basic_host<T...>::string_type;
         if (auto* domain = host.as_domain()) {
-            return iiequals_fl<details::TABS_OR_NEWLINES>("localhost", *domain);
+            return iiequals_fl("localhost", *domain);
         }
         if (auto* str = get_if<string_type>(&host.storage_ref())) {
-            return iiequals_fl<details::TABS_OR_NEWLINES>("localhost", *str);
+            return iiequals_fl("localhost", *str);
         }
         return false;
     }
