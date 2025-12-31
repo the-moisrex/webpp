@@ -28,7 +28,7 @@ namespace webpp::uri::details {
     ///   - a hexadecimal starting with 0x, or 0X
     ///   - an octal value,
     /// then the host MUST be an ipv4, otherwise, it's an INVALID HOST.
-    template <uri_parsing_options Options, typename Iter, ParsingURIContext CtxT>
+    template <uri_options Options, typename Iter, URIContext CtxT>
     static constexpr bool is_possible_ends_with_ipv4(Iter beg, Iter fin, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#ends-in-a-number-checker
 
@@ -118,7 +118,7 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_parsing_options Options = standard_uri_parsing_options, typename Iter, ParsingURIContext CtxT>
+    template <uri_options Options = standard_uri_parsing_options, typename Iter, URIContext CtxT>
     static constexpr bool parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
@@ -251,7 +251,7 @@ namespace webpp::uri::details {
      * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <ParsingURIContext CtxT>
+    template <URIContext CtxT>
     static constexpr bool parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
 

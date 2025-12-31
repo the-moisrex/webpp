@@ -133,7 +133,7 @@ namespace webpp::uri {
         storage_type                         storage = stl::monostate{};
         [[no_unique_address]] allocator_type alloc{};
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
+        template <uri_options Options = uri_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_uri_component_context<components::host, basic_host*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;

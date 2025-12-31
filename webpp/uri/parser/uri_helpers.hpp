@@ -10,7 +10,7 @@
 
 namespace webpp::uri::details {
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter, typename... ValT>
+    template <uri_options Options, URIContext CtxT, typename Iter, typename... ValT>
     [[nodiscard]] static constexpr bool safely_inc_if(Iter& pos, Iter const& end, CtxT& ctx, ValT... val) noexcept {
         if constexpr (Options.ignore_tabs_or_newlines) {
             using ctx_type  = CtxT;
@@ -28,12 +28,8 @@ namespace webpp::uri::details {
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\r':
                     [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                            continue;
-                        }
-                        [[fallthrough]];
-
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        continue;
                     [[likely]] default: {
                         if (*pos != arr[index]) {
                             return false;
@@ -50,7 +46,7 @@ namespace webpp::uri::details {
         }
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT, typename... ValT>
+    template <uri_options Options, URIContext CtxT, typename... ValT>
     [[nodiscard]] static constexpr bool safely_inc_if(CtxT& ctx, ValT... val) noexcept {
         return safely_inc_if<Options>(ctx.pos, ctx.end, ctx, stl::forward<ValT>(val)...);
     }

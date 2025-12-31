@@ -13,7 +13,7 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <ParsingURIContext CtxT, ParsingOutput OutT>
+        template <URIContext CtxT, ParsingOutput OutT>
         static constexpr void next_segment_of(
           CtxT&                    ctx,
           OutT&                    out,
@@ -42,7 +42,7 @@ namespace webpp::uri {
             }
         }
 
-        template <ParsingURIContext CtxT, ParsingOutput OutT>
+        template <URIContext CtxT, ParsingOutput OutT>
         static constexpr void pop_back(
           CtxT&                               ctx,
           OutT&                               out,
@@ -74,7 +74,7 @@ namespace webpp::uri {
         }
 
         /// Remove the last segment of a path
-        template <ParsingURIContext CtxT>
+        template <URIContext CtxT>
         static constexpr void
         pop_back_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
@@ -105,7 +105,7 @@ namespace webpp::uri {
         }
 
         /// Remove the current segment in a path
-        template <uri_parsing_options Options, ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        template <uri_options Options, URIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void clear_segment(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg) noexcept {
             using ctx_type = CtxT;
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
@@ -125,7 +125,7 @@ namespace webpp::uri {
         }
 
         /// We don't need to handle dots in a path if the user is asking us not to
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
             requires(!Options.handle_dots_in_paths)
         static constexpr bool handle_dots_in_paths([[maybe_unused]] CtxT&                    ctx,
                                                    [[maybe_unused]] typename CtxT::iterator& seg_beg) noexcept {
@@ -213,7 +213,7 @@ namespace webpp::uri {
         ///
         /// It's possible to have newlines and tabs in between these things
         /// @returns true if we found one or two dots
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
             requires(Options.handle_dots_in_paths)
         [[nodiscard]] static constexpr bool
         handle_dots_in_paths(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
@@ -255,14 +255,14 @@ namespace webpp::uri {
         constexpr void set_opaque([[maybe_unused]] OutT&      path_comp,
                                   [[maybe_unused]] bool const is_opaque_path) noexcept {}
 
-        template <ParsingURIContext CtxT>
+        template <URIContext CtxT>
         constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
             set_opaque(get_component<components::path>(ctx), is_opaque_path);
         }
 
     } // namespace details
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
@@ -331,7 +331,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 

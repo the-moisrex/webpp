@@ -10,7 +10,7 @@
 
 namespace webpp::uri::details {
 
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, ParsingOutput OutT>
     constexpr void start_segment([[maybe_unused]] CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
         if constexpr (VectorOutput<OutT> && CtxT::is_modifiable) {
@@ -23,7 +23,7 @@ namespace webpp::uri::details {
 
     /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
     /// for path)
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, ParsingOutput OutT>
     static constexpr void
     end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator& inp_beg, typename CtxT::iterator end)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
@@ -35,7 +35,7 @@ namespace webpp::uri::details {
         }
     }
 
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, ParsingOutput OutT>
     static constexpr void end_segment(CtxT& ctx, OutT& out, typename CtxT::iterator& beg)
       noexcept(CtxT::is_nothrow || !VectorOutput<OutT>) {
         end_segment(ctx, out, beg, ctx.pos);
@@ -43,7 +43,7 @@ namespace webpp::uri::details {
 
     /// 1. Skip the separator, and
     /// 2. Set the segment start
-    template <ParsingURIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, ParsingOutput OutT>
     static constexpr void next_segment(
       CtxT&                    ctx,
       OutT&                    out,
@@ -79,7 +79,7 @@ namespace webpp::uri::details {
         return ASCII_ALPHA.contains(*pos) && pos[1] == ':';
     }
 
-    template <uri_parsing_options Options, typename Iter, typename EIter = Iter>
+    template <uri_options Options, typename Iter, typename EIter = Iter>
     [[nodiscard]] static constexpr bool starts_with_windows_driver_letter(Iter pos, EIter end) noexcept {
         // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
 
@@ -132,7 +132,7 @@ namespace webpp::uri::details {
         return false;
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT, ParsingOutput OutT>
+    template <uri_options Options, URIContext CtxT, ParsingOutput OutT>
     static constexpr void
     handle_windows_driver_letter(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
       noexcept(CtxT::is_nothrow) {

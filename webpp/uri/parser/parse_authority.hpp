@@ -16,7 +16,7 @@ namespace webpp::uri {
      * @brief Parse authority part of the URI (credentials, host, and port)
      * @param ctx Parsing Context containing all the details of the URI and the state of it
      */
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // We merged the host parser and authority parser to make it single-pass for most
         // use cases. https://url.spec.whatwg.org/#authority-state
@@ -97,7 +97,7 @@ namespace webpp::uri {
 
     /// Path start state (I like to call it authority end because it's more RFC like to
     /// say that, but WHATWG likes to call it "path start state")
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_authority_end(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
 

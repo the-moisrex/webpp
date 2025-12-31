@@ -12,7 +12,7 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void set_query_name(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
@@ -20,7 +20,7 @@ namespace webpp::uri {
             }
         }
 
-        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void set_query_value(CtxT& ctx, BufT& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
@@ -29,7 +29,7 @@ namespace webpp::uri {
             }
         }
 
-        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void
         append_query_value(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count, typename CtxT::iterator seg_beg)
           noexcept(CtxT::is_nothrow) {
@@ -46,7 +46,7 @@ namespace webpp::uri {
             }
         }
 
-        template <ParsingURIContext CtxT, CtxBufferOf<CtxT> BufT>
+        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
         static constexpr void
         next_query([[maybe_unused]] CtxT& ctx, BufT& key_buffer, BufT& value_buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
@@ -61,7 +61,7 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(!Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept {
         using enum uri_status;
@@ -73,7 +73,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state

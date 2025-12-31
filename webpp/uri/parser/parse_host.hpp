@@ -20,7 +20,7 @@ namespace webpp::uri {
     /**
      * https://url.spec.whatwg.org/#file-host-state
      */
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
@@ -65,7 +65,7 @@ namespace webpp::uri {
         }
 
         webpp_static_constexpr auto parsing_options = []() consteval {
-            uri_parsing_options options = Options;
+            uri_options options = Options;
             options.parse_credentials   = false;
             options.empty_host_is_error = false;
             options.parse_port          = false;
@@ -156,7 +156,7 @@ namespace webpp::uri {
 
         /// @returns should continue parsing or not
         /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
-        template <bool IgnoreWhitespaces = true, typename Iter, ParsingURIContext CtxT>
+        template <bool IgnoreWhitespaces = true, typename Iter, URIContext CtxT>
         [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
 
@@ -173,7 +173,7 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
+    template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
     static constexpr void opaque_host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
@@ -193,7 +193,7 @@ namespace webpp::uri {
      * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
      * calling this function; we don't provide `isOpaque` that the specs say because of that feature.
      */
-    template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
+    template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
     static constexpr void host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
@@ -312,7 +312,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_hostname(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#host-state
         // https://url.spec.whatwg.org/#hostname-state

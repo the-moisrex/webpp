@@ -11,7 +11,7 @@ namespace webpp::uri {
     static constexpr stl::uint16_t max_port_number       = 65'535U;
     static constexpr stl::uint16_t well_known_upper_port = 1024;
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(!Options.parse_port)
     static constexpr void parse_port(CtxT& ctx) noexcept {
         // any path that we take, we shouldn't be allowed to get there if Options.parse_port is false,
@@ -19,7 +19,7 @@ namespace webpp::uri {
         set_error(ctx.status, uri_status::port_invalid);
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
         requires(Options.parse_port)
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state

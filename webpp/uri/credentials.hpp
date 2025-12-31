@@ -53,7 +53,7 @@ namespace webpp::uri {
         string_type storage;
 
       public:
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        template <uri_options Options = uri_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_uri_component_context<components::username, string_type*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;
@@ -164,7 +164,7 @@ namespace webpp::uri {
         string_type storage;
 
       public:
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        template <uri_options Options = uri_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_uri_component_context<components::password, string_type*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;

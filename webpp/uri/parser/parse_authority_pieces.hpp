@@ -27,7 +27,7 @@ namespace webpp::uri::details {
         }
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = true, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, bool IsSpecial = true, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using details::ascii_bitmap;

@@ -31,7 +31,7 @@ namespace webpp::uri {
         template <typename CharT = char>
         static constexpr stl::array<CharT, 2> ws_scheme{'w', 's'};
 
-        template <ParsingURIContext CtxT, stl::size_t N>
+        template <URIContext CtxT, stl::size_t N>
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
             using ctx_type = CtxT;
@@ -43,7 +43,7 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using ctx_type  = CtxT;
             using char_type = typename ctx_type::char_type;
@@ -107,7 +107,7 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
@@ -198,7 +198,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void file_slash_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
             using enum uri_status;
@@ -232,7 +232,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
 
@@ -301,7 +301,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_path);
         }
 
-        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void no_scheme_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
@@ -353,7 +353,7 @@ namespace webpp::uri {
             set_error(ctx.status, missing_scheme_non_relative_url);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_options Options = uri_options{}, URIContext CtxT>
         static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
@@ -387,7 +387,7 @@ namespace webpp::uri {
             set_valid(ctx.status, valid_authority);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_options Options = uri_options{}, URIContext CtxT>
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -404,7 +404,7 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::encoded_scheme;
         using details::safely_inc_if;

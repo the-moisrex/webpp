@@ -79,7 +79,7 @@ namespace webpp::uri {
         bool           m_is_opaque = false; // todo
 
       public:
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        template <uri_options Options = uri_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             using iterator_type = typename string_view_type::iterator;
             parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
@@ -92,7 +92,7 @@ namespace webpp::uri {
             return ctx.status;
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, istl::StringViewifiable StrT>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable StrT>
         constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
             auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
             return parse<Options>(str.begin(), str.end());
@@ -109,7 +109,7 @@ namespace webpp::uri {
             parse(stl::forward<T>(str));
         }
 
-        template <uri_parsing_options Options, typename IterT = iterator, typename... T>
+        template <uri_options Options, typename IterT = iterator, typename... T>
             requires(stl::is_constructible_v<container_type, T...>)
         explicit constexpr basic_path(IterT beg, IterT end, T&&... args) noexcept(is_nothrow)
           : storage{stl::forward<T>(args)...} {
@@ -132,14 +132,14 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = {}, typename IterT = iterator>
+        template <uri_options Options = {}, typename IterT = iterator>
         constexpr basic_path clone(IterT beg, IterT end) const noexcept(is_nothrow) {
             auto out = clone();
             out.template parse<Options>(beg, end);
             return out;
         }
 
-        template <uri_parsing_options Options = {}, istl::StringViewifiable StrT>
+        template <uri_options Options = {}, istl::StringViewifiable StrT>
         constexpr basic_path clone(StrT&& str) const noexcept(is_nothrow) {
             auto out = clone();
             out.template parse<Options>(stl::forward<StrT>(str));
@@ -373,7 +373,7 @@ namespace webpp::uri {
         /// Equality check.
         /// https://url.spec.whatwg.org/#url-equivalence
         /// https://url.spec.whatwg.org/#url-path-serializer
-        template <uri_parsing_options Options = {}, istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <uri_options Options = {}, istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             return *this == clone<Options>(stl::forward<NStrT>(inp_str));
         }

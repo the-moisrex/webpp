@@ -54,8 +54,9 @@ namespace webpp::uri {
      */
     template <istl::StringLike StrT, Allocator AllocT>
     struct uri_components<StrT, AllocT> {
-        using string_type    = StrT;
-        using allocator_type = AllocT;
+        using string_type      = StrT;
+        using allocator_type   = AllocT;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         using scheme_type   = basic_scheme<string_type>;
         using host_type     = basic_host<string_type>;
@@ -108,7 +109,7 @@ namespace webpp::uri {
 
         // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(field)                                                                                       \
-    template <istl::StringLike NStrT = stl::basic_string_view<char_type>>                                      \
+    template <istl::StringLike NStrT = string_view_type>                                                       \
     [[nodiscard]] constexpr NStrT field##_view() const noexcept                                                \
         requires(!is_modifiable)                                                                               \
     {                                                                                                          \
@@ -171,12 +172,13 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType, Allocator AllocT = allocator_type_from_t<StringType>>
     struct basic_uri : uri_components<StringType, rebind_allocator<AllocT, typename StringType::value_type>> {
-        using string_type     = StringType;
-        using char_type       = istl::char_type_of_t<string_type>;
-        using allocator_type  = rebind_allocator<AllocT, char_type>;
-        using components_type = uri_components<string_type, allocator_type>;
-        using iterator        = typename string_type::const_iterator;
-        using size_type       = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = istl::char_type_of_t<string_type>;
+        using allocator_type   = rebind_allocator<AllocT, char_type>;
+        using components_type  = uri_components<string_type, allocator_type>;
+        using iterator         = typename string_type::const_iterator;
+        using size_type        = typename string_type::size_type;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow    = false;
@@ -201,7 +203,7 @@ namespace webpp::uri {
       private:
         status_type m_status = +uri_status::unparsed;
 
-        template <uri_parsing_options Options, typename Iter>
+        template <uri_options Options, typename Iter>
         constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status) noexcept(is_modifiable) {
             using enum uri_status;
 
@@ -217,7 +219,7 @@ namespace webpp::uri {
         }
 
       public:
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
+        template <uri_options Options = uri_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_structured_uri_context<components_type*, Iter> ctx{};
             ctx.beg    = beg;
@@ -230,7 +232,7 @@ namespace webpp::uri {
             return m_status;
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, istl::StringViewifiable StrT>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable StrT>
         constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
             auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
             return parse<Options>(str.begin(), str.end());
@@ -282,7 +284,7 @@ namespace webpp::uri {
             this->clear_fragment();
         }
 
-        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable InpStr = string_view_type>
         constexpr basic_uri& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
             this->clear();
             parse(stl::forward<InpStr>(inp_str));
@@ -428,8 +430,7 @@ namespace webpp::uri {
             return this->as_string<NStrT>();
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type href(NStrT&& inp_str) {
             return parse<Options>(stl::forward<NStrT>(inp_str));
         }
@@ -515,8 +516,7 @@ namespace webpp::uri {
         //     return target;
         // }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type scheme(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str        = istl::string_viewify(stl::forward<NStrT>(inp_str));
             auto       status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
@@ -530,29 +530,25 @@ namespace webpp::uri {
             return status_res;
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type authority(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type username(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type password(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type hostname(NStrT&& inp_str) noexcept(is_modifiable) {
             // https://url.spec.whatwg.org/#dom-url-hostname
             // If this’s URL has an opaque path, then return.
@@ -563,8 +559,7 @@ namespace webpp::uri {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type port(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_port);
@@ -576,22 +571,19 @@ namespace webpp::uri {
             return this->port().assign(port_num);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type path(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_path);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type queries(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_queries);
         }
 
-        template <uri_parsing_options     Options = uri_parsing_options{},
-                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        template <uri_options Options = uri_options{}, istl::StringViewifiable NStrT = string_view_type>
         constexpr uri_status_type fragment(NStrT&& inp_str) noexcept(is_modifiable) {
             auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_fragment);

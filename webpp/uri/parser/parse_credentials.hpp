@@ -10,7 +10,7 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <components Comp, ParsingURIContext CtxT>
+        template <components Comp, URIContext CtxT>
         static constexpr void encode_or_set(
           CtxT&                                ctx,
           typename CtxT::iterator              pos,
@@ -24,7 +24,7 @@ namespace webpp::uri {
             }
         }
 
-        template <ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
+        template <URIContext CtxT, typename Iter = typename CtxT::iterator>
         static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos)
           noexcept(CtxT::is_nothrow) {
             // todo: add "needs_encoding"
@@ -67,7 +67,7 @@ namespace webpp::uri {
     /// parse username
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;
@@ -88,7 +88,7 @@ namespace webpp::uri {
     /// parse password
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    template <uri_options Options = uri_options{}, URIContext CtxT>
     static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;

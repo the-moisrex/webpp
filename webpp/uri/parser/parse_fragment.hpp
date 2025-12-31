@@ -9,7 +9,7 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(!Options.parse_fragment)
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
@@ -22,7 +22,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(Options.parse_fragment)
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state

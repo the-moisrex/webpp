@@ -20,8 +20,10 @@ namespace webpp::uri {
             return;
         }
         istl::append(out, storage);
-        if (add_separators) {
-            out.push_back(':');
+        if constexpr (istl::ModifiableString<StrT>) {
+            if (add_separators) {
+                out.push_back(':');
+            }
         }
     }
 
@@ -47,7 +49,7 @@ namespace webpp::uri {
         string_type storage;
 
       public:
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        template <uri_options Options = uri_options{}, typename Iter = iterator>
         constexpr uri_status_type
           parse(Iter beg, Iter end, uri_status_type const initial_status = +uri_status::unparsed) noexcept(is_nothrow) {
             parsing_uri_component_context<components::scheme, basic_scheme*, stl::remove_cvref_t<Iter>> ctx{};

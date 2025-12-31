@@ -41,7 +41,7 @@ namespace webpp::uri::idna {
      *     UTS #46: https://www.unicode.org/reports/tr46/#ToASCII
      *  Steps From: https://www.unicode.org/reports/tr46/#Processing
      */
-    template <uri_parsing_options Options, istl::String StrT = stl::string, typename Iter>
+    template <uri_options Options, istl::String StrT = stl::string, typename Iter>
     static constexpr domain2ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
         using enum domain2ascii_status;
         using unicode::norm_form;
