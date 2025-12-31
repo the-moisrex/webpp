@@ -42,67 +42,13 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_options Options, URIContext CtxT>
+        template <URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            using ctx_type  = CtxT;
-            using char_type = typename ctx_type::char_type;
-            using iterator  = typename ctx_type::iterator;
-
-            if constexpr (!ctx_type::is_modifiable) {
+            if constexpr (!CtxT::is_modifiable) {
                 set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
-            } else if constexpr (!Options.ignore_tabs_or_newlines) {
-                auto& out_str = get_component<components::scheme>(ctx);
-                ascii::lower_to(out_str, ctx.beg, ctx.pos);
             } else {
-                // this algorithm is the same as "lower_to" except it ignores newlines and tabs
-
-                auto& out_str         = get_storage<components::scheme>(ctx);
-                using string_type     = stl::remove_cvref_t<decltype(out_str)>;
-                using difference_type = stl::iter_difference_t<typename string_type::iterator>;
-                using size_type       = typename string_type::size_type;
-
-                iterator   beg   = ctx.beg;
-                auto const end   = ctx.pos;
-                auto const count = static_cast<size_type>(end - beg);
-
-#if __cpp_lib_string_resize_and_overwrite
-                out_str.resize_and_overwrite(
-                  count,
-                  [beg](auto* out, [[maybe_unused]] stl::size_t length) mutable constexpr noexcept {
-                      auto const endp = beg + static_cast<difference_type>(length);
-                      for (; beg != endp; ++beg) {
-                          switch (*beg) {
-                              case '\r':
-                              case '\t':
-                              case '\n':
-                                  --length;
-                                  continue;
-                              [[likely]] default:
-                                  *out++ = ascii::to_lower_copy<char_type>(*beg);
-                                  break;
-                          }
-                      }
-                      return length;
-                  });
-#else
-                out_str.resize(count);
-                auto        out        = out_str.begin();
-                auto const  endp       = beg + static_cast<difference_type>(count);
-                stl::size_t new_length = count;
-                for (; beg != endp; ++beg) {
-                    switch (*beg) {
-                        case '\r':
-                        case '\t':
-                        case '\n':
-                            --new_length;
-                            continue;
-                        [[likely]] default:
-                            *out++ = ascii::to_lower_copy<char_type>(*beg);
-                            break;
-                    }
-                }
-                out_str.resize(new_length);
-#endif
+                auto& out_str = get_storage<components::scheme>(ctx);
+                ascii::lower_to(out_str, ctx.beg, ctx.pos);
             }
         }
 
@@ -540,7 +486,7 @@ namespace webpp::uri {
                     }
                 }
 
-                details::set_scheme<Options>(ctx);
+                details::set_scheme(ctx);
                 ++ctx.pos;
                 set_flag(ctx.status, scheme_type::not_special);
                 if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
