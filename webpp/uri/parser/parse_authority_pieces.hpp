@@ -179,7 +179,7 @@ namespace webpp::uri::details {
                     break;
                 case '%':
                     if constexpr (!IsSpecial) {
-                        if (!validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
+                        if (!validate_percent_encode(ctx, buffer)) {
                             set_warning(ctx.status, invalid_character);
                         }
                         continue;

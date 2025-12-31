@@ -45,7 +45,7 @@ namespace webpp::uri {
         while (!encode_or_validate(ctx, out, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
             switch (*ctx.pos) {
                 case '%':
-                    if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, out)) {
+                    if (validate_percent_encode(ctx, out)) {
                         continue;
                     }
                     break;

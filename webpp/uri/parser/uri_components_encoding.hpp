@@ -266,55 +266,16 @@ namespace webpp::uri::details {
     }
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-    template <bool CheckNewlinesAndTabs = false, URIContext CtxT, typename OutT>
+    template <URIContext CtxT, typename OutT>
         requires(ParsingOutput<OutT> || CtxBufferOf<OutT, CtxT>)
     [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, OutT& out) noexcept {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)
-        if constexpr (!CheckNewlinesAndTabs) {
-            auto       cur      = ctx.pos;
-            bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur++) && is_hex_digit(*cur);
-            append_n(ctx, out, cur - ctx.pos);
-            return is_valid;
-        } else {
-            append_n(ctx, out, 1);
-            switch (ctx.pos - ctx.end) {
-                [[unlikely]] case 0:
-                [[unlikely]] case 1:
-                    return false;
-                case 2: return is_hex_digit(*ctx.pos++) && is_hex_digit(*ctx.pos);
-                default: {
-                    int count = 0;
-                    for (;;) {
-                        switch (*ctx.pos) {
-                            [[unlikely]] case '\t':
-                            [[unlikely]] case '\r':
-                            [[unlikely]] case '\n':
-                                ++ctx.pos;
-                                if (ctx.pos == ctx.end) {
-                                    return false;
-                                }
-                                continue;
-                            default: {
-                                bool const is_valid_char = is_hex_digit(*ctx.pos);
-                                append_inplace_of(ctx, out, *ctx.pos, 1);
-                                if (!is_valid_char) {
-                                    return false;
-                                }
-                                ++count;
-                                if (count == 2 || ctx.pos == ctx.end) {
-                                    break;
-                                }
-                                continue;
-                            }
-                        }
-                        break;
-                    }
-                    return count == 2;
-                }
-            }
-        }
+        auto       cur      = ctx.pos;
+        bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur++) && is_hex_digit(*cur);
+        append_n(ctx, out, cur - ctx.pos);
+        return is_valid;
         // NOLINTEND(*-inc-dec-in-conditions)
     }
 

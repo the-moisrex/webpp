@@ -252,8 +252,8 @@ namespace webpp::uri {
     }
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-    template <typename Iter, typename CIter = Iter>
-    [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, CIter end) noexcept {
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, EIter end) noexcept {
         using ascii::is_hex_digit;
         webpp_assume(*pos == '%');
 

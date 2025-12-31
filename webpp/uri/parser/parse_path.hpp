@@ -303,7 +303,7 @@ namespace webpp::uri {
                     set_valid(ctx.status, valid_fragment);
                     break;
                 case '%':
-                    if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
+                    if (validate_percent_encode(ctx, buffer)) {
                         continue;
                     }
                     [[fallthrough]];
@@ -391,7 +391,7 @@ namespace webpp::uri {
                     }
                     break;
                 [[likely]] case '%':
-                    if (validate_percent_encode<Options.ignore_tabs_or_newlines>(ctx, buffer)) {
+                    if (validate_percent_encode(ctx, buffer)) {
                         continue;
                     }
                     set_warning(ctx.status, invalid_character);

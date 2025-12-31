@@ -131,7 +131,7 @@ namespace webpp::uri {
                     }
                     break;
                 case '%':
-                    if (!validate_percent_encode<Options.ignore_tabs_or_newlines>(
+                    if (!validate_percent_encode(
                           ctx,
                           !in_value ? key_buffer : value_buffer))
                     {

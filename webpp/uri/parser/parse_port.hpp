@@ -58,21 +58,10 @@ namespace webpp::uri {
                         return;
                     }
                     [[fallthrough]];
-                case '\0':
                 case '/':
                 case '?':
                 case '#': break;
 
-                // handling tabs and newlines
-                case '\t':
-                case '\n':
-                case '\r':
-                    if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, invalid_character);
-                        ++ctx.pos;
-                        continue;
-                    }
-                    [[fallthrough]];
                 default:
                     if constexpr (Options.state_override) {
                         // a = new URL("https://example.com:100/");
