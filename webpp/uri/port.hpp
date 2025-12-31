@@ -14,18 +14,16 @@ namespace webpp::uri {
 
     /// Serialize port
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
+    static constexpr void
+    render_port(StorageType const& storage, StrT& out, bool const add_separators = istl::ModifiableString<StrT>)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
         if (storage.empty()) {
             return;
         }
-
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(':');
-            }
+        if (add_separators) {
+            out.push_back(':');
         }
         istl::append(out, storage);
     }

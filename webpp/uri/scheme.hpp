@@ -11,7 +11,8 @@ namespace webpp::uri {
 
     /// Serialize scheme
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_scheme(StorageStrT const& storage, StrT& out, bool const add_separators = false)
+    static constexpr void
+    render_scheme(StorageStrT const& storage, StrT& out, bool const add_separators = istl::ModifiableString<StrT>)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
 
@@ -19,10 +20,8 @@ namespace webpp::uri {
             return;
         }
         istl::append(out, storage);
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(':');
-            }
+        if (add_separators) {
+            out.push_back(':');
         }
     }
 

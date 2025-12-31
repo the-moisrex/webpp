@@ -11,7 +11,8 @@ namespace webpp::uri {
 
     /// Serialize fragment
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_fragment(StorageStrT const& storage, StrT& out, bool const add_separators = false)
+    static constexpr void
+    render_fragment(StorageStrT const& storage, StrT& out, bool const add_separators = istl::ModifiableString<StrT>)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         using string_type = StrT;
@@ -20,7 +21,7 @@ namespace webpp::uri {
         if (storage.empty()) {
             return;
         }
-        if (istl::ModifiableString<StrT> && add_separators) {
+        if (add_separators) {
             out.push_back(static_cast<char_type>('#'));
         }
         istl::append(out, storage);
