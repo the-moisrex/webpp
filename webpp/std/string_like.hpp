@@ -53,10 +53,11 @@ namespace webpp::istl {
     /// No need to use StringLike constraint on the type; we want it to be used for other types as well.
     template <typename StrT>
     constexpr void clear(StrT& str) noexcept {
-        if constexpr (StringView<StrT>) {
-            str = StrT{};
-        } else {
+        if constexpr (requires { str.clear(); }) {
             str.clear(); // doesn't deallocate, so it's nothrow
+        } else {
+            static_assert(stl::is_nothrow_default_constructible_v<StrT>, "Not a string view probably");
+            str = StrT{};
         }
     }
 

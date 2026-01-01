@@ -67,7 +67,8 @@ namespace webpp::uri {
 
         /// Top-Level-Domain
         [[nodiscard]] constexpr string_view_type tld() const noexcept {
-            // todo: this does not handle label separators (only in string_view probably)
+            // Domain Separators can be Unicode Code Points as well, but if the transition was not successful, then
+            // we'll have an error anyway.
             // https://www.unicode.org/reports/tr46/#Notation
             if (auto const pos = storage.rfind('.'); pos != string_view_type::npos) {
                 return storage.substr(pos + 1);

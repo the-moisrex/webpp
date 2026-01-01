@@ -47,128 +47,6 @@ namespace webpp::uri {
     };
 
     /**
-     * @brief Customization of uri components that holds all the URI components with all the bells and the
-     * whistles
-     * @tparam StrT String or String View type
-     * @tparam AllocT Allocator type (we're not extracting it from StrT, because you may pass a string view)
-     */
-    template <istl::StringLike StrT, Allocator AllocT>
-    struct uri_components<StrT, AllocT> {
-        using string_type      = StrT;
-        using allocator_type   = AllocT;
-        using string_view_type = istl::string_view_type_of<string_type>;
-
-        using scheme_type   = basic_scheme<string_type>;
-        using host_type     = basic_host<string_type>;
-        using username_type = basic_username<string_type>;
-        using password_type = basic_password<string_type>;
-        using port_type     = basic_port<string_type>;
-        using path_type     = basic_path<string_type, allocator_type>;
-        using fragment_type = basic_fragment<string_type>;
-        using queries_type  = basic_queries<string_type, allocator_type>;
-
-        static_assert(VectorOutput<path_type>,
-                      "The path must almost look and feel like a vector, "
-                      "so we don't have to specialize it for get_buffer and what not.");
-
-        using vec_type     = typename path_type::vector_type;
-        using map_type     = typename queries_type::map_type;
-        using seg_type     = string_type;
-        using iterator     = typename string_type::const_iterator;
-        using char_type    = typename string_type::value_type;
-        using size_type    = typename string_type::size_type;
-        using vec_iterator = typename vec_type::iterator;
-
-        /// is resetting the values are noexcept or not
-        static constexpr bool is_nothrow    = false;
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-        static constexpr bool is_segregated = true;
-
-      private:
-        scheme_type   m_scheme{};
-        username_type m_username{};
-        password_type m_password{};
-        host_type     m_hostname{};
-        port_type     m_port{};
-        path_type     m_path{};
-        queries_type  m_queries{};
-        fragment_type m_fragment{};
-
-      public:
-        constexpr uri_components() = default;
-
-        explicit constexpr uri_components(allocator_type const& alloc) : m_path{alloc}, m_queries{alloc} {}
-
-        explicit constexpr uri_components(allocator_type const& alloc)
-            requires(is_modifiable)
-          : m_scheme{alloc},
-            m_username{alloc},
-            m_password{alloc},
-            m_hostname{alloc},
-            m_port{alloc},
-            m_path{alloc},
-            m_queries{alloc},
-            m_fragment{alloc} {}
-
-        // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                                                       \
-    template <istl::StringLike NStrT = string_view_type>                                                       \
-    [[nodiscard]] constexpr NStrT field##_view() const noexcept                                                \
-        requires(!is_modifiable)                                                                               \
-    {                                                                                                          \
-        return m_##field.template view<NStrT>();                                                               \
-    }                                                                                                          \
-                                                                                                               \
-    template <istl::StringLike NStrT = typename decltype(m_##field)::string_type, typename... Args>            \
-    [[nodiscard]] constexpr NStrT get_##field(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) { \
-        return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                               \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr void clear_##field() noexcept {                                                                  \
-        m_##field.clear();                                                                                     \
-    }                                                                                                          \
-                                                                                                               \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {                                                \
-        return m_##field.has_value();                                                                          \
-    }                                                                                                          \
-                                                                                                               \
-    template <typename Iter = iterator>                                                                        \
-    constexpr void set_##field(Iter beg, Iter end) noexcept(is_nothrow) {                                      \
-        m_##field.assign(beg, end);                                                                            \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow) {                               \
-        m_##field = stl::move(str);                                                                            \
-    }                                                                                                          \
-                                                                                                               \
-    [[nodiscard]] constexpr auto const& field() const noexcept {                                               \
-        return m_##field;                                                                                      \
-    }                                                                                                          \
-                                                                                                               \
-    [[nodiscard]] constexpr auto& field() noexcept {                                                           \
-        return m_##field;                                                                                      \
-    }
-
-
-
-        webpp_def(scheme)
-        webpp_def(username)
-        webpp_def(password)
-        webpp_def(hostname)
-        webpp_def(port)
-        webpp_def(path)
-        webpp_def(queries)
-        webpp_def(fragment)
-#undef webpp_def
-
-        // NOLINTEND(*-macro-usage)
-
-        [[nodiscard]] constexpr bool has_credentials() const noexcept {
-            return has_username() || has_password();
-        }
-    };
-
-    /**
      * @brief Basic Structured URI
      * @tparam StringType Storage Type
      * @tparam AllocT Allocator type
@@ -244,7 +122,7 @@ namespace webpp::uri {
         template <istl::StringViewifiable T, Allocator InpAllocT = allocator_type>
         explicit(false) constexpr basic_uri(T&& uri_str, InpAllocT const& alloc = {}) // NOLINT(*-explicit-*)
           noexcept(is_nothrow)
-          : components_type{alloc} {
+          : components_type{} {
             parse(stl::forward<T>(uri_str));
         }
 
@@ -294,83 +172,44 @@ namespace webpp::uri {
             return *this;
         }
 
-        constexpr auto& as_components() noexcept {
-            return static_cast<components_type&>(*this);
-        }
-
-        constexpr auto const& as_components() const noexcept {
-            return static_cast<components_type const&>(*this);
-        }
-
-        [[nodiscard]] constexpr auto& scheme() noexcept {
-            return as_components().scheme();
-        }
-
-        [[nodiscard]] constexpr auto const& scheme() const noexcept {
-            return as_components().scheme();
-        }
-
-        [[nodiscard]] constexpr auto& hostname() noexcept {
-            return as_components().hostname();
-        }
-
-        [[nodiscard]] constexpr auto const& hostname() const noexcept {
-            return as_components().hostname();
-        }
-
-        [[nodiscard]] constexpr auto& username() noexcept {
-            return as_components().username();
-        }
-
-        [[nodiscard]] constexpr auto const& username() const noexcept {
-            return as_components().username();
-        }
-
-        [[nodiscard]] constexpr auto& password() noexcept {
-            return as_components().password();
-        }
-
-        [[nodiscard]] constexpr auto const& password() const noexcept {
-            return as_components().password();
-        }
-
-        [[nodiscard]] constexpr auto& port() noexcept {
-            return as_components().port();
-        }
-
-        [[nodiscard]] constexpr auto const& port() const noexcept {
-            return as_components().port();
-        }
-
-        [[nodiscard]] constexpr auto& path() noexcept {
-            return as_components().path();
-        }
-
-        [[nodiscard]] constexpr auto const& path() const noexcept {
-            return as_components().path();
-        }
-
-        [[nodiscard]] constexpr auto& queries() noexcept {
-            return as_components().queries();
-        }
-
-        [[nodiscard]] constexpr auto const& queries() const noexcept {
-            return as_components().queries();
-        }
-
-        [[nodiscard]] constexpr auto& fragment() noexcept {
-            return as_components().fragment();
-        }
-
-        [[nodiscard]] constexpr auto const& fragment() const noexcept {
-            return as_components().fragment();
-        }
+        // [[nodiscard]] constexpr basic_scheme<> scheme() noexcept {
+        //     return
+        // }
+        //
+        // [[nodiscard]] constexpr auto& hostname() noexcept {
+        //     return as_components().hostname();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& username() noexcept {
+        //     return as_components().username();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& password() noexcept {
+        //     return as_components().password();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& port() noexcept {
+        //     return as_components().port();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& path() noexcept {
+        //     return as_components().path();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& queries() noexcept {
+        //     return as_components().queries();
+        // }
+        //
+        // [[nodiscard]] constexpr auto& fragment() noexcept {
+        //     return as_components().fragment();
+        // }
 
         /**
          * @brief check if we have value
          * @return false if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
+            // todo: fix this, this is stupid:
             return this->has_scheme() || this->has_authority() || this->has_path() || this->has_queries() ||
                    this->has_fragment();
         }

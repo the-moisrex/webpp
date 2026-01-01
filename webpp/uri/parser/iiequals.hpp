@@ -29,6 +29,7 @@ namespace webpp::uri {
             auto rhs_it = stl::begin(rhs);
 
             using char_type = stl::iter_value_t<decltype(lhs_it)>;
+            using ichar_type = typename decltype(IgnoreCharacters)::value_type;
 
             for (;;) {
                 if (lhs_it == stl::end(lhs)) {
@@ -44,7 +45,7 @@ namespace webpp::uri {
                 if (rhs_it == stl::end(rhs)) {
                     // rhs, now has to be all ignored, otherwise it's not equal
                     for (; lhs_it != stl::end(lhs); ++lhs_it) {
-                        if (!IgnoreCharacters.contains(*lhs_it)) {
+                        if (!IgnoreCharacters.contains(static_cast<ichar_type>(*lhs_it))) {
                             return false;
                         }
                     }
@@ -57,12 +58,12 @@ namespace webpp::uri {
                     continue;
                 }
 
-                if (IgnoreCharacters.contains(*lhs_it)) {
+                if (IgnoreCharacters.contains(static_cast<ichar_type>(*lhs_it))) {
                     ++lhs_it;
                     continue;
                 }
 
-                if (IgnoreCharacters.contains(*rhs_it)) {
+                if (IgnoreCharacters.contains(static_cast<ichar_type>(*rhs_it))) {
                     ++rhs_it;
                     continue;
                 }

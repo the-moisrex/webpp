@@ -31,7 +31,7 @@ int test() {
 }
 ```
 
-There are a lot more features included in this directly.
+There are a lot more features included.
 
 ## FAQ
 
