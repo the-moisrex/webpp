@@ -3,193 +3,50 @@
 #ifndef WEBPP_URI_PORT_HPP
 #define WEBPP_URI_PORT_HPP
 
-#include "../convert/casts.hpp"
-#include "../std/string_like.hpp"
+#include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../strings/append.hpp"
 #include "./parser/parse_port.hpp"
 
 namespace webpp::uri {
 
     /// Serialize port
-    template <typename StorageType, istl::StringLike StrT>
-    static constexpr void render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
-      noexcept(!istl::ModifiableString<StrT>) {
+    template <typename CharT>
+    static constexpr void render_port(
+      stl::basic_string_view<CharT> const& storage,
+      stl::basic_string<CharT>&            out,
+      bool const                           add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
         if (storage.empty()) {
             return;
         }
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(':');
-            }
+        if (add_separators) {
+            out.push_back(':');
         }
-        istl::append(out, storage);
+        out.append(storage);
     }
 
     /**
-     * Basic port is designed as a string because it also should be able to handle services,
-     * not that URIs can handle services but that operating systems APIs like Unix systems can
-     * handle services instead of only port numbers.
-     *
-     * todo: implement handling of services at construction and to convert port number to a service
+     * Check if the specified port is valid or not
      */
-    template <istl::StringLike StringType = stl::string_view>
-    struct basic_port {
-        using string_type      = StringType;
-        using char_type        = istl::char_type_of_t<string_type>;
-        using iterator         = typename string_type::iterator;
-        using size_type        = typename string_type::size_type;
-        using string_view_type = istl::string_view_type_of<string_type>;
+    [[nodiscard]] constexpr bool is_valid(int const port) noexcept {
+        return port >= 0 && port < static_cast<int>(max_port_number);
+    }
 
-        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
-        static constexpr bool is_nothrow      = !is_modifiable;
-        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
+    /**
+     * Is the specified port the default port for the specified scheme or not?
+     */
+    template <typename CharT>
+    [[nodiscard]] constexpr bool is_default_port(int const port, stl::basic_string_view<CharT> const scheme) noexcept {
+        return known_port(scheme) == port;
+    }
 
-
-      private:
-        // we're not making this public, because we want this value to be always correct, unless the user
-        // explicitly puts invalid values with assign
-        string_type storage;
-
-      public:
-        template <uri_options Options = uri_options{}, typename Iter = iterator>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_component_context<components::port, string_type*, stl::remove_cvref_t<Iter>> ctx{};
-            ctx.beg = beg;
-            ctx.pos = beg;
-            ctx.end = end;
-            ctx.out = stl::addressof(storage);
-            parse_port<Options>(ctx);
-            return ctx.status;
-        }
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires needs_allocator
-        explicit constexpr basic_port(AllocT const& alloc = {}) noexcept : storage{alloc} {}
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires(!needs_allocator)
-        explicit constexpr basic_port([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
-
-        template <istl::StringViewifiable InpStr = string_view_type>
-        explicit constexpr basic_port(InpStr&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::view(stl::forward<InpStr>(inp_str));
-            parse(str.begin(), str.end());
-        }
-
-        template <istl::StringViewifiable InpStr = string_view_type>
-        constexpr basic_port& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::view(stl::forward<InpStr>(inp_str));
-            parse(str.begin(), str.end());
-            return *this;
-        }
-
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return storage.size();
-        }
-
-        template <istl::StringView StrVT = string_view_type>
-        [[nodiscard]] constexpr bool is_default_port(StrVT const scheme) const noexcept {
-            return known_port(scheme) == value();
-        }
-
-        template <istl::StringView StrVT = string_view_type>
-        [[nodiscard]] constexpr StrVT view() const noexcept {
-            return StrVT{storage.data(), storage.size()};
-        }
-
-        template <istl::StringLike NStrT = string_view_type>
-        constexpr void to_string(NStrT& out, bool const append_separators = false) const
-          noexcept(!istl::ModifiableString<NStrT>) {
-            render_port(storage, out, append_separators);
-        }
-
-        template <istl::StringLike NStrT = string_view_type, typename... Args>
-        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
-            NStrT out{stl::forward<Args>(args)...};
-            to_string(out);
-            return out;
-        }
-
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
-            auto const val = try_to_int(storage);
-            return val && *val >= 0 && *val < max_port_number;
-        }
-
-        [[nodiscard]] constexpr bool is_well_known() const noexcept {
-            auto const val = try_to_int(storage);
-            return val && *val >= 0 && *val < well_known_upper_port;
-        }
-
-        template <stl::integral T = stl::uint16_t>
-        [[nodiscard]] constexpr T value() const noexcept {
-            return to<T>(storage);
-        }
-
-        template <stl::integral T = stl::uint16_t>
-        [[nodiscard]] explicit constexpr operator T() const noexcept {
-            return value<T>(storage);
-        }
-
-        /**
-         * @brief Replace the value with the specified raw data, without parsing
-         * @param beg start of the value
-         * @param end the end of the value
-         */
-        template <typename Iter = iterator>
-        constexpr void assign(Iter beg, Iter end) noexcept(!is_modifiable) {
-            istl::assign(storage, beg, end);
-        }
-
-        template <stl::integral T = stl::uint16_t>
-            requires is_modifiable
-        constexpr bool assign(T port_num) {
-            if constexpr (!stl::same_as<T, stl::uint16_t> && !stl::same_as<T, stl::uint8_t>) {
-                if (port_num < 0 || port_num > max_port_number) {
-                    return false;
-                }
-            }
-            clear();
-            append_to(storage, port_num);
-            return true;
-        }
-
-        constexpr void clear() {
-            istl::clear(storage);
-        }
-
-        /**
-         * @brief check if we have value
-         * @return false if we don't have anything
-         */
-        [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !storage.empty();
-        }
-
-        [[nodiscard]] constexpr auto& storage_ref() noexcept {
-            return storage;
-        }
-
-        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
-            return storage;
-        }
-
-        template <istl::StringViewifiable NStrT = string_view_type>
-        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            return iiequals_afl(storage, stl::forward<NStrT>(inp_str));
-        }
-
-        [[nodiscard]] constexpr bool operator==(basic_port const& other) const noexcept {
-            return storage == other.storage_ref();
-        }
-
-        [[nodiscard]] constexpr bool operator==(stl::integral auto other) const noexcept {
-            return value() == other;
-        }
-    };
-
+    /**
+     * Check if the specified port is a well known port or not
+     */
+    [[nodiscard]] constexpr bool is_well_known(int const port) noexcept {
+        return port >= 0 && port < static_cast<int>(well_known_upper_port);
+    }
 
 } // namespace webpp::uri
 

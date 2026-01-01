@@ -6,7 +6,7 @@
 
 using namespace webpp;
 
-using Types = testing::Types<stl::string, stl::string_view, stl::wstring, stl::wstring_view>;
+using Types = testing::Types<char, char32_t, char16_t, wchar_t>;
 
 template <class T>
 struct StructuredURITests : testing::Test {
@@ -99,13 +99,6 @@ TYPED_TEST(StructuredURITests, StructuredPassword) {
     } else {
         EXPECT_EQ(data, pass.view());
     }
-}
-
-TYPED_TEST(StructuredURITests, StructuredPort) {
-    static TypeParam const           data{get_one<TypeParam>("8080", L"8080")};
-    uri::basic_port<TypeParam> const port{data};
-    EXPECT_TRUE(port.has_value());
-    EXPECT_EQ(8080, port.value());
 }
 
 TYPED_TEST(StructuredURITests, StructuredScheme) {

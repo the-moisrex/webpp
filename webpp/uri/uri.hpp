@@ -71,7 +71,6 @@ namespace webpp::uri {
         using username_type = basic_username<string_type>;
         using password_type = basic_password<string_type>;
         using host_type     = basic_host<string_type>;
-        using port_type     = basic_port<string_type>;
         using path_type     = basic_path<string_type, allocator_type>;
         using queries_type  = basic_queries<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
