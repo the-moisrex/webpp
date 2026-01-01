@@ -367,7 +367,7 @@ namespace webpp::unicode::idna {
     /// conversions, so you may not use this function for serious work.
     template <istl::String OutStrT = std::string, istl::StringViewifiable StrVT = stl::string_view, typename... Args>
     [[nodiscard]] static constexpr OutStrT punycode_of(StrVT &&src, Args &&...args) {
-        auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
+        auto const src_view = istl::view(stl::forward<StrVT>(src));
         using char_type     = istl::char_type_of_t<decltype(src_view)>;
         OutStrT out{stl::forward<Args>(args)...};
         static_cast<void>(to_punycode<char_type, OutStrT>(src_view, out));
@@ -378,7 +378,7 @@ namespace webpp::unicode::idna {
     /// conversions, so you may not use this function for serious work.
     template <istl::String OutStrT = std::string, istl::StringViewifiable StrVT = stl::string_view, typename... Args>
     [[nodiscard]] static constexpr OutStrT unicode_of(StrVT &&src, Args &&...args) {
-        auto const src_view = istl::string_viewify(stl::forward<StrVT>(src));
+        auto const src_view = istl::view(stl::forward<StrVT>(src));
         using char_type     = istl::char_type_of_t<decltype(src_view)>;
         OutStrT out{stl::forward<Args>(args)...};
         static_cast<void>(to_unicode<char_type, OutStrT>(src_view, out));

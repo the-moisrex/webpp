@@ -386,7 +386,7 @@ namespace webpp::unicode::idna {
 
     template <istl::Appendable OutStrT, istl::StringViewifiable InpStrT>
     [[nodiscard]] static constexpr bool map(InpStrT&& src, OutStrT& out) noexcept(istl::NothrowAppendable<OutStrT>) {
-        auto const src_view = istl::string_viewify(stl::forward<InpStrT>(src));
+        auto const src_view = istl::view(stl::forward<InpStrT>(src));
         using iterator      = typename decltype(src_view)::iterator;
         return map<OutStrT, iterator>(stl::begin(src_view), stl::end(src_view), out);
     }

@@ -8,22 +8,22 @@
 #include "../std/string_view.hpp"
 #include "../strings/append.hpp"
 #include "./parser/parse_port.hpp"
-#include "host_authority.hpp"
 
 namespace webpp::uri {
 
     /// Serialize port
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void
-    render_port(StorageType const& storage, StrT& out, bool const add_separators = istl::ModifiableString<StrT>)
+    static constexpr void render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
       noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
         if (storage.empty()) {
             return;
         }
-        if (add_separators) {
-            out.push_back(':');
+        if constexpr (istl::ModifiableString<StrT>) {
+            if (add_separators) {
+                out.push_back(':');
+            }
         }
         istl::append(out, storage);
     }
@@ -37,10 +37,11 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string_view>
     struct basic_port {
-        using string_type = StringType;
-        using char_type   = istl::char_type_of_t<string_type>;
-        using iterator    = typename string_type::iterator;
-        using size_type   = typename string_type::size_type;
+        using string_type      = StringType;
+        using char_type        = istl::char_type_of_t<string_type>;
+        using iterator         = typename string_type::iterator;
+        using size_type        = typename string_type::size_type;
+        using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
@@ -72,15 +73,15 @@ namespace webpp::uri {
             requires(!needs_allocator)
         explicit constexpr basic_port([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
 
-        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable InpStr = string_view_type>
         explicit constexpr basic_port(InpStr&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            auto const str = istl::view(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
         }
 
-        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable InpStr = string_view_type>
         constexpr basic_port& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            auto const str = istl::view(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
             return *this;
         }
@@ -89,23 +90,23 @@ namespace webpp::uri {
             return storage.size();
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr bool is_default_port(StrVT const scheme) const noexcept {
             return known_port(scheme) == value();
         }
 
-        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr StrVT view() const noexcept {
             return StrVT{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringLike NStrT = string_view_type>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
             render_port(storage, out, append_separators);
         }
 
-        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        template <istl::StringLike NStrT = string_view_type, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
@@ -175,7 +176,7 @@ namespace webpp::uri {
             return storage;
         }
 
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        template <istl::StringViewifiable NStrT = string_view_type>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             return iiequals_afl(storage, stl::forward<NStrT>(inp_str));
         }

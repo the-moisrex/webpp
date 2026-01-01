@@ -598,7 +598,7 @@ namespace webpp::unicode::idna {
 
     template <idna_options Options = idna_options{}, istl::StringViewifiable StrVT, istl::String StrT = stl::u8string>
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT&& src, StrT& out) {
-        auto const src_v = istl::string_viewify(stl::forward<StrVT>(src));
+        auto const src_v = istl::view(stl::forward<StrVT>(src));
         return to_ascii<Options>(src_v.begin(), src_v.end(), out);
     }
 
@@ -616,7 +616,7 @@ namespace webpp::unicode::idna {
               istl::StringViewifiable StrT,
               typename... Args>
     [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(StrT&& src, Args&&... args) {
-        auto const str = istl::string_viewify(stl::forward<StrT>(src));
+        auto const str = istl::view(stl::forward<StrT>(src));
         OutStrT    out{stl::forward<Args>(args)...};
         auto const status = to_ascii<Options>(str.begin(), str.end(), out);
         if (is_valid(status)) [[likely]] {
@@ -635,7 +635,7 @@ namespace webpp::unicode::idna {
     template <istl::String OutStrT, istl::StringViewifiable StrV>
     [[nodiscard]] static constexpr bool operator==(stl::expected<OutStrT, to_ascii_status_type> const& lhs,
                                                    StrV&&                                              rhs) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrV>(rhs));
+        auto const str = istl::view(stl::forward<StrV>(rhs));
         if (lhs.has_value()) {
             return lhs.value() == str;
         }

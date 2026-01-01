@@ -18,9 +18,7 @@ namespace webpp::istl {
     /// No need to use StringLike; this can be used for other types as well.
     template <typename StrT, typename InputIt>
     constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(requires {
-        {
-            str.assign(beg, end)
-        } noexcept;
+        { str.assign(beg, end) } noexcept;
     }) {
         str.assign(beg, end);
     }

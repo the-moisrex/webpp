@@ -32,23 +32,18 @@ namespace webpp::uri {
      * @tparam StringType
      */
     template <istl::StringLike StringType = stl::string_view>
-    struct basic_scheme {
+    struct basic_scheme : StringType {
         using string_type      = StringType;
         using char_type        = istl::char_type_of_t<string_type>;
         using iterator         = typename string_type::iterator;
         using size_type        = typename string_type::size_type;
         using allocator_type   = allocator_type_from_t<string_type>;
-        using string_view_type = istl::string_view_type_of<string_type>;
+        using string_view_type = istl::string_view_type_of<StringType>;
 
         static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow      = !is_modifiable;
         static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-
-      private:
-        string_type storage;
-
-      public:
         template <uri_options Options = uri_options{}, typename Iter = iterator>
         constexpr uri_status_type
           parse(Iter beg, Iter end, uri_status_type const initial_status = +uri_status::unparsed) noexcept(is_nothrow) {
@@ -62,55 +57,18 @@ namespace webpp::uri {
             return ctx.status;
         }
 
-        explicit constexpr basic_scheme(allocator_type const& alloc = {}) noexcept
-            requires needs_allocator
-          : storage{alloc} {}
-
-        explicit constexpr basic_scheme([[maybe_unused]] allocator_type const& alloc = {}) noexcept
-            requires(!needs_allocator)
-        {}
-
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, allocator_type const& alloc) noexcept
-            requires needs_allocator
-          : storage{alloc} {}
-
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t  tag,
-                               [[maybe_unused]] allocator_type const& alloc) noexcept
-            requires(!needs_allocator)
-        {}
-
-        explicit constexpr basic_scheme(string_view_type const inp_str) noexcept(is_nothrow) {
-            parse(inp_str.begin(), inp_str.end());
+        template <typename... Args>
+        explicit constexpr basic_scheme(Args&&... args) noexcept(is_nothrow) : StringType{std::forward<Args>(args)...} {
+            parse(this->begin(), this->end());
         }
 
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
-                               allocator_type const&                 alloc,
-                               string_view_type const&               inp_str) noexcept(is_nothrow)
-            requires needs_allocator
-          : storage{alloc} {
-            parse(inp_str.begin(), inp_str.end());
-        }
-
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t  tag,
-                               [[maybe_unused]] allocator_type const& alloc,
-                               string_view_type const&                inp_str) noexcept(is_nothrow)
-            requires(!needs_allocator)
-        {
-            parse(inp_str.begin(), inp_str.end());
-        }
-
-        template <istl::StringLike InpStr = string_view_type>
-        constexpr basic_scheme& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+        constexpr basic_scheme& operator=(string_view_type const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
             return *this;
         }
 
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return storage.size();
-        }
-
         constexpr void clear() noexcept {
-            istl::clear(storage);
+            istl::clear(storage_ref());
         }
 
         /**
@@ -121,14 +79,14 @@ namespace webpp::uri {
          *  - others:     0
          */
         [[nodiscard]] constexpr stl::uint16_t known_port() const noexcept {
-            return uri::known_port(view());
+            return uri::known_port(view(*this));
         }
 
         /**
          * @brief checks if the URI is a relative reference
          */
         [[nodiscard]] constexpr bool is_relative_reference() const noexcept {
-            return storage.empty();
+            return this->empty();
         }
 
         /**
@@ -138,12 +96,12 @@ namespace webpp::uri {
          */
         template <typename Iter = iterator>
         constexpr void assign(Iter beg, Iter end) noexcept(!is_modifiable) {
-            istl::assign(storage, beg, end);
+            istl::assign(storage_ref(), beg, end);
         }
 
         template <istl::StringView StrVT = string_view_type>
         [[nodiscard]] constexpr StrVT view() const noexcept {
-            return StrVT{storage.data(), storage.size()};
+            return StrVT{this->data(), this->size()};
         }
 
         [[nodiscard]] constexpr bool is_special() const noexcept {
@@ -155,13 +113,13 @@ namespace webpp::uri {
          * @return false if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !storage.empty();
+            return !this->empty();
         }
 
         template <istl::StringLike NStrT = string_view_type>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
-            render_scheme(storage, out, append_separators);
+            render_scheme(storage_ref(), out, append_separators);
         }
 
         template <istl::StringLike NStrT = string_view_type, typename... Args>
@@ -172,20 +130,15 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr auto& storage_ref() noexcept {
-            return storage;
+            return static_cast<StringType&>(*this);
         }
 
         [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
-            return storage;
-        }
-
-        template <istl::StringViewifiable NStrT = string_view_type>
-        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            return iiequals_afl(storage, stl::forward<NStrT>(inp_str));
+            return static_cast<StringType const&>(*this);
         }
 
         [[nodiscard]] constexpr bool operator==(basic_scheme const& other) const noexcept {
-            return storage == other.storage_ref();
+            return storage_ref() == other.storage_ref();
         }
     };
 

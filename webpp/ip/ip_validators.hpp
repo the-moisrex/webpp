@@ -35,7 +35,7 @@ namespace webpp::is {
      */
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool subnet(StrV&& subnet_str) noexcept {
-        auto        str      = istl::string_viewify(stl::forward<StrV>(subnet_str));
+        auto        str      = istl::view(stl::forward<StrV>(subnet_str));
         stl::size_t next_dot = 0;
         for (uint8_t octet_index = 0U; octet_index != 4U; octet_index++) {
             next_dot       = str.find('.');
@@ -75,7 +75,7 @@ namespace webpp::is {
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ipv4(StrV&& inp_str) noexcept {
         using enum inet_pton4_status;
-        auto const                                str = istl::string_viewify(stl::forward<StrV>(inp_str));
+        auto const                                str = istl::view(stl::forward<StrV>(inp_str));
         auto                                      beg = str.begin();
         stl::array<stl::uint8_t, ipv4_byte_count> out; // NOLINT(*-member-init)
         return inet_pton4(beg, str.end(), out.data()) == valid;
@@ -89,7 +89,7 @@ namespace webpp::is {
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ipv4_prefix(StrV&& inp_str) noexcept {
         using enum inet_pton4_status;
-        auto                                      str        = istl::string_viewify(stl::forward<StrV>(inp_str));
+        auto                                      str        = istl::view(stl::forward<StrV>(inp_str));
         stl::uint8_t                              prefix_val = stl::to_underlying(valid);
         stl::array<stl::uint8_t, ipv4_byte_count> bin; // NOLINT(*-member-init)
         auto                                      beg = str.begin();
@@ -111,7 +111,7 @@ namespace webpp::is {
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ipv6(StrV&& ip_addr) noexcept {
         using enum inet_pton6_status;
-        auto const                                ip_str = istl::string_viewify(stl::forward<StrV>(ip_addr));
+        auto const                                ip_str = istl::view(stl::forward<StrV>(ip_addr));
         auto                                      beg    = ip_str.begin();
         stl::array<stl::uint8_t, ipv6_byte_count> out;             // NOLINT(*-member-init)
         return inet_pton6(beg, ip_str.end(), out.data()) == valid; // valid_special is not valid here
@@ -120,7 +120,7 @@ namespace webpp::is {
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ipv6_prefix(StrV&& ip_addr) noexcept {
         using enum inet_pton6_status;
-        auto                                      str        = istl::string_viewify(stl::forward<StrV>(ip_addr));
+        auto                                      str        = istl::view(stl::forward<StrV>(ip_addr));
         stl::uint8_t                              prefix_val = stl::to_underlying(valid);
         stl::array<stl::uint8_t, ipv6_byte_count> bin; // NOLINT(*-member-init)
         auto                                      beg = str.begin();
@@ -135,7 +135,7 @@ namespace webpp::is {
      */
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ip(StrV&& ip_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrV>(ip_str));
+        auto const str = istl::view(stl::forward<StrV>(ip_str));
         return is::ipv4(str) || ipv6(str);
     }
 

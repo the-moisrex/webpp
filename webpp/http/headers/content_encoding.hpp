@@ -26,7 +26,7 @@ namespace webpp::http {
          */
         template <istl::StringViewifiable StrV>
         bool parse(StrV&& str_v) noexcept {
-            auto const content_encoding = istl::string_viewify(stl::forward<StrV>(str_v));
+            auto const content_encoding = istl::view(stl::forward<StrV>(str_v));
             using string_view_type      = stl::remove_cvref_t<decltype(content_encoding)>;
 
             // todo: this makes 2 passes to the string, you can optimize this algorithm

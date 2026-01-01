@@ -391,7 +391,7 @@ namespace webpp::unicode {
               istl::Appendable        StrT   = stl::u32string,
               istl::StringViewifiable InpStrT>
     static constexpr void canonical_decompose(InpStrT&& src, StrT& out) noexcept(istl::NothrowAppendable<StrT>) {
-        auto const strv = istl::string_viewify(stl::forward<InpStrT>(src));
+        auto const strv = istl::view(stl::forward<InpStrT>(src));
         canonical_decompose<Policy>(strv.begin(), strv.end(), out);
     }
 
@@ -445,7 +445,7 @@ namespace webpp::unicode {
               istl::StringViewifiable InpStr,
               typename... Args>
     [[nodiscard]] static constexpr OStrT canonical_decomposed(InpStr&& src, Args&&... args) {
-        auto const strv = istl::string_viewify(stl::forward<InpStr>(src));
+        auto const strv = istl::view(stl::forward<InpStr>(src));
         OStrT      out{stl::forward<Args>(args)...};
         canonical_decompose<ErrPolicy>(strv.begin(), strv.end(), out);
         return out;
@@ -1068,7 +1068,7 @@ namespace webpp::unicode {
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFC(StrT&& str) noexcept {
-        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        auto str_view = istl::view(stl::forward<StrT>(str));
         return is_normalized<norm_form::NFC>(str_view.begin(), str_view.end());
     }
 
@@ -1079,7 +1079,7 @@ namespace webpp::unicode {
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFD(StrT&& str) noexcept {
-        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        auto str_view = istl::view(stl::forward<StrT>(str));
         return is_normalized<norm_form::NFD>(str_view.begin(), str_view.end());
     }
 
@@ -1090,7 +1090,7 @@ namespace webpp::unicode {
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFKC(StrT&& str) noexcept {
-        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        auto str_view = istl::view(stl::forward<StrT>(str));
         return is_normalized<norm_form::NFKC>(str_view.begin(), str_view.end());
     }
 
@@ -1101,7 +1101,7 @@ namespace webpp::unicode {
 
     template <istl::StringViewifiable StrT = stl::u32string_view>
     [[nodiscard]] static constexpr bool isNFKD(StrT&& str) noexcept {
-        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        auto str_view = istl::view(stl::forward<StrT>(str));
         return is_normalized<norm_form::NFKD>(str_view.begin(), str_view.end());
     }
 

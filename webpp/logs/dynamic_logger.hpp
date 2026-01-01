@@ -167,37 +167,37 @@ namespace webpp {
                                                                                                                   \
     template <istl::StringViewifiable DetStrT>                                                                    \
     void method_name(DetStrT&& details) const noexcept {                                                          \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<DetStrT>(details)));     \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));     \
     }                                                                                                             \
                                                                                                                   \
     template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
     void method_name(CatStrT&& category, DetStrT&& details) const noexcept {                                      \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::string_viewify_of<string_view_type>(stl::forward<DetStrT>(details)));     \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));     \
     }                                                                                                             \
                                                                                                                   \
     template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
     void method_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ecode) const noexcept {        \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::string_viewify_of<string_view_type>(stl::forward<DetStrT>(details)),      \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),      \
                                   ecode);                                                                         \
     }                                                                                                             \
                                                                                                                   \
     template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
     void method_name(CatStrT&& category, DetStrT&& details, stl::exception const& exp) const noexcept {           \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::string_viewify_of<string_view_type>(stl::forward<DetStrT>(details)),      \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),      \
                                   exp);                                                                           \
     }                                                                                                             \
                                                                                                                   \
     template <istl::StringViewifiable StrT>                                                                       \
     void method_name(StrT&& details, stl::error_code const& ecode) const noexcept {                               \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<StrT>(details)), ecode); \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), ecode); \
     }                                                                                                             \
                                                                                                                   \
     template <istl::StringViewifiable StrT>                                                                       \
     void method_name(StrT&& details, stl::exception const& exp) const noexcept {                                  \
-        m_logger_ptr->method_name(istl::string_viewify_of<string_view_type>(stl::forward<StrT>(details)), exp);   \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), exp);   \
     }                                                                                                             \
                                                                                                                   \
     template <typename... OptsT>                                                                                  \

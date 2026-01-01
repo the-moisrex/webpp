@@ -162,7 +162,7 @@ namespace webpp {
          * parses the string_view to the uint8 structure
          */
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
-            auto  ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
+            auto  ip_str  = istl::view(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
             auto* inp_ptr = ip_str.begin();
             auto* out_ptr = _data.data();
 
@@ -386,7 +386,7 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets and not the prefix
-            return basic_ipv6(istl::string_viewify(stl::forward<StrT>(ip_addr)))._data == _data;
+            return basic_ipv6(istl::view(stl::forward<StrT>(ip_addr)))._data == _data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv6 const ip_addr) const noexcept {

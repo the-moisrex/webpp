@@ -3,11 +3,9 @@
 #ifndef WEBPP_URI_IDNA_ASCII_HPP
 #define WEBPP_URI_IDNA_ASCII_HPP
 
-#include "../std/string.hpp"
-#include "../unicode/idna.hpp"
-#include "../unicode/normalization.hpp"
-#include "../unicode/to_ascii.hpp"
-#include "uri_status.hpp"
+#include "../../std/string.hpp"
+#include "../../unicode/to_ascii.hpp"
+#include "../uri_status.hpp"
 
 namespace webpp::uri::idna {
 
@@ -44,7 +42,6 @@ namespace webpp::uri::idna {
     template <uri_options Options, istl::String StrT = stl::string, typename Iter>
     static constexpr domain2ascii_status domain_to_ascii(Iter spos, Iter send, StrT& out) {
         using enum domain2ascii_status;
-        using unicode::norm_form;
         using unicode::idna::to_ascii_status;
 
         constexpr bool be_strict = false;

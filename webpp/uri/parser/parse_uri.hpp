@@ -82,7 +82,7 @@ namespace webpp::uri {
         using iterator = typename StrT::const_iterator;
         static_assert(stl::same_as<iterator, typename OStrV::const_iterator>,
                       "Origin's string's char type must be the same as the specified URI's string's char type.");
-        auto const base         = istl::string_viewify(stl::forward<OStrV>(base_uri));
+        auto const base         = istl::view(stl::forward<OStrV>(base_uri));
         using base_context_type = parsing_uri_context<stl::uint32_t, iterator>;
 
         base_context_type origin_context{.beg = base.begin(), .pos = base.begin(), .end = base.end()};

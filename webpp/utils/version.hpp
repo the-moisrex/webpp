@@ -126,7 +126,7 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
         constexpr void from_safe_string(StrT&& inp_str) noexcept {
-            auto str    = istl::string_viewify(stl::forward<StrT>(inp_str));
+            auto str    = istl::view(stl::forward<StrT>(inp_str));
             using str_v = decltype(str);
             for (auto octet = this->begin(); octet != this->end(); ++octet) {
                 auto const dot = str.find('.');
@@ -161,7 +161,7 @@ namespace webpp {
           "that means you're not handling the case in which "
           "the specified string is not a valid version.")]] constexpr bool
         from_string(StrT&& inp_str) noexcept {
-            auto str    = istl::string_viewify(stl::forward<StrT>(inp_str));
+            auto str    = istl::view(stl::forward<StrT>(inp_str));
             using str_v = decltype(str);
             for (auto octet = this->begin(); octet != this->end(); ++octet) {
                 auto const dot = str.find('.');

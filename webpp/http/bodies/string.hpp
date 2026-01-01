@@ -192,7 +192,7 @@ namespace webpp::http {
                         }
                     }
                     if constexpr (istl::StringViewifiableOf<type, body_type>) {
-                        str = istl::string_viewify_of<type>(body);
+                        str = istl::view_of<type>(body);
                     } else {
                         using char_type = istl::char_type_of_t<type>;
                         using data_type = char_type const*;
@@ -247,7 +247,7 @@ namespace webpp::http {
             return str;
         } else if constexpr (istl::StringView<T>) {
             if constexpr (istl::StringViewifiableOf<type, BodyType>) {
-                return istl::string_viewify_of<type>(stl::forward<BodyType>(body));
+                return istl::view_of<type>(stl::forward<BodyType>(body));
             } else {
                 type str;
                 details::deserialize_body_impl(str, stl::forward<BodyType>(body));
@@ -312,7 +312,7 @@ namespace webpp::http {
     template <istl::StringViewifiable T, HTTPBody BodyType>
     constexpr void tag_invoke(serialize_body_tag, T&& str, BodyType& body) {
         using body_type     = stl::remove_cvref_t<BodyType>;
-        auto const str_view = istl::string_viewify(str);
+        auto const str_view = istl::view(str);
         if constexpr (UnifiedBodyReader<body_type>) {
             switch (body.which_communicator()) {
                 using enum communicator_type;

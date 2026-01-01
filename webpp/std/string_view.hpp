@@ -38,9 +38,7 @@ namespace webpp::istl {
 
         // NOLINTNEXTLINE(*-avoid-c-arrays)
         requires requires(typename stl::remove_cvref_t<T>::value_type const char_str[3]) {
-            {
-                str = char_str
-            };
+            { str = char_str };
         };
     };
 
@@ -97,7 +95,7 @@ namespace webpp::istl {
      */
     template <typename StrViewT, typename StrT>
         requires(StringViewifiableOf<StrViewT, StrT>)
-    [[nodiscard]] constexpr StrViewT string_viewify_of(StrT&& str) noexcept {
+    [[nodiscard]] constexpr StrViewT view_of(StrT&& str) noexcept {
         if constexpr (stl::is_convertible_v<StrT, StrViewT>) {
             return stl::forward<StrT>(str);
         } else if constexpr (requires { StrViewT{str}; }) {
@@ -117,15 +115,15 @@ namespace webpp::istl {
         {
             return StrViewT{str.data(), str.size()};
         } else if constexpr (requires { str.string_view(); }) {
-            return string_viewify_of<StrViewT>(str.string_view());
+            return view_of<StrViewT>(str.string_view());
         } else if constexpr (requires { str.str(); }) {
-            return string_viewify_of<StrViewT>(str.str());
+            return view_of<StrViewT>(str.str());
         } else if constexpr (requires { str.string(); }) {
-            return string_viewify_of<StrViewT>(str.string());
+            return view_of<StrViewT>(str.string());
         } else if constexpr (requires { str.template to_string<StrViewT>(); }) {
-            return string_viewify_of<StrViewT>(str.template to_string<StrViewT>());
+            return view_of<StrViewT>(str.template to_string<StrViewT>());
         } else if constexpr (requires { str.to_string(); }) {
-            return string_viewify_of<StrViewT>(str.to_string());
+            return view_of<StrViewT>(str.to_string());
         } else {
             static_assert(false && sizeof(StrT), "The specified input is not convertible to string view");
         }
@@ -140,18 +138,18 @@ namespace webpp::istl {
      */
     template <template <typename...> typename StrViewT, typename StrT>
         requires(StringViewifiableOfTemplate<StrViewT, StrT>)
-    [[nodiscard]] constexpr auto string_viewify_of(StrT&& str) noexcept {
+    [[nodiscard]] constexpr auto view_of(StrT&& str) noexcept {
         using deduced_type = details::string_view::deduced_type<StrViewT, StrT>;
-        return string_viewify_of<deduced_type, StrT>(stl::forward<StrT>(str));
+        return view_of<deduced_type, StrT>(stl::forward<StrT>(str));
     }
 
     /**
      * Convert to string view (if itself is one, return itself, otherwise get one of the basic_string_view)
      */
     template <StringViewifiable StrT>
-    [[nodiscard]] constexpr auto string_viewify(StrT&& str) noexcept {
+    [[nodiscard]] constexpr auto view(StrT&& str) noexcept {
         using str_view_t = string_view_type_of<StrT>;
-        return string_viewify_of<str_view_t>(stl::forward<StrT>(str));
+        return view_of<str_view_t>(stl::forward<StrT>(str));
     }
 
     template <StringViewifiable T>
@@ -162,7 +160,7 @@ namespace webpp::istl {
         if constexpr (stl::is_same_v<str_t, str_v>) {
             return str;
         } else {
-            return string_viewify_of<str_v>(stl::forward<T>(str));
+            return view_of<str_v>(stl::forward<T>(str));
         }
     }
 

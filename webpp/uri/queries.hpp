@@ -164,7 +164,7 @@ namespace webpp::uri {
             // NOLINTNEXTLINE(*-avoid-c-arrays)
             webpp_static_constexpr char_type queries_separators[3]{'=', '&', '\0'};
 
-            auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            auto str = istl::view(stl::forward<NStrT>(inp_str));
             while (!str.empty()) {
                 auto const name = str.substr(0, str.find_first_of(queries_separators));
                 str.remove_prefix(name.size());

@@ -123,10 +123,10 @@ namespace webpp::sql {
             using type = stl::remove_cvref_t<T>;
 
             constexpr bool supports_our_sview =
-              supports_string_view<decltype(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)))>;
+              supports_string_view<decltype(istl::view_of<string_view_type>(stl::forward<T>(str)))>;
 
             constexpr bool supports_std_sview =
-              supports_string_view<decltype(istl::string_viewify(stl::forward<T>(str)))>;
+              supports_string_view<decltype(istl::view(stl::forward<T>(str)))>;
 
             constexpr bool is_our_sview = istl::StringViewifiableOf<string_view_type, type>;
             constexpr bool is_std_sview = istl::StringViewifiable<type>;
@@ -136,9 +136,9 @@ namespace webpp::sql {
             }
 
             if constexpr (is_our_sview && supports_our_sview) {
-                return istl::string_viewify_of<string_view_type>(stl::forward<T>(str));
+                return istl::view_of<string_view_type>(stl::forward<T>(str));
             } else if constexpr (is_std_sview && supports_std_sview) {
-                return istl::string_viewify(stl::forward<T>(str));
+                return istl::view(stl::forward<T>(str));
             } else {
                 static_assert_false(T, "We're not able to convert the specified sql query to string view");
             }

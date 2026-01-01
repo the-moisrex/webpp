@@ -3,17 +3,17 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
-#include "../idna_to_ascii.hpp"
 #include "../uri_status.hpp"
+#include "./idna_to_ascii.hpp"
 #include "./parse_authority_pieces.hpp"
 #include "./uri_components.hpp"
 #include "./windows_drive_letter.hpp"
 
 namespace webpp::uri {
 
-    template <istl::StringLike T>
-    [[nodiscard]] static constexpr bool is_localhost_string(T&& host) noexcept {
-        return iiequals_fl<details::TABS_OR_NEWLINES>("localhost", stl::forward<T>(host));
+    template <typename CharT>
+    [[nodiscard]] static constexpr bool is_localhost_string(stl::basic_string_view<CharT> const host) noexcept {
+        return iiequals_fl("localhost", host);
     }
 
     /**
@@ -25,20 +25,12 @@ namespace webpp::uri {
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
-                for (;;) {
-                    switch (*ctx.pos) {
-                        case '/':
-                        case '\\': break;
-                        default:
-                            // we have to move one back because the "path" needs to start with a "/" or a "\"
-                            --ctx.pos;
-                            if (ctx.pos == ctx.beg) {
-                                break;
-                            }
-                            continue;
+            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) [[unlikely]] {
+                while (*ctx.pos != '/' && *ctx.pos != '\\') {
+                    // we have to move one back because the "path" needs to start with a "/" or a "\"
+                    if (--ctx.pos == ctx.beg) {
+                        break;
                     }
-                    break;
                 }
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
                 set_valid(ctx.status, uri_status::valid_path);
@@ -55,10 +47,8 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
-        if (has_value<components::host>(ctx)) {
-            if (is_localhost_string(get_component<components::host>(ctx))) {
-                clear<components::host>(ctx);
-            }
+        if (has_value<components::host>(ctx) && is_localhost_string(get_component<components::host>(ctx))) {
+            clear<components::host>(ctx);
         }
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
@@ -90,17 +80,15 @@ namespace webpp::uri {
         [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
             assert(pos != end);
-
-            if (*pos == '[') {
-                if (*stl::prev(end) != ']') [[unlikely]] {
-                    set_error(ctx.status, ipv6_unclosed);
-                    return false;
-                }
-                static_cast<void>(details::parse_host_ipv6(ctx));
+            if (*pos != '[') [[likely]] {
+                return true;
+            }
+            if (*stl::prev(end) != ']') [[unlikely]] {
+                set_error(ctx.status, ipv6_unclosed);
                 return false;
             }
-
-            [[likely]] { return true; }
+            static_cast<void>(details::parse_host_ipv6(ctx));
+            return false;
         }
     } // namespace details
 
@@ -277,7 +265,6 @@ namespace webpp::uri {
                 case '?':
                 case '#':
                 case '?':
-                case '\0': continue; // todo
                 case '[':
                 case ']': inside_brackets = *ctx.pos == '['; [[fallthrough]];
                 default: break;

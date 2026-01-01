@@ -65,7 +65,7 @@ namespace webpp::http {
 
       public:
         explicit encoded_word(istl::StringViewifiable auto&& _input, allocator_type const& alloc = allocator_type{})
-          : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
+          : input(istl::view(stl::forward<decltype(_input)>(input))),
             output(alloc) {}
 
         encoded_word()                                                  = delete;

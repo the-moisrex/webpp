@@ -172,9 +172,9 @@ set(ALL_SOURCES_SHORT
         uri/fragment.hpp
         uri/host.hpp
         uri/host_authority.hpp
-        uri/idna_to_ascii.hpp
         uri/parser/constants.hpp
         uri/parser/host_ip.hpp
+        uri/parser/idna_to_ascii.hpp
         uri/parser/iiequals.hpp
         uri/parser/parse_authority.hpp
         uri/parser/parse_authority_pieces.hpp

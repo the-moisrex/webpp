@@ -134,7 +134,7 @@ namespace webpp::ascii {
         }
 
         if constexpr (both_lowered == Side || both_uppered == Side) {
-            return istl::string_viewify(_str1) == istl::string_viewify(_str2);
+            return istl::view(_str1) == istl::view(_str2);
         } else {
 #ifdef WEBPP_EVE
             using str2_type  = decltype(_str2);

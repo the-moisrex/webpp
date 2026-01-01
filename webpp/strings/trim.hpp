@@ -58,7 +58,7 @@ namespace webpp::ascii {
     // trim from start (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto ltrim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
+        auto str = istl::view(stl::forward<StrViewType>(inp_str));
         ltrim(str, whitespaces);
         return str;
     }
@@ -66,7 +66,7 @@ namespace webpp::ascii {
     // trim from end (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto rtrim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
+        auto str = istl::view(stl::forward<StrViewType>(inp_str));
         rtrim(str, whitespaces);
         return str;
     }
@@ -74,7 +74,7 @@ namespace webpp::ascii {
     // trim from both ends (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto trim_copy(StrViewType&& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::string_viewify(stl::forward<StrViewType>(inp_str));
+        auto str = istl::view(stl::forward<StrViewType>(inp_str));
         trim(str, whitespaces);
         return str;
     }

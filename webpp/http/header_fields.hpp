@@ -92,12 +92,12 @@ namespace webpp::http {
 
         friend constexpr bool operator==(istl::StringViewifiable auto&&        str,
                                          basic_header_field<StringType> const& field) noexcept {
-            return field.operator==(istl::string_viewify(str));
+            return field.operator==(istl::view(str));
         }
 
         friend constexpr bool operator!=(istl::StringViewifiable auto&&        str,
                                          basic_header_field<StringType> const& field) noexcept {
-            return field.operator!=(istl::string_viewify(str));
+            return field.operator!=(istl::view(str));
         }
     };
 
@@ -227,8 +227,8 @@ namespace webpp::http {
             requires(istl::StringView<string_type> && istl::StringViewifiableOf<string_type, NameT> &&
                      istl::StringViewifiableOf<string_type, ValueT>)
         constexpr void emplace(NameT&& name, ValueT value) {
-            fields.emplace_back(istl::string_viewify_of<string_type>(stl::forward<NameT>(name)),
-                                istl::string_viewify_of<string_type>(stl::forward<ValueT>(value)));
+            fields.emplace_back(istl::view_of<string_type>(stl::forward<NameT>(name)),
+                                istl::view_of<string_type>(stl::forward<ValueT>(value)));
         }
 
         /**

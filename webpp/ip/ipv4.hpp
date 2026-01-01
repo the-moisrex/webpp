@@ -53,7 +53,7 @@ namespace webpp {
      */
     template <istl::StringViewifiable StrT>
     constexpr ipv4_octet to_prefix(StrT&& inp_str) noexcept {
-        auto const  str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const  str = istl::view(stl::forward<StrT>(inp_str));
         ipv4_octets bin; // NOLINT(*-pro-type-member-init)
         auto        beg = str.begin();
         if (inet_pton4(beg, str.end(), bin.data()) == inet_pton4_status::valid) {
@@ -135,7 +135,7 @@ namespace webpp {
 
         template <istl::StringViewifiable StrT>
         constexpr decltype(auto) parse(StrT&& ip_addr) noexcept {
-            auto const str = istl::string_viewify(stl::forward<StrT>(ip_addr));
+            auto const str = istl::view(stl::forward<StrT>(ip_addr));
             return parse(str.begin(), str.end());
         }
 
@@ -325,13 +325,13 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         constexpr stl::strong_ordering operator<=>(StrT&& ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::string_viewify(stl::forward<StrT>(ip_addr))}.data <=> data;
+            return basic_ipv4{istl::view(stl::forward<StrT>(ip_addr))}.data <=> data;
         }
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::string_viewify(stl::forward<StrT>(ip_addr))}.data == data;
+            return basic_ipv4{istl::view(stl::forward<StrT>(ip_addr))}.data == data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv4 const ip_addr) const noexcept {

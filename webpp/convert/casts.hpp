@@ -107,7 +107,7 @@ namespace webpp {
          * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
 
-        auto const str = istl::string_viewify(stl::forward<StrT>(_str));
+        auto const str = istl::view(stl::forward<StrT>(_str));
         T          ret = 0;
         if (!str.size()) {
             return ret;

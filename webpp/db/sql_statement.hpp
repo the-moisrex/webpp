@@ -87,7 +87,7 @@ namespace webpp::sql {
             if constexpr (requires { this->bind(index, stl::forward<T>(val), errmsg); }) {
                 driver().bind(index, stl::forward<T>(val), errmsg);
             } else if constexpr (istl::StringViewifiable<T>) {
-                driver().bind(index, istl::string_viewify_of<string_view_type>(stl::forward<T>(val)), errmsg);
+                driver().bind(index, istl::view_of<string_view_type>(stl::forward<T>(val)), errmsg);
             } else {
                 static_assert_false(T, "Don't know how to bind the value, unknown type specified.");
             }

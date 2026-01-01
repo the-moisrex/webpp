@@ -121,7 +121,7 @@ namespace webpp::http {
                 using data_type = stl::remove_cvref_t<decltype(data)>;
                 if constexpr (istl::StringViewifiable<data_type>) {
                     // data type is a string
-                    auto res = create_response(istl::string_viewify(data));
+                    auto res = create_response(istl::view(data));
                     res.headers.status_code(error_code);
                     return res;
                 } else if constexpr (requires {

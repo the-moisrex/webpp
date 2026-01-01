@@ -29,7 +29,7 @@ namespace webpp::http {
 
             template <istl::StringViewifiable StrT>
             constexpr HTTPResponse auto json_file(StrT&& file_path) const noexcept {
-                return json(stl::filesystem::path{istl::string_viewify(stl::forward<StrT>(file_path))});
+                return json(stl::filesystem::path{istl::view(stl::forward<StrT>(file_path))});
             }
 
             template <typename... Args>

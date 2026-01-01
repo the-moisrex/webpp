@@ -126,7 +126,7 @@ namespace webpp::http {
 
     template <istl::StringLiteral StrT>
     [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag tag, StrT&& next) noexcept {
-        return segment_string{istl::string_viewify(stl::forward<StrT>(next))};
+        return segment_string{istl::view(stl::forward<StrT>(next))};
     }
 
     // String Views Valvifier

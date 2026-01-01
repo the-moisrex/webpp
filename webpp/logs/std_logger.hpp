@@ -64,8 +64,8 @@ namespace webpp {
                 stl::fprintf(stream_getter(),
                              "[%s, %s]: %s\n",
                              logging_type_to_string(lt),
-                             istl::string_viewify(stl::forward<CatStrT>(category)).data(),
-                             istl::string_viewify(stl::forward<DetStrT>(details)).data());
+                             istl::view(stl::forward<CatStrT>(category)).data(),
+                             istl::view(stl::forward<DetStrT>(details)).data());
 #endif
             }
         }
@@ -86,8 +86,8 @@ namespace webpp {
     void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {              \
         if constexpr (!is_debug) {                                                                                    \
             stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
-                                      istl::string_viewify(category).size();                                          \
-            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                                  \
+                                      istl::view(category).size();                                          \
+            auto old_details = istl::view(stl::forward<DetStrT>(details));                                  \
             auto new_details =                                                                                        \
               fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ec.message()); \
             log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \
@@ -98,8 +98,8 @@ namespace webpp {
     void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {               \
         if constexpr (!is_debug) {                                                                                    \
             stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
-                                      istl::string_viewify(category).size();                                          \
-            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                                  \
+                                      istl::view(category).size();                                          \
+            auto old_details = istl::view(stl::forward<DetStrT>(details));                                  \
             auto new_details =                                                                                        \
               fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ex.what());    \
             log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \

@@ -111,8 +111,8 @@ TYPED_TEST(StructuredURITests, StructuredPort) {
 TYPED_TEST(StructuredURITests, StructuredScheme) {
     static TypeParam const             data{get_one<TypeParam>("https:", L"https:")};
     uri::basic_scheme<TypeParam> const scheme{data};
-    EXPECT_TRUE(scheme.has_value());
-    EXPECT_EQ(data.substr(0, data.size() - 1), scheme.view());
+    EXPECT_FALSE(scheme.empty());
+    EXPECT_EQ(data.substr(0, data.size() - 1), istl::view(scheme));
 }
 
 TYPED_TEST(StructuredURITests, StructuredSchemeLowered) {
@@ -121,15 +121,15 @@ TYPED_TEST(StructuredURITests, StructuredSchemeLowered) {
     EXPECT_EQ(data.size(), 6);
 
     uri::basic_scheme<TypeParam> const scheme{data};
-    EXPECT_TRUE(scheme.has_value());
+    EXPECT_FALSE(scheme.empty());
     if constexpr (uri::basic_scheme<TypeParam>::is_modifiable) {
         TypeParam out_str;
         ascii::lower_to(out_str, data.begin(), data.begin() + static_cast<stl::int64_t>(data.size() - 1));
         EXPECT_EQ(out_str, ascii::to_lower_copy(data.substr(0, data.size() - 1)));
 
-        EXPECT_EQ(get_one<TypeParam>("https", L"https"), scheme.view());
+        EXPECT_EQ(get_one<TypeParam>("https", L"https"), istl::view(scheme));
     } else {
-        EXPECT_EQ(data.substr(0, data.size() - 1), scheme.view());
+        EXPECT_EQ(data.substr(0, data.size() - 1), istl::view(scheme));
     }
 }
 
@@ -137,7 +137,7 @@ TYPED_TEST(StructuredURITests, StructuredURI) {
     static TypeParam const data{get_one<TypeParam>("HTTPS:", L"HtTPS:")};
 
     uri::basic_uri<TypeParam> const url{data};
-    EXPECT_TRUE(url.has_value());
+    EXPECT_FALSE(url.has_value());
     EXPECT_TRUE(url.has_scheme());
 }
 

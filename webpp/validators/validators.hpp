@@ -29,8 +29,8 @@ namespace webpp::is {
 
     [[nodiscard]] constexpr bool contains(istl::StringViewifiable auto&& inp_str,
                                           istl::StringViewifiable auto&& inp_seed) noexcept {
-        auto str  = istl::string_viewify(inp_str);
-        auto seed = istl::string_viewify(inp_seed);
+        auto str  = istl::view(inp_str);
+        auto seed = istl::view(inp_seed);
         return str.find(seed) != decltype(str)::npos;
     }
 
@@ -75,7 +75,7 @@ namespace webpp::is {
      * @return
      */
     [[nodiscard]] constexpr bool host(istl::StringViewifiable auto&& inp_str) noexcept {
-        auto str = istl::string_viewify(inp_str);
+        auto str = istl::view(inp_str);
 
         using str_view_t = decltype(str);
         using char_type  = typename str_view_t::value_type;
@@ -142,7 +142,7 @@ namespace webpp::is {
      */
 
     [[nodiscard]] constexpr bool query(istl::StringViewifiable auto&& _str) noexcept {
-        auto str        = istl::string_viewify(_str);
+        auto str        = istl::view(_str);
         using char_type = istl::char_type_of_t<decltype(str)>;
 
         /**
@@ -193,7 +193,7 @@ namespace webpp::is {
      */
 
     [[nodiscard]] constexpr bool hex_color(istl::StringViewifiable auto&& inp_str) noexcept {
-        auto str = istl::string_viewify(inp_str);
+        auto str = istl::view(inp_str);
         if (!ascii::starts_with(str, '#')) {
             return false;
         }
@@ -214,7 +214,7 @@ namespace webpp::is {
     [[nodiscard]] bool rgb_color(istl::StringViewifiable auto&& inp_str) noexcept {
         // TODO: there are better ways to do it, check performance
 
-        auto sstr       = istl::string_viewify(inp_str);
+        auto sstr       = istl::view(inp_str);
         using char_type = typename decltype(sstr)::value_type;
 
         constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
@@ -265,7 +265,7 @@ namespace webpp::is {
 
     // [[nodiscard]] bool rgba_color(istl::StringViewifiable auto&& _str) noexcept {
     //     // TODO: there are better ways to do it, check performance
-    //     auto str                                                  = istl::string_viewify(_str);
+    //     auto str                                                  = istl::view(_str);
     //     using char_type                                           = typename decltype(str)::value_type;
     //     constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
     //     return true; // TODO: I'm just gonna make it compilable

@@ -159,18 +159,18 @@ namespace webpp::ascii {
 
     template <typename T>
     [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& inp_str, T&& data) noexcept {
-        return istl::string_viewify(inp_str).starts_with(stl::forward<T>(data));
+        return istl::view(inp_str).starts_with(stl::forward<T>(data));
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&          inp_str,
                                            istl::char_type_of_t<decltype(inp_str)> inp_char) noexcept {
-        auto const str = istl::string_viewify(inp_str);
+        auto const str = istl::view(inp_str);
         return !str.empty() && str.back() == inp_char;
     }
 
     [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& inp_str,
                                            istl::StringViewifiable auto&& inp_ending) noexcept {
-        return istl::string_viewify(inp_str).ends_with(istl::string_viewify(inp_ending));
+        return istl::view(inp_str).ends_with(istl::view(inp_ending));
     }
 
     //    template <typename ValueType, typename... R>

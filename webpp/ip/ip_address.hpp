@@ -46,7 +46,7 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
             requires(!istl::cvref_as<StrT, ip_address>)
         explicit constexpr ip_address(StrT&& ip_addr) noexcept {
-            parse(istl::string_viewify(stl::forward<StrT>(ip_addr)));
+            parse(istl::view(stl::forward<StrT>(ip_addr)));
         }
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -54,7 +54,7 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
             requires(!istl::cvref_as<StrT, ip_address>)
         constexpr ip_address& operator=(StrT&& ip_addr) noexcept {
-            parse(istl::string_viewify(stl::forward<StrT>(ip_addr)));
+            parse(istl::view(stl::forward<StrT>(ip_addr)));
             return *this;
         }
 

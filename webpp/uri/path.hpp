@@ -94,7 +94,7 @@ namespace webpp::uri {
 
         template <uri_options Options = uri_options{}, istl::StringViewifiable StrT>
         constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+            auto const str = istl::view(stl::forward<StrT>(inp_str));
             return parse<Options>(str.begin(), str.end());
         }
 
@@ -216,7 +216,7 @@ namespace webpp::uri {
             requires(!stl::same_as<stl::remove_cvref_t<SegStrT>, basic_path>)
         [[nodiscard]] constexpr auto operator<=>(SegStrT&& rhs) const {
             // todo: optimize this
-            auto const      path_str = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(rhs));
+            auto const      path_str = istl::view_of<string_view_type>(stl::forward<SegStrT>(rhs));
             path_type const rhs_path{path_str, storage.get_allocator()};
             return *this <=> rhs_path;
         }

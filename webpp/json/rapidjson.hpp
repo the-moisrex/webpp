@@ -448,7 +448,7 @@ namespace webpp::json::rapidjson {
             auto& operator=(T&& val) {
                 using type = stl::remove_cvref_t<T>;
                 if constexpr (istl::StringViewifiable<T>) {
-                    auto const val_view = istl::string_viewify_of<string_view_type>(stl::forward<T>(val));
+                    auto const val_view = istl::view_of<string_view_type>(stl::forward<T>(val));
                     val_handle          = ::rapidjson::StringRef(val_view.data(), val_view.size());
                 } else if constexpr (istl::is_specialization_of_v<type, json::field>) {
                     this->as_object()[val.key] = val.value();
@@ -466,7 +466,7 @@ namespace webpp::json::rapidjson {
                         if constexpr (requires { rapidjson_value_type{item}; }) {
                             data.PushBack(rapidjson_value_type{item}.Move(), this->get_allocator().native_alloc());
                         } else if constexpr (istl::StringViewifiable<item_type>) {
-                            auto const item_view = istl::string_viewify(stl::move(item));
+                            auto const item_view = istl::view(stl::move(item));
                             auto const item_ref  = ::rapidjson::StringRef(item_view.data(), item_view.size());
                             data.PushBack(rapidjson_value_type{item_ref}.Move(), this->get_allocator().native_alloc());
                         }
@@ -740,7 +740,7 @@ namespace webpp::json::rapidjson {
                     return value_type{obj_handle[key_value], this->get_allocator()};
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
-                    auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
+                    auto const key_view = istl::view_of<string_view_type>(stl::forward<KeyType>(key));
                     auto const key_ref  = ::rapidjson::StringRef(key_view.data(), key_view.size());
                     if (!contains(key_ref)) {
                         obj_handle.AddMember(rapidjson_plain_value_type{key_ref},
@@ -764,7 +764,7 @@ namespace webpp::json::rapidjson {
 
             template <JSONKey KeyT, typename ValT>
             generic_object& insert(KeyT&& key, ValT&& val) {
-                auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                auto const key_view = istl::view_of<string_view_type>(stl::forward<KeyT>(key));
                 obj_handle.AddMember(::rapidjson::StringRef(key_view.data(), key_view.size()),
                                      stl::forward<ValT>(val),
                                      this->get_allocator().native_alloc());
@@ -796,7 +796,7 @@ namespace webpp::json::rapidjson {
             template <typename KeyT>
             [[nodiscard]] bool contains(KeyT&& key) const {
                 if constexpr (JSONKey<KeyT>) {
-                    auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                    auto const key_view = istl::view_of<string_view_type>(stl::forward<KeyT>(key));
                     return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
                 } else if constexpr (requires { obj_handle.HasMember(stl::forward<KeyT>(key)); }) {
                     return obj_handle.HasMember(stl::forward<KeyT>(key));
@@ -1010,7 +1010,7 @@ namespace webpp::json::rapidjson {
         // implement the parse method
         template <istl::StringViewifiable StrT>
         document& parse(StrT&& json_string) {
-            auto const json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
+            auto const json_str_view = istl::view(stl::forward<StrT>(json_string));
             this->val_handle.Parse(json_str_view.data(), json_str_view.size());
             return *this;
         }

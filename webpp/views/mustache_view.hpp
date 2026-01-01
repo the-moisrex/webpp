@@ -185,7 +185,7 @@ namespace webpp::views {
                       istl::stringify_of<string_type>(stl::move(input.first), get_allocator<char_type>(etraits))} {}
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
-                    return istl::string_viewify_of<string_view_type>(key_value);
+                    return istl::view_of<string_view_type>(key_value);
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {

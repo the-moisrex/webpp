@@ -139,7 +139,7 @@ namespace webpp::uri {
               istl::String            OutStrT = stl::string>
     [[nodiscard]] static constexpr bool
     decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
-        auto const str = istl::string_viewify(stl::forward<StrVT>(encoded_str));
+        auto const str = istl::view(stl::forward<StrVT>(encoded_str));
         auto       pos = str.begin();
         return decode_uri_component<Policy>(pos, str.end(), output, chars);
     }
@@ -220,7 +220,7 @@ namespace webpp::uri {
               istl::StringViewifiable InpStrT = stl::string_view>
     static constexpr void
     encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& policy_chars) {
-        auto const input = istl::string_viewify(stl::forward<InpStrT>(src));
+        auto const input = istl::view(stl::forward<InpStrT>(src));
         for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, policy_chars);
         }

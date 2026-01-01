@@ -49,7 +49,7 @@ namespace webpp::http {
         using mem_traits = istl::member_function_pointer_traits<Callable>;
         if constexpr (istl::StringViewifiable<Callable>) {
             out.append(" \"");
-            out += istl::string_viewify(func);
+            out += istl::view(func);
             out.append("\"");
         } else if constexpr (requires { func.to_string(out); }) {
             func.to_string(out);

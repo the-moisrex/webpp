@@ -418,7 +418,7 @@ namespace webpp::unicode::idna {
 
     template <idna_options Options = idna_options{}, istl::StringViewifiable StrT>
     [[nodiscard]] static constexpr bool is_label_valid(StrT&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         return is_label_valid<Options>(str.begin(), str.end());
     }
 

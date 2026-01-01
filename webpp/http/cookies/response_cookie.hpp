@@ -121,7 +121,7 @@ namespace webpp::http {
             _expires{},
             _comment{alloc},
             attrs{alloc} {
-            auto src = istl::string_viewify(stl::forward<decltype(source)>(source));
+            auto src = istl::view(stl::forward<decltype(source)>(source));
             parse_set_cookie(src); // parse name, value, and options
             // todo: deal with the error
         }

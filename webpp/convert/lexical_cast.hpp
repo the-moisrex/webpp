@@ -37,7 +37,7 @@ namespace webpp::lexical {
             return stl::forward<Source>(source);
         } else if constexpr (istl::StringView<target_t> && istl::StringViewifiableOf<target_t, src_t>) {
             // Target == string_view and Source is convertible
-            return istl::string_viewify_of<Target>(stl::forward<Source>(source));
+            return istl::view_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t>) {
             // Target == string
             auto const the_alloc =
@@ -121,9 +121,9 @@ namespace webpp::lexical {
         //        static_assert(is_target_string);
 
         if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> &&
-                      requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); })
+                      requires { istl::view_of<Target>(stl::forward<Source>(source)); })
         {
-            return istl::string_viewify_of<Target>(stl::forward<Source>(source));
+            return istl::view_of<Target>(stl::forward<Source>(source));
         } else if constexpr (
           istl::StringifiableOfTemplate<Target, src_t> && requires {
               istl::stringify_of<Target>(stl::forward<Source>(source), extract_allocator_or_default(allocs..., source));

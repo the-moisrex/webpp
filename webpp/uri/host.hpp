@@ -177,14 +177,14 @@ namespace webpp::uri {
         explicit constexpr basic_host(InpStr&& inp_str, AllocT inp_alloc = {}) noexcept(is_nothrow)
           : storage{string_type{inp_alloc}},
             alloc{inp_alloc} {
-            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            auto const str = istl::view(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
         }
 
         template <istl::StringViewifiable InpStr = string_view_type>
             requires(!is_modifiable)
         explicit constexpr basic_host(InpStr&& inp_str) noexcept(is_nothrow) : storage{string_type{}} {
-            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            auto const str = istl::view(stl::forward<InpStr>(inp_str));
             parse(str.begin(), str.end());
         }
 
@@ -253,7 +253,7 @@ namespace webpp::uri {
         //     if (!stl::holds_alternative<string_type>(storage)) {
         //         return uri_status::hostname_type_mismatch;
         //     }
-        //     auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        //     auto const str = istl::view(stl::forward<StrT>(inp_str));
         //     return parse(str.begin(), str.end());
         // }
         //

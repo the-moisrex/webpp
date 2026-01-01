@@ -146,7 +146,7 @@ namespace webpp::uri {
 
         template <istl::StringViewifiable StrV = string_view_type>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (!at_end() && *pos == istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug))) {
+            if (!at_end() && *pos == istl::view_of<string_view_type>(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }
@@ -296,7 +296,7 @@ namespace webpp::uri {
         template <typename StrV>
             requires(istl::StringViewifiableOf<string_view_type, StrV>)
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            return next() && seg == istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug));
+            return next() && seg == istl::view_of<string_view_type>(stl::forward<StrV>(slug));
         }
     };
 

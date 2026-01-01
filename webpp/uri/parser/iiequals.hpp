@@ -22,8 +22,8 @@ namespace webpp::uri {
         if constexpr (IgnoreCharacters.empty()) {
             return ascii::iequals<Side>(stl::forward<LT>(inp_lhs), stl::forward<RT>(inp_rhs));
         } else {
-            auto const lhs = istl::string_viewify(stl::forward<LT>(inp_lhs));
-            auto const rhs = istl::string_viewify(stl::forward<RT>(inp_rhs));
+            auto const lhs = istl::view(stl::forward<LT>(inp_lhs));
+            auto const rhs = istl::view(stl::forward<RT>(inp_rhs));
 
             auto lhs_it = stl::begin(lhs);
             auto rhs_it = stl::begin(rhs);

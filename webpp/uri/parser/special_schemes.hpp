@@ -44,9 +44,9 @@ namespace webpp::uri {
         return static_cast<scheme_type>(+status & scheme_mask);
     }
 
-    template <istl::StringLike StrT>
-    [[nodiscard]] static constexpr bool is_file_scheme(StrT scheme) noexcept {
-        return iiequals_fl<details::TABS_OR_NEWLINES>("file", stl::forward<StrT>(scheme));
+    template <typename CharT>
+    [[nodiscard]] static constexpr bool is_file_scheme(stl::basic_string_view<CharT> const scheme) noexcept {
+        return iiequals_fl("file", scheme);
     }
 
     [[nodiscard]] static constexpr bool is_file_scheme(scheme_type const scheme) noexcept {
@@ -60,21 +60,13 @@ namespace webpp::uri {
     /**
      * @return 0 if unknown, otherwise return the port
      */
-    template <bool CheckSpecialCharacters = true, istl::StringView StrT = stl::string_view>
-    [[nodiscard]] static constexpr stl::uint16_t known_port(StrT scheme) noexcept {
+    template <typename CharT>
+    [[nodiscard]] static constexpr stl::uint16_t known_port(stl::basic_string_view<CharT> const scheme) noexcept {
         using details::encoded_scheme;
 
         // NOLINTBEGIN(*-magic-numbers)
         stl::uint64_t scheme_code = 0ULL;
         for (auto const ith_char : scheme) {
-            if constexpr (CheckSpecialCharacters) {
-                switch (ith_char) {
-                    case '\r':
-                    case '\n':
-                    case '\t': continue;
-                    default: break;
-                }
-            }
             scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(ith_char));
             scheme_code <<= details::one_byte;
         }
@@ -107,8 +99,8 @@ namespace webpp::uri {
      *
      * from https://url.spec.whatwg.org/#is-special
      */
-    template <istl::StringView StrT>
-    [[nodiscard]] static constexpr bool is_special_scheme(StrT scheme) noexcept {
+    template <typename CharT>
+    [[nodiscard]] static constexpr bool is_special_scheme(stl::basic_string_view<CharT> const scheme) noexcept {
         return known_port(scheme) != 0U || is_file_scheme(scheme);
     }
 

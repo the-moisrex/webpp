@@ -31,7 +31,7 @@ namespace webpp::ascii::is {
      */
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool rtrimmed(StrT&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         return !whitespace(*str.rbegin());
     }
 
@@ -42,7 +42,7 @@ namespace webpp::ascii::is {
      */
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool ltrimmed(StrT&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         return !whitespace(str[0]);
     }
 
@@ -53,7 +53,7 @@ namespace webpp::ascii::is {
      */
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool trimmed(StrT&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         return ltrimmed(str) && rtrimmed(str);
     }
 
@@ -74,7 +74,7 @@ namespace webpp::ascii::is {
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool digit(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         for (auto cur_char : str) {
             if (!digit(cur_char)) {
                 return false;
@@ -100,7 +100,7 @@ namespace webpp::ascii::is {
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool number(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto const str      = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str      = istl::view(stl::forward<StrT>(inp_str));
         bool       is_first = true;
         for (auto const& c : str) {
             if (!digit(c)) {
@@ -131,7 +131,7 @@ namespace webpp::ascii::is {
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool lowercase(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        for (auto const str = istl::string_viewify(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
+        for (auto const str = istl::view(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
             if (!lowercase(cur_char)) {
                 return false;
             }
@@ -156,7 +156,7 @@ namespace webpp::ascii::is {
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool uppercase(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        for (auto const str = istl::string_viewify(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
+        for (auto const str = istl::view(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
             if (!uppercase(cur_char)) {
                 return false;
             }
@@ -182,7 +182,7 @@ namespace webpp::ascii::is {
      */
     template <istl::StringViewifiable StrT>
     [[nodiscard]] constexpr bool uint8(StrT&& inp_str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str = istl::view(stl::forward<StrT>(inp_str));
         return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
     }
 
@@ -205,7 +205,7 @@ namespace webpp::ascii::is {
     [[nodiscard]] constexpr bool hex(StrT&& inp_str) noexcept {
         using char_type = istl::char_type_of_t<StrT>;
 
-        auto const str   = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const str   = istl::view(stl::forward<StrT>(inp_str));
         auto       first = stl::cbegin(str);
         if (str.starts_with('-') || str.starts_with('+')) {
             ++first;

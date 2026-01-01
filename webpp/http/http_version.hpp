@@ -34,7 +34,7 @@ namespace webpp::http {
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
         explicit constexpr version(T&& str) noexcept
-          : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
+          : value(parse_string(istl::view(stl::forward<decltype(str)>(str)))) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

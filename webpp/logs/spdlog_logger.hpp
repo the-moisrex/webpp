@@ -35,7 +35,7 @@ namespace webpp {
 
         template <istl::StringViewifiable LogT>
         spdlog_logger(LogT&& logger_name)
-          : spdlogger{spdlog::get(istl::string_viewify(stl::forward<LogT>(logger_name)).c_str())} {}
+          : spdlogger{spdlog::get(istl::view(stl::forward<LogT>(logger_name)).c_str())} {}
 
         spdlog_logger(spdlog_logger const&)                = default;
         spdlog_logger(spdlog_logger&&) noexcept            = default;

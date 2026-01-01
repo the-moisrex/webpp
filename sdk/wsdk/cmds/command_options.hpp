@@ -34,7 +34,7 @@ namespace webpp::sdk {
 
         template <istl::StringViewifiable StrT>
         output_port& operator<<(StrT&& str) {
-            notify(istl::string_viewify(stl::forward<StrT>(str)));
+            notify(istl::view(stl::forward<StrT>(str)));
             return *this;
         }
     };
