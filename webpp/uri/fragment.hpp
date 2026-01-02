@@ -10,138 +10,20 @@
 namespace webpp::uri {
 
     /// Serialize fragment
-    template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void
-    render_fragment(StorageStrT const& storage, StrT& out, bool const add_separators = istl::ModifiableString<StrT>)
-      noexcept(!istl::ModifiableString<StrT>) {
+    template <typename CharT>
+    static constexpr void render_fragment(
+      stl::basic_string_view<CharT> const storage,
+      stl::basic_string<CharT>&           out,
+      bool const                          add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
-        using string_type = StrT;
-        using char_type   = typename string_type::value_type;
-
         if (storage.empty()) {
             return;
         }
         if (add_separators) {
-            out.push_back(static_cast<char_type>('#'));
+            out.push_back(static_cast<CharT>('#'));
         }
-        istl::append(out, storage);
+        out.append(storage);
     }
-
-    /**
-     * @brief Basic Fragment (or sometimes called Hash, like in WHATWG)
-     * @tparam StringType String or String View type to be used as a storage
-     */
-    template <istl::StringLike StringType = stl::string_view>
-    struct basic_fragment {
-        using string_type      = StringType;
-        using char_type        = typename string_type::value_type;
-        using iterator         = typename string_type::iterator;
-        using size_type        = typename string_type::size_type;
-        using string_view_type = istl::string_view_type_of<string_type>;
-
-        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
-        static constexpr bool is_nothrow      = !is_modifiable;
-        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
-
-
-      private:
-        string_type storage;
-
-      public:
-        template <uri_options Options = uri_options{}, typename Iter = iterator>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_component_context<components::fragment, string_type*, stl::remove_cvref_t<Iter>> ctx{};
-            ctx.beg = beg;
-            ctx.pos = beg;
-            ctx.end = end;
-            ctx.out = stl::addressof(storage);
-            parse_fragment<Options>(ctx);
-            return ctx.status;
-        }
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires needs_allocator
-        explicit constexpr basic_fragment(AllocT const& alloc = {}) noexcept : storage{alloc} {}
-
-        template <Allocator AllocT = allocator_type_from_t<string_type>>
-            requires(!needs_allocator)
-        explicit constexpr basic_fragment([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
-
-        template <istl::StringLike InpStr = string_view_type>
-        explicit constexpr basic_fragment(InpStr const& inp_str) noexcept(is_nothrow) {
-            parse(inp_str.begin(), inp_str.end());
-        }
-
-        template <istl::StringLike InpStr = string_view_type>
-        constexpr basic_fragment& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
-            parse(inp_str.begin(), inp_str.end());
-            return *this;
-        }
-
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return storage.size();
-        }
-
-        constexpr void clear() {
-            istl::clear(storage);
-        }
-
-        template <istl::StringView StrVT = string_view_type>
-        [[nodiscard]] constexpr StrVT view() const noexcept {
-            return StrVT{storage.data(), storage.size()};
-        }
-
-        template <istl::StringLike NStrT = string_view_type>
-        constexpr void to_string(NStrT& out, bool const append_separators = false) const noexcept(is_nothrow) {
-            render_fragment(storage, out, append_separators);
-        }
-
-        template <istl::StringLike NStrT = string_view_type, typename... Args>
-        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const noexcept(is_nothrow) {
-            NStrT out{stl::forward<Args>(args)...};
-            to_string(out);
-            return out;
-        }
-
-        /**
-         * @brief Replace the value with the specified raw data, without parsing
-         * @param beg start of the value
-         * @param end the end of the value
-         */
-        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
-            istl::assign(storage, beg, end);
-        }
-
-        /**
-         * @brief check if we have value
-         * @return false if we don't have anything
-         */
-        [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !storage.empty();
-        }
-
-        [[nodiscard]] constexpr auto const& get_allocator() const noexcept {
-            return storage.get_allocator();
-        }
-
-        [[nodiscard]] constexpr auto& storage_ref() noexcept {
-            return storage;
-        }
-
-        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
-            return storage;
-        }
-
-        template <istl::StringViewifiable NStrT = string_view_type>
-        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            return iiequals_afl(storage, stl::forward<NStrT>(inp_str));
-        }
-
-        [[nodiscard]] constexpr bool operator==(basic_fragment const& other) const noexcept {
-            return storage == other.storage_ref();
-        }
-    };
-
 
 } // namespace webpp::uri
 
