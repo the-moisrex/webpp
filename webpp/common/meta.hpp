@@ -225,6 +225,21 @@ namespace webpp {
 #    define WEBPP_MUSTTAIL
 #endif
 
+
+////////////////////////////// [[lifetimebound]] //////////////////////////////
+#ifndef __has_cpp_attribute
+#    define webpp_lifetimebound
+#elif __has_cpp_attribute(msvc::lifetimebound)
+#    define webpp_lifetimebound [[msvc::lifetimebound]]
+#elif __has_cpp_attribute(clang::lifetimebound)
+#    define webpp_lifetimebound [[clang::lifetimebound]]
+#elif __has_cpp_attribute(lifetimebound)
+#    define webpp_lifetimebound [[lifetimebound]]
+#else
+#    define webpp_lifetimebound
+#endif
+
+
 // NOLINTEND(*-avoid-do-while, *-macro-usage, *-trailing-return)
 
 #endif // WEBPP_META_HPP

@@ -41,13 +41,14 @@ namespace webpp::uri {
      * https://url.spec.whatwg.org/#concept-host
      */
     template <typename CharT>
-    struct basic_host : stl::variant<stl::monostate, pure_ipv4, pure_ipv6, stl::basic_string_view<CharT>> {
-        using string_type  = stl::basic_string_view<CharT>;
-        using char_type    = CharT;
-        using storage_type = stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_type>;
+    struct [[nodiscard]]
+    basic_host : stl::variant<stl::monostate, pure_ipv4, pure_ipv6, stl::basic_string_view<CharT>> {
+        using string_view_type = stl::basic_string_view<CharT>;
+        using char_type        = CharT;
+        using storage_type     = stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_view_type>;
 
-        [[nodiscard]] constexpr string_type const* as_domain() const noexcept {
-            return get_if<string_type>(this);
+        [[nodiscard]] constexpr string_view_type const* as_domain() const noexcept webpp_lifetimebound {
+            return get_if<string_view_type>(this);
         }
 
         [[nodiscard]] constexpr pure_ipv4 const* as_ipv4() const noexcept {
@@ -101,9 +102,9 @@ namespace webpp::uri {
         /**
          * Top Level Domain; sometimes called the extension
          */
-        [[nodiscard]] constexpr string_type tld() const noexcept {
+        [[nodiscard]] constexpr string_view_type tld() const noexcept {
             if (auto* domain = as_domain()) {
-                return split_labels(*domain).begin().template value<string_type>();
+                return split_labels(*domain).begin().template value<string_view_type>();
             }
             return {};
         }
@@ -136,7 +137,7 @@ namespace webpp::uri {
         /// Equality check
         /// https://url.spec.whatwg.org/#host-equivalence
         /// Attention: this function doesn't parse your input
-        [[nodiscard]] constexpr bool operator==(string_type const inp_str) const noexcept {
+        [[nodiscard]] constexpr bool operator==(string_view_type const inp_str) const noexcept {
             return stl::visit([=]<typename T>(T const& host) noexcept {
                 if constexpr (!stl::same_as<T, stl::monostate>) {
                     return host == inp_str;
