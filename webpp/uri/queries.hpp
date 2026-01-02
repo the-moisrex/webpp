@@ -63,6 +63,28 @@ namespace webpp::uri {
 
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
+        [[nodiscard]] constexpr bool contains_key(string_view_type key) const noexcept {
+            if (key.empty()) [[unlikely]] {
+                return false;
+            }
+            auto pos = string_view_type::find(key);
+            while (pos != string_view_type::npos) {
+                if ((pos == 0 || (*this)[pos - 1] == '&') &&
+                    (pos + key.size() == string_view_type::size() || (*this)[pos + key.size()] == '=' ||
+                     (*this)[pos + key.size()] == '&'))
+                {
+                    return true;
+                }
+                pos = string_view_type::find(key, pos + 1);
+            }
+            return false;
+        }
+
+        template <typename... KeyT>
+        [[nodiscard]] constexpr bool has(KeyT&&... keys) const noexcept {
+            return (contains_key(stl::forward<KeyT>(keys)) && ...);
+        }
+
         /// Equality check
         /// Attention: this function doesn't parse your input
         [[nodiscard]] constexpr bool has_all(string_view_type str) const noexcept {
