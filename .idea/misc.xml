@@ -19,6 +19,7 @@
       <file path="$PROJECT_DIR$/benchmarks" />
       <file path="$PROJECT_DIR$/build-dev-clang" />
       <file path="$PROJECT_DIR$/build-dev-gcc" />
+      <file path="$PROJECT_DIR$/build-dev-gcc-release" />
       <file path="$PROJECT_DIR$/build-release" />
       <file path="$PROJECT_DIR$/cmake" />
       <file path="$PROJECT_DIR$/docs" />

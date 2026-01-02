@@ -8,93 +8,20 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/splits.hpp"
-#include "./parser/uri_components.hpp"
 
 #include <variant>
-#include <version>
 
 namespace webpp::uri {
-
-    template <typename StrT>
-    struct domain_labels_splitter {
-        using char_type  = typename StrT::value_type;
-        using delim_type = stl::basic_string_view<char_type>;
-        using type       = strings::splitter<typename StrT::iterator, char_type, delim_type, delim_type, delim_type>;
-    };
-
-    /// IDNA Mapping have already changed the Modifiable strings
-    template <istl::String StrT>
-    struct domain_labels_splitter<StrT> {
-        using char_type = typename StrT::value_type;
-        using type      = strings::splitter<typename StrT::iterator, char_type>;
-    };
-
-    template <typename StrT>
-    using domain_labels_splitter_t = typename domain_labels_splitter<StrT>::type;
-
-    namespace details {
-
-        // template <typename T, typename U, stl::size_t N>
-        // [[nodiscard]] consteval stl::array<T, N> to_array(stl::array<U, N> const& src) noexcept {
-        //     stl::array<T, N> out{};
-        //     stl::size_t      index = 0;
-        //     for (auto const val : src) {
-        //         out[index++] = val;
-        //     }
-        //     return out;
-        // }
-
-        // template <typename T, typename... U>
-        // [[nodiscard]] consteval stl::array<T, sizeof...(U)> to_array(U... src) noexcept {
-        //     return stl::array<T, sizeof...(U)>{static_cast<T>(src)...};
-        // }
-
-        template <typename T, typename U, stl::size_t LENGTH>
-        struct string_view_array {
-          private:
-            stl::array<T, LENGTH> data{};
-
-          public:
-            template <typename... RU>
-                requires(stl::same_as<RU, U> && ...)
-            explicit(false) consteval string_view_array(RU... rest) noexcept : data{static_cast<T>(rest)...} {}
-
-            [[nodiscard]] consteval stl::basic_string_view<T> view() const noexcept {
-                return stl::basic_string_view<T>(data.data(), LENGTH);
-            }
-        };
-
-        template <typename CharT>
-        static constexpr string_view_array<CharT, int, 4> ch_FF0E{0xEF, 0xBC, 0x8E, 0}; // \uFF0E
-        template <typename CharT>
-        static constexpr string_view_array<CharT, int, 4> ch_3002{0xE3, 0x80, 0x82, 0}; // \u3002
-        template <typename CharT>
-        static constexpr string_view_array<CharT, int, 4> ch_FF61{0xEF, 0xBD, 0xA1, 0}; // \uFF61
-    } // namespace details
 
     /**
      * Iterator through labels of a valid domain name
      */
-    template <istl::StringLike StrT = stl::string_view>
-    [[nodiscard]] constexpr auto domain_labels(StrT&& str) noexcept {
-        using splitter_type = domain_labels_splitter_t<stl::remove_cvref_t<StrT>>;
-        using char_type     = typename stl::remove_cvref_t<StrT>::value_type;
-        if constexpr (istl::String<StrT>) {
-            // IDNA processing should have already done the mapping of the other label separators
-            return splitter_type{stl::forward<StrT>(str), static_cast<char_type>('.')};
-        } else {
-            // label separators:
-            // https://www.unicode.org/reports/tr46/#Notation
-            // NOLINTBEGIN(*-magic-numbers)
-            return splitter_type{
-              stl::forward<StrT>(str),
-              static_cast<char_type>('.'),
-              details::ch_FF0E<char_type>.view(), // \uFF0E
-              details::ch_3002<char_type>.view(), // \u3002
-              details::ch_FF61<char_type>.view()  // \uFF61
-            };
-            // NOLINTEND(*-magic-numbers)
-        }
+    template <typename CharT>
+    [[nodiscard]] constexpr auto split_labels(stl::basic_string_view<CharT> const str = {}) noexcept {
+        using string_view_type = stl::basic_string_view<CharT>;
+        using splitter_type    = strings::splitter<typename string_view_type::iterator, CharT>;
+        // IDNA processing should have already done the mapping of the other label separators
+        return splitter_type{str, static_cast<CharT>('.')};
     }
 
     /**
@@ -112,189 +39,40 @@ namespace webpp::uri {
      *
      * A typical URL whose host is an opaque host is git://github.com/whatwg/url.git.
      * https://url.spec.whatwg.org/#concept-host
-     *
-     * @tparam StringType
      */
-    template <istl::StringLike StringType = stl::string_view>
-    struct basic_host {
-        using string_type       = StringType;
-        using char_type         = typename string_type::value_type;
-        using modifiable_string = istl::defaulted_string<string_type>;
-        using string_view_type  = istl::string_view_type_of<string_type>;
-        using storage_type      = stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_type>;
-
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-        static constexpr bool is_nothrow    = !is_modifiable;
-        static constexpr bool is_segregated = false;
-
-        using allocator_type = istl::allocator_type_of<string_type, istl::nothing_type>;
-
-      private:
-        storage_type                         storage = stl::monostate{};
-        [[no_unique_address]] allocator_type alloc{};
-
-        template <uri_options Options = uri_options{}, typename Iter>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_component_context<components::host, basic_host*, stl::remove_cvref_t<Iter>> ctx{};
-            ctx.beg = beg;
-            ctx.pos = beg;
-            ctx.end = end;
-            ctx.out = this;
-            // todo: parse hose not authority (even though they will be ignored)
-            parse_authority<Options>(ctx);
-            return ctx.status;
-        }
-
-      public:
-        constexpr basic_host(basic_host const& rhs)                = default;
-        constexpr basic_host(basic_host&& rhs) noexcept            = default;
-        constexpr basic_host& operator=(basic_host const& rhs)     = default;
-        constexpr basic_host& operator=(basic_host&& rhs) noexcept = default;
-        constexpr ~basic_host()                                    = default;
-
-        constexpr basic_host() noexcept
-            requires(!is_modifiable)
-        = default;
-
-        template <Allocator AllocT = stl::allocator<char_type>>
-            requires is_modifiable
-        explicit constexpr basic_host(AllocT const& inp_alloc = {}) noexcept : alloc{inp_alloc} {}
-
-        template <Allocator AllocT = stl::allocator<char_type>>
-            requires(!is_modifiable)
-        explicit constexpr basic_host([[maybe_unused]] AllocT const& inp_alloc) noexcept {}
-
-        template <istl::String InpStr = modifiable_string>
-            requires is_modifiable
-        explicit constexpr basic_host(InpStr const& str) noexcept(is_nothrow)
-          : storage{string_type{str.get_allocator()}},
-            alloc{str.get_allocator()} {
-            parse(str.begin(), str.end());
-        }
-
-        template <istl::StringViewifiable InpStr = string_view_type, Allocator AllocT = stl::allocator<char_type>>
-            requires(is_modifiable && !istl::String<InpStr>)
-        explicit constexpr basic_host(InpStr&& inp_str, AllocT inp_alloc = {}) noexcept(is_nothrow)
-          : storage{string_type{inp_alloc}},
-            alloc{inp_alloc} {
-            auto const str = istl::view(stl::forward<InpStr>(inp_str));
-            parse(str.begin(), str.end());
-        }
-
-        template <istl::StringViewifiable InpStr = string_view_type>
-            requires(!is_modifiable)
-        explicit constexpr basic_host(InpStr&& inp_str) noexcept(is_nothrow) : storage{string_type{}} {
-            auto const str = istl::view(stl::forward<InpStr>(inp_str));
-            parse(str.begin(), str.end());
-        }
-
-        template <istl::StringLike InpStr>
-        constexpr basic_host& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
-            init_domain();
-            parse(inp_str.begin(), inp_str.end());
-            return *this;
-        }
-
-        constexpr basic_host& operator=(pure_ipv6 ip6) noexcept(is_nothrow) {
-            storage = ip6;
-            return *this;
-        }
-
-        constexpr basic_host& operator=(pure_ipv6::octets_t ip6) noexcept(is_nothrow) {
-            storage = ip6;
-            return *this;
-        }
-
-        constexpr basic_host& operator=(pure_ipv4::octets_t ip4) noexcept(is_nothrow) {
-            storage = ip4;
-            return *this;
-        }
-
-        constexpr void assign(pure_ipv6 ip6) noexcept(is_nothrow) {
-            storage = ip6;
-        }
-
-        constexpr void assign(pure_ipv6::octets_t const ip6) noexcept(is_nothrow) {
-            storage = pure_ipv6{ip6};
-        }
-
-        constexpr void assign(pure_ipv4::octets_t ip4) noexcept(is_nothrow) {
-            storage = pure_ipv4{ip4};
-        }
-
-        /**
-         * @brief Replace the values with the specified raw data, without parsing
-         * @param beg start of the value
-         * @param end the end of the value
-         */
-        template <typename Iter>
-        constexpr void assign(Iter beg, Iter end) noexcept(is_nothrow) {
-            storage = string_type{beg, end};
-        }
-
-        constexpr void init_domain() noexcept {
-            if constexpr (is_modifiable) {
-                storage = string_type{this->get_allocator()};
-            } else {
-                storage = string_type{};
-            }
-        }
-
-        [[nodiscard]] constexpr auto const& get_allocator() const noexcept
-            requires(is_modifiable)
-        {
-            return alloc;
-        }
-
-        // // Append a label to the end of the domain
-        // template <istl::StringViewifiable StrT>
-        //     requires is_modifiable
-        // constexpr uri_status append_label(StrT&& inp_str) {
-        //     if (!stl::holds_alternative<string_type>(storage)) {
-        //         return uri_status::hostname_type_mismatch;
-        //     }
-        //     auto const str = istl::view(stl::forward<StrT>(inp_str));
-        //     return parse(str.begin(), str.end());
-        // }
-        //
-        // // Prepend a label to the beginning of the domain
-        // template <istl::StringViewifiable StrT>
-        //     requires is_modifiable
-        // constexpr uri_status prepend_label(StrT&& inp_str) {
-        //     auto const status = append_label(stl::forward<StrT>(inp_str));
-        //     if (is_valid(status)) [[likely]] {
-        //         auto& domain = *as_domain();
-        //         // move the last item to the beginning:
-        //         stl::rotate(domain.rbegin(), stl::next(domain.rbegin()), domain.rend());
-        //     }
-        //     return status;
-        // }
+    template <typename CharT>
+    struct basic_host : stl::variant<stl::monostate, pure_ipv4, pure_ipv6, stl::basic_string_view<CharT>> {
+        using string_type  = stl::basic_string_view<CharT>;
+        using char_type    = CharT;
+        using storage_type = stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_type>;
 
         [[nodiscard]] constexpr string_type const* as_domain() const noexcept {
-            return get_if<string_type>(&storage);
-        }
-
-        [[nodiscard]] constexpr string_type* as_domain() noexcept {
-            return get_if<string_type>(&storage);
+            return get_if<string_type>(this);
         }
 
         [[nodiscard]] constexpr pure_ipv4 const* as_ipv4() const noexcept {
-            return get_if<pure_ipv4>(&storage);
-        }
-
-        [[nodiscard]] constexpr pure_ipv4* as_ipv4() noexcept {
-            return get_if<pure_ipv4>(&storage);
+            return get_if<pure_ipv4>(this);
         }
 
         [[nodiscard]] constexpr pure_ipv6 const* as_ipv6() const noexcept {
-            return get_if<pure_ipv6>(&storage);
+            return get_if<pure_ipv6>(this);
         }
 
-        [[nodiscard]] constexpr pure_ipv6* as_ipv6() noexcept {
-            return get_if<pure_ipv6>(&storage);
+        [[nodiscard]] constexpr bool is_localhost() const noexcept {
+            return stl::visit([]<typename T>(T const& host) noexcept {
+                if constexpr (stl::same_as<T, stl::monostate>) {
+                    return false;
+                } else if constexpr (stl::same_as<T, pure_ipv4>) {
+                    return host == pure_ipv4::loopback();
+                } else if constexpr (stl::same_as<T, pure_ipv6>) {
+                    return host == pure_ipv6::loopback();
+                } else {
+                    return host == "localhost";
+                }
+            });
         }
 
-        template <istl::String NStrT = modifiable_string>
+        template <istl::String NStrT = stl::basic_string<CharT>>
         constexpr void to_string(NStrT& out) const {
             if (auto* domain = as_domain()) {
                 out += *domain;
@@ -305,7 +83,7 @@ namespace webpp::uri {
             }
         }
 
-        template <istl::String NStrT = modifiable_string, typename... Args>
+        template <istl::String NStrT = stl::basic_string<CharT>, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
@@ -317,111 +95,57 @@ namespace webpp::uri {
          * @return false if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            if (stl::holds_alternative<stl::monostate>(storage)) {
-                return true;
-            }
-            if (auto* domain = as_domain()) {
-                return !domain->empty();
-            }
-            return false;
+            return stl::holds_alternative<stl::monostate>(*this);
         }
 
         /**
          * Top Level Domain; sometimes called the extension
          */
-        [[nodiscard]] constexpr string_view_type tld() const noexcept {
+        [[nodiscard]] constexpr string_type tld() const noexcept {
             if (auto* domain = as_domain()) {
-                return domain_labels(*domain).begin().template value<string_view_type>();
+                return split_labels(*domain).begin().template value<string_type>();
             }
             return {};
         }
 
         /// Split the domain labels
-        [[nodiscard]] constexpr domain_labels_splitter_t<string_type> labels() const noexcept {
+        [[nodiscard]] constexpr auto labels() const noexcept {
             if (auto* domain = as_domain()) {
-                return domain_labels(*domain);
+                return split_labels(*domain);
             }
-            return domain_labels(string_type{});
-        }
-
-        [[nodiscard]] constexpr auto& storage_ref() noexcept {
-            return storage;
-        }
-
-        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
-            return storage;
+            return split_labels<char_type>();
         }
 
         constexpr void clear() noexcept {
-            storage = stl::monostate{};
+            *this = stl::monostate{};
         }
 
         /// Calculate the length as a string
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
-            if (auto* domain = as_domain()) {
-                return domain->size();
-            }
-            if (auto* ip4 = as_ipv4()) {
-                return ip4->size(); // re-calculates the size again
-            }
-            if (auto* ip6 = as_ipv6()) {
-                return ip6->size(); // re-calculates the size again
-            }
-            return 0;
+            return stl::visit(
+              []<typename T>(T const& host) noexcept {
+                  if constexpr (!stl::same_as<T, stl::monostate>) {
+                      return host.size();
+                  } else {
+                      return 0;
+                  }
+              },
+              *this);
         }
 
         /// Equality check
         /// https://url.spec.whatwg.org/#host-equivalence
         /// Attention: this function doesn't parse your input
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
-        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            using details::TABS_OR_NEWLINES;
-            if (auto const* domain = as_domain()) {
-                return iiequals_afl<TABS_OR_NEWLINES>(*domain, stl::forward<NStrT>(inp_str));
-            }
-            if (auto const* ip4 = as_ipv4()) {
-                return *ip4 == stl::forward<NStrT>(inp_str);
-            }
-            if (auto const* ip6 = as_ipv6()) {
-                return *ip6 == stl::forward<NStrT>(inp_str);
-            }
-            [[unlikely]] { return false; }
-        }
-
-        // [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
-        //     return iiequals_afl(storage, other.storage_ref());
-        // }
-
-        friend constexpr string_type get_buffer(basic_host const& host) noexcept
-            requires(is_modifiable)
-        {
-            return string_type{host.get_allocator()};
+        [[nodiscard]] constexpr bool operator==(string_type const inp_str) const noexcept {
+            return stl::visit([=]<typename T>(T const& host) noexcept {
+                if constexpr (!stl::same_as<T, stl::monostate>) {
+                    return host == inp_str;
+                } else {
+                    return false;
+                }
+            });
         }
     };
-
-    template <istl::StringView T>
-    basic_host(T&&) -> basic_host<stl::remove_cvref_t<T>>;
-
-    template <istl::String T>
-    basic_host(T&&) -> basic_host<stl::remove_cvref_t<T>>;
-
-    /// Check if it's string "localhost"
-    template <typename... T>
-    [[nodiscard]] static constexpr bool is_localhost_string(basic_host<T...> const& host) noexcept {
-        using string_type = typename basic_host<T...>::string_type;
-        if (auto* domain = host.as_domain()) {
-            return iiequals_fl("localhost", *domain);
-        }
-        if (auto* str = get_if<string_type>(&host.storage_ref())) {
-            return iiequals_fl("localhost", *str);
-        }
-        return false;
-    }
-
-    template <typename... T>
-    static constexpr void clear(basic_host<T...>& host) noexcept {
-        host.clear();
-    }
 
 } // namespace webpp::uri
 

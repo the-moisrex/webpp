@@ -31,7 +31,9 @@ namespace webpp::uri {
         encode_uri_component_set_capacity(end - pos, output);
     }
 
-    static constexpr void encode_uri_component_set_capacity(istl::StringView auto str, istl::String auto& output) {
+    template <typename CharT, typename AllocT>
+    static constexpr void encode_uri_component_set_capacity(stl::basic_string_view<CharT>     str,
+                                                            stl::basic_string<CharT, AllocT>& output) {
         encode_uri_component_set_capacity(str.size(), output);
     }
 
@@ -132,7 +134,7 @@ namespace webpp::uri {
 
     /**
      * @brief this function will decode parts of uri
-     * @details this function is almost the same as "decodeURIComponent" in javascript
+     * @details this function is almost the same as "decodeURIComponent" in JavaScript
      */
     template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
               istl::StringViewifiable StrVT   = stl::string_view,
