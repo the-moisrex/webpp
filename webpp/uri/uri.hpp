@@ -52,7 +52,7 @@ namespace webpp::uri {
      * @tparam AllocT Allocator type
      */
     template <istl::StringLike StringType, Allocator AllocT = allocator_type_from_t<StringType>>
-    struct basic_uri : uri_components<StringType, rebind_allocator<AllocT, typename StringType::value_type>> {
+    struct [[nodiscard]] basic_uri : uri_components<StringType, rebind_allocator<AllocT, typename StringType::value_type>> {
         using string_type      = StringType;
         using char_type        = istl::char_type_of_t<string_type>;
         using allocator_type   = rebind_allocator<AllocT, char_type>;
@@ -67,13 +67,13 @@ namespace webpp::uri {
         /// same as string_type if it's modifiable, otherwise, std::string
         using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
 
-        using scheme_type   = basic_scheme<string_type>;
-        using username_type = basic_username<string_type>;
-        using password_type = basic_password<string_type>;
-        using host_type     = basic_host<string_type>;
+        using scheme_type   = basic_scheme<char_type>;
+        using username_type = string_view_type;
+        using password_type = string_view_type;
+        using host_type     = basic_host<char_type>;
         using path_type     = basic_path<string_type, allocator_type>;
-        using queries_type  = basic_queries<string_type, allocator_type>;
-        using fragment_type = basic_fragment<string_type>;
+        using queries_type  = basic_queries<char_type>;
+        using fragment_type = string_view_type;
         using status_type   = uri_status_type;
 
         static_assert(VectorOutput<path_type>,

@@ -59,48 +59,6 @@ TYPED_TEST(StructuredURITests, StructuredDomain) {
     EXPECT_EQ(domain.tld(), get_one<TypeParam>("tld", L"tld"));
 }
 
-TYPED_TEST(StructuredURITests, StructuredFragment) {
-    static TypeParam const               data{get_one<TypeParam>("this is a fragment", L"this is a fragment")};
-    uri::basic_fragment<TypeParam> const fragment{data};
-    EXPECT_TRUE(fragment.has_value());
-    if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {
-#ifdef __cpp_lib_string_contains
-        EXPECT_FALSE(fragment.view().contains(' '));
-#endif
-        EXPECT_NE(data, fragment.view());
-    } else {
-        EXPECT_EQ(data, fragment.view());
-    }
-}
-
-TYPED_TEST(StructuredURITests, StructuredUsername) {
-    static TypeParam const               data{get_one<TypeParam>("it's username", L"it's username")};
-    uri::basic_username<TypeParam> const user{data};
-    EXPECT_TRUE(user.has_value());
-    if constexpr (uri::basic_username<TypeParam>::is_modifiable) {
-#ifdef __cpp_lib_string_contains
-        EXPECT_FALSE(user.view().contains(' '));
-#endif
-        EXPECT_NE(data, user.view());
-    } else {
-        EXPECT_EQ(data, user.view());
-    }
-}
-
-TYPED_TEST(StructuredURITests, StructuredPassword) {
-    static TypeParam const               data{get_one<TypeParam>("it's password", L"it's password")};
-    uri::basic_password<TypeParam> const pass{data};
-    EXPECT_TRUE(pass.has_value());
-    if constexpr (uri::basic_password<TypeParam>::is_modifiable) {
-#ifdef __cpp_lib_string_contains
-        EXPECT_FALSE(pass.view().contains(' '));
-#endif
-        EXPECT_NE(data, pass.view());
-    } else {
-        EXPECT_EQ(data, pass.view());
-    }
-}
-
 TYPED_TEST(StructuredURITests, StructuredScheme) {
     static TypeParam const             data{get_one<TypeParam>("https:", L"https:")};
     uri::basic_scheme<TypeParam> const scheme{data};

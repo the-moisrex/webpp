@@ -69,10 +69,16 @@ namespace webpp::uri {
             }
             auto pos = string_view_type::find(key);
             while (pos != string_view_type::npos) {
-                if ((pos == 0 || (*this)[pos - 1] == '&') &&
-                    (pos + key.size() == string_view_type::size() || (*this)[pos + key.size()] == '=' ||
-                     (*this)[pos + key.size()] == '&'))
-                {
+                bool       found   = false;
+                auto const key_end = pos + key.size();
+
+                // starts with '&'
+                found &= pos == 0 || (*this)[pos - 1] == '&';
+
+                // and ends with '=' or '&'
+                found &= key_end == string_view_type::size() || (*this)[key_end] == '=' || (*this)[key_end] == '&';
+
+                if (found) {
                     return true;
                 }
                 pos = string_view_type::find(key, pos + 1);
