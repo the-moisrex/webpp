@@ -4,7 +4,6 @@
 #define WEBPP_URL_COMPONENTS_HPP
 
 #include "../../std/collection.hpp"
-#include "../../std/map.hpp"
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
 #include "../uri_status.hpp"
@@ -70,6 +69,20 @@ namespace webpp::uri {
         comps.uri_end;
     };
 
+    template <typename T>
+    concept URIStructuredComponents = URIComponents<T> && requires(T comps) {
+        typename T::string_type;
+        typename T::vec_type;
+        typename T::map_type;
+        { comps.scheme } -> stl::same_as<typename T::string_type>;
+        { comps.username } -> stl::same_as<typename T::string_type>;
+        { comps.password } -> stl::same_as<typename T::string_type>;
+        { comps.hostname } -> stl::same_as<typename T::string_type>;
+        { comps.port } -> stl::same_as<typename T::string_type>;
+        { comps.path } -> stl::same_as<typename T::vec_type>;
+        { comps.queries } -> stl::same_as<typename T::map_type>;
+        { comps.fragment } -> stl::same_as<typename T::string_type>;
+    };
 
     /**
      * An output type that is like a vector or a map
@@ -87,6 +100,10 @@ namespace webpp::uri {
      */
     template <typename T>
     concept ParsingOutput = istl::StringLike<T> || SegregatedOutput<T> || istl::cvref_as<T, istl::nothing_type>;
+
+    //////////////////////////////////////// ////////////// ////////////////////////////////////////
+    //////////////////////////////////////// URI Components ////////////////////////////////////////
+    //////////////////////////////////////// ////////////// ////////////////////////////////////////
 
     /**
      * URL Components
@@ -158,6 +175,132 @@ namespace webpp::uri {
         seg_type fragment_start  = omitted; // query end
         seg_type uri_end         = omitted; // string end
     };
+
+    /**
+     * String View based, but still structured enough
+     */
+    template <typename CharT = char32_t>
+    struct uri_components_view {
+        using string_type  = stl::basic_string_view<CharT>;
+        using iterator     = typename string_type::iterator;
+        using seg_type     = string_type;
+        using char_type    = typename string_type::value_type;
+        using size_type    = typename string_type::size_type;
+        using vec_iterator = seg_type*;
+
+        /// maximum number that this url component class supports
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+
+        /// is resetting the values are noexcept or not
+        static constexpr bool is_nothrow    = stl::is_nothrow_assignable_v<string_type, char_type const*>;
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated = false;
+
+        string_type scheme;
+        string_type username;
+        string_type password;
+        string_type hostname;
+        string_type port;
+        string_type path;
+        string_type queries;
+        string_type fragment;
+    };
+
+    /**
+     * String-Based, owning URI Components
+     */
+    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    struct uri_components_owning {
+        using string_type  = stl::basic_string<CharT, AllocT>;
+        using iterator     = typename string_type::iterator;
+        using seg_type     = string_type;
+        using char_type    = typename string_type::value_type;
+        using size_type    = typename string_type::size_type;
+        using vec_iterator = seg_type*;
+
+        /// maximum number that this url component class supports
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+
+        /// is resetting the values are noexcept or not
+        static constexpr bool is_nothrow    = stl::is_nothrow_assignable_v<string_type, char_type const*>;
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated = false;
+
+        string_type scheme;
+        string_type username;
+        string_type password;
+        string_type hostname;
+        string_type port;
+        string_type path;
+        string_type queries;
+        string_type fragment;
+    };
+
+    /**
+     * Single-Source based URI Components.
+     * Let's have one single href, and have components as string views pointing to that source
+     */
+    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    struct uri_components_href {
+        using string_type      = stl::basic_string<CharT, AllocT>;
+        using string_view_type = stl::basic_string_view<CharT>;
+        using char_type        = typename string_type::value_type;
+        using size_type        = typename string_type::size_type;
+
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+        static constexpr bool is_nothrow           = stl::is_nothrow_assignable_v<string_type, char_type const*>;
+        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated        = false;
+
+        // Source:
+        string_type href;
+
+        // Components:
+        string_view_type scheme;
+        string_view_type username;
+        string_view_type password;
+        string_view_type hostname;
+        string_view_type port;
+        string_view_type path;
+        string_view_type queries;
+        string_view_type fragment;
+    };
+
+    /**
+     * URI Components fully separated.
+     *   - Domains are split into its subdomains.
+     *   - Path are split into its segments.
+     *   - Queries are mapped (or rather vector of pairs).
+     *   - Strings own their data.
+     */
+    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    struct uri_components_structured {
+        using char_type   = CharT;
+        using string_type = stl::basic_string<char_type, AllocT>;
+        using size_type   = typename string_type::size_type;
+        using vec_type    = stl::vector<string_type, AllocT>;
+        using pair_type   = stl::pair<string_type const, string_type>;
+        using map_type =
+          stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
+
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+        static constexpr bool is_nothrow           = false;
+        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated        = true;
+
+        string_type scheme;
+        string_type username;
+        string_type password;
+        string_type hostname;
+        string_type port;
+        vec_type    path;
+        map_type    queries;
+        string_type fragment;
+    };
+
+    //////////////////////////////////////// /////////////////// ////////////////////////////////////////
+    //////////////////////////////////////// Relative Components ////////////////////////////////////////
+    //////////////////////////////////////// /////////////////// ////////////////////////////////////////
 
     template <URIRelativeComponents CompT>
     constexpr void set_min_authority_end(CompT& comps, typename CompT::seg_type const end) noexcept {
@@ -471,190 +614,51 @@ namespace webpp::uri {
         return view(comps, comps.fragment_start, comps.uri_end - comps.fragment_start);
     }
 
-    template <typename CharT>
-    struct uri_components_view {
-        using string_type  = stl::basic_string_view<CharT>;
-        using iterator     = typename string_type::iterator;
-        using seg_type     = string_type;
-        using char_type    = typename string_type::value_type;
-        using size_type    = typename string_type::size_type;
-        using vec_iterator = seg_type*;
+    //////////////////////////////////////// ///////////////////// ////////////////////////////////////////
+    //////////////////////////////////////// Structured Components ////////////////////////////////////////
+    //////////////////////////////////////// ///////////////////// ////////////////////////////////////////
 
-        /// maximum number that this url component class supports
-        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
-
-        /// is resetting the values are noexcept or not
-        static constexpr bool is_nothrow    = stl::is_nothrow_assignable_v<string_type, char_type const*>;
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-        static constexpr bool is_segregated = false;
-
-        string_type scheme;
-        string_type username;
-        string_type password;
-        string_type hostname;
-        string_type port;
-        string_type path;
-        string_type queries;
-        string_type fragment;
-    };
-
-    template <typename CharT, typename AllocT>
-    struct uri_components_separated {
-        using string_type  = stl::basic_string<CharT, AllocT>;
-        using iterator     = typename string_type::iterator;
-        using seg_type     = string_type;
-        using char_type    = typename string_type::value_type;
-        using size_type    = typename string_type::size_type;
-        using vec_iterator = seg_type*;
-
-        /// maximum number that this url component class supports
-        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
-
-        /// is resetting the values are noexcept or not
-        static constexpr bool is_nothrow    = stl::is_nothrow_assignable_v<string_type, char_type const*>;
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-        static constexpr bool is_segregated = false;
-
-        string_type scheme;
-        string_type username;
-        string_type password;
-        string_type hostname;
-        string_type port;
-        string_type path;
-        string_type queries;
-        string_type fragment;
-    };
-
-    /**
-     * Let's have one single href, and have components as string views pointing to that source
-     */
-    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_href {
-        using string_type      = stl::basic_string<CharT, AllocT>;
-        using string_view_type = stl::basic_string_view<CharT>;
-        using char_type        = typename string_type::value_type;
-        using size_type        = typename string_type::size_type;
-
-        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
-        static constexpr bool is_nothrow           = stl::is_nothrow_assignable_v<string_type, char_type const*>;
-        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
-        static constexpr bool is_segregated        = false;
-
-        // Source:
-        string_type href;
-
-        // Components:
-        string_view_type scheme;
-        string_view_type username;
-        string_view_type password;
-        string_view_type hostname;
-        string_view_type port;
-        string_view_type path;
-        string_view_type queries;
-        string_view_type fragment;
-    };
-
-    /**
-     * URI Components fully separated
-     *   - Domains are split into its subdomains
-     *   - Path are split into its segments
-     *   - Queries are mapped
-     */
-    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_structured {
-        using char_type   = CharT;
-        using string_type = stl::basic_string<char_type, AllocT>;
-        using size_type   = typename string_type::size_type;
-        using vec_type    = stl::vector<string_type, AllocT>;
-        using pair_type   = stl::pair<string_type const, string_type>;
-        using map_type =
-          stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
-
-        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
-        static constexpr bool is_nothrow           = false;
-        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
-        static constexpr bool is_segregated        = true;
-
-        string_type scheme;
-        string_type username;
-        string_type password;
-        string_type hostname;
-        string_type port;
-        vec_type    path;
-        map_type    queries;
-        string_type fragment;
-
-        constexpr void set_path(iterator beg, iterator end) {
-            istl::clear(m_path);
-            if constexpr (is_modifiable) {
-                istl::emplace_one(m_path, beg, end, m_path.get_allocator());
-            } else {
-                istl::emplace_one(m_path, beg, end);
-            }
-        }
-
-        constexpr void set_queries(iterator beg, iterator end) {
-            using pack_type  = typename map_type::value_type;
-            using key_type   = typename map_type::key_type;
-            using value_type = typename map_type::mapped_type;
-
-            // first "name" is chosen for the whole value, because of the algorithm that gets the queries will
-            // be correct that way
-
-            istl::clear(m_queries);
-            if constexpr (is_modifiable) {
-                istl::emplace_one(m_queries,
-                                  pack_type{
-                                    key_type{beg, end, m_queries.get_allocator()},
-                                    value_type{m_queries.get_allocator()}
-                });
-            } else {
-                istl::emplace_one(m_queries,
-                                  pack_type{
-                                    key_type{beg, end},
-                                    value_type{}
-                });
-            }
-        }
-
-        template <istl::String StrT = stl::string, typename... Args>
-        [[nodiscard]] constexpr StrT get_path(Args&&... args) const {
-            StrT out{stl::forward<Args>(args)...};
-            if (m_path.empty()) {
-                return out;
-            }
-            auto seg = m_path.begin();
-            for (;;) {
-                out += *seg;
-                if (++seg == m_path.end()) {
-                    break;
-                }
-                out += '/';
-            }
+    template <istl::String StrT = stl::string, URIStructuredComponents CompT, typename... Args>
+    [[nodiscard]] constexpr StrT render_path(CompT const& comps, Args&&... args) {
+        StrT out{stl::forward<Args>(args)...};
+        if (comps.path.empty()) {
             return out;
         }
+        auto seg = comps.path.begin();
+        for (;;) {
+            out += *seg;
+            if (++seg == comps.path.end()) {
+                break;
+            }
+            out += '/';
+        }
+        return out;
+    }
 
-        template <istl::String StrT = stl::string, typename... Args>
-        [[nodiscard]] constexpr StrT get_queries(Args&&... args) const {
-            StrT out{stl::forward<Args>(args)...};
-            if (m_queries.empty()) {
-                return out;
-            }
-            for (auto pos = m_queries.begin();;) {
-                auto const [name, value]  = *pos;
-                out                      += name;
-                if (!value.empty()) {
-                    out += '=';
-                    out += value;
-                }
-                if (++pos == m_queries.end()) {
-                    break;
-                }
-                out += '&';
-            }
+    template <istl::String StrT = stl::string, URIStructuredComponents CompT, typename... Args>
+    [[nodiscard]] constexpr StrT render_queries(CompT const& comps, Args&&... args) {
+        StrT out{stl::forward<Args>(args)...};
+        if (comps.queries.empty()) {
             return out;
         }
-    };
+        for (auto pos = comps.queries.begin();;) {
+            auto const [name, value]  = *pos;
+            out                      += name;
+            if (!value.empty()) {
+                out += '=';
+                out += value;
+            }
+            if (++pos == comps.queries.end()) {
+                break;
+            }
+            out += '&';
+        }
+        return out;
+    }
+
+    //////////////////////////////////////// ////////////////// ////////////////////////////////////////
+    //////////////////////////////////////// General Components ////////////////////////////////////////
+    //////////////////////////////////////// ////////////////// ////////////////////////////////////////
 
     template <URIComponents CompT>
     [[nodiscard]] constexpr auto& scheme(CompT&& comp) noexcept {
