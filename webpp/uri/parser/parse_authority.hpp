@@ -120,7 +120,7 @@ namespace webpp::uri {
                         } else if constexpr (Options.parse_queries) {
                             set_valid(ctx.status, valid_queries);
                             ++ctx.pos;
-                            clear<components::queries>(ctx);
+                            clear_queries(ctx.out);
                         } else {
                             set_warning(ctx.status, invalid_character);
                         }
@@ -131,14 +131,14 @@ namespace webpp::uri {
                         } else if constexpr (Options.parse_fragment) {
                             set_valid(ctx.status, valid_fragment);
                             ++ctx.pos;
-                            clear<components::fragment>(ctx);
+                            clear_fragment(ctx.out);
                         } else {
                             set_warning(ctx.status, invalid_character);
                         }
                         return;
                     default:
                         set_valid(ctx.status, valid_path);
-                        clear<components::path>(ctx);
+                        clear_path(ctx.out);
                         return;
                 }
                 break;

@@ -48,7 +48,7 @@ namespace webpp::uri {
                 iterator const username_beg = beg;
                 iterator const username_end = stl::min(password_token_pos, atsign_pos);
 
-                clear<components::username>(ctx); // todo: it's optimizable
+                clear_username>(ctx.out); // todo: it's optimizable
                 encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
 
                 // parse password
@@ -56,7 +56,7 @@ namespace webpp::uri {
                     iterator const password_beg = password_token_pos + 1;
                     iterator const password_end = atsign_pos;
 
-                    clear<components::password>(ctx); // todo: it's optimizable
+                    clear_password(ctx.out); // todo: it's optimizable
                     encode_or_set<components::password>(ctx, password_beg, password_end, USER_INFO_ENCODE_SET);
                 }
             }
@@ -80,7 +80,7 @@ namespace webpp::uri {
             webpp_assume(ctx.pos < ctx.end);
             set_warning(ctx.status, uri_status::has_credentials);
 
-            clear<components::username>(ctx);
+            clear_username(ctx.out);
             encode_or_set<components::username>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
         }
     }
@@ -101,7 +101,7 @@ namespace webpp::uri {
             webpp_assume(ctx.pos < ctx.end);
             set_warning(ctx.status, uri_status::has_credentials);
 
-            clear<components::password>(ctx);
+            clear_password(ctx.out);
             encode_or_set<components::password>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
         }
     }

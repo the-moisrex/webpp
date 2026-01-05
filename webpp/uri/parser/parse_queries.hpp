@@ -124,7 +124,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
-                        clear<components::fragment>(ctx);
+                        clear_fragment(ctx.out);
                         set_valid(ctx.status, valid_fragment);
                     } else {
                         stl::unreachable();

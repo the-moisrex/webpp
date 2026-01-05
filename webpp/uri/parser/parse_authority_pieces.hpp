@@ -111,7 +111,7 @@ namespace webpp::uri::details {
                         // rollback if it's not a port, we roll back and assume it's a password
                         if (get_value(ctx.status) == port_invalid) {
                             must_contain_credentials = true;
-                            clear<components::port>(ctx);
+                            clear_port(ctx.out);
                             unset_flag(ctx.status, has_non_null_port);
                             // it might be a "password" or it's invalid port
                             ctx.pos = pre_port_pos + 1;
@@ -192,7 +192,7 @@ namespace webpp::uri::details {
                     if constexpr (Options.parse_credentials) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
-                        clear<components::host>(ctx);
+                        clear_hostname(ctx.out);
                         reset_begin(ctx, seg_beg);
                         host_begin = ctx.pos;
                         continue;
@@ -228,7 +228,7 @@ namespace webpp::uri::details {
                 return;
             }
             if constexpr (CtxModifiableStringOutput<decltype(buffer), CtxT>) {
-                clear<components::host>(ctx);
+                clear_hostname(ctx.out);
                 pure_ipv4{ipv4_octets_data}.to_string(buffer);
                 if (skip_last_char) {
                     ++ctx.pos;

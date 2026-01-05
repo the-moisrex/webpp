@@ -295,11 +295,11 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '?':
-                    clear<components::queries>(ctx);
+                    clear_queries(ctx.out);
                     set_valid(ctx.status, valid_queries);
                     break;
                 case '#':
-                    clear<components::fragment>(ctx);
+                    clear_fragment(ctx.out);
                     set_valid(ctx.status, valid_fragment);
                     break;
                 case '%':

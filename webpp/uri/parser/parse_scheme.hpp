@@ -99,18 +99,18 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '?':
-                    clear<queries>(ctx);
+                    clear_queries(ctx.out);
                     set_valid(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
                 case '#':
-                    clear<fragment>(ctx);
+                    clear_fragment(ctx.out);
                     set_valid(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
                 default: break;
             }
-            clear<queries>(ctx);
+            clear_queries(ctx.out);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
             set_valid(ctx.status, valid_path);
         }
@@ -156,7 +156,7 @@ namespace webpp::uri {
             details::set_scheme(ctx, details::file_scheme<char_type>);
 
             // Set url’s host to the empty string.
-            clear<components::host>(ctx);
+            clear_hostname(ctx.out);
 
             // if constexpr (ctx_type::has_base_uri) {
             //     // set scheme to "file"
@@ -207,7 +207,7 @@ namespace webpp::uri {
                                 set_value<components::scheme>(ctx, ctx.base.get_scheme());
                                 set_value<components::path>(ctx, ctx.base.get_path());
                                 set_value<components::queries>(ctx, ctx.base.get_queries());
-                                clear<components::fragment>(ctx);
+                                clear_fragment(ctx.out);
                                 set_valid(ctx.status, valid_fragment);
                                 return;
                             } else {
@@ -293,7 +293,7 @@ namespace webpp::uri {
                 // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
                 if constexpr (!Options.state_override) {
                     ctx.pos = ctx.beg;
-                    clear<components::scheme>(ctx);
+                    clear_scheme(ctx.out);
                     details::no_scheme_state<Options>(ctx);
                 } else {
                     // otherwise, return failure
@@ -396,7 +396,7 @@ namespace webpp::uri {
                     return;
                 }
 
-                clear<components::path>(ctx);
+                clear_path(ctx.out);
                 set_valid(ctx.status, valid_opaque_path);
                 return;
             }

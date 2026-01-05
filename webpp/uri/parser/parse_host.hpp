@@ -48,7 +48,7 @@ namespace webpp::uri {
         details::parse_authority_pieces<parsing_options>(ctx);
 
         if (has_value<components::host>(ctx) && is_localhost_string(get_component<components::host>(ctx))) {
-            clear<components::host>(ctx);
+            clear_hostname(ctx.out);
         }
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
