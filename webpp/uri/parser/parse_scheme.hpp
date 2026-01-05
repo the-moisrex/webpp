@@ -34,16 +34,16 @@ namespace webpp::uri {
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_modifiable) {
-                set_value<components::scheme>(ctx, scheme.begin(), scheme.end());
+                set_scheme(ctx, scheme.begin(), scheme.end());
             } else {
-                set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
+                set_scheme(ctx, ctx.beg, ctx.pos);
             }
         }
 
         template <URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
-                set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
+                set_scheme(ctx, ctx.beg, ctx.pos);
             } else {
                 auto& out_str = get_storage<components::scheme>(ctx);
                 ascii::lower_to(out_str, ctx.beg, ctx.pos);
@@ -68,7 +68,7 @@ namespace webpp::uri {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
 
-                set_value<scheme>(ctx, scheme(ctx.base));
+                set_scheme(ctx, scheme(ctx.base));
             }
             switch (*ctx.pos) {
                 case '/': break;
@@ -89,13 +89,12 @@ namespace webpp::uri {
             // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
             if constexpr (ctx_type::has_base_uri) {
-                set_value<username>(ctx, username(ctx.base));
-                set_value<password>(ctx, password(ctx.base));
-                set_value<host>(ctx, hostname(ctx.base));
-                set_value<port>(ctx, port(ctx.base));
-                set_value<path>(ctx,
-                                path(ctx.base)); // todo: https://infra.spec.whatwg.org/#list-clone
-                set_value<queries>(ctx, queries(ctx.base));
+                set_username(ctx, username(ctx.base));
+                set_password(ctx, password(ctx.base));
+                set_hostname(ctx, hostname(ctx.base));
+                set_port(ctx, port(ctx.base));
+                set_path(ctx, path(ctx.base)); // todo: https://infra.spec.whatwg.org/#list-clone
+                set_queries(ctx, queries(ctx.base));
             }
             switch (*ctx.pos) {
                 case '?':
@@ -130,7 +129,7 @@ namespace webpp::uri {
             }
             if constexpr (ctx_type::has_base_uri) {
                 if (is_file_scheme(scheme(ctx.base))) {
-                    set_value<components::scheme>(ctx, scheme(ctx.base));
+                    set_scheme(ctx, scheme(ctx.base));
 
                     // todo:
                     // 2. If the code point substring from pointer to the end of input does not
@@ -160,7 +159,7 @@ namespace webpp::uri {
 
             // if constexpr (ctx_type::has_base_uri) {
             //     // set scheme to "file"
-            //     set_value<components::scheme>(ctx,
+            //     set_scheme(ctx,
             //                                   scheme(ctx.base).data(),
             //                                   scheme(ctx.base).data() + scheme(ctx.base).size());
             // }
@@ -204,9 +203,9 @@ namespace webpp::uri {
                     for (; ctx.pos != ctx.end; ++ctx.pos) {
                         if (*ctx.pos == '#') {
                             if constexpr (Options.parse_fragment) {
-                                set_value<components::scheme>(ctx, scheme(ctx.base));
-                                set_value<components::path>(ctx, path(ctx.base));
-                                set_value<components::queries>(ctx, queries(ctx.base));
+                                set_scheme(ctx, scheme(ctx.base));
+                                set_path(ctx, path(ctx.base));
+                                set_queries(ctx, queries(ctx.base));
                                 clear_fragment(ctx.out);
                                 set_valid(ctx.status, valid_fragment);
                                 return;

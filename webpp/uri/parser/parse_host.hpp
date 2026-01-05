@@ -171,7 +171,7 @@ namespace webpp::uri {
                     details::parse_host_ipv4(pos, end, ctx);
                     return;
                 }
-                set_value<components::host>(ctx, pos, end);
+                set_hostname(ctx, pos, end);
                 return;
             case no_ip_val | nt_val:
                 if constexpr (CtxT::is_modifiable) {
@@ -183,7 +183,7 @@ namespace webpp::uri {
                 // fast path:
                 // the host is fully in valid ascii characters already, and also we don't need to check for
                 // ipv4 either, it includes invalid ipv4 characters.
-                set_value<components::host>(ctx, pos, end);
+                set_hostname(ctx, pos, end);
                 return;
             [[unlikely]] case forb_val:
                 break; // forbidden code points:
@@ -225,7 +225,7 @@ namespace webpp::uri {
                 set_error<components::host>(ctx, to_ascii_res);
                 return;
             }
-            set_value<components::host>(ctx, out);
+            set_hostname(ctx, out);
         } else {
             // todo
         }

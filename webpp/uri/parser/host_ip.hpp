@@ -275,7 +275,7 @@ namespace webpp::uri::details {
                         set_flag(ctx.status, has_non_empty_host);
                     } else {
                         // set value already sets the flag
-                        set_value<components::host>(ctx, beg, ctx.pos);
+                        set_hostname(ctx, beg, ctx.pos);
                     }
                     for (;; ++ctx.pos) {
                         if (ctx.pos == ctx.end) {

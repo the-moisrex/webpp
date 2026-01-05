@@ -87,11 +87,11 @@ namespace webpp::uri {
         } else {
             if constexpr (requires { istl::deptr(ctx.out).set_port(static_cast<stl::uint16_t>(port_value)); }) {
                 // store the integer port value
-                set_value<components::port>(ctx, static_cast<stl::uint16_t>(port_value));
+                set_port(ctx, static_cast<stl::uint16_t>(port_value));
             } else {
                 // store it as a string
                 // set value already sets the flag
-                set_value<components::port>(ctx, beg, ctx.pos);
+                set_port(ctx, beg, ctx.pos);
             }
         }
 
