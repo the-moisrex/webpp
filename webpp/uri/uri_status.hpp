@@ -529,6 +529,13 @@ namespace webpp::uri {
         status |= +value;
     }
 
+    template <bool Cond>
+    static constexpr void set_valid_if(uri_status_type& status, uri_status const value) noexcept {
+        if constexpr (Cond) {
+            set_valid(status, value);
+        }
+    }
+
     static constexpr void set_error(uri_status_type& status, uri_status const value) noexcept {
         status &= ~values_mask;
         status |= +value;

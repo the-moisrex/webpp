@@ -337,7 +337,7 @@ namespace webpp::uri {
 
         if constexpr (Options.state_override) {
             // If url’s scheme is "file" and its host is an empty host, then return.
-            if (is_file_scheme(ctx.status) && has_value<components::host>(ctx)) [[unlikely]] {
+            if (is_file_scheme(ctx.status) && has_hostname(ctx.out)) [[unlikely]] {
                 return;
             }
         }

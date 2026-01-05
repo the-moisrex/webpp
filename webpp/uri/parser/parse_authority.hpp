@@ -147,7 +147,7 @@ namespace webpp::uri {
             // Otherwise, if state override is given and url’s host is null, append the empty string to
             // url’s path.
             if constexpr (Options.state_override) {
-                if (!has_value<components::host>(ctx)) {
+                if (!has_hostname(ctx.out)) {
                     get_storage<components::path>(ctx).emplace_back();
                 }
             }

@@ -340,8 +340,7 @@ namespace webpp::uri {
         webpp_static_constexpr auto encode_set =
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
-        webpp_static_constexpr auto interesting_chars_base =
-          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '%', '\r', '\n', '\t'});
+        webpp_static_constexpr auto interesting_chars_base = ascii_bitmap(encode_set, ascii_bitmap{'\\', '/', '%'});
         webpp_static_constexpr auto interesting_chars =
           !Options.state_override ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
 
@@ -377,18 +376,10 @@ namespace webpp::uri {
                     next_segment_of(ctx, out, buffer, seg_beg, '/');
                     continue;
                 [[likely]] case '?':
-                    if constexpr (!Options.state_override) {
-                        set_valid(ctx.status, valid_queries);
-                    } else {
-                        stl::unreachable();
-                    }
+                    set_valid_if<!Options.state_override>(ctx.status, valid_queries);
                     break;
                 case '#':
-                    if constexpr (!Options.state_override) {
-                        set_valid(ctx.status, valid_fragment);
-                    } else {
-                        stl::unreachable();
-                    }
+                    set_valid_if<!Options.state_override>(ctx.status, valid_fragment);
                     break;
                 [[likely]] case '%':
                     if (validate_percent_encode(ctx, buffer)) {
@@ -410,7 +401,7 @@ namespace webpp::uri {
         } else {
             // handling empty paths
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                if (is_special_scheme(ctx.status) && !has_value<components::path>(ctx)) {
+                if (is_special_scheme(ctx.status) && !has_path(ctx.out)) {
                     next_segment_of(ctx, out, buffer, seg_beg, '/', 0);
                 }
             }

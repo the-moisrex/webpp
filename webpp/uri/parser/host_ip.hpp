@@ -254,7 +254,7 @@ namespace webpp::uri::details {
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
-        if (has_value<components::host>(ctx)) [[unlikely]] {
+        if (has_hostname(ctx.out)) [[unlikely]] {
             set_error(ctx.status, invalid_domain_code_point);
             return false;
         }
