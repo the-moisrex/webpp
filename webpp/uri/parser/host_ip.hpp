@@ -11,11 +11,11 @@ namespace webpp::uri::details {
 
     static constexpr charset VALID_IPV4{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a',
                                         'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F'};
-    static constexpr auto    INVALID_IPV4 = inverse(VALID_IPV4);
+    static constexpr auto    INVALID_IPV4 = inverse<256U>(VALID_IPV4);
 
     static constexpr charset VALID_IPV6{'.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
                                         'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F', '[', ']', ':'};
-    static constexpr auto    INVALID_IPV6 = inverse(VALID_IPV6);
+    static constexpr auto    INVALID_IPV6 = inverse<256U>(VALID_IPV6);
 
     /// Checks the last octet of a possible ipv4 address to see if we should parse the host as an ipv4, or
     /// we should parse it normally.
@@ -48,28 +48,29 @@ namespace webpp::uri::details {
             }
         }
 
+        enum struct operation_type : stl::uint8_t {
+            op_no, // return false
+            op_dot,
+            op_continue,
+            op_possible_hex,
+            op_hex, // must be hex
+        };
+
+        webpp_static_constexpr auto interesting_characters = categorize<operation_type, 256U>(
+          cat{.set = INVALID_IPV4, .value = operation_type::op_no},
+          cat{.set = VALID_IPV4, .value = operation_type::op_continue},
+          cat{.set = u8"abcdefABCDEF", .value = operation_type::op_possible_hex},
+          cat{.set = u8"xX", .value = operation_type::op_hex},
+          cat{.set = u8".", .value = operation_type::op_dot});
+
         bool is_hex      = false;
         bool must_be_hex = false;
         auto pos         = fin;
         for (; pos != beg; --pos) {
-            switch (*pos) {
-                case '.': break;
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9': continue;
-                case 'X':
-                    // if constexpr (ctx_type::is_modifiable) {
-                    //     stl::unreachable();
-                    // }
-                    // [[fallthrough]];
-                case 'x':
+            switch (or_one(interesting_characters, *pos)) {
+                case operation_type::op_dot: break;
+                case operation_type::op_continue: continue;
+                case operation_type::op_hex:
                     // next characters now must be ".0x"
                     // NOLINTNEXTLINE(*-inc-dec-in-conditions)
                     if (pos - beg < 1 || *--pos != '0' || (pos != beg && *--pos != '.')) {
@@ -77,28 +78,9 @@ namespace webpp::uri::details {
                     }
                     is_hex = true;
                     break;
-                case 'A':
-                case 'B':
-                case 'C':
-                case 'D':
-                case 'E':
-                case 'F':
-                    // if it's modifiable, then we should be lowercasing the characters before we reach
-                    // here in this function.
-                    // if constexpr (ctx_type::is_modifiable) {
-                    //     stl::unreachable();
-                    // }
-                    // [[fallthrough]];
-                case 'a':
-                case 'b':
-                case 'c':
-                case 'd':
-                case 'e':
-                case 'f':
-                    must_be_hex = true;
-                    continue;
-                [[likely]] default:
-                    return false;
+                case operation_type::op_possible_hex: must_be_hex = true; continue;
+                case operation_type::op_no: return false;
+                default: stl::unreachable();
             }
             break;
         }
