@@ -20,13 +20,13 @@
 using namespace webpp;
 
 using Types =
-  testing::Types<uri::parsing_uri_context_string<stl::string>,
-                 uri::parsing_uri_context_string<stl::string_view>,
-                 // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
-                 uri::parsing_uri_context_u32,
-                 uri::parsing_uri_context_segregated<>,
-                 uri::parsing_uri_context_segregated_view<>,
-                 uri::parsing_uri_context<stl::string_view, char const*>>;
+  testing::Types<uri::uri_context_string<stl::string>,
+                 uri::uri_context_string<stl::string_view>,
+                 // uri::uri_context_string<stl::basic_string_view<char8_t>>,
+                 uri::uri_context_u32,
+                 uri::uri_context_segregated<>,
+                 uri::uri_context_segregated_view<>,
+                 uri::uri_context<stl::string_view, char const*>>;
 
 template <class T>
 struct IDNATests : testing::Test {

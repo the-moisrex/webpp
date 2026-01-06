@@ -11,13 +11,13 @@ using namespace webpp;
 
 
 using Types =
-  testing::Types<uri::parsing_uri_context_string<stl::string>,
-                 uri::parsing_uri_context_string<stl::string_view>,
-                 // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
-                 uri::parsing_uri_context_u32,
-                 uri::parsing_uri_context_segregated<>,
-                 uri::parsing_uri_context_segregated_view<>,
-                 uri::parsing_uri_context<stl::string_view, char const*>>;
+  testing::Types<uri::uri_context_string<stl::string>,
+                 uri::uri_context_string<stl::string_view>,
+                 // uri::uri_context_string<stl::basic_string_view<char8_t>>,
+                 uri::uri_context_u32,
+                 uri::uri_context_segregated<>,
+                 uri::uri_context_segregated_view<>,
+                 uri::uri_context<stl::string_view, char const*>>;
 
 template <class T>
 struct URIWhatwgTest : testing::Test {
@@ -56,7 +56,7 @@ struct URIWhatwgTest : testing::Test {
         uri::parse_uri(ctx);
 
         using iterator          = typename stl::string_view::const_iterator;
-        using base_context_type = uri::parsing_uri_context<stl::uint32_t, iterator>;
+        using base_context_type = uri::uri_context<stl::uint32_t, iterator>;
 
         base_context_type origin_context{.beg = base_str.begin(), .pos = base_str.begin(), .end = base_str.end()};
         uri::parse_uri(origin_context);

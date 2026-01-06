@@ -14,30 +14,6 @@
 namespace webpp::uri {
 
     /**
-     * URI Context is everything we need during parsing of a URL
-     */
-    template <typename T>
-    concept URIContext = requires(T ctx) {
-        typename T::iterator;
-        typename T::out_type;
-        typename T::out_seg_type;
-        typename T::base_seg_type;
-        typename T::base_type;
-        typename T::char_type;
-        typename T::vec_iterator;
-
-        T::is_nothrow;
-        T::is_modifiable;
-        T::is_segregated;
-
-        ctx.pos;
-        ctx.beg;
-        ctx.end;
-        ctx.base;
-        ctx.status;
-    };
-
-    /**
      * URI Components contain all the pieces of a URL including:
      *  - Scheme
      *  - Credentials (Username and Password)
@@ -751,25 +727,6 @@ namespace webpp::uri {
     [[nodiscard]] constexpr bool has_credentials(URIComponents auto const& components) noexcept {
         return has_username(components) || has_password(components);
     }
-
-    /**
-     * A class used during parsing a URI
-     */
-    template <URIComponents CompType, URIComponents BaseType = CompType>
-    struct parsing_uri_context {
-        using component_type = CompType;
-        using base_type      = BaseType;
-        using seg_type       = typename component_type::seg_type;
-        using iterator       = typename component_type::iterator;
-        using char_type      = stl::iter_value_t<iterator>;
-
-        iterator                        beg{}; // the beginning of the string, not going to change during parsing
-        iterator                        pos{}; // current position
-        iterator                        end{}; // the end of the string
-        component_type                  out{}; // the output uri components
-        [[no_unique_address]] base_type base{};
-        uri_status_type                 status = +uri_status::unparsed;
-    };
 
 } // namespace webpp::uri
 

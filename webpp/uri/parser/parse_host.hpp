@@ -19,7 +19,7 @@ namespace webpp::uri {
     /**
      * https://url.spec.whatwg.org/#file-host-state
      */
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");

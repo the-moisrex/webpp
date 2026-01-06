@@ -5,7 +5,7 @@
 
 #include "../encoding.hpp"
 #include "./constants.hpp"
-#include "./uri_components_encoding.hpp"
+#include "./uri_context.hpp"
 
 namespace webpp::uri {
 

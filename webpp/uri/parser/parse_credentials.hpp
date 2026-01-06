@@ -4,7 +4,7 @@
 #define WEBPP_URI_PARSE_CREDENTIALS_HPP
 
 #include "./constants.hpp"
-#include "./uri_components_encoding.hpp"
+#include "./uri_context.hpp"
 
 namespace webpp::uri {
 
@@ -67,7 +67,7 @@ namespace webpp::uri {
     /// parse username
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;
@@ -88,7 +88,7 @@ namespace webpp::uri {
     /// parse password
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;

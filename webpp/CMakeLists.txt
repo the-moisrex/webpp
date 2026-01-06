@@ -189,7 +189,7 @@ set(ALL_SOURCES_SHORT
         uri/parser/parse_uri.hpp
         uri/parser/special_schemes.hpp
         uri/parser/uri_components.hpp
-        uri/parser/uri_components_encoding.hpp
+        uri/parser/uri_context.hpp
         uri/parser/windows_drive_letter.hpp
         uri/path.hpp
         uri/path_traverser.hpp

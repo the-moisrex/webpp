@@ -426,7 +426,7 @@ namespace webpp::unicode::idna {
      * Check Validity Criteria for the whole domain
      */
     template <idna_options Options = idna_options{}, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr bool is_domain_valid(Iter spos, Iter const& send) noexcept {
+    [[nodiscard]] static constexpr validity_criteria_status_type is_domain_valid(Iter spos, Iter const& send) noexcept {
         using enum validity_criteria_status;
 
         // todo: use sentinels to optimize the double passing

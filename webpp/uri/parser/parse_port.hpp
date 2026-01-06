@@ -19,7 +19,7 @@ namespace webpp::uri {
         set_error(ctx.status, uri_status::port_invalid);
     }
 
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
         requires(Options.parse_port)
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state

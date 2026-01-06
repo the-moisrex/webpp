@@ -259,6 +259,7 @@ namespace webpp::uri::details {
             return false;
         }
 
+        assert(*ctx.pos == '[');
         ++ctx.pos; // first char should be '[' now
 
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
@@ -266,42 +267,38 @@ namespace webpp::uri::details {
                 set_error(ctx.status, ipv6_unclosed);
                 return false;
             [[likely]] case inet_pton6_status::valid_special:
-                if (*ctx.pos == ']') [[likely]] {
-                    if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
-                        istl::deptr(ctx.out).set_hostname(ipv6_bytes);
-                        set_flag(ctx.status, has_non_empty_host);
-                    } else if constexpr (requires { get_component<components::host>(ctx).assign(ipv6_bytes); }) {
-                        get_component<components::host>(ctx).assign(ipv6_bytes);
-                        set_flag(ctx.status, has_non_empty_host);
-                    } else {
-                        // set value already sets the flag
-                        set_hostname(ctx, beg, ctx.pos);
-                    }
-                    for (;; ++ctx.pos) {
-                        if (ctx.pos == ctx.end) {
-                            set_valid(ctx.status, valid);
-                            return false;
-                        }
-                        switch (*ctx.pos) {
-                            case '/': set_valid(ctx.status, valid_path); return false;
-                            case ':': set_valid(ctx.status, valid_port); break;
-                            case '#': set_valid(ctx.status, valid_fragment); break;
-                            case '?':
-                                set_valid(ctx.status, valid_queries);
-                                break;
-                            [[unlikely]] case '\r':
-                            [[unlikely]] case '\t':
-                            [[unlikely]] case '\n':
-                                continue;
-                            [[unlikely]] default:
-                                set_error(ctx.status, ipv6_char_after_closing);
-                                return false;
-                        }
-                    }
-                    ++ctx.pos;
+                if (*ctx.pos != ']') [[unlikely]] {
+                    set_error(ctx.status, ipv6_unclosed);
                     return false;
                 }
-                set_error(ctx.status, ipv6_unclosed);
+                if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
+                    istl::deptr(ctx.out).set_hostname(ipv6_bytes);
+                    set_flag(ctx.status, has_non_empty_host);
+                } else if constexpr (requires { get_component<components::host>(ctx).assign(ipv6_bytes); }) {
+                    get_component<components::host>(ctx).assign(ipv6_bytes);
+                    set_flag(ctx.status, has_non_empty_host);
+                } else {
+                    // set value already sets the flag
+                    set_hostname(ctx, beg, ctx.pos);
+                }
+                switch (*++ctx.pos) {
+                    case '/': set_valid(ctx.status, valid_path); break;
+                    case ':':
+                        set_valid(ctx.status, valid_port);
+                        ++ctx.pos;
+                        break;
+                    case '#':
+                        set_valid(ctx.status, valid_fragment);
+                        ++ctx.pos;
+                        break;
+                    case '?':
+                        set_valid(ctx.status, valid_queries);
+                        ++ctx.pos;
+                        break;
+                    [[unlikely]] default:
+                        set_error(ctx.status, ipv6_char_after_closing);
+                        break;
+                }
                 return false;
             default:
                 set_error(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));

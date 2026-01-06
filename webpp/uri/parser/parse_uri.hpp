@@ -9,7 +9,7 @@
 namespace webpp::uri {
 
     namespace details {
-        template <uri_options Options = uri_options{}, URIContext CtxT>
+        template <uri_options Options , URIContext CtxT>
         static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
@@ -35,7 +35,7 @@ namespace webpp::uri {
             return false;
         }
 
-        template <uri_options Options = uri_options{}, URIContext CtxT>
+        template <uri_options Options , URIContext CtxT>
         static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             while (!has_error(ctx.status)) {
                 if (parse_uri_step<Options>(ctx)) {
@@ -45,15 +45,15 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         details::continue_parsing_uri<Options>(ctx);
     }
 
-    template <uri_options Options = uri_options{}, istl::StringView StrV = stl::string_view>
+    template <uri_options Options , istl::StringView StrV = stl::string_view>
     static constexpr auto parse_uri(StrV str) noexcept {
         using iterator     = typename StrV::const_iterator;
-        using context_type = parsing_uri_context<StrV, iterator>;
+        using context_type = uri_context<StrV, iterator>;
         context_type context{.beg = str.begin(),
                              .pos = str.begin(), // current position is start
                              .end = str.end()};
@@ -61,13 +61,13 @@ namespace webpp::uri {
         return context;
     }
 
-    template <uri_options Options = uri_options{}, istl::StringLike StrT, typename SegType>
+    template <uri_options Options , istl::StringLike StrT, typename SegType>
     static constexpr auto parse_uri(StrT const& the_url, uri_components<SegType> const& origin_context)
       noexcept(istl::StringView<StrT>) {
         using iterator             = typename StrT::const_iterator;
         using base_components_type = uri_components<SegType>;
         using base_seg_type        = typename base_components_type::seg_type;
-        using context_type         = parsing_uri_context<StrT, iterator, base_seg_type>;
+        using context_type         = uri_context<StrT, iterator, base_seg_type>;
 
         context_type context{.beg  = the_url.begin(),
                              .pos  = the_url.begin(), // current position is start
@@ -77,13 +77,13 @@ namespace webpp::uri {
         return context;
     }
 
-    template <uri_options Options = uri_options{}, istl::StringLike StrT, istl::StringViewifiable OStrV>
+    template <uri_options Options , istl::StringLike StrT, istl::StringViewifiable OStrV>
     static constexpr auto parse_uri(StrT const& the_url, OStrV&& base_uri) noexcept(istl::StringView<StrT>) {
         using iterator = typename StrT::const_iterator;
         static_assert(stl::same_as<iterator, typename OStrV::const_iterator>,
                       "Origin's string's char type must be the same as the specified URI's string's char type.");
         auto const base         = istl::view(stl::forward<OStrV>(base_uri));
-        using base_context_type = parsing_uri_context<stl::uint32_t, iterator>;
+        using base_context_type = uri_context<stl::uint32_t, iterator>;
 
         base_context_type origin_context{.beg = base.begin(), .pos = base.begin(), .end = base.end()};
         parse_uri<Options>(origin_context);

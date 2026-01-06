@@ -47,8 +47,8 @@ namespace webpp::uri {
     }
 
     namespace details {
-        static constexpr auto domain_name_threshold = 255;
-        static constexpr auto subdomain_threshold   = 63;
+        static constexpr auto domain_length_limit    = 255;
+        static constexpr auto subdomain_length_limit = 63;
     } // namespace details
 
     /**
@@ -65,52 +65,55 @@ namespace webpp::uri {
 
         using char_type = stl::iter_value_t<Iter>;
 
-        if (pos == end) {
+        auto const length = stl::distance(pos, end);
+
+        if (pos == end) [[unlikely]] {
             return empty_subdomain;
         }
-        if (end - pos > details::domain_name_threshold) {
+        if (length > details::domain_length_limit) [[unlikely]] {
+            // todo: is `too_long` the right error?
             return too_long;
         }
 
         switch (*pos) {
-            case static_cast<char_type>('.'): return empty_subdomain;
-            case static_cast<char_type>('-'): return begin_with_hyphen;
+            [[unlikely]] case static_cast<char_type>('.'):
+                return empty_subdomain;
+            [[unlikely]] case static_cast<char_type>('-'):
+                return begin_with_hyphen;
             default: break;
         }
 
-        bool has_punycode    = false;
-        auto subdomain_start = pos;
+        constexpr auto nonascii = charmap{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}};
+        bool           has_punycode    = false;
+        auto           subdomain_start = pos;
         while (pos != end) {
             if (*pos == static_cast<char_type>('x') && end - pos > 4 && *++pos == static_cast<char_type>('n') &&
                 *++pos == static_cast<char_type>('-') && *++pos == static_cast<char_type>('-'))
             {
                 has_punycode = true;
-                pos =
-                  charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}}.find_first_not_in(
-                    pos,
-                    end);
+                pos          = nonascii.find_first_not_in(pos, end);
                 continue;
             }
 
             switch (char_type const cur_char = *pos++) {
                 // todo: are we handling label-separators? https://www.unicode.org/reports/tr46/#Notation
-                case static_cast<char_type>('.'):
+                case '.':
                     if (pos == end) {
                         return dot_at_end;
                     }
-                    if (*pos == static_cast<char_type>('.')) {
+                    if (*pos == '.') {
                         return empty_subdomain;
                     }
-                    if (*pos == static_cast<char_type>('-')) {
+                    if (*pos == '-') {
                         return begin_with_hyphen;
                     }
-                    if (pos - subdomain_start > details::subdomain_threshold) {
+                    if (pos - subdomain_start > details::subdomain_length_limit) {
                         return subdomain_too_long;
                     }
                     subdomain_start = pos;
                     continue;
-                case static_cast<char_type>('-'):
-                    if (pos == end || *pos == static_cast<char_type>('.')) {
+                case '-':
+                    if (pos == end || *pos == '.') {
                         return end_with_hyphen;
                     }
                     if (*pos == static_cast<char_type>('-')) {
@@ -127,7 +130,7 @@ namespace webpp::uri {
             pos = ALPHA_DIGIT<char_type>.find_first_not_in(pos, end);
         }
         // checking if the TLD is of valid length
-        if (end - subdomain_start > details::subdomain_threshold) {
+        if (end - subdomain_start > details::subdomain_length_limit) {
             return subdomain_too_long;
         }
         return has_punycode ? valid_punycode : valid;

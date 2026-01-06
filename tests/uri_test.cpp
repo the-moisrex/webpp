@@ -28,13 +28,13 @@ TEST(URIHelperTests, IIEquals) {
 }
 
 using Types =
-  testing::Types<uri::parsing_uri_context_segregated_view<>,
-                 uri::parsing_uri_context_string<stl::string>,
-                 uri::parsing_uri_context_string<stl::string_view>,
-                 // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
-                 uri::parsing_uri_context_u32,
-                 uri::parsing_uri_context_segregated<>,
-                 uri::parsing_uri_context<stl::string_view, char const*>>;
+  testing::Types<uri::uri_context_segregated_view<>,
+                 uri::uri_context_string<stl::string>,
+                 uri::uri_context_string<stl::string_view>,
+                 // uri::uri_context_string<stl::basic_string_view<char8_t>>,
+                 uri::uri_context_u32,
+                 uri::uri_context_segregated<>,
+                 uri::uri_context<stl::string_view, char const*>>;
 
 template <class T>
 struct URITests : testing::Test {
@@ -133,7 +133,7 @@ TYPED_TEST(URITests, PathFromString) {
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
     constexpr stl::string_view    str = "http://";
-    uri::parsing_uri_context_view context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
+    uri::uri_context_view context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
     auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
@@ -144,7 +144,7 @@ TYPED_TEST(URITests, IntegralSchemeParsing) {
 TYPED_TEST(URITests, StringSchemeParsing) {
     constexpr stl::string_view str = "urn:testing";
 
-    uri::parsing_uri_context<stl::string_view, char const*> context{
+    uri::uri_context<stl::string_view, char const*> context{
       .beg = str.data(),
       .pos = str.data(),
       .end = str.data() + str.size()};
@@ -528,7 +528,7 @@ TYPED_TEST(URITests, PathDot) {
 TYPED_TEST(URITests, PathDotNormalized) {
     stl::string const str = "https://127.0.0.1/./one";
 
-    uri::parsing_uri_context_string context{
+    uri::uri_context_string context{
       .beg = str.begin(),
       .pos = str.begin(),
       .end = str.end(),

@@ -70,7 +70,7 @@ namespace webpp::uri {
      *     reg-name         = *( unreserved / pct-encoded / sub-delims )
      */
     struct host_authority {
-        using domain_type = basic_domain<>;
+        using domain_type = basic_domain<char>;
 
         static constexpr stl::uint16_t max_port_number    = 65'535U;
         static constexpr stl::uint16_t default_http_port  = 80U;
@@ -334,13 +334,15 @@ namespace webpp::uri {
                 case valid:
                 case valid_punycode: {
                     // no port, it's valid
-                    endpoint    = domain_type{host_ptr, host_end};
+                    // todo:
+                    endpoint    = domain_type{stl::string_view{host_ptr, host_end}};
                     status_code = host_status::valid;
                     break;
                 }
                 case invalid_character: {
                     if (*domain_ptr == ':') {
-                        endpoint = domain_type{host_ptr, domain_ptr};
+                        // todo:
+                        endpoint = domain_type{stl::string_view{host_ptr, domain_ptr}};
                         // it's a valid domain + (valid/invalid) port
                         parse_port(domain_ptr, host_end);
                     } else {

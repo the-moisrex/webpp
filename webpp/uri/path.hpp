@@ -79,7 +79,7 @@ namespace webpp::uri {
         bool           m_is_opaque = false; // todo
 
       public:
-        template <uri_options Options = uri_options{}, typename Iter = iterator>
+        template <uri_options Options , typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             using iterator_type = typename string_view_type::iterator;
             parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
@@ -92,7 +92,7 @@ namespace webpp::uri {
             return ctx.status;
         }
 
-        template <uri_options Options = uri_options{}, istl::StringViewifiable StrT>
+        template <uri_options Options , istl::StringViewifiable StrT>
         constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
             auto const str = istl::view(stl::forward<StrT>(inp_str));
             return parse<Options>(str.begin(), str.end());

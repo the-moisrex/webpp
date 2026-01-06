@@ -6,7 +6,7 @@
 #include "../encoding.hpp"
 #include "./constants.hpp"
 #include "./special_schemes.hpp"
-#include "./uri_components_encoding.hpp"
+#include "./uri_context.hpp"
 #include "./windows_drive_letter.hpp"
 
 namespace webpp::uri {
@@ -256,7 +256,7 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
@@ -312,7 +312,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_options Options = uri_options{}, URIContext CtxT>
+    template <uri_options Options , URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
