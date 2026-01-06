@@ -133,21 +133,15 @@ namespace webpp::uri {
         }
 
         // Character Category Lookup Table
-        template <bool IgnoreWhitespaces = true>
         static constexpr auto dots_category = []() consteval {
             // NOLINTBEGIN(*-magic-numbers, *-member-init)
             stl::array<stl::uint8_t, 256U> category;
-            category.fill(5U);      // Default category is 5 (other characters)
-            category['%'] = 1U;     // Start of percent-encoding
-            category['2'] = 2U;     // Part of %2e
-            category['e'] = 3U;     // End of %2e (lowercase)
-            category['E'] = 3U;     // End of %2E (uppercase)
-            category['.'] = 4U;     // Literal dot
-            if constexpr (IgnoreWhitespaces) {
-                category['\n'] = 0; // Whitespace (ignored)
-                category['\r'] = 0; // Whitespace (ignored)
-                category['\t'] = 0; // Whitespace (ignored)
-            }
+            category.fill(5U);     // Default category is 5 (other characters)
+            category.at('%') = 1U; // Start of percent-encoding
+            category.at('2') = 2U; // Part of %2e
+            category.at('e') = 3U; // End of %2e (lowercase)
+            category.at('E') = 3U; // End of %2E (uppercase)
+            category.at('.') = 4U; // Literal dot
             // NOLINTEND(*-magic-numbers, *-member-init)
             return category;
         }();
@@ -181,12 +175,12 @@ namespace webpp::uri {
            {10, 0, 0, 0, 0, 0}}
         };
 
-        template <bool IgnoreWhitespace = true, typename IterT>
+        template <typename IterT>
         [[nodiscard]] static constexpr stl::uint8_t dots_count(IterT pos, IterT end) noexcept {
             stl::uint8_t state = 3; // Start at initial state
 
             for (; pos != end; ++pos) {
-                auto const category = dots_category<IgnoreWhitespace>[static_cast<stl::uint8_t>(*pos)];
+                auto const category = dots_category.at(static_cast<stl::uint8_t>(*pos));
 
                 // NOLINTNEXTLINE(*-bounds-constant-array-index)
                 state = dots_state_transitions[state][category];
@@ -277,8 +271,7 @@ namespace webpp::uri {
         using iterator = typename ctx_type::iterator;
 
         // todo: URI Code Points are among interesting characters as well
-        webpp_static_constexpr auto interesting_characters =
-          details::ascii_bitmap('\0', '%', '#', '?', '\r', '\t', '\n');
+        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
 
         set_opaque(ctx, true);
         details::CtxBufferOf<CtxT> auto buffer  = get_buffer<components::path>(ctx);

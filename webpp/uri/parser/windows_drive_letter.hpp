@@ -96,13 +96,6 @@ namespace webpp::uri::details {
                 // ignoring first (back-)slash character
                 for (size_type index = 0; index != 3 && pos != end; ++pos) {
                     switch (*pos) {
-                        [[unlikely]] case '\r':
-                        [[unlikely]] case '\n':
-                        [[unlikely]] case '\t':
-                            if constexpr (Options.ignore_tabs_or_newlines) {
-                                continue;
-                            }
-                            return false;
                         case '\\':
                         case '/':
                             if (index == 0) {
@@ -163,14 +156,6 @@ namespace webpp::uri::details {
                     // ignoring first (back-)slash character
                     for (size_type index = 0; index != 3 && pos != ctx.end; ++pos) {
                         switch (*pos) {
-                            [[unlikely]] case '\r':
-                            [[unlikely]] case '\n':
-                            [[unlikely]] case '\t':
-                                if constexpr (Options.ignore_tabs_or_newlines) {
-                                    set_warning(ctx.status, uri_status::invalid_character);
-                                    continue;
-                                }
-                                return;
                             case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                             case '/':
                                 if (index == 0) {
@@ -178,7 +163,7 @@ namespace webpp::uri::details {
                                 }
                                 [[fallthrough]];
                             [[likely]] default:
-                                letters[index] = *pos;
+                                letters.at(index) = *pos;
                                 ++index;
                                 continue;
                         }

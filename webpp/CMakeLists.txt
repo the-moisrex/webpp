@@ -184,6 +184,7 @@ set(ALL_SOURCES_SHORT
         uri/parser/parse_host.hpp
         uri/parser/parse_path.hpp
         uri/parser/parse_port.hpp
+        uri/parser/parse_queries.hpp
         uri/parser/parse_scheme.hpp
         uri/parser/parse_uri.hpp
         uri/parser/special_schemes.hpp

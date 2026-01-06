@@ -25,9 +25,7 @@ namespace webpp::istl {
             str.at(0);
             str.data();
             str.c_str();
-            {
-                str = char_str
-            };
+            { str = char_str };
             str.size();
             str.capacity();
             str.shrink_to_fit();
@@ -150,13 +148,9 @@ namespace webpp::istl {
 
     template <typename T>
     concept ComparableToString = requires(T obj) {
-        {
-            obj == ""
-        };
+        { obj == "" };
     } || requires(T obj) {
-        {
-            "" == obj
-        };
+        { "" == obj };
     };
 
     template <istl::String StrT>

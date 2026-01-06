@@ -9,69 +9,6 @@
 
 namespace webpp::istl {
 
-
-    template <typename X>
-    concept CharTraits = requires {
-        typename X::char_type;
-        typename X::int_type;
-        typename X::off_type;
-        typename X::pos_type;
-        typename X::state_type;
-        requires requires(
-          typename X::char_type        c,
-          typename X::char_type const* p,
-          typename X::char_type*       s,
-          stl::size_t                  n,
-          typename X::int_type         e,
-          typename X::char_type const& ch) {
-            requires CopyAssignable<typename X::state_type>;
-            requires Destructible<typename X::state_type>;
-            requires CopyConstructible<typename X::state_type>;
-            requires DefaultConstructible<typename X::state_type>;
-
-            {
-                X::eq(c, c)
-            } -> stl::same_as<bool>;
-            {
-                X::lt(c, c)
-            } -> stl::same_as<bool>;
-            {
-                X::compare(p, p, n)
-            } -> stl::same_as<int>;
-            {
-                X::length(p)
-            } -> stl::same_as<stl::size_t>;
-            {
-                X::find(p, n, ch)
-            } -> stl::same_as<typename X::char_type const*>;
-            {
-                X::move(s, p, ch)
-            } -> stl::same_as<typename X::char_type*>;
-            {
-                X::copy(s, p, n)
-            } -> stl::same_as<typename X::char_type*>;
-            {
-                X::assign(s, n, c)
-            } -> stl::same_as<typename X::char_type*>;
-            {
-                X::not_eof(e)
-            } -> stl::same_as<typename X::int_type>;
-            {
-                X::to_char_type(e)
-            } -> stl::same_as<typename X::char_type>;
-            {
-                X::to_int_type(c)
-            } -> stl::same_as<typename X::int_type>;
-            {
-                X::eq_int_type(e, e)
-            } -> stl::same_as<bool>;
-            {
-                X::eof()
-            } -> stl::same_as<typename X::int_type>;
-        };
-    };
-
-
     template <typename T>
     concept SingleCharacter = part_of<T, unsigned char, char, wchar_t, char16_t, char8_t, char32_t>;
 
