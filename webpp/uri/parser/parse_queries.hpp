@@ -67,9 +67,9 @@ namespace webpp::uri {
         using enum uri_status;
 
         if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
         } else {
-            set_error(ctx.status, invalid_queries_character);
+            set(ctx.status, invalid_queries_character);
         }
     }
 
@@ -93,7 +93,7 @@ namespace webpp::uri {
         using ctx_type = CtxT;
 
         if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
             return;
         }
 
@@ -124,7 +124,7 @@ namespace webpp::uri {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
-                        set_valid(ctx.status, valid_fragment);
+                        set(ctx.status, valid_fragment);
                     } else {
                         stl::unreachable();
                     }
@@ -137,7 +137,7 @@ namespace webpp::uri {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
-                            set_error(ctx.status, invalid_queries_character);
+                            set(ctx.status, invalid_queries_character);
                             return;
                         }
                     }
@@ -166,7 +166,7 @@ namespace webpp::uri {
                     if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
                     } else {
-                        set_error(ctx.status, invalid_queries_character);
+                        set(ctx.status, invalid_queries_character);
                         return;
                     }
                     skip_separator(ctx, out);
@@ -186,7 +186,7 @@ namespace webpp::uri {
         set_queries(ctx.out, seg_beg, ctx.pos);
 
         if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
         } else {
             ++ctx.pos;
         }

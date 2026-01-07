@@ -32,7 +32,7 @@ namespace webpp::uri {
 
         if constexpr (Options.allow_file_hosts) {
             if (is_file_scheme(ctx.status)) {
-                set_valid(ctx.status, valid_file_host);
+                set(ctx.status, valid_file_host);
                 return;
             }
         }
@@ -57,12 +57,12 @@ namespace webpp::uri {
             case '#':
                 if constexpr (Options.empty_host_is_error) {
                     if (is_special_scheme(ctx.status)) {
-                        set_error(ctx.status, host_missing);
+                        set(ctx.status, host_missing);
                         return;
                     }
-                    set_valid(ctx.status, valid);
+                    set(ctx.status, valid);
                 } else {
-                    set_valid(ctx.status, valid);
+                    set(ctx.status, valid);
                     return;
                 }
                 break;
@@ -87,7 +87,7 @@ namespace webpp::uri {
 
         if (ctx.pos == ctx.end) {
             // todo: I'm guessing
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
             return;
         }
         if (is_special_scheme(ctx.status)) {
@@ -95,7 +95,7 @@ namespace webpp::uri {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                     case '/':
-                    default: set_valid(ctx.status, valid_path); break;
+                    default: set(ctx.status, valid_path); break;
                 }
                 break;
             }
@@ -105,7 +105,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     if constexpr (Options.parse_queries) {
-                        set_valid(ctx.status, valid_queries);
+                        set(ctx.status, valid_queries);
                         ++ctx.pos;
                         clear_queries(ctx.out);
                     } else {
@@ -114,7 +114,7 @@ namespace webpp::uri {
                     break;
                 case '#':
                     if constexpr (Options.parse_fragment) {
-                        set_valid(ctx.status, valid_fragment);
+                        set(ctx.status, valid_fragment);
                         ++ctx.pos;
                         clear_fragment(ctx.out);
                     } else {
@@ -122,7 +122,7 @@ namespace webpp::uri {
                     }
                     break;
                 default:
-                    set_valid(ctx.status, valid_path);
+                    set(ctx.status, valid_path);
                     clear_path(ctx.out);
                     break;
             }

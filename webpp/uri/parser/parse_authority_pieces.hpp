@@ -72,11 +72,11 @@ namespace webpp::uri::details {
             if (done) {
                 if constexpr (Options.empty_host_is_error && !IsSpecial) {
                     if (ctx.pos == authority_begin) {
-                        set_error(ctx.status, host_missing);
+                        set(ctx.status, host_missing);
                         return;
                     }
                 }
-                set_valid(ctx.status, valid_path);
+                set(ctx.status, valid_path);
                 break;
             }
 
@@ -92,10 +92,10 @@ namespace webpp::uri::details {
                         ++ctx.pos;
                         continue;
                     } else if constexpr (!Options.parse_credentials) {
-                        set_valid(ctx.status, valid_port);
+                        set(ctx.status, valid_port);
                     } else if constexpr (!Options.parse_port) {
                         // it must not be a port or a credential, so it must be invalid?
-                        set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                        set(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
                     } else {
                         // the first colon is the start of the password section
                         if (colon_pos == ctx.end) {
@@ -105,7 +105,7 @@ namespace webpp::uri::details {
                         // assume it's a port (even though it might be the start of the password)
                         auto const pre_port_pos = ctx.pos;
                         ++ctx.pos;
-                        set_valid(ctx.status, valid_port);
+                        set(ctx.status, valid_port);
                         parse_port(ctx);
 
                         // rollback if it's not a port, we roll back and assume it's a password
@@ -122,10 +122,10 @@ namespace webpp::uri::details {
 
                         if (pre_port_pos == host_begin) {
                             if constexpr (Options.empty_host_is_error && IsSpecial) {
-                                set_error(ctx.status, host_missing);
+                                set(ctx.status, host_missing);
                                 return;
                             } else if (ctx.pos == ctx.end) {
-                                set_valid(ctx.status, valid_path);
+                                set(ctx.status, valid_path);
                             }
                         }
                         return;
@@ -143,7 +143,7 @@ namespace webpp::uri::details {
                     if (must_contain_credentials) {
                         return;
                     }
-                    set_valid(ctx.status, valid_path);
+                    set(ctx.status, valid_path);
                     break;
                 case '.':
                     skip_separator(ctx, out);
@@ -156,7 +156,7 @@ namespace webpp::uri::details {
                     }
                     if constexpr (Options.parse_queries) {
                         skip_last_char = true;
-                        set_valid(ctx.status, valid_queries);
+                        set(ctx.status, valid_queries);
                     } else {
                         set_warning(ctx.status, invalid_character);
                         skip_separator(ctx, out);
@@ -170,7 +170,7 @@ namespace webpp::uri::details {
                     }
                     if constexpr (Options.parse_fragment) {
                         skip_last_char = true;
-                        set_valid(ctx.status, valid_fragment);
+                        set(ctx.status, valid_fragment);
                     } else {
                         set_warning(ctx.status, invalid_character);
                         skip_separator(ctx, out);
@@ -184,7 +184,7 @@ namespace webpp::uri::details {
                         }
                         continue;
                     } else {
-                        set_error(ctx.status, invalid_domain_code_point);
+                        set(ctx.status, invalid_domain_code_point);
                         return;
                     }
                 case '@':
@@ -202,17 +202,17 @@ namespace webpp::uri::details {
                         set_warning(ctx.status, invalid_character);
                         return;
                     }
-                default: set_error(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point); return;
+                default: set(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point); return;
             }
             if (must_contain_credentials) {
                 return;
             }
             if (ctx.pos == host_begin) {
                 if constexpr (Options.empty_host_is_error && IsSpecial) {
-                    set_error(ctx.status, host_missing);
+                    set(ctx.status, host_missing);
                     return;
                 } else if (ctx.pos == ctx.end) {
-                    set_valid(ctx.status, valid_path);
+                    set(ctx.status, valid_path);
                 }
             }
             break;

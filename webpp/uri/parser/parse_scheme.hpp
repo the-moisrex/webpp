@@ -60,7 +60,7 @@ namespace webpp::uri {
 
             using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, valid);
+                set(ctx.status, valid);
                 return;
             }
 
@@ -81,7 +81,7 @@ namespace webpp::uri {
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, valid);
+                set(ctx.status, valid);
                 return;
             }
 
@@ -99,19 +99,19 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
-                    set_valid(ctx.status, valid_queries);
+                    set(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
                 case '#':
                     clear_fragment(ctx.out);
-                    set_valid(ctx.status, valid_fragment);
+                    set(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
                 default: break;
             }
             clear_queries(ctx.out);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
-            set_valid(ctx.status, valid_path);
+            set(ctx.status, valid_path);
         }
 
         template <uri_options Options, URIContext CtxT>
@@ -123,7 +123,7 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/': set_valid(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path); return;
+                    case '/': set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path); return;
                     default: break;
                 }
             }
@@ -138,7 +138,7 @@ namespace webpp::uri {
                     //    This is a (platform-independent) Windows drive letter quirk.
                 }
             }
-            set_valid(ctx.status, valid_path);
+            set(ctx.status, valid_path);
         }
 
         template <uri_options Options, URIContext CtxT>
@@ -166,7 +166,7 @@ namespace webpp::uri {
 
             for (;; ++ctx.pos) {
                 if (ctx.pos == ctx.end) {
-                    set_valid(ctx.status, valid);
+                    set(ctx.status, valid);
                     return;
                 }
 
@@ -176,7 +176,7 @@ namespace webpp::uri {
                     default: break;
                 }
                 if constexpr (Options.allow_file_hosts) {
-                    set_valid(ctx.status, valid_file_host);
+                    set(ctx.status, valid_file_host);
                     return;
                 }
                 break;
@@ -188,7 +188,7 @@ namespace webpp::uri {
                 }
             }
 
-            set_valid(ctx.status, valid_path);
+            set(ctx.status, valid_path);
         }
 
         template <uri_options Options, URIContext CtxT>
@@ -207,7 +207,7 @@ namespace webpp::uri {
                                 set_path(ctx, path(ctx.base));
                                 set_queries(ctx, queries(ctx.base));
                                 clear_fragment(ctx.out);
-                                set_valid(ctx.status, valid_fragment);
+                                set(ctx.status, valid_fragment);
                                 return;
                             } else {
                                 break;
@@ -223,7 +223,7 @@ namespace webpp::uri {
                     return;
                 }
             }
-            set_error(ctx.status, missing_scheme_non_relative_url);
+            set(ctx.status, missing_scheme_non_relative_url);
         }
 
         template <uri_options Options , URIContext CtxT>
@@ -243,7 +243,7 @@ namespace webpp::uri {
                 }
                 break;
             }
-            set_valid(ctx.status, valid_authority);
+            set(ctx.status, valid_authority);
         }
 
         template <uri_options Options , URIContext CtxT>
@@ -296,7 +296,7 @@ namespace webpp::uri {
                     details::no_scheme_state<Options>(ctx);
                 } else {
                     // otherwise, return failure
-                    set_error(ctx.status, scheme_setter_invalid_input);
+                    set(ctx.status, scheme_setter_invalid_input);
                 }
                 return;
             }
@@ -311,7 +311,7 @@ namespace webpp::uri {
         // handling alpha, num, +, -, .
         for (;; ++ctx.pos) {
             if (ctx.pos == ctx.end) {
-                set_error(ctx.status, scheme_ended_unexpectedly);
+                set(ctx.status, scheme_ended_unexpectedly);
                 return;
             }
             switch (*ctx.pos) {
@@ -319,7 +319,7 @@ namespace webpp::uri {
                     break;
                 [[likely]] default: {
                     if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
-                        set_error(ctx.status, invalid_scheme_character);
+                        set(ctx.status, invalid_scheme_character);
                         return;
                     }
                     scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
@@ -328,7 +328,7 @@ namespace webpp::uri {
                 }
             }
             if (ctx.pos == ctx.end) [[unlikely]] {
-                set_error(ctx.status, scheme_ended_unexpectedly);
+                set(ctx.status, scheme_ended_unexpectedly);
                 return;
             }
             break;
@@ -388,15 +388,15 @@ namespace webpp::uri {
                 if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                     // https://url.spec.whatwg.org/#path-or-authority-state
                     if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
-                        set_valid(ctx.status, valid_authority);
+                        set(ctx.status, valid_authority);
                         return;
                     }
-                    set_valid(ctx.status, valid_path);
+                    set(ctx.status, valid_path);
                     return;
                 }
 
                 clear_path(ctx.out);
-                set_valid(ctx.status, valid_opaque_path);
+                set(ctx.status, valid_opaque_path);
                 return;
             }
         }

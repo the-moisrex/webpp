@@ -33,7 +33,7 @@ namespace webpp::uri {
                     }
                 }
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
-                set_valid(ctx.status, uri_status::valid_path);
+                set(ctx.status, uri_status::valid_path);
                 return;
             }
         }
@@ -84,7 +84,7 @@ namespace webpp::uri {
                 return true;
             }
             if (*stl::prev(end) != ']') [[unlikely]] {
-                set_error(ctx.status, ipv6_unclosed);
+                set(ctx.status, ipv6_unclosed);
                 return false;
             }
             static_cast<void>(details::parse_host_ipv6(ctx));
@@ -242,7 +242,7 @@ namespace webpp::uri {
         // file host state.
         if constexpr (Options.state_override) {
             if (is_file_scheme(ctx.status)) {
-                set_valid(ctx.status, valid_file_host);
+                set(ctx.status, valid_file_host);
                 return;
             }
         }

@@ -524,21 +524,17 @@ namespace webpp::uri {
         return has_error(+status, expected_err);
     }
 
-    static constexpr void set_valid(uri_status_type& status, uri_status const value) noexcept {
+    /// Set Valid or Set Error
+    static constexpr void set(uri_status_type& status, uri_status const value) noexcept {
         status &= ~values_mask;
         status |= +value;
     }
 
     template <bool Cond>
-    static constexpr void set_valid_if(uri_status_type& status, uri_status const value) noexcept {
+    static constexpr void set_if(uri_status_type& status, uri_status const value) noexcept {
         if constexpr (Cond) {
-            set_valid(status, value);
+            set(status, value);
         }
-    }
-
-    static constexpr void set_error(uri_status_type& status, uri_status const value) noexcept {
-        status &= ~values_mask;
-        status |= +value;
     }
 
     static constexpr void set_flag(uri_status_type& status, uri_status const value) noexcept {
@@ -579,11 +575,7 @@ namespace webpp::uri {
       uri_status_type& status,
       uri_status const invalid_state, // NOLINT(*-easily-swappable-parameters)
       uri_status const valid_state = uri_status::valid) noexcept {
-        if constexpr (Opt) {
-            set_error(status, invalid_state);
-        } else {
-            set_valid(status, valid_state);
-        }
+        set(status, Opt ? invalid_state : valid_state);
     }
 
     /// multiple calls with the same value must not affect the result, meaning, if you set a specific warning

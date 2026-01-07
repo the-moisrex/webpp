@@ -129,8 +129,7 @@ namespace webpp::uri::details {
     static constexpr void
     handle_windows_driver_letter(CtxT& ctx, OutT& out, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
       noexcept(CtxT::is_nothrow) {
-        using ctx_type  = CtxT;
-        using char_type = typename ctx_type::char_type;
+        using char_type = typename CtxT::char_type;
         if constexpr (Options.handle_windows_drive_letters) {
             if (!is_file_scheme(ctx.status)) {
                 return;
@@ -190,7 +189,7 @@ namespace webpp::uri::details {
             append_inplace_of(ctx, buffer, letters[1]);
             ignore_character(ctx, pos - ctx.pos - 1);
             if (letters[2] == '/') {
-                if constexpr (!ctx_type::is_segregated) {
+                if constexpr (!CtxT::is_segregated) {
                     append_inplace_of(ctx, buffer, '/');
                     next_segment(ctx, buffer, buffer, seg_beg, 0);
                 } else {

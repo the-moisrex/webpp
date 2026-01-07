@@ -16,7 +16,7 @@ namespace webpp::uri {
     static constexpr void parse_port(CtxT& ctx) noexcept {
         // any path that we take, we shouldn't be allowed to get there if Options.parse_port is false,
         // so, we just set an error and get out of this situation since it's most-likely a bug in parsing.
-        set_error(ctx.status, uri_status::port_invalid);
+        set(ctx.status, uri_status::port_invalid);
     }
 
     template <uri_options Options , URIContext CtxT>
@@ -48,13 +48,13 @@ namespace webpp::uri {
                     port_value += static_cast<port_type>(*ctx.pos - '0');
                     ++ctx.pos;
                     if (port_value > max_port_number) [[unlikely]] {
-                        set_error(ctx.status, port_out_of_range);
+                        set(ctx.status, port_out_of_range);
                         return;
                     }
                     continue;
                 case '\\':
                     if (!is_special_scheme(ctx.status)) [[unlikely]] {
-                        set_error(ctx.status, port_invalid);
+                        set(ctx.status, port_invalid);
                         return;
                     }
                     [[fallthrough]];
@@ -69,7 +69,7 @@ namespace webpp::uri {
                         // a.port === '200'
                         break;
                     } else {
-                        set_error(ctx.status, port_invalid);
+                        set(ctx.status, port_invalid);
                         return;
                     }
             }
@@ -97,7 +97,7 @@ namespace webpp::uri {
 
         if constexpr (!Options.state_override) {
             // https://url.spec.whatwg.org/#path-start-state
-            set_valid(ctx.status, valid_authority_end);
+            set(ctx.status, valid_authority_end);
         }
     }
 

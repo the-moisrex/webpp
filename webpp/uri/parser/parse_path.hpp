@@ -256,7 +256,7 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
@@ -280,7 +280,7 @@ namespace webpp::uri {
         start_segment(ctx, out, buffer);
         for (;;) {
             if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
-                set_valid(ctx.status, valid);
+                set(ctx.status, valid);
                 end_segment(ctx, out, seg_beg);
                 set_path(ctx.out, seg_beg, ctx.pos);
                 break;
@@ -288,11 +288,11 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
-                    set_valid(ctx.status, valid_queries);
+                    set(ctx.status, valid_queries);
                     break;
                 case '#':
                     clear_fragment(ctx.out);
-                    set_valid(ctx.status, valid_fragment);
+                    set(ctx.status, valid_fragment);
                     break;
                 case '%':
                     if (validate_percent_encode(ctx, buffer)) {
@@ -311,7 +311,7 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
@@ -355,10 +355,8 @@ namespace webpp::uri {
 
         while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
-                case '\\':
-                    set_warning(ctx.status, reverse_solidus_used);
-                    [[fallthrough]];
-                [[likely]] case '/':
+                case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
+                case '/':
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg)) {
                         ignore_character(ctx);
                         reset_segment_start(ctx, seg_beg);
@@ -366,19 +364,17 @@ namespace webpp::uri {
                     }
                     next_segment_of(ctx, out, buffer, seg_beg, '/');
                     continue;
-                [[likely]] case '?':
-                    set_valid_if<!Options.state_override>(ctx.status, valid_queries);
-                    break;
-                case '#':
-                    set_valid_if<!Options.state_override>(ctx.status, valid_fragment);
-                    break;
-                [[likely]] case '%':
+                case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
+                case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
+                case '%':
                     if (validate_percent_encode(ctx, buffer)) {
                         continue;
                     }
                     set_warning(ctx.status, invalid_character);
                     continue;
-                default: set_warning(ctx.status, invalid_character); break;
+                [[unlikely]] default:
+                    set_warning(ctx.status, invalid_character);
+                    break;
             }
             break;
         }
@@ -397,7 +393,7 @@ namespace webpp::uri {
                 }
             }
 
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
         }
     }
 

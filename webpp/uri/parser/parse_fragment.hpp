@@ -14,46 +14,31 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
-
-        if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, valid);
-        } else {
-            set_error(ctx.status, unexpected_fragment_found);
-        }
+        set(ctx.status, ctx.pos == ctx.end ? valid : unexpected_fragment_found);
     }
 
     template <uri_options Options, URIContext CtxT>
         requires(Options.parse_fragment)
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
-        using details::encode_or_validate;
-        using details::validate_percent_encode;
         using enum uri_status;
-
-        using ctx_type  = CtxT;
-        using char_type = typename ctx_type::char_type;
+        using char_type = typename CtxT::char_type;
 
         if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, valid);
+            set(ctx.status, valid);
             return;
         }
 
         auto const          seg_beg = ctx.pos;
-        ParsingOutput auto& out     = get_storage<components::fragment>(ctx);
-
+        ParsingOutput auto& out     = fragment(ctx.out);
         while (!encode_or_validate(ctx, out, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
-            switch (*ctx.pos) {
-                case '%':
-                    if (validate_percent_encode(ctx, out)) {
-                        continue;
-                    }
-                    break;
-                default: break;
+            if (*ctx.pos == '%' && validate_percent_encode(ctx, out)) {
+                continue;
             }
             set_warning(ctx.status, invalid_character);
         }
         set_fragment(ctx.out, seg_beg, ctx.pos);
-        set_valid(ctx.status, valid);
+        set(ctx.status, valid);
     }
 
 } // namespace webpp::uri

@@ -109,7 +109,7 @@ namespace webpp::uri::details {
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max()) + 1;
 
         if (src == end) {
-            set_error(ctx.status, uri_status::ip_bad_ending);
+            set(ctx.status, uri_status::ip_bad_ending);
             return false;
         }
 
@@ -151,7 +151,7 @@ namespace webpp::uri::details {
                             ++src;
                             break;
                         }
-                        set_error(ctx.status, uri_status::ip_invalid_character);
+                        set(ctx.status, uri_status::ip_invalid_character);
                         return false;
                     }
                     octet = digit;
@@ -173,7 +173,7 @@ namespace webpp::uri::details {
 
                 // dealing with invalid octet range or invalid characters
                 if (octet > 255) [[unlikely]] {
-                    set_error(ctx.status, uri_status::ip_invalid_octet_range);
+                    set(ctx.status, uri_status::ip_invalid_octet_range);
                     return false;
                 }
 
@@ -186,7 +186,7 @@ namespace webpp::uri::details {
             if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
                 for (; src != end; ++src) {
                     if (*src != '.') {
-                        set_error(ctx.status, uri_status::ip_invalid_character);
+                        set(ctx.status, uri_status::ip_invalid_character);
                         return false;
                     }
                 }
@@ -195,11 +195,11 @@ namespace webpp::uri::details {
                 if (++src == end) {
                     set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
                 } else {
-                    set_error(ctx.status, uri_status::ip_invalid_character);
+                    set(ctx.status, uri_status::ip_invalid_character);
                     return false;
                 }
             } else {
-                set_error(ctx.status, uri_status::ip_invalid_character);
+                set(ctx.status, uri_status::ip_invalid_character);
                 return false;
             }
         }
@@ -212,12 +212,12 @@ namespace webpp::uri::details {
             }
         } else {
             if (octets != 5) {
-                set_error(ctx.status, uri_status::ip_too_little_octets);
+                set(ctx.status, uri_status::ip_too_little_octets);
                 return false;
             }
         }
         if (octet != 0) {
-            set_error(ctx.status, uri_status::ip_too_many_octets);
+            set(ctx.status, uri_status::ip_too_many_octets);
             return false;
         }
 
@@ -237,7 +237,7 @@ namespace webpp::uri::details {
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
         if (has_hostname(ctx.out)) [[unlikely]] {
-            set_error(ctx.status, invalid_domain_code_point);
+            set(ctx.status, invalid_domain_code_point);
             return false;
         }
 
@@ -246,11 +246,11 @@ namespace webpp::uri::details {
 
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
             case inet_pton6_status::valid:
-                set_error(ctx.status, ipv6_unclosed);
+                set(ctx.status, ipv6_unclosed);
                 return false;
             [[likely]] case inet_pton6_status::valid_special:
                 if (*ctx.pos != ']') [[unlikely]] {
-                    set_error(ctx.status, ipv6_unclosed);
+                    set(ctx.status, ipv6_unclosed);
                     return false;
                 }
                 if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
@@ -264,26 +264,26 @@ namespace webpp::uri::details {
                     set_hostname(ctx, beg, ctx.pos);
                 }
                 switch (*++ctx.pos) {
-                    case '/': set_valid(ctx.status, valid_path); break;
+                    case '/': set(ctx.status, valid_path); break;
                     case ':':
-                        set_valid(ctx.status, valid_port);
+                        set(ctx.status, valid_port);
                         ++ctx.pos;
                         break;
                     case '#':
-                        set_valid(ctx.status, valid_fragment);
+                        set(ctx.status, valid_fragment);
                         ++ctx.pos;
                         break;
                     case '?':
-                        set_valid(ctx.status, valid_queries);
+                        set(ctx.status, valid_queries);
                         ++ctx.pos;
                         break;
                     [[unlikely]] default:
-                        set_error(ctx.status, ipv6_char_after_closing);
+                        set(ctx.status, ipv6_char_after_closing);
                         break;
                 }
                 return false;
             default:
-                set_error(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
+                set(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
                 return false;
         }
         return true;
