@@ -542,7 +542,6 @@ namespace webpp::uri {
     }
 
     static constexpr void set_flag(uri_status_type& status, uri_status const value) noexcept {
-        status &= ~flags_mask;
         status |= +value;
     }
 
