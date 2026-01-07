@@ -11,7 +11,7 @@
 
 namespace webpp::uri {
 
-    enum struct uri_encoding_policy : stl::uint_fast8_t {
+    enum struct uri_encoding_policy : stl::uint8_t {
         skip_chars,  // allow the specified chars
         encode_chars // allow all the chars except these
     };

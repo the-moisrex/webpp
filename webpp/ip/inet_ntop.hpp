@@ -96,24 +96,24 @@ namespace webpp {
 
             if (high_hex_8bit != 0U) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
+                *octet_ptr++ = static_cast<char_type>(hex_chars.at(high_hex_8bit));
             }
 
             high_hex_8bit = low_hex_8bit & 0x0FU;
             if (!skip || (high_hex_8bit != 0U)) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
+                *octet_ptr++ = static_cast<char_type>(hex_chars.at(high_hex_8bit));
             }
 
             low_hex_8bit = *src_ptr++;
 
             high_hex_8bit = low_hex_8bit >> 4U;
             if (!skip || (high_hex_8bit != 0U)) {
-                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
+                *octet_ptr++ = static_cast<char_type>(hex_chars.at(high_hex_8bit));
             }
 
             high_hex_8bit  = low_hex_8bit & 0x0FU;
-            *octet_ptr      = hex_chars<char_type>[high_hex_8bit];
+            *octet_ptr     = static_cast<char_type>(hex_chars.at(high_hex_8bit));
             hex_ptr       += 5;
 
 

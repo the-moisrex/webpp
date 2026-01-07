@@ -5,285 +5,26 @@
 
 #include "../common/meta.hpp"
 
+#include <array>
 #include <cstdint>
 
 namespace webpp::ascii {
 
     // NOLINTBEGIN(*-magic-numbers)
-    // NOLINTBEGIN(*-avoid-c-arrays)
     namespace details {
-        template <typename CharT = char>
-        static constexpr CharT hex_to_binary_table[] = {
-          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 10, 11, 12, 13, 14, 15, 0,  0,  0,  0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  10, 11, 12, 13, 14, 15};
-
-        // template <typename IntegerType = std::uint8_t, IntegerType NAN = -1, bool Hex = true>
-        // static constexpr IntegerType hex_to_binary_table_full[256] = {
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   0,
-        //   1,
-        //   2,
-        //   3,
-        //   4,
-        //   5,
-        //   6,
-        //   7,
-        //   8,
-        //   9,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   (Hex ? 10 : NAN),
-        //   (Hex ? 11 : NAN),
-        //   (Hex ? 12 : NAN),
-        //   (Hex ? 13 : NAN),
-        //   (Hex ? 14 : NAN),
-        //   (Hex ? 15 : NAN),
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   (Hex ? 10 : NAN),
-        //   (Hex ? 11 : NAN),
-        //   (Hex ? 12 : NAN),
-        //   (Hex ? 13 : NAN),
-        //   (Hex ? 14 : NAN),
-        //   (Hex ? 15 : NAN),
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN,
-        //   NAN};
+        static constexpr stl::array hex_to_binary_table = {
+          '\0', '\1', '\2', '\3',  '\4',  '\5',  '\6',  '\7',  '\x8', '\x9', '\0',  '\0',  '\0', '\0',
+          '\0', '\0', '\0', '\xA', '\xB', '\xC', '\xD', '\xE', '\xF', '\0',  '\0',  '\0',  '\0', '\0',
+          '\0', '\0', '\0', '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0',  '\0', '\0',
+          '\0', '\0', '\0', '\0',  '\0',  '\0',  '\0',  '\xA', '\xB', '\xC', '\xD', '\xE', '\xF'};
 
         /// 0123456789abcdef
-        template <typename CharT = char>
-        static constexpr CharT
-          hex_chars[17]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '\0'};
+        static constexpr stl::array
+          hex_chars{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '\0'};
 
 
         template <typename CharT = char>
-        static constexpr CharT percent_hex_table[1024]{
+        static constexpr stl::array<CharT, 1024> percent_hex_table{
           '%', '0', '0', 0, '%', '0', '1', 0, '%', '0', '2', 0, '%', '0', '3', 0, '%', '0', '4', 0, '%', '0', '5', 0,
           '%', '0', '6', 0, '%', '0', '7', 0, '%', '0', '8', 0, '%', '0', '9', 0, '%', '0', 'A', 0, '%', '0', 'B', 0,
           '%', '0', 'C', 0, '%', '0', 'D', 0, '%', '0', 'E', 0, '%', '0', 'F', 0, '%', '1', '0', 0, '%', '1', '1', 0,
@@ -365,10 +106,9 @@ namespace webpp::ascii {
     /// convert hex to its integral value
     /// Attention: use this utility where you KNOW the input is valid hex character,
     /// otherwise use hex_digit_value
-    template <typename ResType = unsigned, typename CharT = char>
-    [[nodiscard]] static constexpr ResType hex_to_binary(CharT inp_char) noexcept {
-        webpp_assume(inp_char >= static_cast<CharT>('0') && inp_char <= static_cast<CharT>('f'));
-        return details::hex_to_binary_table<ResType>[static_cast<unsigned>(inp_char - static_cast<CharT>('0'))];
+    [[nodiscard]] static constexpr char hex_to_binary(char const inp_char) noexcept {
+        webpp_assume(inp_char >= '0' && inp_char <= 'f');
+        return details::hex_to_binary_table.at(static_cast<stl::size_t>(inp_char - '0'));
     }
 
     /**
@@ -433,17 +173,16 @@ namespace webpp::ascii {
     }
 
     /// attention: this only supports up to 2 hex characters
-    template <typename CharT = char, typename IntType = int>
-    [[nodiscard]] static constexpr CharT const* to_percent_hex(IntType inp_int) noexcept {
+    template <typename CharT = char>
+    [[nodiscard]] static constexpr CharT const* to_percent_hex(CharT const code_unit) noexcept {
         // Equal to:
         //   output += '%';
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
         // webpp_assume(inp_int <= static_cast<IntType>(0xFFU) && inp_int >= static_cast<IntType>(0U));
-        return details::percent_hex_table<CharT> + (static_cast<std::uint8_t>(inp_int) * 4);
+        return details::percent_hex_table<CharT>.data() + (static_cast<std::uint8_t>(code_unit) * 4);
     }
 
-    // NOLINTEND(*-avoid-c-arrays)
     // NOLINTEND(*-magic-numbers)
 
 } // namespace webpp::ascii
