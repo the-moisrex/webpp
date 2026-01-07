@@ -8,6 +8,7 @@
 #include "../std/utility.hpp"
 
 #include <bit>
+#include <cassert>
 #include <cstdint>
 
 namespace webpp::uri {
@@ -515,17 +516,20 @@ namespace webpp::uri {
         return get_value(+status);
     }
 
-    [[nodiscard]] static constexpr bool has_error(uri_status_type const status,
-                                                  uri_status const      expected_err) noexcept {
+    [[nodiscard]] static constexpr bool has(uri_status_type const status, uri_status const expected_err) noexcept {
+        assert((+expected_err & values_mask) != 0); // only values and not warnings and flags
         return get_value(status) == expected_err;
     }
 
-    [[nodiscard]] static constexpr bool has_error(uri_status const status, uri_status const expected_err) noexcept {
-        return has_error(+status, expected_err);
+    [[nodiscard]] static constexpr bool has(uri_status const status, uri_status const expected_err) noexcept {
+        return has(+status, expected_err);
     }
 
     /// Set Valid or Set Error
     static constexpr void set(uri_status_type& status, uri_status const value) noexcept {
+        // Some algorithm has gone very wrong if we have two validation errors being set.
+        // But it's okay if we keep changing the valid status.
+        assert((status & error_bit) != error_bit);
         status &= ~values_mask;
         status |= +value;
     }
@@ -549,11 +553,6 @@ namespace webpp::uri {
     static constexpr void set_flags(uri_status_type& status, uri_status_type const value) noexcept {
         status &= ~flags_mask;
         status |= value & flags_mask;
-    }
-
-    [[nodiscard]] static constexpr uri_status_type merge_flags(uri_status_type const lhs,
-                                                               uri_status_type const rhs) noexcept {
-        return (lhs | rhs) & flags_mask;
     }
 
     [[nodiscard]] static constexpr uri_status_type flags_of(uri_status_type const status) noexcept {
