@@ -19,51 +19,47 @@ namespace webpp::uri {
         set(ctx.status, uri_status::port_invalid);
     }
 
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
         requires(Options.parse_port)
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
-
         using enum uri_status;
-
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
+
+        enum struct operation_type : stl::uint8_t {
+            op_invalid = 0,              // must be zero
+            op_digit   = 1,
+            op_break   = 2,
+        };
+        constexpr auto table = categorize<256U>(
+          // cat{.set = ALL_ASCII<char>, .value = operation_type::op_invalid},
+          cat{.set = "0123456789", .value = operation_type::op_digit},
+          cat{.set = "\\/?#", .value = operation_type::op_break});
 
         auto      beg        = ctx.pos;
         port_type port_value = 0;
-
-        while (ctx.pos != ctx.end) {
-            switch (*ctx.pos) {
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9':
-                    // "65535".count() == 5
+        for (; ctx.pos != ctx.end; ++ctx.pos) {
+            auto const code_unit = *ctx.pos;
+            switch (or_one(table, code_unit)) {
+                case operation_type::op_digit:
                     port_value *= 10U; // NOLINT(*-magic-numbers)
-                    port_value += static_cast<port_type>(*ctx.pos - '0');
-                    ++ctx.pos;
+                    port_value += static_cast<port_type>(code_unit - '0');
                     if (port_value > max_port_number) [[unlikely]] {
                         set(ctx.status, port_out_of_range);
                         return;
                     }
                     continue;
-                case '\\':
-                    if (!is_special_scheme(ctx.status)) [[unlikely]] {
+
+                case operation_type::op_break:
+                    if (code_unit == '\\' && !is_special_scheme(ctx.status)) [[unlikely]] {
                         set(ctx.status, port_invalid);
                         return;
                     }
-                    [[fallthrough]];
-                case '/':
-                case '?':
-                case '#': break;
+                    break;
 
-                default:
+                [[unlikely]] case operation_type::op_invalid:
                     if constexpr (Options.state_override) {
+                        // todo: add an option to make sure this would be an error. WHATWG is written by stupid people
                         // a = new URL("https://example.com:100/");
                         // a.port = "200what?";
                         // a.port === '200'
@@ -72,6 +68,7 @@ namespace webpp::uri {
                         set(ctx.status, port_invalid);
                         return;
                     }
+                default: stl::unreachable();
             }
             break;
         }
@@ -82,17 +79,13 @@ namespace webpp::uri {
         }
 
         // it's unsigned, we don't need to check for it being lower than 0
-        if (port_value == known_port(get_output_view<components::scheme>(ctx))) {
+        if (port_value == known_port(scheme(ctx.out))) {
             clear_port(ctx.out);
         } else {
-            if constexpr (requires { istl::deptr(ctx.out).set_port(static_cast<stl::uint16_t>(port_value)); }) {
-                // store the integer port value
-                set_port(ctx, static_cast<stl::uint16_t>(port_value));
-            } else {
-                // store it as a string
-                // set value already sets the flag
-                set_port(ctx, beg, ctx.pos);
-            }
+            // only one of these should work:
+            set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
+            set_port(ctx.out, beg, ctx.pos);
+            set(ctx.status, has_non_null_port);
         }
 
         if constexpr (!Options.state_override) {
