@@ -118,7 +118,7 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        set_component_value<components::host>(ctx, host_begin, pre_port_pos);
+                        set_hostname(ctx.out, host_begin, pre_port_pos);
 
                         if (pre_port_pos == host_begin) {
                             if constexpr (Options.empty_host_is_error && IsSpecial) {
@@ -237,7 +237,7 @@ namespace webpp::uri::details {
             }
         }
 
-        set_component_value<components::host>(ctx, seg_beg);
+        set_hostname(ctx.out, seg_beg, ctx.pos);
         if (skip_last_char) {
             ++ctx.pos;
         }

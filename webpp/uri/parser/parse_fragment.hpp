@@ -27,7 +27,6 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using details::encode_or_validate;
-        using details::set_component_value;
         using details::validate_percent_encode;
         using enum uri_status;
 
@@ -53,7 +52,7 @@ namespace webpp::uri {
             }
             set_warning(ctx.status, invalid_character);
         }
-        set_component_value<components::fragment>(ctx, seg_beg);
+        set_fragment(ctx.out, seg_beg, ctx.pos);
         set_valid(ctx.status, valid);
     }
 

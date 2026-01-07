@@ -85,23 +85,6 @@ namespace webpp::uri::details {
     concept CtxNonModifiableBuffer =
       CtxBufferOf<T, CtxT> && !istl::cvref_as<T, istl::nothing_type> && !CtxT::is_modifiable;
 
-    /// call this when encoding/decoding is done
-    template <components Comp, URIContext CtxT>
-    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end)
-      noexcept(CtxT::is_nothrow) {
-        webpp_static_constexpr bool is_vec = CtxT::is_segregated && components::path == Comp;
-        webpp_static_constexpr bool is_map = CtxT::is_segregated && components::queries == Comp;
-        webpp_static_constexpr bool is_seg = is_vec || is_map;
-        if constexpr (!is_seg && !CtxT::is_modifiable) {
-            uri::set_value<Comp>(ctx, beg, end);
-        }
-    }
-
-    template <components Comp, URIContext CtxT>
-    static constexpr void set_component_value(CtxT& ctx, typename CtxT::iterator beg) noexcept(CtxT::is_nothrow) {
-        set_component_value<Comp>(ctx, beg, ctx.pos);
-    }
-
     template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,

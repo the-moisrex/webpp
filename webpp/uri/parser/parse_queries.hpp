@@ -85,7 +85,6 @@ namespace webpp::uri {
         using details::ignore_character;
         using details::next_query;
         using details::reset_begin;
-        using details::set_component_value;
         using details::set_query_name;
         using details::set_query_value;
         using details::skip_separator;
@@ -184,7 +183,7 @@ namespace webpp::uri {
                 set_query_name(ctx, key_buffer, seg_beg);
             }
         }
-        set_component_value<components::queries>(ctx, seg_beg);
+        set_queries(ctx.out, seg_beg, ctx.pos);
 
         if (ctx.pos == ctx.end) {
             set_valid(ctx.status, valid);

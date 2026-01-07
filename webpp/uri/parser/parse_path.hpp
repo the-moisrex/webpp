@@ -263,7 +263,6 @@ namespace webpp::uri {
         using enum uri_status;
         using details::encode_or_validate;
         using details::end_segment;
-        using details::set_component_value;
         using details::set_opaque;
         using details::start_segment;
         using details::validate_percent_encode;
@@ -283,7 +282,7 @@ namespace webpp::uri {
             if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
                 set_valid(ctx.status, valid);
                 end_segment(ctx, out, seg_beg);
-                set_component_value<components::path>(ctx, seg_beg);
+                set_path(ctx.out, seg_beg, ctx.pos);
                 break;
             }
             switch (*ctx.pos) {
@@ -306,7 +305,7 @@ namespace webpp::uri {
                     continue;
             }
             end_segment(ctx, out, seg_beg);
-            set_component_value<components::path>(ctx, seg_beg);
+            set_path(ctx.out, seg_beg, ctx.pos);
             ++ctx.pos; // it's okay, we're not at the end
             break;
         }
@@ -323,7 +322,6 @@ namespace webpp::uri {
         using details::ignore_character;
         using details::next_segment_of;
         using details::reset_segment_start;
-        using details::set_component_value;
         using details::set_opaque;
         using details::start_segment;
         using details::validate_percent_encode;
@@ -386,7 +384,7 @@ namespace webpp::uri {
         }
         static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg));
         end_segment(ctx, out, seg_beg);
-        set_component_value<components::path>(ctx, seg_beg);
+        set_path(ctx.out, seg_beg, ctx.pos);
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {
