@@ -73,26 +73,24 @@ namespace webpp::uri {
             break;
         }
 
-        // ignoring the leading zeros
-        while (beg != ctx.pos - 1 && *beg == '0') [[unlikely]] {
-            ++beg;
-        }
-
         // it's unsigned, we don't need to check for it being lower than 0
         if (port_value == known_port(scheme(ctx.out))) {
             clear_port(ctx.out);
             unset_flag(ctx.status, has_non_null_port);
         } else {
+            // ignoring the leading zeros
+            while (beg != ctx.pos - 1 && *beg == '0') [[unlikely]] {
+                ++beg;
+            }
+
             // only one of these should work:
             set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
             set_port(ctx.out, beg, ctx.pos);
             set_flag(ctx.status, has_non_null_port);
         }
 
-        if constexpr (!Options.state_override) {
-            // https://url.spec.whatwg.org/#path-start-state
-            set(ctx.status, valid_authority_end);
-        }
+        // https://url.spec.whatwg.org/#path-start-state
+        set_if<!Options.state_override>(ctx.status, valid_authority_end);
     }
 
 } // namespace webpp::uri

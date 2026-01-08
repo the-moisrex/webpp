@@ -25,16 +25,14 @@ namespace webpp::uri {
 
         using enum uri_status;
 
-        if (ctx.pos == ctx.end) {
-            set_error_if<Options.empty_host_is_error>(ctx.status, host_missing);
+        if (ctx.pos == ctx.end) [[unlikely]] {
+            set_if<Options.empty_host_is_error>(ctx.status, host_missing);
             return;
         }
 
-        if constexpr (Options.allow_file_hosts) {
-            if (is_file_scheme(ctx.status)) {
-                set(ctx.status, valid_file_host);
-                return;
-            }
+        if (Options.allow_file_hosts && is_file_scheme(ctx.status)) {
+            set(ctx.status, valid_file_host);
+            return;
         }
 
         // Handle missing host situation:
@@ -43,7 +41,7 @@ namespace webpp::uri {
         switch (*ctx.pos) {
             case ':':
                 if constexpr (!Options.parse_credentials) {
-                    set_error_if<Options.empty_host_is_error>(ctx.status, host_missing);
+                    set_if<Options.empty_host_is_error>(ctx.status, host_missing);
                     return;
                 }
                 break;
@@ -69,12 +67,7 @@ namespace webpp::uri {
             default: break;
         }
 
-        if (!is_special_scheme(ctx.status)) {
-            details::parse_authority_pieces<Options, false>(ctx);
-            return;
-        }
-
-        details::parse_authority_pieces<Options, true>(ctx);
+        details::parse_authority_pieces<Options>(ctx);
     }
 
     /// Path start state (I like to call it authority end because it's more RFC like to
@@ -91,14 +84,10 @@ namespace webpp::uri {
             return;
         }
         if (is_special_scheme(ctx.status)) {
-            for (;;) {
-                switch (*ctx.pos) {
-                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/':
-                    default: set(ctx.status, valid_path); break;
-                }
-                break;
+            if (*ctx.pos == '\\') [[unlikely]] {
+                set_warning(ctx.status, reverse_solidus_used);
             }
+            set(ctx.status, valid_path);
             return;
         }
         if constexpr (!Options.state_override) {

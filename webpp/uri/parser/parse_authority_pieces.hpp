@@ -7,6 +7,7 @@
 #include "../credentials.hpp"
 #include "../encoding.hpp"
 #include "./host_ip.hpp"
+#include "./special_schemes.hpp"
 
 namespace webpp::uri::details {
 
@@ -27,7 +28,7 @@ namespace webpp::uri::details {
         }
     }
 
-    template <uri_options Options , bool IsSpecial = true, URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using details::ascii_bitmap;
@@ -43,35 +44,33 @@ namespace webpp::uri::details {
           '%'
         };
 
+        webpp_static_constexpr ascii_bitmap normal_chars = forbidden_hosts;
+        webpp_static_constexpr ascii_bitmap special_chars =
+          ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
+                                  : forbidden_domains;
 
-        webpp_static_constexpr ascii_bitmap interesting_characters =
-          !IsSpecial                ? forbidden_hosts
-          : ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
-                                    : forbidden_domains;
-
-        auto const authority_begin = ctx.pos;
-        auto       host_begin      = authority_begin;
-        iterator   colon_pos       = ctx.end; // start of password or port
-
-        bool  skip_last_char           = false;
-        bool  must_contain_credentials = false;
-        auto& out                      = init_string_host(ctx);
-        auto  buffer                   = get_buffer(get_component<components::host>(ctx));
-        auto  seg_beg                  = ctx.pos;
-
+        bool const is_special               = is_special_scheme(ctx.status);
+        auto const authority_begin          = ctx.pos;
+        auto       host_begin               = authority_begin;
+        iterator   colon_pos                = ctx.end; // start of password or port
+        bool       skip_last_char           = false;
+        bool       must_contain_credentials = false;
+        auto&      out                      = init_string_host(ctx);
+        auto       buffer                   = get_buffer(get_component<components::host>(ctx));
+        auto       seg_beg                  = ctx.pos;
         for (;;) {
             bool done; // NOLINT(*-init-variables)
-            if constexpr (!IsSpecial) {
+            if (!is_special) {
                 // for opaque hosts:
-                done = encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, interesting_characters);
+                done = encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, normal_chars);
             } else {
                 // for domain names:
                 // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                done = decode_or_tolower(ctx, buffer, interesting_characters);
+                done = decode_or_tolower(ctx, buffer, special_chars);
             }
             if (done) {
-                if constexpr (Options.empty_host_is_error && !IsSpecial) {
-                    if (ctx.pos == authority_begin) {
+                if constexpr (Options.empty_host_is_error) {
+                    if (!is_special && ctx.pos == authority_begin) {
                         set(ctx.status, host_missing);
                         return;
                     }
@@ -95,7 +94,7 @@ namespace webpp::uri::details {
                         set(ctx.status, valid_port);
                     } else if constexpr (!Options.parse_port) {
                         // it must not be a port or a credential, so it must be invalid?
-                        set(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                        set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point);
                     } else {
                         // the first colon is the start of the password section
                         if (colon_pos == ctx.end) {
@@ -121,7 +120,7 @@ namespace webpp::uri::details {
                         set_hostname(ctx.out, host_begin, pre_port_pos);
 
                         if (pre_port_pos == host_begin) {
-                            if constexpr (Options.empty_host_is_error && IsSpecial) {
+                            if (Options.empty_host_is_error && is_special) {
                                 set(ctx.status, host_missing);
                                 return;
                             } else if (ctx.pos == ctx.end) {
@@ -133,7 +132,7 @@ namespace webpp::uri::details {
                     break;
                 }
                 case '\\':
-                    if constexpr (!IsSpecial) {
+                    if constexpr (!is_special) {
                         // todo: check for non-specials
                         break;
                     }
@@ -178,15 +177,14 @@ namespace webpp::uri::details {
                     }
                     break;
                 case '%':
-                    if constexpr (!IsSpecial) {
+                    if (!is_special) {
                         if (!validate_percent_encode(ctx, buffer)) {
                             set_warning(ctx.status, invalid_character);
                         }
                         continue;
-                    } else {
-                        set(ctx.status, invalid_domain_code_point);
-                        return;
                     }
+                    set(ctx.status, invalid_domain_code_point);
+                    return;
                 case '@':
                     must_contain_credentials = false;
                     if constexpr (Options.parse_credentials) {
@@ -202,16 +200,17 @@ namespace webpp::uri::details {
                         set_warning(ctx.status, invalid_character);
                         return;
                     }
-                default: set(ctx.status, IsSpecial ? invalid_domain_code_point : invalid_host_code_point); return;
+                default: set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point); return;
             }
             if (must_contain_credentials) {
                 return;
             }
             if (ctx.pos == host_begin) {
-                if constexpr (Options.empty_host_is_error && IsSpecial) {
+                if (Options.empty_host_is_error && is_special) {
                     set(ctx.status, host_missing);
                     return;
-                } else if (ctx.pos == ctx.end) {
+                }
+                if (ctx.pos == ctx.end) {
                     set(ctx.status, valid_path);
                 }
             }

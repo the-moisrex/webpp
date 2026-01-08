@@ -567,15 +567,6 @@ namespace webpp::uri {
         return (status & +flag) != 0;
     }
 
-    /// Conditionally set an error or set as valid
-    template <bool Opt>
-    static constexpr void set_error_if(
-      uri_status_type& status,
-      uri_status const invalid_state, // NOLINT(*-easily-swappable-parameters)
-      uri_status const valid_state = uri_status::valid) noexcept {
-        set(status, Opt ? invalid_state : valid_state);
-    }
-
     /// multiple calls with the same value must not affect the result, meaning, if you set a specific warning
     /// 5 times, the status should not be corrupted.
     static constexpr void set_warning(uri_status_type& status, uri_status const value) noexcept {
