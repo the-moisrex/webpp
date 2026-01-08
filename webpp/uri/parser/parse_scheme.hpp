@@ -10,6 +10,7 @@
 #include "../uri_status.hpp"
 #include "./special_schemes.hpp"
 #include "./uri_components.hpp"
+#include "./uri_context.hpp"
 
 namespace webpp::uri {
 
@@ -54,17 +55,13 @@ namespace webpp::uri {
         static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
-
             using enum uri_status;
-            using enum components;
-
-            using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
                 set(ctx.status, valid);
                 return;
             }
 
-            if constexpr (ctx_type::has_base_uri) {
+            if constexpr (CtxT::has_base_uri) {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
 
@@ -73,7 +70,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '/': break;
                 case '\\':
-                    if (is_special_scheme(ctx.status)) {
+                    if (is_special_scheme(ctx.status)) [[unlikely]] {
                         set_warning(ctx.status, reverse_solidus_used);
                     }
                     break;
@@ -88,7 +85,7 @@ namespace webpp::uri {
 
             // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
-            if constexpr (ctx_type::has_base_uri) {
+            if constexpr (CtxT::has_base_uri) {
                 set_username(ctx, username(ctx.base));
                 set_password(ctx, password(ctx.base));
                 set_hostname(ctx, hostname(ctx.base));
@@ -144,11 +141,8 @@ namespace webpp::uri {
         template <uri_options Options, URIContext CtxT>
         static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
-
             using enum uri_status;
-
-            using ctx_type  = CtxT;
-            using char_type = typename ctx_type::char_type;
+            using char_type = typename CtxT::char_type;
 
             // set scheme to "file"
             set_flag(ctx.status, scheme_type::file_scheme);
@@ -182,7 +176,7 @@ namespace webpp::uri {
                 break;
             }
 
-            if constexpr (ctx_type::has_base_uri) {
+            if constexpr (CtxT::has_base_uri) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     // todo
                 }
@@ -196,12 +190,10 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#no-scheme-state
 
             using enum uri_status;
-            using ctx_type = CtxT;
-
-            if constexpr (ctx_type::has_base_uri) {
+            if constexpr (CtxT::has_base_uri) {
                 if (path(ctx.base)) { // todo: specs say opaque path
                     for (; ctx.pos != ctx.end; ++ctx.pos) {
-                        if (*ctx.pos == '#') {
+                        if (*ctx.pos == '#') [[unlikely]] {
                             if constexpr (Options.parse_fragment) {
                                 set_scheme(ctx, scheme(ctx.base));
                                 set_path(ctx, path(ctx.base));
@@ -226,7 +218,7 @@ namespace webpp::uri {
             set(ctx.status, missing_scheme_non_relative_url);
         }
 
-        template <uri_options Options , URIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
@@ -246,7 +238,7 @@ namespace webpp::uri {
             set(ctx.status, valid_authority);
         }
 
-        template <uri_options Options , URIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -263,16 +255,13 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::encoded_scheme;
-
-        using ctx_type  = CtxT;
-        using char_type = typename ctx_type::char_type;
+        using char_type = typename CtxT::char_type;
         using enum uri_status;
 
         webpp_static_constexpr auto alnum_plus = details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
-
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end) [[unlikely]] {
@@ -280,65 +269,55 @@ namespace webpp::uri {
             return;
         }
 
-        // this is designed to find out which scheme type we're dealing with here
-        stl::uint64_t scheme_code = 0ULL;
-
         // handling of the first character:
-        for (;;) {
-            if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
-                // if state override is not given, set buffer to the empty string, state to no
-                // scheme state, and start over (from the first code point in input).
-                //
-                // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                if constexpr (!Options.state_override) {
-                    ctx.pos = ctx.beg;
-                    clear_scheme(ctx.out);
-                    details::no_scheme_state<Options>(ctx);
-                } else {
-                    // otherwise, return failure
-                    set(ctx.status, scheme_setter_invalid_input);
-                }
-                return;
+        if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
+            // if state override is not given, set buffer to the empty string, state to no
+            // scheme state, and start over (from the first code point in input).
+            //
+            // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+            if constexpr (!Options.state_override) {
+                ctx.pos = ctx.beg;
+                clear_scheme(ctx.out);
+                details::no_scheme_state<Options>(ctx);
+            } else {
+                // otherwise, return failure
+                set(ctx.status, scheme_setter_invalid_input);
             }
-            break;
+            return;
         }
 
-        scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
-        scheme_code <<= details::one_byte;
+        // this is designed to find out which scheme type we're dealing with here
+        stl::uint64_t scheme_code   = 0ULL;
+        scheme_code                |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
+        scheme_code               <<= details::one_byte;
         ++ctx.pos;
 
         // scheme state (https://url.spec.whatwg.org/#scheme-state)
         // handling alpha, num, +, -, .
         for (;; ++ctx.pos) {
-            if (ctx.pos == ctx.end) {
-                set(ctx.status, scheme_ended_unexpectedly);
-                return;
-            }
-            switch (*ctx.pos) {
-                case ':':
-                    break;
-                [[likely]] default: {
-                    if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
-                        set(ctx.status, invalid_scheme_character);
-                        return;
-                    }
-                    scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
-                    scheme_code <<= details::one_byte;
-                    continue;
-                }
-            }
             if (ctx.pos == ctx.end) [[unlikely]] {
                 set(ctx.status, scheme_ended_unexpectedly);
                 return;
             }
-            break;
-        }
-
-        if constexpr (Options.state_override) {
-            // If url’s scheme is "file" and its host is an empty host, then return.
-            if (is_file_scheme(ctx.status) && has_hostname(ctx.out)) [[unlikely]] {
+            if (*ctx.pos == ':') {
+                break;
+            }
+            if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
+                set(ctx.status, invalid_scheme_character);
                 return;
             }
+            scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
+            scheme_code <<= details::one_byte;
+        }
+
+        if (ctx.pos == ctx.end) [[unlikely]] {
+            set(ctx.status, scheme_ended_unexpectedly);
+            return;
+        }
+
+        // If url’s scheme is "file" and its host is an empty host, then return.
+        if (Options.state_override && is_file_scheme(ctx.status) && has_hostname(ctx.out)) [[unlikely]] {
+            return;
         }
 
         switch (scheme_code) {
@@ -352,18 +331,13 @@ namespace webpp::uri {
             case encoded_scheme("wss"): details::set_scheme(ctx, details::wss_scheme<char_type>); break;
             case encoded_scheme("ftp"): details::set_scheme(ctx, details::ftp_scheme<char_type>); break;
             case encoded_scheme("file"): {
-                if constexpr (Options.state_override) {
-                    // If url includes credentials or has a non-null port, and buffer is "file", then return
-                    if (has_warning(ctx.status, has_credentials) || has_flag(ctx.status, has_non_null_port))
-                      [[unlikely]]
-                    {
-                        return;
-                    }
-
-                    // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
-                    if (!is_special_scheme(ctx.status)) [[unlikely]] {
-                        return;
-                    }
+                // If url includes credentials or has a non-null port, and buffer is "file", then return
+                // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+                if (Options.state_override &&
+                    (has_flags(ctx.status, has_credentials, has_non_null_port) || !is_special_scheme(ctx.status)))
+                  [[unlikely]]
+                {
+                    return;
                 }
                 ++ctx.pos;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
@@ -375,11 +349,9 @@ namespace webpp::uri {
                 return;
             }
             [[unlikely]] default: {
-                if constexpr (Options.state_override) {
-                    // If url’s scheme is not a special scheme and buffer is a special scheme, then return.
-                    if (!is_special_scheme(ctx.status)) [[unlikely]] {
-                        return;
-                    }
+                // If url’s scheme is not a special scheme and buffer is a special scheme, then return.
+                if (Options.state_override && !is_special_scheme(ctx.status)) [[unlikely]] {
+                    return;
                 }
 
                 details::set_scheme(ctx);
@@ -401,18 +373,16 @@ namespace webpp::uri {
             }
         }
 
-        if constexpr (Options.state_override) {
-            // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
-            if (!is_special_scheme(ctx.status)) [[unlikely]] {
-                return;
-            }
+        // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+        if (Options.state_override && !is_special_scheme(ctx.status)) [[unlikely]] {
+            return;
         }
 
         ++ctx.pos;
         set_flag(ctx.status, scheme_type::special_scheme);
 
-        if constexpr (ctx_type::has_base_uri) {
-            if (get_output_view<components::scheme>(ctx) == scheme(ctx.base)) {
+        if constexpr (CtxT::has_base_uri) {
+            if (scheme(ctx.out) == scheme(ctx.base)) {
                 // todo: Assert: base is special (and therefore does not have an opaque path).
                 details::special_relative_or_authority_state<Options>(ctx);
                 return;

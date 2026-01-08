@@ -5,7 +5,6 @@
 
 #include "../../ip/ipv4.hpp"
 #include "../credentials.hpp"
-#include "../encoding.hpp"
 #include "./host_ip.hpp"
 #include "./special_schemes.hpp"
 
@@ -35,19 +34,17 @@ namespace webpp::uri::details {
         using details::FORBIDDEN_DOMAIN_CODE_POINTS;
         using details::FORBIDDEN_HOST_CODE_POINTS;
 
-        using ctx_type = CtxT;
-        using iterator = typename ctx_type::iterator;
+        using iterator = typename CtxT::iterator;
 
         webpp_static_constexpr ascii_bitmap forbidden_hosts{
-          ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
+          CtxT::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
             : FORBIDDEN_HOST_CODE_POINTS,
           '%'
         };
 
         webpp_static_constexpr ascii_bitmap normal_chars = forbidden_hosts;
         webpp_static_constexpr ascii_bitmap special_chars =
-          ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
-                                  : forbidden_domains;
+          CtxT::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}} : forbidden_domains;
 
         bool const is_special               = is_special_scheme(ctx.status);
         auto const authority_begin          = ctx.pos;
@@ -120,10 +117,11 @@ namespace webpp::uri::details {
                         set_hostname(ctx.out, host_begin, pre_port_pos);
 
                         if (pre_port_pos == host_begin) {
-                            if (Options.empty_host_is_error && is_special) {
+                            if (Options.empty_host_is_error && is_special) [[unlikely]] {
                                 set(ctx.status, host_missing);
                                 return;
-                            } else if (ctx.pos == ctx.end) {
+                            }
+                            if (ctx.pos == ctx.end) {
                                 set(ctx.status, valid_path);
                             }
                         }
@@ -132,7 +130,7 @@ namespace webpp::uri::details {
                     break;
                 }
                 case '\\':
-                    if constexpr (!is_special) {
+                    if (!is_special) {
                         // todo: check for non-specials
                         break;
                     }

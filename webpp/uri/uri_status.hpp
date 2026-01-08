@@ -516,6 +516,14 @@ namespace webpp::uri {
         return get_value(+status);
     }
 
+    template <typename... T>
+        requires((stl::same_as<T, uri_status> && ...))
+    [[nodiscard]] static constexpr bool has_flags(uri_status_type const status, T const... warns) noexcept {
+        assert((get_value(warns) | ...) == 0); // only flags and warnings
+        uri_status_type const warning = (+warns | ...);
+        return (status & warning) == warning;
+    }
+
     [[nodiscard]] static constexpr bool has(uri_status_type const status, uri_status const expected_err) noexcept {
         assert((+expected_err & values_mask) != 0); // only values and not warnings and flags
         return get_value(status) == expected_err;

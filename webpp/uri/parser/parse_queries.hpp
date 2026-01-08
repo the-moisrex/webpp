@@ -90,16 +90,13 @@ namespace webpp::uri {
         using details::skip_separator;
         using details::validate_percent_encode;
 
-        using ctx_type = CtxT;
-
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
             return;
         }
 
         webpp_static_constexpr auto base_interesting_characters =
-          !ctx_type::is_segregated ? ascii_bitmap('%', '\r', '\n', '\t', '\0')
-                                   : ascii_bitmap('%', '=', '&', '\r', '\n', '\t', '\0');
+          !CtxT::is_segregated ? ascii_bitmap('%') : ascii_bitmap('%', '=', '&');
         webpp_static_constexpr auto interesting_characters =
           Options.parse_fragment && !Options.state_override
             ? ascii_bitmap(base_interesting_characters, '#')
@@ -130,10 +127,7 @@ namespace webpp::uri {
                     }
                     break;
                 case '%':
-                    if (!validate_percent_encode(
-                          ctx,
-                          !in_value ? key_buffer : value_buffer))
-                    {
+                    if (!validate_percent_encode(ctx, !in_value ? key_buffer : value_buffer)) {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
@@ -144,7 +138,7 @@ namespace webpp::uri {
                     continue;
                 case '=':
                     if (!in_value) {
-                        if constexpr (ctx_type::is_segregated) {
+                        if constexpr (CtxT::is_segregated) {
                             set_query_name(ctx, key_buffer, seg_beg);
                         }
                         skip_separator(ctx, out);
@@ -155,7 +149,7 @@ namespace webpp::uri {
                     in_value = true;
                     continue;
                 case '&':
-                    if constexpr (ctx_type::is_segregated) {
+                    if constexpr (CtxT::is_segregated) {
                         set_query_value(ctx, value_buffer, seg_beg);
                         in_value = false;
                     }
@@ -176,7 +170,7 @@ namespace webpp::uri {
             }
             break;
         }
-        if constexpr (ctx_type::is_segregated) {
+        if constexpr (CtxT::is_segregated) {
             if (in_value) {
                 set_query_value(ctx, value_buffer, seg_beg);
             } else {

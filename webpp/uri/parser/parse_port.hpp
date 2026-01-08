@@ -5,6 +5,7 @@
 
 #include "./special_schemes.hpp"
 #include "./uri_components.hpp"
+#include "./uri_context.hpp"
 
 namespace webpp::uri {
 
