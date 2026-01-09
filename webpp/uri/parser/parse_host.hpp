@@ -19,7 +19,7 @@ namespace webpp::uri {
     /**
      * https://url.spec.whatwg.org/#file-host-state
      */
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
@@ -118,6 +118,8 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::is_possible_ends_with_ipv4;
+        using id_type  = stl::uint8_t;
+        using iterator = typename CtxT::iterator;
 
         // note: we don't need to check for IPv6 as the first step, we can check later.
 
@@ -132,40 +134,39 @@ namespace webpp::uri {
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
 
-        using id_type = stl::uint8_t;
 
-        webpp_static_constexpr id_type upper_val   = 0b1U;                               // upper case ascii chars
-        webpp_static_constexpr id_type no_ipv4_val = 0b10U;                              // invalid IPv4 Characters
-        webpp_static_constexpr id_type no_ipv6_val = 0b100U;                             // invalid IPv6 Characters
-        webpp_static_constexpr id_type x_val       = 0b1000U;                            // character x
-        webpp_static_constexpr id_type n_val       = 0b1'0000U;                          // character n
-        webpp_static_constexpr id_type dash_val    = 0b10'0000U;                         // character -
-        webpp_static_constexpr id_type nt_val      = 0b100'0000U;                        // newlines and tabs
-        webpp_static_constexpr id_type forb_val    = static_cast<id_type>(~0 & ~nt_val); // Forbidden/Unicode
-        webpp_static_constexpr id_type xnd_val     = x_val | n_val | dash_val | no_ipv4_val;
-        webpp_static_constexpr id_type no_ip_val   = no_ipv4_val | no_ipv6_val;
+        enum struct cp_type : id_type {
+            upper_val   = 0b1U,                      // upper case ascii chars
+            no_ipv4_val = 0b10U,                     // invalid IPv4 Characters
+            no_ipv6_val = 0b100U,                    // invalid IPv6 Characters
+            x_val       = 0b1000U,                   // character x
+            n_val       = 0b1'0000U,                 // character n
+            dash_val    = 0b10'0000U,                // character -
+            forb_val    = static_cast<id_type>(~0U), // Forbidden/Unicode
+            xnd_val     = x_val | n_val | dash_val | no_ipv4_val,
+            no_ip_val   = no_ipv4_val | no_ipv6_val,
+        };
 
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS, .value = forb_val},
-          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = forb_val},
-          cat{.set = details::INVALID_IPV4, .value = no_ipv4_val},
-          cat{.set = details::INVALID_IPV6, .value = no_ipv6_val},
-          cat{.set = details::TABS_OR_NEWLINES, .value = nt_val},
-          cat{.set = UPPER_ALPHA<char8_t>, .value = upper_val},
-          cat{.set = u8"xX", .value = x_val},
-          cat{.set = u8"nN", .value = n_val},
-          cat{.set = u8"-", .value = dash_val});
+          cat{.set = details::NON_ASCII_CODE_UNITS, .value = cp_type::forb_val},
+          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = cp_type::forb_val},
+          cat{.set = details::INVALID_IPV4, .value = cp_type::no_ipv4_val},
+          cat{.set = details::INVALID_IPV6, .value = cp_type::no_ipv6_val},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = cp_type::upper_val},
+          cat{.set = u8"xX", .value = cp_type::x_val},
+          cat{.set = u8"nN", .value = cp_type::n_val},
+          cat{.set = u8"-", .value = cp_type::dash_val});
 
         // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
-        auto const status = or_all<id_type>(interesting_characters, pos, end);
+        iterator const sbeg   = pos;
+        auto const     status = or_all<id_type>(interesting_characters, pos, end);
         switch (status) {
-            case upper_val:
+            case cp_type::upper_val:
                 // todo: does a simple to_lower would suffice?
                 break;
-                [[fallthrough]];
             case 0: // possible IPv4
                 if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
                     details::parse_host_ipv4(pos, end, ctx);
@@ -173,35 +174,25 @@ namespace webpp::uri {
                 }
                 set_hostname(ctx, pos, end);
                 return;
-            case no_ip_val | nt_val:
-                if constexpr (CtxT::is_modifiable) {
-                    break;
-                }
-                // todo: strip the newlines or trim if it's non-modifiable
-                [[fallthrough]];
-            [[likely]] case no_ip_val:
+            case cp_type::no_ip_val:
                 // fast path:
                 // the host is fully in valid ascii characters already, and also we don't need to check for
                 // ipv4 either, it includes invalid ipv4 characters.
                 set_hostname(ctx, pos, end);
                 return;
-            [[unlikely]] case forb_val:
+            [[unlikely]] case cp_type::forb_val:
                 break; // forbidden code points:
             [[unlikely]] default:
                 // 'x', 'n' and '-' were found
-                if ((status & no_ipv6_val) == 0) {
-                    if (!details::handle_ipv6(ctx, pos, end)) {
-                        // either found a valid ipv6, an error occurred, or it's an empty string.
-                        return;
-                    }
+                if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 && !details::handle_ipv6(ctx, pos, end)) {
+                    // either found a valid ipv6, an error occurred, or it's an empty string.
+                    return;
                 }
 
-                if ((status | xnd_val) == status) {
+                if ((status | stl::to_underlying(cp_type::xnd_val)) == status && starts_with(pos, end, "xn-")) {
                     // if it starts with `xn-`, then we go the slow path
-                    if (starts_with(pos, end, "xn-")) {
-                        // todo: we already know if newlines and tabs exist or not
-                        break;
-                    }
+                    // todo: we already know if newlines and tabs exist or not
+                    break;
                 }
                 break;
         }
@@ -216,18 +207,23 @@ namespace webpp::uri {
 
         // Return asciiDomain.
         if constexpr (CtxT::is_modifiable) {
-            auto  out       = get_buffer<components::host>(ctx);
-            auto& prev_host = get_storage<components::host>(ctx);
+            auto out = get_buffer<components::host>(ctx);
 
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
-            auto const to_ascii_res = idna::domain_to_ascii<Options>(prev_host, pos, end, out);
-            if (!is_valid(to_ascii_res)) {
+            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, pos, end, out);
+            if (!is_valid(to_ascii_res)) [[unlikely]] {
                 set_error<components::host>(ctx, to_ascii_res);
                 return;
             }
-            set_hostname(ctx, out);
+            set_hostname(ctx.out, out);
         } else {
-            // todo
+            // Only validate, no conversion:
+            auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, pos);
+            if (!is_valid(ascii_status)) [[unlikely]] {
+                set(ctx.status, ascii_status);
+                return;
+            }
+            set_hostname(ctx.out, sbeg, pos);
         }
     }
 

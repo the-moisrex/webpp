@@ -73,6 +73,43 @@ namespace webpp::uri::idna {
         return is_valid(status) ? valid : domain_to_ascii_error;
     }
 
+    /**
+     * Check if a domain is in a valid ASCII format (have gone through the toASCII algorithm)
+     * This is the same as doing `toASCII(str) == str` but without any allocations
+     */
+    template <uri_options Options, typename Iter>
+    static constexpr domain2ascii_status verify_domain_ascii(Iter spos, Iter send) noexcept {
+        using enum domain2ascii_status;
+        using unicode::idna::to_ascii_status;
+
+        constexpr bool be_strict = false;
+
+        constexpr auto to_ascii_options = []() consteval {
+            unicode::idna::idna_options options;
+            options.VerifyDnsLength   = Options.verify_dns_length; // be strict
+            options.UseSTD3ASCIIRules = Options.use_std3_ascii_rules;
+            options.CheckHyphens      = be_strict;
+            return options;
+        };
+
+        auto const status = unicode::idna::validate_domain<to_ascii_options>(spos, send);
+
+        if constexpr (!be_strict) {
+            // If result is the empty string, domain-to-ASCII validation error, return failure.
+            // if (out.size() == prev_len) {
+            //     return domain_to_ascii_error;
+            // }
+
+            // todo:
+            // If result contains a forbidden domain code point, domain-invalid-code-point validation error,
+            // return failure.
+            // if () {
+            //     return invalid_domain_code_point;
+            // }
+        }
+        return is_valid(status) ? valid : domain_to_ascii_error;
+    }
+
 
 } // namespace webpp::uri::idna
 

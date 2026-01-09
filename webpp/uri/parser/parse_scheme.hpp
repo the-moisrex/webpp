@@ -51,7 +51,7 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_options Options, URIContext CtxT>
+        template <URIContext CtxT>
         static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
@@ -64,17 +64,10 @@ namespace webpp::uri {
             if constexpr (CtxT::has_base_uri) {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
-
                 set_scheme(ctx, scheme(ctx.base));
             }
-            switch (*ctx.pos) {
-                case '/': break;
-                case '\\':
-                    if (is_special_scheme(ctx.status)) [[unlikely]] {
-                        set_warning(ctx.status, reverse_solidus_used);
-                    }
-                    break;
-                default: break;
+            if (*ctx.pos == '\\' && is_special_scheme(ctx.status)) [[unlikely]] {
+                set_warning(ctx.status, reverse_solidus_used);
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
@@ -192,23 +185,21 @@ namespace webpp::uri {
             using enum uri_status;
             if constexpr (CtxT::has_base_uri) {
                 if (path(ctx.base)) { // todo: specs say opaque path
-                    for (; ctx.pos != ctx.end; ++ctx.pos) {
-                        if (*ctx.pos == '#') [[unlikely]] {
-                            if constexpr (Options.parse_fragment) {
+                    if constexpr (Options.parse_fragment) {
+                        for (; ctx.pos != ctx.end; ++ctx.pos) {
+                            if (*ctx.pos == '#') [[unlikely]] {
                                 set_scheme(ctx, scheme(ctx.base));
                                 set_path(ctx, path(ctx.base));
                                 set_queries(ctx, queries(ctx.base));
                                 clear_fragment(ctx.out);
                                 set(ctx.status, valid_fragment);
                                 return;
-                            } else {
-                                break;
                             }
+                            break;
                         }
-                        break;
                     }
                 } else if (!is_file_scheme(scheme(ctx.base))) {
-                    relative_state<Options>(ctx);
+                    relative_state(ctx);
                     return;
                 } else {
                     file_state<Options>(ctx);
@@ -218,7 +209,7 @@ namespace webpp::uri {
             set(ctx.status, missing_scheme_non_relative_url);
         }
 
-        template <uri_options Options, URIContext CtxT>
+        template <URIContext CtxT>
         static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
@@ -243,11 +234,11 @@ namespace webpp::uri {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
             if (ascii::inc_if<Options>(ctx, '/', '/')) {
-                special_authority_ignore_slashes_state<Options>(ctx);
+                special_authority_ignore_slashes_state(ctx);
                 return;
             }
             set_warning(ctx.status, uri_status::missing_following_solidus);
-            relative_state<Options>(ctx);
+            relative_state(ctx);
         }
 
     } // namespace details
@@ -393,7 +384,7 @@ namespace webpp::uri {
         if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
             set_warning(ctx.status, missing_following_solidus);
         }
-        details::special_authority_ignore_slashes_state<Options>(ctx);
+        details::special_authority_ignore_slashes_state(ctx);
     }
 
 } // namespace webpp::uri
