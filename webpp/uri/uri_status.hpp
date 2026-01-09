@@ -53,8 +53,7 @@ namespace webpp::uri {
         bool allow_multiple_trailing_empty_ipv4_octets = false;
 
         /// Hexadecimals and Octal octets are allowed to be used in IPv4 addresses (not in IPv6 though)
-        bool allow_ipv4_hex_octets   = true;
-        bool allow_ipv4_octal_octets = true;
+        bool allow_ipv4_hex_octal_octets = true;
 
         /// Invalid characters (except in domains and schemas and what not) are considered a warning, not an
         /// error in WHATWG
@@ -110,8 +109,7 @@ namespace webpp::uri {
       .parse_fragment                            = true,
       .allow_trailing_empty_ipv4_octet           = false,
       .allow_multiple_trailing_empty_ipv4_octets = false,
-      .allow_ipv4_hex_octets                     = false,
-      .allow_ipv4_octal_octets                   = false,
+      .allow_ipv4_hex_octal_octets               = false,
       .allow_invalid_characters                  = false,
       .allow_file_hosts                          = false,
       .handle_windows_drive_letters              = false,
@@ -130,8 +128,7 @@ namespace webpp::uri {
       .parse_fragment                            = true,
       .allow_trailing_empty_ipv4_octet           = true,
       .allow_multiple_trailing_empty_ipv4_octets = true,
-      .allow_ipv4_hex_octets                     = true,
-      .allow_ipv4_octal_octets                   = true,
+      .allow_ipv4_hex_octal_octets               = true,
       .allow_invalid_characters                  = true,
       .allow_file_hosts                          = true,
       .handle_windows_drive_letters              = true,

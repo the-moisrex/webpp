@@ -12,28 +12,12 @@ namespace webpp::uri::details {
 
     static constexpr ascii_bitmap forbidden_domains{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
-    template <typename CtxT>
-    static constexpr auto& init_string_host(CtxT& ctx) {
-        if constexpr (CtxT::is_modifiable) {
-            auto& host = get_component<components::host>(ctx);
-            if constexpr (requires { host.init_domain(); }) {
-                host.init_domain();
-                return *host.as_domain();
-            } else {
-                return host;
-            }
-        } else {
-            return istl::nothing;
-        }
-    }
-
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::FORBIDDEN_DOMAIN_CODE_POINTS;
         using details::FORBIDDEN_HOST_CODE_POINTS;
-
         using iterator = typename CtxT::iterator;
 
         webpp_static_constexpr ascii_bitmap forbidden_hosts{
@@ -52,7 +36,7 @@ namespace webpp::uri::details {
         iterator   colon_pos                = ctx.end; // start of password or port
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
-        auto&      out                      = init_string_host(ctx);
+        auto&      out                      = get_component<components::host>(ctx);
         auto       buffer                   = get_buffer(get_component<components::host>(ctx));
         auto       seg_beg                  = ctx.pos;
         for (;;) {

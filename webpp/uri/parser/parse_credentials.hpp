@@ -43,23 +43,26 @@ namespace webpp::uri {
             auto const atsign_pos = ctx.pos;
 
             // append to the username and password
-            if (atsign_pos != ctx.end) {
-                // parse username
-                iterator const username_beg = beg;
-                iterator const username_end = stl::min(password_token_pos, atsign_pos);
-
-                clear_username>(ctx.out); // todo: it's optimizable
-                encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
-
-                // parse password
-                if (password_token_pos != ctx.end) {
-                    iterator const password_beg = password_token_pos + 1;
-                    iterator const password_end = atsign_pos;
-
-                    clear_password(ctx.out); // todo: it's optimizable
-                    encode_or_set<components::password>(ctx, password_beg, password_end, USER_INFO_ENCODE_SET);
-                }
+            if (atsign_pos == ctx.end) {
+                return;
             }
+
+            // parse username
+            iterator const username_beg = beg;
+            iterator const username_end = stl::min(password_token_pos, atsign_pos);
+
+            clear_username > (ctx.out); // todo: it's optimizable
+            encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
+
+            // parse password
+            if (password_token_pos == ctx.end) {
+                return;
+            }
+            iterator const password_beg = password_token_pos + 1;
+            iterator const password_end = atsign_pos;
+
+            clear_password(ctx.out); // todo: it's optimizable
+            encode_or_set<components::password>(ctx, password_beg, password_end, USER_INFO_ENCODE_SET);
         }
 
     } // namespace details
@@ -67,7 +70,7 @@ namespace webpp::uri {
     /// parse username
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;
@@ -88,7 +91,7 @@ namespace webpp::uri {
     /// parse password
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;

@@ -231,16 +231,13 @@ namespace webpp::uri {
     static constexpr void parse_hostname(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#host-state
         // https://url.spec.whatwg.org/#hostname-state
-
         using enum uri_status;
 
         // If state override is given and url’s scheme is "file", then decrease pointer by 1 and set state to
         // file host state.
-        if constexpr (Options.state_override) {
-            if (is_file_scheme(ctx.status)) {
-                set(ctx.status, valid_file_host);
-                return;
-            }
+        if (Options.state_override && is_file_scheme(ctx.status)) {
+            set(ctx.status, valid_file_host);
+            return;
         }
 
         bool inside_brackets = false;

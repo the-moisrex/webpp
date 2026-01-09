@@ -96,9 +96,10 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_options Options = standard_uri_parsing_options, typename Iter, URIContext CtxT>
+    template <uri_options Options, typename Iter, URIContext CtxT>
     static constexpr bool parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
+        using enum uri_status;
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
 
@@ -108,8 +109,8 @@ namespace webpp::uri::details {
         webpp_static_constexpr auto invalid_num =
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max()) + 1;
 
-        if (src == end) {
-            set(ctx.status, uri_status::ip_bad_ending);
+        if (src == end) [[unlikely]] {
+            set(ctx.status, ip_bad_ending);
             return false;
         }
 
@@ -120,18 +121,14 @@ namespace webpp::uri::details {
                 stl::uint64_t octet_base = 10;
 
                 // find the current octet's base
-                if (*src == '0') {
+                if (Options.allow_ipv4_hex_octal_octets && *src == '0') {
                     // octet, hex, or a series of zeros (000000)
-                    if constexpr (Options.allow_ipv4_octal_octets) {
-                        // assume it's octal (all zero decimals will be parsed correctly as octal)
-                        octet_base = 8;
-                    }
-                    if constexpr (Options.allow_ipv4_hex_octets) {
+                    // assume it's octal (all zero decimals will be parsed correctly as octal)
+                    octet_base = 8;
+                    ++src;
+                    if (src != end && (*src == 'x' || *src == 'X')) {
+                        octet_base = 16; // it's definitely hex or invalid octet now
                         ++src;
-                        if (src != end && (*src == 'x' || *src == 'X')) {
-                            octet_base = 16; // it's definitely hex or invalid octet now
-                            ++src;
-                        }
                     }
                 }
 
@@ -141,7 +138,7 @@ namespace webpp::uri::details {
                 for (; src != end; ++src) {
                     stl::uint64_t digit  = octet;
                     digit               *= octet_base;
-                    if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
+                    if (Options.allow_ipv4_hex_octal_octets && octet_base == 16) [[unlikely]] {
                         digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(*src);
                     } else {
                         digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(*src);
@@ -151,16 +148,14 @@ namespace webpp::uri::details {
                             ++src;
                             break;
                         }
-                        set(ctx.status, uri_status::ip_invalid_character);
+                        set(ctx.status, ip_invalid_character);
                         return false;
                     }
                     octet = digit;
                 }
 
-                if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
-                    if (octet_base != 10 && octet != 0) [[unlikely]] {
-                        set_warning(ctx.status, uri_status::ipv4_non_decimal_octet);
-                    }
+                if (Options.allow_ipv4_hex_octal_octets && octet_base != 10 && octet != 0) [[unlikely]] {
+                    set_warning(ctx.status, ipv4_non_decimal_octet);
                 }
 
                 if (src == end) {
@@ -173,7 +168,7 @@ namespace webpp::uri::details {
 
                 // dealing with invalid octet range or invalid characters
                 if (octet > 255) [[unlikely]] {
-                    set(ctx.status, uri_status::ip_invalid_octet_range);
+                    set(ctx.status, ip_invalid_octet_range);
                     return false;
                 }
 
@@ -182,24 +177,24 @@ namespace webpp::uri::details {
             }
         }
 
-        if (src != end && *src == '.') {
+        if (src != end && *src == '.') [[unlikely]] {
             if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
                 for (; src != end; ++src) {
-                    if (*src != '.') {
-                        set(ctx.status, uri_status::ip_invalid_character);
+                    if (*src != '.') [[unlikely]] {
+                        set(ctx.status, ip_invalid_character);
                         return false;
                     }
                 }
             } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
                 // empty octet at the end is found:
                 if (++src == end) {
-                    set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+                    set_warning(ctx.status, ipv4_trailing_empty_octet);
                 } else {
-                    set(ctx.status, uri_status::ip_invalid_character);
+                    set(ctx.status, ip_invalid_character);
                     return false;
                 }
             } else {
-                set(ctx.status, uri_status::ip_invalid_character);
+                set(ctx.status, ip_invalid_character);
                 return false;
             }
         }
@@ -210,14 +205,12 @@ namespace webpp::uri::details {
                 *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
                 octet  &= ~(0xFFULL << static_cast<stl::uint64_t>((4 - octets) * 8));
             }
-        } else {
-            if (octets != 5) {
-                set(ctx.status, uri_status::ip_too_little_octets);
-                return false;
-            }
+        } else if (octets != 5) [[unlikely]] {
+            set(ctx.status, ip_too_little_octets);
+            return false;
         }
-        if (octet != 0) {
-            set(ctx.status, uri_status::ip_too_many_octets);
+        if (octet != 0) [[unlikely]] {
+            set(ctx.status, ip_too_many_octets);
             return false;
         }
 
@@ -253,16 +246,9 @@ namespace webpp::uri::details {
                     set(ctx.status, ipv6_unclosed);
                     return false;
                 }
-                if constexpr (requires { istl::deptr(ctx.out).set_hostname(ipv6_bytes); }) {
-                    istl::deptr(ctx.out).set_hostname(ipv6_bytes);
-                    set_flag(ctx.status, has_non_empty_host);
-                } else if constexpr (requires { get_component<components::host>(ctx).assign(ipv6_bytes); }) {
-                    get_component<components::host>(ctx).assign(ipv6_bytes);
-                    set_flag(ctx.status, has_non_empty_host);
-                } else {
-                    // set value already sets the flag
-                    set_hostname(ctx, beg, ctx.pos);
-                }
+                set_hostname(ctx, beg, ctx.pos);
+                set_hostname(ctx.out, ipv6_bytes);
+                set_flag(ctx.status, has_non_empty_host);
                 switch (*++ctx.pos) {
                     case '/': set(ctx.status, valid_path); break;
                     case ':':
