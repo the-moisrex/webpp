@@ -76,7 +76,7 @@ namespace webpp::uri {
     }
 
     template <URIContext CtxT>
-    static constexpr auto get_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+    static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
         return seg_type{get_allocator(ctx.out)};
     }

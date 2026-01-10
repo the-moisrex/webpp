@@ -343,6 +343,17 @@ namespace webpp::uri {
         return {.href = string_type{alloc}};
     }
 
+    template <URIHrefComponents CompT>
+    static constexpr CompT get_allocator(CompT const& comps) noexcept {
+        return comps.href.get_allocator();
+    }
+
+    template <URIComponents CompT>
+        requires requires { typename CompT::allocator_type; }
+    static constexpr CompT get_allocator(CompT const& comps) noexcept {
+        return comps.scheme.get_allocator();
+    }
+
     //////////////////////////////////////// /////////////////// ////////////////////////////////////////
     //////////////////////////////////////// Relative Components ////////////////////////////////////////
     //////////////////////////////////////// /////////////////// ////////////////////////////////////////
