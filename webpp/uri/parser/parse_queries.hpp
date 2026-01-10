@@ -65,12 +65,7 @@ namespace webpp::uri {
         requires(!Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept {
         using enum uri_status;
-
-        if (ctx.pos == ctx.end) {
-            set(ctx.status, valid);
-        } else {
-            set(ctx.status, invalid_queries_character);
-        }
+        set(ctx.status, ctx.pos == ctx.end ? valid : invalid_queries_character);
     }
 
     template <uri_options Options, URIContext CtxT>

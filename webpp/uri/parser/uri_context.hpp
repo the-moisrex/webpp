@@ -45,6 +45,11 @@ namespace webpp::uri {
         using seg_type       = typename component_type::seg_type;
         using iterator       = typename component_type::iterator;
         using char_type      = stl::iter_value_t<iterator>;
+        using allocator_type = istl::allocator_type_of<component_type>;
+
+        static constexpr bool is_nothrow    = component_type::is_nothrow;
+        static constexpr bool is_modifiable = component_type::is_modifiable;
+        static constexpr bool is_segregated = component_type::is_segregated;
 
         iterator                        beg{}; // the beginning of the string, not going to change during parsing
         iterator                        pos{}; // current position
@@ -53,6 +58,28 @@ namespace webpp::uri {
         [[no_unique_address]] base_type base{};
         uri_status_type                 status = +uri_status::unparsed;
     };
+
+    /// Create a URI Context
+    template <URIContext CtxT>
+    static constexpr CtxT
+    create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::allocator_type alloc = {})
+      noexcept(CtxT::is_nothrow) {
+        using enum uri_status;
+        CtxT ctx{
+          .beg    = beg,
+          .pos    = beg,
+          .end    = end,
+          .out    = create<typename CtxT::component_type>(beg, end, alloc),
+          .status = unparsed,
+        };
+        return ctx;
+    }
+
+    template <URIContext CtxT>
+    static constexpr auto get_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using seg_type = typename CtxT::seg_type;
+        return seg_type{get_allocator(ctx.out)};
+    }
 
 } // namespace webpp::uri
 

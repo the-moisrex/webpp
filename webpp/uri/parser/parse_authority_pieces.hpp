@@ -50,11 +50,9 @@ namespace webpp::uri::details {
                 done = decode_or_tolower(ctx, buffer, special_chars);
             }
             if (done) {
-                if constexpr (Options.empty_host_is_error) {
-                    if (!is_special && ctx.pos == authority_begin) {
-                        set(ctx.status, host_missing);
-                        return;
-                    }
+                if (Options.empty_host_is_error && !is_special && ctx.pos == authority_begin) {
+                    set(ctx.status, host_missing);
+                    return;
                 }
                 set(ctx.status, valid_path);
                 break;
@@ -62,9 +60,7 @@ namespace webpp::uri::details {
 
             switch (*ctx.pos) {
                 case '[': // it's not in the beginning because of the credentials may come before it
-                    if (!details::parse_host_ipv6(ctx)) {
-                        return;
-                    }
+                    details::parse_host_ipv6(ctx);
                     break;
                 case ':': {
                     if constexpr (!Options.parse_credentials && !Options.parse_port) {

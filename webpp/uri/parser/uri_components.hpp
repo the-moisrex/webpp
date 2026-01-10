@@ -46,6 +46,9 @@ namespace webpp::uri {
     };
 
     template <typename T>
+    concept URIHrefComponents = URIComponents<T> && requires(T comps) { comps.href; };
+
+    template <typename T>
     concept URIStructuredComponents = URIComponents<T> && requires(T comps) {
         typename T::string_type;
         typename T::vec_type;
@@ -96,7 +99,7 @@ namespace webpp::uri {
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
     template <typename CharT, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_u32 {
+    struct [[nodiscard]] uri_components_u32 {
         using seg_type    = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_type = stl::basic_string<CharT, AllocT>;
 
@@ -125,7 +128,7 @@ namespace webpp::uri {
      * Non-Owning completely
      */
     template <typename CharT = char32_t>
-    struct uri_components_u32_view {
+    struct [[nodiscard]] uri_components_u32_view {
         using seg_type         = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_view_type = stl::basic_string_view<CharT>;
         using iterator         = string_view_type::iterator;
@@ -156,7 +159,7 @@ namespace webpp::uri {
      * String View based, but still structured enough
      */
     template <typename CharT = char32_t>
-    struct uri_components_view {
+    struct [[nodiscard]] uri_components_view {
         using string_type  = stl::basic_string_view<CharT>;
         using iterator     = typename string_type::iterator;
         using seg_type     = string_type;
@@ -186,7 +189,7 @@ namespace webpp::uri {
      * String-Based, owning URI Components
      */
     template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_owning {
+    struct [[nodiscard]] uri_components_owning {
         using string_type  = stl::basic_string<CharT, AllocT>;
         using iterator     = typename string_type::iterator;
         using seg_type     = string_type;
@@ -217,8 +220,9 @@ namespace webpp::uri {
      * Let's have one single href, and have components as string views pointing to that source
      */
     template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_href {
+    struct [[nodiscard]] uri_components_href {
         using string_type      = stl::basic_string<CharT, AllocT>;
+        using iterator         = typename string_type::iterator;
         using string_view_type = stl::basic_string_view<CharT>;
         using char_type        = typename string_type::value_type;
         using size_type        = typename string_type::size_type;
@@ -250,7 +254,7 @@ namespace webpp::uri {
      *   - Strings own their data.
      */
     template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
-    struct uri_components_structured {
+    struct [[nodiscard]] uri_components_structured {
         using char_type   = CharT;
         using string_type = stl::basic_string<char_type, AllocT>;
         using size_type   = typename string_type::size_type;
@@ -273,6 +277,71 @@ namespace webpp::uri {
         map_type    queries;
         string_type fragment;
     };
+
+    //////////////////////////////////////// ///////////////// ////////////////////////////////////////
+    //////////////////////////////////////// Create Components ////////////////////////////////////////
+    //////////////////////////////////////// ///////////////// ////////////////////////////////////////
+
+    template <URIComponents CompT>
+        requires requires { typename CompT::allocator_type; }
+    static constexpr CompT create(
+      stl::type_identity<CompT>,
+      [[maybe_unused]] typename CompT::iterator beg,
+      [[maybe_unused]] typename CompT::iterator end,
+      istl::allocator_type_of<CompT>            alloc = {}) noexcept(CompT::is_nothrow) {
+        using seg_type = typename CompT::seg_type;
+        return CompT{
+          .scheme   = seg_type{alloc},
+          .username = seg_type{alloc},
+          .password = seg_type{alloc},
+          .hostname = seg_type{alloc},
+          .port     = seg_type{alloc},
+          .path     = seg_type{alloc},
+          .queries  = seg_type{alloc},
+          .fragment = seg_type{alloc},
+        };
+    }
+
+    template <URIComponents CompT>
+    static constexpr CompT create(
+      stl::type_identity<CompT>,
+      [[maybe_unused]] typename CompT::iterator       beg,
+      [[maybe_unused]] typename CompT::iterator       end,
+      [[maybe_unused]] istl::allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
+        using seg_type = typename CompT::seg_type;
+        return CompT{
+          .scheme   = seg_type{},
+          .username = seg_type{},
+          .password = seg_type{},
+          .hostname = seg_type{},
+          .port     = seg_type{},
+          .path     = seg_type{},
+          .queries  = seg_type{},
+          .fragment = seg_type{},
+        };
+    }
+
+    template <typename CharT>
+    static constexpr uri_components_u32_view<CharT> create(
+      stl::type_identity<uri_components_u32_view<CharT>>,
+      typename uri_components_u32_view<CharT>::iterator                        beg,
+      [[maybe_unused]] typename uri_components_u32_view<CharT>::iterator       end,
+      [[maybe_unused]] istl::allocator_type_of<uri_components_u32_view<CharT>> alloc = {}) noexcept {
+        return {
+          .uri_beg = beg,
+        };
+    }
+
+    template <URIHrefComponents CompT>
+    static constexpr CompT create(
+      stl::type_identity<CompT>,
+      [[maybe_unused]] typename CompT::iterator beg,
+      [[maybe_unused]] typename CompT::iterator end,
+      istl::allocator_type_of<CompT>            alloc = {}) noexcept {
+        using component_type = CompT;
+        using string_type    = typename component_type::string_type;
+        return {.href = string_type{alloc}};
+    }
 
     //////////////////////////////////////// /////////////////// ////////////////////////////////////////
     //////////////////////////////////////// Relative Components ////////////////////////////////////////

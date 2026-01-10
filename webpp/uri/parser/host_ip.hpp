@@ -223,15 +223,16 @@ namespace webpp::uri::details {
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
     template <URIContext CtxT>
-    static constexpr bool parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+    static constexpr void parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
 
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
+        // todo: do we need this check?
         if (has_hostname(ctx.out)) [[unlikely]] {
             set(ctx.status, invalid_domain_code_point);
-            return false;
+            return;
         }
 
         assert(*ctx.pos == '[');
@@ -240,11 +241,11 @@ namespace webpp::uri::details {
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
             case inet_pton6_status::valid:
                 set(ctx.status, ipv6_unclosed);
-                return false;
+                break;
             [[likely]] case inet_pton6_status::valid_special:
                 if (*ctx.pos != ']') [[unlikely]] {
                     set(ctx.status, ipv6_unclosed);
-                    return false;
+                    break;
                 }
                 set_hostname(ctx, beg, ctx.pos);
                 set_hostname(ctx.out, ipv6_bytes);
@@ -267,12 +268,11 @@ namespace webpp::uri::details {
                         set(ctx.status, ipv6_char_after_closing);
                         break;
                 }
-                return false;
+                break;
             default:
                 set(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
-                return false;
+                break;
         }
-        return true;
     }
 
 } // namespace webpp::uri::details

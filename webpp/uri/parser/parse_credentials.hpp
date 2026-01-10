@@ -51,7 +51,7 @@ namespace webpp::uri {
             iterator const username_beg = beg;
             iterator const username_end = stl::min(password_token_pos, atsign_pos);
 
-            clear_username > (ctx.out); // todo: it's optimizable
+            clear_username(ctx.out); // todo: it's optimizable
             encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
 
             // parse password
@@ -72,9 +72,6 @@ namespace webpp::uri {
     /// This function is not being used inside the URI parsing at all
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        using details::ascii_bitmap;
-        using details::USER_INFO_ENCODE_SET;
-
         if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
                 return;
@@ -84,7 +81,7 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear_username(ctx.out);
-            encode_or_set<components::username>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
+            encode_or_set<components::username>(ctx, ctx.pos, ctx.end, details::USER_INFO_ENCODE_SET);
         }
     }
 

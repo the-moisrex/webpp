@@ -61,13 +61,10 @@ namespace webpp::uri {
 
         template <typename Iter>
         [[nodiscard]] static constexpr bool starts_with(Iter& pos, Iter end, auto str) noexcept {
-            auto spos = stl::begin(str);
-            auto send = stl::end(str);
-            if (send < end) {
-                return false;
-            }
+            auto       spos = stl::begin(str);
+            auto const send = stl::end(str);
             for (; pos != end && spos != send; ++pos, ++spos) {
-                if (head(pos, end) != *pos) {
+                if (*spos != *pos) {
                     return false;
                 }
             }
