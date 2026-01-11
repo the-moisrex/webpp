@@ -74,12 +74,6 @@ namespace webpp::uri {
     template <typename T>
     concept VectorOutput = istl::LinearContainer<T> && !istl::MapContainer<T> && !istl::String<T>;
 
-    /**
-     * This is the output type that the URI parser will be able to put the results of components into.
-     */
-    template <typename T>
-    concept ParsingOutput = istl::StringLike<T> || SegregatedOutput<T> || istl::cvref_as<T, istl::nothing_type>;
-
     //////////////////////////////////////// ////////////// ////////////////////////////////////////
     //////////////////////////////////////// URI Components ////////////////////////////////////////
     //////////////////////////////////////// ////////////// ////////////////////////////////////////

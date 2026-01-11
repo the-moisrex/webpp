@@ -273,9 +273,9 @@ namespace webpp::uri {
         webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
 
         set_opaque(ctx, true);
-        details::CtxBufferOf<CtxT> auto buffer  = get_buffer<components::path>(ctx);
-        ParsingOutput auto&             out     = get_storage<components::path>(ctx);
-        iterator                        seg_beg = ctx.pos;
+        auto                buffer  = create_buffer(ctx);
+        ParsingOutput auto& out     = get_storage<components::path>(ctx);
+        iterator            seg_beg = ctx.pos;
 
         start_segment(ctx, out, buffer);
         for (;;) {
@@ -346,7 +346,7 @@ namespace webpp::uri {
 
         set_opaque(ctx, false);
 
-        auto     buffer  = get_buffer<components::path>(ctx);
+        auto     buffer  = create_buffer(ctx);
         auto&    out     = get_storage<components::path>(ctx);
         iterator seg_beg = ctx.pos;
 

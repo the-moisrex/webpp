@@ -25,7 +25,7 @@ namespace webpp::uri {
         }
 
         template <URIContext CtxT, typename Iter = typename CtxT::iterator>
-        static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos)
+        static constexpr void parse_credentials(CtxT& ctx, Iter authority_beg, Iter colon_pos)
           noexcept(CtxT::is_nothrow) {
             // todo: add "needs_encoding"
             // todo: See if there's a way to find the last atsign position instead of running this function for every atsign
@@ -48,17 +48,17 @@ namespace webpp::uri {
             }
 
             // parse username
-            iterator const username_beg = beg;
-            iterator const username_end = stl::min(password_token_pos, atsign_pos);
+            iterator const username_beg = authority_beg;
+            iterator const username_end = stl::min(colon_pos, atsign_pos);
 
             clear_username(ctx.out); // todo: it's optimizable
             encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
 
             // parse password
-            if (password_token_pos == ctx.end) {
+            if (colon_pos == ctx.end) {
                 return;
             }
-            iterator const password_beg = password_token_pos + 1;
+            iterator const password_beg = colon_pos + 1;
             iterator const password_end = atsign_pos;
 
             clear_password(ctx.out); // todo: it's optimizable

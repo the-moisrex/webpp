@@ -3,8 +3,7 @@
 #ifndef URI_COMPONENTS_ENCODING_HPP
 #define URI_COMPONENTS_ENCODING_HPP
 
-#include "../../std/string_like.hpp"
-#include "../../strings/append.hpp"
+#include "../../std/string.hpp"
 #include "../../strings/to_case.hpp"
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
@@ -88,31 +87,7 @@ namespace webpp::uri::details {
     template <URIContext CtxT>
     using diff_type_of = stl::iter_difference_t<typename CtxT::iterator>;
 
-
-    /// if it's segregated:
-    ///   if it's modifiable path, vector::iterator
-    /// else if modifiable, a simple string:
-    /// otherwise, nothing_type
-    template <typename T, typename CtxT>
-    concept CtxBufferOf = URIContext<CtxT> && (requires {
-                              typename CtxT::vec_iterator;
-                              requires istl::cvref_as<T, typename CtxT::vec_iterator>;
-                          } || istl::cvref_as<T, istl::nothing_type> || istl::StringLike<T>);
-
-    template <typename T, typename CtxT>
-    concept CtxModifiableBuffer = CtxBufferOf<T, CtxT> && CtxT::is_modifiable && istl::String<T>;
-
-    template <typename T, typename CtxT>
-    concept CtxModifiableStringOutput = URIContext<CtxT> && CtxT::is_modifiable && istl::String<T>;
-
-    template <typename T, typename CtxT>
-    concept CtxMappedBuffer = CtxBufferOf<T, CtxT> && istl::cvref_as<T, typename CtxT::map_value_type>;
-
-    template <typename T, typename CtxT>
-    concept CtxNonModifiableBuffer =
-      CtxBufferOf<T, CtxT> && !istl::cvref_as<T, istl::nothing_type> && !CtxT::is_modifiable;
-
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
+    template <URIContext CtxT, typename BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
       BufT&                    buffer,
@@ -120,7 +95,7 @@ namespace webpp::uri::details {
       typename CtxT::iterator  end,
       CharSet auto const&      policy_chars,
       CharSet auto const&      invalid_chars) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
+        if constexpr (istl::String<BufT>) {
             return encode_uri_component<uri_encoding_policy::encode_chars>(
               pos,
               end,
@@ -133,14 +108,14 @@ namespace webpp::uri::details {
         }
     }
 
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
+    template <URIContext CtxT, typename BufT>
     [[nodiscard]] static constexpr bool encode_or_validate(
       [[maybe_unused]] CtxT&   ctx,
       BufT&                    buffer,
       typename CtxT::iterator& pos,
       typename CtxT::iterator  end,
       CharSet auto const&      policy_chars) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
+        if constexpr (istl::String<BufT>) {
             encode_uri_component<uri_encoding_policy::encode_chars>(pos, end, buffer, policy_chars);
             return pos == end;
         } else {
@@ -159,27 +134,27 @@ namespace webpp::uri::details {
      */
     template <URIContext CtxT>
     [[nodiscard]] static constexpr bool encode_or_validate(
-      CtxT&                   ctx,
-      CtxBufferOf<CtxT> auto& buffer,
-      CharSet auto const&     policy_chars,
-      CharSet auto const&     invalid_chars) noexcept(CtxT::is_nothrow) {
+      CtxT&               ctx,
+      istl::String auto&  buffer,
+      CharSet auto const& policy_chars,
+      CharSet auto const& invalid_chars) noexcept(CtxT::is_nothrow) {
         return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars, invalid_chars);
     }
 
     template <URIContext CtxT>
     [[nodiscard]] static constexpr bool
-    encode_or_validate(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, CharSet auto const& policy_chars)
+    encode_or_validate(CtxT& ctx, istl::String auto& buffer, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
         return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars);
     }
 
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
+    template <URIContext CtxT, typename BufT>
     [[nodiscard]] static constexpr bool encode_or_validate_map(
       CtxT&                                ctx,
       [[maybe_unused]] CharSet auto const& policy_chars,
       CharSet auto const&                  invalid_chars,
       BufT&                                buffer) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
+        if constexpr (istl::String<BufT>) {
             return encode_uri_component<uri_encoding_policy::encode_chars>(
               ctx.pos,
               ctx.end,
@@ -198,10 +173,10 @@ namespace webpp::uri::details {
      * @param policy_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
+    template <URIContext CtxT, typename BufT>
     [[nodiscard]] static constexpr bool decode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
+        if constexpr (istl::String<BufT>) {
             return decode_uri_component<uri_encoding_policy::encode_chars>(ctx.pos, ctx.end, buffer, policy_chars);
         } else {
             ctx.pos = policy_chars.find_first_in(ctx.pos, ctx.end);
@@ -211,11 +186,11 @@ namespace webpp::uri::details {
 
     /// Convert to lowercase and also decode
     /// @returns true when we reach the end
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
+    template <URIContext CtxT, typename BufT>
     [[nodiscard]] static constexpr bool decode_or_tolower(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
         using char_type = typename CtxT::char_type;
-        if constexpr (CtxModifiableBuffer<BufT, CtxT>) {
+        if constexpr (istl::String<BufT>) {
             while (ctx.pos != ctx.end) {
                 if (decode_uri_component<uri_encoding_policy::encode_chars>(ctx.pos, ctx.end, buffer, policy_chars)) {
                     return true;
@@ -253,11 +228,11 @@ namespace webpp::uri::details {
         }
     }
 
-    template <URIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, typename OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out, diff_type_of<CtxT> count) noexcept {
-        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
+        if constexpr (istl::String<OutT>) {
             for (; count != 0; --count) {
-                append_to(out, *ctx.pos++);
+                out.append(*ctx.pos++);
             }
         } else {
             ctx.pos += count;
@@ -266,66 +241,64 @@ namespace webpp::uri::details {
 
     /// Parsing path requires this so we can make sure the modifiable strings' separator is always '/' and
     /// not '\\' if the input contains that separator
-    template <URIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, typename OutT>
     static constexpr void
     skip_separator(CtxT& ctx, OutT& out, typename CtxT::char_type separator, diff_type_of<CtxT> count = 1)
       noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
-            append_to(out, separator);
+        if constexpr (istl::String<OutT>) {
+            out.append(separator);
             ctx.pos += count;
         } else {
             return skip_separator(ctx, out, count);
         }
     }
 
-    template <URIContext CtxT, ParsingOutput OutT>
+    template <URIContext CtxT, typename OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
-        if constexpr (CtxModifiableStringOutput<OutT, CtxT>) {
-            append_to(out, *ctx.pos++);
+        if constexpr (istl::String<OutT>) {
+            out.append(*ctx.pos++);
         } else {
             ++ctx.pos;
         }
     }
 
     template <URIContext CtxT>
-    static constexpr void ignore_character(CtxT& ctx, diff_type_of<CtxT> count = 1) noexcept {
+    static constexpr void ignore_character(CtxT& ctx, diff_type_of<CtxT> count = 1) noexcept(CtxT::is_nothrow) {
         ctx.pos += count;
     }
 
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-    static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept {
-        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
+    template <URIContext CtxT, typename BufT>
+    static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept(CtxT::is_nothrow) {
+        if constexpr (istl::String<BufT>) {
             for (; count != 0; --count) {
-                append_to(buffer, *ctx.pos++);
+                buffer.append(*ctx.pos++);
             }
         } else {
             ctx.pos += count;
         }
     }
 
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-    static constexpr void append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char) noexcept {
-        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
-            append_to(buffer, inp_char);
+    template <URIContext CtxT, typename BufT>
+    static constexpr void append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (istl::String<BufT>) {
+            buffer.append(inp_char);
         }
     }
 
-    template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-    constexpr void append_inplace_of(
-      CtxT&                    ctx,
-      BufT&                    buffer,
-      typename CtxT::char_type inp_char,
-      diff_type_of<CtxT>       count = 1) noexcept {
-        if constexpr (CtxModifiableStringOutput<BufT, CtxT>) {
-            append_to(buffer, inp_char);
+    template <URIContext CtxT, typename BufT>
+    constexpr void
+    append_inplace_of(CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char, diff_type_of<CtxT> count = 1)
+      noexcept(CtxT::is_nothrow) {
+        if constexpr (istl::String<BufT>) {
+            buffer.append(inp_char);
         }
         ctx.pos += count;
     }
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-    template <URIContext CtxT, typename OutT>
-        requires(ParsingOutput<OutT> || CtxBufferOf<OutT, CtxT>)
-    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, OutT& out) noexcept {
+    template <URIContext CtxT, istl::String OutT>
+    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)

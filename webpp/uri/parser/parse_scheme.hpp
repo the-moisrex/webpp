@@ -249,8 +249,9 @@ namespace webpp::uri {
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::encoded_scheme;
-        using char_type = typename CtxT::char_type;
         using enum uri_status;
+        using char_type = typename CtxT::char_type;
+        using iterator  = typename CtxT::iterator;
 
         webpp_static_constexpr auto alnum_plus = details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
 
@@ -261,13 +262,14 @@ namespace webpp::uri {
         }
 
         // handling of the first character:
+        iterator const beg = ctx.pos;
         if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
             // if state override is not given, set buffer to the empty string, state to no
             // scheme state, and start over (from the first code point in input).
             //
             // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
             if constexpr (!Options.state_override) {
-                ctx.pos = ctx.beg;
+                // ctx.pos = ctx.beg;
                 clear_scheme(ctx.out);
                 details::no_scheme_state<Options>(ctx);
             } else {

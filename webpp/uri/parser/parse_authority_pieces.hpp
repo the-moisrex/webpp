@@ -37,8 +37,7 @@ namespace webpp::uri::details {
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
         auto&      out                      = get_component<components::host>(ctx);
-        auto       buffer                   = get_buffer(get_component<components::host>(ctx));
-        auto       seg_beg                  = ctx.pos;
+        auto       buffer                   = create_buffer(ctx);
         for (;;) {
             bool done; // NOLINT(*-init-variables)
             if (!is_special) {
@@ -62,7 +61,7 @@ namespace webpp::uri::details {
                 case '[': // it's not in the beginning because of the credentials may come before it
                     details::parse_host_ipv6(ctx);
                     break;
-                case ':': {
+                case ':':
                     if constexpr (!Options.parse_credentials && !Options.parse_port) {
                         set_warning(ctx.status, invalid_character);
                         ++ctx.pos;
@@ -108,7 +107,6 @@ namespace webpp::uri::details {
                         return;
                     }
                     break;
-                }
                 case '\\':
                     if (!is_special) {
                         // todo: check for non-specials
@@ -122,10 +120,7 @@ namespace webpp::uri::details {
                     }
                     set(ctx.status, valid_path);
                     break;
-                case '.':
-                    skip_separator(ctx, out);
-                    reset_segment_start(ctx, seg_beg);
-                    continue;
+                case '.': skip_separator(ctx, out); continue;
                 case '?':
                     // escape if invalid port found
                     if (must_contain_credentials) {
@@ -164,18 +159,15 @@ namespace webpp::uri::details {
                     set(ctx.status, invalid_domain_code_point);
                     return;
                 case '@':
-                    must_contain_credentials = false;
                     if constexpr (Options.parse_credentials) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
                         clear_hostname(ctx.out);
-                        reset_begin(ctx, seg_beg);
-                        host_begin = ctx.pos;
+                        host_begin               = ctx.pos;
+                        must_contain_credentials = false;
                         continue;
                     } else {
-                        // todo: set an error
-                        set_warning(ctx.status, has_credentials);
-                        set_warning(ctx.status, invalid_character);
+                        set(ctx.status, credentials_not_supported);
                         return;
                     }
                 default: set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point); return;
@@ -214,7 +206,7 @@ namespace webpp::uri::details {
             }
         }
 
-        set_hostname(ctx.out, seg_beg, ctx.pos);
+        set_hostname(ctx.out, host_begin, ctx.pos);
         if (skip_last_char) {
             ++ctx.pos;
         }

@@ -100,8 +100,8 @@ namespace webpp::uri {
         auto const query_percent_encode_set =
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
         bool  in_value     = false;
-        auto  key_buffer   = get_buffer<components::queries>(ctx);
-        auto  value_buffer = get_buffer<components::queries>(ctx);
+        auto  key_buffer   = create_buffer(ctx);
+        auto  value_buffer = create_buffer(ctx);
         auto& out          = get_storage<components::queries>(ctx);
         auto  seg_beg      = ctx.pos;
 

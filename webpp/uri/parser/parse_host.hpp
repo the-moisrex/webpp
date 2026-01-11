@@ -47,7 +47,7 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
-        if (has_hostname(ctx.out) && is_localhost_string(get_component<components::host>(ctx))) {
+        if (has_hostname(ctx.out) && is_localhost_string(get_hostname(ctx.out))) {
             clear_hostname(ctx.out);
         }
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
@@ -166,7 +166,7 @@ namespace webpp::uri {
                 break;
             case 0: // possible IPv4
                 if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-                    details::parse_host_ipv4(pos, end, ctx);
+                    details::parse_host_ipv4<Options>(pos, end, ctx);
                     return;
                 }
                 set_hostname(ctx, pos, end);
@@ -198,13 +198,13 @@ namespace webpp::uri {
 
         // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
         if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-            details::parse_host_ipv4(pos, end, ctx);
+            details::parse_host_ipv4<Options>(pos, end, ctx);
             return;
         }
 
         // Return asciiDomain.
         if constexpr (CtxT::is_modifiable) {
-            auto out = get_buffer<components::host>(ctx);
+            auto out = create_buffer(ctx);
 
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
             auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, pos, end, out);

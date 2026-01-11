@@ -256,6 +256,7 @@ namespace webpp::uri {
         scheme_setter_invalid_input     = error_bit | 24U, // This indication of failure is used exclusively by
                                                            // the Location object’s protocol setter.
         hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
+        credentials_not_supported       = error_bit | 26U,
 
         // flags:
         special_scheme     = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
@@ -457,6 +458,7 @@ namespace webpp::uri {
                 return {
                   "Hostname type mismatch; the new hostname is not the same type as the old one; for "
                   "example, you can't add a new label to the end of an IP address."};
+            case credentials_not_supported: return {"User Info (credentials) are disabled, but found in the URI."};
 
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};
