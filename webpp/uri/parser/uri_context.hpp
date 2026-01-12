@@ -75,9 +75,35 @@ namespace webpp::uri {
     }
 
     template <URIContext CtxT>
+        requires(CtxT::is_modifiable)
     static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
         return seg_type{get_allocator(ctx.out)};
+    }
+
+    template <URIContext CtxT>
+    static constexpr segment<typename CtxT::iterator> create_buffer([[maybe_unused]] CtxT& ctx) noexcept {
+        return {.beg = ctx.pos, .end = ctx.pos};
+    }
+
+    template <URIContext CtxT>
+    static constexpr void end_segment([[maybe_unused]] CtxT const&        ctx,
+                                      [[maybe_unused]] istl::String auto& seg) noexcept {
+        // Do nothing
+    }
+
+    template <URIContext CtxT>
+    static constexpr void end_segment(CtxT const& ctx, segment<typename CtxT::iterator>& seg) noexcept {
+        seg.end = ctx.pos;
+    }
+
+    template <URIContext CtxT, typename BufT>
+    static constexpr void clear_segment(CtxT& ctx, BufT& buffer) noexcept {
+        if constexpr (istl::String<BufT>) {
+            buffer.clear();
+        } else {
+            ctx.pos = buffer.end = buffer.beg;
+        }
     }
 
 } // namespace webpp::uri
@@ -210,24 +236,6 @@ namespace webpp::uri::details {
         }
     }
 
-    /// Set the beginning to current position
-    template <URIContext CtxT>
-    static constexpr void reset_begin(CtxT& ctx, typename CtxT::iterator& beg) noexcept {
-        beg = ctx.pos;
-    }
-
-    template <URIContext CtxT>
-    [[nodiscard]] static constexpr bool is_segment_empty(CtxT& ctx, typename CtxT::iterator beg) noexcept {
-        return beg == ctx.pos;
-    }
-
-    template <URIContext CtxT>
-    static constexpr void reset_segment_start(CtxT ctx, typename CtxT::iterator& beg) noexcept {
-        if constexpr (CtxT::is_modifiable) {
-            reset_begin(ctx, beg);
-        }
-    }
-
     template <URIContext CtxT, typename OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out, diff_type_of<CtxT> count) noexcept {
         if constexpr (istl::String<OutT>) {
@@ -260,11 +268,6 @@ namespace webpp::uri::details {
         } else {
             ++ctx.pos;
         }
-    }
-
-    template <URIContext CtxT>
-    static constexpr void ignore_character(CtxT& ctx, diff_type_of<CtxT> count = 1) noexcept(CtxT::is_nothrow) {
-        ctx.pos += count;
     }
 
     template <URIContext CtxT, typename BufT>

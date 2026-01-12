@@ -22,22 +22,21 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
-        using char_type = typename CtxT::char_type;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
             return;
         }
 
-        auto const          seg_beg = ctx.pos;
-        ParsingOutput auto& out     = fragment(ctx.out);
-        while (!encode_or_validate(ctx, out, details::FRAGMENT_ENCODE_SET, charset<char_type, 1>('%'))) {
-            if (*ctx.pos == '%' && validate_percent_encode(ctx, out)) {
+        auto buffer = create_buffer(ctx);
+        while (!encode_or_validate(ctx, buffer, details::FRAGMENT_ENCODE_SET, charset('%'))) {
+            if (*ctx.pos == '%' && validate_percent_encode(ctx, buffer)) {
                 continue;
             }
             set_warning(ctx.status, invalid_character);
         }
-        set_fragment(ctx.out, seg_beg, ctx.pos);
+        end_segment(ctx, buffer);
+        set_fragment(ctx.out, stl::move(buffer));
         set(ctx.status, valid);
     }
 

@@ -10,8 +10,6 @@
 
 namespace webpp::uri::details {
 
-    static constexpr ascii_bitmap forbidden_domains{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
-
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
@@ -20,15 +18,12 @@ namespace webpp::uri::details {
         using details::FORBIDDEN_HOST_CODE_POINTS;
         using iterator = typename CtxT::iterator;
 
-        webpp_static_constexpr ascii_bitmap forbidden_hosts{
-          CtxT::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
-            : FORBIDDEN_HOST_CODE_POINTS,
-          '%'
-        };
+        webpp_static_constexpr ascii_bitmap forbidden_hosts{FORBIDDEN_HOST_CODE_POINTS, '%'};
 
         webpp_static_constexpr ascii_bitmap normal_chars = forbidden_hosts;
         webpp_static_constexpr ascii_bitmap special_chars =
-          CtxT::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}} : forbidden_domains;
+          CtxT::is_modifiable ? ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, ascii_bitmap{UPPER_ALPHA<char>}}
+                              : FORBIDDEN_DOMAIN_CODE_POINTS;
 
         bool const is_special               = is_special_scheme(ctx.status);
         auto const authority_begin          = ctx.pos;
@@ -36,7 +31,6 @@ namespace webpp::uri::details {
         iterator   colon_pos                = ctx.end; // start of password or port
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
-        auto&      out                      = get_component<components::host>(ctx);
         auto       buffer                   = create_buffer(ctx);
         for (;;) {
             bool done; // NOLINT(*-init-variables)
@@ -84,7 +78,7 @@ namespace webpp::uri::details {
                         parse_port(ctx);
 
                         // rollback if it's not a port, we roll back and assume it's a password
-                        if (get_value(ctx.status) == port_invalid) {
+                        if (has(ctx.status, port_invalid)) {
                             must_contain_credentials = true;
                             clear_port(ctx.out);
                             unset_flag(ctx.status, has_non_null_port);
@@ -115,15 +109,14 @@ namespace webpp::uri::details {
                     [[fallthrough]];
                 case '/':
                     // escape if invalid port found
-                    if (must_contain_credentials) {
+                    if (must_contain_credentials) [[unlikely]] {
                         return;
                     }
                     set(ctx.status, valid_path);
                     break;
-                case '.': skip_separator(ctx, out); continue;
                 case '?':
                     // escape if invalid port found
-                    if (must_contain_credentials) {
+                    if (must_contain_credentials) [[unlikely]] {
                         return;
                     }
                     if constexpr (Options.parse_queries) {
@@ -131,13 +124,13 @@ namespace webpp::uri::details {
                         set(ctx.status, valid_queries);
                     } else {
                         set_warning(ctx.status, invalid_character);
-                        skip_separator(ctx, out);
+                        skip_separator(ctx, buffer);
                         continue;
                     }
                     break;
                 case '#':
                     // escape if invalid port found
-                    if (must_contain_credentials) {
+                    if (must_contain_credentials) [[unlikely]] {
                         return;
                     }
                     if constexpr (Options.parse_fragment) {
@@ -145,13 +138,13 @@ namespace webpp::uri::details {
                         set(ctx.status, valid_fragment);
                     } else {
                         set_warning(ctx.status, invalid_character);
-                        skip_separator(ctx, out);
+                        skip_separator(ctx, buffer);
                         continue;
                     }
                     break;
                 case '%':
                     if (!is_special) {
-                        if (!validate_percent_encode(ctx, buffer)) {
+                        if (!validate_percent_encode(ctx, buffer)) [[unlikely]] {
                             set_warning(ctx.status, invalid_character);
                         }
                         continue;
@@ -175,13 +168,15 @@ namespace webpp::uri::details {
             if (must_contain_credentials) {
                 return;
             }
-            if (ctx.pos == host_begin) {
+            if (ctx.pos == host_begin) [[unlikely]] {
+                clear_hostname(ctx.out);
                 if (Options.empty_host_is_error && is_special) {
                     set(ctx.status, host_missing);
                     return;
                 }
                 if (ctx.pos == ctx.end) {
-                    set(ctx.status, valid_path);
+                    set(ctx.status, valid);
+                    return;
                 }
             }
             break;
@@ -196,7 +191,7 @@ namespace webpp::uri::details {
             if (!should_continue) {
                 return;
             }
-            if constexpr (CtxModifiableStringOutput<decltype(buffer), CtxT>) {
+            if constexpr (istl::String<decltype(buffer)>) {
                 clear_hostname(ctx.out);
                 pure_ipv4{ipv4_octets_data}.to_string(buffer);
                 if (skip_last_char) {

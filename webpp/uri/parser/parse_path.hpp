@@ -14,35 +14,6 @@ namespace webpp::uri {
     namespace details {
 
         template <URIContext CtxT, ParsingOutput OutT>
-        static constexpr void next_segment_of(
-          CtxT&                    ctx,
-          OutT&                    out,
-          CtxBufferOf<CtxT> auto&  buffer,
-          typename CtxT::iterator& beg,
-          typename CtxT::char_type separator,
-          diff_type_of<CtxT>       sep_count = 1) noexcept(CtxT::is_nothrow) {
-            if constexpr (SegregatedOutput<OutT>) {
-                if constexpr (CtxT::is_modifiable) {
-                    skip_separator(ctx, out, sep_count);
-                    reset_segment_start(ctx, beg);
-                    start_segment(ctx, out, buffer);
-                } else {
-                    end_segment(ctx, out, beg);
-                    skip_separator(ctx, out, sep_count);
-                    reset_segment_start(ctx, beg);
-                }
-            } else {
-                if constexpr (CtxT::is_modifiable) {
-                    skip_separator(ctx, out, separator, sep_count);
-                } else {
-                    skip_separator(ctx, out, sep_count);
-                }
-                end_segment(ctx, out, beg);
-                reset_segment_start(ctx, beg);
-            }
-        }
-
-        template <URIContext CtxT, ParsingOutput OutT>
         static constexpr void pop_back(
           CtxT&                               ctx,
           OutT&                               out,
@@ -105,24 +76,6 @@ namespace webpp::uri {
         }
 
         /// Remove the current segment in a path
-        template <uri_options Options, URIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void clear_segment(CtxT& ctx, BufT& buffer, typename CtxT::iterator seg_beg) noexcept {
-            using ctx_type = CtxT;
-            if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                buffer->clear();
-            } else if constexpr (CtxModifiableBuffer<BufT, CtxT> && !ctx_type::is_segregated) {
-                if constexpr (!Options.ignore_tabs_or_newlines) {
-                    auto const length = static_cast<stl::size_t>(ctx.pos - seg_beg);
-                    buffer.erase(buffer.size() - length);
-                } else {
-                    // we have to manually find the last slash and remove until there, we can't rely on
-                    // on the size, because we may have newlines and tabs
-                    // todo: optimization is kinda possible, but we're not on a happy path
-                    pop_back_segment(ctx, buffer, seg_beg);
-                }
-            }
-            reset_segment_start(ctx, seg_beg);
-        }
 
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_options Options, URIContext CtxT>
@@ -210,7 +163,7 @@ namespace webpp::uri {
         template <uri_options Options, URIContext CtxT>
             requires(Options.handle_dots_in_paths)
         [[nodiscard]] static constexpr bool
-        handle_dots_in_paths(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
+        handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator& seg_beg)
           noexcept(CtxT::is_nothrow) {
             auto       pos  = seg_beg;
             auto const end  = ctx.pos;
@@ -222,7 +175,7 @@ namespace webpp::uri {
 
                 // single dot found:
                 case 1: // .
-                    clear_segment<Options>(ctx, buffer, seg_beg);
+                    clear_segment(ctx, buffer, seg_beg);
                     break;
 
                 // two dots found:
@@ -256,33 +209,25 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <uri_options Options, URIContext CtxT>
+    template <URIContext CtxT>
     static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
-
         using enum uri_status;
         using details::encode_or_validate;
-        using details::end_segment;
         using details::set_opaque;
-        using details::start_segment;
         using details::validate_percent_encode;
-        using ctx_type = CtxT;
-        using iterator = typename ctx_type::iterator;
 
         // todo: URI Code Points are among interesting characters as well
         webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
 
         set_opaque(ctx, true);
-        auto                buffer  = create_buffer(ctx);
-        ParsingOutput auto& out     = get_storage<components::path>(ctx);
-        iterator            seg_beg = ctx.pos;
+        auto buffer = create_buffer(ctx);
 
-        start_segment(ctx, out, buffer);
         for (;;) {
             if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
                 set(ctx.status, valid);
-                end_segment(ctx, out, seg_beg);
-                set_path(ctx.out, seg_beg, ctx.pos);
+                end_segment(ctx, buffer);
+                set_path(ctx.out, buffer);
                 break;
             }
             switch (*ctx.pos) {
@@ -304,8 +249,8 @@ namespace webpp::uri {
                     set_warning(ctx.status, invalid_character);
                     continue;
             }
-            end_segment(ctx, out, seg_beg);
-            set_path(ctx.out, seg_beg, ctx.pos);
+            end_segment(ctx, buffer);
+            set_path(ctx.out, buffer);
             ++ctx.pos; // it's okay, we're not at the end
             break;
         }
@@ -318,18 +263,12 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::end_segment;
-        using details::ignore_character;
-        using details::next_segment_of;
-        using details::reset_segment_start;
         using details::set_opaque;
-        using details::start_segment;
         using details::validate_percent_encode;
-        using ctx_type = CtxT;
-        using iterator = typename ctx_type::iterator;
+        using iterator = typename CtxT::iterator;
 
         webpp_static_constexpr auto encode_set =
-          ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
+          CtxT::is_modifiable || CtxT::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
         webpp_static_constexpr auto interesting_chars_base = ascii_bitmap(encode_set, ascii_bitmap{'\\', '/', '%'});
         webpp_static_constexpr auto interesting_chars =
@@ -346,23 +285,23 @@ namespace webpp::uri {
 
         set_opaque(ctx, false);
 
-        auto     buffer  = create_buffer(ctx);
-        auto&    out     = get_storage<components::path>(ctx);
+        auto buffer = create_buffer(ctx);
+
+        details::handle_windows_driver_letter<Options>(ctx, buffer);
+
         iterator seg_beg = ctx.pos;
-
-        start_segment(ctx, out, buffer);
-        details::handle_windows_driver_letter<Options>(ctx, out, buffer, seg_beg);
-
         while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                 case '/':
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg)) {
-                        ignore_character(ctx);
+                        ++ctx.pos; // ignore character
                         reset_segment_start(ctx, seg_beg);
                         continue;
                     }
-                    next_segment_of(ctx, out, buffer, seg_beg, '/');
+                    end_segment(ctx, buffer);
+                    push_path(ctx, buffer);
+                    details::append_inplace_of(buffer, '/');
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
@@ -379,15 +318,15 @@ namespace webpp::uri {
             break;
         }
         static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg));
-        end_segment(ctx, out, seg_beg);
-        set_path(ctx.out, seg_beg, ctx.pos);
+        end_segment(ctx, buffer);
+        set_path(ctx.out, buffer);
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {
             ++ctx.pos;
         } else {
             // handling empty paths
-            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+            if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
                 if (is_special_scheme(ctx.status) && !has_path(ctx.out)) {
                     next_segment_of(ctx, out, buffer, seg_beg, '/', 0);
                 }

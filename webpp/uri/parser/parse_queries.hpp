@@ -77,7 +77,6 @@ namespace webpp::uri {
         using details::append_query_value;
         using details::ascii_bitmap;
         using details::encode_or_validate_map;
-        using details::ignore_character;
         using details::next_query;
         using details::reset_begin;
         using details::set_query_name;
