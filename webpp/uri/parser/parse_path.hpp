@@ -13,50 +13,17 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <URIContext CtxT, ParsingOutput OutT>
-        static constexpr void pop_back(
-          CtxT&                               ctx,
-          OutT&                               out,
-          CtxBufferOf<CtxT> auto&             buffer,
-          typename CtxT::iterator&            beg,
-          [[maybe_unused]] diff_type_of<CtxT> hint = 0) noexcept {
-            using difference_type = diff_type_of<CtxT>;
-            if constexpr (CtxT::is_modifiable && VectorOutput<OutT>) {
-                if (out.size() > 2) {
-                    out.pop_back();
-                    buffer = out.begin() + static_cast<difference_type>(out.size() - 1);
-                } else if (out.size() == 1) {
-                    buffer->clear();
-                }
-            } else if constexpr (VectorOutput<OutT>) {
-                if (out.size() > 1) {
-                    out.pop_back();
-                } else {
-                    istl::clear(out.back());
-                }
-                reset_segment_start(ctx, beg);
-            } else if constexpr (CtxT::is_modifiable) {
-                using output_t  = stl::remove_cvref_t<decltype(out)>;
-                using size_type = typename output_t::size_type;
-                if (!out.empty()) {
-                    out.erase(out.size() - static_cast<size_type>(hint));
-                }
-            }
-        }
-
         /// Remove the last segment of a path
         template <URIContext CtxT>
-        static constexpr void
-        pop_back_segment(CtxT& ctx, CtxBufferOf<CtxT> auto& buffer, typename CtxT::iterator& seg_beg)
-          noexcept(CtxT::is_nothrow) {
-            using ctx_type        = CtxT;
-            using iterator        = typename ctx_type::iterator;
+        static constexpr void pop_back_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            using iterator        = typename CtxT::iterator;
             using difference_type = stl::iter_difference_t<iterator>;
 
-            auto& out = get_storage<components::path>(ctx);
+            auto& out       = get_path(ctx);
+            using path_type = stl::remove_cvref_t<decltype(out)>;
 
             // remove the last segment as well
-            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+            if constexpr (istl::String<path_type>) {
                 difference_type slash_loc = 0;
 
                 // find the last slash
@@ -69,9 +36,10 @@ namespace webpp::uri {
                 for (; cur != beg && *cur != '/'; --cur) {
                     ++slash_loc;
                 }
-                pop_back(ctx, out, buffer, seg_beg, slash_loc);
+                out.erase(out.size() - slash_loc);
             } else {
-                pop_back(ctx, out, buffer, seg_beg);
+                // It's a vector, so we just pop the back
+                out.pop_back();
             }
         }
 
@@ -134,9 +102,7 @@ namespace webpp::uri {
 
             for (; pos != end; ++pos) {
                 auto const category = dots_category.at(static_cast<stl::uint8_t>(*pos));
-
-                // NOLINTNEXTLINE(*-bounds-constant-array-index)
-                state = dots_state_transitions[state][category];
+                state               = dots_state_transitions.at(state).at(category);
                 if (state == 0) {
                     break; // Exit early if sequence becomes invalid
                 }
@@ -163,11 +129,10 @@ namespace webpp::uri {
         template <uri_options Options, URIContext CtxT>
             requires(Options.handle_dots_in_paths)
         [[nodiscard]] static constexpr bool
-        handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator& seg_beg)
-          noexcept(CtxT::is_nothrow) {
+        handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
             auto       pos  = seg_beg;
             auto const end  = ctx.pos;
-            auto const dots = dots_count<Options.ignore_tabs_or_newlines>(pos, end);
+            auto const dots = dots_count(pos, end);
 
             switch (dots) {
                 // no dots found:
@@ -180,7 +145,7 @@ namespace webpp::uri {
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_segment(ctx, buffer, seg_beg);
+                    pop_back_path(ctx, buffer, seg_beg);
                     clear_segment<Options>(ctx, buffer, seg_beg);
                     break;
 

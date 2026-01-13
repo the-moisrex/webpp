@@ -4,7 +4,6 @@
 #define URI_COMPONENTS_ENCODING_HPP
 
 #include "../../std/string.hpp"
-#include "../../strings/to_case.hpp"
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
 
@@ -58,7 +57,7 @@ namespace webpp::uri {
         uri_status_type                 status = +uri_status::unparsed;
     };
 
-    /// Create a URI Context
+    /// Create a URI Context, and initialize it properly
     template <URIContext CtxT>
     static constexpr CtxT
     create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::allocator_type alloc = {})
@@ -74,6 +73,7 @@ namespace webpp::uri {
         return ctx;
     }
 
+    /// Create a new buffer/segment
     template <URIContext CtxT>
         requires(CtxT::is_modifiable)
     static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -81,22 +81,26 @@ namespace webpp::uri {
         return seg_type{get_allocator(ctx.out)};
     }
 
+    /// Create a new buffer (which can be used as a segment)
     template <URIContext CtxT>
     static constexpr segment<typename CtxT::iterator> create_buffer([[maybe_unused]] CtxT& ctx) noexcept {
         return {.beg = ctx.pos, .end = ctx.pos};
     }
 
+    /// Mark the end of the current segment
     template <URIContext CtxT>
     static constexpr void end_segment([[maybe_unused]] CtxT const&        ctx,
                                       [[maybe_unused]] istl::String auto& seg) noexcept {
         // Do nothing
     }
 
+    /// Mark the end of the current segment
     template <URIContext CtxT>
     static constexpr void end_segment(CtxT const& ctx, segment<typename CtxT::iterator>& seg) noexcept {
         seg.end = ctx.pos;
     }
 
+    /// Empty out the current buffer
     template <URIContext CtxT, typename BufT>
     static constexpr void clear_segment(CtxT& ctx, BufT& buffer) noexcept {
         if constexpr (istl::String<BufT>) {

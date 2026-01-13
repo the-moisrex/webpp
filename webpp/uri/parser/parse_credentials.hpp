@@ -10,20 +10,6 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <components Comp, URIContext CtxT>
-        static constexpr void encode_or_set(
-          CtxT&                                ctx,
-          typename CtxT::iterator              pos,
-          typename CtxT::iterator              end,
-          [[maybe_unused]] CharSet auto const& policy_chars) noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxT::is_modifiable) {
-                auto& out = get_storage<Comp>(ctx);
-                encode_uri_component<uri_encoding_policy::encode_chars>(pos, end, out, policy_chars);
-            } else {
-                set_value<Comp>(ctx, pos, end);
-            }
-        }
-
         template <URIContext CtxT, typename Iter = typename CtxT::iterator>
         static constexpr void parse_credentials(CtxT& ctx, Iter authority_beg, Iter colon_pos)
           noexcept(CtxT::is_nothrow) {
@@ -33,6 +19,7 @@ namespace webpp::uri {
 
             using details::ascii_bitmap;
             using details::USER_INFO_ENCODE_SET;
+            using enum uri_encoding_policy;
 
             using ctx_type = CtxT;
             using iterator = typename ctx_type::iterator;
@@ -48,21 +35,29 @@ namespace webpp::uri {
             }
 
             // parse username
-            iterator const username_beg = authority_beg;
-            iterator const username_end = stl::min(colon_pos, atsign_pos);
+            {
+                iterator const username_beg = authority_beg;
+                iterator const username_end = stl::min(colon_pos, atsign_pos);
 
-            clear_username(ctx.out); // todo: it's optimizable
-            encode_or_set<components::username>(ctx, username_beg, username_end, USER_INFO_ENCODE_SET);
+                clear_username(ctx.out); // todo: it's optimizable
+                auto user_buffer = create_buffer(ctx.out);
+                encode_uri_component<encode_chars>(username_beg, username_end, user_buffer, USER_INFO_ENCODE_SET);
+                set_username(ctx.out, stl::move(user_buffer));
+            }
 
             // parse password
-            if (colon_pos == ctx.end) {
-                return;
-            }
-            iterator const password_beg = colon_pos + 1;
-            iterator const password_end = atsign_pos;
+            {
+                if (colon_pos == ctx.end) {
+                    return;
+                }
+                iterator const password_beg = colon_pos + 1;
+                iterator const password_end = atsign_pos;
 
-            clear_password(ctx.out); // todo: it's optimizable
-            encode_or_set<components::password>(ctx, password_beg, password_end, USER_INFO_ENCODE_SET);
+                clear_password(ctx.out); // todo: it's optimizable
+                auto pass_buffer = create_buffer(ctx.out);
+                encode_uri_component<encode_chars>(password_beg, password_end, pass_buffer, USER_INFO_ENCODE_SET);
+                set_password(ctx.out, stl::move(pass_buffer));
+            }
         }
 
     } // namespace details
@@ -72,6 +67,7 @@ namespace webpp::uri {
     /// This function is not being used inside the URI parsing at all
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using enum uri_encoding_policy;
         if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
                 return;
@@ -81,7 +77,9 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear_username(ctx.out);
-            encode_or_set<components::username>(ctx, ctx.pos, ctx.end, details::USER_INFO_ENCODE_SET);
+            auto user_buffer = create_buffer(ctx.out);
+            encode_uri_component<encode_chars>(ctx.pos, ctx.end, user_buffer, details::USER_INFO_ENCODE_SET);
+            set_username(ctx.out, stl::move(user_buffer));
         }
     }
 
@@ -92,6 +90,7 @@ namespace webpp::uri {
     static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::USER_INFO_ENCODE_SET;
+        using enum uri_encoding_policy;
 
         if constexpr (Options.parse_credentials) {
             if (ctx.pos == ctx.end) {
@@ -102,7 +101,9 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear_password(ctx.out);
-            encode_or_set<components::password>(ctx, ctx.pos, ctx.end, USER_INFO_ENCODE_SET);
+            auto pass_buffer = create_buffer(ctx.out);
+            encode_uri_component<encode_chars>(ctx.pos, ctx.end, pass_buffer, USER_INFO_ENCODE_SET);
+            set_password(ctx.out, stl::move(pass_buffer));
         }
     }
 
