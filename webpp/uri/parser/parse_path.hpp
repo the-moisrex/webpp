@@ -169,7 +169,7 @@ namespace webpp::uri {
 
         template <URIContext CtxT>
         constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
-            set_opaque(get_component<components::path>(ctx), is_opaque_path);
+            // set_opaque(get_component<components::path>(ctx), is_opaque_path);
         }
 
     } // namespace details
@@ -292,7 +292,8 @@ namespace webpp::uri {
             // handling empty paths
             if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
                 if (is_special_scheme(ctx.status) && !has_path(ctx.out)) {
-                    next_segment_of(ctx, out, buffer, seg_beg, '/', 0);
+                    push_segment(path(ctx.out), buffer);
+                    details::append_inplace_of(buffer, '/', 0);
                 }
             }
 

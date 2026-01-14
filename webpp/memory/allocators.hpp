@@ -184,6 +184,7 @@ namespace webpp {
         using type = typename T::allocator_type;
     };
 
+    // todo: use `allocator_from_tag` CPO as the default
     template <typename T, typename DefaultAllocatorType = stl::allocator<typename T::value_type>>
     using allocator_type_from_t = typename allocator_type_from<T, DefaultAllocatorType>::type;
 

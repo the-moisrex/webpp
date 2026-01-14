@@ -100,13 +100,12 @@ namespace webpp::uri {
     static constexpr CtxT
     create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::allocator_type alloc = {})
       noexcept(CtxT::is_nothrow) {
-        using enum uri_status;
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
           .end    = end,
           .out    = create<typename CtxT::component_type>(beg, end, alloc),
-          .status = unparsed,
+          .status = uri_status::unparsed,
         };
         return ctx;
     }
@@ -119,14 +118,13 @@ namespace webpp::uri {
       typename CtxT::iterator       end,
       typename CtxT::base_type&&    base_ctx,
       typename CtxT::allocator_type alloc = {}) noexcept(CtxT::is_nothrow) {
-        using enum uri_status;
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
           .end    = end,
           .out    = create<typename CtxT::component_type>(beg, end, alloc),
           .base   = stl::move(base_ctx),
-          .status = unparsed,
+          .status = uri_status::unparsed,
         };
         return ctx;
     }

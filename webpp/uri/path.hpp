@@ -44,28 +44,14 @@ namespace webpp::uri {
      *                  will be disabled, and that might be a security problem for you. So if the input is
      *                  from an untrusted source, make sure to slug type is a modifiable string.
      */
-    template <Slug SlugType = stl::string, typename AllocT = allocator_type_from_t<SlugType>>
-    struct basic_path {
-        using slug_type           = SlugType;
-        using slug_allocator_type = AllocT;
-        using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector's alloc
-        using container_type      = stl::vector<slug_type, allocator_type>;
-        using value_type          = slug_type;
-        using char_type           = istl::char_type_of_t<slug_type>;
-        using string_type         = istl::defaulted_string<slug_type, allocator_type>;
-        using string_view_type    = istl::string_view_type_of<slug_type>;
-        using path_type           = basic_path;
-        using iterator            = typename container_type::iterator;
-        using const_iterator      = typename container_type::const_iterator;
-
-        using size_type       = typename container_type::size_type;
-        using reference       = typename container_type::reference;
-        using const_reference = typename container_type::const_reference;
-        using vector_type     = container_type; // used in uri's uri_components
-
-        static constexpr bool is_modifiable = istl::ModifiableString<value_type>;
-        static constexpr bool is_segregated = true;
-        static constexpr bool is_nothrow    = false;
+    template <Slug SlugType = stl::string>
+    struct basic_path : SlugType {
+        using string_type      = SlugType;
+        using value_type       = string_type;
+        using char_type        = istl::char_type_of_t<string_type>;
+        using string_view_type = istl::string_view_type_of<string_type>;
+        using path_type        = basic_path;
+        using size_type        = typename string_type::size_type;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -75,151 +61,10 @@ namespace webpp::uri {
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>;
 
       private:
-        container_type storage;
-        bool           m_is_opaque = false; // todo
+        bool m_is_opaque = false; // todo
 
       public:
-        template <uri_options Options , typename Iter = iterator>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            using iterator_type = typename string_view_type::iterator;
-            parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
-            ctx.beg = beg;
-            ctx.end = end;
-            ctx.pos = beg;
-            ctx.out = this;
-            // ctx.scheme = scheme_type::special_scheme;
-            parse_path<Options>(ctx);
-            return ctx.status;
-        }
-
-        template <uri_options Options , istl::StringViewifiable StrT>
-        constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::view(stl::forward<StrT>(inp_str));
-            return parse<Options>(str.begin(), str.end());
-        }
-
-        template <typename... T>
-            requires(stl::is_constructible_v<container_type, T...>)
-        explicit constexpr basic_path(T&&... args) : storage{stl::forward<T>(args)...} {}
-
-        // NOLINTBEGIN(*-forwarding-reference-overload)
-        template <istl::StringViewifiable T, typename InpAlloc = allocator_type>
-            requires(!istl::cvref_as<T, basic_path>)
-        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) noexcept(is_nothrow) : storage{alloc} {
-            parse(stl::forward<T>(str));
-        }
-
-        template <uri_options Options, typename IterT = iterator, typename... T>
-            requires(stl::is_constructible_v<container_type, T...>)
-        explicit constexpr basic_path(IterT beg, IterT end, T&&... args) noexcept(is_nothrow)
-          : storage{stl::forward<T>(args)...} {
-            parse<Options>(beg, end);
-        }
-
-        template <istl::String T>
-            requires(!istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
-        explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
-            parse(stl::forward<T>(str));
-        }
-
-        // NOLINTEND(*-forwarding-reference-overload)
-
-        [[nodiscard]] constexpr basic_path clone() const noexcept(is_nothrow) {
-            if constexpr (is_modifiable) {
-                return basic_path{storage.get_allocator()};
-            } else {
-                return basic_path{};
-            }
-        }
-
-        template <uri_options Options = {}, typename IterT = iterator>
-        constexpr basic_path clone(IterT beg, IterT end) const noexcept(is_nothrow) {
-            auto out = clone();
-            out.template parse<Options>(beg, end);
-            return out;
-        }
-
-        template <uri_options Options = {}, istl::StringViewifiable StrT>
-        constexpr basic_path clone(StrT&& str) const noexcept(is_nothrow) {
-            auto out = clone();
-            out.template parse<Options>(stl::forward<StrT>(str));
-            return out;
-        }
-
-        template <istl::StringViewifiable SegStrT>
-        constexpr basic_path& operator/=(SegStrT&& seg_str) {
-            parse(stl::forward<SegStrT>(seg_str));
-            return *this;
-        }
-
-        constexpr basic_path& operator=(value_type str) {
-            storage.clear();
-            parse(stl::move(str));
-            return *this;
-        }
-
-        [[nodiscard]] constexpr allocator_type get_allocator() const noexcept {
-            return storage.get_allocator();
-        }
-
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return storage.size();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) begin() const noexcept {
-            return storage.begin();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) end() const noexcept {
-            return storage.end();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) begin() noexcept {
-            return storage.begin();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) end() noexcept {
-            return storage.end();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) front() const noexcept {
-            return storage.front();
-        }
-
-        [[nodiscard]] constexpr decltype(auto) back() const noexcept {
-            return storage.front();
-        }
-
-        template <typename Arg>
-            requires(!stl::integral<Arg>)
-        [[nodiscard]] constexpr auto operator[](Arg&& arg) noexcept {
-            return storage.operator[](stl::forward<Arg>(arg));
-        }
-
-        [[nodiscard]] constexpr auto operator[](size_type index) noexcept {
-            return storage.operator[](index);
-        }
-
-        [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
-            auto const lhs_size = storage.size();
-            auto const rhs_size = rhs.size();
-            if (lhs_size != rhs_size) {
-                return stl::compare_partial_order_fallback(lhs_size, rhs_size);
-            }
-            if (stl::equal(storage.begin(), storage.end(), rhs.begin(), rhs.end())) {
-                return stl::partial_ordering::equivalent;
-            }
-            return stl::partial_ordering::unordered;
-        }
-
-        template <istl::StringViewifiable SegStrT>
-            requires(!stl::same_as<stl::remove_cvref_t<SegStrT>, basic_path>)
-        [[nodiscard]] constexpr auto operator<=>(SegStrT&& rhs) const {
-            // todo: optimize this
-            auto const      path_str = istl::view_of<string_view_type>(stl::forward<SegStrT>(rhs));
-            path_type const rhs_path{path_str, storage.get_allocator()};
-            return *this <=> rhs_path;
-        }
+        using SlugType::SlugType;
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
             return !storage.empty() && storage.front().empty();
@@ -233,42 +78,8 @@ namespace webpp::uri {
             remove_dot_segments(is_absolute(), remove_empty_segments);
         }
 
-        /**
-         * @brief check if we have value
-         * @return false if we don't have anything
-         */
-        [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !storage.empty() && !(storage.size() == 1 && storage.front().empty());
-        }
-
-        /**
-         * @brief Replace the values with the specified raw data, without parsing
-         * @param beg start of the value
-         * @param end the end of the value
-         */
-        constexpr void assign(iterator beg, iterator end) {
-            storage.clear();
-            if constexpr (is_modifiable) {
-                istl::emplace_one(storage, beg, end, storage.get_allocator());
-            } else {
-                istl::emplace_one(storage, beg, end);
-            }
-        }
-
         constexpr void set_opaque(bool const value = false) noexcept {
             m_is_opaque = value;
-        }
-
-        constexpr void clear() {
-            return storage.clear();
-        }
-
-        [[nodiscard]] constexpr bool empty() const noexcept {
-            return storage.empty();
-        }
-
-        constexpr void pop_back() noexcept {
-            return storage.pop_back();
         }
 
         /**
@@ -362,19 +173,11 @@ namespace webpp::uri {
             return storage.emplace_back(stl::forward<Args>(args)...);
         }
 
-        [[nodiscard]] constexpr auto& storage_ref() noexcept {
-            return storage;
-        }
-
-        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
-            return storage;
-        }
-
         /// Equality check.
         /// https://url.spec.whatwg.org/#url-equivalence
         /// https://url.spec.whatwg.org/#url-path-serializer
         template <uri_options Options = {}, istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
-        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+        [[nodiscard]] constexpr bool operator==(NStrT && inp_str) const noexcept {
             return *this == clone<Options>(stl::forward<NStrT>(inp_str));
         }
 
@@ -397,13 +200,6 @@ namespace webpp::uri {
         }
     };
 
-    template <typename... T>
-    constexpr void set_opaque(basic_path<T...>& path_comp, bool const is_opaque_path) noexcept {
-        path_comp.set_opaque(is_opaque_path);
-    }
-
-    template <istl::Stringifiable S>
-    basic_path(S&& str) -> basic_path<stl::remove_cvref_t<decltype(istl::stringify(stl::forward<S>(str)))>>;
 
 } // namespace webpp::uri
 
