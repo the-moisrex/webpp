@@ -92,7 +92,7 @@ namespace webpp {
 
         template <typename T>
         [[nodiscard]] constexpr allocator_type<T> get_allocator() const noexcept {
-            return allocator_type<T>{construct_allocator_from(alloc)};
+            return allocator_type<T>{allocator_from(alloc)};
         }
     };
 

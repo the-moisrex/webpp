@@ -3,13 +3,15 @@
 #ifndef WEBPP_URI_PARSE_URI_HPP
 #define WEBPP_URI_PARSE_URI_HPP
 
+#include "../../memory/allocator_concepts.hpp"
 #include "./parse_authority.hpp"
 #include "./parse_host.hpp"
+#include "uri_components.hpp"
 
 namespace webpp::uri {
 
     namespace details {
-        template <uri_options Options , URIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
@@ -35,7 +37,7 @@ namespace webpp::uri {
             return false;
         }
 
-        template <uri_options Options , URIContext CtxT>
+        template <uri_options Options, URIContext CtxT>
         static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             while (!has_error(ctx.status)) {
                 if (parse_uri_step<Options>(ctx)) {
@@ -45,39 +47,44 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_options Options , URIContext CtxT>
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         details::continue_parsing_uri<Options>(ctx);
     }
 
-    template <uri_options Options , istl::StringView StrV = stl::string_view>
-    static constexpr auto parse_uri(StrV str) noexcept {
-        using iterator     = typename StrV::const_iterator;
-        using context_type = uri_context<StrV, iterator>;
-        context_type context{.beg = str.begin(),
-                             .pos = str.begin(), // current position is start
-                             .end = str.end()};
+    /// View-only
+    template <uri_options Options, typename CharT = char>
+    static constexpr auto parse_uri(stl::basic_string_view<CharT> const str) noexcept {
+        using context_type = uri_context<uri_components_u32_view<CharT>>;
+        auto context       = create<context_type>(str.begin(), str.end());
         parse_uri<Options>(context);
         return context;
     }
 
-    template <uri_options Options , istl::StringLike StrT, typename SegType>
-    static constexpr auto parse_uri(StrT const& the_url, uri_components<SegType> const& origin_context)
-      noexcept(istl::StringView<StrT>) {
-        using iterator             = typename StrT::const_iterator;
-        using base_components_type = uri_components<SegType>;
-        using base_seg_type        = typename base_components_type::seg_type;
-        using context_type         = uri_context<StrT, iterator, base_seg_type>;
-
-        context_type context{.beg  = the_url.begin(),
-                             .pos  = the_url.begin(), // current position is start
-                             .end  = the_url.end(),
-                             .base = origin_context};
+    template <uri_options Options, typename CharT, URIComponents BaseCompT>
+    static constexpr auto parse_uri(stl::basic_string_view<CharT> const the_url, BaseCompT&& base_comps)
+      noexcept(false) {
+        using context_type = uri_context<uri_components_owning<CharT>, BaseCompT>;
+        auto context       = create<context_type>(the_url.begin(), the_url.end(), stl::forward<BaseCompT>(base_comps));
         parse_uri<Options>(context);
         return context;
     }
 
-    template <uri_options Options , istl::StringLike StrT, istl::StringViewifiable OStrV>
+    /// Owning String
+    template <uri_options Options, typename CharT, typename AllocT, URIComponents BaseCompT>
+    static constexpr auto parse_uri(stl::basic_string<CharT, AllocT> const& the_url, BaseCompT&& base_comps)
+      noexcept(false) {
+        using context_type = uri_context<uri_components_owning<CharT, AllocT>, BaseCompT>;
+        auto context       = create<context_type>(
+          the_url.begin(),
+          the_url.end(),
+          stl::forward<BaseCompT>(base_comps),
+          allocator_from(the_url));
+        parse_uri<Options>(context);
+        return context;
+    }
+
+    template <uri_options Options, istl::StringLike StrT, istl::StringViewifiable OStrV>
     static constexpr auto parse_uri(StrT const& the_url, OStrV&& base_uri) noexcept(istl::StringView<StrT>) {
         using iterator = typename StrT::const_iterator;
         static_assert(stl::same_as<iterator, typename OStrV::const_iterator>,

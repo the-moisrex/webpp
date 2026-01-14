@@ -209,7 +209,7 @@ namespace webpp::uri {
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
             auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, pos, end, out);
             if (!is_valid(to_ascii_res)) [[unlikely]] {
-                set_error<components::host>(ctx, to_ascii_res);
+                set_error(ctx.status, to_ascii_res);
                 return;
             }
             set_hostname(ctx.out, out);

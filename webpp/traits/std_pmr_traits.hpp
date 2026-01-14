@@ -32,7 +32,7 @@ namespace webpp {
             /// We're ignoring the requested type, polymorphic_allocatr<stl::byte> should be able to allocate
             /// anything and everything.
             [[nodiscard]] friend stl::pmr::polymorphic_allocator<T> tag_invoke(
-              [[maybe_unused]] stl::tag_t<construct_allocator_from> tag,
+              [[maybe_unused]] stl::tag_t<allocator_from> tag,
               resource_wrapper&                                     self) noexcept {
                 return stl::pmr::polymorphic_allocator<T>{static_cast<stl::pmr::memory_resource*>(&self.resource)};
             }

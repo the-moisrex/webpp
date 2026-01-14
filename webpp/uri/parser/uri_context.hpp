@@ -7,6 +7,8 @@
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
 
+#include <type_traits>
+
 namespace webpp::uri {
 
     /**
@@ -36,7 +38,7 @@ namespace webpp::uri {
     /**
      * A class used during parsing a URI
      */
-    template <URIComponents CompType, URIComponents BaseType = CompType>
+    template <URIComponents CompType, URIComponents BaseType = void>
     struct uri_context {
         using component_type = CompType;
         using base_type      = BaseType;
@@ -49,13 +51,49 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_segregated = component_type::is_segregated;
 
-        iterator                        beg{}; // the beginning of the string, not going to change during parsing
-        iterator                        pos{}; // current position
-        iterator                        end{}; // the end of the string
-        component_type                  out{}; // the output uri components
-        [[no_unique_address]] base_type base{};
-        uri_status_type                 status = +uri_status::unparsed;
+        iterator        beg{}; // the beginning of the string, not going to change during parsing
+        iterator        pos{}; // current position
+        iterator        end{}; // the end of the string
+        component_type  out{}; // the output uri components
+        base_type       base{};
+        uri_status_type status = +uri_status::unparsed;
     };
+
+    /**
+     * A class used during parsing a URI
+     */
+    template <URIComponents CompType>
+    struct uri_context<CompType, void> {
+        using component_type = CompType;
+        using base_type      = void;
+        using seg_type       = typename component_type::seg_type;
+        using iterator       = typename component_type::iterator;
+        using char_type      = stl::iter_value_t<iterator>;
+        using allocator_type = istl::allocator_type_of<component_type>;
+
+        static constexpr bool is_nothrow    = component_type::is_nothrow;
+        static constexpr bool is_modifiable = component_type::is_modifiable;
+        static constexpr bool is_segregated = component_type::is_segregated;
+
+        iterator       beg{}; // the beginning of the string, not going to change during parsing
+        iterator       pos{}; // current position
+        iterator       end{}; // the end of the string
+        component_type out{}; // the output uri components
+        [[no_unique_address]] istl::nothing_type base   = istl::nothing;
+        uri_status_type                          status = +uri_status::unparsed;
+    };
+
+    template <typename CompType, typename BaseType>
+    static constexpr decltype(auto) tag_invoke(allocator_from_type,
+                                               uri_context<CompType, BaseType> const& ctx) noexcept {
+        if constexpr (URIModifiableComponents<CompType>) {
+            return allocator_from(ctx.out);
+        } else if constexpr (URIModifiableComponents<BaseType>) {
+            return allocator_from(ctx.base);
+        } else {
+            static_assert_false(CompType, "No allocator available");
+        }
+    }
 
     /// Create a URI Context, and initialize it properly
     template <URIContext CtxT>
@@ -68,6 +106,26 @@ namespace webpp::uri {
           .pos    = beg,
           .end    = end,
           .out    = create<typename CtxT::component_type>(beg, end, alloc),
+          .status = unparsed,
+        };
+        return ctx;
+    }
+
+    /// Create a URI Context, and initialize it properly
+    template <URIContext CtxT>
+        requires(!stl::is_void_v<typename CtxT::base_type>)
+    static constexpr CtxT create(
+      typename CtxT::iterator       beg,
+      typename CtxT::iterator       end,
+      typename CtxT::base_type&&    base_ctx,
+      typename CtxT::allocator_type alloc = {}) noexcept(CtxT::is_nothrow) {
+        using enum uri_status;
+        CtxT ctx{
+          .beg    = beg,
+          .pos    = beg,
+          .end    = end,
+          .out    = create<typename CtxT::component_type>(beg, end, alloc),
+          .base   = stl::move(base_ctx),
           .status = unparsed,
         };
         return ctx;
@@ -110,6 +168,34 @@ namespace webpp::uri {
         }
     }
 
+    /// Push back the buffer to the specified component
+    template <VectorOutput CompT>
+    static constexpr void push_segment(CompT& component, typename CompT::value_type&& buffer) noexcept(false) {
+        component.emplace_back(stl::move(buffer));
+    }
+
+    template <VectorOutput CompT, typename Iter>
+    static constexpr void push_segment(CompT& component, segment<Iter> const& buffer) noexcept(false) {
+        component.emplace_back(buffer.beg, buffer.end);
+    }
+
+    template <istl::String CompT, istl::String BufT>
+        requires(stl::is_rvalue_reference_v<BufT>)
+    static constexpr void push_segment(CompT& component, BufT&& buffer) noexcept(false) {
+        component.append(stl::forward<BufT>(buffer));
+    }
+
+    template <istl::String CompT, typename Iter>
+    static constexpr void push_segment(CompT& component, segment<Iter> const& buffer) noexcept(false) {
+        component.append(buffer.beg, buffer.end);
+    }
+
+    /// String View Components are not modifiable
+    template <typename CompT, typename Iter>
+    static constexpr void push_segment([[maybe_unused]] CompT&               component,
+                                       [[maybe_unused]] segment<Iter> const& buffer) noexcept {
+        // nothing to do
+    }
 } // namespace webpp::uri
 
 namespace webpp::uri::details {
@@ -285,9 +371,8 @@ namespace webpp::uri::details {
         }
     }
 
-    template <URIContext CtxT, typename BufT>
-    static constexpr void append([[maybe_unused]] CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char)
-      noexcept(CtxT::is_nothrow) {
+    template <typename BufT, typename CharT>
+    static constexpr void append(BufT& buffer, CharT const inp_char) noexcept(false) {
         if constexpr (istl::String<BufT>) {
             buffer.append(inp_char);
         }

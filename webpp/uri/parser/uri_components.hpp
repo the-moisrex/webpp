@@ -63,6 +63,23 @@ namespace webpp::uri {
         { comps.fragment } -> stl::same_as<typename T::string_type>;
     };
 
+    template <typename T>
+    concept URIOwningComponents = URIComponents<T> && requires(T comps) {
+        requires istl::String<typename T::string_type>;
+        { comps.scheme } -> stl::same_as<typename T::string_type>;
+        { comps.username } -> stl::same_as<typename T::string_type>;
+        { comps.password } -> stl::same_as<typename T::string_type>;
+        { comps.hostname } -> stl::same_as<typename T::string_type>;
+        { comps.port } -> stl::same_as<typename T::string_type>;
+        { comps.path } -> stl::same_as<typename T::string_type>;
+        { comps.queries } -> stl::same_as<typename T::string_type>;
+        { comps.fragment } -> stl::same_as<typename T::string_type>;
+    };
+
+
+    template <typename T>
+    concept URIModifiableComponents = URIComponents<T> && requires { requires istl::String<typename T::string_type>; };
+
     /**
      * An output type that is like a vector or a map
      */

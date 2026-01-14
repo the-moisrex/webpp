@@ -52,7 +52,8 @@ namespace webpp::io {
                     set_error(task_state, read_size);
                     set_error(io, read_size);
                     return false;
-                } else if (read_size == 0) {
+                }
+                if (read_size == 0) {
                     set_done(task_state);
                     set_done(io);
                 } else {

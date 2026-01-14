@@ -5,7 +5,7 @@
 
 #include "../../ip/inet_pton.hpp"
 #include "../../strings/hex.hpp"
-#include "./uri_components.hpp"
+#include "./uri_context.hpp"
 
 namespace webpp::uri::details {
 

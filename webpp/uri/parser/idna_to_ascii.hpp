@@ -24,7 +24,7 @@ namespace webpp::uri::idna {
     }
 
     static constexpr void set_error(uri_status_type& status, domain2ascii_status const value) noexcept {
-        set_error(status, static_cast<uri_status>(stl::to_underlying(value)));
+        set(status, static_cast<uri_status>(stl::to_underlying(value)));
     }
 
     /**

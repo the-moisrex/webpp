@@ -57,49 +57,72 @@ namespace webpp {
     template <typename T, typename Alloc>
     concept AllocatorOf = Allocator<Alloc> && stl::is_same_v<typename Alloc::value_type, T>;
 
+    template <typename T>
+    concept has_allocator = requires(T obj) {
+        typename T::allocator_type;
+        { obj.get_allocator() } noexcept -> Allocator;
+    };
+
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
     /**
-     * Get Allocator is a CPO (Customization Point Object) that helps to get the allocator out of a "resource"
-     * that the allocator returned.
+     * Get Allocator is a CPO (Customization Point Object) that helps to get the allocator out of a "resource" or any
+     * type that we can get an allocator out of.
      *
-     * For example, in traits type user, instead of returning an allocator, they will return a resource,
-     * (std::pmr::monotonic_buffer_resource for example), but then they specialize this CPO and return
+     * For example, in "traits type", the user instead of returning an allocator, they will return a resource,
+     * (std::pmr::monotonic_buffer_resource for example), but then we specialize this CPO and return
      * std::pmr::polymorphic_allocator initialized with that resource.
+     *
+     * Or `allocator_from(basic_string<CharT, AllocT>{})` should return the allocator of that string by default.
      *
      * This is designed for the user to easily support both std::pmr-style allocators that have resources,
      * and also std::allocator-style allocators that don't have resources.
      */
-    static constexpr struct construct_allocator_from_type {
+    static constexpr struct allocator_from_type {
         /// Customization Point
         template <typename T>
-            requires stl::tag_invocable<construct_allocator_from_type, T>
-        [[nodiscard]] constexpr stl::tag_invoke_result_t<construct_allocator_from_type, T> operator()(
-          T&& resource) const noexcept(stl::nothrow_tag_invocable<construct_allocator_from_type, T>) {
+            requires stl::tag_invocable<allocator_from_type, T>
+        [[nodiscard]] constexpr stl::tag_invoke_result_t<allocator_from_type, T> operator()(T&& resource) const
+          noexcept(stl::nothrow_tag_invocable<allocator_from_type, T>) {
             return stl::tag_invoke(*this, stl::forward<T>(resource));
         }
 
         /// default impl: return the allocator itself
         template <typename T>
-        [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] construct_allocator_from_type tag,
-                                                                 T&& alloc) noexcept {
+        [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] allocator_from_type tag,
+                                                                 T&&                                  alloc) noexcept {
             return stl::forward<T>(alloc);
         }
 
-        /// handle rvalue reference inputs, the library should not use this, it's just for metaprogamming
-        template <typename T>
-            requires(!stl::is_lvalue_reference_v<T>)
-        [[nodiscard]] friend constexpr decltype(auto) tag_invoke(
-          [[maybe_unused]] construct_allocator_from_type tag,
-          T&&                                            inp_res) noexcept {                                             // NOLINT(*-missing-std-forward)
-            return stl::tag_invoke(construct_allocator_from_type{}, inp_res); // pass as lvalue
-        }
+        /// handle rvalue reference inputs, the library should not use this, it's just for metaprogramming
+        // template <typename T>
+        //     requires(!stl::is_lvalue_reference_v<T>)
+        // [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] construct_allocator_from_type tag,
+        //                                                          T&& inp_res) noexcept {
+        //     return stl::tag_invoke(construct_allocator_from_type{}, stl::forward<T>(inp_res));
+        // }
 
         /// void impl: return void
-        friend constexpr void tag_invoke([[maybe_unused]] construct_allocator_from_type tag) noexcept {
+        friend constexpr void tag_invoke([[maybe_unused]] allocator_from_type tag) noexcept {
             // return void;
         }
-    } construct_allocator_from;
+
+        /// Return `.get_allocator()` for any type that supports it
+        template <typename T>
+            requires has_allocator<T>
+        friend constexpr decltype(auto) tag_invoke(allocator_from_type, T const& obj) noexcept {
+            return obj.get_allocator();
+        }
+
+        /// Return `get_allocator(obj)` for any type that supports it
+        template <typename T>
+            requires requires(T const& obj) {
+                { get_allocator(obj) } noexcept -> Allocator;
+            }
+        friend constexpr decltype(auto) tag_invoke(allocator_from_type, T const& obj) noexcept {
+            return get_allocator(obj);
+        }
+    } allocator_from;
 
     /// one single allocator descriptor which describes an allocator and its features and its resources
     template <typename D>
@@ -107,7 +130,7 @@ namespace webpp {
         typename D::template allocator_type<char>; // get the allocator itself
         D::template construct_allocator<char>();
         {
-            construct_allocator_from(D::template construct_allocator<char>())
+            allocator_from(D::template construct_allocator<char>())
         } -> istl::cvref_as<typename D::template allocator_type<char>>;
     } || stl::same_as<D, void>;
 
@@ -126,7 +149,7 @@ namespace webpp {
         typename D::template allocator_type<char>; // get the allocator itself
         requires requires(void* buffer, stl::size_t size) {
             {
-                construct_allocator_from(D::template construct_allocator<char>(buffer, size))
+                allocator_from(D::template construct_allocator<char>(buffer, size))
             } -> istl::cvref_as<typename D::template allocator_type<char>>;
         };
     } || stl::same_as<D, void>;
@@ -138,8 +161,7 @@ namespace webpp {
     template <typename T, AllocatorDescriptor Desc>
     struct resource_type_of {
         // for a general allocator descriptor, just return the allocator type
-        using type =
-          stl::tag_invoke_result_t<construct_allocator_from_type, decltype(Desc::template construct_allocator<T>())>;
+        using type = stl::tag_invoke_result_t<allocator_from_type, decltype(Desc::template construct_allocator<T>())>;
     };
 
     template <typename T, AllocatorDescriptor Desc>

@@ -254,18 +254,17 @@ namespace webpp::uri {
 
         details::handle_windows_driver_letter<Options>(ctx, buffer);
 
-        iterator seg_beg = ctx.pos;
         while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                 case '/':
-                    if (details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg)) {
+                    if (details::handle_dots_in_paths<Options>(ctx, buffer)) {
                         ++ctx.pos; // ignore character
-                        reset_segment_start(ctx, seg_beg);
+                        clear_segment(ctx, buffer);
                         continue;
                     }
                     end_segment(ctx, buffer);
-                    push_path(ctx, buffer);
+                    push_segment(path(ctx.out), buffer);
                     details::append_inplace_of(buffer, '/');
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
@@ -282,7 +281,7 @@ namespace webpp::uri {
             }
             break;
         }
-        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, seg_beg));
+        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer));
         end_segment(ctx, buffer);
         set_path(ctx.out, buffer);
 

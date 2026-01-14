@@ -4,8 +4,8 @@
 #define WEBPP_URI_PARSE_AUTHORITY_HPP
 
 #include "../../ip/ipv4.hpp"
-#include "../credentials.hpp"
 #include "./host_ip.hpp"
+#include "./parse_credentials.hpp"
 #include "./special_schemes.hpp"
 
 namespace webpp::uri::details {
