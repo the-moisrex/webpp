@@ -39,15 +39,10 @@ namespace webpp::uri {
 
     /**
      * @brief Basic Structured URI Path
-     * @tparam SlugType The type of each segment of the path to use in the vector
-     *                  If the slug type is a string view (and not a string), some of the parsing features
-     *                  will be disabled, and that might be a security problem for you. So if the input is
-     *                  from an untrusted source, make sure to slug type is a modifiable string.
      */
     template <Slug SlugType = stl::string>
-    struct basic_path : SlugType {
+    struct basic_path : stl::span<SlugType> {
         using string_type      = SlugType;
-        using value_type       = string_type;
         using char_type        = istl::char_type_of_t<string_type>;
         using string_view_type = istl::string_view_type_of<string_type>;
         using path_type        = basic_path;
@@ -60,73 +55,18 @@ namespace webpp::uri {
         // except slash char
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>;
 
-      private:
-        bool m_is_opaque = false; // todo
-
-      public:
-        using SlugType::SlugType;
+        using stl::span<SlugType>::span; // ctor
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
-            return !storage.empty() && storage.front().empty();
+            return !this->empty() && this->front().empty();
         }
 
         [[nodiscard]] constexpr bool is_relative() const noexcept {
             return !is_absolute();
         }
 
-        constexpr void normalize(bool const remove_empty_segments = false) {
-            remove_dot_segments(is_absolute(), remove_empty_segments);
-        }
-
         constexpr void set_opaque(bool const value = false) noexcept {
             m_is_opaque = value;
-        }
-
-        /**
-         * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
-         * Refer to uri_normalize_benchmark for more related algorithms of this
-         */
-        constexpr void remove_dot_segments(bool const remove_leading, bool const remove_empty_segments = false) {
-            if (storage.empty()) {
-                return;
-            }
-
-            auto pos = storage.begin();
-
-            // handle the first part
-            while (pos != storage.end()) {
-                if (remove_empty_segments && pos->empty()) {
-                    pos = storage.erase(pos);
-                    continue;
-                }
-                if (*pos == current_dir) {
-                    pos = storage.erase(pos);
-                    continue;
-                }
-                if (*pos == parent_dir) {
-                    if (pos != storage.begin()) {
-                        auto const last_el = std::prev(pos);
-                        if (last_el->empty()) {
-                            // remove just this one
-                            pos = storage.erase(pos);
-                            continue;
-                        }
-                        if (*last_el != parent_dir) {
-                            // remove the previous one and this one
-                            pos = storage.erase(last_el, std::next(pos));
-                            if (pos == storage.begin()) {
-                                return;
-                            }
-                            --pos;
-                            continue;
-                        }
-                    } else if (remove_leading) {
-                        pos = storage.erase(pos);
-                        continue;
-                    }
-                }
-                ++pos;
-            }
         }
 
         [[nodiscard]] constexpr bool is_opaque() const noexcept {
@@ -199,6 +139,65 @@ namespace webpp::uri {
             return true;
         }
     };
+
+    /**
+     * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
+     * Refer to uri_normalize_benchmark for more related algorithms of this
+     */
+    template <istl::LinearContainer VecT>
+    constexpr void
+    remove_dot_segments(VecT& path, bool const remove_leading, bool const remove_empty_segments = false) {
+        if (path.empty()) {
+            return;
+        }
+
+        auto pos = path.begin();
+
+        // handle the first part
+        while (pos != path.end()) {
+            if (remove_empty_segments && pos->empty()) {
+                pos = path.erase(pos);
+                continue;
+            }
+            if (*pos == ".") {
+                pos = path.erase(pos);
+                continue;
+            }
+            if (*pos == "..") {
+                if (pos != path.begin()) {
+                    auto const last_el = std::prev(pos);
+                    if (last_el->empty()) {
+                        // remove just this one
+                        pos = path.erase(pos);
+                        continue;
+                    }
+                    if (*last_el != "..") {
+                        // remove the previous one and this one
+                        pos = path.erase(last_el, std::next(pos));
+                        if (pos == path.begin()) {
+                            return;
+                        }
+                        --pos;
+                        continue;
+                    }
+                } else if (remove_leading) {
+                    pos = path.erase(pos);
+                    continue;
+                }
+            }
+            ++pos;
+        }
+    }
+
+    template <Slug T>
+    [[nodiscard]] static constexpr bool is_absolute(stl::span<T const> const path) noexcept {
+        return !path.empty() && path.front().empty();
+    }
+
+    template <istl::LinearContainer VecT>
+    static constexpr void normalize(VecT& path, bool const remove_empty_segments = false) {
+        remove_dot_segments(is_absolute(path), remove_empty_segments);
+    }
 
 
 } // namespace webpp::uri
