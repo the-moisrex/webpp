@@ -41,7 +41,7 @@ namespace webpp::uri {
      * @brief Basic Structured URI Path
      */
     template <Slug SlugType = stl::string>
-    struct basic_path : stl::span<SlugType> {
+    struct basic_path : stl::span<SlugType const> {
         using string_type      = SlugType;
         using char_type        = istl::char_type_of_t<string_type>;
         using string_view_type = istl::string_view_type_of<string_type>;
@@ -65,72 +65,27 @@ namespace webpp::uri {
             return !is_absolute();
         }
 
-        constexpr void set_opaque(bool const value = false) noexcept {
-            m_is_opaque = value;
-        }
-
-        [[nodiscard]] constexpr bool is_opaque() const noexcept {
-            return m_is_opaque;
-        }
-
-        template <istl::String NStrT = string_type>
-        constexpr void to_string(NStrT& out) const {
-            render_path(storage_ref(), out, is_opaque());
-        }
-
-        template <istl::String NStrT = string_type, typename... Args>
-        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
-            NStrT out{stl::forward<Args>(args)...};
-            to_string(out);
-            return out;
-        }
-
         /**
-         * Get the raw string non-decoded size
+         * Get the raw string encoded size
          */
         [[nodiscard]] constexpr stl::size_t raw_string_size() const noexcept {
-            // todo: we could remove lambda; or we even can use an iterator_wrapper and use "std::reduce"
-            // http://www.boost.org/doc/libs/1_64_0/libs/iterator/doc/transform_iterator.html
-            return [this]() noexcept -> stl::size_t {
-                stl::size_t sum = 0;
-                for (auto const& slug : *this) {
-                    sum += slug.size();
-                }
-                return sum;
-            }() + storage.size() - 1;
-        }
-
-        constexpr void trim() {
-            // remove the last empty string
-            if (!storage.empty() && storage.back().empty()) {
-                static_cast<void>(storage.pop_back());
+            stl::size_t sum = this->size() - 1;
+            for (auto const& slug : *this) {
+                sum += slug.size();
             }
-        }
-
-        /// Attention: this does not parse the input, it's raw emplace back
-        template <typename... Args>
-        constexpr decltype(auto) emplace_back(Args&&... args) {
-            return storage.emplace_back(stl::forward<Args>(args)...);
+            return sum;
         }
 
         /// Equality check.
         /// https://url.spec.whatwg.org/#url-equivalence
         /// https://url.spec.whatwg.org/#url-path-serializer
-        template <uri_options Options = {}, istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
-        [[nodiscard]] constexpr bool operator==(NStrT && inp_str) const noexcept {
-            return *this == clone<Options>(stl::forward<NStrT>(inp_str));
-        }
-
-        /// Equality check.
-        /// https://url.spec.whatwg.org/#url-equivalence
-        /// https://url.spec.whatwg.org/#url-path-serializer
-        [[nodiscard]] constexpr bool operator==(basic_path const& inp_str) const noexcept {
-            if (inp_str.storage.size() != storage.size()) {
+        [[nodiscard]] constexpr bool operator==(basic_path const inp_str) const noexcept {
+            if (inp_str.size() != this->size()) {
                 return false;
             }
-            auto       lhs     = this->storage.begin();
-            auto const lhs_end = this->storage.end();
-            auto       rhs     = this->storage.begin();
+            auto       lhs     = this->begin();
+            auto const lhs_end = this->end();
+            auto       rhs     = this->begin();
             for (; lhs != lhs_end; ++lhs, ++rhs) {
                 if (lhs != rhs) {
                     return false;
