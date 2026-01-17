@@ -162,7 +162,8 @@ namespace webpp::uri {
         if constexpr (istl::String<BufT>) {
             buffer.clear();
         } else {
-            ctx.pos = buffer.end = buffer.beg;
+            // Don't set `pos` to be `beg`, set the `beg` to be `pos`
+            buffer.beg = buffer.end = ctx.pos;
         }
     }
 
@@ -170,6 +171,23 @@ namespace webpp::uri {
     template <VectorOutput CompT>
     static constexpr void push_segment(CompT& component, typename CompT::value_type&& buffer) noexcept(false) {
         component.emplace_back(stl::move(buffer));
+    }
+
+    /// For queries
+    template <VectorOutput CompT, typename... Args>
+    static constexpr void push_segment(CompT& component, Args&&... args) noexcept(false) {
+        component.emplace_back(stl::forward<Args>(args)...);
+    }
+
+    /// For queries
+    template <VectorOutput CompT, typename Iter>
+    static constexpr void
+    push_segment(CompT& component, segment<Iter> const& key_buffer, segment<Iter> const& value_buffer) noexcept(false) {
+        using pair_type   = typename CompT::value_type;
+        using first_type  = typename pair_type::first_type;
+        using second_type = typename pair_type::second_type;
+        component.emplace_back(first_type{key_buffer.beg, key_buffer.end},
+                               second_type{value_buffer.beg, value_buffer.end});
     }
 
     template <VectorOutput CompT, typename Iter>

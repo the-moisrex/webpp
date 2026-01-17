@@ -9,54 +9,6 @@
 
 namespace webpp::uri {
 
-
-    namespace details {
-
-        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void set_query_name(CtxT& ctx, BufT& buffer) noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
-                istl::assign(buffer, seg_beg, ctx.pos);
-            }
-        }
-
-        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void set_query_value(CtxT& ctx, BufT& buffer) noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
-                istl::assign(buffer, seg_beg, ctx.pos);
-                seg_beg = ctx.pos + 1;
-            }
-        }
-
-        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void append_query_value(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count)
-          noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxMappedBuffer<BufT, CtxT>) {
-                if constexpr (CtxNonModifiableBuffer<BufT, CtxT>) {
-                    ctx.pos += count;
-                    istl::assign(buffer, seg_beg, ctx.pos);
-                } else {
-                    buffer  += *ctx.pos;
-                    ctx.pos += count;
-                }
-            } else {
-                ctx.pos += count;
-            }
-        }
-
-        template <URIContext CtxT, CtxBufferOf<CtxT> BufT>
-        static constexpr void next_query([[maybe_unused]] CtxT& ctx, BufT& key_buffer, BufT& value_buffer)
-          noexcept(CtxT::is_nothrow) {
-            if constexpr (CtxT::is_segregated && istl::StringLike<BufT>) {
-                if (!key_buffer.empty() || !value_buffer.empty()) {
-                    get_storage<components::queries>(ctx).emplace(key_buffer, value_buffer);
-                }
-                istl::clear(key_buffer);
-                istl::clear(value_buffer);
-            }
-            reset_begin(ctx, seg_beg);
-        }
-    } // namespace details
-
     template <uri_options Options, URIContext CtxT>
         requires(!Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept {
@@ -160,6 +112,7 @@ namespace webpp::uri {
         bool  in_value     = false;
         auto  key_buffer   = create_buffer(ctx);
         auto  value_buffer = create_buffer(ctx);
+        auto& out          = queries(ctx.out);
 
         // find the end of the queries
         while (!encode_or_validate<encode_chars>(
@@ -173,10 +126,10 @@ namespace webpp::uri {
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
                         set(ctx.status, valid_fragment);
+                        break;
                     } else {
                         stl::unreachable();
                     }
-                    break;
                 case '%':
                     if (!validate_percent_encode(ctx, !in_value ? key_buffer : value_buffer)) {
                         if constexpr (Options.allow_invalid_characters) {
@@ -190,20 +143,19 @@ namespace webpp::uri {
                 case '=':
                     if (!in_value) {
                         end_segment(ctx, key_buffer);
-                        // todo:
-                        skip_separator(ctx, out);
+                        ++ctx.pos;
                     } else {
                         skip_separator(ctx, value_buffer);
                     }
                     in_value = true;
                     continue;
                 case '&':
-                    if constexpr (CtxT::is_segregated) {
-                        set_query_value(ctx, value_buffer);
-                        in_value = false;
-                    }
-                    skip_separator(ctx, out);
-                    next_query(ctx, key_buffer, value_buffer);
+                    end_segment(ctx, in_value ? value_buffer : key_buffer);
+                    push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
+                    clear_segment(ctx, key_buffer);
+                    clear_segment(ctx, value_buffer);
+                    in_value = false;
+                    ++ctx.pos;
                     continue;
                 default: {
                     if constexpr (Options.allow_invalid_characters) {
@@ -212,28 +164,19 @@ namespace webpp::uri {
                         set(ctx.status, invalid_queries_character);
                         return;
                     }
-                    skip_separator(ctx, out);
+                    skip_separator(ctx, in_value ? value_buffer : key_buffer);
                     // invalid characters are not errors
                     continue;
                 }
             }
             break;
         }
-        if constexpr (CtxT::is_segregated) {
-            if (in_value) {
-                set_query_value(ctx, value_buffer, seg_beg);
-            } else {
-                set_query_name(ctx, key_buffer, seg_beg);
-            }
-        }
-        set_queries(ctx.out, seg_beg, ctx.pos);
+        end_segment(ctx, in_value ? value_buffer : key_buffer);
+        push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
-        } else {
-            ++ctx.pos;
         }
-        next_query(ctx, key_buffer, value_buffer, seg_beg);
     }
 
 } // namespace webpp::uri
