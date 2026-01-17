@@ -163,38 +163,20 @@ namespace webpp::uri {
             return true;
         }
 
-        template <typename OutT>
-        constexpr void set_opaque([[maybe_unused]] OutT&      path_comp,
-                                  [[maybe_unused]] bool const is_opaque_path) noexcept {}
-
-        template <URIContext CtxT>
-        constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) noexcept {
-            // set_opaque(get_component<components::path>(ctx), is_opaque_path);
-        }
-
     } // namespace details
 
     template <URIContext CtxT>
     static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
         using enum uri_status;
+        using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::set_opaque;
         using details::validate_percent_encode;
 
-        // todo: URI Code Points are among interesting characters as well
-        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
+        set_flag(ctx.status, opaque_path);
 
-        set_opaque(ctx, true);
         auto buffer = create_buffer(ctx);
-
-        for (;;) {
-            if (encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, interesting_characters)) {
-                set(ctx.status, valid);
-                end_segment(ctx, buffer);
-                set_path(ctx.out, buffer);
-                break;
-            }
+        while (!encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, ascii_bitmap('%', '#', '?'))) {
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
@@ -217,8 +199,11 @@ namespace webpp::uri {
             end_segment(ctx, buffer);
             set_path(ctx.out, buffer);
             ++ctx.pos; // it's okay, we're not at the end
-            break;
+            return;
         }
+        set(ctx.status, valid);
+        end_segment(ctx, buffer);
+        set_path(ctx.out, buffer);
     }
 
     template <uri_options Options, URIContext CtxT>
@@ -228,9 +213,7 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::set_opaque;
         using details::validate_percent_encode;
-        using iterator = typename CtxT::iterator;
 
         webpp_static_constexpr auto encode_set =
           CtxT::is_modifiable || CtxT::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
@@ -247,13 +230,10 @@ namespace webpp::uri {
             parse_opaque_path<Options>(ctx);
             return;
         }
-
-        set_opaque(ctx, false);
+        unset_flag(ctx.status, opaque_path);
 
         auto buffer = create_buffer(ctx);
-
         details::handle_windows_driver_letter<Options>(ctx, buffer);
-
         while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];

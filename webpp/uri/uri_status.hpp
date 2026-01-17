@@ -264,6 +264,7 @@ namespace webpp::uri {
         file_scheme        = flags_bit >> 0U | flags_bit >> 1U, // file is also special
         has_non_null_port  = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
         has_non_empty_host = flags_bit >> 3U, // the URI has a non-empty host
+        opaque_path        = flags_bit >> 4U,
     };
 
     [[nodiscard]] static constexpr stl::underlying_type_t<uri_status> operator+(uri_status const status) noexcept {
@@ -473,6 +474,7 @@ namespace webpp::uri {
                   "The URI has a non-null port number; the default port numbers that match the URI's scheme "
                   "are also considered null."};
             case has_non_empty_host: return {"The URI has a non-empty host."};
+            case opaque_path: return {"The URI has opaque path."};
 
             default: return {"Clean up the URI status first to get individual errors and warnings."};
         }

@@ -262,24 +262,6 @@ namespace webpp::uri::details {
         return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars);
     }
 
-    template <URIContext CtxT, typename BufT>
-    [[nodiscard]] static constexpr bool encode_or_validate_map(
-      CtxT&                                ctx,
-      [[maybe_unused]] CharSet auto const& policy_chars,
-      CharSet auto const&                  invalid_chars,
-      BufT&                                buffer) noexcept(CtxT::is_nothrow) {
-        if constexpr (istl::String<BufT>) {
-            return encode_uri_component<uri_encoding_policy::encode_chars>(
-              ctx.pos,
-              ctx.end,
-              buffer,
-              policy_chars,
-              invalid_chars);
-        } else {
-            return encode_or_validate(ctx, buffer, policy_chars, invalid_chars);
-        }
-    }
-
     /**
      * @brief Decode if the context is modifiable, otherwise just validate the invalid characters
      * @param ctx context

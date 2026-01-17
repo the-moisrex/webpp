@@ -71,13 +71,10 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#query-state
 
         using enum uri_status;
-        using details::append_query_value;
         using details::ascii_bitmap;
-        using details::encode_or_validate_map;
-        using details::set_query_name;
-        using details::set_query_value;
         using details::skip_separator;
         using details::validate_percent_encode;
+        using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
@@ -92,7 +89,7 @@ namespace webpp::uri {
         auto buffer = create_buffer(ctx);
 
         // find the end of the queries
-        while (!encode_or_validate(ctx, query_percent_encode_set, interesting_characters, buffer)) {
+        while (!encode_or_validate<encode_chars>(ctx, buffer, query_percent_encode_set, interesting_characters)) {
             switch (*ctx.pos) {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
@@ -143,40 +140,33 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#query-state
 
         using enum uri_status;
-        using details::append_query_value;
         using details::ascii_bitmap;
-        using details::encode_or_validate_map;
-        using details::next_query;
-        using details::set_query_name;
-        using details::set_query_value;
         using details::skip_separator;
         using details::validate_percent_encode;
+        using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
             return;
         }
 
-        webpp_static_constexpr auto base_interesting_characters =
-          !CtxT::is_segregated ? ascii_bitmap('%') : ascii_bitmap('%', '=', '&');
         webpp_static_constexpr auto interesting_characters =
           Options.parse_fragment && !Options.state_override
-            ? ascii_bitmap(base_interesting_characters, '#')
-            : base_interesting_characters;
+            ? ascii_bitmap('%', '=', '&', '#')
+            : ascii_bitmap('%', '=', '&');
 
         auto const query_percent_encode_set =
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
         bool  in_value     = false;
         auto  key_buffer   = create_buffer(ctx);
         auto  value_buffer = create_buffer(ctx);
-        auto& out          = get_storage<components::queries>(ctx);
 
         // find the end of the queries
-        while (!encode_or_validate_map(
+        while (!encode_or_validate<encode_chars>(
           ctx,
+          !in_value ? key_buffer : value_buffer,
           query_percent_encode_set,
-          interesting_characters,
-          !in_value ? key_buffer : value_buffer))
+          interesting_characters))
         {
             switch (*ctx.pos) {
                 case '#':
@@ -199,13 +189,11 @@ namespace webpp::uri {
                     continue;
                 case '=':
                     if (!in_value) {
-                        if constexpr (CtxT::is_segregated) {
-                            set_query_name(ctx, key_buffer);
-                        }
+                        end_segment(ctx, key_buffer);
+                        // todo:
                         skip_separator(ctx, out);
-                        reset_begin(ctx, seg_beg);
                     } else {
-                        append_query_value(ctx, value_buffer, 1);
+                        skip_separator(ctx, value_buffer);
                     }
                     in_value = true;
                     continue;
