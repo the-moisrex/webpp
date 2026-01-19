@@ -23,7 +23,7 @@ namespace webpp::uri {
     template <Slug SlugType, typename CharT, typename AllocT>
     static constexpr void render_path(
       stl::span<SlugType const>         storage,
-      stl::basic_string<CharT, AllocT>& out,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
       bool const                        is_opaque = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
@@ -47,7 +47,7 @@ namespace webpp::uri {
     /// Serialize path from string view
     template <typename CharT, typename AllocT>
     static constexpr void render_path(stl::basic_string_view<CharT> const storage,
-                                      stl::basic_string<CharT, AllocT>&   out) {
+                                      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&   out) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         out += storage;

@@ -33,7 +33,7 @@ namespace webpp::uri {
 
     template <typename CharT, typename AllocT>
     static constexpr void encode_uri_component_set_capacity(stl::basic_string_view<CharT>     str,
-                                                            stl::basic_string<CharT, AllocT>& output) {
+                                                            stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& output) {
         encode_uri_component_set_capacity(str.size(), output);
     }
 

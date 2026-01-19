@@ -10,7 +10,7 @@ namespace webpp::uri {
 
     /// Serialize username
     template <typename CharT, typename AllocT>
-    static constexpr void render_username(stl::basic_string_view<CharT> storage, stl::basic_string<CharT, AllocT>& out)
+    static constexpr void render_username(stl::basic_string_view<CharT> storage, stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out)
       noexcept(false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
@@ -21,7 +21,7 @@ namespace webpp::uri {
 
     /// Serialize password
     template <typename CharT, typename AllocT>
-    static constexpr void render_password(stl::basic_string_view<CharT> storage, stl::basic_string<CharT, AllocT>& out)
+    static constexpr void render_password(stl::basic_string_view<CharT> storage, stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out)
       noexcept(false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {

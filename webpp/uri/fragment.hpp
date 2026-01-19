@@ -13,7 +13,7 @@ namespace webpp::uri {
     template <typename CharT, typename AllocT>
     static constexpr void render_fragment(
       stl::basic_string_view<CharT> const storage,
-      stl::basic_string<CharT, AllocT>&   out,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&   out,
       bool const                          add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {

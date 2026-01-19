@@ -52,7 +52,7 @@ namespace webpp::uri {
 
         template <uri_options Options, typename Iter>
         [[nodiscard]] constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status)
-          noexcept(is_modifiable) {
+          noexcept(is_nothrow) {
             using enum uri_status;
             using context_type = uri_context<component_type, void>;
 
@@ -310,7 +310,7 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr void href(string_view_type const str) {
+        constexpr void href(string_view_type const str) noexcept(is_nothrow) {
             parse<Options>(str);
         }
 
@@ -393,7 +393,8 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr uri_status_type scheme(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type scheme(string_view_type const str) noexcept(is_nothrow) {
             auto status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
             if (is_valid(status_res) && port() == known_port(scheme())) {
                 // From https://url.spec.whatwg.org/#scheme-state
@@ -406,22 +407,26 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr uri_status_type authority(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type authority(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
         template <uri_options Options>
-        constexpr uri_status_type username(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type username(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
         template <uri_options Options>
-        constexpr uri_status_type password(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type password(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
         template <uri_options Options>
-        constexpr uri_status_type hostname(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type hostname(string_view_type const str) noexcept(is_nothrow) {
             // https://url.spec.whatwg.org/#dom-url-hostname
             // If this’s URL has an opaque path, then return.
             if (this->path().is_opaque()) [[unlikely]] {
@@ -431,7 +436,8 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr uri_status_type port(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type port(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_port);
         }
 
@@ -442,22 +448,25 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr uri_status_type path(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type path(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_path);
         }
 
         template <uri_options Options>
-        constexpr uri_status_type queries(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type queries(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_queries);
         }
 
         template <uri_options Options>
-        constexpr uri_status_type fragment(string_view_type const str) noexcept(is_modifiable) {
+            requires is_modifiable
+        constexpr uri_status_type fragment(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_fragment);
         }
     };
 
-    using uri = basic_uri<stl::string>;
+    using uri = basic_uri<uri_components_owning<char>>;
 } // namespace webpp::uri
 
 #endif // WEBPP_URI_HPP

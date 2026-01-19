@@ -72,7 +72,7 @@ namespace webpp::uri {
 
     /// Owning String
     template <uri_options Options, typename CharT, typename AllocT, URIComponents BaseCompT>
-    static constexpr auto parse_uri(stl::basic_string<CharT, AllocT> const& the_url, BaseCompT&& base_comps)
+    static constexpr auto parse_uri(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& the_url, BaseCompT&& base_comps)
       noexcept(false) {
         using context_type = uri_context<uri_components_owning<CharT, AllocT>, BaseCompT>;
         auto context       = create<context_type>(
