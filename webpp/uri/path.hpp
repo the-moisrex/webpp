@@ -3,39 +3,55 @@
 #ifndef WEBPP_URI_PATH_HPP
 #define WEBPP_URI_PATH_HPP
 
-#include "../memory/allocators.hpp"
 #include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
-#include "../strings/peek.hpp"
 #include "./parser/parse_path.hpp"
 
-#include <compare>
 #include <numeric>
 
 namespace webpp::uri {
-
-    /// Serialize path
-    template <typename StorageType, istl::String StrT>
-    static constexpr void render_path(StorageType const& storage, StrT& out, bool const is_opaque = false) {
-        // https://url.spec.whatwg.org/#url-serializing
-        // https://url.spec.whatwg.org/#url-path-serializer
-        if (is_opaque) {
-            out += storage.front();
-        } else {
-            for (auto const& seg : storage) {
-                out += '/';
-                out += seg;
-            }
-        }
-    }
 
     /**
      * Including normal string and string view types
      */
     template <typename T>
     concept Slug = istl::StringLike<T>;
+
+    /// Serialize path
+    template <Slug SlugType, typename CharT, typename AllocT>
+    static constexpr void render_path(
+      stl::span<SlugType const>         storage,
+      stl::basic_string<CharT, AllocT>& out,
+      bool const                        is_opaque = false) {
+        // https://url.spec.whatwg.org/#url-serializing
+        // https://url.spec.whatwg.org/#url-path-serializer
+        if (is_opaque) {
+            out += storage.front();
+        } else {
+            if (storage.empty()) {
+                return;
+            }
+            auto seg = storage.begin();
+            for (;;) {
+                out += *seg;
+                if (++seg == storage.end()) {
+                    break;
+                }
+                out += '/';
+            }
+        }
+    }
+
+    /// Serialize path from string view
+    template <typename CharT, typename AllocT>
+    static constexpr void render_path(stl::basic_string_view<CharT> const storage,
+                                      stl::basic_string<CharT, AllocT>&   out) {
+        // https://url.spec.whatwg.org/#url-serializing
+        // https://url.spec.whatwg.org/#url-path-serializer
+        out += storage;
+    }
 
     /**
      * @brief Basic Structured URI Path

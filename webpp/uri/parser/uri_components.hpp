@@ -32,8 +32,11 @@ namespace webpp::uri {
         T::max_supported_length;
     };
 
+    /// Relative Components are components that only point to the components of a URL using numbers or iterators or a
+    /// combination of them.
     template <typename T>
     concept URIRelativeComponents = URIComponents<T> && requires(T comps) {
+        comps.uri_beg;
         comps.scheme_end;
         comps.authority_start;
         comps.password_start;
@@ -45,9 +48,12 @@ namespace webpp::uri {
         comps.uri_end;
     };
 
+    /// Href Components are components that store the `.href()` strings directly, and may or may not include the
+    /// components as string views that point to that main href string.
     template <typename T>
     concept URIHrefComponents = URIComponents<T> && requires(T comps) { comps.href; };
 
+    /// Structured Components are components that store each URI's components separately.
     template <typename T>
     concept URIStructuredComponents = URIComponents<T> && requires(T comps) {
         typename T::string_type;
@@ -63,6 +69,7 @@ namespace webpp::uri {
         { comps.fragment } -> stl::same_as<typename T::string_type>;
     };
 
+    /// Owning Components are components that are using strings and not string views.
     template <typename T>
     concept URIOwningComponents = URIComponents<T> && requires(T comps) {
         requires istl::String<typename T::string_type>;
@@ -370,6 +377,22 @@ namespace webpp::uri {
     static constexpr CompT get_allocator(CompT const& comps) noexcept {
         return comps.scheme.get_allocator();
     }
+
+    [[nodiscard]] constexpr stl::size_t length(URIRelativeComponents auto const& components) noexcept {
+        assert(components.uri_beg <= components.uri_end);
+        return static_cast<stl::size_t>(stl::distance(components.uri_beg, components.uri_end));
+    }
+
+    [[nodiscard]] constexpr stl::size_t length(URIHrefComponents auto const& components) noexcept {
+        return components.href.size();
+    }
+
+    // [[nodiscard]] constexpr stl::size_t length(URIComponents auto const& components) noexcept {
+    //     // todo: optimize this:
+    //     return scheme(components).size() + username(components).size() + password(components).size() +
+    //            hostname(components).size() + port(components).size() + path(components).size() +
+    //            queries(components).size() + fragment(components).size();
+    // }
 
     //////////////////////////////////////// /////////////////// ////////////////////////////////////////
     //////////////////////////////////////// Relative Components ////////////////////////////////////////
@@ -685,48 +708,6 @@ namespace webpp::uri {
             return view(comps);
         }
         return view(comps, comps.fragment_start, comps.uri_end - comps.fragment_start);
-    }
-
-    //////////////////////////////////////// ///////////////////// ////////////////////////////////////////
-    //////////////////////////////////////// Structured Components ////////////////////////////////////////
-    //////////////////////////////////////// ///////////////////// ////////////////////////////////////////
-
-    template <istl::String StrT = stl::string, URIStructuredComponents CompT, typename... Args>
-    [[nodiscard]] constexpr StrT render_path(CompT const& comps, Args&&... args) {
-        StrT out{stl::forward<Args>(args)...};
-        if (comps.path.empty()) {
-            return out;
-        }
-        auto seg = comps.path.begin();
-        for (;;) {
-            out += *seg;
-            if (++seg == comps.path.end()) {
-                break;
-            }
-            out += '/';
-        }
-        return out;
-    }
-
-    template <istl::String StrT = stl::string, URIStructuredComponents CompT, typename... Args>
-    [[nodiscard]] constexpr StrT render_queries(CompT const& comps, Args&&... args) {
-        StrT out{stl::forward<Args>(args)...};
-        if (comps.queries.empty()) {
-            return out;
-        }
-        for (auto pos = comps.queries.begin();;) {
-            auto const [name, value]  = *pos;
-            out                      += name;
-            if (!value.empty()) {
-                out += '=';
-                out += value;
-            }
-            if (++pos == comps.queries.end()) {
-                break;
-            }
-            out += '&';
-        }
-        return out;
     }
 
     //////////////////////////////////////// ////////////////// ////////////////////////////////////////

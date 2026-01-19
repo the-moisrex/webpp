@@ -24,11 +24,11 @@ namespace webpp::uri {
         using string_type      = typename component_type::string_type;
         using char_type        = istl::char_type_of_t<string_type>;
         using allocator_type   = istl::allocator_type_of<component_type, void>;
-        using size_type        = typename string_type::size_type;
         using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_nothrow    = component_type::is_nothrow;
+        static constexpr bool is_structured = URIStructuredComponents<component_type>;
 
         /// same as string_type if it's modifiable, otherwise, std::string
         using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
@@ -75,8 +75,7 @@ namespace webpp::uri {
         }
 
         template <uri_options Options, istl::StringViewifiable StrT>
-        constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
-            auto const str = istl::view(stl::forward<StrT>(inp_str));
+        constexpr uri_status_type parse(StrT&& str) noexcept(is_nothrow) {
             return parse<Options>(str.begin(), str.end());
         }
 
@@ -113,19 +112,51 @@ namespace webpp::uri {
             return valid();
         }
 
+        constexpr void clear_scheme() noexcept(is_nothrow) {
+            clear_scheme(components);
+        }
+
+        constexpr void clear_username() noexcept(is_nothrow) {
+            clear_username(components);
+        }
+
+        constexpr void clear_password() noexcept(is_nothrow) {
+            clear_password(components);
+        }
+
+        constexpr void clear_hostname() noexcept(is_nothrow) {
+            clear_hostname(components);
+        }
+
+        constexpr void clear_port() noexcept(is_nothrow) {
+            clear_port(components);
+        }
+
+        constexpr void clear_path() noexcept(is_nothrow) {
+            clear_path(components);
+        }
+
+        constexpr void clear_queries() noexcept(is_nothrow) {
+            clear_queries(components);
+        }
+
+        constexpr void clear_fragment() noexcept(is_nothrow) {
+            clear_fragment(components);
+        }
+
         constexpr void clear_authority() noexcept(is_nothrow) {
-            this->clear_username();
-            this->clear_password();
-            this->clear_hostname();
-            this->clear_port();
+            clear_username();
+            clear_password();
+            clear_hostname();
+            clear_port();
         }
 
         constexpr void clear() noexcept(is_nothrow) {
-            this->clear_scheme();
-            this->clear_authority();
-            this->clear_path();
-            this->clear_queries();
-            this->clear_fragment();
+            clear_scheme();
+            clear_authority();
+            clear_path();
+            clear_queries();
+            clear_fragment();
         }
 
         [[nodiscard]] constexpr bool has_scheme() const noexcept {
@@ -173,9 +204,9 @@ namespace webpp::uri {
             return has_hostname() || has_credentials() || has_port();
         }
 
-        constexpr basic_uri& operator=(string_view_type const inp_str) noexcept(is_nothrow) {
+        constexpr basic_uri& operator=(string_view_type const str) noexcept(is_nothrow) {
             clear();
-            parse(inp_str);
+            parse(str);
             return *this;
         }
 
@@ -219,35 +250,37 @@ namespace webpp::uri {
             return is_valid(m_status) && m_status != +uri_status::unparsed;
         }
 
-        /// Get the total string size WITHOUT DELIMITERS, and not considering the encoding bloat
-        ///
-        /// Attention: The size will be different based on the string type used because non-modifiable string
-        ///            types won't be able to hold decoded/encoded values.
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            // todo: queries, host, and path's sizes are not string sizes
-            return this->scheme().size() + this->username().size() + this->password().size() + this->hostname().size() +
-                   this->port().size() + this->path().size() + this->queries().size() + this->fragment().size();
+        /// Return the length of the URI if available
+        [[nodiscard]] constexpr stl::size_t length() const noexcept
+            requires(!is_structured)
+        {
+            // todo: store the length in structured components for fast retrieval
+            return length(components);
         }
 
-        template <istl::String NStrT = modifiable_string_type>
-        constexpr void to_string(NStrT& out) const {
+        constexpr void to_string(modifiable_string_type& out) const {
             // https://url.spec.whatwg.org/#concept-url-serializer
-            out.reserve(size());
-            scheme().to_string(out, true);
-            if (hostname().has_value()) {
-                istl::append(out, '/');
-                istl::append(out, '/');
+            if constexpr (is_structured) {
+                // todo: make this better:
+                out.reserve(128);
+            } else {
+                out.reserve(length());
+            }
+            render_scheme(scheme(components), out, true);
+            if (has_hostname()) {
+                out.append('/');
+                out.append('/');
                 if (has_credentials()) {
-                    username().to_string(out);
+                    render_username(username(components), out);
                     if (has_password()) {
-                        istl::append(out, ':');
-                        password().to_string(out);
+                        out.append(':');
+                        render_password(password(components), out);
                     }
-                    istl::append(out, '@');
+                    out.append('@');
                 }
-                hostname().to_string(out);
-                if (!port().is_default_port(scheme().view())) {
-                    port().to_string(out, true);
+                render_hostname(hostname(components), out);
+                if (!port().is_default_port(scheme(components))) {
+                    render_port(port(components), out, true);
                 }
             } else if (!is_opaque() && path().size() > 1 && path().front().empty()) {
                 // If url’s host is null, url does not have an opaque path, url’s path’s size is greater than
@@ -256,13 +289,13 @@ namespace webpp::uri {
                 // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and
                 // then serialized, from ending up as web+demo://not-a-host/ (they end up as
                 // web+demo:/.//not-a-host/).
-                istl::append(out, '/');
-                istl::append(out, '.');
+                out.append('/');
+                out.append('.');
             }
 
-            path().to_string(out);
-            queries().to_string(out, true);
-            fragment().to_string(out, true);
+            render_path(path(components), out);
+            render_queries(queries(components), out, true);
+            render_fragment(fragment(components), out, true);
         }
 
         template <typename... Args>
@@ -277,8 +310,8 @@ namespace webpp::uri {
         }
 
         template <uri_options Options>
-        constexpr void href(string_view_type const inp_str) {
-            parse<Options>(inp_str);
+        constexpr void href(string_view_type const str) {
+            parse<Options>(str);
         }
 
         // /**
@@ -359,10 +392,9 @@ namespace webpp::uri {
             return has_flag(m_status, uri_status::opaque_path);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type scheme(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str        = istl::view(stl::forward<NStrT>(inp_str));
-            auto       status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
+        template <uri_options Options>
+        constexpr uri_status_type scheme(string_view_type const str) noexcept(is_modifiable) {
+            auto status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
             if (is_valid(status_res) && port() == known_port(scheme())) {
                 // From https://url.spec.whatwg.org/#scheme-state
                 // If url’s port is url’s scheme’s default port, then set url’s port to null.
@@ -373,38 +405,33 @@ namespace webpp::uri {
             return status_res;
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type authority(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type authority(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type username(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type username(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type password(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type password(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type hostname(NStrT&& inp_str) noexcept(is_modifiable) {
+        template <uri_options Options>
+        constexpr uri_status_type hostname(string_view_type const str) noexcept(is_modifiable) {
             // https://url.spec.whatwg.org/#dom-url-hostname
             // If this’s URL has an opaque path, then return.
             if (this->path().is_opaque()) [[unlikely]] {
                 return +uri_status::setting_hostname_on_opaque_path;
             }
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type port(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type port(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_port);
         }
 
@@ -414,21 +441,18 @@ namespace webpp::uri {
             return this->port().assign(port_num);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type path(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type path(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_path);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type queries(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type queries(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_queries);
         }
 
-        template <uri_options Options, istl::StringViewifiable NStrT = string_view_type>
-        constexpr uri_status_type fragment(NStrT&& inp_str) noexcept(is_modifiable) {
-            auto const str = istl::view(stl::forward<NStrT>(inp_str));
+        template <uri_options Options>
+        constexpr uri_status_type fragment(string_view_type const str) noexcept(is_modifiable) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_fragment);
         }
     };

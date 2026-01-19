@@ -10,10 +10,10 @@
 namespace webpp::uri {
 
     /// Serialize port
-    template <typename CharT>
+    template <typename CharT, typename AllocT>
     static constexpr void render_port(
       stl::basic_string_view<CharT> const& storage,
-      stl::basic_string<CharT>&            out,
+      stl::basic_string<CharT, AllocT>&    out,
       bool const                           add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer

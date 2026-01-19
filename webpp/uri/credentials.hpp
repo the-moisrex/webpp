@@ -20,8 +20,8 @@ namespace webpp::uri {
     }
 
     /// Serialize password
-    template <typename CharT>
-    static constexpr void render_password(stl::basic_string_view<CharT> storage, stl::basic_string<CharT>& out)
+    template <typename CharT, typename AllocT>
+    static constexpr void render_password(stl::basic_string_view<CharT> storage, stl::basic_string<CharT, AllocT>& out)
       noexcept(false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
