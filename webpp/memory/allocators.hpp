@@ -23,9 +23,7 @@ namespace webpp {
      * @endcode
      */
     template <typename T, int priority = 1>
-    struct default_allocator {
-        using type = default_allocator<T, priority - 1>;
-    };
+    struct default_allocator : default_allocator<T, priority - 1> {};
 
     /// Default, Default Allocator (if the user doesn't specify the default
     /// allocator, this would be used)

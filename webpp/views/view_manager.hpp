@@ -41,7 +41,8 @@ namespace webpp::views {
 
         using mustache_view_type = mustache_view<traits_type>;
         using json_view_type     = json_view<traits_type>;
-        using file_view_type     = file_view<traits_type>;
+        using allocator_type     = typename string_type::allocator_type;
+        using file_view_type     = file_view<char_type, allocator_type>;
 
         static constexpr stl::size_t default_cache_limit = 100u;
         static constexpr auto        logging_category    = "ViewMan";
@@ -245,9 +246,9 @@ namespace webpp::views {
             view.render(out, stl::forward<DataType>(data)...);
         }
 
-        template <typename ViewType, istl::StringViewifiable StrT, typename OutT, typename... DataType>
-        constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) {
-            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+        template <typename ViewType, typename CharT, typename OutT, typename... DataType>
+        constexpr void view_to(OutT& out, stl::basic_string_view<CharT> file_request, DataType&&... data) {
+            auto const file = find_file(file_request);
             if (!file) {
                 this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
                 return;
@@ -296,11 +297,11 @@ namespace webpp::views {
         /**
          * Render a view
          */
-        template <istl::StringViewifiable StrT, typename DT>
+        template <typename CharT, typename DT>
             requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
-        [[nodiscard]] auto view(StrT&& file_request, DT&& data) {
-            auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
+        [[nodiscard]] auto view(stl::basic_string_view<CharT> const file_request, DT&& data) {
+            auto const file = find_file(file_request);
             auto       out  = object::make_object<string_type>(*this);
             if (!file) {
                 this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));

@@ -275,7 +275,7 @@ TEST(DynamicRouter, DoubleSegmentingTest) {
 
     stl::string route_str;
     router.to_string(route_str);
-    istl::replace_all(route_str, " ", "");
+    replace_all(route_str, " ", "");
     EXPECT_FALSE(route_str.starts_with("//")) << route_str << "\n" << router.to_string();
 }
 

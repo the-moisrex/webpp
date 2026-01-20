@@ -152,17 +152,6 @@ namespace webpp::istl {
         return view_of<str_view_t>(stl::forward<StrT>(str));
     }
 
-    template <StringViewifiable T>
-    [[nodiscard]] static constexpr auto to_std_string_view(T&& str) noexcept {
-        using str_t     = stl::remove_cvref_t<T>;
-        using char_type = char_type_of_t<str_t>;
-        using str_v     = stl::basic_string_view<char_type>;
-        if constexpr (stl::is_same_v<str_t, str_v>) {
-            return str;
-        } else {
-            return view_of<str_v>(stl::forward<T>(str));
-        }
-    }
 
 } // namespace webpp::istl
 

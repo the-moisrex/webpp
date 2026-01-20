@@ -38,6 +38,7 @@ set(ALL_SOURCES_SHORT
         strings/join.hpp
         strings/parser_utils.hpp
         strings/peek.hpp
+        strings/replace.hpp
         strings/size.hpp
         strings/splits.hpp
         strings/string_tokenizer.hpp

@@ -8,6 +8,7 @@
 #include "../../std/string_view.hpp"
 #include "../../std/tag_invoke.hpp"
 #include "../../std/types.hpp"
+#include "../../strings/replace.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
@@ -61,8 +62,8 @@ namespace webpp::http {
         } else {
             out.append(" ");
             StrT name{istl::type_name<Callable>(), out.get_allocator()};
-            istl::replace_all(name, "webpp::http::", "");
-            istl::replace_all(name, "webpp::", "");
+            replace_all(name, "webpp::http::", "");
+            replace_all(name, "webpp::", "");
             out.append(name);
         }
     }

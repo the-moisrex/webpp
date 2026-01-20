@@ -54,7 +54,6 @@ namespace webpp::istl {
     template <typename T>
     using char_type_of_t = typename char_type_of<T>::type;
 
-
     template <typename T>
     struct char_traits_type_of {
         using type = stl::char_traits<char_type_of_t<T>>;

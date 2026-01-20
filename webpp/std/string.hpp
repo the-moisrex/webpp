@@ -6,6 +6,7 @@
 #include "../common/meta.hpp"
 #include "./string_concepts.hpp"
 #include "./type_traits.hpp"
+#include "memory/allocators.hpp"
 
 #include <string>
 
@@ -75,7 +76,7 @@ namespace webpp::istl {
     concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
 
     // Get T if it's a string, or get std::basic_string<...>
-    template <typename T, typename AllocType = allocator_type_of<T>>
+    template <typename T, typename AllocType = default_allocator_t<char>>
     using defaulted_string = stl::conditional_t<
       String<T>,
       stl::remove_cvref_t<T>,
@@ -152,34 +153,6 @@ namespace webpp::istl {
     } || requires(T obj) {
         { "" == obj };
     };
-
-    template <istl::String StrT>
-    static constexpr auto to_std_string(StrT&& str) {
-        using string_type      = stl::remove_cvref_t<StrT>;
-        using allocator_type   = typename string_type::allocator_type;
-        using char_traits_type = typename string_type::traits_type;
-        using char_type        = typename string_type::value_type;
-        using std_string_type  = stl::basic_string<char_type, char_traits_type, allocator_type>;
-        if constexpr (stl::is_same_v<string_type, std_string_type>) {
-            return stl::forward<StrT>(str);
-        } else {
-            return std_string_type{str.data(), str.size(), str.get_allocator()};
-        }
-    }
-
-    template <istl::String StrT>
-    stl::size_t replace_all(StrT& inout, stl::string_view what, stl::string_view with) {
-        using inout_string_type = StrT;
-        stl::size_t count{};
-        for (typename StrT::size_type pos{};; pos += with.size(), ++count) {
-            pos = inout.find(what.data(), pos, what.size());
-            if (pos == inout_string_type::npos) {
-                break;
-            }
-            inout.replace(pos, what.size(), with.data(), with.size());
-        }
-        return count;
-    }
 
     /// A polyfill for std::string::resize_and_override
     template <String StrT, typename Func>
