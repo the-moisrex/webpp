@@ -124,6 +124,14 @@ namespace webpp {
         }
     } allocator_from;
 
+
+    /**
+     * Get the underlying allocator_type
+     */
+    template <typename T>
+    using allocator_type_of = stl::remove_cvref_t<decltype(allocator_from(stl::declval<T>()))>;
+
+
     /// one single allocator descriptor which describes an allocator and its features and its resources
     template <typename D>
     concept GeneralAllocatorDescriptor = requires {

@@ -29,7 +29,7 @@ namespace webpp {
 
             /// CPO specialization for getting the allocator
             /// Even though the standard doesn't specify "noexcept", it is
-            /// We're ignoring the requested type, polymorphic_allocatr<stl::byte> should be able to allocate
+            /// We're ignoring the requested type, polymorphic_allocator<stl::byte> should be able to allocate
             /// anything and everything.
             [[nodiscard]] friend stl::pmr::polymorphic_allocator<T> tag_invoke(
               [[maybe_unused]] stl::tag_t<allocator_from> tag,

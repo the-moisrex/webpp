@@ -16,33 +16,7 @@ namespace webpp::uri {
         using char_type        = CharT;
         using string_view_type = stl::basic_string_view<CharT>;
 
-      private:
-        domain_name_status status = domain_name_status::unparsed;
-
-      public:
-        basic_domain(basic_domain const&)                = default;
-        basic_domain(basic_domain&&) noexcept            = default;
-        basic_domain& operator=(basic_domain const&)     = default;
-        basic_domain& operator=(basic_domain&&) noexcept = default;
-        ~basic_domain()                                  = default;
-
-        explicit constexpr basic_domain(stl::basic_string_view<CharT> input,
-                                        domain_name_status const      inp_status) noexcept
-          : stl::basic_string_view<CharT>{input},
-            status{inp_status} {}
-
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
-            using enum domain_name_status;
-            return status == valid || status == valid_punycode;
-        }
-
-        [[nodiscard]] constexpr bool has_punycode() const noexcept {
-            return status == domain_name_status::valid_punycode;
-        }
-
-        [[nodiscard]] explicit constexpr operator bool() const noexcept {
-            return is_valid();
-        }
+        using stl::basic_string_view<CharT>::basic_string_view; // ctor
 
         /// Top-Level-Domain
         [[nodiscard]] constexpr string_view_type tld() const noexcept {

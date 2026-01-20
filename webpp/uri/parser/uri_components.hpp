@@ -244,7 +244,7 @@ namespace webpp::uri {
      */
     template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
     struct [[nodiscard]] uri_components_href {
-        using string_allocator_type = typename stl::allocator_traits<CharT>::template rebind_alloc<CharT>;
+        using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
         using iterator              = typename string_type::iterator;
         using string_view_type      = stl::basic_string_view<CharT>;
@@ -252,8 +252,8 @@ namespace webpp::uri {
         using size_type             = typename string_type::size_type;
 
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
-        static constexpr bool is_nothrow           = stl::is_nothrow_assignable_v<string_type, char_type const*>;
-        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow           = false;
+        static constexpr bool is_modifiable        = true;
         static constexpr bool is_segregated        = false;
 
         // Source:
@@ -279,17 +279,18 @@ namespace webpp::uri {
      */
     template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
     struct [[nodiscard]] uri_components_structured {
-        using char_type   = CharT;
-        using string_type = stl::basic_string<char_type, AllocT>;
-        using size_type   = typename string_type::size_type;
-        using vec_type    = stl::vector<string_type, AllocT>;
-        using pair_type   = stl::pair<string_type const, string_type>;
+        using char_type             = CharT;
+        using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
+        using string_type           = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
+        using size_type             = typename string_type::size_type;
+        using vec_type              = stl::vector<string_type, AllocT>;
+        using pair_type             = stl::pair<string_type const, string_type>;
         using map_type =
           stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
 
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
         static constexpr bool is_nothrow           = false;
-        static constexpr bool is_modifiable        = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable        = true;
         static constexpr bool is_segregated        = true;
 
         string_type scheme;

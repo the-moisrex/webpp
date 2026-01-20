@@ -23,7 +23,7 @@ namespace webpp::uri {
         using component_type   = CompT;
         using string_type      = typename component_type::string_type;
         using char_type        = istl::char_type_of_t<string_type>;
-        using allocator_type   = istl::allocator_type_of<component_type, void>;
+        using allocator_type   = allocator_type_of<component_type>;
         using string_view_type = istl::string_view_type_of<string_type>;
 
         static constexpr bool is_modifiable = component_type::is_modifiable;
@@ -74,8 +74,8 @@ namespace webpp::uri {
             m_status = ctx.status;
         }
 
-        template <uri_options Options, istl::StringViewifiable StrT>
-        constexpr uri_status_type parse(StrT&& str) noexcept(is_nothrow) {
+        template <uri_options Options>
+        constexpr uri_status_type parse(string_view_type const str) noexcept(is_nothrow) {
             return parse<Options>(str.begin(), str.end());
         }
 
