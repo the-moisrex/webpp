@@ -22,79 +22,21 @@ namespace webpp::http {
 
 
 
-    /**
-     * This extension helps the user to create a response with the help of the context
-     *
-     * @code
-     *   ctx.string_type{"this is a response"}
-     *   ctx.str_t{"this is nice"}
-     *   ctx.string("hello world")
-     * @endcode
-     *
-     * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
-     *
-     * todo: remove this, extensions are removed
-     */
-    template <Traits TraitsType, Context ContextType>
-    struct string_context_extension : ContextType {
-        using context_type  = ContextType;
-        using traits_type   = TraitsType;
-        using response_type = typename context_type::response_type;
-        using body_type     = typename response_type::body_type;
-        using string_type   = traits::string<traits_type>;
-
-        using context_type::context_type; // inherit the constructors
-
-        template <typename... Args>
-        constexpr HTTPResponse auto string(Args&&... args) const {
-            return this->response_body(stl::forward<Args>(args)...);
-        }
-
-        template <typename StrT, typename... Args>
-        constexpr string_type format(StrT&& format_str, Args&&... args) const {
-            // todo: it's possible to optimize this for constant expressions
-            // todo: should this function return a HTTPResponse instead of string?
-            string_type str{get_alloc_for<string_type>(*this)};
-            fmt::vformat_to(stl::back_inserter(str),
-                            istl::to_std_string_view(format_str),
-                            fmt::make_format_args(stl::forward<Args>(args)...));
-            return str;
-        }
-
-        // load a file as a string body and return a response
-        [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
-            auto result = object::make_object<string_type>(*this);
-
-            if (file::get_to(filepath, result)) {
-                // read the file successfully
-                return this->response_body(result);
-            }
-
-            this->logger.error("Response/File", fmt::format("Cannot load the specified file: {}", filepath.string()));
-            // todo: retry feature
-            if constexpr (context_type::is_debug()) {
-                return this->error(http::status_code::internal_server_error);
-            } else {
-                return this->error(http::status_code::internal_server_error,
-                                   fmt::format("We're not able to load the specified file: {}", filepath.string()));
-            }
-        }
-    };
-
     ////////////////////////////// Body Deserializer ( Body into Object ) //////////////////////////////
 
 
 
     namespace details {
-        template <typename T>
-            requires(istl::String<T> || istl::StringView<T>)
-        constexpr void deserialize_text_body(T& str, TextBasedBodyReader auto const& body) {
+        template <typename CharT, typename AllocT>
+        constexpr void deserialize_text_body(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& str,
+                                             TextBasedBodyReader auto const&                            body) {
             str.append(body.data(), body.size());
         }
 
-        template <typename T, typename BodyType>
-            requires(istl::String<T> && CStreamBasedBodyReader<stl::remove_cvref_t<BodyType>>)
-        constexpr void deserialize_cstream_body(T& str, BodyType&& body) {
+        template <typename CharT, typename AllocT, typename BodyType>
+            requires(CStreamBasedBodyReader<stl::remove_cvref_t<BodyType>>)
+        constexpr void deserialize_cstream_body(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& str,
+                                                BodyType&&                                                 body) {
             using body_type     = stl::remove_cvref_t<BodyType>;
             using byte_type     = typename body_type::byte_type;
             auto const str_size = str.size();
@@ -134,9 +76,9 @@ namespace webpp::http {
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
 
-        template <typename T>
-            requires(istl::String<T>)
-        constexpr void deserialize_stream_body(T& str, StreamBasedBodyReader auto const& body) {
+        template <typename CharT, typename AllocT>
+        constexpr void deserialize_stream_body(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& str,
+                                               StreamBasedBodyReader auto const&                          body) {
             body >> str;
         }
 
@@ -264,13 +206,13 @@ namespace webpp::http {
 
     namespace details {
 
-        template <istl::StringView T, TextBasedBodyReader BodyType>
-        constexpr void serialize_text_body(T str, BodyType& body) {
+        template <typename CharT, TextBasedBodyReader BodyType>
+        constexpr void serialize_text_body(stl::basic_string_view<CharT> const str, BodyType& body) {
             body.append(str.data(), str.size());
         }
 
-        template <istl::StringView T, CStreamBasedBodyReader BodyType>
-        constexpr void serialize_cstream_body(T str, BodyType& body) {
+        template <typename CharT, CStreamBasedBodyReader BodyType>
+        constexpr void serialize_cstream_body(stl::basic_string_view<CharT> const str, BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
             using byte_type = typename body_type::byte_type;
             // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
@@ -302,50 +244,49 @@ namespace webpp::http {
             }
         }
 
-        template <istl::StringView T, StreamBasedBodyReader BodyType>
-        constexpr void serialize_stream_body(T str, BodyType& body) {
+        template <typename CharT, StreamBasedBodyReader BodyType>
+        constexpr void serialize_stream_body(stl::basic_string_view<CharT> const str, BodyType& body) {
             body << str;
         }
 
     } // namespace details
 
-    template <istl::StringViewifiable T, HTTPBody BodyType>
-    constexpr void tag_invoke(serialize_body_tag, T&& str, BodyType& body) {
-        using body_type     = stl::remove_cvref_t<BodyType>;
-        auto const str_view = istl::view(str);
+    template <typename CharT, HTTPBody BodyType>
+    constexpr void tag_invoke(serialize_body_tag, stl::basic_string_view<CharT> const str, BodyType& body) {
+        using body_type = stl::remove_cvref_t<BodyType>;
         if constexpr (UnifiedBodyReader<body_type>) {
             switch (body.which_communicator()) {
                 using enum communicator_type;
                 case nothing: // nothing in the body, we can set a new string there
                 case text_based: {
-                    details::serialize_text_body(str_view, body);
+                    details::serialize_text_body(str, body);
                     break;
                 }
                 case cstream_based: {
-                    details::serialize_cstream_body(str_view, body);
+                    details::serialize_cstream_body(str, body);
                     break;
                 }
                 case stream_based: {
-                    details::serialize_stream_body(str_view, body);
+                    details::serialize_stream_body(str, body);
                     break;
                 }
                 default: stl::unreachable();
             }
         } else if constexpr (TextBasedBodyWriter<body_type>) {
-            details::serialize_text_body(str_view, body);
+            details::serialize_text_body(str, body);
         } else if constexpr (CStreamBasedBodyWriter<body_type>) {
-            details::serialize_cstream_body(str_view, body);
+            details::serialize_cstream_body(str, body);
         } else if constexpr (StreamBasedBodyWriter<body_type>) {
-            details::serialize_stream_body(str_view, body);
+            details::serialize_stream_body(str, body);
         } else {
             static_assert_false(body_type, "The body type doesn't support strings.");
         }
     }
 
-    template <istl::StringViewifiable T, HTTPResponse ResponseType>
-    constexpr void tag_invoke(serialize_response_body_tag, T&& str, ResponseType& res) {
+    template <typename CharT, HTTPResponse ResponseType>
+    constexpr void tag_invoke(serialize_response_body_tag, stl::basic_string_view<CharT> const str, ResponseType& res) {
         res.headers.set("Content-Length", ascii::size(str));
-        serialize_body(stl::forward<T>(str), res.body);
+        serialize_body(str, res.body);
     }
 
 } // namespace webpp::http

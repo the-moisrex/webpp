@@ -5,7 +5,6 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/traits.hpp"
 
 namespace webpp::http {
 
@@ -51,21 +50,20 @@ namespace webpp::http {
      *                  ; (but see "Use of encoded-words in message
      *                  ; headers", section 5)
      */
-    template <Traits TraitsType>
+    template <typename CharT, typename AllocT>
     struct encoded_word {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::string<traits_type>;
+        using string_view_type = stl::basic_string_view<CharT>;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
         using char_type        = typename string_type::value_type;
-        using allocator_type   = typename traits_type::template allocator<typename string_type::value_type>;
+        using allocator_type   = typename string_type::allocator_type;
 
       private:
         string_view_type input;
         string_type      output;
 
       public:
-        explicit encoded_word(istl::StringViewifiable auto&& _input, allocator_type const& alloc = allocator_type{})
-          : input(istl::view(stl::forward<decltype(_input)>(input))),
+        explicit encoded_word(string_view_type const _input, allocator_type const& alloc = allocator_type{})
+          : input(_input),
             output(alloc) {}
 
         encoded_word()                                                  = delete;

@@ -9,16 +9,16 @@
 namespace webpp::views {
 
     /**
-     * File view
+     * File view.
      *
      * File view does no rendering or parsing. The exact input is outputted.
      */
-    template <Traits TraitsType>
+    template <typename CharT, typename AllocT>
     struct file_view {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
-        using char_type        = traits::char_type<traits_type>;
-        using string_type      = traits::string<traits_type>; // to satisfy View concept
+        using string_view_type = stl::basic_string_view<CharT>;
+        using char_type        = CharT;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>; // to satisfy View concept
+        using allocator_type   = typename string_type::allocator_type;
 
         using data_view_type = istl::nothing_type;
         using data_type      = istl::nothing_type;
@@ -29,12 +29,7 @@ namespace webpp::views {
       public:
         constexpr file_view() = default;
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
-        explicit constexpr file_view(ET&& et) : data{get_alloc_for<string_type>(et)} {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+        explicit constexpr file_view(allocator_type const& alloc) : data{alloc} {}
 
         constexpr file_view(file_view const&)     = default;
         constexpr file_view(file_view&&) noexcept = default;

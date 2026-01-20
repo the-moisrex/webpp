@@ -14,17 +14,7 @@ namespace webpp {
     struct basic_std_traits {
         using char_type   = CharT;
         using logger_type = stderr_logger;
-        using string_view = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
-
-        struct allocator_descriptor {
-            template <typename T>
-            using allocator_type = stl::allocator<T>;
-
-            template <typename T>
-            [[nodiscard]] static constexpr stl::allocator<T> construct_allocator() noexcept {
-                return {};
-            }
-        };
+        using string_view = stl::basic_string_view<char_type>;
 
         template <typename AllocT>
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;

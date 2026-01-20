@@ -8,9 +8,9 @@
 
 namespace webpp::http {
 
-    template <Allocator AllocT, istl::StringView StrViewT = stl::string_view>
+    template <typename CharT, Allocator AllocT>
     struct basic_content_type {
-        using str_v                 = StrViewT;
+        using str_v                 = stl::basic_string_view<CharT>;
         using char_type             = typename str_v::value_type;
         using str_const_iterator    = typename str_v::const_iterator;
         using allocator_type        = AllocT;
@@ -37,9 +37,6 @@ namespace webpp::http {
       private:
         str_v data;
     };
-
-    template <Traits TraitsType>
-    using content_type = basic_content_type<traits::string_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 
