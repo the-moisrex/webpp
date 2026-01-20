@@ -35,10 +35,10 @@ namespace webpp {
      * @tparam StringType
      */
     template <typename StringType>
-    struct istring : public stl::remove_cvref_t<StringType> {
-        using string_type      = stl::remove_cvref_t<StringType>;
-        using char_type        = istl::char_type_of_t<string_type>;
-        using char_traits_type = istl::char_traits_type_of_t<string_type>;
+    struct istring : StringType {
+        using string_type      = StringType;
+        using char_type        = typename string_type::value_type;
+        using char_traits_type = typename string_type::traits_type;
         using istring_type     = istring<StringType>;
         using pointer          = typename string_type::pointer;
         using uchar_type       = stl::make_unsigned_t<char_type>;

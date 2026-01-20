@@ -25,7 +25,7 @@ namespace webpp::http {
      *
      */
     template <typename HeadersType, typename BodyType>
-    struct common_http_request : public enable_traits<typename BodyType::traits_type> {
+    struct common_http_request :  enable_traits<typename BodyType::traits_type> {
         using headers_type     = HeadersType;
         using body_type        = BodyType;
         using traits_type      = typename body_type::traits_type;
@@ -40,7 +40,6 @@ namespace webpp::http {
         headers_type                    headers; // NOLINT(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
 
-      public:
         template <typename ServerT>
             requires(EnabledTraits<ServerT> && !HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
                      !istl::cvref_as<ServerT, common_http_request>)

@@ -55,21 +55,6 @@ namespace webpp::istl {
     using char_type_of_t = typename char_type_of<T>::type;
 
     template <typename T>
-    struct char_traits_type_of {
-        using type = stl::char_traits<char_type_of_t<T>>;
-    };
-
-    template <typename T>
-        requires requires { typename T::traits_type; }
-    struct char_traits_type_of<T> {
-        using type = typename T::traits_type;
-    };
-
-    template <typename T>
-    using char_traits_type_of_t = typename char_traits_type_of<T>::type;
-
-
-    template <typename T>
     using char_type_of_t_string_literals =
       stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_all_extents_t<stl::remove_cvref_t<T>>>>;
 

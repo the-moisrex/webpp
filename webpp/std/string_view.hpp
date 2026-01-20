@@ -53,9 +53,10 @@ namespace webpp::istl {
     } // namespace details::string_view
 
     /// Get the basic_string_view<...> type based on std::basic_string<...> template parameters
+    /// todo: remove this
     template <typename T>
     using string_view_type_of =
-      stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>, char_traits_type_of_t<T>>>;
+      stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>>>;
 
     namespace details {
         template <typename StrViewType, typename T>

@@ -550,7 +550,7 @@ namespace webpp::unicode::unchecked {
     template <istl::Appendable StrT, stl::forward_iterator Iter = char32_t const*, typename EIter = Iter>
         requires stl::sentinel_for<EIter, Iter>
     static constexpr stl::size_t append(StrT& out, Iter& src, EIter end) noexcept(istl::NothrowAppendable<StrT>) {
-        using out_char_type = istl::char_traits_type_of_t<StrT>;
+        using out_char_type = istl::appendable_value_type_t<StrT>;
         using src_char_type = stl::iter_value_t<Iter>;
         if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
             // no need to convert to UTF32 then convert to whatever

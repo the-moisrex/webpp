@@ -75,13 +75,14 @@ namespace webpp::istl {
     template <template <typename...> typename StrType, typename T>
     concept StringifiableOfTemplate = StringifiableOf<details::string::deduced_type<StrType, T>, T>;
 
-    // Get T if it's a string, or get std::basic_string<...>
+    /// Get T if it's a string, or get std::basic_string<...>
+    /// todo: remove this
     template <typename T, typename AllocType = default_allocator_t<char>>
     using defaulted_string = stl::conditional_t<
       String<T>,
       stl::remove_cvref_t<T>,
       stl::basic_string<char_type_of_t<T>,
-                        char_traits_type_of_t<T>,
+                        stl::char_traits<char_type_of_t<T>>,
                         typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type_of_t<T>>>>;
 
     template <typename T>
@@ -128,12 +129,6 @@ namespace webpp::istl {
         return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }
 
-    template <typename Strifiable, typename AllocType>
-    [[nodiscard]] constexpr auto stringify(Strifiable&& str, AllocType const& allocator) noexcept {
-        using deduced_type = defaulted_string<Strifiable, AllocType>;
-        return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
-    }
-
     /**
      * Get the underlying data of the specified string
      */
@@ -146,13 +141,6 @@ namespace webpp::istl {
             return &str[0];     // it'll throw an error if it didn't work, so let's do this
         }
     }
-
-    template <typename T>
-    concept ComparableToString = requires(T obj) {
-        { obj == "" };
-    } || requires(T obj) {
-        { "" == obj };
-    };
 
     /// A polyfill for std::string::resize_and_override
     template <String StrT, typename Func>
