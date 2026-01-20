@@ -11,6 +11,84 @@
 
 namespace webpp {
 
+
+    /**
+     * Default Allocator
+     * Specialize this in order to change the default allocator for the whole library.
+     * @code
+     *   template <typename T>
+     *   struct default_allocator<T> {
+     *       using type = std::pmr::polymorphic_allocator<T>;
+     *   };
+     * @endcode
+     */
+    template <typename T, int priority = 1>
+    struct default_allocator {
+        using type = default_allocator<T, priority - 1>;
+    };
+
+    /// Default, Default Allocator (if the user doesn't specify the default
+    /// allocator, this would be used)
+    template <typename T>
+    struct default_allocator<T, 0> {
+        using type = stl::allocator<T>;
+    };
+
+    template <typename T>
+    using default_allocator_t = typename default_allocator<T>::type;
+
+    /**
+     * Allocator CPO (Customization Point Object).
+     * This will let us construct an allocator like this:
+     *
+     * @code
+     *   std::string str1{"...", alloc};
+     *   std::pmr::string str2{"...", alloc};
+     *   std::basic_string str2{"...", alloc.of<char>()};
+     * @endcode
+     *
+     * Also this will let you customize the construction of any allocator that you need, like so:
+     * @code
+     *   template <typename T>
+     *   std::pmr::polymorphic_allocator<T>
+     *   tag_invoke(alloc_tag, std::type_identity<std::pmr::polymorphic_allocator<T>>) noexcept {
+     *       std::println("pmr allocator constructed.");
+     *       return {};
+     *   }
+     * @endcode
+     */
+    static constexpr struct [[nodiscard]] alloc_tag {
+        /// Customization Point
+        template <typename T>
+        [[nodiscard]] constexpr decltype(auto) operator()(stl::type_identity<T> ident) const noexcept {
+            // rely on ADL to find it
+            return tag_invoke(*this, ident);
+        }
+
+        /// default impl: default construct
+        template <Allocator T>
+            requires stl::is_default_constructible_v<T>
+        [[nodiscard]] friend constexpr T tag_invoke(alloc_tag, stl::type_identity<T>) noexcept {
+            return {};
+        }
+
+        template <Allocator T>
+        [[nodiscard]] constexpr explicit(false) operator T() const noexcept {
+            return operator()(stl::type_identity<T>{});
+        }
+
+        // template <typename T>
+        // [[nodiscard]] constexpr explicit(false) operator default_allocator_t<T>() const noexcept {
+        //     return operator()(stl::type_identity<default_allocator_t<T>>{});
+        // }
+
+        template <typename T = stl::byte>
+        [[nodiscard]] constexpr decltype(auto) of() const noexcept {
+            static_assert(!Allocator<T>, "Don't pass an allocator, pass the value type you need.");
+            return operator()(stl::type_identity<default_allocator_t<T>>{});
+        }
+    } alloc;
+
     template <typename AllocType, typename NewValueType>
     using rebind_allocator = typename stl::allocator_traits<AllocType>::template rebind_alloc<NewValueType>;
 
@@ -148,27 +226,27 @@ namespace webpp {
         allocator_type alloc;
     };
 
-    namespace details {
-        template <template <typename> typename AllocType>
-        struct allocator_replacer {
-            template <typename T>
-            struct replacer {
-                static constexpr bool value = false;
-                using type                  = T;
-            };
-
-            template <Allocator T>
-            struct replacer<T> {
-                static constexpr bool value = true;
-                using value_type            = typename T::value_type;
-                using type                  = AllocType<value_type>;
-            };
-        };
-    } // namespace details
-
-    template <typename T, template <typename> typename AllocType>
-    using replace_allocators =
-      istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
+    // namespace details {
+    //     template <template <typename> typename AllocType>
+    //     struct allocator_replacer {
+    //         template <typename T>
+    //         struct replacer {
+    //             static constexpr bool value = false;
+    //             using type                  = T;
+    //         };
+    //
+    //         template <Allocator T>
+    //         struct replacer<T> {
+    //             static constexpr bool value = true;
+    //             using value_type            = typename T::value_type;
+    //             using type                  = AllocType<value_type>;
+    //         };
+    //     };
+    // } // namespace details
+    //
+    // template <typename T, template <typename> typename AllocType>
+    // using replace_allocators =
+    //   istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
 
     /**
      * Get allocator of T, if it has an allocator, otherwise, revert back to the DefaultAllocatorType
