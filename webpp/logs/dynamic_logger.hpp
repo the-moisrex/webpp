@@ -5,8 +5,8 @@
 
 #include "../std/memory.hpp"
 #include "../std/string_view.hpp"
-#include "default_logger.hpp"
 #include "log_concepts.hpp"
+#include "logger.hpp"
 #include "void_logger.hpp"
 
 namespace webpp {

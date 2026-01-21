@@ -286,9 +286,9 @@ set(ALL_SOURCES_SHORT
         http/cookies/response_cookie.hpp
         http/cookies/response_cookie_jar.hpp
 
-        logs/default_logger.hpp
         logs/dynamic_logger.hpp
         logs/log_concepts.hpp
+        logs/logger.hpp
         logs/spdlog_logger.hpp
         logs/std_logger.hpp
         logs/void_logger.hpp
@@ -352,7 +352,7 @@ target_link_libraries(${LIB_NAME}
         INTERFACE ZLIB::ZLIB)
 if (NOT HAS_CPP_LIB_FORMAT)
     target_link_libraries(${LIB_NAME} PUBLIC fmt::fmt)
-endif()
+endif ()
 
 
 # liburing
@@ -381,7 +381,7 @@ set_target_properties(${LIB_NAME} PROPERTIES
         VERSION ${LIB_VERSION}
         SOVERSION ${LIB_SOVERSION}
         LINKER_LANGUAGE CXX
-        )
+)
 
 target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
@@ -389,14 +389,14 @@ target_include_directories(${LIB_NAME} PUBLIC
         # $<BUILD_INTERFACE:${date_SOURCE_DIR}/include>
         # $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
         ${RAPIDJSON_INCLUDE_DIR}
-        )
+)
 
 
 install(TARGETS ${LIB_NAME}
         EXPORT "${LIB_NAME}Config"
         FILE_SET HEADERS
         DESTINATION include/webpp
-        )
+)
 #export(TARGETS ${LIB_NAME}
 #        NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
 #        FILE "${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}InternalConfig.cmake"

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <webpp/logs/default_logger.hpp>
+#include <webpp/logs/logger.hpp>
 
 using webpp::sdk::command_status;
 using webpp::sdk::create_project;
