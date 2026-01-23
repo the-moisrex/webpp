@@ -16,7 +16,7 @@ namespace webpp::http {
 
 
         template <HTTPRequest RequestType>
-        struct common_context_methods : public enable_traits<typename RequestType::traits_type> {
+        struct common_context_methods : enable_traits<typename RequestType::traits_type> {
             using request_type  = RequestType;
             using traits_type   = typename request_type::traits_type;
             using etraits       = enable_traits<traits_type>;
@@ -58,12 +58,12 @@ namespace webpp::http {
                 return with_body(*this, stl::forward<Args>(args)...);
             }
 
-            [[nodiscard]] static constexpr bool is_debug() noexcept {
+            [[nodiscard]] static consteval bool is_debug() noexcept {
                 // todo: configure this in cmake
-#ifdef DEBUG
-                return true;
-#else
+#ifdef NDEBUG
                 return false;
+#else
+                return true;
 #endif
             }
 
@@ -125,9 +125,7 @@ namespace webpp::http {
                     res.headers.status_code(error_code);
                     return res;
                 } else if constexpr (requires {
-                                         {
-                                             data.what()
-                                         } -> istl::StringViewifiable;
+                                         { data.what() } -> istl::StringViewifiable;
                                      })
                 {
                     // standard exception, use .what to get the error message
@@ -145,7 +143,7 @@ namespace webpp::http {
     } // namespace details
 
     template <HTTPRequest RequestType>
-    struct common_context_view : public details::common_context_methods<RequestType> {
+    struct common_context_view : details::common_context_methods<RequestType> {
         using request_type       = RequestType;
         using traits_type        = typename request_type::traits_type;
         using response_type      = simple_response<traits_type>;
