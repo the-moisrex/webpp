@@ -15,7 +15,7 @@ namespace webpp {
      */
     template <typename T>
     concept locally_bound_global = requires(T obj) {
-        { T::instance() } noexcept -> std::same_as<typename T::type>;
+        { T::instance() } noexcept -> std::same_as<typename T::type&>;
 
         requires requires(typename T::pointer ptr) {
             { obj.exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
@@ -27,13 +27,14 @@ namespace webpp {
      */
     template <typename T>
     struct [[nodiscard]] simple_registry {
+        // static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
+        // static_assert(std::is_base_of_v<T, simple_registry>, "CRTP is needed.");
+
         using type    = T;
         using pointer = T*;
 
-      private:
-        consteval simple_registry() = default;
-
-      public:
+        /// Marking it consteval so we force compile time default constructor
+        consteval simple_registry()                                      = default;
         constexpr simple_registry(simple_registry const&)                = default;
         constexpr simple_registry& operator=(simple_registry const&)     = default;
         constexpr simple_registry(simple_registry&&) noexcept            = default;
@@ -52,8 +53,8 @@ namespace webpp {
             return ptr;
         }
 
-        [[nodiscard]] static simple_registry& instance() noexcept {
-            static simple_registry inst;
+        [[nodiscard]] static T& instance() noexcept {
+            static T inst;
             return inst;
         }
 
@@ -92,11 +93,19 @@ namespace webpp {
         explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{T::instance().exchange(inp_ptr)} {}
 
         constexpr lbg_scope(T& obj, pointer inp_ptr) noexcept : prev{obj.exchange(inp_ptr)} {
-            assert(obj == T::instance());
+            assert(&obj == &T::instance());
+        }
+
+        constexpr lbg_scope(T const& obj, pointer inp_ptr) noexcept : prev{T::instance().exchange(inp_ptr)} {
+            assert(&obj == &T::instance());
         }
 
         constexpr lbg_scope(T& obj, T& ref) noexcept : prev{obj.exchange(&ref)} {
-            assert(obj == T::instance());
+            assert(&obj == &T::instance());
+        }
+
+        constexpr lbg_scope(T const& obj, T& ref) noexcept : prev{T::instance().exchange(&ref)} {
+            assert(&obj == &T::instance());
         }
 
         lbg_scope(lbg_scope const& obj)                = delete;
@@ -111,6 +120,15 @@ namespace webpp {
       private:
         pointer prev = nullptr;
     };
+
+    template <typename T>
+    lbg_scope(T*) -> lbg_scope<std::remove_const_t<T>>;
+
+    template <typename T>
+    lbg_scope(T&, T*) -> lbg_scope<std::remove_const_t<T>>;
+
+    template <typename T>
+    lbg_scope(T&, T&) -> lbg_scope<std::remove_const_t<T>>;
 
     // static constexpr struct [[nodiscard]] logger_tag : simple_registry<logger_tag> {
     // } logger;

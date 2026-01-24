@@ -4,12 +4,11 @@
 
 using namespace webpp;
 
-struct context_type {
+static constexpr struct context_type : simple_registry<context_type> {
     std::string_view request;
     std::string_view response;
-};
+} context;
 
-static constinit auto context = simple_registry<context_type>::instance();
 
 TEST(LBGTest, Basic) {
     context_type ctx{.request = "req1", .response = "res1"};
