@@ -18,6 +18,7 @@ namespace webpp {
         { T::instance() } noexcept -> std::same_as<typename T::type&>;
 
         requires requires(typename T::pointer ptr) {
+            { obj.get() } noexcept -> std::same_as<typename T::pointer>;
             { obj.exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
         };
     };
@@ -26,20 +27,20 @@ namespace webpp {
      * Global Simple and Unsafe Registry
      */
     template <typename T>
-    struct [[nodiscard]] simple_registry {
-        // static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
-        // static_assert(std::is_base_of_v<T, simple_registry>, "CRTP is needed.");
+    struct [[nodiscard]] simple_local_registry {
+        static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
 
-        using type    = T;
-        using pointer = T*;
+        using type          = T;
+        using pointer       = T*;
+        using const_pointer = T const*;
 
         /// Marking it consteval so we force compile time default constructor
-        consteval simple_registry()                                      = default;
-        constexpr simple_registry(simple_registry const&)                = default;
-        constexpr simple_registry& operator=(simple_registry const&)     = default;
-        constexpr simple_registry(simple_registry&&) noexcept            = default;
-        constexpr simple_registry& operator=(simple_registry&&) noexcept = default;
-        constexpr ~simple_registry() noexcept                            = default;
+        consteval simple_local_registry()                                            = default;
+        constexpr simple_local_registry(simple_local_registry const&)                = default;
+        constexpr simple_local_registry& operator=(simple_local_registry const&)     = default;
+        constexpr simple_local_registry(simple_local_registry&&) noexcept            = default;
+        constexpr simple_local_registry& operator=(simple_local_registry&&) noexcept = default;
+        constexpr ~simple_local_registry() noexcept                                  = default;
 
         constexpr pointer exchange(pointer inp_ptr) noexcept {
             pointer const old_ptr = ptr; // NOLINT(*-misplaced-const)
@@ -53,8 +54,18 @@ namespace webpp {
             return ptr;
         }
 
-        [[nodiscard]] static T& instance() noexcept {
-            static T inst;
+        [[nodiscard]] constexpr pointer operator->() noexcept {
+            assert(ptr != nullptr);
+            return ptr;
+        }
+
+        [[nodiscard]] constexpr const_pointer operator->() const noexcept {
+            assert(ptr != nullptr);
+            return ptr;
+        }
+
+        [[nodiscard]] static simple_local_registry& instance() noexcept {
+            static simple_local_registry inst;
             return inst;
         }
 
@@ -85,28 +96,16 @@ namespace webpp {
      * And when we go out of scope, we do this:
      *   1. Set the old instance back into the global instance.
      */
-    template <locally_bound_global T>
+    template <typename T, template <typename> typename Registry = simple_local_registry>
     struct [[nodiscard]] lbg_scope {
         using type    = T;
         using pointer = T*;
 
-        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{T::instance().exchange(inp_ptr)} {}
+        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{Registry<T>::instance().exchange(inp_ptr)} {}
 
-        constexpr lbg_scope(T& obj, pointer inp_ptr) noexcept : prev{obj.exchange(inp_ptr)} {
-            assert(&obj == &T::instance());
-        }
+        constexpr lbg_scope([[maybe_unused]] T const& obj, pointer inp_ptr) noexcept : lbg_scope{inp_ptr} {}
 
-        constexpr lbg_scope(T const& obj, pointer inp_ptr) noexcept : prev{T::instance().exchange(inp_ptr)} {
-            assert(&obj == &T::instance());
-        }
-
-        constexpr lbg_scope(T& obj, T& ref) noexcept : prev{obj.exchange(&ref)} {
-            assert(&obj == &T::instance());
-        }
-
-        constexpr lbg_scope(T const& obj, T& ref) noexcept : prev{T::instance().exchange(&ref)} {
-            assert(&obj == &T::instance());
-        }
+        constexpr lbg_scope([[maybe_unused]] T const& obj, T& ref) noexcept : lbg_scope{&ref} {}
 
         lbg_scope(lbg_scope const& obj)                = delete;
         lbg_scope(lbg_scope&& obj) noexcept            = default;
@@ -114,7 +113,7 @@ namespace webpp {
         lbg_scope& operator=(lbg_scope&& obj) noexcept = default;
 
         constexpr ~lbg_scope() noexcept {
-            T::instance().exchange(prev);
+            Registry<T>::instance().exchange(prev);
         }
 
       private:
