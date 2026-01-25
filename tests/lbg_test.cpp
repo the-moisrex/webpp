@@ -4,17 +4,17 @@
 
 using namespace webpp;
 
-static constexpr struct context_type {
+static constexpr struct context_type : simple_local_registry<context_type> {
+    static constexpr registry self{};
+
     std::string_view request;
     std::string_view response;
 
     [[nodiscard]] std::string_view req() const noexcept {
-        auto& self = simple_local_registry<context_type>::instance();
         return self->request;
     }
 
     [[nodiscard]] std::string_view res() const noexcept {
-        auto& self = simple_local_registry<context_type>::instance();
         return self->response;
     }
 } context;

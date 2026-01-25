@@ -28,11 +28,11 @@ namespace webpp {
      */
     template <typename T>
     struct [[nodiscard]] simple_local_registry {
-        static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
-
         using type          = T;
         using pointer       = T*;
         using const_pointer = T const*;
+        using registry      = simple_local_registry;
+
 
         /// Marking it consteval so we force compile time default constructor
         consteval simple_local_registry()                                            = default;
@@ -42,35 +42,22 @@ namespace webpp {
         constexpr simple_local_registry& operator=(simple_local_registry&&) noexcept = default;
         constexpr ~simple_local_registry() noexcept                                  = default;
 
-        constexpr pointer exchange(pointer inp_ptr) noexcept {
-            pointer const old_ptr = ptr; // NOLINT(*-misplaced-const)
-            ptr                   = inp_ptr;
+        static constexpr pointer exchange(pointer inp_ptr) noexcept {
+            pointer const old_ptr = instance(); // NOLINT(*-misplaced-const)
+            instance()            = inp_ptr;
             return old_ptr;
         }
 
-        [[nodiscard]] constexpr pointer get() const noexcept {
-            // If it's null, then you should first create a new scope for it.
-            assert(ptr != nullptr);
-            return ptr;
+        [[nodiscard]] constexpr pointer operator->() const noexcept {
+            assert(instance() != nullptr);
+            return instance();
         }
 
-        [[nodiscard]] constexpr pointer operator->() noexcept {
-            assert(ptr != nullptr);
-            return ptr;
-        }
-
-        [[nodiscard]] constexpr const_pointer operator->() const noexcept {
-            assert(ptr != nullptr);
-            return ptr;
-        }
-
-        [[nodiscard]] static simple_local_registry& instance() noexcept {
-            static simple_local_registry inst;
+        [[nodiscard]] static pointer& instance() noexcept {
+            static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
+            static pointer inst = nullptr;
             return inst;
         }
-
-      private:
-        pointer ptr = nullptr;
     };
 
     /**
@@ -96,12 +83,13 @@ namespace webpp {
      * And when we go out of scope, we do this:
      *   1. Set the old instance back into the global instance.
      */
-    template <typename T, template <typename> typename Registry = simple_local_registry>
+    template <typename T>
     struct [[nodiscard]] lbg_scope {
-        using type    = T;
-        using pointer = T*;
+        using type     = T;
+        using pointer  = T*;
+        using registry = typename T::registry;
 
-        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{Registry<T>::instance().exchange(inp_ptr)} {}
+        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{registry::exchange(inp_ptr)} {}
 
         constexpr lbg_scope([[maybe_unused]] T const& obj, pointer inp_ptr) noexcept : lbg_scope{inp_ptr} {}
 
@@ -113,7 +101,7 @@ namespace webpp {
         lbg_scope& operator=(lbg_scope&& obj) noexcept = default;
 
         constexpr ~lbg_scope() noexcept {
-            Registry<T>::instance().exchange(prev);
+            registry::exchange(prev);
         }
 
       private:
