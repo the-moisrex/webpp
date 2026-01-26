@@ -27,7 +27,7 @@ namespace webpp {
      * @tparam stream_getter is a callable that gets a FILE* (like stderr, stdin, stdout)
      */
     template <auto stream_getter, bool IsDebug = is_debug_build>
-    struct std_logger {
+    struct [[nodiscard]] std_logger {
         using logger_type = std_logger;
         using logger_ref  = logger_type;  // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*; // there's a syntax difference, so we can't copy
@@ -35,8 +35,8 @@ namespace webpp {
         static constexpr bool is_debug              = IsDebug;
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
-        static constexpr auto logging_type_to_string(details::logging_type const lt) noexcept {
-            switch (lt) {
+        static constexpr auto logging_type_to_string(details::logging_type const ltype) noexcept {
+            switch (ltype) {
                 using enum details::logging_type;
                 case info: return "INFO";
                 case warning: return "WARNING";
@@ -47,73 +47,76 @@ namespace webpp {
             return "UNSPECIFIED";
         }
 
-        static constexpr stl::size_t logging_type_string_size(details::logging_type const lt) noexcept {
-            return stl::string_view{logging_type_to_string(lt)}.size();
+        static constexpr stl::size_t logging_type_string_size(details::logging_type const ltype) noexcept {
+            return stl::string_view{logging_type_to_string(ltype)}.size();
         }
 
-        template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>
-        static void log(details::logging_type lt, CatStrT&& category, DetStrT&& details) noexcept {
+        template <typename CharT>
+        static void log(details::logging_type               ltype,
+                        stl::basic_string_view<CharT> const category,
+                        stl::basic_string_view<CharT>       details) noexcept {
             if constexpr (!is_debug) {
 #ifdef WEBPP_FMT_LIB
-                fmt::print(stream_getter(),
-                           "[{}, {}]: {}\n",
-                           logging_type_to_string(lt),
-                           stl::forward<CatStrT>(category),
-                           stl::forward<DetStrT>(details));
+                fmt::print(stream_getter(), "[{}, {}]: {}\n", logging_type_to_string(ltype), category, details);
 #else
                 stl::fprintf(stream_getter(),
                              "[%s, %s]: %s\n",
-                             logging_type_to_string(lt),
-                             istl::view(stl::forward<CatStrT>(category)).data(),
-                             istl::view(stl::forward<DetStrT>(details)).data());
+                             logging_type_to_string(ltype),
+                             category.data(),
+                             details.data());
 #endif
             }
         }
 
 #define WEBPP_LOGGER_SHORTCUT(logging_name)                                                                           \
                                                                                                                       \
-    template <istl::StringViewifiable DetStrT>                                                                        \
-    void logging_name(DetStrT&& details) const noexcept {                                                             \
-        log(details::logging_type::logging_name, default_category_name, stl::forward<DetStrT>(details));              \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const details) const noexcept {                                   \
+        log(details::logging_type::logging_name, default_category_name, details);                                     \
     }                                                                                                                 \
                                                                                                                       \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
-    void logging_name(CatStrT&& category, DetStrT&& details) const noexcept {                                         \
-        log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::forward<DetStrT>(details));    \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const category, stl::basic_string_view<CharT> const details)      \
+      const noexcept {                                                                                                \
+        log(details::logging_type::logging_name, category, details);                                                  \
     }                                                                                                                 \
                                                                                                                       \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
-    void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {              \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const category,                                                   \
+                      stl::basic_string_view<CharT> const details,                                                    \
+                      stl::error_code const&              ec) const noexcept {                                                     \
         if constexpr (!is_debug) {                                                                                    \
-            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
-                                      istl::view(category).size();                                          \
-            auto old_details = istl::view(stl::forward<DetStrT>(details));                                  \
+            stl::size_t space_count =                                                                                 \
+              6 + logging_type_string_size(details::logging_type::logging_name) + istl::view(category).size();        \
+            auto old_details = istl::view(details);                                                                   \
             auto new_details =                                                                                        \
               fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ec.message()); \
-            log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \
+            log(details::logging_type::logging_name, category, stl::move(new_details));                               \
         }                                                                                                             \
     }                                                                                                                 \
                                                                                                                       \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
-    void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {               \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const category,                                                   \
+                      stl::basic_string_view<CharT> const details,                                                    \
+                      stl::exception const&               ex) const noexcept {                                                      \
         if constexpr (!is_debug) {                                                                                    \
-            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) +             \
-                                      istl::view(category).size();                                          \
-            auto old_details = istl::view(stl::forward<DetStrT>(details));                                  \
+            stl::size_t space_count =                                                                                 \
+              6 + logging_type_string_size(details::logging_type::logging_name) + istl::view(category).size();        \
+            auto old_details = istl::view(details);                                                                   \
             auto new_details =                                                                                        \
               fmt::format("{2}\n{1: >{0}}error message: {3}", stl::move(space_count), "", old_details, ex.what());    \
-            log(details::logging_type::logging_name, stl::forward<CatStrT>(category), stl::move(new_details));        \
+            log(details::logging_type::logging_name, category, stl::move(new_details));                               \
         }                                                                                                             \
     }                                                                                                                 \
                                                                                                                       \
-    template <istl::StringViewifiable StrT>                                                                           \
-    void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                                     \
-        logging_name(default_category_name, stl::forward<StrT>(details), ec);                                         \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const details, stl::error_code const& ec) const noexcept {        \
+        logging_name(default_category_name, details, ec);                                                             \
     }                                                                                                                 \
                                                                                                                       \
-    template <istl::StringViewifiable StrT>                                                                           \
-    void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                                      \
-        logging_name(default_category_name, stl::forward<StrT>(details), ex);                                         \
+    template <typename CharT>                                                                                         \
+    void logging_name(stl::basic_string_view<CharT> const details, stl::exception const& ex) const noexcept {         \
+        logging_name(default_category_name, details, ex);                                                             \
     }                                                                                                                 \
                                                                                                                       \
     template <typename... OptsT>                                                                                      \
