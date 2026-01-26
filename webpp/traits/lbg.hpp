@@ -4,6 +4,7 @@
 #ifndef WEBPP_LBG_HPP
 #define WEBPP_LBG_HPP
 
+#include <atomic>
 #include <cassert>
 #include <concepts>
 
@@ -27,11 +28,14 @@ namespace webpp {
 
         requires requires(typename T::pointer ptr) {
             { obj.operator->() } noexcept -> std::same_as<typename T::pointer>;
-            { obj.operator*() } noexcept -> std::same_as<typename T::pointer>;
+            { obj.ptr() } noexcept -> std::same_as<typename T::pointer>;
             { obj.exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
         };
     };
 
+    /**
+     * T should now use `binding self` instead of `this` pointer to access global bounded version.
+     */
     template <typename T>
     concept locally_bounded_global = requires {
         requires locally_bound_global<typename T::binding>;
@@ -65,9 +69,8 @@ namespace webpp {
             return instance();
         }
 
-        [[nodiscard]] constexpr pointer operator*() const noexcept {
-            assert(instance() != nullptr);
-            return instance();
+        [[nodiscard]] pointer ptr() const noexcept {
+            return operator->();
         }
 
         [[nodiscard]] static pointer& instance() noexcept {
@@ -76,6 +79,83 @@ namespace webpp {
             return inst;
         }
     };
+
+    /**
+     * Thread-Local version of the Global Binding
+     */
+    template <typename T>
+    struct [[nodiscard]] thread_binding {
+        using type          = T;
+        using pointer       = T*;
+        using const_pointer = T const*;
+        using binding       = thread_binding;
+
+        static constexpr pointer exchange(pointer inp_ptr) noexcept {
+            pointer const old_ptr = instance(); // NOLINT(*-misplaced-const)
+            instance()            = inp_ptr;
+            return old_ptr;
+        }
+
+        [[nodiscard]] constexpr pointer operator->() const noexcept {
+            assert(instance() != nullptr && "Global binding accessed without being set.");
+            return instance();
+        }
+
+        [[nodiscard]] pointer ptr() const noexcept {
+            return operator->();
+        }
+
+        [[nodiscard]] static pointer& instance() noexcept {
+            static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
+            thread_local pointer inst = nullptr;
+            return inst;
+        }
+    };
+
+    /**
+     * Non-Thread-Local, Thread-Safe Global Binding.
+     *
+     * This uses a single global std::atomic pointer shared by all threads.
+     * Operations on this pointer are atomic, preventing data races during swaps/reads.
+     *
+     * @warning Because this is not thread_local, creating an lbg_scope in one thread
+     * will change the active instance for ALL threads. This is intended for "Global Mode Switching"
+     * or "Singleton Hot-Swapping", not for per-request contexts.
+     */
+    // template <typename T>
+    // struct [[nodiscard]] atomic_binding {
+    //     using type        = T;
+    //     using pointer     = T*;
+    //     using binding     = atomic_binding;
+    //     using atomic_type = std::atomic<pointer>;
+    //
+    //     // Atomic exchange: safely swaps the pointer and returns the old value.
+    //     // We use memory_order_acq_rel to ensure that modifications to the object
+    //     // are synchronized across threads (Release on store, Acquire on load of the return value).
+    //     static pointer exchange(pointer inp_ptr) noexcept {
+    //         return instance().exchange(inp_ptr, std::memory_order_acq_rel);
+    //     }
+    //
+    //     [[nodiscard]] pointer operator->() const noexcept {
+    //         // Atomic load: safely reads the current pointer.
+    //         // We use memory_order_acquire to ensure we see the most up-to-date
+    //         // modifications to the object itself made by the thread that set the pointer.
+    //         pointer ptr = instance().load(std::memory_order_acquire);
+    //
+    //         assert(ptr != nullptr && "Global binding accessed without being set.");
+    //         return ptr;
+    //     }
+    //
+    //     [[nodiscard]] pointer ptr() const noexcept {
+    //         return operator->();
+    //     }
+    //
+    //     // The instance is now a plain static variable, wrapped in std::atomic.
+    //     [[nodiscard]] static atomic_type& instance() noexcept {
+    //         static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile
+    //         time."); static atomic_type inst{nullptr}; return inst;
+    //     }
+    // };
 
     /**
      * Create a new Locally-Bound-Global scope.
@@ -107,7 +187,7 @@ namespace webpp {
 
         explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
 
-        explicit constexpr lbg_scope(T& ref) noexcept : lbg_scope{&ref} {}
+        explicit constexpr lbg_scope(T& ref) noexcept : lbg_scope{std::addressof(ref)} {}
 
         lbg_scope(lbg_scope const& obj)                = delete;
         lbg_scope(lbg_scope&& obj) noexcept            = default;
