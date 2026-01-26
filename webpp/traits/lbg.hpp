@@ -23,12 +23,19 @@ namespace webpp {
         typename T::binding;
         typename T::type;
         typename T::pointer;
-        { T::instance() } noexcept -> std::same_as<typename T::type&>;
+        { T::instance() } noexcept -> std::same_as<typename T::pointer&>;
 
         requires requires(typename T::pointer ptr) {
-            { obj.get() } noexcept -> std::same_as<typename T::pointer>;
+            { obj.operator->() } noexcept -> std::same_as<typename T::pointer>;
+            { obj.operator*() } noexcept -> std::same_as<typename T::pointer>;
             { obj.exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
         };
+    };
+
+    template <typename T>
+    concept locally_bounded_global = requires {
+        requires locally_bound_global<typename T::binding>;
+        requires std::is_base_of_v<typename T::binding, T>;
     };
 
     /**
@@ -54,6 +61,11 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr pointer operator->() const noexcept {
+            assert(instance() != nullptr);
+            return instance();
+        }
+
+        [[nodiscard]] constexpr pointer operator*() const noexcept {
             assert(instance() != nullptr);
             return instance();
         }
@@ -88,17 +100,14 @@ namespace webpp {
      * And when we go out of scope, we do this:
      *   1. Set the old instance back into the global instance.
      */
-    template <typename T>
+    template <locally_bounded_global T>
     struct [[nodiscard]] lbg_scope {
-        using type    = T;
-        using pointer = T*;
         using binding = typename T::binding;
+        using pointer = T*;
 
         explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
 
-        constexpr lbg_scope([[maybe_unused]] T const& obj, pointer inp_ptr) noexcept : lbg_scope{inp_ptr} {}
-
-        constexpr lbg_scope([[maybe_unused]] T const& obj, T& ref) noexcept : lbg_scope{&ref} {}
+        explicit constexpr lbg_scope(T& ref) noexcept : lbg_scope{&ref} {}
 
         lbg_scope(lbg_scope const& obj)                = delete;
         lbg_scope(lbg_scope&& obj) noexcept            = default;
@@ -117,10 +126,7 @@ namespace webpp {
     lbg_scope(T*) -> lbg_scope<std::remove_const_t<T>>;
 
     template <typename T>
-    lbg_scope(T&, T*) -> lbg_scope<std::remove_const_t<T>>;
-
-    template <typename T>
-    lbg_scope(T&, T&) -> lbg_scope<std::remove_const_t<T>>;
+    lbg_scope(T&) -> lbg_scope<std::remove_const_t<T>>;
 
 } // namespace webpp
 

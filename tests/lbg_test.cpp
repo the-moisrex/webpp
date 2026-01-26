@@ -5,7 +5,7 @@
 using namespace webpp;
 
 static constexpr struct context_type : global_binding<context_type> {
-    static constexpr binding self{};
+    static constexpr global_binding self{};
 
     std::string_view request;
     std::string_view response;
@@ -21,7 +21,7 @@ static constexpr struct context_type : global_binding<context_type> {
 
 TEST(LBGTest, Basic) {
     context_type ctx{.request = "req1", .response = "res1"};
-    lbg_scope    scope{context, ctx};
+    lbg_scope    scope{ctx};
     EXPECT_EQ(context.req(), "req1");
     EXPECT_EQ(context.res(), "res1");
 }
@@ -30,14 +30,14 @@ TEST(LBGTest, Nested) {
     // layer 1:
     {
         context_type ctx1{.request = "req1", .response = "res1"};
-        lbg_scope    scope1{context, ctx1};
+        lbg_scope    scope1{ctx1};
         EXPECT_EQ(context.req(), "req1");
         EXPECT_EQ(context.res(), "res1");
 
         // layer 2:
         {
             context_type ctx2{.request = "req2", .response = "res2"};
-            lbg_scope    scope2{context, ctx2};
+            lbg_scope    scope2{ctx2};
             EXPECT_EQ(context.req(), "req2");
             EXPECT_EQ(context.res(), "res2");
         }
