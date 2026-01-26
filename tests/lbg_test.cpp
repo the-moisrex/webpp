@@ -4,8 +4,8 @@
 
 using namespace webpp;
 
-static constexpr struct context_type : simple_local_registry<context_type> {
-    static constexpr registry self{};
+static constexpr struct context_type : global_binding<context_type> {
+    static constexpr binding self{};
 
     std::string_view request;
     std::string_view response;

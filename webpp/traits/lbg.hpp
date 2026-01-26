@@ -10,11 +10,19 @@
 namespace webpp {
 
     /**
-     * Locally Bound Globals are singleton objects that can be changed to point to another instance.
+     * Locally Bound Globals are types that each instances of them will still point to the same global instance, and
+     * also the global instance can be changed locally.
      * They're a glorified pointer that sit in the global scope.
+     * It means each instance of the type T is a pointer to itself, kinda.
+     *
+     * It's designed for the purpose of having the caller of user function X to set some things, and X to use those
+     * things without X needing to change its function signature.
      */
     template <typename T>
     concept locally_bound_global = requires(T obj) {
+        typename T::binding;
+        typename T::type;
+        typename T::pointer;
         { T::instance() } noexcept -> std::same_as<typename T::type&>;
 
         requires requires(typename T::pointer ptr) {
@@ -24,23 +32,20 @@ namespace webpp {
     };
 
     /**
-     * Global Simple and Unsafe Registry
+     * Global Binding: the guy responsible to hold on to the pointer of T for everyone.
+     * This will give you interesting ways to access the global T pointer if T inherited from it.
+     * @code
+     *   global_binding<T>::instance(); // get the pointer
+     *   global_binding<T> self;
+     *   // Access member functions and fields of global T using `self->function_or_field`
+     * @endcode
      */
     template <typename T>
-    struct [[nodiscard]] simple_local_registry {
+    struct [[nodiscard]] global_binding {
         using type          = T;
         using pointer       = T*;
         using const_pointer = T const*;
-        using registry      = simple_local_registry;
-
-
-        /// Marking it consteval so we force compile time default constructor
-        consteval simple_local_registry()                                            = default;
-        constexpr simple_local_registry(simple_local_registry const&)                = default;
-        constexpr simple_local_registry& operator=(simple_local_registry const&)     = default;
-        constexpr simple_local_registry(simple_local_registry&&) noexcept            = default;
-        constexpr simple_local_registry& operator=(simple_local_registry&&) noexcept = default;
-        constexpr ~simple_local_registry() noexcept                                  = default;
+        using binding       = global_binding;
 
         static constexpr pointer exchange(pointer inp_ptr) noexcept {
             pointer const old_ptr = instance(); // NOLINT(*-misplaced-const)
@@ -85,11 +90,11 @@ namespace webpp {
      */
     template <typename T>
     struct [[nodiscard]] lbg_scope {
-        using type     = T;
-        using pointer  = T*;
-        using registry = typename T::registry;
+        using type    = T;
+        using pointer = T*;
+        using binding = typename T::binding;
 
-        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{registry::exchange(inp_ptr)} {}
+        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
 
         constexpr lbg_scope([[maybe_unused]] T const& obj, pointer inp_ptr) noexcept : lbg_scope{inp_ptr} {}
 
@@ -101,7 +106,7 @@ namespace webpp {
         lbg_scope& operator=(lbg_scope&& obj) noexcept = default;
 
         constexpr ~lbg_scope() noexcept {
-            registry::exchange(prev);
+            binding::exchange(prev);
         }
 
       private:
@@ -117,8 +122,6 @@ namespace webpp {
     template <typename T>
     lbg_scope(T&, T&) -> lbg_scope<std::remove_const_t<T>>;
 
-    // static constexpr struct [[nodiscard]] logger_tag : simple_registry<logger_tag> {
-    // } logger;
 } // namespace webpp
 
 #endif // WEBPP_LBG_HPP
