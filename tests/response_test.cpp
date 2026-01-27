@@ -8,7 +8,6 @@
 #include "../webpp/http/response_body.hpp"
 #include "../webpp/traits/enable_traits.hpp"
 #include "common/test.hpp"
-#include "extensions/extension.hpp"
 #include "traits/default_traits.hpp"
 
 #include <string>

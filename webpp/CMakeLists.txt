@@ -26,9 +26,6 @@ set(ALL_SOURCES_SHORT
         libs/sqlite.hpp
         libs/zlib.hpp
 
-        extensions/extension.hpp
-        extensions/extension_wrapper.hpp
-
         strings/append.hpp
         strings/charset.hpp
         strings/fixed_string.hpp
