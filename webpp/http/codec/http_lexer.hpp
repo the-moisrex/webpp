@@ -48,12 +48,13 @@ namespace webpp::http {
      */
     template <istl::StringView StrViewT, Allocator AllocT>
     struct http_lexer {
-        using string_view_type      = StrViewT;
-        using char_type             = istl::char_type_of_t<string_view_type>;
-        using allocator_type        = AllocT;
-        using header_view_type      = stl::array<string_view_type, 2>;
-        using header_view_allocator = rebind_allocator<allocator_type, header_view_type>;
-        using header_views_type     = stl::vector<header_view_type, header_view_allocator>;
+        using string_view_type = StrViewT;
+        using char_type        = istl::char_type_of_t<string_view_type>;
+        using allocator_type   = AllocT;
+        using header_view_type = stl::array<string_view_type, 2>;
+        using header_view_allocator =
+          typename stl::allocator_traits<allocator_type>::template rebind_alloc<header_view_type>;
+        using header_views_type = stl::vector<header_view_type, header_view_allocator>;
 
         string_view_type  raw_view{};
         string_view_type  body_view{};

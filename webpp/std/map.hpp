@@ -32,7 +32,8 @@ namespace webpp::istl {
       stl::map<StringType,
                StringType,
                stl::less<StringType>,
-               rebind_allocator<AllocType, stl::pair<stl::add_const_t<StringType>, StringType>>>;
+               typename stl::allocator_traits<AllocType>::template rebind_alloc<
+                 stl::pair<stl::add_const_t<StringType>, StringType>>>;
 
 } // namespace webpp::istl
 

@@ -14,17 +14,6 @@
 
 namespace webpp::http {
 
-    /**
-     * This is the application master which lets the user to combine multiple
-     * application and use them as a single application and pass to the
-     * protocols when they need to.
-     */
-    template <Application... AppTypes>
-    struct master_application : private AppTypes... {
-        HTTPResponse auto operator()(Context auto& ctx) noexcept {
-            (AppTypes(ctx), ...); // todo: this is not correct
-        }
-    };
 
     /**
      * This type helps to initialize the application and make sure the correct things get passed to the
@@ -41,36 +30,18 @@ namespace webpp::http {
         struct enable_throws {};
 
         // ctor that passes the enabled_traits object to daddy :)
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, ETT, Args...>)
-        explicit constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj, stl::forward<Args>(args)...} {}
-
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        explicit constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj, stl::forward<Args>(args)..., et_obj} {}
-
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, Args...> &&
-                     !stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        explicit constexpr http_app_wrapper([[maybe_unused]] ETT& inp_etraits, Args&&... args)
-          : application_type{stl::forward<Args>(args)...} {}
+        template <typename... Args>
+            requires(stl::is_constructible_v<application_type, Args...>)
+        explicit constexpr http_app_wrapper(Args&&... args) : application_type{stl::forward<Args>(args)...} {}
 
         [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {
             if constexpr (requires {
-                              {
-                                  application_type::response(req)
-                              } -> HTTPResponse;
+                              { application_type::response(req) } -> HTTPResponse;
                           })
             {
                 return application_type::response(req);
             } else if constexpr (requires {
-                                     {
-                                         application_type::response()
-                                     } -> HTTPResponse;
+                                     { application_type::response() } -> HTTPResponse;
                                  })
             {
                 return application_type::response();
@@ -118,23 +89,17 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
-                              {
-                                  application_type::error(req, err)
-                              } -> HTTPResponse;
+                              { application_type::error(req, err) } -> HTTPResponse;
                           })
             {
                 return application_type::error(req, err);
             } else if constexpr (requires {
-                                     {
-                                         application_type::error(err)
-                                     } -> HTTPResponse;
+                                     { application_type::error(err) } -> HTTPResponse;
                                  })
             {
                 return application_type::error(err);
             } else if constexpr (requires {
-                                     {
-                                         application_type::error(err, req)
-                                     } -> HTTPResponse;
+                                     { application_type::error(err, req) } -> HTTPResponse;
                                  })
             {
                 return application_type::error(err, req);

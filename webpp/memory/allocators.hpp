@@ -87,9 +87,6 @@ namespace webpp {
         }
     } alloc;
 
-    template <typename AllocType, typename NewValueType>
-    using rebind_allocator = typename stl::allocator_traits<AllocType>::template rebind_alloc<NewValueType>;
-
     namespace details {
         template <typename T>
         struct temp_alloc_holder {
@@ -196,9 +193,6 @@ namespace webpp {
         using allocator_type       = stl::remove_cvref_t<AllocType>;
         using allocator_value_type = typename allocator_type::value_type;
 
-        template <typename T>
-        using allocator_type_as = rebind_allocator<allocator_type, T>;
-
         template <typename... T>
         explicit constexpr allocator_holder(T&&... alloc_holders) noexcept
           : alloc{extract_allocator_of<AllocType, T...>(stl::forward<T>(alloc_holders)...)} {}
@@ -212,7 +206,7 @@ namespace webpp {
                 return alloc;
             } else {
                 // using copy ctor, so this should work for most allocator types
-                return rebind_allocator<allocator_type, T>(alloc);
+                return typename stl::allocator_traits<allocator_type>::template rebind_alloc<T>(alloc);
             }
         }
 

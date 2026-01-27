@@ -60,7 +60,8 @@ namespace webpp::http {
                              string_type,
                              stl::hash<string_type>,
                              stl::equal_to<string_type>,
-                             rebind_allocator<string_allocator_type, stl::pair<string_type const, string_type>>>;
+                             typename stl::allocator_traits<string_allocator_type>::template rebind_alloc<
+                               stl::pair<string_type const, string_type>>>;
 
 
         static constexpr max_age_t MAX_AGE_EXISTENCE_VALUE = stl::numeric_limits<max_age_t>::min();
