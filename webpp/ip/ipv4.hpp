@@ -49,11 +49,10 @@ namespace webpp {
 
     /**
      * Convert string to prefix
-     * @param inp_str
+     * @param str
      */
-    template <istl::StringViewifiable StrT>
-    constexpr ipv4_octet to_prefix(StrT&& inp_str) noexcept {
-        auto const  str = istl::view(stl::forward<StrT>(inp_str));
+    template <typename CharT>
+    constexpr ipv4_octet to_prefix(stl::basic_string_view<CharT> const str) noexcept {
         ipv4_octets bin; // NOLINT(*-pro-type-member-init)
         auto        beg = str.begin();
         if (inet_pton4(beg, str.end(), bin.data()) == inet_pton4_status::valid) {
@@ -133,10 +132,9 @@ namespace webpp {
                    static_cast<stl::uint32_t>(ip_addr[2] << 8U) | static_cast<stl::uint32_t>(ip_addr[3]);
         }
 
-        template <istl::StringViewifiable StrT>
-        constexpr decltype(auto) parse(StrT&& ip_addr) noexcept {
-            auto const str = istl::view(stl::forward<StrT>(ip_addr));
-            return parse(str.begin(), str.end());
+        template <typename CharT>
+        constexpr decltype(auto) parse(stl::basic_string_view<CharT> const ip_addr) noexcept {
+            return parse(ip_addr.begin(), ip_addr.end());
         }
 
       public:
@@ -171,10 +169,9 @@ namespace webpp {
         constexpr basic_ipv4() noexcept = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <typename T>
-            requires(!istl::cvref_as<T, basic_ipv4> && istl::StringViewifiable<T>)
-        constexpr explicit basic_ipv4(T&& ip_addr) noexcept {
-            parse(stl::forward<T>(ip_addr));
+        template <typename CharT>
+        constexpr explicit basic_ipv4(stl::basic_string_view<CharT> const ip_addr) noexcept {
+            parse(ip_addr);
         }
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -185,29 +182,29 @@ namespace webpp {
             parse(startp, endp);
         }
 
-        template <istl::StringViewifiable IPStrT, istl::StringViewifiable SubStrT>
+        template <typename CharT>
             requires WithPrefix
-        constexpr basic_ipv4(IPStrT&& ip_addr, SubStrT&& subnet) noexcept {
-            parse(stl::forward<IPStrT>(ip_addr));
+        constexpr basic_ipv4(stl::basic_string_view<CharT> const ip_addr,
+                             stl::basic_string_view<CharT> const subnet) noexcept {
+            parse(ip_addr);
             if (is_valid()) {
-                _prefix = (is::subnet(subnet) ? to_prefix(stl::forward<SubStrT>(subnet))
-                                              : prefix_status(inet_pton4_status::invalid_prefix));
+                _prefix = (is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix));
             }
         }
 
-        template <istl::StringViewifiable IPStrT>
+        template <typename CharT>
             requires WithPrefix
-        constexpr basic_ipv4(IPStrT&& ip_addr, ipv4_octets const subnet) noexcept {
-            parse(stl::forward<IPStrT>(ip_addr));
+        constexpr basic_ipv4(stl::basic_string_view<CharT> const ip_addr, ipv4_octets const subnet) noexcept {
+            parse(ip_addr);
             if (is_valid()) {
                 _prefix = is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix);
             }
         }
 
-        template <istl::StringViewifiable IPStrT>
+        template <typename CharT>
             requires WithPrefix
-        constexpr basic_ipv4(IPStrT&& ip_addr, ipv4_octet const prefix_val) noexcept {
-            parse(stl::forward<IPStrT>(ip_addr));
+        constexpr basic_ipv4(stl::basic_string_view<CharT> const ip_addr, ipv4_octet const prefix_val) noexcept {
+            parse(ip_addr);
             if (is_valid()) {
                 _prefix = prefix_val > ipv4_max_prefix && prefix_val != prefix_status(inet_pton4_status::valid)
                             ? prefix_status(inet_pton4_status::invalid_prefix)
@@ -228,12 +225,13 @@ namespace webpp {
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix_val) {}
 
+        template <typename CharT>
         constexpr basic_ipv4(
-          ipv4_octet const       octet1,
-          ipv4_octet const       octet2,
-          ipv4_octet const       octet3,
-          ipv4_octet const       octet4,
-          stl::string_view const subnet) noexcept
+          ipv4_octet const                    octet1,
+          ipv4_octet const                    octet2,
+          ipv4_octet const                    octet3,
+          ipv4_octet const                    octet4,
+          stl::basic_string_view<CharT> const subnet) noexcept
             requires(WithPrefix)
           : data(parse({octet1, octet2, octet3, octet4})),
             _prefix(is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix)) {}
@@ -257,12 +255,11 @@ namespace webpp {
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
-        template <istl::StringViewifiable StrT>
+        template <typename CharT>
             requires(WithPrefix)
-        constexpr explicit basic_ipv4(stl::uint32_t const ip_addr, StrT&& subnet) noexcept
+        constexpr explicit basic_ipv4(stl::uint32_t const ip_addr, stl::basic_string_view<CharT> const subnet) noexcept
           : data(ip_addr),
-            _prefix(is::subnet(subnet) ? to_prefix(stl::forward<StrT>(subnet))
-                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr explicit basic_ipv4(ipv4_octets const ip_addr,
                                       ipv4_octet const  prefix = prefix_status(inet_pton4_status::valid)) noexcept
@@ -276,12 +273,11 @@ namespace webpp {
             requires(!WithPrefix)
           : data(parse(ip_addr)) {}
 
-        template <istl::StringViewifiable StrT>
-        constexpr basic_ipv4(ipv4_octets const ip_addr, StrT&& subnet) noexcept
+        template <typename CharT>
+        constexpr basic_ipv4(ipv4_octets const ip_addr, stl::basic_string_view<CharT> const subnet) noexcept
             requires(WithPrefix)
           : data(parse(ip_addr)),
-            _prefix(is::subnet(subnet) ? to_prefix(stl::forward<StrT>(subnet))
-                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr basic_ipv4(ipv4_octets const ip_addr, ipv4_octets const subnet) noexcept
             requires(WithPrefix)
@@ -300,9 +296,9 @@ namespace webpp {
         constexpr basic_ipv4& operator=(basic_ipv4 const&)     = default;
         constexpr basic_ipv4& operator=(basic_ipv4&&) noexcept = default;
 
-        template <istl::StringViewifiable StrT>
-        constexpr basic_ipv4& operator=(StrT&& ip_addr) noexcept {
-            parse(stl::forward<StrT>(ip_addr));
+        template <typename CharT>
+        constexpr basic_ipv4& operator=(stl::basic_string_view<CharT> const ip_addr) noexcept {
+            parse(ip_addr);
             return *this;
         }
 
@@ -322,16 +318,16 @@ namespace webpp {
             return data <=> ip_addr;
         }
 
-        template <istl::StringViewifiable StrT>
-        constexpr stl::strong_ordering operator<=>(StrT&& ip_addr) const noexcept {
+        template <typename CharT>
+        constexpr stl::strong_ordering operator<=>(stl::basic_string_view<CharT> const ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::view(stl::forward<StrT>(ip_addr))}.data <=> data;
+            return basic_ipv4{ip_addr}.data <=> data;
         }
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
+        template <typename CharT>
+        [[nodiscard]] constexpr bool operator==(stl::basic_string_view<CharT> const ip_addr) const noexcept {
             // only compare the octets not the prefix
-            return basic_ipv4{istl::view(stl::forward<StrT>(ip_addr))}.data == data;
+            return basic_ipv4{ip_addr}.data == data;
         }
 
         [[nodiscard]] constexpr bool operator==(basic_ipv4 const ip_addr) const noexcept {
@@ -438,23 +434,23 @@ namespace webpp {
 
         /**
          * Set prefix with a subnet string
-         * @param _subnet
+         * @param subnet
          */
-        template <istl::StringViewifiable StrT>
-        constexpr basic_ipv4& prefix(StrT&& _subnet) noexcept
+        template <typename CharT>
+        constexpr basic_ipv4& prefix(stl::basic_string_view<CharT> const subnet) noexcept
             requires(WithPrefix)
         {
-            return prefix(to_prefix(stl::forward<StrT>(_subnet)));
+            return prefix(to_prefix(subnet));
         }
 
         /**
          * Set prefix with a subnet array
-         * @param _subnet
+         * @param subnet
          */
-        constexpr basic_ipv4& prefix(ipv4_octets const _subnet) noexcept
+        constexpr basic_ipv4& prefix(ipv4_octets const subnet) noexcept
             requires(WithPrefix)
         {
-            return prefix(to_prefix(_subnet));
+            return prefix(to_prefix(subnet));
         }
 
         /**
