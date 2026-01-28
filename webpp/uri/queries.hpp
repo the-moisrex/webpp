@@ -14,9 +14,9 @@ namespace webpp::uri {
      */
     template <typename CharT, typename AllocT>
     static constexpr void render_queries(
-      stl::basic_string_view<CharT>     storage,
+      stl::basic_string_view<CharT>                              storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool const                        add_separators = false) {
+      bool const                                                 add_separators = false) {
         if (storage.empty()) {
             return;
         }
@@ -31,9 +31,9 @@ namespace webpp::uri {
      */
     template <typename KeyValT, typename CharT, typename AllocT>
     static constexpr void render_queries(
-      stl::span<KeyValT const>          storage,
+      stl::span<KeyValT const>                                   storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool const                        add_separators = false) {
+      bool const                                                 add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
             return;
@@ -59,7 +59,7 @@ namespace webpp::uri {
      * @brief Basic Queries (or sometimes called Searches, like in WHATWG)
      */
     template <typename CharT>
-    struct basic_queries : stl::basic_string_view<CharT> {
+    struct [[nodiscard]] basic_queries : stl::basic_string_view<CharT> {
         using string_view_type = stl::basic_string_view<CharT>;
         using char_type        = CharT;
 

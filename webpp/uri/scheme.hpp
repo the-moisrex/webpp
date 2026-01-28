@@ -11,9 +11,9 @@ namespace webpp::uri {
     /// Serialize scheme
     template <typename CharT, typename AllocT>
     static constexpr void render_scheme(
-      stl::basic_string_view<CharT> const& storage,
-      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&    out,
-      bool const                           add_separators = false) {
+      stl::basic_string_view<CharT> const&                       storage,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      bool const                                                 add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
             return;
@@ -27,8 +27,8 @@ namespace webpp::uri {
     /**
      * Scheme or Protocol
      */
-    template <istl::CharType CharT>
-    struct basic_scheme : stl::basic_string_view<CharT> {
+    template <typename CharT>
+    struct [[nodiscard]] basic_scheme : stl::basic_string_view<CharT> {
         using char_type        = CharT;
         using string_view_type = stl::basic_string_view<CharT>;
         using string_type      = stl::basic_string<CharT>;

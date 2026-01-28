@@ -31,7 +31,7 @@ namespace webpp::uri {
         static constexpr bool is_structured = URIStructuredComponents<component_type>;
 
         /// same as string_type if it's modifiable, otherwise, std::string
-        using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
+        using modifiable_string_type = stl::basic_string<char_type, stl::char_traits<char_type>, allocator_type>;
 
         using scheme_type   = basic_scheme<char_type>;
         using username_type = string_view_type;
@@ -41,10 +41,6 @@ namespace webpp::uri {
         using queries_type  = basic_queries<char_type>;
         using fragment_type = string_view_type;
         using status_type   = uri_status_type;
-
-        static_assert(VectorOutput<path_type>,
-                      "The path must almost look and feel like a vector, "
-                      "so we don't have to specialize it for get_buffer and what not.");
 
       private:
         component_type components;
@@ -79,15 +75,15 @@ namespace webpp::uri {
             return parse<Options>(str.begin(), str.end());
         }
 
-        template <stl::random_access_iterator IterT, Allocator InpAllocT = allocator_type>
-        constexpr basic_uri(IterT const beg, IterT const end, InpAllocT const& alloc = {}) noexcept(is_nothrow)
+        template <stl::random_access_iterator IterT>
+        constexpr basic_uri(IterT const beg, IterT const end, allocator_type const& alloc = {}) noexcept(is_nothrow)
           : components{create<component_type>(beg, end, alloc)} {
             parse(beg, end);
         }
 
-        template <typename CharT, Allocator InpAllocT = allocator_type>
+        template <typename CharT>
         explicit(false) constexpr basic_uri(stl::basic_string_view<CharT> const uri_str,
-                                            InpAllocT const&                    alloc = {}) // NOLINT(*-explicit-*)
+                                            allocator_type const&               alloc = {}) // NOLINT(*-explicit-*)
           noexcept(is_nothrow)
           : basic_uri{create<component_type>(uri_str.begin(), uri_str.end(), alloc)} {}
 
@@ -110,6 +106,58 @@ namespace webpp::uri {
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return valid();
+        }
+
+        [[nodiscard]] constexpr string_view_type scheme_view() const noexcept {
+            return scheme(components);
+        }
+
+        constexpr basic_scheme<char_type> scheme() const noexcept {
+            return {scheme(components)};
+        }
+
+        [[nodiscard]] constexpr string_view_type hostname_view() const noexcept {
+            return hostname(components);
+        }
+
+        [[nodiscard]] constexpr basic_host<char_type> hostname() const noexcept {
+            return {hostname(components)};
+        }
+
+        [[nodiscard]] constexpr string_view_type port_view() const noexcept {
+            return port(components);
+        }
+
+        [[nodiscard]] constexpr string_view_type username() const noexcept {
+            return username(components);
+        }
+
+        [[nodiscard]] constexpr string_view_type password() const noexcept {
+            return password(components);
+        }
+
+        [[nodiscard]] constexpr string_view_type authority() const noexcept {
+            // todo
+        }
+
+        [[nodiscard]] constexpr string_view_type path_view() const noexcept {
+            return path(components);
+        }
+
+        [[nodiscard]] constexpr string_view_type queries_view() const noexcept {
+            return queries(components);
+        }
+
+        [[nodiscard]] constexpr basic_path<string_type> path() const noexcept {
+            return {path(components)};
+        }
+
+        [[nodiscard]] constexpr basic_queries<char_type> queries() const noexcept {
+            return {queries(components)};
+        }
+
+        [[nodiscard]] constexpr string_view_type fragment() const noexcept {
+            return fragment(components);
         }
 
         constexpr void clear_scheme() noexcept(is_nothrow) {

@@ -71,7 +71,7 @@ namespace webpp::uri {
         // except slash char
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>;
 
-        using stl::span<SlugType>::span; // ctor
+        using stl::span<SlugType const>::span; // ctor
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
             return !this->empty() && this->front().empty();
