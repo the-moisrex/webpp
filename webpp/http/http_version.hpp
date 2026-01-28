@@ -12,13 +12,14 @@
 namespace webpp::http {
 
     // Wrapper for an HTTP (major,minor) version pair.
-    class version {
+    struct [[nodiscard]] version {
       private:
         static constexpr auto uint_16_bits     = sizeof(stl::uint16_t) * 8u;
         static constexpr auto minor_value_mask = 0xFFFFU;
 
         // parse version from string
-        constexpr stl::uint32_t parse_string(auto&& str) noexcept {
+        template <typename CharT>
+        constexpr stl::uint32_t parse_string(stl::basic_string_view<CharT> const str) noexcept {
             auto dot   = str.find('.');
             auto major = to_uint16(str.substr(0, dot));
             auto minor = to_uint16(str.substr(dot + 1, str.size()));
@@ -30,13 +31,9 @@ namespace webpp::http {
         // Default constructor (major=0, minor=0).
         constexpr version() noexcept = default;
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <typename T>
-            requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
-        explicit constexpr version(T&& str) noexcept
-          : value(parse_string(istl::view(stl::forward<decltype(str)>(str)))) {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+        template <typename CharT>
+        explicit(false) constexpr version(stl::basic_string_view<CharT> const str) noexcept
+          : value(parse_string(str)) {}
 
         constexpr version(version const&) noexcept            = default;
         constexpr version(version&&) noexcept                 = default;
@@ -72,7 +69,8 @@ namespace webpp::http {
          * The string you get usually from SERVER_PROTOCOL env can be parsed with this method.
          * Examples of input: “HTTP/1.0”, “HTTP/1.1”, or “HTTP/2.0”
          */
-        [[nodiscard]] static constexpr version from_server_protocol(istl::StringView auto str) noexcept {
+        template <typename CharT>
+        [[nodiscard]] static constexpr version from_server_protocol(stl::basic_string_view<CharT> const str) noexcept {
             constexpr auto http_string = "HTTP"; // todo: make static when C++23 support is good
             if (!str.starts_with(http_string)) {
                 return unknown();
@@ -87,7 +85,8 @@ namespace webpp::http {
             return unknown();
         }
 
-        [[nodiscard]] static constexpr version from_string(istl::StringView auto str) noexcept {
+        template <typename CharT>
+        [[nodiscard]] static constexpr version from_string(stl::basic_string_view<CharT> const str) noexcept {
             return version{str};
         }
 
@@ -127,15 +126,15 @@ namespace webpp::http {
      * A list of http::version
      */
     template <stl::size_t N>
-    struct version_list : public stl::array<version, N> {
+    struct version_list : stl::array<version, N> {
         using array_type = stl::array<version, N>;
 
         template <typename... T>
         explicit constexpr version_list(T&&... versions) noexcept : array_type{stl::forward<T>(versions)...} {}
 
         [[nodiscard]] constexpr bool include_version(version ver) noexcept {
-            for (auto const& v : *this) {
-                if (ver == v) {
+            for (auto const& cur : *this) {
+                if (ver == cur) {
                     return true;
                 }
             }
