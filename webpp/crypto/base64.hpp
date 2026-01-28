@@ -13,12 +13,12 @@ namespace webpp::base64 {
     /**
      * Encodes the input binary data in base64.
      */
-    void encode(istl::StringViewifiable auto&& input, istl::String auto& output) {
-        auto input_view = istl::view(stl::forward<decltype(input)>(input));
-        output.resize(modp_b64::encode_len(input_view.size())); // makes room for null byte
+    template <typename CharT>
+    void encode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+        output.resize(modp_b64::encode_len(input.size())); // makes room for null byte
 
         // modp_b64::encode_len() returns at least 1, so output[0] is safe to use.
-        size_t const output_size = modp_b64::encode(&output[0], input_view.data(), input_view.size());
+        size_t const output_size = modp_b64::encode(&output[0], input.data(), input.size());
         output.resize(output_size);
     }
 
@@ -28,15 +28,15 @@ namespace webpp::base64 {
      * The output string is only modified if successful.
      * The decoding can be done in-place.
      */
-    [[nodiscard]] bool decode(istl::StringViewifiable auto&& input, istl::String auto& output) {
-        using str_t      = stl::remove_pointer_t<stl::remove_cvref_t<decltype(output)>>;
-        auto  input_view = istl::view(stl::forward<decltype(input)>(input));
+    template <typename CharT>
+    [[nodiscard]] bool decode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+        using str_t = stl::remove_pointer_t<stl::remove_cvref_t<decltype(output)>>;
         str_t temp(output.get_allocator());
-        temp.resize(modp_b64::decode_len(input_view.size()));
+        temp.resize(modp_b64::decode_len(input.size()));
 
         // does not null terminate result since result is binary data!
-        stl::size_t const input_size  = input_view.size();
-        stl::size_t       output_size = modp_b64::decode(&(temp[0]), input_view.data(), input_size);
+        stl::size_t const input_size  = input.size();
+        stl::size_t       output_size = modp_b64::decode(&(temp[0]), input.data(), input_size);
         if (output_size == modp_b64::error) {
             return false;
         }

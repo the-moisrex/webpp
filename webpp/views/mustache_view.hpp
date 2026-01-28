@@ -104,9 +104,7 @@ namespace webpp::views {
 
                 static constexpr bool requires_renderer =
                   requires(Func func, string_view_type text, renderer_type const& renderer) {
-                      {
-                          func(text, renderer)
-                      } -> istl::StringViewifiableOf<string_type>;
+                      { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
                   };
 
               private:
@@ -126,9 +124,7 @@ namespace webpp::views {
                     if constexpr (requires_renderer) {
                         return istl::stringify_of<string_type>(func(text, renderer), string_allocator);
                     } else if constexpr (requires(Func func) {
-                                             {
-                                                 func(text)
-                                             } -> istl::StringViewifiableOf<string_type>;
+                                             { func(text) } -> istl::StringViewifiableOf<string_type>;
                                          })
                     {
                         return istl::stringify_of<string_type>(func(text), string_allocator);

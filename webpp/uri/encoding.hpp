@@ -32,8 +32,9 @@ namespace webpp::uri {
     }
 
     template <typename CharT, typename AllocT>
-    static constexpr void encode_uri_component_set_capacity(stl::basic_string_view<CharT>     str,
-                                                            stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& output) {
+    static constexpr void encode_uri_component_set_capacity(
+      stl::basic_string_view<CharT>                              str,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& output) {
         encode_uri_component_set_capacity(str.size(), output);
     }
 
@@ -136,14 +137,13 @@ namespace webpp::uri {
      * @brief this function will decode parts of uri
      * @details this function is almost the same as "decodeURIComponent" in JavaScript
      */
-    template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
-              istl::StringViewifiable StrVT   = stl::string_view,
-              istl::String            OutStrT = stl::string>
-    [[nodiscard]] static constexpr bool
-    decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
-        auto const str = istl::view(stl::forward<StrVT>(encoded_str));
-        auto       pos = str.begin();
-        return decode_uri_component<Policy>(pos, str.end(), output, chars);
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, typename CharT, typename AllocT>
+    [[nodiscard]] static constexpr bool decode_uri_component(
+      stl::basic_string_view<CharT> const                        encoded_str,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& output,
+      CharSet auto const&                                        chars) {
+        auto pos = encoded_str.begin();
+        return decode_uri_component<Policy>(pos, encoded_str.end(), output, chars);
     }
 
     /// encode one character and add it to the output
@@ -218,11 +218,11 @@ namespace webpp::uri {
      *
      * @details this function is almost the same as "encodeURIComponent" in JavaScript
      */
-    template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
-              istl::StringViewifiable InpStrT = stl::string_view>
-    static constexpr void
-    encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& policy_chars) {
-        auto const input = istl::view(stl::forward<InpStrT>(src));
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, typename CharT = char>
+    static constexpr void encode_uri_component(
+      stl::basic_string_view<CharT> const input,
+      istl::String auto&                  output,
+      CharSet auto const&                 policy_chars) {
         for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, policy_chars);
         }

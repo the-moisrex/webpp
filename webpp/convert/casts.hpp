@@ -100,16 +100,15 @@ namespace webpp {
      *
      * todo: check overflows as well
      */
-    template <typename T, T base = 10, istl::StringViewifiable StrT = stl::string_view>
-    constexpr integer_cast_result<T> to(StrT&& _str) noexcept {
+    template <typename T, T base = 10, typename CharT>
+    constexpr integer_cast_result<T> to(stl::basic_string_view<CharT> const str) noexcept {
         using enum integer_casting_errors;
         /**
          * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
 
-        auto const str = istl::view(stl::forward<StrT>(_str));
-        T          ret = 0;
-        if (!str.size()) {
+        T ret = 0;
+        if (str.empty()) {
             return ret;
         }
 
@@ -144,15 +143,15 @@ namespace webpp {
     }
 
     // NOLINTNEXTLINE(*-macro-usage)
-#define WEBPP_TO_FUNCTION(name, type)                                          \
-    template <type base = 10, istl::StringViewifiable StrT = stl::string_view> \
-    constexpr auto to_##name(StrT&& str) noexcept {                            \
-        return to<type, base, StrT>(stl::forward<StrT>(str));                  \
-    }                                                                          \
-                                                                               \
-    template <type base = 10, istl::StringViewifiable StrT = stl::string_view> \
-    constexpr auto try_to_##name(StrT&& str) noexcept {                        \
-        return to<type, base, StrT>(stl::forward<StrT>(str));                  \
+#define WEBPP_TO_FUNCTION(name, type)                                                \
+    template <type base = 10, typename CharT>                                        \
+    constexpr auto to_##name(stl::basic_string_view<CharT> const str) noexcept {     \
+        return to<type, base>(str);                                                  \
+    }                                                                                \
+                                                                                     \
+    template <type base = 10, typename CharT>                                        \
+    constexpr auto try_to_##name(stl::basic_string_view<CharT> const str) noexcept { \
+        return to<type, base>(str);                                                  \
     }
 
     WEBPP_TO_FUNCTION(int, int)

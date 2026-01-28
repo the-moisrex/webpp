@@ -29,26 +29,25 @@ namespace webpp::is {
 
     /**
      * Check if the specified string is a valid ipv4 subnet mask or not
-     * @param subnet_str
+     * @param subnet
      * @return bool an indication weather or not the specified string is a
      * valid ipv4 subnet mask or not
      */
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool subnet(StrV&& subnet_str) noexcept {
-        auto        str      = istl::view(stl::forward<StrV>(subnet_str));
+    template <typename CharT>
+    [[nodiscard]] constexpr bool subnet(stl::basic_string_view<CharT> const subnet) noexcept {
         stl::size_t next_dot = 0;
         for (uint8_t octet_index = 0U; octet_index != 4U; octet_index++) {
-            next_dot       = str.find('.');
-            auto octet_str = str.substr(0, next_dot);
+            next_dot       = subnet.find('.');
+            auto octet_str = subnet.substr(0, next_dot);
             if (octet_str.size() > 3UL || !ascii::is::digit(octet_str)) {
                 return false;
             }
             if (unsigned const octet_int = to_uint(octet_str); octet_int > 255U || subnet_octet(octet_int)) {
                 return false;
             }
-            str.remove_prefix(octet_str.size() + (octet_index != 3U));
+            subnet.remove_prefix(octet_str.size() + (octet_index != 3U));
         }
-        return str.empty();
+        return subnet.empty();
     }
 
     /**
@@ -69,13 +68,12 @@ namespace webpp::is {
 
     /**
      * @brief checks if the specified str is an ipv4
-     * @param inp_str
+     * @param str
      * @return true if str is a valid ipv4
      */
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool ipv4(StrV&& inp_str) noexcept {
+    template <typename CharT>
+    [[nodiscard]] constexpr bool ipv4(stl::basic_string_view<CharT> const str) noexcept {
         using enum inet_pton4_status;
-        auto const                                str = istl::view(stl::forward<StrV>(inp_str));
         auto                                      beg = str.begin();
         stl::array<stl::uint8_t, ipv4_byte_count> out; // NOLINT(*-member-init)
         return inet_pton4(beg, str.end(), out.data()) == valid;
@@ -86,10 +84,9 @@ namespace webpp::is {
      * is valid or not.
      * @example 192.168.0.1/24, 192.168.0.1:24
      */
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool ipv4_prefix(StrV&& inp_str) noexcept {
+    template <typename CharT>
+    [[nodiscard]] constexpr bool ipv4_prefix(stl::basic_string_view<CharT> const str) noexcept {
         using enum inet_pton4_status;
-        auto                                      str        = istl::view(stl::forward<StrV>(inp_str));
         stl::uint8_t                              prefix_val = stl::to_underlying(valid);
         stl::array<stl::uint8_t, ipv4_byte_count> bin; // NOLINT(*-member-init)
         auto                                      beg = str.begin();
@@ -101,30 +98,28 @@ namespace webpp::is {
      * is a valid IPv6 address according to the rules in
      * RFC 3986 (https://tools.ietf.org/html/rfc3986).
      *
-     * @param[in] inp_addr
+     * @param[in] ip_addr
      *     This is the IPv6 address to validate.
      *
      * @return
      *     An indication of whether or not the given address
      *     is a valid IPv6 address is returned.
      */
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool ipv6(StrV&& ip_addr) noexcept {
+    template <typename CharT>
+    [[nodiscard]] constexpr bool ipv6(stl::basic_string_view<CharT> const ip_addr) noexcept {
         using enum inet_pton6_status;
-        auto const                                ip_str = istl::view(stl::forward<StrV>(ip_addr));
-        auto                                      beg    = ip_str.begin();
-        stl::array<stl::uint8_t, ipv6_byte_count> out;             // NOLINT(*-member-init)
-        return inet_pton6(beg, ip_str.end(), out.data()) == valid; // valid_special is not valid here
+        auto                                      beg = ip_addr.begin();
+        stl::array<stl::uint8_t, ipv6_byte_count> out;              // NOLINT(*-member-init)
+        return inet_pton6(beg, ip_addr.end(), out.data()) == valid; // valid_special is not valid here
     }
 
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool ipv6_prefix(StrV&& ip_addr) noexcept {
+    template <typename CharT>
+    [[nodiscard]] constexpr bool ipv6_prefix(stl::basic_string_view<CharT> const ip_addr) noexcept {
         using enum inet_pton6_status;
-        auto                                      str        = istl::view(stl::forward<StrV>(ip_addr));
         stl::uint8_t                              prefix_val = stl::to_underlying(valid);
         stl::array<stl::uint8_t, ipv6_byte_count> bin; // NOLINT(*-member-init)
-        auto                                      beg = str.begin();
-        return is_valid(inet_pton6(beg, str.end(), bin.data(), prefix_val, '/')) && prefix_val <= ipv6_max_prefix;
+        auto                                      beg = ip_addr.begin();
+        return is_valid(inet_pton6(beg, ip_addr.end(), bin.data(), prefix_val, '/')) && prefix_val <= ipv6_max_prefix;
     }
 
     /**
@@ -133,10 +128,9 @@ namespace webpp::is {
      * @return true if str is ipv4 or ipv6
      * TODO: start supporting IPvF (IP version Future)
      */
-    template <istl::StringViewifiable StrV = stl::string_view>
-    [[nodiscard]] constexpr bool ip(StrV&& ip_str) noexcept {
-        auto const str = istl::view(stl::forward<StrV>(ip_str));
-        return is::ipv4(str) || ipv6(str);
+    template <typename CharT>
+    [[nodiscard]] constexpr bool ip(stl::basic_string_view<CharT> const ip_str) noexcept {
+        return is::ipv4(ip_str) || ipv6(ip_str);
     }
 
 

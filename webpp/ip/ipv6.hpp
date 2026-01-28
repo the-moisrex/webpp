@@ -161,21 +161,21 @@ namespace webpp {
         /**
          * parses the string_view to the uint8 structure
          */
-        constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
-            auto  ip_str  = istl::view(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
-            auto* inp_ptr = ip_str.begin();
+        template <typename CharT>
+        constexpr void parse(stl::basic_string_view<CharT> const ipv6_data) noexcept {
+            auto* inp_ptr = ipv6_data.begin();
             auto* out_ptr = _data.data();
 
             if constexpr (WithPrefix) {
                 // set the default value to valid
                 _prefix           = prefix_status(inet_pton6_status::valid);
-                auto const status = inet_pton6(inp_ptr, ip_str.end(), out_ptr, _prefix, '/');
+                auto const status = inet_pton6(inp_ptr, ipv6_data.end(), out_ptr, _prefix, '/');
                 if (!webpp::is_valid(status)) {
                     // set the status
                     _prefix = prefix_status(status);
                 }
             } else {
-                static_cast<void>(inet_pton6(inp_ptr, ip_str.end(), out_ptr));
+                static_cast<void>(inet_pton6(inp_ptr, ipv6_data.end(), out_ptr));
             }
         }
 

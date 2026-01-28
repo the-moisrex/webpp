@@ -13,86 +13,95 @@ namespace webpp::http {
     // Return true if the character is HTTP "linear white space" (SP | HT).
     // This definition corresponds with the HTTP_LWS macro, and does not match
     // newlines.
-    static constexpr bool is_lws(istl::CharType auto c) noexcept {
-        using char_type = stl::remove_cvref_t<decltype(c)>;
-        using str_v     = stl::basic_string_view<char_type>;
+    template <istl::CharType CharT>
+    static constexpr bool is_lws(CharT const code_point) noexcept {
+        using str_v = stl::basic_string_view<CharT>;
         constexpr str_v whitespaces(http_lws);
-        return whitespaces.find(c) != str_v::npos;
+        return whitespaces.find(code_point) != str_v::npos;
     }
 
     // Trim HTTP_LWS chars from the beginning and end of the string.
     // trim from start (leading whitespaces)
     template <typename Iter>
-    static inline void ltrim_lws(Iter* begin, Iter const* end) noexcept {
+    static void ltrim_lws(Iter* begin, Iter const* end) noexcept {
         ascii::ltrim(begin, end, http_lws);
     }
 
     template <typename Iter>
-    static inline void rtrim_lws(Iter const* begin, Iter* end) noexcept {
+    static void rtrim_lws(Iter const* begin, Iter* end) noexcept {
         ascii::rtrim(begin, end, http_lws);
     }
 
     template <typename Iter>
-    static inline void trim_lws(Iter* begin, Iter* end) noexcept {
+    static void trim_lws(Iter* begin, Iter* end) noexcept {
         ascii::trim(begin, end, http_lws);
     }
 
     // trim from start (in place)
-    static inline void ltrim_lws(istl::StringView auto& str) noexcept {
+    template <typename CharT>
+    static void ltrim_lws(stl::basic_string_view<CharT>& str) noexcept {
         ascii::ltrim(str, http_lws);
     }
 
-    static inline void rtrim_lws(istl::StringView auto& str) noexcept {
+    template <typename CharT>
+    static void rtrim_lws(stl::basic_string_view<CharT>& str) noexcept {
         ascii::rtrim(str, http_lws);
     }
 
-    static inline void trim_lws(istl::StringView auto& str) noexcept {
+    template <typename CharT>
+    static void trim_lws(stl::basic_string_view<CharT>& str) noexcept {
         ascii::trim(str, http_lws);
     }
 
     // trim from start (copying)
-    [[nodiscard]] static inline auto ltrim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
-        return ascii::ltrim_copy(stl::forward<decltype(s)>(s), http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto ltrim_copy_lws(stl::basic_string_view<CharT> const str) noexcept {
+        return ascii::ltrim_copy(str, http_lws);
     }
 
     // trim from end (copying)
-    [[nodiscard]] static inline auto rtrim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
-        return ascii::rtrim_copy(stl::forward<decltype(s)>(s), http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto rtrim_copy_lws(stl::basic_string_view<CharT> const str) noexcept {
+        return ascii::rtrim_copy(str, http_lws);
     }
 
     // trim from both ends (copying)
-    [[nodiscard]] static inline auto trim_copy_lws(istl::StringViewifiable auto&& s) noexcept {
-        return ascii::trim_copy(stl::forward<decltype(s)>(s), http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto trim_copy_lws(stl::basic_string_view<CharT> const str) noexcept {
+        return ascii::trim_copy(str, http_lws);
     }
 
     // trim from start (in place)
-    static inline void ltrim_lws(istl::String auto& s) noexcept {
-        ascii::ltrim(stl::forward<decltype(s)>(s), http_lws);
+    static void ltrim_lws(istl::String auto& str) noexcept {
+        ascii::ltrim(str, http_lws);
     }
 
     // trim from end (in place)
-    static inline void rtrim_lws(istl::String auto& s) noexcept {
-        ascii::rtrim(stl::forward<decltype(s)>(s), http_lws);
+    static void rtrim_lws(istl::String auto& str) noexcept {
+        ascii::rtrim(str, http_lws);
     }
 
     // trim from both ends (in place)
-    static inline void trim_lws(istl::String auto& s) noexcept {
-        ascii::trim(stl::forward<decltype(s)>(s), http_lws);
+    static void trim_lws(istl::String auto& str) noexcept {
+        ascii::trim(str, http_lws);
     }
 
     // trim from start (copying)
-    [[nodiscard]] static inline auto ltrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
-        return ascii::ltrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto ltrim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
+        return ascii::ltrim_copy(str, allocator, http_lws);
     }
 
     // trim from end (copying)
-    [[nodiscard]] static inline auto rtrim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
-        return ascii::rtrim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto rtrim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
+        return ascii::rtrim_copy(str, allocator, http_lws);
     }
 
     // trim from both ends (copying)
-    [[nodiscard]] inline auto trim_copy_lws(istl::Stringifiable auto&& s, auto const& allocator) noexcept {
-        return ascii::trim_copy(stl::forward<decltype(s)>(s), allocator, http_lws);
+    template <typename CharT>
+    [[nodiscard]] static auto trim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
+        return ascii::trim_copy(str, allocator, http_lws);
     }
 } // namespace webpp::http
 

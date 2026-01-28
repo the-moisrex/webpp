@@ -313,7 +313,7 @@ namespace webpp::uri {
       stl::type_identity<CompT>,
       [[maybe_unused]] typename CompT::iterator beg,
       [[maybe_unused]] typename CompT::iterator end,
-      istl::allocator_type_of<CompT>            alloc = {}) noexcept(CompT::is_nothrow) {
+      allocator_type_of<CompT>                  alloc = {}) noexcept(CompT::is_nothrow) {
         using seg_type = typename CompT::seg_type;
         return CompT{
           .scheme   = seg_type{alloc},
@@ -330,9 +330,9 @@ namespace webpp::uri {
     template <URIComponents CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
-      [[maybe_unused]] typename CompT::iterator       beg,
-      [[maybe_unused]] typename CompT::iterator       end,
-      [[maybe_unused]] istl::allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
+      [[maybe_unused]] typename CompT::iterator beg,
+      [[maybe_unused]] typename CompT::iterator end,
+      [[maybe_unused]] allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
         using seg_type = typename CompT::seg_type;
         return CompT{
           .scheme   = seg_type{},
@@ -349,9 +349,9 @@ namespace webpp::uri {
     template <typename CharT>
     static constexpr uri_components_u32_view<CharT> create(
       stl::type_identity<uri_components_u32_view<CharT>>,
-      typename uri_components_u32_view<CharT>::iterator                        beg,
-      [[maybe_unused]] typename uri_components_u32_view<CharT>::iterator       end,
-      [[maybe_unused]] istl::allocator_type_of<uri_components_u32_view<CharT>> alloc = {}) noexcept {
+      typename uri_components_u32_view<CharT>::iterator                  beg,
+      [[maybe_unused]] typename uri_components_u32_view<CharT>::iterator end,
+      [[maybe_unused]] allocator_type_of<uri_components_u32_view<CharT>> alloc = {}) noexcept {
         return {
           .uri_beg = beg,
         };
@@ -362,7 +362,7 @@ namespace webpp::uri {
       stl::type_identity<CompT>,
       [[maybe_unused]] typename CompT::iterator beg,
       [[maybe_unused]] typename CompT::iterator end,
-      istl::allocator_type_of<CompT>            alloc = {}) noexcept {
+      allocator_type_of<CompT>                  alloc = {}) noexcept {
         using component_type = CompT;
         using string_type    = typename component_type::string_type;
         return {.href = string_type{alloc}};

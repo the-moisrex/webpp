@@ -19,7 +19,7 @@ namespace webpp::http {
          * todo: remove this when you don't need to see the implementation
          */
         template <Traits TraitsType, Context ContextType>
-        struct json_context_extension : public ContextType {
+        struct json_context_extension : ContextType {
             using context_type       = ContextType;
             using traits_type        = TraitsType;
             using json_response_type = typename context_type::response_type;
@@ -27,9 +27,9 @@ namespace webpp::http {
 
             using context_type::context_type; // inherit the constructors
 
-            template <istl::StringViewifiable StrT>
-            constexpr HTTPResponse auto json_file(StrT&& file_path) const noexcept {
-                return json(stl::filesystem::path{istl::view(stl::forward<StrT>(file_path))});
+            template <typename CharT>
+            constexpr HTTPResponse auto json_file(stl::basic_string_view<CharT> const file_path) const noexcept {
+                return json(stl::filesystem::path{file_path});
             }
 
             template <typename... Args>

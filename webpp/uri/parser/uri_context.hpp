@@ -45,7 +45,7 @@ namespace webpp::uri {
         using seg_type       = typename component_type::seg_type;
         using iterator       = typename component_type::iterator;
         using char_type      = stl::iter_value_t<iterator>;
-        using allocator_type = istl::allocator_type_of<component_type>;
+        using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
         static constexpr bool is_modifiable = component_type::is_modifiable;
@@ -69,7 +69,7 @@ namespace webpp::uri {
         using seg_type       = typename component_type::seg_type;
         using iterator       = typename component_type::iterator;
         using char_type      = stl::iter_value_t<iterator>;
-        using allocator_type = istl::allocator_type_of<component_type>;
+        using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
         static constexpr bool is_modifiable = component_type::is_modifiable;

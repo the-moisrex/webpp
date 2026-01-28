@@ -10,7 +10,6 @@
 #include "routes/router_concepts.hpp"
 #include "status_code.hpp"
 
-#include <cstdint>
 
 namespace webpp::http {
 
@@ -117,6 +116,7 @@ namespace webpp::http {
             } else if constexpr (stl::is_nothrow_invocable_v<application_type>) {
                 return fix_response(req, application_type::operator()());
             } else if constexpr (stl::is_invocable_v<application_type, ReqType>) {
+                using enum status_code;
                 using request_type = stl::remove_cvref_t<ReqType>;
                 using etraits_type = typename request_type::enable_traits_type;
                 using return_type  = stl::invoke_result_t<application_type, ReqType>;
@@ -126,12 +126,12 @@ namespace webpp::http {
                     } catch (stl::exception const& ex) {
                         // todo: log
                         return_type res{req.get_traits()};
-                        error(req, http::status_code::internal_server_error, res);
+                        error(req, internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
                         return_type res{req.get_traits()};
-                        error(req, http::status_code::internal_server_error, res);
+                        error(req, internal_server_error, res);
                         return res;
                     }
                 } else if constexpr (stl::is_default_constructible_v<return_type>) {
@@ -140,12 +140,12 @@ namespace webpp::http {
                     } catch (stl::exception const& ex) {
                         // todo: log
                         return_type res;
-                        error(req, http::status_code::internal_server_error, res);
+                        error(req, internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
                         return_type res;
-                        error(req, http::status_code::internal_server_error, res);
+                        error(req, internal_server_error, res);
                         return res;
                     }
                 } else {

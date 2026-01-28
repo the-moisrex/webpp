@@ -32,9 +32,9 @@ namespace webpp::sdk {
         virtual void notify(stl::string_view)                    = 0;
         virtual void send_table(stl::string_view name, row_view) = 0;
 
-        template <istl::StringViewifiable StrT>
-        output_port& operator<<(StrT&& str) {
-            notify(istl::view(stl::forward<StrT>(str)));
+        template <typename CharT>
+        output_port& operator<<(stl::basic_string_view<CharT> const str) {
+            notify(str);
             return *this;
         }
     };

@@ -72,8 +72,8 @@ namespace webpp::uri {
 
     /// Owning String
     template <uri_options Options, typename CharT, typename AllocT, URIComponents BaseCompT>
-    static constexpr auto parse_uri(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& the_url, BaseCompT&& base_comps)
-      noexcept(false) {
+    static constexpr auto parse_uri(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& the_url,
+                                    BaseCompT&& base_comps) noexcept(false) {
         using context_type = uri_context<uri_components_owning<CharT, AllocT>, BaseCompT>;
         auto context       = create<context_type>(
           the_url.begin(),
@@ -84,15 +84,16 @@ namespace webpp::uri {
         return context;
     }
 
-    template <uri_options Options, istl::StringLike StrT, istl::StringViewifiable OStrV>
-    static constexpr auto parse_uri(StrT const& the_url, OStrV&& base_uri) noexcept(istl::StringView<StrT>) {
-        using iterator = typename StrT::const_iterator;
-        static_assert(stl::same_as<iterator, typename OStrV::const_iterator>,
+    template <uri_options Options, istl::StringLike StrT, typename CharT>
+    static constexpr auto parse_uri(StrT const& the_url, stl::basic_string_view<CharT> const base_uri)
+      noexcept(istl::StringView<StrT>) {
+        using iterator       = typename StrT::const_iterator;
+        using const_iterator = stl::basic_string_view<CharT>::const_iterator;
+        static_assert(stl::same_as<iterator, const_iterator>,
                       "Origin's string's char type must be the same as the specified URI's string's char type.");
-        auto const base         = istl::view(stl::forward<OStrV>(base_uri));
         using base_context_type = uri_context<stl::uint32_t, iterator>;
 
-        base_context_type origin_context{.beg = base.begin(), .pos = base.begin(), .end = base.end()};
+        base_context_type origin_context{.beg = base_uri.begin(), .pos = base_uri.begin(), .end = base_uri.end()};
         parse_uri<Options>(origin_context);
 
         return parse_uri<Options>(the_url, origin_context.out);

@@ -57,7 +57,7 @@ namespace webpp::strings {
           stl::conditional_t<stl::is_void_v<StringType>, stl::remove_cvref_t<typename best_str_t::type>, StringType>;
         auto const alloc = [&]() noexcept {
             if constexpr (!stl::is_void_v<StringType>) {
-                return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
+                return extract_allocator_of_or_default<allocator_type_of<str_type>>(strs...);
             } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
                 // using best_alloc_type = typename str_type::allocator_type;
                 auto const best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
@@ -216,7 +216,7 @@ namespace webpp::strings {
                           auto const best_alloc = best_str::get(item...).get_allocator();
                           return best_alloc;
                       } else {
-                          return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(item...);
+                          return extract_allocator_of_or_default<allocator_type_of<str_type>>(item...);
                       }
                   }();
                   str_type output{alloc};

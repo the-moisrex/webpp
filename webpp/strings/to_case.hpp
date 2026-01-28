@@ -119,31 +119,27 @@ namespace webpp::ascii {
 
     // NOLINTBEGIN(*-macro-parentheses)
     // NOLINTNEXTLINE(*-macro-usage)
-#define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                    \
-    template <istl::CharType CharT>                                                                   \
-    static constexpr_state void method(CharT* pos) noexcept {                                         \
-        for (; *pos != static_cast<CharT>('\0'); ++pos)                                               \
-            method(*pos);                                                                             \
-    }                                                                                                 \
-                                                                                                      \
-    static constexpr_state void method(istl::Stringifiable auto& str) noexcept {                      \
-        algo::chosen_algorithm##_##method(stl::forward<decltype(str)>(str));                          \
-    }                                                                                                 \
-                                                                                                      \
-    [[nodiscard]] static constexpr_state auto method##_copy(istl::Stringifiable auto _str,            \
-                                                            auto const&              allocator) noexcept {         \
-        auto str = istl::stringify(stl::move(_str), allocator);                                       \
-        method(str);                                                                                  \
-        return str;                                                                                   \
-    }                                                                                                 \
-                                                                                                      \
-                                                                                                      \
-    [[nodiscard]] static constexpr_state auto method##_copy(istl::Stringifiable auto _str) noexcept { \
-        using char_type = istl::char_type_of_t<decltype(_str)>;                                       \
-        auto str        = istl::stringify(stl::move(_str), stl::allocator<char_type>());              \
-        method(str);                                                                                  \
-        return str;                                                                                   \
+#define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                                \
+    template <istl::CharType CharT>                                                                               \
+    static constexpr_state void method(CharT* pos) noexcept {                                                     \
+        for (; *pos != static_cast<CharT>('\0'); ++pos)                                                           \
+            method(*pos);                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    template <typename CharT, typename AllocT>                                                                    \
+    static constexpr_state void method(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& str) noexcept { \
+        algo::chosen_algorithm##_##method(stl::forward<decltype(str)>(str));                                      \
+    }                                                                                                             \
+                                                                                                                  \
+    template <typename CharT, typename AllocT>                                                                    \
+    [[nodiscard]] static constexpr_state auto method##_copy(                                                      \
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> _str) noexcept {                                  \
+        stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> str = stl::move(_str);                          \
+        method(str);                                                                                              \
+        return str;                                                                                               \
     }
+
+
 
 #ifdef WEBPP_EVE
     WEBPP_TO_METHOD(to_upper, eve, inline)

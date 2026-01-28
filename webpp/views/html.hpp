@@ -8,8 +8,8 @@
 
 namespace webpp {
 
-    template <istl::String StrT, istl::StringViewifiable StrVT>
-    static constexpr StrT html_escape(StrVT&& input, StrT& out) {
+    template <typename CharT, istl::String StrT>
+    static constexpr StrT html_escape(stl::basic_string_view<CharT> const input, StrT& out) {
         // todo: consider using SIMD if it's not being optimized
         out.reserve(input.size() * 2);
         for (auto const ch : input) {

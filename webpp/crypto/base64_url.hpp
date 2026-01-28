@@ -36,10 +36,8 @@ namespace webpp::base64 {
      * The |policy| defines whether padding should be included or omitted from the
      * encoded |*output|. |input| and |*output| may reference the same storage.
      */
-    template <url_encode_policy Policy = url_encode_policy::include_padding>
-    static void url_encode(istl::StringViewifiable auto&& _input, istl::String auto& output) {
-        auto input = istl::view(stl::forward<decltype(_input)>(_input));
-
+    template <url_encode_policy Policy = url_encode_policy::include_padding, typename CharT = char>
+    static void url_encode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
         base64::encode(input, output);
 
         stl::replace(output.begin(), output.end(), '+', '-');
@@ -63,9 +61,8 @@ namespace webpp::base64 {
      * The |policy| defines whether padding will be required, ignored or disallowed
      * altogether. |input| and |*output| may reference the same storage.
      */
-    template <url_decode_policy Policy = url_decode_policy::require_padding>
-    [[nodiscard]] bool url_decode(istl::StringViewifiable auto&& _input, istl::String auto& output) {
-        auto input  = istl::view(stl::forward<decltype(_input)>(_input));
+    template <url_decode_policy Policy = url_decode_policy::require_padding, typename CharT = char>
+    [[nodiscard]] bool url_decode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
         using str_t = stl::remove_cvref_t<decltype(output)>;
         using str_v = stl::remove_cvref_t<decltype(input)>;
 

@@ -19,7 +19,8 @@ namespace webpp {
         using stl::variant<ipv4, ipv6>::variant;
 
       private:
-        constexpr void parse(stl::string_view ip_addr) noexcept {
+        template <typename CharT>
+        constexpr void parse(stl::basic_string_view<CharT> ip_addr) noexcept {
             // first, let's try parsing it as an ipv4 address
             if (ipv4 const ip4{ip_addr}; ip4.status() == inet_pton4_status::invalid_character) {
                 *this = ipv6{ip_addr};
@@ -42,19 +43,14 @@ namespace webpp {
         // invalid ipv4
         constexpr ip_address() noexcept : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <istl::StringViewifiable StrT>
-            requires(!istl::cvref_as<StrT, ip_address>)
-        explicit constexpr ip_address(StrT&& ip_addr) noexcept {
-            parse(istl::view(stl::forward<StrT>(ip_addr)));
+        template <typename CharT>
+        explicit constexpr ip_address(stl::basic_string_view<CharT> const ip_addr) noexcept {
+            parse(ip_addr);
         }
 
-        // NOLINTEND(bugprone-forwarding-reference-overload)
-
-        template <istl::StringViewifiable StrT>
-            requires(!istl::cvref_as<StrT, ip_address>)
-        constexpr ip_address& operator=(StrT&& ip_addr) noexcept {
-            parse(istl::view(stl::forward<StrT>(ip_addr)));
+        template <typename CharT>
+        constexpr ip_address& operator=(stl::basic_string_view<CharT> const ip_addr) noexcept {
+            parse(ip_addr);
             return *this;
         }
 
@@ -87,10 +83,10 @@ namespace webpp {
               ipv4{ip_int, prefix}
         } {}
 
-        template <istl::StringViewifiable StrT>
-        constexpr explicit ip_address(stl::uint32_t const ip_addr, StrT&& subnet) noexcept
+        template <typename CharT>
+        constexpr explicit ip_address(stl::uint32_t const ip_addr, stl::basic_string_view<CharT> const subnet) noexcept
           : ip_address{
-              ipv4{ip_addr, stl::forward<StrT>(subnet)}
+              ipv4{ip_addr, subnet}
         } {}
 
         explicit constexpr ip_address(ipv4_octets const ip_addr,
@@ -99,10 +95,10 @@ namespace webpp {
               ipv4{ip_addr, prefix}
         } {}
 
-        template <istl::StringViewifiable StrT>
-        constexpr ip_address(ipv4_octets const ip_addr, StrT&& subnet) noexcept
+        template <typename CharT>
+        constexpr ip_address(ipv4_octets const ip_addr, stl::basic_string_view<CharT> const subnet) noexcept
           : ip_address{
-              ipv4{ip_addr, stl::forward<StrT>(subnet)}
+              ipv4{ip_addr, subnet}
         } {}
 
         constexpr ip_address(ipv4_octets const ip_addr, ipv4_octets const subnet) noexcept
@@ -153,11 +149,11 @@ namespace webpp {
             return is_v6() && as_v6() == ip_addr;
         }
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr bool operator==(StrT&& ip_str) const noexcept {
+        template <typename CharT>
+        [[nodiscard]] constexpr bool operator==(stl::basic_string_view<CharT> const ip_str) const noexcept {
             // this implementation works too, but it's not "noexcept":
             //   *this == address{stl::forward<StrT>(ip)};
-            ip_address const addr{stl::forward<StrT>(ip_str)};
+            ip_address const addr{ip_str};
             if (addr.index() == index()) {
                 if (auto const* ip4 = get_if<ipv4>(&as_variant())) {
                     return *ip4 == addr.as_v4();
@@ -196,9 +192,10 @@ namespace webpp {
             return stl::partial_ordering::unordered;
         }
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr stl::partial_ordering operator<=>(StrT&& ip_addr) const noexcept {
-            return *this <=> ip_address{stl::forward<StrT>(ip_addr)};
+        template <typename CharT>
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(
+          stl::basic_string_view<CharT> const ip_addr) const noexcept {
+            return *this <=> ip_address{ip_addr};
         }
 
         // Run the specified function/lambda with the right pick
