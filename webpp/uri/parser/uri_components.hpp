@@ -346,7 +346,7 @@ namespace webpp::uri {
         };
     }
 
-    template <typename CharT>
+    template <istl::CharType CharT>
     static constexpr uri_components_u32_view<CharT> create(
       stl::type_identity<uri_components_u32_view<CharT>>,
       typename uri_components_u32_view<CharT>::iterator                  beg,
@@ -804,6 +804,10 @@ namespace webpp::uri {
         fragment(comp) = stl::move(value);
     }
 
+    [[nodiscard]] constexpr bool has_scheme(URIComponents auto const& comp) noexcept {
+        return scheme(comp).empty();
+    }
+
     [[nodiscard]] constexpr bool has_username(URIComponents auto const& comp) noexcept {
         return username(comp).empty();
     }
@@ -814,6 +818,22 @@ namespace webpp::uri {
 
     [[nodiscard]] constexpr bool has_credentials(URIComponents auto const& components) noexcept {
         return has_username(components) || has_password(components);
+    }
+
+    [[nodiscard]] constexpr bool has_hostname(URIComponents auto const& comp) noexcept {
+        return hostname(comp).empty();
+    }
+
+    [[nodiscard]] constexpr bool has_path(URIComponents auto const& comp) noexcept {
+        return path(comp).empty();
+    }
+
+    [[nodiscard]] constexpr bool has_queries(URIComponents auto const& comp) noexcept {
+        return queries(comp).empty();
+    }
+
+    [[nodiscard]] constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
+        return fragment(comp).empty();
     }
 
 

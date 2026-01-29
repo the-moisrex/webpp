@@ -47,6 +47,8 @@ namespace webpp::uri {
         using char_type        = CharT;
         using storage_type     = stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_view_type>;
 
+        using storage_type::variant; // ctor
+
         [[nodiscard]] constexpr string_view_type const* as_domain() const noexcept webpp_lifetimebound {
             return get_if<string_view_type>(this);
         }

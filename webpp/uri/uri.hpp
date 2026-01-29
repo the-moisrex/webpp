@@ -70,7 +70,7 @@ namespace webpp::uri {
             m_status = ctx.status;
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
         constexpr uri_status_type parse(string_view_type const str) noexcept(is_nothrow) {
             return parse<Options>(str.begin(), str.end());
         }
@@ -81,11 +81,18 @@ namespace webpp::uri {
             parse(beg, end);
         }
 
-        template <typename CharT>
-        explicit(false) constexpr basic_uri(stl::basic_string_view<CharT> const uri_str,
-                                            allocator_type const&               alloc = {}) // NOLINT(*-explicit-*)
+        explicit constexpr basic_uri(string_view_type const uri_str,
+                                     allocator_type const&  alloc = {}) // NOLINT(*-explicit-*)
           noexcept(is_nothrow)
-          : basic_uri{create<component_type>(uri_str.begin(), uri_str.end(), alloc)} {}
+          : basic_uri{uri_str, alloc} {}
+
+        template <stl::size_t N>
+        explicit(false) constexpr basic_uri(
+          char_type const (&uri_str)[N],
+          allocator_type const& alloc =
+            allocator_type{
+        }) noexcept(is_nothrow)
+          : basic_uri{string_view_type{uri_str, N}, alloc} {}
 
         constexpr basic_uri()
             requires(stl::is_default_constructible_v<string_type>)
@@ -120,7 +127,7 @@ namespace webpp::uri {
             return hostname(components);
         }
 
-        [[nodiscard]] constexpr basic_host<char_type> hostname() const noexcept {
+        constexpr basic_host<char_type> hostname() const noexcept {
             return {hostname(components)};
         }
 
@@ -148,11 +155,11 @@ namespace webpp::uri {
             return queries(components);
         }
 
-        [[nodiscard]] constexpr basic_path<string_type> path() const noexcept {
+        constexpr basic_path<string_type> path() const noexcept {
             return {path(components)};
         }
 
-        [[nodiscard]] constexpr basic_queries<char_type> queries() const noexcept {
+        constexpr basic_queries<char_type> queries() const noexcept {
             return {queries(components)};
         }
 
@@ -208,19 +215,19 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_scheme() const noexcept {
-            return has_scheme(components);
+            return uri::has_scheme(components);
         }
 
         [[nodiscard]] constexpr bool has_hostname() const noexcept {
-            return has_hostname(components);
+            return uri::has_hostname(components);
         }
 
         [[nodiscard]] constexpr bool has_username() const noexcept {
-            return has_username(components);
+            return uri::has_username(components);
         }
 
         [[nodiscard]] constexpr bool has_password() const noexcept {
-            return has_password(components);
+            return uri::has_password(components);
         }
 
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
@@ -228,19 +235,19 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_port() const noexcept {
-            return has_port(components);
+            return uri::has_port(components);
         }
 
         [[nodiscard]] constexpr bool has_path() const noexcept {
-            return has_path(components);
+            return uri::has_path(components);
         }
 
         [[nodiscard]] constexpr bool has_queries() const noexcept {
-            return has_queries(components);
+            return uri::has_queries(components);
         }
 
         [[nodiscard]] constexpr bool has_fragment() const noexcept {
-            return has_fragment(components);
+            return uri::has_fragment(components);
         }
 
         /**
@@ -257,38 +264,6 @@ namespace webpp::uri {
             parse(str);
             return *this;
         }
-
-        // [[nodiscard]] constexpr basic_scheme<> scheme() noexcept {
-        //     return
-        // }
-        //
-        // [[nodiscard]] constexpr auto& hostname() noexcept {
-        //     return as_components().hostname();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& username() noexcept {
-        //     return as_components().username();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& password() noexcept {
-        //     return as_components().password();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& port() noexcept {
-        //     return as_components().port();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& path() noexcept {
-        //     return as_components().path();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& queries() noexcept {
-        //     return as_components().queries();
-        // }
-        //
-        // [[nodiscard]] constexpr auto& fragment() noexcept {
-        //     return as_components().fragment();
-        // }
 
         /**
          * @brief check if we have value
@@ -357,7 +332,7 @@ namespace webpp::uri {
             return as_string<modifiable_string_type>();
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
         constexpr void href(string_view_type const str) noexcept(is_nothrow) {
             parse<Options>(str);
         }
@@ -440,7 +415,7 @@ namespace webpp::uri {
             return has_flag(m_status, uri_status::opaque_path);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type scheme(string_view_type const str) noexcept(is_nothrow) {
             auto status_res = parse_step<Options>(str.begin(), str.end(), uri_status::unparsed);
@@ -454,25 +429,25 @@ namespace webpp::uri {
             return status_res;
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type authority(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type username(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type password(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type hostname(string_view_type const str) noexcept(is_nothrow) {
             // https://url.spec.whatwg.org/#dom-url-hostname
@@ -483,7 +458,7 @@ namespace webpp::uri {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type port(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_port);
@@ -495,19 +470,19 @@ namespace webpp::uri {
             return this->port().assign(port_num);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type path(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_path);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type queries(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_queries);
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type fragment(string_view_type const str) noexcept(is_nothrow) {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_fragment);
