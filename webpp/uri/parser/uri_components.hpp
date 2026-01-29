@@ -716,9 +716,20 @@ namespace webpp::uri {
     //////////////////////////////////////// General Components ////////////////////////////////////////
     //////////////////////////////////////// ////////////////// ////////////////////////////////////////
 
+    // Helper function to get a string_view from a string-like object
+    template <typename StringType>
+    [[nodiscard]] constexpr auto make_view(StringType&& str) noexcept {
+        using T = stl::remove_cvref_t<StringType>;
+        if constexpr (istl::StringView<T>) {
+            return stl::forward<StringType>(str);
+        } else {
+            return stl::basic_string_view<typename T::value_type>{stl::forward<StringType>(str)};
+        }
+    }
+
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& scheme(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).scheme;
+    [[nodiscard]] constexpr auto scheme(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).scheme);
     }
 
     template <URIComponents CompT>
@@ -727,8 +738,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& username(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).username;
+    [[nodiscard]] constexpr auto username(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).username);
     }
 
     template <URIComponents CompT>
@@ -737,8 +748,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& password(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).password;
+    [[nodiscard]] constexpr auto password(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).password);
     }
 
     template <URIComponents CompT>
@@ -747,8 +758,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& hostname(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).hostname;
+    [[nodiscard]] constexpr auto hostname(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).hostname);
     }
 
     template <URIComponents CompT>
@@ -757,8 +768,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& port(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).port;
+    [[nodiscard]] constexpr auto port(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).port);
     }
 
     template <URIComponents CompT>
@@ -776,8 +787,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& queries(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).queries;
+    [[nodiscard]] constexpr auto queries(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).queries);
     }
 
     template <URIComponents CompT>
@@ -786,8 +797,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& path(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).path;
+    [[nodiscard]] constexpr auto path(CompT&& comp) noexcept {
+        return make_view(stl::forward<CompT>(comp).path);
     }
 
     template <URIComponents CompT>

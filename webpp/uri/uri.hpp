@@ -116,31 +116,31 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr string_view_type scheme_view() const noexcept {
-            return scheme(components);
+            return uri::scheme(components);
         }
 
         constexpr basic_scheme<char_type> scheme() const noexcept {
-            return {scheme(components)};
+            return {uri::scheme(components)};
         }
 
         [[nodiscard]] constexpr string_view_type hostname_view() const noexcept {
-            return hostname(components);
+            return uri::hostname(components);
         }
 
         constexpr basic_host<char_type> hostname() const noexcept {
-            return {hostname(components)};
+            return {uri::hostname(components)};
         }
 
         [[nodiscard]] constexpr string_view_type port_view() const noexcept {
-            return port(components);
+            return uri::port(components);
         }
 
         [[nodiscard]] constexpr string_view_type username() const noexcept {
-            return username(components);
+            return uri::username(components);
         }
 
         [[nodiscard]] constexpr string_view_type password() const noexcept {
-            return password(components);
+            return uri::password(components);
         }
 
         [[nodiscard]] constexpr string_view_type authority() const noexcept {
@@ -148,23 +148,23 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr string_view_type path_view() const noexcept {
-            return path(components);
+            return uri::path(components);
         }
 
         [[nodiscard]] constexpr string_view_type queries_view() const noexcept {
-            return queries(components);
+            return uri::queries(components);
         }
 
         constexpr basic_path<string_type> path() const noexcept {
-            return {path(components)};
+            return {uri::path(components)};
         }
 
         constexpr basic_queries<char_type> queries() const noexcept {
-            return {queries(components)};
+            return {uri::queries(components)};
         }
 
         [[nodiscard]] constexpr string_view_type fragment() const noexcept {
-            return fragment(components);
+            return uri::fragment(components);
         }
 
         constexpr void clear_scheme() noexcept(is_nothrow) {
@@ -289,21 +289,21 @@ namespace webpp::uri {
             } else {
                 out.reserve(length());
             }
-            render_scheme(scheme(components), out, true);
+            render_scheme(uri::scheme(components), out, true);
             if (has_hostname()) {
                 out.append('/');
                 out.append('/');
                 if (has_credentials()) {
-                    render_username(username(components), out);
+                    render_username(uri::username(components), out);
                     if (has_password()) {
                         out.append(':');
-                        render_password(password(components), out);
+                        render_password(uri::password(components), out);
                     }
                     out.append('@');
                 }
-                render_hostname(hostname(components), out);
-                if (!port().is_default_port(scheme(components))) {
-                    render_port(port(components), out, true);
+                render_hostname(uri::hostname(components), out);
+                if (!port().is_default_port(scheme())) {
+                    render_port(uri::port(components), out, true);
                 }
             } else if (!is_opaque() && path().size() > 1 && path().front().empty()) {
                 // If url’s host is null, url does not have an opaque path, url’s path’s size is greater than
@@ -316,9 +316,9 @@ namespace webpp::uri {
                 out.append('.');
             }
 
-            render_path(path(components), out);
-            render_queries(queries(components), out, true);
-            render_fragment(fragment(components), out, true);
+            render_path(uri::path(components), out);
+            render_queries(uri::queries(components), out, true);
+            render_fragment(uri::fragment(components), out, true);
         }
 
         template <typename... Args>
