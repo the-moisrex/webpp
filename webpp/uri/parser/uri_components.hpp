@@ -686,6 +686,14 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
+    [[nodiscard]] constexpr auto authority(CompT const& comps) noexcept(CompT::is_nothrow) {
+        if (comps.authority_start == CompT::omitted || comps.authority_end == CompT::omitted) {
+            return view(comps);
+        }
+        return view(comps, comps.authority_start, comps.authority_end - comps.authority_start);
+    }
+
+    template <URIRelativeComponents CompT>
     [[nodiscard]] constexpr auto path(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.authority_end == CompT::omitted) {
             return view(comps);
@@ -760,6 +768,62 @@ namespace webpp::uri {
     template <URIComponents CompT>
     [[nodiscard]] constexpr auto hostname(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).hostname);
+    }
+
+    // For href-based components, the authority is the substring from the start of the first authority
+    // component to the end of the last authority component
+    template <URIHrefComponents CompT>
+    [[nodiscard]] constexpr auto authority( CompT const& comp) noexcept {
+        using string_view_type = typename CompT::string_view_type;
+
+        // If there's no hostname, there's no authority
+        if (comp.hostname.empty()) {
+            return string_view_type{};
+        }
+
+        // Find the start of the authority (earliest of username, password, hostname)
+        auto const& href_str = comp.href;
+        auto const href_view = string_view_type{href_str};
+
+        auto start_ptr = comp.hostname.data();
+        auto end_ptr = start_ptr + comp.hostname.length();
+
+        // Check if username exists and comes earlier
+        if (!comp.username.empty() && comp.username.data() < start_ptr) {
+            start_ptr = comp.username.data();
+        }
+
+        // Check if password exists and comes earlier or later
+        if (!comp.password.empty()) {
+            if (comp.password.data() < start_ptr) {
+                start_ptr = comp.password.data();
+            }
+            // Extend end if password goes further
+            auto const password_end = comp.password.data() + comp.password.length();
+            if (password_end > end_ptr) {
+                end_ptr = password_end;
+            }
+        }
+
+        // Extend end if hostname goes further
+        auto const hostname_end = comp.hostname.data() + comp.hostname.length();
+        if (hostname_end > end_ptr) {
+            end_ptr = hostname_end;
+        }
+
+        // Extend end if port exists and goes further
+        if (!comp.port.empty()) {
+            auto const port_end = comp.port.data() + comp.port.length();
+            if (port_end > end_ptr) {
+                end_ptr = port_end;
+            }
+        }
+
+        // Calculate the offset and length
+        auto const start_offset = start_ptr - href_view.data();
+        auto const length = end_ptr - start_ptr;
+
+        return href_view.substr(start_offset, length);
     }
 
     template <URIComponents CompT>

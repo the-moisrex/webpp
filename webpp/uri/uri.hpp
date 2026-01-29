@@ -6,6 +6,7 @@
 #include "../std/string_view.hpp"
 #include "../strings/to_case.hpp"
 #include "./parser/parse_uri.hpp"
+#include "credentials.hpp"
 #include "fragment.hpp"
 #include "host.hpp"
 #include "path.hpp"
@@ -143,8 +144,26 @@ namespace webpp::uri {
             return uri::password(components);
         }
 
-        [[nodiscard]] constexpr string_view_type authority() const noexcept {
-            // todo
+        /// @returns string/string_view
+        [[nodiscard]] constexpr auto authority() const
+          noexcept(URIRelativeComponents<component_type> || URIHrefComponents<component_type>) {
+            if constexpr (URIRelativeComponents<component_type> || URIHrefComponents<component_type>) {
+                // For relative components, we can extract the authority directly from the original string
+                // For href-based components, we can calculate the start and end of it.
+                return uri::authority(components);
+            } else {
+                // For other component types, we need to construct the authority string
+                // This returns a temporary string, not a string_view
+                modifiable_string_type out;
+                out.reserve(64); // Reserve reasonable size for authority
+                render_authority(
+                  uri::username(components),
+                  uri::password(components),
+                  uri::hostname(components),
+                  uri::port(components),
+                  out);
+                return out;
+            }
         }
 
         [[nodiscard]] constexpr string_view_type path_view() const noexcept {
