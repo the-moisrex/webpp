@@ -25,17 +25,17 @@ namespace webpp::uri {
      * Though this doesn't mean we would force them to a specific name for each the of the components.
      */
     template <typename T>
-    concept URIComponents = requires(T comps) {
-        T::is_nothrow;
-        T::is_modifiable;
-        T::is_segregated;
-        T::max_supported_length;
+    concept URIComponents = requires {
+        stl::remove_cvref_t<T>::is_nothrow;
+        stl::remove_cvref_t<T>::is_modifiable;
+        stl::remove_cvref_t<T>::is_segregated;
+        stl::remove_cvref_t<T>::max_supported_length;
     };
 
     /// Relative Components are components that only point to the components of a URL using numbers or iterators or a
     /// combination of them.
     template <typename T>
-    concept URIRelativeComponents = URIComponents<T> && requires(T comps) {
+    concept URIRelativeComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) {
         comps.uri_beg;
         comps.scheme_end;
         comps.authority_start;
@@ -51,41 +51,42 @@ namespace webpp::uri {
     /// Href Components are components that store the `.href()` strings directly, and may or may not include the
     /// components as string views that point to that main href string.
     template <typename T>
-    concept URIHrefComponents = URIComponents<T> && requires(T comps) { comps.href; };
+    concept URIHrefComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) { comps.href; };
 
     /// Structured Components are components that store each URI's components separately.
     template <typename T>
-    concept URIStructuredComponents = URIComponents<T> && requires(T comps) {
-        typename T::string_type;
-        typename T::vec_type;
-        typename T::map_type;
-        { comps.scheme } -> stl::same_as<typename T::string_type>;
-        { comps.username } -> stl::same_as<typename T::string_type>;
-        { comps.password } -> stl::same_as<typename T::string_type>;
-        { comps.hostname } -> stl::same_as<typename T::string_type>;
-        { comps.port } -> stl::same_as<typename T::string_type>;
-        { comps.path } -> stl::same_as<typename T::vec_type>;
-        { comps.queries } -> stl::same_as<typename T::map_type>;
-        { comps.fragment } -> stl::same_as<typename T::string_type>;
+    concept URIStructuredComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) {
+        typename stl::remove_cvref_t<T>::string_type;
+        typename stl::remove_cvref_t<T>::vec_type;
+        typename stl::remove_cvref_t<T>::map_type;
+        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.port } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::vec_type>;
+        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::map_type>;
+        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
     };
 
     /// Owning Components are components that are using strings and not string views.
     template <typename T>
-    concept URIOwningComponents = URIComponents<T> && requires(T comps) {
-        requires istl::String<typename T::string_type>;
-        { comps.scheme } -> stl::same_as<typename T::string_type>;
-        { comps.username } -> stl::same_as<typename T::string_type>;
-        { comps.password } -> stl::same_as<typename T::string_type>;
-        { comps.hostname } -> stl::same_as<typename T::string_type>;
-        { comps.port } -> stl::same_as<typename T::string_type>;
-        { comps.path } -> stl::same_as<typename T::string_type>;
-        { comps.queries } -> stl::same_as<typename T::string_type>;
-        { comps.fragment } -> stl::same_as<typename T::string_type>;
+    concept URIOwningComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) {
+        requires istl::String<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.port } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
     };
 
 
     template <typename T>
-    concept URIModifiableComponents = URIComponents<T> && requires { requires istl::String<typename T::string_type>; };
+    concept URIModifiableComponents =
+      URIComponents<T> && requires { requires istl::String<typename stl::remove_cvref_t<T>::string_type>; };
 
     /**
      * An output type that is like a vector or a map
@@ -805,15 +806,15 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] constexpr bool has_scheme(URIComponents auto const& comp) noexcept {
-        return scheme(comp).empty();
+        return !scheme(comp).empty();
     }
 
     [[nodiscard]] constexpr bool has_username(URIComponents auto const& comp) noexcept {
-        return username(comp).empty();
+        return !username(comp).empty();
     }
 
     [[nodiscard]] constexpr bool has_password(URIComponents auto const& components) noexcept {
-        return password(components).empty();
+        return !password(components).empty();
     }
 
     [[nodiscard]] constexpr bool has_credentials(URIComponents auto const& components) noexcept {
@@ -821,19 +822,19 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] constexpr bool has_hostname(URIComponents auto const& comp) noexcept {
-        return hostname(comp).empty();
+        return !hostname(comp).empty();
     }
 
     [[nodiscard]] constexpr bool has_path(URIComponents auto const& comp) noexcept {
-        return path(comp).empty();
+        return !path(comp).empty();
     }
 
     [[nodiscard]] constexpr bool has_queries(URIComponents auto const& comp) noexcept {
-        return queries(comp).empty();
+        return !queries(comp).empty();
     }
 
     [[nodiscard]] constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
-        return fragment(comp).empty();
+        return !fragment(comp).empty();
     }
 
 
