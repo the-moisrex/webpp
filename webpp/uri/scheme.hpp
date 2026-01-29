@@ -33,8 +33,12 @@ namespace webpp::uri {
         using string_view_type = stl::basic_string_view<CharT>;
         using string_type      = stl::basic_string<CharT>;
 
-        // ctor
+        // constructors
         using stl::basic_string_view<CharT>::basic_string_view;
+
+        // Explicit constructor to handle basic_string_view initialization
+        explicit constexpr basic_scheme(stl::basic_string_view<CharT> sv) noexcept
+          : stl::basic_string_view<CharT>(sv) {}
 
         /**
          * Return the default for the current scheme.

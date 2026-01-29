@@ -120,7 +120,7 @@ namespace webpp::uri {
         }
 
         constexpr basic_scheme<char_type> scheme() const noexcept {
-            return {uri::scheme(components)};
+            return basic_scheme<char_type>{uri::scheme(components)};
         }
 
         [[nodiscard]] constexpr string_view_type hostname_view() const noexcept {
@@ -128,7 +128,7 @@ namespace webpp::uri {
         }
 
         constexpr basic_host<char_type> hostname() const noexcept {
-            return {uri::hostname(components)};
+            return basic_host<char_type>{uri::hostname(components)};
         }
 
         [[nodiscard]] constexpr string_view_type port_view() const noexcept {
@@ -156,11 +156,11 @@ namespace webpp::uri {
         }
 
         constexpr basic_path<string_type> path() const noexcept {
-            return {uri::path(components)};
+            return basic_path<string_type>{uri::path(components)};
         }
 
         constexpr basic_queries<char_type> queries() const noexcept {
-            return {uri::queries(components)};
+            return basic_queries<char_type>{uri::queries(components)};
         }
 
         [[nodiscard]] constexpr string_view_type fragment() const noexcept {
