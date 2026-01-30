@@ -174,8 +174,12 @@ namespace webpp::uri {
             return uri::queries(components);
         }
 
-        constexpr basic_path<string_type> path() const noexcept {
-            return basic_path<string_type>{uri::path(components)};
+        [[nodiscard]] constexpr auto path() const noexcept {
+            if constexpr (URIStructuredComponents<component_type>) {
+                return basic_path<string_type>{uri::path(components)};
+            } else {
+                return path_view();
+            }
         }
 
         constexpr basic_queries<char_type> queries() const noexcept {
