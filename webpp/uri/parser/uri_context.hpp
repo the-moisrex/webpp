@@ -14,23 +14,35 @@ namespace webpp::uri {
     /**
      * URI Context is everything we need during parsing of a URL
      */
-    template <typename T>
-    concept URIContext = requires(T ctx) {
-        typename T::iterator;
-        requires URIComponents<typename T::out_type>;
-        requires URIComponents<typename T::base_type> || stl::is_void_v<typename T::base_type>;
-        typename T::char_type;
+    template <typename T, typename U = stl::remove_cvref_t<T>>
+    concept URIContext = requires(U ctx) {
+        // Source iterator
+        typename U::iterator;
 
-        T::is_nothrow;
-        T::is_modifiable;
-        T::is_segregated;
+        // Component type
+        requires URIComponents<typename U::component_type>;
 
-        ctx.pos;
-        ctx.beg;
-        ctx.end;
-        ctx.out;
-        ctx.base;
+        // Base type (that component type would inherit from)
+        requires URIComponents<typename U::base_type> || stl::is_void_v<typename U::base_type>;
+
+        // Character type
+        typename U::char_type;
+
+        U::is_nothrow;
+        U::is_modifiable;
+        U::is_segregated;
+
+        { ctx.beg } -> stl::same_as<typename U::iterator>;
+        { ctx.pos } -> stl::same_as<typename U::iterator>;
+        { ctx.end } -> stl::same_as<typename U::iterator>;
+        { ctx.out } -> stl::same_as<typename U::component_type>;
+        { ctx.base } -> stl::same_as<typename U::base_type>;
         ctx.status;
+
+        // Compatibility Check: If base type is modifiable, then component type must be modifiable as well.
+        requires(URIModifiableComponents<typename U::component_type> &&
+                 URIModifiableComponents<typename U::base_type>) ||
+                  (!URIModifiableComponents<typename U::base_type>);
     };
 
     /**

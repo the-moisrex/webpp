@@ -52,6 +52,7 @@ namespace webpp::uri {
           noexcept(is_nothrow) {
             using enum uri_status;
             using context_type = uri_context<component_type, void>;
+            static_assert(URIContext<context_type>, "Component types of output and base must match.");
 
             auto ctx   = create<context_type>(beg, end, get_allocator());
             // todo: ctx.out = ;
@@ -65,7 +66,9 @@ namespace webpp::uri {
         template <uri_options Options, typename Iter>
         constexpr void parse(Iter beg, Iter end) noexcept(is_nothrow) {
             using context_type = uri_context<component_type, void>;
-            auto ctx           = create<context_type>(beg, end, get_allocator());
+            static_assert(URIContext<context_type>, "Component types of output and base must match.");
+
+            auto ctx = create<context_type>(beg, end, get_allocator());
             // todo: ctx.out = ;
             parse_uri<Options>(ctx);
             m_status = ctx.status;
