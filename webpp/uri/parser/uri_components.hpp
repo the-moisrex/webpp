@@ -26,6 +26,9 @@ namespace webpp::uri {
      */
     template <typename T>
     concept URIComponents = requires {
+        typename stl::remove_cvref_t<T>::seg_type; // segment type (string/string-view/uint32_t/...)
+        typename stl::remove_cvref_t<T>::iterator; // it's needed for uri context
+
         stl::remove_cvref_t<T>::is_nothrow;
         stl::remove_cvref_t<T>::is_modifiable;
         stl::remove_cvref_t<T>::is_segregated;
@@ -128,6 +131,7 @@ namespace webpp::uri {
         using seg_type              = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
+        using iterator              = typename string_type::iterator;
 
         static constexpr seg_type omitted              = stl::numeric_limits<seg_type>::max();
         static constexpr auto     max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -153,7 +157,7 @@ namespace webpp::uri {
     /**
      * Non-Owning completely
      */
-    template <typename CharT = char32_t>
+    template <istl::CharType CharT = char32_t>
     struct [[nodiscard]] uri_components_u32_view {
         using seg_type         = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_view_type = stl::basic_string_view<CharT>;
@@ -184,7 +188,7 @@ namespace webpp::uri {
     /**
      * String View based, but still structured enough
      */
-    template <typename CharT = char32_t>
+    template <istl::CharType CharT = char32_t>
     struct [[nodiscard]] uri_components_view {
         using string_type  = stl::basic_string_view<CharT>;
         using iterator     = typename string_type::iterator;
@@ -214,7 +218,7 @@ namespace webpp::uri {
     /**
      * String-Based, owning URI Components
      */
-    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
     struct [[nodiscard]] uri_components_owning {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -243,7 +247,7 @@ namespace webpp::uri {
      * Single-Source based URI Components.
      * Let's have one single href, and have components as string views pointing to that source
      */
-    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
     struct [[nodiscard]] uri_components_href {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -278,11 +282,12 @@ namespace webpp::uri {
      *   - Queries are mapped (or rather vector of pairs).
      *   - Strings own their data.
      */
-    template <typename CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
     struct [[nodiscard]] uri_components_structured {
         using char_type             = CharT;
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
+        using iterator              = typename string_type::iterator;
         using size_type             = typename string_type::size_type;
         using vec_type              = stl::vector<string_type, AllocT>;
         using pair_type             = stl::pair<string_type const, string_type>;
@@ -773,7 +778,7 @@ namespace webpp::uri {
     // For href-based components, the authority is the substring from the start of the first authority
     // component to the end of the last authority component
     template <URIHrefComponents CompT>
-    [[nodiscard]] constexpr auto authority( CompT const& comp) noexcept {
+    [[nodiscard]] constexpr auto authority(CompT const& comp) noexcept {
         using string_view_type = typename CompT::string_view_type;
 
         // If there's no hostname, there's no authority
@@ -782,11 +787,11 @@ namespace webpp::uri {
         }
 
         // Find the start of the authority (earliest of username, password, hostname)
-        auto const& href_str = comp.href;
-        auto const href_view = string_view_type{href_str};
+        auto const& href_str  = comp.href;
+        auto const  href_view = string_view_type{href_str};
 
         auto start_ptr = comp.hostname.data();
-        auto end_ptr = start_ptr + comp.hostname.length();
+        auto end_ptr   = start_ptr + comp.hostname.length();
 
         // Check if username exists and comes earlier
         if (!comp.username.empty() && comp.username.data() < start_ptr) {
@@ -821,7 +826,7 @@ namespace webpp::uri {
 
         // Calculate the offset and length
         auto const start_offset = start_ptr - href_view.data();
-        auto const length = end_ptr - start_ptr;
+        auto const length       = end_ptr - start_ptr;
 
         return href_view.substr(start_offset, length);
     }

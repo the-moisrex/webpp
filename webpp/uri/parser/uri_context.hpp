@@ -17,12 +17,9 @@ namespace webpp::uri {
     template <typename T>
     concept URIContext = requires(T ctx) {
         typename T::iterator;
-        typename T::out_type;
-        typename T::out_seg_type;
-        typename T::base_seg_type;
-        typename T::base_type;
+        requires URIComponents<typename T::out_type>;
+        requires URIComponents<typename T::base_type> || stl::is_void_v<typename T::base_type>;
         typename T::char_type;
-        typename T::vec_iterator;
 
         T::is_nothrow;
         T::is_modifiable;
@@ -31,6 +28,7 @@ namespace webpp::uri {
         ctx.pos;
         ctx.beg;
         ctx.end;
+        ctx.out;
         ctx.base;
         ctx.status;
     };
@@ -38,7 +36,8 @@ namespace webpp::uri {
     /**
      * A class used during parsing a URI
      */
-    template <URIComponents CompType, URIComponents BaseType = void>
+    template <URIComponents CompType, typename BaseType = void>
+        requires(URIComponents<BaseType> || stl::same_as<BaseType, void>)
     struct uri_context {
         using component_type = CompType;
         using base_type      = BaseType;
