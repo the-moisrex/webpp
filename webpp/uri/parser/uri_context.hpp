@@ -16,8 +16,8 @@ namespace webpp::uri {
      */
     template <typename T, typename U = stl::remove_cvref_t<T>>
     concept URIContext = requires(U ctx) {
-        // Source iterator
         typename U::iterator;
+        typename U::char_type;
 
         // Component type
         requires URIComponents<typename U::component_type>;
@@ -25,19 +25,20 @@ namespace webpp::uri {
         // Base type (that component type would inherit from)
         requires URIComponents<typename U::base_type> || stl::is_void_v<typename U::base_type>;
 
-        // Character type
-        typename U::char_type;
-
         U::is_nothrow;
         U::is_modifiable;
         U::is_segregated;
 
-        { ctx.beg } -> stl::same_as<typename U::iterator>;
-        { ctx.pos } -> stl::same_as<typename U::iterator>;
-        { ctx.end } -> stl::same_as<typename U::iterator>;
-        { ctx.out } -> stl::same_as<typename U::component_type>;
-        { ctx.base } -> stl::same_as<typename U::base_type>;
+        { ctx.beg } -> stl::convertible_to<typename U::iterator>;
+        { ctx.pos } -> stl::convertible_to<typename U::iterator>;
+        { ctx.end } -> stl::convertible_to<typename U::iterator>;
+        { ctx.out } -> stl::convertible_to<typename U::component_type>;
         ctx.status;
+        requires requires {
+            { ctx.base } -> stl::convertible_to<typename U::base_type>;
+        } || requires {
+            { ctx.base } -> stl::convertible_to<istl::nothing_type>;
+        };
 
         // Compatibility Check: If base type is modifiable, then component type must be modifiable as well.
         requires(URIModifiableComponents<typename U::component_type> &&
@@ -54,8 +55,8 @@ namespace webpp::uri {
         using component_type = CompType;
         using base_type      = BaseType;
         using seg_type       = typename component_type::seg_type;
-        using iterator       = typename component_type::iterator;
-        using char_type      = stl::iter_value_t<iterator>;
+        using char_type      = typename component_type::char_type;
+        using iterator       = typename stl::basic_string_view<char_type>::const_iterator;
         using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
@@ -78,8 +79,8 @@ namespace webpp::uri {
         using component_type = CompType;
         using base_type      = void;
         using seg_type       = typename component_type::seg_type;
-        using iterator       = typename component_type::iterator;
-        using char_type      = stl::iter_value_t<iterator>;
+        using char_type      = typename component_type::char_type;
+        using iterator       = typename stl::basic_string_view<char_type>::const_iterator;
         using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;

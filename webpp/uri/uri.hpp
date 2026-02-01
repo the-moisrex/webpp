@@ -26,6 +26,7 @@ namespace webpp::uri {
         using char_type        = typename string_type::value_type;
         using allocator_type   = allocator_type_of<component_type>;
         using string_view_type = stl::basic_string_view<char_type>;
+        using iterator         = typename string_view_type::const_iterator;
 
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_nothrow    = component_type::is_nothrow;
@@ -47,8 +48,8 @@ namespace webpp::uri {
         component_type components;
         status_type    m_status = +uri_status::unparsed;
 
-        template <uri_options Options, typename Iter>
-        [[nodiscard]] constexpr uri_status_type parse_step(Iter beg, Iter end, uri_status const status)
+        template <uri_options Options>
+        [[nodiscard]] constexpr uri_status_type parse_step(iterator beg, iterator end, uri_status const status)
           noexcept(is_nothrow) {
             using enum uri_status;
             using context_type = uri_context<component_type, void>;
@@ -63,8 +64,8 @@ namespace webpp::uri {
         }
 
       public:
-        template <uri_options Options, typename Iter>
-        constexpr void parse(Iter beg, Iter end) noexcept(is_nothrow) {
+        template <uri_options Options>
+        constexpr void parse(iterator beg, iterator end) noexcept(is_nothrow) {
             using context_type = uri_context<component_type, void>;
             static_assert(URIContext<context_type>, "Component types of output and base must match.");
 
@@ -79,8 +80,8 @@ namespace webpp::uri {
             return parse<Options>(str.begin(), str.end());
         }
 
-        template <stl::random_access_iterator IterT>
-        constexpr basic_uri(IterT const beg, IterT const end, allocator_type const& alloc = {}) noexcept(is_nothrow)
+        constexpr basic_uri(iterator const beg, iterator const end, allocator_type const& alloc = {})
+          noexcept(is_nothrow)
           : components{create<component_type>(beg, end, alloc)} {
             parse(beg, end);
         }
