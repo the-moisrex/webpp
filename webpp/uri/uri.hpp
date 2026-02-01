@@ -23,9 +23,9 @@ namespace webpp::uri {
     struct [[nodiscard]] basic_uri {
         using component_type   = CompT;
         using string_type      = typename component_type::string_type;
-        using char_type        = istl::char_type_of_t<string_type>;
+        using char_type        = typename string_type::value_type;
         using allocator_type   = allocator_type_of<component_type>;
-        using string_view_type = istl::string_view_type_of<string_type>;
+        using string_view_type = stl::basic_string_view<char_type>;
 
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_nothrow    = component_type::is_nothrow;

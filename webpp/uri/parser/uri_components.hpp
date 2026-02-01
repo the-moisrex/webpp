@@ -24,15 +24,15 @@ namespace webpp::uri {
      *  - Fragments
      * Though this doesn't mean we would force them to a specific name for each the of the components.
      */
-    template <typename T>
+    template <typename T, typename U = stl::remove_cvref_t<T>>
     concept URIComponents = requires {
-        typename stl::remove_cvref_t<T>::seg_type; // segment type (string/string-view/uint32_t/...)
-        typename stl::remove_cvref_t<T>::iterator; // it's needed for uri context
+        typename U::seg_type; // segment type (string/string-view/uint32_t/...)
+        typename U::char_type;
 
-        stl::remove_cvref_t<T>::is_nothrow;
-        stl::remove_cvref_t<T>::is_modifiable;
-        stl::remove_cvref_t<T>::is_segregated;
-        stl::remove_cvref_t<T>::max_supported_length;
+        U::is_nothrow;
+        U::is_modifiable;
+        U::is_segregated;
+        U::max_supported_length;
     };
 
     /// Relative Components are components that only point to the components of a URL using numbers or iterators or a
@@ -57,33 +57,33 @@ namespace webpp::uri {
     concept URIHrefComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) { comps.href; };
 
     /// Structured Components are components that store each URI's components separately.
-    template <typename T>
-    concept URIStructuredComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) {
-        typename stl::remove_cvref_t<T>::string_type;
-        typename stl::remove_cvref_t<T>::vec_type;
-        typename stl::remove_cvref_t<T>::map_type;
-        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.port } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::vec_type>;
-        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::map_type>;
-        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+    template <typename T, typename U = stl::remove_cvref_t<T>>
+    concept URIStructuredComponents = URIComponents<T> && requires(U comps) {
+        typename U::string_type;
+        typename U::vec_type;
+        typename U::map_type;
+        { comps.scheme } -> stl::same_as<typename U::string_type>;
+        { comps.username } -> stl::same_as<typename U::string_type>;
+        { comps.password } -> stl::same_as<typename U::string_type>;
+        { comps.hostname } -> stl::same_as<typename U::string_type>;
+        { comps.port } -> stl::same_as<typename U::string_type>;
+        { comps.path } -> stl::same_as<typename U::vec_type>;
+        { comps.queries } -> stl::same_as<typename U::map_type>;
+        { comps.fragment } -> stl::same_as<typename U::string_type>;
     };
 
     /// Owning Components are components that are using strings and not string views.
-    template <typename T>
-    concept URIOwningComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) {
-        requires istl::String<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.port } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
-        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type>;
+    template <typename T, typename U = stl::remove_cvref_t<T>>
+    concept URIOwningComponents = URIComponents<T> && requires(U comps) {
+        requires istl::String<typename U::string_type>;
+        { comps.scheme } -> stl::same_as<typename U::string_type>;
+        { comps.username } -> stl::same_as<typename U::string_type>;
+        { comps.password } -> stl::same_as<typename U::string_type>;
+        { comps.hostname } -> stl::same_as<typename U::string_type>;
+        { comps.port } -> stl::same_as<typename U::string_type>;
+        { comps.path } -> stl::same_as<typename U::string_type>;
+        { comps.queries } -> stl::same_as<typename U::string_type>;
+        { comps.fragment } -> stl::same_as<typename U::string_type>;
     };
 
 
@@ -131,7 +131,6 @@ namespace webpp::uri {
         using seg_type              = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using iterator              = typename string_type::iterator;
 
         static constexpr seg_type omitted              = stl::numeric_limits<seg_type>::max();
         static constexpr auto     max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -191,7 +190,6 @@ namespace webpp::uri {
     template <istl::CharType CharT = char32_t>
     struct [[nodiscard]] uri_components_view {
         using string_type  = stl::basic_string_view<CharT>;
-        using iterator     = typename string_type::iterator;
         using seg_type     = string_type;
         using char_type    = typename string_type::value_type;
         using size_type    = typename string_type::size_type;
@@ -222,7 +220,6 @@ namespace webpp::uri {
     struct [[nodiscard]] uri_components_owning {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using iterator              = typename string_type::iterator;
         using seg_type              = string_type;
         using char_type             = typename string_type::value_type;
         using size_type             = typename string_type::size_type;
@@ -251,7 +248,6 @@ namespace webpp::uri {
     struct [[nodiscard]] uri_components_href {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using iterator              = typename string_type::iterator;
         using string_view_type      = stl::basic_string_view<CharT>;
         using char_type             = typename string_type::value_type;
         using size_type             = typename string_type::size_type;
@@ -287,7 +283,6 @@ namespace webpp::uri {
         using char_type             = CharT;
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
-        using iterator              = typename string_type::iterator;
         using size_type             = typename string_type::size_type;
         using vec_type              = stl::vector<string_type, AllocT>;
         using pair_type             = stl::pair<string_type const, string_type>;
