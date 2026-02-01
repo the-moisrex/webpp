@@ -116,8 +116,8 @@ namespace webpp::uri {
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create<typename CtxT::component_type>(beg, end, alloc),
-          .status = uri_status::unparsed,
+          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, alloc),
+          .status = +uri_status::unparsed,
         };
         return ctx;
     }
@@ -134,9 +134,9 @@ namespace webpp::uri {
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create<typename CtxT::component_type>(beg, end, alloc),
+          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, alloc),
           .base   = stl::move(base_ctx),
-          .status = uri_status::unparsed,
+          .status = +uri_status::unparsed,
         };
         return ctx;
     }
