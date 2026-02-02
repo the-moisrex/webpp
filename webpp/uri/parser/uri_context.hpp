@@ -96,8 +96,7 @@ namespace webpp::uri {
     };
 
     template <typename CompType, typename BaseType>
-    static constexpr decltype(auto) tag_invoke(allocator_from_type,
-                                               uri_context<CompType, BaseType> const& ctx) noexcept {
+    [[nodiscard]] static constexpr auto const& get_allocator(uri_context<CompType, BaseType> const& ctx) noexcept {
         if constexpr (URIModifiableComponents<CompType>) {
             return allocator_from(ctx.out);
         } else if constexpr (URIModifiableComponents<BaseType>) {

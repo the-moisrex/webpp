@@ -374,13 +374,12 @@ namespace webpp::uri {
     }
 
     template <URIHrefComponents CompT>
-    static constexpr CompT get_allocator(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr auto const& get_allocator(CompT const& comps) noexcept {
         return comps.href.get_allocator();
     }
 
-    template <URIComponents CompT>
-        requires requires { typename CompT::allocator_type; }
-    static constexpr CompT get_allocator(CompT const& comps) noexcept {
+    template <URIOwningComponents CompT>
+    [[nodiscard]] static constexpr auto const& get_allocator(CompT const& comps) noexcept {
         return comps.scheme.get_allocator();
     }
 

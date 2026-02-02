@@ -69,7 +69,7 @@ namespace webpp {
      * Get Allocator is a CPO (Customization Point Object) that helps to get the allocator out of a "resource" or any
      * type that we can get an allocator out of.
      *
-     * For example, in "traits type", the user instead of returning an allocator, they will return a resource,
+     * For example, the user instead of returning an allocator, they will return a resource,
      * (std::pmr::monotonic_buffer_resource for example), but then we specialize this CPO and return
      * std::pmr::polymorphic_allocator initialized with that resource.
      *
@@ -78,39 +78,42 @@ namespace webpp {
      * This is designed for the user to easily support both std::pmr-style allocators that have resources,
      * and also std::allocator-style allocators that don't have resources.
      */
-    static constexpr struct allocator_from_type {
+    static constexpr struct allocator_from_tag {
+        template <typename T>
+        using alloc_type = stl::tag_invoke_result_t<allocator_from_tag, stl::remove_cvref_t<T> const&>;
+
         /// Customization Point
         template <typename T>
-            requires stl::tag_invocable<allocator_from_type, T>
-        [[nodiscard]] constexpr stl::tag_invoke_result_t<allocator_from_type, T> operator()(T&& resource) const
-          noexcept(stl::nothrow_tag_invocable<allocator_from_type, T>) {
-            return stl::tag_invoke(*this, stl::forward<T>(resource));
+            requires stl::tag_invocable<allocator_from_tag, T>
+        [[nodiscard]] constexpr alloc_type<T> const& operator()(T const& resource) const
+          noexcept(stl::nothrow_tag_invocable<allocator_from_tag, T>) {
+            return stl::tag_invoke(*this, resource);
         }
 
-        /// default impl: return the allocator itself
-        template <typename T>
-        [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] allocator_from_type tag,
-                                                                 T&&                                  alloc) noexcept {
-            return stl::forward<T>(alloc);
+        /// default impl: return the allocator itself if the object itself is an allocator
+        template <Allocator T>
+        [[nodiscard]] friend constexpr T const& tag_invoke([[maybe_unused]] allocator_from_tag tag,
+                                                           T const&                            alloc) noexcept {
+            return alloc;
         }
 
         /// handle rvalue reference inputs, the library should not use this, it's just for metaprogramming
         // template <typename T>
         //     requires(!stl::is_lvalue_reference_v<T>)
-        // [[nodiscard]] friend constexpr decltype(auto) tag_invoke([[maybe_unused]] construct_allocator_from_type tag,
+        // [[nodiscard]] friend constexpr Allocator decltype(auto) tag_invoke(allocator_from_tag tag,
         //                                                          T&& inp_res) noexcept {
-        //     return stl::tag_invoke(construct_allocator_from_type{}, stl::forward<T>(inp_res));
+        //     return stl::tag_invoke(tag, stl::forward<T>(inp_res));
         // }
 
         /// void impl: return void
-        friend constexpr void tag_invoke([[maybe_unused]] allocator_from_type tag) noexcept {
-            // return void;
-        }
+        // friend constexpr void tag_invoke([[maybe_unused]] allocator_from_tag tag) noexcept {
+        //     // return void;
+        // }
 
         /// Return `.get_allocator()` for any type that supports it
         template <typename T>
             requires has_allocator<T>
-        friend constexpr decltype(auto) tag_invoke(allocator_from_type, T const& obj) noexcept {
+        [[nodiscard]] friend constexpr Allocator auto const& tag_invoke(allocator_from_tag, T const& obj) noexcept {
             return obj.get_allocator();
         }
 
@@ -119,17 +122,16 @@ namespace webpp {
             requires requires(T const& obj) {
                 { get_allocator(obj) } noexcept -> Allocator;
             }
-        friend constexpr decltype(auto) tag_invoke(allocator_from_type, T const& obj) noexcept {
+        [[nodiscard]] friend constexpr Allocator auto const& tag_invoke(allocator_from_tag, T const& obj) noexcept {
             return get_allocator(obj);
         }
     } allocator_from;
-
 
     /**
      * Get the underlying allocator_type
      */
     template <typename T>
-    using allocator_type_of = stl::remove_cvref_t<decltype(allocator_from(stl::declval<T>()))>;
+    using allocator_type_of = allocator_from_tag::alloc_type<T>;
 
 
     /// one single allocator descriptor which describes an allocator and its features and its resources
@@ -169,7 +171,7 @@ namespace webpp {
     template <typename T, AllocatorDescriptor Desc>
     struct resource_type_of {
         // for a general allocator descriptor, just return the allocator type
-        using type = stl::tag_invoke_result_t<allocator_from_type, decltype(Desc::template construct_allocator<T>())>;
+        using type = stl::tag_invoke_result_t<allocator_from_tag, decltype(Desc::template construct_allocator<T>())>;
     };
 
     template <typename T, AllocatorDescriptor Desc>
