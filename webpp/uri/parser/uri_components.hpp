@@ -220,6 +220,7 @@ namespace webpp::uri {
     struct [[nodiscard]] uri_components_owning {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
+        using allocator_type        = typename string_type::allocator_type;
         using seg_type              = string_type;
         using char_type             = typename string_type::value_type;
         using size_type             = typename string_type::size_type;
