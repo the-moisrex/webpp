@@ -28,6 +28,7 @@ namespace webpp::uri {
     concept URIComponents = requires {
         typename U::seg_type; // segment type (string/string-view/uint32_t/...)
         typename U::char_type;
+        // requires can_get_allocator<U>;
 
         U::is_nothrow;
         U::is_modifiable;
@@ -62,28 +63,28 @@ namespace webpp::uri {
         typename U::string_type;
         typename U::vec_type;
         typename U::map_type;
-        { comps.scheme } -> stl::same_as<typename U::string_type>;
-        { comps.username } -> stl::same_as<typename U::string_type>;
-        { comps.password } -> stl::same_as<typename U::string_type>;
-        { comps.hostname } -> stl::same_as<typename U::string_type>;
-        { comps.port } -> stl::same_as<typename U::string_type>;
-        { comps.path } -> stl::same_as<typename U::vec_type>;
-        { comps.queries } -> stl::same_as<typename U::map_type>;
-        { comps.fragment } -> stl::same_as<typename U::string_type>;
+        { comps.scheme } -> stl::same_as<typename U::string_type&>;
+        { comps.username } -> stl::same_as<typename U::string_type&>;
+        { comps.password } -> stl::same_as<typename U::string_type&>;
+        { comps.hostname } -> stl::same_as<typename U::string_type&>;
+        { comps.port } -> stl::same_as<typename U::string_type&>;
+        { comps.path } -> stl::same_as<typename U::vec_type&>;
+        { comps.queries } -> stl::same_as<typename U::map_type&>;
+        { comps.fragment } -> stl::same_as<typename U::string_type&>;
     };
 
     /// Owning Components are components that are using strings and not string views.
     template <typename T, typename U = stl::remove_cvref_t<T>>
     concept URIOwningComponents = URIComponents<T> && requires(U comps) {
         requires istl::String<typename U::string_type>;
-        { comps.scheme } -> stl::same_as<typename U::string_type>;
-        { comps.username } -> stl::same_as<typename U::string_type>;
-        { comps.password } -> stl::same_as<typename U::string_type>;
-        { comps.hostname } -> stl::same_as<typename U::string_type>;
-        { comps.port } -> stl::same_as<typename U::string_type>;
-        { comps.path } -> stl::same_as<typename U::string_type>;
-        { comps.queries } -> stl::same_as<typename U::string_type>;
-        { comps.fragment } -> stl::same_as<typename U::string_type>;
+        { comps.scheme } -> stl::same_as<typename U::string_type&>;
+        { comps.username } -> stl::same_as<typename U::string_type&>;
+        { comps.password } -> stl::same_as<typename U::string_type&>;
+        { comps.hostname } -> stl::same_as<typename U::string_type&>;
+        { comps.port } -> stl::same_as<typename U::string_type&>;
+        { comps.path } -> stl::same_as<typename U::string_type&>;
+        { comps.queries } -> stl::same_as<typename U::string_type&>;
+        { comps.fragment } -> stl::same_as<typename U::string_type&>;
     };
 
 
@@ -373,14 +374,15 @@ namespace webpp::uri {
         return {.href = string_type{alloc}};
     }
 
-    template <URIHrefComponents CompT>
-    [[nodiscard]] static constexpr auto const& get_allocator(CompT const& comps) noexcept {
-        return comps.href.get_allocator();
-    }
-
-    template <URIOwningComponents CompT>
-    [[nodiscard]] static constexpr auto const& get_allocator(CompT const& comps) noexcept {
-        return comps.scheme.get_allocator();
+    template <URIComponents CompT>
+    [[nodiscard]] static constexpr decltype(auto) get_allocator(CompT const& comps) noexcept {
+        if constexpr (URIHrefComponents<CompT>) {
+            return comps.href.get_allocator();
+        } else if constexpr (URIOwningComponents<CompT>) {
+            return comps.scheme.get_allocator();
+        } else {
+            static_assert_false(CompT, "This component don't have allocator");
+        }
     }
 
     [[nodiscard]] constexpr stl::size_t length(URIRelativeComponents auto const& components) noexcept {

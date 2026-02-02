@@ -139,6 +139,12 @@ namespace webpp {
               "Provide a tag_invoke customization for allocator_from_tag or a get_allocator(obj) function.");
             using type = stl::tag_invoke_result_t<allocator_from_tag, T>;
         };
+
+        /// Let's trust the object's type itself for telling us its allocator type
+        template <has_allocator T>
+        struct allocator_type_of_impl<T> {
+            using type = typename stl::remove_cvref_t<T>::allocator_type;
+        };
     } // namespace details
 
     /**
