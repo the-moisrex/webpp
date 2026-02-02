@@ -6,6 +6,7 @@
 #include "../std/concepts.hpp"
 #include "../std/tag_invoke.hpp"
 #include "../std/type_traits.hpp"
+#include "../std/utility.hpp"
 
 #include <memory>
 
@@ -63,6 +64,11 @@ namespace webpp {
         { obj.get_allocator() } noexcept -> Allocator;
     };
 
+    template <typename T>
+    concept can_get_allocator = requires(T obj) {
+        { get_allocator(obj) } noexcept -> Allocator;
+    };
+
     // static_assert(Allocator<stl::allocator<int>>, "There's a problem with Allocator concept");
 
     /**
@@ -85,53 +91,61 @@ namespace webpp {
         /// Customization Point
         template <typename T>
             requires stl::tag_invocable<allocator_from_tag, T>
-        [[nodiscard]] constexpr alloc_type<T> const& operator()(T const& resource) const
+        [[nodiscard]] constexpr Allocator decltype(auto) operator()(T&& resource) const
           noexcept(stl::nothrow_tag_invocable<allocator_from_tag, T>) {
-            return stl::tag_invoke(*this, resource);
+            if constexpr (stl::is_lvalue_reference_v<T>) {
+                return stl::tag_invoke(*this, stl::forward<T>(resource));
+            } else {
+                // copy the allocator if the object is passed as a rvalue reference.
+                return istl::deref(stl::tag_invoke(*this, stl::forward<T>(resource)));
+            }
         }
 
         /// default impl: return the allocator itself if the object itself is an allocator
+        /// default impl (moved allocator): copy the allocator itself.
         template <Allocator T>
-        [[nodiscard]] friend constexpr T const& tag_invoke([[maybe_unused]] allocator_from_tag tag,
-                                                           T const&                            alloc) noexcept {
-            return alloc;
+        [[nodiscard]] friend constexpr Allocator decltype(auto) tag_invoke(
+          [[maybe_unused]] allocator_from_tag tag,
+          T&&                                 alloc) noexcept {
+            if constexpr (stl::is_lvalue_reference_v<T>) {
+                return stl::forward<T>(alloc);
+            } else {
+                // prevent returning references to moved objects
+                return istl::deref(alloc);
+            }
         }
-
-        /// handle rvalue reference inputs, the library should not use this, it's just for metaprogramming
-        // template <typename T>
-        //     requires(!stl::is_lvalue_reference_v<T>)
-        // [[nodiscard]] friend constexpr Allocator decltype(auto) tag_invoke(allocator_from_tag tag,
-        //                                                          T&& inp_res) noexcept {
-        //     return stl::tag_invoke(tag, stl::forward<T>(inp_res));
-        // }
-
-        /// void impl: return void
-        // friend constexpr void tag_invoke([[maybe_unused]] allocator_from_tag tag) noexcept {
-        //     // return void;
-        // }
 
         /// Return `.get_allocator()` for any type that supports it
-        template <typename T>
-            requires has_allocator<T>
-        [[nodiscard]] friend constexpr Allocator auto const& tag_invoke(allocator_from_tag, T const& obj) noexcept {
-            return obj.get_allocator();
-        }
-
         /// Return `get_allocator(obj)` for any type that supports it
         template <typename T>
-            requires requires(T const& obj) {
-                { get_allocator(obj) } noexcept -> Allocator;
+            requires(has_allocator<T> || can_get_allocator<T>)
+        [[nodiscard]] friend constexpr Allocator decltype(auto) tag_invoke(allocator_from_tag, T&& obj) noexcept {
+            // we're not separating them into two functions just in case there's a type that has implemented both
+            if constexpr (has_allocator<T>) {
+                return stl::forward<T>(obj).get_allocator();
+            } else {
+                return get_allocator(stl::forward<T>(obj));
             }
-        [[nodiscard]] friend constexpr Allocator auto const& tag_invoke(allocator_from_tag, T const& obj) noexcept {
-            return get_allocator(obj);
         }
+
     } allocator_from;
+
+    namespace details {
+        template <typename T>
+        struct allocator_type_of_impl {
+            static_assert(
+              has_allocator<T> || can_get_allocator<T> || stl::tag_invocable<allocator_from_tag, T>,
+              "No known way to extract an allocator from this type. "
+              "Provide a tag_invoke customization for allocator_from_tag or a get_allocator(obj) function.");
+            using type = stl::tag_invoke_result_t<allocator_from_tag, T>;
+        };
+    } // namespace details
 
     /**
      * Get the underlying allocator_type
      */
     template <typename T>
-    using allocator_type_of = allocator_from_tag::alloc_type<T>;
+    using allocator_type_of = typename details::allocator_type_of_impl<T>::type;
 
 
     /// one single allocator descriptor which describes an allocator and its features and its resources
