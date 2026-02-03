@@ -6,6 +6,7 @@
 #include "../../ip/ipv4.hpp"
 #include "./host_ip.hpp"
 #include "./parse_credentials.hpp"
+#include "./parse_port.hpp"
 #include "./special_schemes.hpp"
 
 namespace webpp::uri::details {
@@ -75,7 +76,7 @@ namespace webpp::uri::details {
                         auto const pre_port_pos = ctx.pos;
                         ++ctx.pos;
                         set(ctx.status, valid_port);
-                        parse_port(ctx);
+                        parse_port<Options>(ctx);
 
                         // rollback if it's not a port, we roll back and assume it's a password
                         if (has(ctx.status, port_invalid)) {

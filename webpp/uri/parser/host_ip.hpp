@@ -247,7 +247,7 @@ namespace webpp::uri::details {
                     set(ctx.status, ipv6_unclosed);
                     break;
                 }
-                set_hostname(ctx, beg, ctx.pos);
+                set_hostname(ctx.out, segment{beg, ctx.pos});
                 set_hostname(ctx.out, ipv6_bytes);
                 set_flag(ctx.status, has_non_empty_host);
                 switch (*++ctx.pos) {
