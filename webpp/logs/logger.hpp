@@ -1,7 +1,7 @@
 #ifndef WEBPP_LOGGER_DEFAULT_HPP
 #define WEBPP_LOGGER_DEFAULT_HPP
 
-#include "../traits/lbg.hpp"
+#include "../traits/dynamic_scoping.hpp"
 #include "std_logger.hpp"
 
 namespace webpp {

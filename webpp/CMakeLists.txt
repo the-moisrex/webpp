@@ -69,8 +69,8 @@ set(ALL_SOURCES_SHORT
         unicode/utf32_iterator.hpp
         unicode/validity_criteria.hpp
 
+        traits/dynamic_scoping.hpp
         traits/enable_traits.hpp
-        traits/lbg.hpp
         traits/std_pmr_traits.hpp
         traits/std_traits.hpp
         traits/traits.hpp

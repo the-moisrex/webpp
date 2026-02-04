@@ -1,8 +1,8 @@
 // Created by moisrex on 1/22/26.
 // Locally Bound Globals (LBG)
 
-#ifndef WEBPP_LBG_HPP
-#define WEBPP_LBG_HPP
+#ifndef WEBPP_DYNAMIC_SCOPING_HPP
+#define WEBPP_DYNAMIC_SCOPING_HPP
 
 #include <atomic>
 #include <cassert>
@@ -11,16 +11,18 @@
 namespace webpp {
 
     /**
-     * Locally Bound Globals are types that each instances of them will still point to the same global instance, and
+     * Dynamic Scopes are types that each instances of them will still point to the same global instance, and
      * also the global instance can be changed locally.
      * They're a glorified pointer that sit in the global scope.
      * It means each instance of the type T is a pointer to itself, kinda.
      *
      * It's designed for the purpose of having the caller of user function X to set some things, and X to use those
      * things without X needing to change its function signature.
+     *
+     * We used to call this "Locally Bound Globals (LBG)"
      */
     template <typename T>
-    concept locally_bound_global = requires(T obj) {
+    concept binder_instance = requires(T obj) {
         typename T::binding;
         typename T::type;
         typename T::pointer;
@@ -37,8 +39,8 @@ namespace webpp {
      * T should now use `binding self` instead of `this` pointer to access global bounded version.
      */
     template <typename T>
-    concept locally_bounded_global = requires {
-        requires locally_bound_global<typename T::binding>;
+    concept dynamically_scoped = requires {
+        requires binder_instance<typename T::binding>;
         requires std::is_base_of_v<typename T::binding, T>;
     };
 
@@ -167,7 +169,7 @@ namespace webpp {
      * @code
      *   {
      *      context_type ctx2;
-     *      lbg_scope scope{context, ctx2};
+     *      dynamic_scope scope{context, ctx2};
      *      // now `context` is pointing to `ctx2` until `lbg_scope` goes out of scope
      *   }
      * @endcode
@@ -180,21 +182,21 @@ namespace webpp {
      * And when we go out of scope, we do this:
      *   1. Set the old instance back into the global instance.
      */
-    template <locally_bounded_global T>
-    struct [[nodiscard]] lbg_scope {
+    template <dynamically_scoped T>
+    struct [[nodiscard]] dynamic_scope {
         using binding = typename T::binding;
         using pointer = T*;
 
-        explicit constexpr lbg_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
+        explicit constexpr dynamic_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
 
-        explicit constexpr lbg_scope(T& ref) noexcept : lbg_scope{std::addressof(ref)} {}
+        explicit constexpr dynamic_scope(T& ref) noexcept : dynamic_scope{std::addressof(ref)} {}
 
-        lbg_scope(lbg_scope const& obj)                = delete;
-        lbg_scope(lbg_scope&& obj) noexcept            = default;
-        lbg_scope& operator=(lbg_scope const& obj)     = delete;
-        lbg_scope& operator=(lbg_scope&& obj) noexcept = default;
+        dynamic_scope(dynamic_scope const& obj)                = delete;
+        dynamic_scope(dynamic_scope&& obj) noexcept            = default;
+        dynamic_scope& operator=(dynamic_scope const& obj)     = delete;
+        dynamic_scope& operator=(dynamic_scope&& obj) noexcept = default;
 
-        constexpr ~lbg_scope() noexcept {
+        constexpr ~dynamic_scope() noexcept {
             binding::exchange(prev);
         }
 
@@ -203,11 +205,11 @@ namespace webpp {
     };
 
     template <typename T>
-    lbg_scope(T*) -> lbg_scope<std::remove_const_t<T>>;
+    dynamic_scope(T*) -> dynamic_scope<std::remove_const_t<T>>;
 
     template <typename T>
-    lbg_scope(T&) -> lbg_scope<std::remove_const_t<T>>;
+    dynamic_scope(T&) -> dynamic_scope<std::remove_const_t<T>>;
 
 } // namespace webpp
 
-#endif // WEBPP_LBG_HPP
+#endif // WEBPP_DYNAMIC_SCOPING_HPP
