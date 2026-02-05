@@ -225,6 +225,7 @@ namespace webpp::uri::details {
     template <URIContext CtxT>
     static constexpr void parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
+        using string_view_type = stl::basic_string_view<typename CtxT::char_type>;
 
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
@@ -247,7 +248,7 @@ namespace webpp::uri::details {
                     set(ctx.status, ipv6_unclosed);
                     break;
                 }
-                set_hostname(ctx.out, segment{beg, ctx.pos});
+                set_hostname(ctx.out, string_view_type{beg, ctx.pos});
                 set_hostname(ctx.out, ipv6_bytes);
                 set_flag(ctx.status, has_non_empty_host);
                 switch (*++ctx.pos) {
