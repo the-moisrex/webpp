@@ -218,6 +218,14 @@ namespace webpp::uri::details {
         return true;
     }
 
+    template <typename Iter>
+    static constexpr void render_ipv6(stl::uint8_t const* data, Iter& out) noexcept {
+        *out++ = '[';
+        out    = inet_ntop6(data, out);
+        *out++ = ']';
+        *out++ = '\0';
+    }
+
     /**
      * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
@@ -225,9 +233,8 @@ namespace webpp::uri::details {
     template <URIContext CtxT>
     static constexpr void parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
-        using string_view_type = stl::basic_string_view<typename CtxT::char_type>;
 
-        auto const                                beg = ctx.pos;
+        auto                                      buffer = create_buffer(ctx);
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
         // todo: do we need this check?
@@ -248,8 +255,22 @@ namespace webpp::uri::details {
                     set(ctx.status, ipv6_unclosed);
                     break;
                 }
-                set_hostname(ctx.out, string_view_type{beg, ctx.pos});
-                set_hostname(ctx.out, ipv6_bytes);
+                if constexpr (URIModifiableComponents<typename CtxT::component_type>) {
+                    // re-generate the IPv6 string
+                    istl::resize_and_overwrite(max_ipv6_str_len + 3,
+                                               [&](auto* buf, stl::size_t const max_len) noexcept {
+                                                   auto const beg = buf;
+                                                   render_ipv6(ipv6_bytes.data(), buf);
+                                                   auto const len = stl::distance(beg, buf);
+                                                   assert(len <= max_len);
+                                                   return len;
+                                               });
+                    set_hostname(ctx.out, buffer);
+                } else {
+                    end_segment(ctx, buffer);
+                    set_hostname(ctx.out, buffer);
+                }
+                // set_hostname(ctx.out, ipv6_bytes);
                 set_flag(ctx.status, has_non_empty_host);
                 switch (*++ctx.pos) {
                     case '/': set(ctx.status, valid_path); break;
