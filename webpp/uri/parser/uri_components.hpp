@@ -67,7 +67,8 @@ namespace webpp::uri {
         { comps.username } -> stl::same_as<typename U::string_type&>;
         { comps.password } -> stl::same_as<typename U::string_type&>;
         { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        { comps.port } -> stl::same_as<typename U::string_type&>;
+        requires stl::same_as<decltype(comps.port), typename U::string_type&> ||
+                   stl::same_as<decltype(comps.port), stl::uint16_t&>;
         { comps.path } -> stl::same_as<typename U::vec_type&>;
         { comps.queries } -> stl::same_as<typename U::map_type&>;
         { comps.fragment } -> stl::same_as<typename U::string_type&>;
@@ -81,11 +82,22 @@ namespace webpp::uri {
         { comps.username } -> stl::same_as<typename U::string_type&>;
         { comps.password } -> stl::same_as<typename U::string_type&>;
         { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        { comps.port } -> stl::same_as<typename U::string_type&>;
+        requires stl::same_as<decltype(comps.port), typename U::string_type&> ||
+                   stl::same_as<decltype(comps.port), stl::uint16_t&>;
         { comps.path } -> stl::same_as<typename U::string_type&>;
         { comps.queries } -> stl::same_as<typename U::string_type&>;
         { comps.fragment } -> stl::same_as<typename U::string_type&>;
     };
+
+    template <typename CompT, auto MemberPtr, typename... Args>
+    [[nodiscard]] consteval bool is_component_assignable() noexcept {
+        return URIOwningComponents<CompT> && (requires(CompT& comps) {
+                   requires stl::is_nothrow_assignable_v<stl::remove_cvref_t<decltype(comps.*MemberPtr)>, Args...>;
+               });
+    }
+
+    template <typename CompT>
+    concept PortNumberAssignable = is_component_assignable<CompT, &CompT::port, stl::uint16_t>();
 
 
     template <typename T>
@@ -846,13 +858,14 @@ namespace webpp::uri {
         port(comp) = stl::move(value);
     }
 
-    template <URIComponents CompT>
-    static constexpr void set_port([[maybe_unused]] CompT& comps, [[maybe_unused]] stl::uint16_t const port) noexcept {
-        using port_type = stl::remove_cvref_t<decltype(port(comps))>;
-        if constexpr (stl::is_nothrow_assignable_v<port_type, stl::uint16_t>) {
-            port(comps) = port;
-        }
-        // else: ignore setting it
+    template <URIComponents CompT, typename Iter>
+    static constexpr void set_port(CompT& comp, Iter beg, Iter end) noexcept(CompT::is_nothrow) {
+        set_port(comp, typename CompT::string_type{beg, end});
+    }
+
+    template <PortNumberAssignable CompT>
+    static constexpr void set_port(CompT& comps, stl::uint16_t const port_value) noexcept {
+        port(comps) = port_value;
     }
 
     template <URIComponents CompT>

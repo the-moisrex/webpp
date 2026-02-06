@@ -79,14 +79,18 @@ namespace webpp::uri {
             clear_port(ctx.out);
             unset_flag(ctx.status, has_non_null_port);
         } else {
-            // ignoring the leading zeros
-            while (beg != ctx.pos - 1 && *beg == '0') [[unlikely]] {
-                ++beg;
-            }
+            assert(port_value <= max_port_number);
 
-            // only one of these should work:
-            set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
-            set_port(ctx.out, beg, ctx.pos);
+            // set the port:
+            if constexpr (PortNumberAssignable<typename CtxT::component_type>) {
+                set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
+            } else {
+                // ignoring the leading zeros
+                while (beg != ctx.pos - 1 && *beg == '0') [[unlikely]] {
+                    ++beg;
+                }
+                set_port(ctx.out, create_buffer(ctx, beg, ctx.pos));
+            }
             set_flag(ctx.status, has_non_null_port);
         }
 

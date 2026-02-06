@@ -143,15 +143,29 @@ namespace webpp::uri {
     /// Create a new buffer/segment
     template <URIContext CtxT>
         requires(CtxT::is_modifiable)
-    static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
         return seg_type{get_allocator(ctx.out)};
+    }
+
+    template <URIContext CtxT>
+        requires(CtxT::is_modifiable)
+    [[nodiscard]] static constexpr auto
+    create_buffer(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::itereator end) noexcept(CtxT::is_nothrow) {
+        using seg_type = typename CtxT::seg_type;
+        return seg_type{beg, end, get_allocator(ctx.out)};
     }
 
     /// Create a new buffer (which can be used as a segment)
     template <URIContext CtxT>
     static constexpr segment<typename CtxT::iterator> create_buffer([[maybe_unused]] CtxT& ctx) noexcept {
         return {.beg = ctx.pos, .end = ctx.pos};
+    }
+
+    template <URIContext CtxT>
+    static constexpr segment<typename CtxT::iterator>
+    create_buffer([[maybe_unused]] CtxT& ctx, typename CtxT::iterator beg, typename CtxT::itereator end) noexcept {
+        return {.beg = beg, .end = end};
     }
 
     /// Mark the end of the current segment
