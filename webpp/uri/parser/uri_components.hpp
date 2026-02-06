@@ -388,9 +388,9 @@ namespace webpp::uri {
 
     template <URIComponents CompT>
     [[nodiscard]] static constexpr decltype(auto) get_allocator(CompT const& comps) noexcept {
-        if constexpr (URIHrefComponents<CompT>) {
+        if constexpr (requires { comps.href.get_allocator(); }) {
             return comps.href.get_allocator();
-        } else if constexpr (URIOwningComponents<CompT>) {
+        } else if constexpr (requires { comps.scheme.get_allocator(); }) {
             return comps.scheme.get_allocator();
         } else {
             static_assert_false(CompT, "This component don't have allocator");
