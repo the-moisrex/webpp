@@ -367,7 +367,7 @@ namespace webpp::uri::details {
     skip_separator(CtxT& ctx, OutT& out, typename CtxT::char_type separator, diff_type_of<CtxT> count = 1)
       noexcept(CtxT::is_nothrow) {
         if constexpr (istl::String<OutT>) {
-            out.append(separator);
+            out.push_back(separator);
             ctx.pos += count;
         } else {
             return skip_separator(ctx, out, count);
@@ -377,7 +377,7 @@ namespace webpp::uri::details {
     template <URIContext CtxT, typename OutT>
     static constexpr void skip_separator(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
         if constexpr (istl::String<OutT>) {
-            out.append(*ctx.pos++);
+            out.push_back(*ctx.pos++);
         } else {
             ++ctx.pos;
         }
@@ -387,7 +387,7 @@ namespace webpp::uri::details {
     static constexpr void append_n(CtxT& ctx, BufT& buffer, diff_type_of<CtxT> count) noexcept(CtxT::is_nothrow) {
         if constexpr (istl::String<BufT>) {
             for (; count != 0; --count) {
-                buffer.append(*ctx.pos++);
+                buffer.push_back(*ctx.pos++);
             }
         } else {
             ctx.pos += count;
@@ -397,7 +397,7 @@ namespace webpp::uri::details {
     template <typename BufT, typename CharT>
     static constexpr void append(BufT& buffer, CharT const inp_char) noexcept(false) {
         if constexpr (istl::String<BufT>) {
-            buffer.append(inp_char);
+            buffer.push_back(inp_char);
         }
     }
 
@@ -406,7 +406,7 @@ namespace webpp::uri::details {
     append_inplace_of(CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char, diff_type_of<CtxT> count = 1)
       noexcept(CtxT::is_nothrow) {
         if constexpr (istl::String<BufT>) {
-            buffer.append(inp_char);
+            buffer.push_back(inp_char);
         }
         ctx.pos += count;
     }

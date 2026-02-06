@@ -40,7 +40,7 @@ namespace webpp::uri {
                 iterator const username_end = stl::min(colon_pos, atsign_pos);
 
                 clear_username(ctx.out); // todo: it's optimizable
-                auto user_buffer = create_buffer(ctx.out);
+                auto user_buffer = create_buffer(ctx);
                 encode_uri_component<encode_chars>(username_beg, username_end, user_buffer, USER_INFO_ENCODE_SET);
                 set_username(ctx.out, stl::move(user_buffer));
             }
@@ -54,7 +54,7 @@ namespace webpp::uri {
                 iterator const password_end = atsign_pos;
 
                 clear_password(ctx.out); // todo: it's optimizable
-                auto pass_buffer = create_buffer(ctx.out);
+                auto pass_buffer = create_buffer(ctx);
                 encode_uri_component<encode_chars>(password_beg, password_end, pass_buffer, USER_INFO_ENCODE_SET);
                 set_password(ctx.out, stl::move(pass_buffer));
             }

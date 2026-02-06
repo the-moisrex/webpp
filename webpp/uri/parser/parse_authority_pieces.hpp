@@ -88,7 +88,7 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        set_hostname(ctx.out, host_begin, pre_port_pos);
+                        set_hostname(ctx.out, create_buffer(ctx, host_begin, pre_port_pos));
 
                         if (pre_port_pos == host_begin) {
                             if (Options.empty_host_is_error && is_special) [[unlikely]] {
@@ -202,7 +202,7 @@ namespace webpp::uri::details {
             }
         }
 
-        set_hostname(ctx.out, host_begin, ctx.pos);
+        set_hostname(ctx.out, create_buffer(ctx, host_begin, ctx.pos));
         if (skip_last_char) {
             ++ctx.pos;
         }
