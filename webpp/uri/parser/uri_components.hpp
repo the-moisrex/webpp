@@ -385,12 +385,12 @@ namespace webpp::uri {
         }
     }
 
-    [[nodiscard]] constexpr stl::size_t length(URIRelativeComponents auto const& components) noexcept {
+    [[nodiscard]] static constexpr stl::size_t length(URIRelativeComponents auto const& components) noexcept {
         assert(components.uri_beg <= components.uri_end);
         return static_cast<stl::size_t>(stl::distance(components.uri_beg, components.uri_end));
     }
 
-    [[nodiscard]] constexpr stl::size_t length(URIHrefComponents auto const& components) noexcept {
+    [[nodiscard]] static constexpr stl::size_t length(URIHrefComponents auto const& components) noexcept {
         return components.href.size();
     }
 
@@ -406,119 +406,119 @@ namespace webpp::uri {
     //////////////////////////////////////// /////////////////// ////////////////////////////////////////
 
     template <URIRelativeComponents CompT>
-    constexpr void set_min_authority_end(CompT& comps, typename CompT::seg_type const end) noexcept {
+    static constexpr void set_min_authority_end(CompT& comps, typename CompT::seg_type const end) noexcept {
         comps.authority_end = comps.authority_end != CompT::omitted ? stl::max(comps.authority_end, end) : end;
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_min_uri_end(CompT& comps, typename CompT::seg_type const end) noexcept {
+    static constexpr void set_min_uri_end(CompT& comps, typename CompT::seg_type const end) noexcept {
         comps.uri_end = comps.uri_end != CompT::omitted ? stl::max(comps.uri_end, end) : end;
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_scheme(CompT& comps, segment<comp_iter<CompT>> seg) noexcept {
+    static constexpr void set_scheme(CompT& comps, segment<comp_iter<CompT>> seg) noexcept {
         comps.uri_beg    = seg.beg;
         comps.scheme_end = static_cast<typename CompT::seg_type>(seg.end - seg.beg);
         set_min_uri_end(comps.scheme_end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_path(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_path(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.authority_end = seg.beg;
         set_min_uri_end(seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_path(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_path(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_path(comps,
                  static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                  static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_username(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_username(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.authority_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_username(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_username(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_username(comps,
                      static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                      static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_password(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_password(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.password_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_password(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_password(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_password(comps,
                      static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                      static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_hostname(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_hostname(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.host_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_hostname(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_hostname(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_hostname(comps,
                      static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                      static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_port(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_port(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.port_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_port(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_port(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_port(comps,
                  static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                  static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_queries(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_queries(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.queries_start = seg.beg;
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_queries(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_queries(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_queries(comps,
                     static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                     static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_fragment(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+    static constexpr void set_fragment(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.fragment_start = seg.beg;
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void set_fragment(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+    static constexpr void set_fragment(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
         set_fragment(comps,
                      static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
                      static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clean_authority_end(CompT& comps) noexcept {
+    static constexpr void clean_authority_end(CompT& comps) noexcept {
         bool test  = comps.authority_start == CompT::omitted;
         test      &= comps.password_start == CompT::omitted;
         test      &= comps.port_start == CompT::omitted;
@@ -529,36 +529,36 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_scheme(CompT& comps) noexcept {
+    static constexpr void clear_scheme(CompT& comps) noexcept {
         comps.scheme_end = CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_hostname(CompT& comps) noexcept {
+    static constexpr void clear_hostname(CompT& comps) noexcept {
         comps.host_start = CompT::omitted;
         clean_authority_end(comps);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_port(CompT& comps) noexcept {
+    static constexpr void clear_port(CompT& comps) noexcept {
         comps.port_start = CompT::omitted;
         clean_authority_end(comps);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_username(CompT& comps) noexcept {
+    static constexpr void clear_username(CompT& comps) noexcept {
         comps.authority_start = CompT::omitted;
         clean_authority_end(comps);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_password(CompT& comps) noexcept {
+    static constexpr void clear_password(CompT& comps) noexcept {
         comps.password_start = CompT::omitted;
         clean_authority_end(comps);
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_path(CompT& comps) noexcept {
+    static constexpr void clear_path(CompT& comps) noexcept {
         if (comps.queries_start == CompT::omitted && comps.fragment_start == CompT::omitted) {
             comps.uri_end = stl::min(comps.authority_end, comps.uri_end);
         }
@@ -566,7 +566,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_queries(CompT& comps) noexcept {
+    static constexpr void clear_queries(CompT& comps) noexcept {
         if (comps.fragment_start == CompT::omitted) {
             comps.uri_end = stl::min(comps.fragment_start, comps.uri_end);
         }
@@ -574,64 +574,64 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    constexpr void clear_fragment(CompT& comps) noexcept {
+    static constexpr void clear_fragment(CompT& comps) noexcept {
         comps.uri_end        = stl::min(comps.fragment_start, comps.uri_end);
         comps.fragment_start = CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_scheme(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_scheme(CompT const& comps) noexcept {
         return comps.scheme_end != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_username(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_username(CompT const& comps) noexcept {
         return comps.authority_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_password(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_password(CompT const& comps) noexcept {
         return comps.password_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_hostname(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_hostname(CompT const& comps) noexcept {
         return comps.host_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_credentials(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_credentials(CompT const& comps) noexcept {
         return comps.authority_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_port(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_port(CompT const& comps) noexcept {
         return comps.port_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_path(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_path(CompT const& comps) noexcept {
         return comps.authority_end != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_queries(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_queries(CompT const& comps) noexcept {
         return comps.queries_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr bool has_fragment(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr bool has_fragment(CompT const& comps) noexcept {
         return comps.fragment_start != CompT::omitted;
     }
 
     template <typename CharT>
-    [[nodiscard]] constexpr stl::basic_string_view<CharT> view(
+    [[nodiscard]] static constexpr stl::basic_string_view<CharT> view(
       [[maybe_unused]] uri_components_u32_view<CharT> const& comps) noexcept {
         return {};
     }
 
     template <typename CharT>
-    [[nodiscard]] constexpr stl::basic_string_view<CharT> view(
+    [[nodiscard]] static constexpr stl::basic_string_view<CharT> view(
       uri_components_u32_view<CharT> const&                   comps,
       typename uri_components_u32_view<CharT>::seg_type const pos,
       typename uri_components_u32_view<CharT>::seg_type const length) noexcept {
@@ -639,12 +639,12 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr typename CompT::seg_type size(CompT const& comps) noexcept {
+    [[nodiscard]] static constexpr typename CompT::seg_type size(CompT const& comps) noexcept {
         return comps.uri_end == CompT::omitted ? 0 : comps.uri_end;
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto scheme(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto scheme(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.scheme_end == CompT::omitted) {
             return view(comps);
         }
@@ -652,7 +652,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto username(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto username(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.authority_start == CompT::omitted) {
             return view(comps);
         }
@@ -662,7 +662,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto password(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto password(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.password_start == CompT::omitted) {
             return view(comps);
         }
@@ -673,7 +673,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto hostname(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto hostname(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.host_start == CompT::omitted) {
             return view(comps);
         }
@@ -683,7 +683,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto port(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto port(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.port_start == CompT::omitted) {
             return view(comps);
         }
@@ -691,7 +691,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto authority(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto authority(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.authority_start == CompT::omitted || comps.authority_end == CompT::omitted) {
             return view(comps);
         }
@@ -699,7 +699,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto path(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto path(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.authority_end == CompT::omitted) {
             return view(comps);
         }
@@ -710,7 +710,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto queries(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto queries(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.queries_start == CompT::omitted) {
             return view(comps);
         }
@@ -718,7 +718,7 @@ namespace webpp::uri {
     }
 
     template <URIRelativeComponents CompT>
-    [[nodiscard]] constexpr auto fragment(CompT const& comps) noexcept(CompT::is_nothrow) {
+    [[nodiscard]] static constexpr auto fragment(CompT const& comps) noexcept(CompT::is_nothrow) {
         if (comps.fragment_start == CompT::omitted) {
             return view(comps);
         }
@@ -731,7 +731,7 @@ namespace webpp::uri {
 
     // Helper function to get a string_view from a string-like object
     template <typename StringType>
-    [[nodiscard]] constexpr auto make_view(StringType&& str) noexcept {
+    [[nodiscard]] static constexpr auto make_view(StringType&& str) noexcept {
         using T = stl::remove_cvref_t<StringType>;
         if constexpr (istl::StringView<T>) {
             return stl::forward<StringType>(str);
@@ -741,44 +741,44 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto scheme(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto scheme(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).scheme);
     }
 
     template <URIComponents CompT>
-    constexpr void set_scheme(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_scheme(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         scheme(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto username(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto username(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).username);
     }
 
     template <URIComponents CompT>
-    constexpr void set_username(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_username(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         username(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto password(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto password(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).password);
     }
 
     template <URIComponents CompT>
-    constexpr void set_password(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_password(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         password(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto hostname(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto hostname(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).hostname);
     }
 
     // For href-based components, the authority is the substring from the start of the first authority
     // component to the end of the last authority component
     template <URIHrefComponents CompT>
-    [[nodiscard]] constexpr auto authority(CompT const& comp) noexcept {
+    [[nodiscard]] static constexpr auto authority(CompT const& comp) noexcept {
         using string_view_type = typename CompT::string_view_type;
 
         // If there's no hostname, there's no authority
@@ -832,22 +832,22 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    constexpr void set_hostname(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_hostname(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         hostname(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto port(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto port(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).port);
     }
 
     template <URIComponents CompT>
-    constexpr void set_port(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_port(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         port(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    constexpr void set_port([[maybe_unused]] CompT& comps, [[maybe_unused]] stl::uint16_t const port) noexcept {
+    static constexpr void set_port([[maybe_unused]] CompT& comps, [[maybe_unused]] stl::uint16_t const port) noexcept {
         using port_type = stl::remove_cvref_t<decltype(port(comps))>;
         if constexpr (stl::is_nothrow_assignable_v<port_type, stl::uint16_t>) {
             port(comps) = port;
@@ -856,32 +856,32 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto queries(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto queries(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).queries);
     }
 
     template <URIComponents CompT>
-    constexpr void set_queries(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_queries(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         queries(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto path(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto path(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).path);
     }
 
     template <URIComponents CompT>
-    constexpr void set_path(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_path(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         path(comp) = stl::move(value);
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] constexpr auto& fragment(CompT&& comp) noexcept {
+    [[nodiscard]] static constexpr auto& fragment(CompT&& comp) noexcept {
         return stl::forward<CompT>(comp).fragment;
     }
 
     template <URIComponents CompT>
-    constexpr void set_fragment(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+    static constexpr void set_fragment(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         fragment(comp) = stl::move(value);
     }
 
