@@ -885,35 +885,67 @@ namespace webpp::uri {
         fragment(comp) = stl::move(value);
     }
 
-    [[nodiscard]] constexpr bool has_scheme(URIComponents auto const& comp) noexcept {
+    static constexpr void clear_scheme(URIComponents auto& comp) noexcept {
+        istl::clear(comp.scheme);
+    }
+
+    static constexpr void clear_username(URIComponents auto& comp) noexcept {
+        istl::clear(comp.username);
+    }
+
+    static constexpr void clear_password(URIComponents auto& comp) noexcept {
+        istl::clear(comp.password);
+    }
+
+    static constexpr void clear_hostname(URIComponents auto& comp) noexcept {
+        istl::clear(comp.hostname);
+    }
+
+    static constexpr void clear_port(URIComponents auto& comp) noexcept {
+        istl::clear(comp.port);
+    }
+
+    static constexpr void clear_path(URIComponents auto& comp) noexcept {
+        istl::clear(comp.path);
+    }
+
+    static constexpr void clear_queries(URIComponents auto& comp) noexcept {
+        istl::clear(comp.queries);
+    }
+
+    static constexpr void clear_fragment(URIComponents auto& comp) noexcept {
+        istl::clear(comp.fragment);
+    }
+
+    [[nodiscard]] static constexpr bool has_scheme(URIComponents auto const& comp) noexcept {
         return !scheme(comp).empty();
     }
 
-    [[nodiscard]] constexpr bool has_username(URIComponents auto const& comp) noexcept {
+    [[nodiscard]] static constexpr bool has_username(URIComponents auto const& comp) noexcept {
         return !username(comp).empty();
     }
 
-    [[nodiscard]] constexpr bool has_password(URIComponents auto const& components) noexcept {
+    [[nodiscard]] static constexpr bool has_password(URIComponents auto const& components) noexcept {
         return !password(components).empty();
     }
 
-    [[nodiscard]] constexpr bool has_credentials(URIComponents auto const& components) noexcept {
+    [[nodiscard]] static constexpr bool has_credentials(URIComponents auto const& components) noexcept {
         return has_username(components) || has_password(components);
     }
 
-    [[nodiscard]] constexpr bool has_hostname(URIComponents auto const& comp) noexcept {
+    [[nodiscard]] static constexpr bool has_hostname(URIComponents auto const& comp) noexcept {
         return !hostname(comp).empty();
     }
 
-    [[nodiscard]] constexpr bool has_path(URIComponents auto const& comp) noexcept {
+    [[nodiscard]] static constexpr bool has_path(URIComponents auto const& comp) noexcept {
         return !path(comp).empty();
     }
 
-    [[nodiscard]] constexpr bool has_queries(URIComponents auto const& comp) noexcept {
+    [[nodiscard]] static constexpr bool has_queries(URIComponents auto const& comp) noexcept {
         return !queries(comp).empty();
     }
 
-    [[nodiscard]] constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
+    [[nodiscard]] static constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
         return !fragment(comp).empty();
     }
 

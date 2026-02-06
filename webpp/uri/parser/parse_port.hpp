@@ -41,7 +41,7 @@ namespace webpp::uri {
         port_type port_value = 0;
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             auto const code_unit = *ctx.pos;
-            switch (or_one(table, code_unit)) {
+            switch (static_cast<operation_type>(or_one(table, code_unit))) {
                 case operation_type::op_digit:
                     port_value *= 10U; // NOLINT(*-magic-numbers)
                     port_value += static_cast<port_type>(code_unit - '0');
@@ -69,7 +69,7 @@ namespace webpp::uri {
                         set(ctx.status, port_invalid);
                         return;
                     }
-                default: stl::unreachable();
+                default: assert(false); stl::unreachable();
             }
             break;
         }

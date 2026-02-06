@@ -4,6 +4,7 @@
 #define WEBPP_URI_HOST_IP_HPP
 
 #include "../../ip/inet_pton.hpp"
+#include "../../std/string.hpp"
 #include "../../strings/hex.hpp"
 #include "./uri_context.hpp"
 
@@ -257,15 +258,17 @@ namespace webpp::uri::details {
                 }
                 if constexpr (URIModifiableComponents<typename CtxT::component_type>) {
                     // re-generate the IPv6 string
-                    istl::resize_and_overwrite(max_ipv6_str_len + 3,
-                                               [&](auto* buf, stl::size_t const max_len) noexcept {
-                                                   auto const beg = buf;
-                                                   render_ipv6(ipv6_bytes.data(), buf);
-                                                   auto const len = stl::distance(beg, buf);
-                                                   assert(len <= max_len);
-                                                   return len;
-                                               });
-                    set_hostname(ctx.out, buffer);
+                    istl::resize_and_overwrite(
+                      buffer,
+                      max_ipv6_str_len + 3,
+                      [&](auto* buf, stl::size_t const max_len) noexcept {
+                          auto const beg = buf;
+                          render_ipv6(ipv6_bytes.data(), buf);
+                          auto const len = stl::distance(beg, buf);
+                          assert(len <= static_cast<stl::ptrdiff_t>(max_len));
+                          return len;
+                      });
+                    set_hostname(ctx.out, stl::move(buffer));
                 } else {
                     end_segment(ctx, buffer);
                     set_hostname(ctx.out, buffer);

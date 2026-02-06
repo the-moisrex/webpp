@@ -281,16 +281,15 @@ namespace webpp {
          *
          * @tparam StrType The type of string to be created. It should be a specialization of
          * `std::basic_string` or `istl::String`.
-         * @param alloc The allocator to be used for the new string. Default is the default allocator of the
-         * target string type.
+         * @param inp_alloc The allocator
          * @return The new string created from the existing string, with the specified allocator.
          *
          * @see istl::String
          */
         template <istl::String StrType = stl::basic_string<value_type>>
         [[nodiscard]] constexpr StrType string(
-          typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
-            return StrType{this->data(), this->size(), alloc};
+          typename StrType::allocator_type const& inp_alloc = typename StrType::allocator_type{}) const noexcept {
+            return StrType{this->data(), this->size(), inp_alloc};
         }
 
         /// default value is for compatibility
@@ -571,8 +570,8 @@ namespace webpp {
 
         template <istl::String StrType = stl::basic_string<bool>>
         [[nodiscard]] StrType string(
-          typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
-            return StrType{super::data(), super::size(), alloc};
+          typename StrType::allocator_type const& inp_alloc = typename StrType::allocator_type{}) const noexcept {
+            return StrType{super::data(), super::size(), inp_alloc};
         }
 
         constexpr charmap& set(stl::size_t pos, bool val = true) noexcept {
