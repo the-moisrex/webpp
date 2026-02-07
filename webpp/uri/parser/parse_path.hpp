@@ -19,7 +19,7 @@ namespace webpp::uri {
             using iterator        = typename CtxT::iterator;
             using difference_type = stl::iter_difference_t<iterator>;
 
-            auto& out       = get_path(ctx);
+            auto& out       = path(ctx);
             using path_type = stl::remove_cvref_t<decltype(out)>;
 
             // remove the last segment as well

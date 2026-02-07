@@ -68,7 +68,7 @@ namespace webpp::uri::details {
         bool must_be_hex = false;
         auto pos         = fin;
         for (; pos != beg; --pos) {
-            switch (or_one(interesting_characters, *pos)) {
+            switch (static_cast<operation_type>(or_one(interesting_characters, *pos))) {
                 case operation_type::op_dot: break;
                 case operation_type::op_continue: continue;
                 case operation_type::op_hex:
@@ -81,7 +81,7 @@ namespace webpp::uri::details {
                     break;
                 case operation_type::op_possible_hex: must_be_hex = true; continue;
                 case operation_type::op_no: return false;
-                default: stl::unreachable();
+                default: assert(false); stl::unreachable();
             }
             break;
         }
