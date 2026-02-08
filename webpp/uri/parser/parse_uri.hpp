@@ -27,7 +27,7 @@ namespace webpp::uri {
                     break;
                 case valid_port: parse_port<Options>(ctx); break;
                 case valid_authority_end: parse_authority_end<Options>(ctx); break;
-                case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
+                case valid_opaque_path: parse_opaque_path(ctx); break;
                 case valid_path: parse_path<Options>(ctx); break;
                 case valid_queries: parse_queries<Options>(ctx); break;
                 case valid_fragment: parse_fragment<Options>(ctx); break;

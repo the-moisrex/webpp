@@ -197,13 +197,14 @@ namespace webpp::uri {
                     continue;
             }
             end_segment(ctx, buffer);
-            set_path(ctx.out, buffer);
+            set_path(ctx.out, stl::move(buffer));
+            clear_segment(ctx, buffer);
             ++ctx.pos; // it's okay, we're not at the end
             return;
         }
         set(ctx.status, valid);
         end_segment(ctx, buffer);
-        set_path(ctx.out, buffer);
+        set_path(ctx.out, stl::move(buffer));
     }
 
     template <uri_options Options, URIContext CtxT>
