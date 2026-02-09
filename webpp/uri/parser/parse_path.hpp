@@ -19,7 +19,7 @@ namespace webpp::uri {
             using iterator        = typename CtxT::iterator;
             using difference_type = stl::iter_difference_t<iterator>;
 
-            auto& out       = path(ctx);
+            auto& out       = path(ctx.out);
             using path_type = stl::remove_cvref_t<decltype(out)>;
 
             // remove the last segment as well
@@ -274,7 +274,7 @@ namespace webpp::uri {
             if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
                 if (is_special_scheme(ctx.status) && !has_path(ctx.out)) {
                     push_segment(path(ctx.out), buffer);
-                    details::append_inplace_of(buffer, '/', 0);
+                    details::append_inplace_of(ctx, buffer, '/', 0);
                 }
             }
 
