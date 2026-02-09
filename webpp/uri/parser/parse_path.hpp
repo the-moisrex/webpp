@@ -19,11 +19,19 @@ namespace webpp::uri {
             using iterator        = typename CtxT::iterator;
             using difference_type = stl::iter_difference_t<iterator>;
 
-            auto& out       = path(ctx.out);
-            using path_type = stl::remove_cvref_t<decltype(out)>;
-
             // remove the last segment as well
-            if constexpr (istl::String<path_type>) {
+            if constexpr (URIStructuredComponents<typename CtxT::component_type>) {
+                if (!ctx.out.path.empty()) {
+                    ctx.out.path.pop_back();
+                }
+            } else if constexpr (URIModifiableComponents<typename CtxT::component_type>) {
+                auto& out = [&]() -> auto& {
+                    if constexpr (URIHrefComponents<typename CtxT::component_type>) {
+                        return ctx.out.href;
+                    } else {
+                        return ctx.out.path;
+                    }
+                }();
                 difference_type slash_loc = 0;
 
                 // find the last slash
@@ -37,9 +45,6 @@ namespace webpp::uri {
                     ++slash_loc;
                 }
                 out.erase(out.size() - slash_loc);
-            } else {
-                // It's a vector, so we just pop the back
-                out.pop_back();
             }
         }
 
@@ -48,8 +53,7 @@ namespace webpp::uri {
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_options Options, URIContext CtxT>
             requires(!Options.handle_dots_in_paths)
-        static constexpr bool handle_dots_in_paths([[maybe_unused]] CtxT&                    ctx,
-                                                   [[maybe_unused]] typename CtxT::iterator& seg_beg) noexcept {
+        static constexpr bool handle_dots_in_paths([[maybe_unused]] CtxT& ctx, [[maybe_unused]] auto& buffer) noexcept {
             return false;
         }
 
@@ -128,11 +132,10 @@ namespace webpp::uri {
         /// @returns true if we found one or two dots
         template <uri_options Options, URIContext CtxT>
             requires(Options.handle_dots_in_paths)
-        [[nodiscard]] static constexpr bool
-        handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator& seg_beg) noexcept(CtxT::is_nothrow) {
-            auto       pos  = seg_beg;
-            auto const end  = ctx.pos;
-            auto const dots = dots_count(pos, end);
+        [[nodiscard]] static constexpr bool handle_dots_in_paths(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
+            using stl::begin;
+            using stl::end;
+            auto const dots = dots_count(begin(buffer), end(buffer));
 
             switch (dots) {
                 // no dots found:
@@ -140,13 +143,13 @@ namespace webpp::uri {
 
                 // single dot found:
                 case 1: // .
-                    clear_segment(ctx, buffer, seg_beg);
+                    clear_segment(ctx, buffer);
                     break;
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_path(ctx, buffer, seg_beg);
-                    clear_segment<Options>(ctx, buffer, seg_beg);
+                    pop_back_path(ctx, buffer);
+                    clear_segment(ctx, buffer);
                     break;
 
                 // a normal segment found:
@@ -228,7 +231,7 @@ namespace webpp::uri {
         // we're in a special scheme, we have to add "/" to it
 
         if (!is_special_scheme(ctx.status)) {
-            parse_opaque_path<Options>(ctx);
+            parse_opaque_path(ctx);
             return;
         }
         unset_flag(ctx.status, opaque_path);

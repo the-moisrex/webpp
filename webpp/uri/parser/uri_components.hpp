@@ -125,6 +125,16 @@ namespace webpp::uri {
         Iter end;
     };
 
+    template <typename Iter>
+    [[nodiscard]] static constexpr Iter begin(segment<Iter> const& seg) noexcept {
+        return seg.beg;
+    }
+
+    template <typename Iter>
+    [[nodiscard]] static constexpr Iter end(segment<Iter> const& seg) noexcept {
+        return seg.end;
+    }
+
     /**
      * URL Components
      * RFC: https://tools.ietf.org/html/rfc3986
