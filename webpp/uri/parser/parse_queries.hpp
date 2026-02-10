@@ -87,7 +87,7 @@ namespace webpp::uri {
 
     /// Parse into a Structured queries (usually a vector<pair<string, string>>)
     template <uri_options Options, URIContext CtxT>
-        requires(Options.parse_queries)
+        requires(Options.parse_queries && URIStructuredComponents<typename CtxT::component_type>)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
 

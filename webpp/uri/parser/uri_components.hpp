@@ -900,7 +900,7 @@ namespace webpp::uri {
 
     template <URIComponents CompT>
     [[nodiscard]] static constexpr decltype(auto) fragment(CompT&& comp) noexcept {
-        return stl::forward<CompT>(comp).fragment;
+        return make_view(stl::forward<CompT>(comp).fragment);
     }
 
     template <URIComponents CompT>

@@ -251,7 +251,7 @@ namespace webpp::uri {
                     if constexpr (CtxT::is_segregated) {
                         push_segment(path(ctx.out), buffer);
                     }
-                    details::append_inplace_of(buffer, '/');
+                    details::append_inplace_of(ctx, buffer, '/');
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
@@ -269,7 +269,7 @@ namespace webpp::uri {
         }
         static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer));
         end_segment(ctx, buffer);
-        set_path(ctx.out, buffer);
+        set_path(ctx.out, stl::move(buffer));
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {
