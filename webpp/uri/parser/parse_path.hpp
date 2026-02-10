@@ -248,7 +248,9 @@ namespace webpp::uri {
                         continue;
                     }
                     end_segment(ctx, buffer);
-                    push_segment(path(ctx.out), buffer);
+                    if constexpr (CtxT::is_segregated) {
+                        push_segment(path(ctx.out), buffer);
+                    }
                     details::append_inplace_of(buffer, '/');
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
@@ -276,7 +278,6 @@ namespace webpp::uri {
             // handling empty paths
             if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
                 if (is_special_scheme(ctx.status) && !has_path(ctx.out)) {
-                    push_segment(path(ctx.out), buffer);
                     details::append_inplace_of(ctx, buffer, '/', 0);
                 }
             }
