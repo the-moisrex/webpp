@@ -32,7 +32,7 @@ namespace webpp::uri {
                         return ctx.out.path;
                     }
                 }();
-                difference_type slash_loc = 0;
+                stl::size_t slash_loc = 0;
 
                 // find the last slash
                 auto const beg = out.begin();
@@ -148,7 +148,7 @@ namespace webpp::uri {
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_path(ctx, buffer);
+                    pop_back_path(ctx);
                     clear_segment(ctx, buffer);
                     break;
 
