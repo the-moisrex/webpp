@@ -24,6 +24,7 @@ namespace webpp::uri {
 
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::encode_or_validate;
         using details::skip_separator;
         using details::validate_percent_encode;
         using enum uri_encoding_policy;
@@ -78,7 +79,7 @@ namespace webpp::uri {
             break;
         }
         end_segment(ctx, buffer);
-        set_queries(ctx.out, buffer);
+        set_queries(ctx.out, stl::move(buffer));
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
@@ -93,6 +94,7 @@ namespace webpp::uri {
 
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::encode_or_validate;
         using details::skip_separator;
         using details::validate_percent_encode;
         using enum uri_encoding_policy;

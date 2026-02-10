@@ -6,6 +6,7 @@
 #include "../../memory/allocator_concepts.hpp"
 #include "./parse_authority.hpp"
 #include "./parse_host.hpp"
+#include "./parse_scheme.hpp"
 #include "uri_components.hpp"
 
 namespace webpp::uri {

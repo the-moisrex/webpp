@@ -22,6 +22,8 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
+        using details::encode_or_validate;
+        using details::validate_percent_encode;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
