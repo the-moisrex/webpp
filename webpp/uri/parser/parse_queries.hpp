@@ -42,7 +42,7 @@ namespace webpp::uri {
         auto buffer = create_buffer(ctx);
 
         // find the end of the queries
-        while (!encode_or_validate<encode_chars>(ctx, buffer, query_percent_encode_set, interesting_characters)) {
+        while (!encode_or_validate(ctx, buffer, query_percent_encode_set, interesting_characters)) {
             switch (*ctx.pos) {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
@@ -64,17 +64,16 @@ namespace webpp::uri {
                         }
                     }
                     continue;
-                default: {
+                default:
                     if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
+                        skip_separator(ctx, buffer);
+                        // invalid characters are not errors
+                        continue;
                     } else {
                         set(ctx.status, invalid_queries_character);
                         return;
                     }
-                    skip_separator(ctx, buffer);
-                    // invalid characters are not errors
-                    continue;
-                }
             }
             break;
         }
@@ -117,11 +116,10 @@ namespace webpp::uri {
         auto& out          = queries(ctx.out);
 
         // find the end of the queries
-        while (!encode_or_validate<encode_chars>(
-          ctx,
-          !in_value ? key_buffer : value_buffer,
-          query_percent_encode_set,
-          interesting_characters))
+        while (!encode_or_validate(ctx,
+                                   !in_value ? key_buffer : value_buffer,
+                                   query_percent_encode_set,
+                                   interesting_characters))
         {
             switch (*ctx.pos) {
                 case '#':

@@ -262,7 +262,6 @@ namespace webpp::uri {
         }
 
         // handling of the first character:
-        iterator const beg = ctx.pos;
         if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
             // if state override is not given, set buffer to the empty string, state to no
             // scheme state, and start over (from the first code point in input).
