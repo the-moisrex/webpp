@@ -62,7 +62,7 @@ namespace webpp::uri {
                 return;
             }
 
-            if constexpr (CtxT::has_base_uri) {
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
                 set_scheme(ctx, scheme(ctx.base));
@@ -79,7 +79,7 @@ namespace webpp::uri {
 
             // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
-            if constexpr (CtxT::has_base_uri) {
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 set_username(ctx, username(ctx.base));
                 set_password(ctx, password(ctx.base));
                 set_hostname(ctx, hostname(ctx.base));
@@ -118,7 +118,7 @@ namespace webpp::uri {
                     default: break;
                 }
             }
-            if constexpr (ctx_type::has_base_uri) {
+            if constexpr (!stl::is_void_v<typename ctx_type::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     set_scheme(ctx, scheme(ctx.base));
 
@@ -145,7 +145,7 @@ namespace webpp::uri {
             // Set url’s host to the empty string.
             clear_hostname(ctx.out);
 
-            // if constexpr (ctx_type::has_base_uri) {
+            // if constexpr (!stl::is_void_v<typename ctx_type::base_type>) {
             //     // set scheme to "file"
             //     set_scheme(ctx,
             //                                   scheme(ctx.base).data(),
@@ -170,7 +170,7 @@ namespace webpp::uri {
                 break;
             }
 
-            if constexpr (CtxT::has_base_uri) {
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     // todo
                 }
@@ -184,7 +184,7 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#no-scheme-state
 
             using enum uri_status;
-            if constexpr (CtxT::has_base_uri) {
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (path(ctx.base)) { // todo: specs say opaque path
                     if constexpr (Options.parse_fragment) {
                         for (; ctx.pos != ctx.end; ++ctx.pos) {
@@ -374,7 +374,7 @@ namespace webpp::uri {
         ++ctx.pos;
         set_flag(ctx.status, scheme_type::special_scheme);
 
-        if constexpr (CtxT::has_base_uri) {
+        if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
             if (scheme(ctx.out) == scheme(ctx.base)) {
                 // todo: Assert: base is special (and therefore does not have an opaque path).
                 details::special_relative_or_authority_state<Options>(ctx);
