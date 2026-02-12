@@ -35,19 +35,20 @@ namespace webpp::uri {
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_modifiable) {
-                set_scheme(ctx, scheme.begin(), scheme.end());
+                set_scheme(ctx.out, create_buffer(ctx, scheme.begin(), scheme.end()));
             } else {
-                set_scheme(ctx, ctx.beg, ctx.pos);
+                set_scheme(ctx.out, create_buffer(ctx, ctx.beg, ctx.pos));
             }
         }
 
         template <URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
-                set_scheme(ctx, ctx.beg, ctx.pos);
+                set_scheme(ctx.out, create_buffer(ctx, ctx.beg, ctx.pos));
             } else {
-                auto& out_str = get_storage<components::scheme>(ctx);
+                auto out_str = create_buffer(ctx);
                 ascii::lower_to(out_str, ctx.beg, ctx.pos);
+                set_scheme(ctx.out, stl::move(out_str));
             }
         }
 

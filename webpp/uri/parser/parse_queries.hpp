@@ -128,6 +128,7 @@ namespace webpp::uri {
                         set(ctx.status, valid_fragment);
                         break;
                     } else {
+                        assert(false);
                         stl::unreachable();
                     }
                 case '%':
