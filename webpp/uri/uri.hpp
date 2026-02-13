@@ -302,15 +302,15 @@ namespace webpp::uri {
 
         /// Return the length of the URI if available
         [[nodiscard]] constexpr stl::size_t length() const noexcept
-            requires(!is_structured)
+            requires(!is_structured && requires { uri::length(components); })
         {
             // todo: store the length in structured components for fast retrieval
-            return length(components);
+            return uri::length(components);
         }
 
         constexpr void to_string(modifiable_string_type& out) const {
             // https://url.spec.whatwg.org/#concept-url-serializer
-            if constexpr (is_structured) {
+            if constexpr (is_structured || !requires { length(); }) {
                 // todo: make this better:
                 out.reserve(128);
             } else {
@@ -318,15 +318,15 @@ namespace webpp::uri {
             }
             render_scheme(uri::scheme(components), out, true);
             if (has_hostname()) {
-                out.append('/');
-                out.append('/');
+                out.push_back('/');
+                out.push_back('/');
                 if (has_credentials()) {
                     render_username(uri::username(components), out);
                     if (has_password()) {
-                        out.append(':');
+                        out.push_back(':');
                         render_password(uri::password(components), out);
                     }
-                    out.append('@');
+                    out.push_back('@');
                 }
                 render_hostname(uri::hostname(components), out);
                 if (!port().is_default_port(scheme())) {
@@ -339,8 +339,8 @@ namespace webpp::uri {
                 // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and
                 // then serialized, from ending up as web+demo://not-a-host/ (they end up as
                 // web+demo:/.//not-a-host/).
-                out.append('/');
-                out.append('.');
+                out.push_back('/');
+                out.push_back('.');
             }
 
             render_path(uri::path(components), out);
