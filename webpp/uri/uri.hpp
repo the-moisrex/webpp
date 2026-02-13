@@ -336,15 +336,26 @@ namespace webpp::uri {
                 if (!is_default_port(port(), scheme())) {
                     render_port(uri::port(components), out, true);
                 }
-            } else if (!is_opaque() && path().size() > 1 && path().front().empty()) {
-                // If url’s host is null, url does not have an opaque path, url’s path’s size is greater than
-                // 1, and url’s path[0] is the empty string, then append U+002F (/) followed by U+002E (.) to
-                // output.c
-                // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed and
-                // then serialized, from ending up as web+demo://not-a-host/ (they end up as
-                // web+demo:/.//not-a-host/).
-                out.push_back('/');
-                out.push_back('.');
+            } else if (!is_opaque()) {
+                bool should_prepend_dot = false;
+                if constexpr (is_structured) {
+                    auto const _path = path();
+                    should_prepend_dot = _path.size() > 1 && _path.front().empty();
+                } else {
+                    auto const _path = path_view();
+                    should_prepend_dot = _path.size() > 1 && _path.front() == '/' && _path[1] == '/';
+                }
+
+                if (should_prepend_dot) {
+                    // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
+                    // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
+                    // U+002E (.) to output.
+                    // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed
+                    // and then serialized, from ending up as web+demo://not-a-host/ (they end up as
+                    // web+demo:/.//not-a-host/).
+                    out.push_back('/');
+                    out.push_back('.');
+                }
             }
 
             render_path(uri::path(components), out);
