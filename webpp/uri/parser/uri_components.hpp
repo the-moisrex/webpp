@@ -960,6 +960,10 @@ namespace webpp::uri {
         return !hostname(comp).empty();
     }
 
+    [[nodiscard]] static constexpr bool has_port(URIComponents auto const& comp) noexcept {
+        return !port(comp).empty();
+    }
+
     [[nodiscard]] static constexpr bool has_path(URIComponents auto const& comp) noexcept {
         return !path(comp).empty();
     }

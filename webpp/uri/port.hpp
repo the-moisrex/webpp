@@ -7,14 +7,16 @@
 #include "../std/string_view.hpp"
 #include "./parser/parse_port.hpp"
 
+#include <utility>
+
 namespace webpp::uri {
 
     /// Serialize port
     template <typename CharT, typename AllocT>
     static constexpr void render_port(
-      stl::basic_string_view<CharT> const& storage,
-      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&    out,
-      bool const                           add_separators = false) {
+      stl::basic_string_view<CharT> const&                       storage,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      bool const                                                 add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
         if (storage.empty()) {
@@ -29,23 +31,24 @@ namespace webpp::uri {
     /**
      * Check if the specified port is valid or not
      */
-    [[nodiscard]] constexpr bool is_valid(int const port) noexcept {
-        return port >= 0 && port < static_cast<int>(max_port_number);
+    [[nodiscard]] static constexpr bool is_valid(int const port) noexcept {
+        return port >= 0 && stl::cmp_less(port, max_port_number);
     }
 
     /**
      * Is the specified port the default port for the specified scheme or not?
      */
     template <typename CharT>
-    [[nodiscard]] constexpr bool is_default_port(int const port, stl::basic_string_view<CharT> const scheme) noexcept {
-        return known_port(scheme) == port;
+    [[nodiscard]] static constexpr bool is_default_port(int const                           port,
+                                                        stl::basic_string_view<CharT> const scheme) noexcept {
+        return port >= 1 && known_port(scheme) == port;
     }
 
     /**
      * Check if the specified port is a well known port or not
      */
-    [[nodiscard]] constexpr bool is_well_known(int const port) noexcept {
-        return port >= 0 && port < static_cast<int>(well_known_upper_port);
+    [[nodiscard]] static constexpr bool is_well_known(int const port) noexcept {
+        return port >= 0 && stl::cmp_less(port, well_known_upper_port);
     }
 
 } // namespace webpp::uri

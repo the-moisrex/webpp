@@ -24,6 +24,31 @@ namespace webpp::uri {
         return splitter_type{str, static_cast<CharT>('.')};
     }
 
+    /// Serialize hostname
+    template <typename CharT, typename AllocT>
+    static constexpr void render_hostname(stl::basic_string_view<CharT> const                        storage,
+                                          stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out) {
+        // https://url.spec.whatwg.org/#concept-host-serializer
+        // https://url.spec.whatwg.org/#url-serializing
+        out.append(storage);
+    }
+
+    template <typename CharT, typename AllocT>
+    static constexpr void render_hostname(
+      stl::variant<stl::monostate, pure_ipv4, pure_ipv6, stl::basic_string_view<CharT>> const& host,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&                               out) {
+        // https://url.spec.whatwg.org/#concept-host-serializer
+        // https://url.spec.whatwg.org/#url-serializing
+        using string_view_type = stl::basic_string_view<CharT>;
+        if (auto* domain = get_if<string_view_type>(&host)) {
+            out += *domain;
+        } else if (auto* ip4 = get_if<pure_ipv4>(&host)) {
+            ip4->to_string(out);
+        } else if (auto* ip6 = get_if<pure_ipv6>(&host)) {
+            ip6->to_string(out);
+        }
+    }
+
     /**
      * @brief Basic Host
      * A host is
@@ -49,6 +74,10 @@ namespace webpp::uri {
 
         /// Constructor
         using stl::variant<stl::monostate, pure_ipv4, pure_ipv6, string_view_type>::variant;
+
+        [[nodiscard]] constexpr storage_type const& as_variant() const noexcept {
+            return static_cast<storage_type const&>(*this);
+        }
 
         [[nodiscard]] constexpr string_view_type const* as_domain() const noexcept webpp_lifetimebound {
             return get_if<string_view_type>(this);
@@ -78,13 +107,7 @@ namespace webpp::uri {
 
         template <istl::String NStrT = stl::basic_string<CharT>>
         constexpr void to_string(NStrT& out) const {
-            if (auto* domain = as_domain()) {
-                out += *domain;
-            } else if (auto* ip4 = as_ipv4()) {
-                ip4->to_string(out);
-            } else if (auto* ip6 = as_ipv6()) {
-                ip6->to_string(out);
-            }
+            render_hostname(as_variant(), out);
         }
 
         template <istl::String NStrT = stl::basic_string<CharT>, typename... Args>

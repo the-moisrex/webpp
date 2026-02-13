@@ -76,8 +76,8 @@ namespace webpp::uri {
         }
 
         template <uri_options Options = {}>
-        constexpr uri_status_type parse(string_view_type const str) noexcept(is_nothrow) {
-            return parse<Options>(str.begin(), str.end());
+        constexpr void parse(string_view_type const str) noexcept(is_nothrow) {
+            parse<Options>(str.begin(), str.end());
         }
 
         constexpr basic_uri(iterator const beg, iterator const end, allocator_type const& alloc = {})
@@ -138,6 +138,10 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr string_view_type port_view() const noexcept {
             return uri::port(components);
+        }
+
+        [[nodiscard]] constexpr int port() const noexcept {
+            return to_int(uri::port(components)).value_or(-1);
         }
 
         [[nodiscard]] constexpr string_view_type username() const noexcept {
@@ -329,7 +333,7 @@ namespace webpp::uri {
                     out.push_back('@');
                 }
                 render_hostname(uri::hostname(components), out);
-                if (!port().is_default_port(scheme())) {
+                if (!is_default_port(port(), scheme())) {
                     render_port(uri::port(components), out, true);
                 }
             } else if (!is_opaque() && path().size() > 1 && path().front().empty()) {
@@ -449,7 +453,7 @@ namespace webpp::uri {
             if (is_valid(status_res) && port() == known_port(scheme())) {
                 // From https://url.spec.whatwg.org/#scheme-state
                 // If url’s port is url’s scheme’s default port, then set url’s port to null.
-                port().clear();
+                clear_port();
                 unset_flag(status_res, uri_status::has_non_null_port);
                 unset_flag(m_status, uri_status::has_non_null_port);
             }
@@ -491,10 +495,10 @@ namespace webpp::uri {
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_port);
         }
 
-        template <stl::integral T = stl::uint16_t>
+        constexpr void port(stl::uint16_t const port_num)
             requires is_modifiable
-        constexpr bool port(T port_num) {
-            return this->port().assign(port_num);
+        {
+            set_port(components, static_cast<stl::uint16_t>(port_num));
         }
 
         template <uri_options Options = {}>
