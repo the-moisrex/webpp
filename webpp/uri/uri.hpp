@@ -356,7 +356,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr modifiable_string_type href() const {
-            return as_string<modifiable_string_type>();
+            return as_string();
         }
 
         template <uri_options Options = {}>

@@ -25,7 +25,7 @@ namespace webpp::uri {
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) [[unlikely]] {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
                 while (*ctx.pos != '/' && *ctx.pos != '\\') {
                     // we have to move one back because the "path" needs to start with a "/" or a "\"
                     if (--ctx.pos == ctx.beg) {
@@ -51,7 +51,7 @@ namespace webpp::uri {
             clear_hostname(ctx.out);
         }
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
             }
         }
