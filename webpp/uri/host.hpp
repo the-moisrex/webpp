@@ -170,7 +170,7 @@ namespace webpp::uri {
                 } else {
                     return false;
                 }
-            });
+            }, *this);
         }
     };
 

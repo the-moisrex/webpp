@@ -80,7 +80,7 @@ namespace webpp::is {
     }
 
     /**
-     * @brief this function template will check if the ipv4 with it's prefix
+     * @brief this function template will check if the ipv4 with its prefix
      * is valid or not.
      * @example 192.168.0.1/24, 192.168.0.1:24
      */

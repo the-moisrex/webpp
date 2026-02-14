@@ -12,7 +12,8 @@ TEST(StructuredURITests, StructuredDomain) {
 }
 
 TEST(StructuredURITests, StructuredURI) {
-    uri::uri const url = "HtTPS://";
+    using stl::literals::operator""sv;
+    uri::uri const url{"HtTPS://"sv};
     EXPECT_TRUE(url.has_scheme());
     EXPECT_EQ(url.scheme(), "https:");
 }
@@ -54,8 +55,9 @@ TEST(StructuredURITests, SchemeChangeParsing) {
 }
 
 TEST(StructuredURITests, ClearOnSet) {
+    using stl::literals::operator""sv;
     uri::uri url{"https://example.org/about"};
-    url = "http://0300.168.0xF0";
+    url = "http://0300.168.0xF0"sv;
     EXPECT_EQ(url.scheme(), "http");
     EXPECT_FALSE(url.has_path());
     EXPECT_EQ(url.href(), "http://192.168.0.240");

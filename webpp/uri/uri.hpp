@@ -89,7 +89,7 @@ namespace webpp::uri {
         explicit constexpr basic_uri(string_view_type const uri_str,
                                      allocator_type const&  alloc = {}) // NOLINT(*-explicit-*)
           noexcept(is_nothrow)
-          : basic_uri{uri_str, alloc} {}
+          : basic_uri{uri_str.begin(), uri_str.end(), alloc} {}
 
         template <stl::size_t N>
         explicit(false) constexpr basic_uri(
@@ -106,6 +106,13 @@ namespace webpp::uri {
         constexpr basic_uri(basic_uri&&) noexcept            = default;
         constexpr basic_uri& operator=(basic_uri const&)     = default;
         constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
+
+        constexpr basic_uri& operator=(string_view_type const str) noexcept(is_nothrow) {
+            clear();
+            parse(str);
+            return *this;
+        }
+
         constexpr ~basic_uri()                               = default;
 
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
@@ -199,35 +206,35 @@ namespace webpp::uri {
         }
 
         constexpr void clear_scheme() noexcept(is_nothrow) {
-            clear_scheme(components);
+            uri::clear_scheme(components);
         }
 
         constexpr void clear_username() noexcept(is_nothrow) {
-            clear_username(components);
+            uri::clear_username(components);
         }
 
         constexpr void clear_password() noexcept(is_nothrow) {
-            clear_password(components);
+            uri::clear_password(components);
         }
 
         constexpr void clear_hostname() noexcept(is_nothrow) {
-            clear_hostname(components);
+            uri::clear_hostname(components);
         }
 
         constexpr void clear_port() noexcept(is_nothrow) {
-            clear_port(components);
+            uri::clear_port(components);
         }
 
         constexpr void clear_path() noexcept(is_nothrow) {
-            clear_path(components);
+            uri::clear_path(components);
         }
 
         constexpr void clear_queries() noexcept(is_nothrow) {
-            clear_queries(components);
+            uri::clear_queries(components);
         }
 
         constexpr void clear_fragment() noexcept(is_nothrow) {
-            clear_fragment(components);
+            uri::clear_fragment(components);
         }
 
         constexpr void clear_authority() noexcept(is_nothrow) {
@@ -288,12 +295,6 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr bool has_authority() const noexcept {
             return has_hostname() || has_credentials() || has_port();
-        }
-
-        constexpr basic_uri& operator=(string_view_type const str) noexcept(is_nothrow) {
-            clear();
-            parse(str);
-            return *this;
         }
 
         /**
