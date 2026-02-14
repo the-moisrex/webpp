@@ -64,7 +64,7 @@ namespace webpp::uri {
         }
 
       public:
-        template <uri_options Options>
+        template <uri_options Options = {}>
         constexpr void parse(iterator beg, iterator end) noexcept(is_nothrow) {
             using context_type = uri_context<component_type, void>;
             static_assert(URIContext<context_type>, "Component types of output and base must match.");
@@ -75,7 +75,7 @@ namespace webpp::uri {
             m_status = ctx.status;
         }
 
-        template <uri_options Options>
+        template <uri_options Options = {}>
         constexpr void parse(string_view_type const str) noexcept(is_nothrow) {
             parse<Options>(str.begin(), str.end());
         }
@@ -83,7 +83,7 @@ namespace webpp::uri {
         template <uri_options Options = {}>
         constexpr basic_uri(iterator const beg, iterator const end, allocator_type const& alloc = {})
           noexcept(is_nothrow)
-          : components{create<component_type>(beg, end, alloc)} {
+          : components{create(stl::type_identity<component_type>{}, beg, end, alloc)} {
             parse<Options>(beg, end);
         }
 

@@ -252,7 +252,6 @@ namespace webpp::uri {
         using details::encoded_scheme;
         using enum uri_status;
         using char_type = typename CtxT::char_type;
-        using iterator  = typename CtxT::iterator;
 
         webpp_static_constexpr auto alnum_plus = details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
 

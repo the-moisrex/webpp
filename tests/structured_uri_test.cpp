@@ -68,14 +68,14 @@ TEST(StructuredURITests, StructuredPortGetsSerialized) {
     uri::uri const url{"https://example.org:080/about"};
     EXPECT_EQ(url.href(), "https://example.org:80/about");
     EXPECT_EQ(url.port(), 80);
-    EXPECT_EQ(url.port(), "80");
+    EXPECT_EQ(url.port_view(), "80");
 }
 
 TEST(StructuredURITests, StructuredPortGetsSerialized2) {
     uri::uri const url{"https://example.org:00000000000/about"};
     EXPECT_EQ(url.href(), "https://example.org:0/about");
     EXPECT_EQ(url.port(), 0);
-    EXPECT_EQ(url.port(), "0");
+    EXPECT_EQ(url.port_view(), "0");
 }
 
 TEST(StructuredURITests, OpaquePath) {
