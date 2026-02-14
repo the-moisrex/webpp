@@ -75,15 +75,16 @@ namespace webpp::uri {
             m_status = ctx.status;
         }
 
-        template <uri_options Options = {}>
+        template <uri_options Options>
         constexpr void parse(string_view_type const str) noexcept(is_nothrow) {
             parse<Options>(str.begin(), str.end());
         }
 
+        template <uri_options Options = {}>
         constexpr basic_uri(iterator const beg, iterator const end, allocator_type const& alloc = {})
           noexcept(is_nothrow)
           : components{create<component_type>(beg, end, alloc)} {
-            parse(beg, end);
+            parse<Options>(beg, end);
         }
 
         explicit constexpr basic_uri(string_view_type const uri_str,
@@ -113,7 +114,7 @@ namespace webpp::uri {
             return *this;
         }
 
-        constexpr ~basic_uri()                               = default;
+        constexpr ~basic_uri() = default;
 
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
             return allocator_from(components);
@@ -340,10 +341,10 @@ namespace webpp::uri {
             } else if (!is_opaque()) {
                 bool should_prepend_dot = false;
                 if constexpr (is_structured) {
-                    auto const _path = path();
+                    auto const _path   = path();
                     should_prepend_dot = _path.size() > 1 && _path.front().empty();
                 } else {
-                    auto const _path = path_view();
+                    auto const _path   = path_view();
                     should_prepend_dot = _path.size() > 1 && _path.front() == '/' && _path[1] == '/';
                 }
 
