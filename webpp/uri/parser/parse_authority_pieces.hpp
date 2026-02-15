@@ -194,7 +194,9 @@ namespace webpp::uri::details {
             }
             if constexpr (istl::String<decltype(buffer)>) {
                 clear_hostname(ctx.out);
+                buffer.clear();
                 pure_ipv4{ipv4_octets_data}.to_string(buffer);
+                set_hostname(ctx.out, stl::move(buffer));
                 if (skip_last_char) {
                     ++ctx.pos;
                 }
