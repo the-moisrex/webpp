@@ -77,7 +77,7 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear_username(ctx.out);
-            auto user_buffer = create_buffer(ctx.out);
+            auto user_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, user_buffer, details::USER_INFO_ENCODE_SET);
             set_username(ctx.out, stl::move(user_buffer));
         }
@@ -101,7 +101,7 @@ namespace webpp::uri {
             set_warning(ctx.status, uri_status::has_credentials);
 
             clear_password(ctx.out);
-            auto pass_buffer = create_buffer(ctx.out);
+            auto pass_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, pass_buffer, USER_INFO_ENCODE_SET);
             set_password(ctx.out, stl::move(pass_buffer));
         }

@@ -45,6 +45,13 @@ TEST(StructuredURITests, UpdatePassword) {
     EXPECT_EQ(url.href(), "https://username:test@host:8000/path?query#fragment");
 }
 
+TEST(StructuredURITests, UpdatePasswordWithoutAuthority) {
+    uri::uri url{"file:///var/log/system.log"};
+    url.password("test");
+    EXPECT_FALSE(url.has_password());
+    EXPECT_EQ(url.href(), "file:/var/log/system.log");
+}
+
 // https://github.com/nodejs/node/issues/46755
 TEST(StructuredURITests, SchemeChangeParsing) {
     uri::uri url{"file:///var/log/system.log"};
