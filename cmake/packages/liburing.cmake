@@ -1,5 +1,5 @@
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT USE_OS_LIBURING)
     include(CPM)
     CPMAddPackage(
             NAME liburing
