@@ -482,13 +482,29 @@ namespace webpp::uri {
         template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type username(string_view_type const str) noexcept(is_nothrow) {
-            return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
+            using context_type = uri_context<component_type, void>;
+            auto ctx           = create<context_type>(str.begin(), str.end(), stl::move(components));
+            ctx.status         = m_status;
+
+            parse_username<Options | state_override>(ctx);
+
+            components = stl::move(ctx.out);
+            set_flags(m_status, flags_of(ctx.status));
+            return m_status;
         }
 
         template <uri_options Options = {}>
             requires is_modifiable
         constexpr uri_status_type password(string_view_type const str) noexcept(is_nothrow) {
-            return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
+            using context_type = uri_context<component_type, void>;
+            auto ctx           = create<context_type>(str.begin(), str.end(), stl::move(components));
+            ctx.status         = m_status;
+
+            parse_password<Options | state_override>(ctx);
+
+            components = stl::move(ctx.out);
+            set_flags(m_status, flags_of(ctx.status));
+            return m_status;
         }
 
         template <uri_options Options = {}>
