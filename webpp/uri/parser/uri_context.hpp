@@ -123,6 +123,22 @@ namespace webpp::uri {
 
     /// Create a URI Context, and initialize it properly
     template <URIContext CtxT>
+    static constexpr CtxT
+    create(typename CtxT::iterator            beg,
+           typename CtxT::iterator            end,
+           typename CtxT::component_type&& out) noexcept(CtxT::is_nothrow) {
+        CtxT ctx{
+          .beg    = beg,
+          .pos    = beg,
+          .end    = end,
+          .out    = stl::move(out),
+          .status = +uri_status::unparsed,
+        };
+        return ctx;
+    }
+
+    /// Create a URI Context, and initialize it properly
+    template <URIContext CtxT>
         requires(!stl::is_void_v<typename CtxT::base_type>)
     static constexpr CtxT create(
       typename CtxT::iterator       beg,

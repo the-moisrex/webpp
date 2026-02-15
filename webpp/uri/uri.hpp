@@ -55,10 +55,10 @@ namespace webpp::uri {
             using context_type = uri_context<component_type, void>;
             static_assert(URIContext<context_type>, "Component types of output and base must match.");
 
-            auto ctx   = create<context_type>(beg, end, get_allocator());
-            // todo: ctx.out = ;
+            auto ctx   = create<context_type>(beg, end, stl::move(components));
             ctx.status = +status | info_of(m_status);
             details::parse_uri_step<Options | state_override>(ctx);
+            components = stl::move(ctx.out);
             set_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
@@ -69,9 +69,9 @@ namespace webpp::uri {
             using context_type = uri_context<component_type, void>;
             static_assert(URIContext<context_type>, "Component types of output and base must match.");
 
-            auto ctx = create<context_type>(beg, end, get_allocator());
-            // todo: ctx.out = ;
+            auto ctx = create<context_type>(beg, end, stl::move(components));
             parse_uri<Options>(ctx);
+            components = stl::move(ctx.out);
             m_status = ctx.status;
         }
 
