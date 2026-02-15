@@ -55,7 +55,7 @@ namespace webpp::uri::idna {
         };
 
         auto const prev_len = out.size();
-        auto const status   = unicode::idna::to_ascii<to_ascii_options>(spos, send, out);
+        auto const status   = unicode::idna::to_ascii<to_ascii_options()>(spos, send, out);
 
         if constexpr (!be_strict) {
             // If result is the empty string, domain-to-ASCII validation error, return failure.
@@ -70,7 +70,7 @@ namespace webpp::uri::idna {
             //     return invalid_domain_code_point;
             // }
         }
-        return is_valid(status) ? valid : domain_to_ascii_error;
+        return unicode::idna::is_valid(status) ? valid : domain_to_ascii_error;
     }
 
     /**
@@ -92,7 +92,7 @@ namespace webpp::uri::idna {
             return options;
         };
 
-        auto const status = unicode::idna::validate_domain<to_ascii_options>(spos, send);
+        auto const status = unicode::idna::validate_domain<to_ascii_options()>(spos, send);
 
         if constexpr (!be_strict) {
             // If result is the empty string, domain-to-ASCII validation error, return failure.
@@ -107,7 +107,7 @@ namespace webpp::uri::idna {
             //     return invalid_domain_code_point;
             // }
         }
-        return is_valid(status) ? valid : domain_to_ascii_error;
+        return unicode::idna::is_valid(status) ? valid : domain_to_ascii_error;
     }
 
 

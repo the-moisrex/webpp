@@ -5,11 +5,36 @@
 
 #include "../../ip/ipv4.hpp"
 #include "./host_ip.hpp"
+#include "./idna_to_ascii.hpp"
 #include "./parse_credentials.hpp"
 #include "./parse_port.hpp"
 #include "./special_schemes.hpp"
 
 namespace webpp::uri::details {
+
+    template <uri_options Options, URIContext CtxT, typename Iter>
+    [[nodiscard]] static constexpr bool set_parsed_hostname(
+      CtxT& ctx,
+      bool const is_special,
+      Iter const host_begin,
+      Iter const host_end) noexcept(CtxT::is_nothrow) {
+        if constexpr (CtxT::is_modifiable) {
+            if (is_special) {
+                auto host_out           = create_buffer(ctx);
+                auto const to_ascii_res = idna::domain_to_ascii<Options>(host_begin, host_end, host_out);
+                if (!idna::is_valid(to_ascii_res)) [[unlikely]] {
+                    idna::set_error(ctx.status, to_ascii_res);
+                    return false;
+                }
+                set_hostname(ctx.out, stl::move(host_out));
+            } else {
+                set_hostname(ctx.out, create_buffer(ctx, host_begin, host_end));
+            }
+        } else {
+            set_hostname(ctx.out, create_buffer(ctx, host_begin, host_end));
+        }
+        return true;
+    }
 
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -33,6 +58,7 @@ namespace webpp::uri::details {
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
         auto       buffer                   = create_buffer(ctx);
+
         for (;;) {
             bool done; // NOLINT(*-init-variables)
             if (!is_special) {
@@ -88,7 +114,13 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        set_hostname(ctx.out, create_buffer(ctx, host_begin, pre_port_pos));
+                        if (!details::set_parsed_hostname<Options>(
+                              ctx,
+                              is_special,
+                              host_begin,
+                              pre_port_pos)) [[unlikely]] {
+                            return;
+                        }
 
                         if (pre_port_pos == host_begin) {
                             if (Options.empty_host_is_error && is_special) [[unlikely]] {
@@ -204,7 +236,9 @@ namespace webpp::uri::details {
             }
         }
 
-        set_hostname(ctx.out, create_buffer(ctx, host_begin, ctx.pos));
+        if (!details::set_parsed_hostname<Options>(ctx, is_special, host_begin, ctx.pos)) [[unlikely]] {
+            return;
+        }
         if (skip_last_char) {
             ++ctx.pos;
         }
