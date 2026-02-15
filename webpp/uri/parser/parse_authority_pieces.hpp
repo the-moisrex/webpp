@@ -75,7 +75,6 @@ namespace webpp::uri::details {
                         // assume it's a port (even though it might be the start of the password)
                         auto const pre_port_pos = ctx.pos;
                         ++ctx.pos;
-                        set(ctx.status, valid_port);
                         parse_port<Options>(ctx);
 
                         // rollback if it's not a port, we roll back and assume it's a password
@@ -83,6 +82,7 @@ namespace webpp::uri::details {
                             must_contain_credentials = true;
                             clear_port(ctx.out);
                             unset_flag(ctx.status, has_non_null_port);
+                            unset_flag(ctx.status, port_invalid);
                             // it might be a "password" or it's invalid port
                             ctx.pos = pre_port_pos + 1;
                             continue;
