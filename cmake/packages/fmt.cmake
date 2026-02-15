@@ -25,8 +25,7 @@ else()
                     "FMT_INSTALL ON"
                     "FMT_TEST OFF"
                     "FMT_FUZZ OFF"
-                    "FMT_CUDA_TEST"
+                    "FMT_CUDA_TEST OFF"
                     "FMT_OS ON"
     )
 endif()
-

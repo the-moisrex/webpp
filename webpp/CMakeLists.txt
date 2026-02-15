@@ -357,7 +357,7 @@ endif ()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     if (USE_OS_LIBURING)
         target_link_libraries(${LIB_NAME} PUBLIC uring)
-        target_compile_definitions(${LIB_NAME} PUBLIC -D USE_OS_LIBURING=1)
+        target_compile_definitions(${LIB_NAME} PUBLIC USE_OS_LIBURING=1)
     else ()
         target_link_libraries(${LIB_NAME} PUBLIC liburing::uring)
     endif ()
@@ -366,7 +366,7 @@ endif ()
 if (USE_EVE)
     target_link_libraries(${LIB_NAME}
             PUBLIC eve::eve)
-    target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_EVE=1)
+    target_compile_definitions(${LIB_NAME} PUBLIC WEBPP_USE_EVE=1)
 endif ()
 
 
