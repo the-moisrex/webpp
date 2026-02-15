@@ -49,8 +49,9 @@ namespace webpp::uri {
                         clear_fragment(ctx.out);
                         ++ctx.pos;
                         set(ctx.status, valid_fragment);
-                        return;
+                        break;
                     } else {
+                        assert(false);
                         stl::unreachable();
                     }
                     break;
@@ -125,6 +126,7 @@ namespace webpp::uri {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
+                        ++ctx.pos;
                         set(ctx.status, valid_fragment);
                         break;
                     } else {
