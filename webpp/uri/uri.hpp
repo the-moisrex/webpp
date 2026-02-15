@@ -98,7 +98,7 @@ namespace webpp::uri {
           allocator_type const& alloc =
             allocator_type{
         }) noexcept(is_nothrow)
-          : basic_uri{string_view_type{uri_str, N}, alloc} {}
+          : basic_uri{string_view_type{uri_str, N - 1U}, alloc} {}
 
         constexpr basic_uri()
             requires(stl::is_default_constructible_v<string_type>)
