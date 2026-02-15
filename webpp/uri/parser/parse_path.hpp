@@ -222,7 +222,9 @@ namespace webpp::uri {
         webpp_static_constexpr auto encode_set =
           CtxT::is_modifiable || CtxT::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
-        webpp_static_constexpr auto interesting_chars_base = ascii_bitmap(encode_set, ascii_bitmap{'\\', '/', '%'});
+        // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
+        // Characters such as spaces must be percent-encoded, not dropped.
+        webpp_static_constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
         webpp_static_constexpr auto interesting_chars =
           !Options.state_override ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
 
@@ -243,7 +245,7 @@ namespace webpp::uri {
         bool const had_path_before = has_path(ctx.out);
 
         details::handle_windows_driver_letter<Options>(ctx, buffer);
-        while (!encode_or_validate(ctx, buffer, details::PATH_ENCODE_SET, interesting_chars)) {
+        while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                 case '/':
