@@ -763,13 +763,13 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] static constexpr decltype(auto) scheme(CompT&& comp) noexcept {
-        return make_view(stl::forward<CompT>(comp).scheme);
+    [[nodiscard]] static constexpr decltype(auto) scheme(CompT&& comps) noexcept {
+        return make_view(stl::forward<CompT>(comps).scheme);
     }
 
     template <URIComponents CompT>
-    static constexpr void set_scheme(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        scheme(comp) = stl::move(value);
+    static constexpr void set_scheme(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.scheme = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -778,8 +778,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_username(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        username(comp) = stl::move(value);
+    static constexpr void set_username(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.username = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -788,8 +788,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_password(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        password(comp) = stl::move(value);
+    static constexpr void set_password(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.password = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -854,8 +854,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_hostname(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        hostname(comp) = stl::move(value);
+    static constexpr void set_hostname(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.hostname = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -864,8 +864,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_port(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        port(comp) = stl::move(value);
+    static constexpr void set_port(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.port = stl::move(value);
     }
 
     template <URIComponents CompT, typename Iter>
@@ -875,7 +875,7 @@ namespace webpp::uri {
 
     template <PortNumberAssignable CompT>
     static constexpr void set_port(CompT& comps, stl::uint16_t const port_value) noexcept {
-        port(comps) = port_value;
+        comps.port = port_value;
     }
 
     template <URIComponents CompT>
@@ -884,8 +884,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_queries(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        queries(comp) = stl::move(value);
+    static constexpr void set_queries(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.queries = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -894,8 +894,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_path(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        path(comp) = stl::move(value);
+    static constexpr void set_path(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.path = stl::move(value);
     }
 
     template <URIComponents CompT>
@@ -904,8 +904,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    static constexpr void set_fragment(CompT& comp, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
-        fragment(comp) = stl::move(value);
+    static constexpr void set_fragment(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
+        comps.fragment = stl::move(value);
     }
 
     static constexpr void clear_scheme(URIComponents auto& comp) noexcept {

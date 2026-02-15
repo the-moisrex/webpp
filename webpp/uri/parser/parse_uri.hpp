@@ -33,7 +33,7 @@ namespace webpp::uri {
                 case valid_queries: parse_queries<Options>(ctx); break;
                 case valid_fragment: parse_fragment<Options>(ctx); break;
                 case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
-                default: stl::unreachable(); break;               // should be impossible
+                default: assert(false); stl::unreachable(); break;               // should be impossible
             }
             return false;
         }
