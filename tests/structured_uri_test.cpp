@@ -34,7 +34,7 @@ TEST(StructuredURITests, AddDotToPath) {
     // EXPECT_TRUE(url);
     url.path("//p");
     EXPECT_EQ(url.path(), "//p");
-    EXPECT_EQ(url.as_string(), "non-spec:/.//p");
+    EXPECT_EQ(url.as_string(), "non-spec://p");
 }
 
 TEST(StructuredURITests, UpdatePassword) {
