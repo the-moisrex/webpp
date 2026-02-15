@@ -169,7 +169,7 @@ namespace webpp {
         }
 
         [[nodiscard]] string_view content_type() const noexcept {
-            return get_data("CONTENT_LENGTH");
+            return get_data("CONTENT_TYPE");
         }
 
         [[nodiscard]] string_view content_length() const noexcept {

@@ -58,6 +58,9 @@ namespace webpp::http {
                         if (name == "CONTENT_LENGTH") {
                             string_view_type const value = hdr.substr(equal_sign + 1);
                             this->headers.emplace("Content-Length", put_value(value));
+                        } else if (name == "CONTENT_TYPE") {
+                            string_view_type const value = hdr.substr(equal_sign + 1);
+                            this->headers.emplace("Content-Type", put_value(value));
                         }
                         break;
                     }
@@ -333,7 +336,7 @@ namespace webpp::http {
          * POST and PUT, this is the content type of the data.
          */
         [[nodiscard]] string_view_type content_type() const noexcept {
-            return env("CONTENT_LENGTH");
+            return env("CONTENT_TYPE");
         }
 
         /**
