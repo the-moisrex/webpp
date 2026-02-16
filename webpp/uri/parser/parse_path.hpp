@@ -100,8 +100,8 @@ namespace webpp::uri {
            {10, 0, 0, 0, 0, 0}}
         };
 
-        template <typename IterT>
-        [[nodiscard]] static constexpr stl::uint8_t dots_count(IterT pos, IterT end) noexcept {
+        template <stl::forward_iterator IterT>
+        [[nodiscard]] static constexpr stl::uint8_t dots_count(IterT pos, IterT const end) noexcept {
             stl::uint8_t state = 3; // Start at initial state
 
             for (; pos != end; ++pos) {

@@ -33,7 +33,10 @@ namespace webpp::uri {
                 case valid_queries: parse_queries<Options>(ctx); break;
                 case valid_fragment: parse_fragment<Options>(ctx); break;
                 case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
-                default: assert(false); stl::unreachable(); break;               // should be impossible
+                default:
+                    assert(false);
+                    stl::unreachable();
+                    break; // should be impossible
             }
             return false;
         }
@@ -48,13 +51,13 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_options Options, URIContext CtxT>
+    template <uri_options Options = {}, URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         details::continue_parsing_uri<Options>(ctx);
     }
 
     /// View-only
-    template <uri_options Options, typename CharT = char>
+    template <uri_options Options = {}, typename CharT = char>
     static constexpr auto parse_uri(stl::basic_string_view<CharT> const str) noexcept {
         using context_type = uri_context<uri_components_u32_view<CharT>>;
         auto context       = create<context_type>(str.begin(), str.end());
@@ -62,7 +65,7 @@ namespace webpp::uri {
         return context;
     }
 
-    template <uri_options Options, typename CharT, URIComponents BaseCompT>
+    template <uri_options Options = {}, typename CharT, URIComponents BaseCompT>
     static constexpr auto parse_uri(stl::basic_string_view<CharT> const the_url, BaseCompT&& base_comps)
       noexcept(false) {
         using context_type = uri_context<uri_components_owning<CharT>, BaseCompT>;
@@ -72,7 +75,7 @@ namespace webpp::uri {
     }
 
     /// Owning String
-    template <uri_options Options, typename CharT, typename AllocT, URIComponents BaseCompT>
+    template <uri_options Options = {}, typename CharT, typename AllocT, URIComponents BaseCompT>
     static constexpr auto parse_uri(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& the_url,
                                     BaseCompT&& base_comps) noexcept(false) {
         using context_type = uri_context<uri_components_owning<CharT, AllocT>, BaseCompT>;
@@ -85,7 +88,7 @@ namespace webpp::uri {
         return context;
     }
 
-    template <uri_options Options, istl::StringLike StrT, typename CharT>
+    template <uri_options Options = {}, istl::StringLike StrT, typename CharT>
     static constexpr auto parse_uri(StrT const& the_url, stl::basic_string_view<CharT> const base_uri)
       noexcept(istl::StringView<StrT>) {
         using iterator       = typename StrT::const_iterator;
