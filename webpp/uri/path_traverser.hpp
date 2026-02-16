@@ -159,51 +159,61 @@ namespace webpp::uri {
      *
      * https://httpwg.org/specs/rfc9110.html#uri.references
      */
-    template <istl::String SlugType = stl::string, istl::StringView StringViewType = stl::string_view>
-    struct basic_path_iterator {
-        using string_type      = SlugType;
+    template <istl::CharType CharT = char, Allocator AllocT = stl::allocator<CharT>>
+    struct path_iterator {
+        using char_type        = CharT;
+        using allocator_type   = AllocT;
+        using string_type      = stl::basic_string<char_type, stl::char_traits<char_type>, allocator_type>;
         using slug_type        = string_type;
-        using iterator         = typename slug_type::const_iterator;
-        using size_type        = typename slug_type::size_type;
-        using char_type        = istl::char_type_of_t<string_type>;
-        using string_view_type = StringViewType;
+        using string_view_type = stl::basic_string_view<char_type>;
+        using iterator         = typename string_view_type::const_iterator;
+        using size_type        = typename string_view_type::size_type;
 
-        static constexpr string_view_type parent_dir  = "..";
-        static constexpr string_view_type current_dir = ".";
+      private:
+        static constexpr char_type parent_dir_arr[]  = {char_type{'.'}, char_type{'.'}};
+        static constexpr char_type current_dir_arr[] = {char_type{'.'}};
+
+      public:
+        static constexpr string_view_type parent_dir  = string_view_type{parent_dir_arr, 2U};
+        static constexpr string_view_type current_dir = string_view_type{current_dir_arr, 1U};
         static constexpr auto allowed_chars           = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
       private:
-        slug_type seg;                                                                             // segment
-        iterator  beg;
-        iterator  pos;
-        iterator  fin; // todo: technically it's possible to remove this
+        slug_type        seg;                                                                      // segment
+        string_view_type path;
+        iterator         beg;
+        iterator         pos;
+        iterator         fin; // todo: technically it's possible to remove this
 
       public:
-        constexpr explicit basic_path_iterator(string_type const& path)
-          : seg{path.get_allocator()},
+        constexpr explicit path_iterator(string_view_type const inp_path,
+                                         allocator_type const&  in_alloc = allocator_type{})
+          : seg{in_alloc},
+            path{inp_path},
             beg{stl::begin(path)},
             pos{stl::begin(path)},
             fin{stl::end(path)} {}
 
-        constexpr basic_path_iterator& operator=(string_type const& path) {
-            beg = stl::begin(path);
-            pos = stl::begin(path);
-            fin = stl::end(path);
+        constexpr path_iterator& operator=(string_view_type const inp_path) {
+            path = inp_path;
+            beg  = stl::begin(path);
+            pos  = stl::begin(path);
+            fin  = stl::end(path);
             seg.clear();
             return *this;
         }
 
-        constexpr basic_path_iterator(basic_path_iterator const&)                = default;
-        constexpr basic_path_iterator(basic_path_iterator&&) noexcept            = default;
-        constexpr basic_path_iterator& operator=(basic_path_iterator&&) noexcept = default;
-        constexpr basic_path_iterator& operator=(basic_path_iterator const&)     = default;
-        constexpr ~basic_path_iterator()                                         = default;
+        constexpr path_iterator(path_iterator const&)                = default;
+        constexpr path_iterator(path_iterator&&) noexcept            = default;
+        constexpr path_iterator& operator=(path_iterator&&) noexcept = default;
+        constexpr path_iterator& operator=(path_iterator const&)     = default;
+        constexpr ~path_iterator()                                   = default;
 
         /**
          * Get a copy
          * Used for branching the traversal position
          */
-        constexpr basic_path_iterator branch() const {
+        constexpr path_iterator branch() const {
             return {*this};
         }
 
@@ -264,7 +274,7 @@ namespace webpp::uri {
             return !at_end();
         }
 
-        constexpr basic_path_iterator& operator++() noexcept {
+        constexpr path_iterator& operator++() noexcept {
             next();
             return *this;
         }
@@ -300,8 +310,11 @@ namespace webpp::uri {
         }
     };
 
-    template <Traits TraitsType = default_traits>
-    using path_iterator = basic_path_iterator<traits::string<TraitsType>, traits::string_view<TraitsType>>;
+    template <typename CharT, stl::size_t N>
+    path_iterator(CharT const (&)[N]) -> path_iterator<CharT>;
+
+    template <typename CharT>
+    path_iterator(stl::basic_string_view<CharT>) -> path_iterator<CharT>;
 
 } // namespace webpp::uri
 
