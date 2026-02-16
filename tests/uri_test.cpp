@@ -385,8 +385,8 @@ TYPED_TEST(URITests, PathIteratorTest) {
 }
 
 TYPED_TEST(URITests, PathTraverser) {
-    uri::basic_path<> the_path;
-    EXPECT_TRUE(the_path.parse(stl::string_view{"/page/one"}));
+    stl::array<stl::string, 3> segments{"", "page", "one"};
+    uri::basic_path<stl::string> the_path{segments.data(), segments.size()};
     EXPECT_EQ(the_path.size(), 3);
     uri::path_traverser iter{the_path};
     EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
@@ -1682,10 +1682,9 @@ TEST(URITests, HostLabelsUnicode) {
 }
 
 namespace {
-    template <bool IgnoreWhitespaces = true>
     auto dots(std::string_view const input) {
         using uri::details::dots_count;
-        return dots_count<IgnoreWhitespaces>(input.begin(), input.end());
+        return dots_count(input.begin(), input.end());
     }
 } // namespace
 
@@ -1698,9 +1697,6 @@ TEST(URITests, HandleDotsTest) {
     EXPECT_EQ(dots("%2e%2e"), 2);  // Test 5: Valid_Percent2ePercent2e
     EXPECT_EQ(dots(".%2e"), 2);    // Test 6: Valid_DotPercent2e
     EXPECT_EQ(dots("%2e."), 2);    // Test 7: Valid_Percent2eDot
-    EXPECT_EQ(dots("\n.\n"), 1);   // Test 8: Valid_DotWithWhitespace
-    EXPECT_EQ(dots("\t..\t"), 2);  // Test 9: Valid_DoubleDotWithWhitespace
-    EXPECT_EQ(dots("\r%2e\r"), 1); // Test 10: Valid_Percent2eWithWhitespace
     EXPECT_EQ(dots(".%2E"), 2);    // Test 11: Valid_MixedDotsAndPercent2e
     EXPECT_EQ(dots("%2E."), 2);    // Test 12: Valid_Percent2EDot
 
@@ -1726,11 +1722,9 @@ TEST(URITests, HandleDotsTest) {
     EXPECT_EQ(dots("%2e.."), 0);       // Test 30: Invalid_Percent2eDoubleDot
     EXPECT_EQ(dots(".%2e.."), 0);      // Test 31: Invalid_DotPercent2eDoubleDot
     EXPECT_EQ(dots("..%2e."), 0);      // Test 32: Invalid_DoubleDotPercent2eDot
-    EXPECT_EQ(dots("%2e\n.\t%2e"), 0); // Test 33: Invalid_WhitespaceInSequence
     EXPECT_EQ(dots(" ."), 0);          // Test 34: Invalid_LeadingSpace
     EXPECT_EQ(dots("  .."), 0);        // Test 35: Invalid_LeadingSpacesDoubleDot
     EXPECT_EQ(dots("   %2e"), 0);      // Test 36: Invalid_LeadingSpacesPercent2e
-    EXPECT_EQ(dots(" \t\n\r"), 0);     // Test 37: Invalid_OnlyWhitespace
     EXPECT_EQ(dots(""), 0);            // Test 38: Invalid_EmptyInput
     EXPECT_EQ(dots("...."), 0);        // Test 39: Invalid_QuadrupleDot
     EXPECT_EQ(dots("%2e%2e."), 0);     // Test 40: Invalid_Percent2ePercent2eDot
@@ -1746,13 +1740,4 @@ TEST(URITests, HandleDotsTest) {
     EXPECT_EQ(dots("   ."), 0);        // Test 50: Invalid_WhitespaceBeforeDot
 
 
-    // --- Whitespace Handling Tests (NoWhitespace Options) ---
-    EXPECT_EQ(dots<false>("."), 1);       // Re-test valid dot without whitespace
-    EXPECT_EQ(dots<false>(".."), 2);      // Re-test valid double dot without whitespace
-    EXPECT_EQ(dots<false>("%2e"), 1);     // Re-test valid percent 2e without whitespace
-    EXPECT_EQ(dots<false>("\n.\n"), 0);   // Test 51: NoWhitespace_Invalid_DotWithNewline
-    EXPECT_EQ(dots<false>("\t..\t"), 0);  // Test 52: NoWhitespace_Invalid_DoubleDotWithTab
-    EXPECT_EQ(dots<false>("\r%2e\r"), 0); // Test 53: NoWhitespace_Invalid_Percent2eWithReturn
-    EXPECT_EQ(dots<false>(" ."), 0);      // Test 54: NoWhitespace_Invalid_LeadingSpaceDot
-    EXPECT_EQ(dots<false>(" "), 0);       // Test 55: NoWhitespace_Invalid_OnlySpace
 }
