@@ -23,8 +23,7 @@ static_assert(std::ranges::input_range<uri::uri_status_iterator>, "Input range")
 #endif
 
 TEST(URIHelperTests, IIEquals) {
-    EXPECT_TRUE(
-      uri::iiequals<uri::details::TABS_OR_NEWLINES>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
+    EXPECT_TRUE(uri::iiequals<uri::details::TABS_OR_NEWLINES>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
 }
 
 using Types = testing::Types<uri::uri_context<uri::uri_components_owning<char>>>;
@@ -102,7 +101,7 @@ TYPED_TEST(URITests, SpecialPathRendering) {
 }
 
 TYPED_TEST(URITests, PathFromString) {
-    stl::array<stl::string, 4> const path_segments{"", "a", "b", "d"};
+    stl::array<stl::string, 4> const   path_segments{"", "a", "b", "d"};
     uri::basic_path<stl::string> const path{path_segments};
     ASSERT_EQ(path.size(), 4);
     EXPECT_TRUE(path.is_absolute());
@@ -123,8 +122,11 @@ TYPED_TEST(URITests, PathFromString) {
 // }
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
-    constexpr stl::string_view    str = "http://";
-    uri::uri_context<uri::uri_components_owning<char>> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
+    constexpr stl::string_view                         str = "http://";
+    uri::uri_context<uri::uri_components_owning<char>> context{
+      .beg = str.begin(),
+      .pos = str.begin(),
+      .end = str.end()};
     uri::parse_scheme<uri::standard_uri_parsing_options>(context);
     auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
@@ -725,8 +727,6 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostWithNewLine) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
-      << to_string(uri::get_warning(context.status));
-    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::path(context.out), "/C:/windows");

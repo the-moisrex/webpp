@@ -258,6 +258,7 @@ namespace webpp::uri {
         hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
         credentials_not_supported       = error_bit | 26U,
         modification_required           = error_bit | 27U,
+        found_tabs_or_newlines          = error_bit | 28U, // only thrown on read-only APIs
 
         // flags:
         special_scheme     = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
@@ -465,6 +466,10 @@ namespace webpp::uri {
                 return {
                   "The URI requires to be modified, but we have given non-modifiable view-only URI components. Use "
                   "string-based URI components instead of string-view-based ones."};
+            case found_tabs_or_newlines:
+                return {
+                  "Input contains tabs or newlines. They must be removed before parsing, which requires modifiable "
+                  "URI components."};
 
             // flags:
             case special_scheme: return {"The URI's scheme is special http(s), ws(s), or ftp."};

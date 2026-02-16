@@ -56,7 +56,7 @@ namespace webpp::uri {
         using base_type      = BaseType;
         using seg_type       = typename component_type::seg_type;
         using char_type      = typename component_type::char_type;
-        using iterator       = typename stl::basic_string_view<char_type>::const_iterator;
+        using iterator       = char_type const*;
         using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
@@ -80,7 +80,7 @@ namespace webpp::uri {
         using base_type      = void;
         using seg_type       = typename component_type::seg_type;
         using char_type      = typename component_type::char_type;
-        using iterator       = typename stl::basic_string_view<char_type>::const_iterator;
+        using iterator       = char_type const*;
         using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
