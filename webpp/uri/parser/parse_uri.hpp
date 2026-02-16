@@ -93,7 +93,7 @@ namespace webpp::uri {
                       length,
                       [&](char_type* buf, stl::size_t const max_length) noexcept {
                           // raw copy
-                          for (auto pos = src; pos != src;) {
+                          for (auto pos = ctx.beg; pos != src;) {
                               *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
                           }
 
