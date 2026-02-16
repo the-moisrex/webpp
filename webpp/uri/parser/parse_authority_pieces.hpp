@@ -13,14 +13,16 @@
 namespace webpp::uri::details {
 
     template <uri_options Options, URIContext CtxT, typename Iter>
-    [[nodiscard]] static constexpr bool set_parsed_hostname(
-      CtxT& ctx,
-      bool const is_special,
-      Iter const host_begin,
-      Iter const host_end) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] static constexpr bool
+    set_parsed_hostname(CtxT& ctx, bool const is_special, Iter const host_begin, Iter const host_end)
+      noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable) {
             if (is_special) {
-                auto host_out           = create_buffer(ctx);
+                if (host_begin == ctx.pos) {
+                    clear_hostname(ctx.out);
+                    return true;
+                }
+                auto       host_out     = create_buffer(ctx);
                 auto const to_ascii_res = idna::domain_to_ascii<Options>(host_begin, host_end, host_out);
                 if (!idna::is_valid(to_ascii_res)) [[unlikely]] {
                     idna::set_error(ctx.status, to_ascii_res);
@@ -114,11 +116,9 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        if (!details::set_parsed_hostname<Options>(
-                              ctx,
-                              is_special,
-                              host_begin,
-                              pre_port_pos)) [[unlikely]] {
+                        if (!details::set_parsed_hostname<Options>(ctx, is_special, host_begin, pre_port_pos))
+                          [[unlikely]]
+                        {
                             return;
                         }
 
@@ -216,7 +216,7 @@ namespace webpp::uri::details {
         }
 
         // Parse IPv4 (if it ends with ipv4 octet)
-        if (details::is_possible_ends_with_ipv4<Options>(host_begin, ctx.pos - 1, ctx)) {
+        if (details::is_possible_ends_with_ipv4<Options>(host_begin, stl::prev(ctx.pos), ctx)) {
             // we don't need to initialize it to zero
             stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
             bool const                  should_continue =

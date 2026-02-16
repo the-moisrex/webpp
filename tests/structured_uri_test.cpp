@@ -100,5 +100,5 @@ TEST(StructuredURITests, SpacesTest) {
     EXPECT_TRUE(url.valid());
     EXPECT_EQ(url.href(), "http://www.example.com/%20%20/%20%20/+/");
     url = uri::uri("http://www.example.com/");
-    EXPECT_FALSE(url.valid());
+    EXPECT_TRUE(url.valid());
 }
