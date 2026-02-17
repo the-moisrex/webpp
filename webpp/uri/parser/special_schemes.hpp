@@ -62,20 +62,31 @@ namespace webpp::uri {
      */
     template <typename CharT>
     [[nodiscard]] static constexpr stl::uint16_t known_port(stl::basic_string_view<CharT> const scheme) noexcept {
-        using details::encoded_scheme;
-
         // NOLINTBEGIN(*-magic-numbers)
-        stl::uint64_t scheme_code = 0ULL;
-        for (auto const ith_char : scheme) {
-            scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(ith_char));
-            scheme_code <<= details::one_byte;
-        }
-        switch (scheme_code) {
-            case encoded_scheme("http"):
-            case encoded_scheme("ws"): return 80U;
-            case encoded_scheme("https"):
-            case encoded_scheme("wss"): return 443U;
-            case encoded_scheme("ftp"): return 21U;
+        switch (scheme.size()) {
+            case 2U:
+                if (iiequals_fl("ws", scheme)) {
+                    return 80U;
+                }
+                break;
+            case 3U:
+                if (iiequals_fl("wss", scheme)) {
+                    return 443U;
+                }
+                if (iiequals_fl("ftp", scheme)) {
+                    return 21U;
+                }
+                break;
+            case 4U:
+                if (iiequals_fl("http", scheme)) {
+                    return 80U;
+                }
+                break;
+            case 5U:
+                if (iiequals_fl("https", scheme)) {
+                    return 443U;
+                }
+                break;
             default: break;
         }
         return 0U;
