@@ -389,14 +389,14 @@ TYPED_TEST(URITests, PathTraverser) {
     uri::basic_path<stl::string> the_path{segments.data(), segments.size()};
     EXPECT_EQ(the_path.size(), 3);
     uri::path_traverser iter{the_path};
-    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
-    EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
-    EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment(""));
+    EXPECT_TRUE(iter.check_segment("page"));
+    EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
     iter.reset();
-    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
-    EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
-    EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment(""));
+    EXPECT_TRUE(iter.check_segment("page"));
+    EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
 }
 

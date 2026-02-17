@@ -101,7 +101,8 @@ namespace webpp::uri {
             return pos.operator->();
         }
 
-        [[nodiscard]] constexpr slug_type segment() const noexcept {
+        [[nodiscard]] constexpr slug_type const& segment() const noexcept {
+            assert(!at_end());
             return *pos;
         }
 
