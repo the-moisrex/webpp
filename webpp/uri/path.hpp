@@ -167,7 +167,7 @@ namespace webpp::uri {
 
     template <istl::LinearContainer VecT>
     static constexpr void normalize(VecT& path, bool const remove_empty_segments = false) {
-        remove_dot_segments(is_absolute(path), remove_empty_segments);
+        remove_dot_segments(path, is_absolute(path), remove_empty_segments);
     }
 
 

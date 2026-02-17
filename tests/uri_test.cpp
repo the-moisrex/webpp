@@ -385,7 +385,7 @@ TYPED_TEST(URITests, PathIteratorTest) {
 }
 
 TYPED_TEST(URITests, PathTraverser) {
-    stl::array<stl::string, 3> segments{"", "page", "one"};
+    stl::array<stl::string, 3>   segments{"", "page", "one"};
     uri::basic_path<stl::string> the_path{segments.data(), segments.size()};
     EXPECT_EQ(the_path.size(), 3);
     uri::path_traverser iter{the_path};
@@ -521,11 +521,7 @@ TYPED_TEST(URITests, PathDot) {
 TYPED_TEST(URITests, PathDotNormalized) {
     stl::string const str = "https://127.0.0.1/./one";
 
-    uri::uri_context<uri::uri_components_owning<char>> context{
-      .beg = str.begin(),
-      .pos = str.begin(),
-      .end = str.end(),
-    };
+    auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
@@ -1347,8 +1343,9 @@ TYPED_TEST(URITests, AbormalHostIPv4Loose) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::standard_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
         EXPECT_FALSE(should_continue) << "Original IP String: '" << _ip << "'\nParsed IP: "
                                       << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
@@ -1532,8 +1529,9 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     stl::uint8_t ip_octets[4]{};
 
     for (auto const& [_ip, expected_ip] : valid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::standard_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
         EXPECT_TRUE(should_continue) << "Original IP String: " << _ip << "\nParsed IP: "
                                      << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
@@ -1546,8 +1544,9 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::standard_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
 
         EXPECT_FALSE(should_continue) << "Original IP String: '" << _ip << "'\nParsed IP: "
                                       << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
@@ -1620,7 +1619,7 @@ TYPED_TEST(URITests, BlowUp) {
 TYPED_TEST(URITests, SpacesInURIs) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example. org");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
-    EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::invalid_domain_code_point))
+    EXPECT_TRUE(uri::has(ctx.status, uri::uri_status::invalid_domain_code_point))
       << to_string(uri::get_value(ctx.status));
 }
 
@@ -1637,12 +1636,12 @@ TYPED_TEST(URITests, SpecialDots) {
 TYPED_TEST(URITests, EmptyHostNotAllowed) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://username:password@:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
-    EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has(ctx.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx.status));
 
 
     auto const ctx2 = this->template parse_from_string<TypeParam>("http://username@/");
     EXPECT_FALSE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
-    EXPECT_TRUE(uri::has_error(ctx2.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx2.status));
+    EXPECT_TRUE(uri::has(ctx2.status, uri::uri_status::host_missing)) << to_string(uri::get_value(ctx2.status));
 }
 
 TYPED_TEST(URITests, StupidSchemes) {
@@ -1688,54 +1687,52 @@ namespace {
 
 TEST(URITests, HandleDotsTest) {
     // --- Valid Dot Sequences ---
-    EXPECT_EQ(dots("."), 1);       // Test 1: Valid_SingleDot
-    EXPECT_EQ(dots(".."), 2);      // Test 2: Valid_DoubleDot
-    EXPECT_EQ(dots("%2e"), 1);     // Test 3: Valid_Percent2e
-    EXPECT_EQ(dots("%2E"), 1);     // Test 4: Valid_Percent2E
-    EXPECT_EQ(dots("%2e%2e"), 2);  // Test 5: Valid_Percent2ePercent2e
-    EXPECT_EQ(dots(".%2e"), 2);    // Test 6: Valid_DotPercent2e
-    EXPECT_EQ(dots("%2e."), 2);    // Test 7: Valid_Percent2eDot
-    EXPECT_EQ(dots(".%2E"), 2);    // Test 11: Valid_MixedDotsAndPercent2e
-    EXPECT_EQ(dots("%2E."), 2);    // Test 12: Valid_Percent2EDot
+    EXPECT_EQ(dots("."), 1);      // Test 1: Valid_SingleDot
+    EXPECT_EQ(dots(".."), 2);     // Test 2: Valid_DoubleDot
+    EXPECT_EQ(dots("%2e"), 1);    // Test 3: Valid_Percent2e
+    EXPECT_EQ(dots("%2E"), 1);    // Test 4: Valid_Percent2E
+    EXPECT_EQ(dots("%2e%2e"), 2); // Test 5: Valid_Percent2ePercent2e
+    EXPECT_EQ(dots(".%2e"), 2);   // Test 6: Valid_DotPercent2e
+    EXPECT_EQ(dots("%2e."), 2);   // Test 7: Valid_Percent2eDot
+    EXPECT_EQ(dots(".%2E"), 2);   // Test 11: Valid_MixedDotsAndPercent2e
+    EXPECT_EQ(dots("%2E."), 2);   // Test 12: Valid_Percent2EDot
 
 
     // --- Invalid Dot Sequences ---
-    EXPECT_EQ(dots("..."), 0);         // Test 13: Invalid_TripleDot
-    EXPECT_EQ(dots("%2e%2e%2e"), 0);   // Test 14: Invalid_Percent2ePercent2ePercent2e
-    EXPECT_EQ(dots(".%2e."), 0);       // Test 15: Invalid_DotPercent2eDot
-    EXPECT_EQ(dots("%"), 0);           // Test 16: Invalid_PartialPercent
-    EXPECT_EQ(dots("%2"), 0);          // Test 17: Invalid_PartialPercent2
-    EXPECT_EQ(dots("%2f"), 0);         // Test 18: Invalid_Percent2f
-    EXPECT_EQ(dots("2e"), 0);          // Test 19: Invalid_2e
-    EXPECT_EQ(dots("e2"), 0);          // Test 20: Invalid_e2
-    EXPECT_EQ(dots(".a"), 0);          // Test 21: Invalid_DotFollowedByChar
-    EXPECT_EQ(dots("..b"), 0);         // Test 22: Invalid_DoubleDotFollowedByChar
-    EXPECT_EQ(dots("%2ec"), 0);        // Test 23: Invalid_Percent2eFollowedByChar
-    EXPECT_EQ(dots("a."), 0);          // Test 24: Invalid_CharBeforeDot
-    EXPECT_EQ(dots("b.."), 0);         // Test 25: Invalid_CharBeforeDoubleDot
-    EXPECT_EQ(dots("c%2e"), 0);        // Test 26: Invalid_CharBeforePercent2e
-    EXPECT_EQ(dots(".%"), 0);          // Test 27: Invalid_DotPercent
-    EXPECT_EQ(dots("..%"), 0);         // Test 28: Invalid_DoubleDotPercent
-    EXPECT_EQ(dots("%2e%"), 0);        // Test 29: Invalid_Percent2ePercent
-    EXPECT_EQ(dots("%2e.."), 0);       // Test 30: Invalid_Percent2eDoubleDot
-    EXPECT_EQ(dots(".%2e.."), 0);      // Test 31: Invalid_DotPercent2eDoubleDot
-    EXPECT_EQ(dots("..%2e."), 0);      // Test 32: Invalid_DoubleDotPercent2eDot
-    EXPECT_EQ(dots(" ."), 0);          // Test 34: Invalid_LeadingSpace
-    EXPECT_EQ(dots("  .."), 0);        // Test 35: Invalid_LeadingSpacesDoubleDot
-    EXPECT_EQ(dots("   %2e"), 0);      // Test 36: Invalid_LeadingSpacesPercent2e
-    EXPECT_EQ(dots(""), 0);            // Test 38: Invalid_EmptyInput
-    EXPECT_EQ(dots("...."), 0);        // Test 39: Invalid_QuadrupleDot
-    EXPECT_EQ(dots("%2e%2e."), 0);     // Test 40: Invalid_Percent2ePercent2eDot
-    EXPECT_EQ(dots(".%2e%2e"), 0);     // Test 41: Invalid_DotPercent2ePercent2e
-    EXPECT_EQ(dots("abc."), 0);        // Test 42: Invalid_CharsBeforeDot
-    EXPECT_EQ(dots("abc.."), 0);       // Test 43: Invalid_CharsBeforeDoubleDot
-    EXPECT_EQ(dots("abc%2e"), 0);      // Test 44: Invalid_CharsBeforePercent2e
-    EXPECT_EQ(dots("...%2e"), 0);      // Test 45: Invalid_TripleDotPercent2e
-    EXPECT_EQ(dots("%2..."), 0);       // Test 46: Invalid_Percent2TripleDot
-    EXPECT_EQ(dots("%2e.a"), 0);       // Test 47: Invalid_Percent2eDotChar
-    EXPECT_EQ(dots("..a"), 0);         // Test 48: Invalid_DoubleDotChar
-    EXPECT_EQ(dots(".a"), 0);          // Test 49: Invalid_SingleDotChar
-    EXPECT_EQ(dots("   ."), 0);        // Test 50: Invalid_WhitespaceBeforeDot
-
-
+    EXPECT_EQ(dots("..."), 0);       // Test 13: Invalid_TripleDot
+    EXPECT_EQ(dots("%2e%2e%2e"), 0); // Test 14: Invalid_Percent2ePercent2ePercent2e
+    EXPECT_EQ(dots(".%2e."), 0);     // Test 15: Invalid_DotPercent2eDot
+    EXPECT_EQ(dots("%"), 0);         // Test 16: Invalid_PartialPercent
+    EXPECT_EQ(dots("%2"), 0);        // Test 17: Invalid_PartialPercent2
+    EXPECT_EQ(dots("%2f"), 0);       // Test 18: Invalid_Percent2f
+    EXPECT_EQ(dots("2e"), 0);        // Test 19: Invalid_2e
+    EXPECT_EQ(dots("e2"), 0);        // Test 20: Invalid_e2
+    EXPECT_EQ(dots(".a"), 0);        // Test 21: Invalid_DotFollowedByChar
+    EXPECT_EQ(dots("..b"), 0);       // Test 22: Invalid_DoubleDotFollowedByChar
+    EXPECT_EQ(dots("%2ec"), 0);      // Test 23: Invalid_Percent2eFollowedByChar
+    EXPECT_EQ(dots("a."), 0);        // Test 24: Invalid_CharBeforeDot
+    EXPECT_EQ(dots("b.."), 0);       // Test 25: Invalid_CharBeforeDoubleDot
+    EXPECT_EQ(dots("c%2e"), 0);      // Test 26: Invalid_CharBeforePercent2e
+    EXPECT_EQ(dots(".%"), 0);        // Test 27: Invalid_DotPercent
+    EXPECT_EQ(dots("..%"), 0);       // Test 28: Invalid_DoubleDotPercent
+    EXPECT_EQ(dots("%2e%"), 0);      // Test 29: Invalid_Percent2ePercent
+    EXPECT_EQ(dots("%2e.."), 0);     // Test 30: Invalid_Percent2eDoubleDot
+    EXPECT_EQ(dots(".%2e.."), 0);    // Test 31: Invalid_DotPercent2eDoubleDot
+    EXPECT_EQ(dots("..%2e."), 0);    // Test 32: Invalid_DoubleDotPercent2eDot
+    EXPECT_EQ(dots(" ."), 0);        // Test 34: Invalid_LeadingSpace
+    EXPECT_EQ(dots("  .."), 0);      // Test 35: Invalid_LeadingSpacesDoubleDot
+    EXPECT_EQ(dots("   %2e"), 0);    // Test 36: Invalid_LeadingSpacesPercent2e
+    EXPECT_EQ(dots(""), 0);          // Test 38: Invalid_EmptyInput
+    EXPECT_EQ(dots("...."), 0);      // Test 39: Invalid_QuadrupleDot
+    EXPECT_EQ(dots("%2e%2e."), 0);   // Test 40: Invalid_Percent2ePercent2eDot
+    EXPECT_EQ(dots(".%2e%2e"), 0);   // Test 41: Invalid_DotPercent2ePercent2e
+    EXPECT_EQ(dots("abc."), 0);      // Test 42: Invalid_CharsBeforeDot
+    EXPECT_EQ(dots("abc.."), 0);     // Test 43: Invalid_CharsBeforeDoubleDot
+    EXPECT_EQ(dots("abc%2e"), 0);    // Test 44: Invalid_CharsBeforePercent2e
+    EXPECT_EQ(dots("...%2e"), 0);    // Test 45: Invalid_TripleDotPercent2e
+    EXPECT_EQ(dots("%2..."), 0);     // Test 46: Invalid_Percent2TripleDot
+    EXPECT_EQ(dots("%2e.a"), 0);     // Test 47: Invalid_Percent2eDotChar
+    EXPECT_EQ(dots("..a"), 0);       // Test 48: Invalid_DoubleDotChar
+    EXPECT_EQ(dots(".a"), 0);        // Test 49: Invalid_SingleDotChar
+    EXPECT_EQ(dots("   ."), 0);      // Test 50: Invalid_WhitespaceBeforeDot
 }
