@@ -355,6 +355,7 @@ namespace webpp::uri {
                         set(ctx.status, valid_authority);
                         return;
                     }
+                    --ctx.pos; // keep the leading slash for the path parser
                     set(ctx.status, valid_path);
                     return;
                 }
