@@ -24,41 +24,31 @@ namespace webpp::uri {
         path_iterator pos{path.begin()}; // beginning (will be moved)
 
       public:
-        constexpr explicit path_traverser(path_type const& inp_path) : path{inp_path} {
-            path.normalize(true);
-            pos = path.begin(); // the iterator might be invalidated
-        }
+        constexpr explicit path_traverser(path_type const& inp_path) : path{inp_path}, pos(path.begin()) {}
 
-        constexpr explicit path_traverser(path_type&& inp_path) : path{stl::move(inp_path)} {
-            path.normalize(true);
-            pos = path.begin();
-        }
+        constexpr explicit path_traverser(path_type&& inp_path) : path{stl::move(inp_path)}, pos(path.begin()) {}
 
         template <istl::StringViewifiable StrT = string_view_type>
-        constexpr explicit path_traverser(StrT&& inp_path_str) : path{stl::forward<StrT>(inp_path_str)} {
-            path.normalize(true); // todo: parsing and normalizing can be combined into one algorithm
-            pos = path.begin();
-        }
+        constexpr explicit path_traverser(StrT&& inp_path_str)
+          : path{stl::forward<StrT>(inp_path_str)},
+            pos(path.begin()) {}
 
         constexpr path_traverser& operator=(path_type const& inp_path) {
             path = inp_path;
-            path.normalize(true);
-            pos = path.begin();
+            pos  = path.begin();
             return *this;
         }
 
         constexpr path_traverser& operator=(path_type&& inp_path) {
             path = stl::move(inp_path);
-            path.normalize(true);
-            pos = path.begin();
+            pos  = path.begin();
             return *this;
         }
 
         template <istl::StringViewifiable StrT = string_view_type>
         constexpr path_traverser& operator=(StrT&& inp_path_str) {
             path = stl::forward<StrT>(inp_path_str);
-            path.normalize(true);
-            pos = path.begin();
+            pos  = path.begin();
             return *this;
         }
 

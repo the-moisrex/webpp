@@ -512,7 +512,7 @@ namespace webpp::uri {
         constexpr uri_status_type hostname(string_view_type const str) noexcept(is_nothrow) {
             // https://url.spec.whatwg.org/#dom-url-hostname
             // If this’s URL has an opaque path, then return.
-            if (this->path().is_opaque()) [[unlikely]] {
+            if (is_opaque()) [[unlikely]] {
                 return +uri_status::setting_hostname_on_opaque_path;
             }
             return parse_step<Options>(str.begin(), str.end(), uri_status::valid_authority);
