@@ -59,7 +59,7 @@ namespace webpp::uri {
 
     /// Structured Components are components that store each URI's components separately.
     template <typename T, typename U = stl::remove_cvref_t<T>>
-    concept URIStructuredComponents = URIComponents<T> && requires(U comps) {
+    concept URIStructuredComponents = URIComponents<T> && requires(U& comps) {
         typename U::string_type;
         typename U::vec_type;
         typename U::map_type;
@@ -67,8 +67,8 @@ namespace webpp::uri {
         { comps.username } -> stl::same_as<typename U::string_type&>;
         { comps.password } -> stl::same_as<typename U::string_type&>;
         { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        requires stl::same_as<decltype(comps.port), typename U::string_type&> ||
-                   stl::same_as<decltype(comps.port), stl::uint16_t&>;
+        requires stl::same_as<decltype((comps.port)), typename U::string_type&> ||
+                   stl::same_as<decltype((comps.port)), stl::uint16_t&>;
         { comps.path } -> stl::same_as<typename U::vec_type&>;
         { comps.queries } -> stl::same_as<typename U::map_type&>;
         { comps.fragment } -> stl::same_as<typename U::string_type&>;
@@ -76,14 +76,14 @@ namespace webpp::uri {
 
     /// Owning Components are components that are using strings and not string views.
     template <typename T, typename U = stl::remove_cvref_t<T>>
-    concept URIOwningComponents = URIComponents<T> && requires(U comps) {
+    concept URIOwningComponents = URIComponents<T> && requires(U& comps) {
         requires istl::String<typename U::string_type>;
         { comps.scheme } -> stl::same_as<typename U::string_type&>;
         { comps.username } -> stl::same_as<typename U::string_type&>;
         { comps.password } -> stl::same_as<typename U::string_type&>;
         { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        requires stl::same_as<decltype(comps.port), typename U::string_type&> ||
-                   stl::same_as<decltype(comps.port), stl::uint16_t&>;
+        requires stl::same_as<decltype((comps.port)), typename U::string_type&> ||
+                   stl::same_as<decltype((comps.port)), stl::uint16_t&>;
         { comps.path } -> stl::same_as<typename U::string_type&>;
         { comps.queries } -> stl::same_as<typename U::string_type&>;
         { comps.fragment } -> stl::same_as<typename U::string_type&>;
@@ -767,7 +767,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comps).scheme);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_scheme(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.scheme = stl::move(value);
     }
@@ -777,7 +777,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).username);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_username(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.username = stl::move(value);
     }
@@ -787,7 +787,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).password);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_password(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.password = stl::move(value);
     }
@@ -853,7 +853,7 @@ namespace webpp::uri {
         return href_view.substr(start_offset, length);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_hostname(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.hostname = stl::move(value);
     }
@@ -863,7 +863,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).port);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_port(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.port = stl::move(value);
     }
@@ -883,7 +883,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).queries);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_queries(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.queries = stl::move(value);
     }
@@ -893,7 +893,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).path);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_path(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.path = stl::move(value);
     }
@@ -903,7 +903,7 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).fragment);
     }
 
-    template <URIComponents CompT>
+    template <URIOwningComponents CompT>
     static constexpr void set_fragment(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.fragment = stl::move(value);
     }
