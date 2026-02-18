@@ -143,7 +143,7 @@ TYPED_TEST(URITests, StringSchemeParsing) {
       .end = str.end()};
 
     uri::parse_scheme<uri::standard_uri_parsing_options>(context);
-    auto const res = static_cast<uri::uri_status>(context.status);
+    auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
     EXPECT_EQ(uri::scheme(context.out), "urn");
     EXPECT_EQ(context.pos - str.begin(), 4);
@@ -154,8 +154,9 @@ TYPED_TEST(URITests, ParseURI) {
     auto                       context = this->template get_context<TypeParam>(str);
 
     uri::parse_uri(context);
-    auto const res = static_cast<uri::uri_status>(context.status);
+    auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
+    EXPECT_TRUE(uri::has_flag(context.status, uri::uri_status::opaque_path));
     EXPECT_EQ(uri::scheme(context.out), "urn");
     EXPECT_EQ(uri::path(context.out), "testing");
 }

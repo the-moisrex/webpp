@@ -485,6 +485,15 @@ namespace webpp::uri {
         }
     }
 
+    /// get the error/valid value without the warnings if available
+    [[nodiscard]] static constexpr uri_status get_value(uri_status_type const status) noexcept {
+        return static_cast<uri_status>(status & values_mask);
+    }
+
+    [[nodiscard]] static constexpr uri_status get_value(uri_status const status) noexcept {
+        return get_value(+status);
+    }
+
     [[nodiscard]] static constexpr bool is_valid(uri_status_type const status) noexcept {
         return (error_bit & status) == 0;
     }
@@ -518,15 +527,12 @@ namespace webpp::uri {
         return has_error(+status);
     }
 
-    /// get the error/valid value without the warnings if available
-    [[nodiscard]] static constexpr uri_status get_value(uri_status_type const status) noexcept {
-        return static_cast<uri_status>(status & values_mask);
-    }
-
-    [[nodiscard]] static constexpr uri_status get_value(uri_status const status) noexcept {
-        return get_value(+status);
-    }
-
+    /**
+     * Check if the status has all of the specified flags/warnings.
+     * Performs a bitwise AND check - all specified flags must be set.
+     * @param status The status value to check
+     * @param warns Flags/warnings to check for (not values/errors)
+     */
     template <typename... T>
         requires((stl::same_as<T, uri_status> && ...))
     [[nodiscard]] static constexpr bool has_flags(uri_status_type const status, T const... warns) noexcept {
@@ -535,13 +541,37 @@ namespace webpp::uri {
         return (status & warning) == warning;
     }
 
+    /**
+     * Check if the status equals the specified error/value (exact match).
+     * Checks if the value portion of the status matches exactly.
+     * @param status The status value to check
+     * @param expected_err The expected error/value (not a flag or warning)
+     * @return true if status equals expected_err
+     */
     [[nodiscard]] static constexpr bool has(uri_status_type const status, uri_status const expected_err) noexcept {
         assert((+expected_err & values_mask) != 0); // only values and not warnings and flags
         return get_value(status) == expected_err;
     }
 
+    /**
+     * Check if the status equals the specified error/value (exact match).
+     * @param status The status value to check
+     * @param expected_err The expected error/value (not a flag or warning)
+     * @return true if status equals expected_err
+     */
     [[nodiscard]] static constexpr bool has(uri_status const status, uri_status const expected_err) noexcept {
         return has(+status, expected_err);
+    }
+
+    /**
+     * Check if a specific flag bit is set in the status.
+     * Performs a bitwise AND check to test if the flag is present.
+     * @param status The status value to check
+     * @param flag The flag to check for
+     * @return true if the flag is set
+     */
+    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status, uri_status const flag) noexcept {
+        return (status & +flag) != 0;
     }
 
     /// Set Valid or Set Error
@@ -580,10 +610,6 @@ namespace webpp::uri {
     /// Get warnings and flags
     [[nodiscard]] static constexpr uri_status_type info_of(uri_status_type const status) noexcept {
         return status & (flags_mask | warnings_mask);
-    }
-
-    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status, uri_status const flag) noexcept {
-        return (status & +flag) != 0;
     }
 
     /// multiple calls with the same value must not affect the result, meaning, if you set a specific warning
