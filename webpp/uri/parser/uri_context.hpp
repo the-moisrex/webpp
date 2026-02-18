@@ -236,23 +236,23 @@ namespace webpp::uri {
         component.emplace_back(buffer.beg, buffer.end);
     }
 
-    template <istl::String CompT, istl::String BufT>
-        requires(stl::is_rvalue_reference_v<BufT>)
-    static constexpr void push_segment(CompT& component, BufT&& buffer) noexcept(false) {
-        component.append(stl::forward<BufT>(buffer));
-    }
-
-    template <istl::String CompT, typename Iter>
-    static constexpr void push_segment(CompT& component, segment<Iter> const& buffer) noexcept(false) {
-        component.append(buffer.beg, buffer.end);
-    }
-
-    /// String View Components are not modifiable
-    template <typename CompT, typename Iter>
-    static constexpr void push_segment([[maybe_unused]] CompT&               component,
-                                       [[maybe_unused]] segment<Iter> const& buffer) noexcept {
-        // nothing to do
-    }
+    // template <istl::String CompT, istl::String BufT>
+    //     requires(stl::is_rvalue_reference_v<BufT>)
+    // static constexpr void push_segment(CompT& component, BufT&& buffer) noexcept(false) {
+    //     component.append(stl::forward<BufT>(buffer));
+    // }
+    //
+    // template <istl::String CompT, typename Iter>
+    // static constexpr void push_segment(CompT& component, segment<Iter> const& buffer) noexcept(false) {
+    //     component.append(buffer.beg, buffer.end);
+    // }
+    //
+    // /// String View Components are not modifiable
+    // template <typename CompT, typename Iter>
+    // static constexpr void push_segment([[maybe_unused]] CompT&               component,
+    //                                    [[maybe_unused]] segment<Iter> const& buffer) noexcept {
+    //     // nothing to do
+    // }
 } // namespace webpp::uri
 
 namespace webpp::uri::details {

@@ -3,13 +3,9 @@
 #ifndef WEBPP_URI_PATH_HPP
 #define WEBPP_URI_PATH_HPP
 
-#include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../std/vector.hpp"
 #include "./parser/parse_path.hpp"
-
-#include <numeric>
 
 namespace webpp::uri {
 
@@ -22,9 +18,9 @@ namespace webpp::uri {
     /// Serialize path
     template <Slug SlugType, typename CharT, typename AllocT>
     static constexpr void render_path(
-      stl::span<SlugType const>         storage,
+      stl::span<SlugType const>                                  storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool const                        is_opaque = false) {
+      bool const                                                 is_opaque = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         if (is_opaque) {
@@ -46,8 +42,8 @@ namespace webpp::uri {
 
     /// Serialize path from string view
     template <typename CharT, typename AllocT>
-    static constexpr void render_path(stl::basic_string_view<CharT> const storage,
-                                      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>&   out) {
+    static constexpr void render_path(stl::basic_string_view<CharT> const                        storage,
+                                      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         out += storage;

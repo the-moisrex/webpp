@@ -66,8 +66,8 @@ TEST(StructuredURITests, ClearOnSet) {
     uri::uri url{"https://example.org/about"};
     url = "http://0300.168.0xF0"sv;
     EXPECT_EQ(url.scheme(), "http");
-    EXPECT_FALSE(url.has_path());
-    EXPECT_EQ(url.href(), "http://192.168.0.240");
+    EXPECT_TRUE(url.has_path());
+    EXPECT_EQ(url.href(), "http://192.168.0.240/");
 }
 
 TEST(StructuredURITests, StructuredPortGetsSerialized) {

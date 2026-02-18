@@ -240,10 +240,6 @@ namespace webpp::uri {
 
         auto buffer = create_buffer(ctx);
 
-        // Keep this information so we can preserve state-override style updates done via parsing APIs
-        // (for example when updating an already-parsed URL object) without affecting fresh parses.
-        bool const had_path_before = has_path(ctx.out);
-
         details::handle_windows_driver_letter<Options>(ctx, buffer);
         while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
@@ -263,10 +259,9 @@ namespace webpp::uri {
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
                 case '%':
-                    if (validate_percent_encode(ctx, buffer)) {
-                        continue;
+                    if (!validate_percent_encode(ctx, buffer)) {
+                        set_warning(ctx.status, invalid_character);
                     }
-                    set_warning(ctx.status, invalid_character);
                     continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, invalid_character);
@@ -279,14 +274,11 @@ namespace webpp::uri {
 
         // https://url.spec.whatwg.org/#path-state
         // If URL is special, host is not null, and path is empty, append the empty string to path.
-        // For parser-step style updates on existing parsed URLs we only apply this when there was an
-        // existing path before this parse, so full fresh parses keep current behavior.
-        if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
-            if (ctx.pos == ctx.end && is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty() &&
-                had_path_before)
-            {
-                details::append_inplace_of(ctx, buffer, '/', 0);
+        if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty()) {
+            if constexpr (CtxT::is_segregated) {
+                push_segment(path(ctx.out), buffer);
             }
+            details::append_inplace_of(ctx, buffer, '/', 0);
         }
 
         set_path(ctx.out, stl::move(buffer));

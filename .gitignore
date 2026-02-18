@@ -12,6 +12,7 @@ CMakeLists.txt.user.*
 *~
 **/*~
 .Trash-*/
+.qtcreator
 
 # AI stuff
 GEMINI.md
