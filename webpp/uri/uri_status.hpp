@@ -146,18 +146,18 @@ namespace webpp::uri {
     ///   - which warnings we have found
     ///   - distinguish between a warning flag and an error flag or a success flag
     ///
-    /// indexes: [                 C     B A 9 8    7 6 5 4  3 2 1 0    7 6 5 4  3 2 1 0 ] == 28bits
-    /// integer: [ F F F F   _ _ _ E     W W W W    W W W W  W W W W    N N N N  N N N N ]
-    ///            -------         ^     -------    ----------------    ----------------
-    ///               ^            |        ^               ^                 ^
-    ///               |            |        |               |                 |
-    ///             flags          |        |               |         valid/error number
-    ///                            |        |               |
-    ///                            |        --------------------> Each warning bit
-    ///                            |
-    ///                            |
-    ///                         error bit == 1
-    ///                         valid bit == 0
+    /// indexes: [                          C     B A 9 8    7 6 5 4  3 2 1 0    7 6 5 4  3 2 1 0 ] == 28bits
+    /// integer: [F F F F   F F F F   _ _ _ E     W W W W    W W W W  W W W W    N N N N  N N N N ]
+    ///           -------   -------         ^     -------    ----------------    ----------------
+    ///                        ^            |        ^               ^                 ^
+    ///                        |            |        |               |                 |
+    ///                      flags          |        |               |         valid/error number
+    ///                                     |        |               |
+    ///                                     |        --------------------> Each warning bit
+    ///                                     |
+    ///                                     |
+    ///                                  error bit == 1
+    ///                                  valid bit == 0
     ///
     /// Flags are used to store parsing status like if it's a `special` URI or not.
     /// Keep this uri_status_type and ip_address_status the same type so they're trivially convertible.
@@ -172,7 +172,7 @@ namespace webpp::uri {
     /// considering the IPv4 and IPv6 values that need to match special prefix values, we're going with
     /// all 8 bits even though it's possible to do it with even 4 bits.
     static constexpr uri_status_type values_mask   = 0b0000'0000'1111'1111U | error_bit | valid_bit;
-    static constexpr uri_status_type flags_mask    = 0b1111U << 24U;
+    static constexpr uri_status_type flags_mask    = 0b1111'1111U << 24U;
     static constexpr uri_status_type warnings_mask = 0b1111'1111'1111U << 8U; // Warnings' bits
 
     /// successes are exclusive
@@ -669,11 +669,11 @@ namespace webpp::uri {
         constexpr uri_status_iterator() noexcept = default;
 
         constexpr explicit uri_status_iterator(uri_status const inp_status) noexcept
-          : status{+inp_status & flags_mask},
+          : status{+inp_status & (warnings_mask | values_mask)},
             current{get_warning(status)} {}
 
         constexpr explicit uri_status_iterator(storage_type const inp_status) noexcept
-          : status{inp_status & flags_mask},
+          : status{inp_status & (warnings_mask | values_mask)},
             current{get_warning(status)} {}
 
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;
