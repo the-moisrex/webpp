@@ -53,7 +53,10 @@ namespace webpp::uri {
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_options Options, URIContext CtxT>
             requires(!Options.handle_dots_in_paths)
-        static constexpr bool handle_dots_in_paths([[maybe_unused]] CtxT& ctx, [[maybe_unused]] auto& buffer) noexcept {
+        static constexpr bool handle_dots_in_paths(
+          [[maybe_unused]] CtxT&       ctx,
+          [[maybe_unused]] auto&       buffer,
+          [[maybe_unused]] stl::size_t segment_start = 0) noexcept {
             return false;
         }
 
@@ -132,10 +135,22 @@ namespace webpp::uri {
         /// @returns true if we found one or two dots
         template <uri_options Options, URIContext CtxT>
             requires(Options.handle_dots_in_paths)
-        [[nodiscard]] static constexpr bool handle_dots_in_paths(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
+        [[nodiscard]] static constexpr bool
+        handle_dots_in_paths(CtxT& ctx, auto& buffer, stl::size_t const segment_start = 0) noexcept(CtxT::is_nothrow) {
             using stl::begin;
             using stl::end;
-            auto const dots = dots_count(begin(buffer), end(buffer));
+
+            using buffer_type                      = stl::remove_cvref_t<decltype(buffer)>;
+            static constexpr bool is_string_buffer = istl::String<buffer_type>;
+
+            auto segment_begin = begin(buffer);
+            if constexpr (is_string_buffer) {
+                // For string buffers, `segment_start` points at the beginning of the current segment.
+                auto const safe_segment_start = stl::min(segment_start, buffer.size());
+                segment_begin                 = begin(buffer) + static_cast<stl::ptrdiff_t>(safe_segment_start);
+            }
+
+            auto const dots = dots_count(segment_begin, end(buffer));
 
             switch (dots) {
                 // no dots found:
@@ -143,13 +158,35 @@ namespace webpp::uri {
 
                 // single dot found:
                 case 1: // .
-                    clear_segment(ctx, buffer);
+                    if constexpr (is_string_buffer) {
+                        auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
+                        buffer.resize(seg_start);
+                    } else {
+                        clear_segment(ctx, buffer);
+                    }
                     break;
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_path(ctx);
-                    clear_segment(ctx, buffer);
+                    if constexpr (is_string_buffer) {
+                        // Remove the current ".." segment, then shorten the previous path segment from `buffer`.
+                        auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
+                        buffer.resize(seg_start);
+
+                        if (!buffer.empty() && buffer.back() == '/') {
+                            buffer.pop_back();
+                        }
+
+                        auto const prev_slash = buffer.find_last_of('/');
+                        if (prev_slash == buffer.npos) {
+                            buffer.clear();
+                        } else {
+                            buffer.resize(prev_slash + 1U);
+                        }
+                    } else {
+                        pop_back_path(ctx);
+                        clear_segment(ctx, buffer);
+                    }
                     break;
 
                 // a normal segment found:
@@ -232,22 +269,23 @@ namespace webpp::uri {
         // we should not check to see if we're at the end of the string because if the path is empty, and
         // we're in a special scheme, we have to add "/" to it
 
-        if (!is_special_scheme(ctx.status)) {
-            parse_opaque_path(ctx);
-            return;
-        }
         unset_flag(ctx.status, opaque_path);
 
         auto buffer = create_buffer(ctx);
 
         details::handle_windows_driver_letter<Options>(ctx, buffer);
+
+        using buffer_type                      = stl::remove_cvref_t<decltype(buffer)>;
+        static constexpr bool is_string_buffer = istl::String<buffer_type>;
+        stl::size_t           segment_start    = is_string_buffer ? buffer.size() : 0U;
+
         while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                 case '/':
-                    if (details::handle_dots_in_paths<Options>(ctx, buffer)) {
+                    if (details::handle_dots_in_paths<Options>(ctx, buffer, segment_start)) {
                         ++ctx.pos; // ignore character
-                        clear_segment(ctx, buffer);
+                        segment_start = buffer.size();
                         continue;
                     }
                     end_segment(ctx, buffer);
@@ -255,6 +293,7 @@ namespace webpp::uri {
                         push_segment(path(ctx.out), buffer);
                     }
                     details::append_inplace_of(ctx, buffer, '/');
+                    segment_start = buffer.size();
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
@@ -269,7 +308,7 @@ namespace webpp::uri {
             }
             break;
         }
-        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer));
+        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, segment_start));
         end_segment(ctx, buffer);
 
         // https://url.spec.whatwg.org/#path-state
