@@ -129,10 +129,12 @@ namespace webpp::uri {
          * Top Level Domain; sometimes called the extension
          */
         [[nodiscard]] constexpr string_view_type tld() const noexcept {
-            if (auto* domain = as_domain()) {
-                return split_labels(*domain).begin().template value<string_view_type>();
+            auto domain = as_domain();
+            if (!domain) [[unlikely]] {
+                return {};
             }
-            return {};
+            auto pos = domain->find_last_of('.');
+            return pos == string_view_type::npos ? *domain : domain->substr(pos + 1);
         }
 
         /// Split the domain labels
@@ -164,13 +166,15 @@ namespace webpp::uri {
         /// https://url.spec.whatwg.org/#host-equivalence
         /// Attention: this function doesn't parse your input
         [[nodiscard]] constexpr bool operator==(string_view_type const inp_str) const noexcept {
-            return stl::visit([=]<typename T>(T const& host) noexcept {
-                if constexpr (!stl::same_as<T, stl::monostate>) {
-                    return host == inp_str;
-                } else {
-                    return false;
-                }
-            }, *this);
+            return stl::visit(
+              [=]<typename T>(T const& host) noexcept {
+                  if constexpr (!stl::same_as<T, stl::monostate>) {
+                      return host == inp_str;
+                  } else {
+                      return false;
+                  }
+              },
+              *this);
         }
     };
 

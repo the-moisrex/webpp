@@ -260,7 +260,7 @@ namespace webpp::uri {
         modification_required           = error_bit | 27U,
         found_tabs_or_newlines          = error_bit | 28U, // only thrown on read-only APIs
 
-        // flags:
+        // Other flags (or states):
         special_scheme     = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
         file_scheme        = flags_bit >> 0U | flags_bit >> 1U, // file is also special
         has_non_null_port  = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
