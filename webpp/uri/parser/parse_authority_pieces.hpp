@@ -18,7 +18,7 @@ namespace webpp::uri::details {
       noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable) {
             if (is_special) {
-                if (host_begin == ctx.pos) {
+                if (host_begin == host_end) {
                     clear_hostname(ctx.out);
                     return true;
                 }
