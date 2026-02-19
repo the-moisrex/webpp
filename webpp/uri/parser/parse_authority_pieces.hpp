@@ -84,7 +84,7 @@ namespace webpp::uri::details {
             switch (*ctx.pos) {
                 case '[': // it's not in the beginning because of the credentials may come before it
                     details::parse_host_ipv6(ctx);
-                    break;
+                    return;
                 case ':':
                     if constexpr (!Options.parse_credentials && !Options.parse_port) {
                         set_warning(ctx.status, invalid_character);

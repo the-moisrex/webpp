@@ -224,7 +224,6 @@ namespace webpp::uri::details {
         *out++ = '[';
         out    = inet_ntop6(data, out);
         *out++ = ']';
-        *out++ = '\0';
     }
 
     /**

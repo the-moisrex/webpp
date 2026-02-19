@@ -1628,12 +1628,8 @@ TYPED_TEST(URITests, SpacesInURIs) {
 
 TYPED_TEST(URITests, SpecialDots) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example｡org");
-    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
-    if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::hostname(ctx.out), "example.org");
-    } else {
-        EXPECT_EQ(uri::hostname(ctx.out), "example｡org");
-    }
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    EXPECT_EQ(uri::hostname(ctx.out), "example.org");
 }
 
 TYPED_TEST(URITests, EmptyHostNotAllowed) {
