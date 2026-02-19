@@ -91,7 +91,8 @@ namespace webpp::uri {
                     istl::resize_and_overwrite(
                       sanitized,
                       length,
-                      [&](char_type* buf, stl::size_t const max_length) noexcept {
+                      [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
+                          auto* const start = buf;
                           // raw copy
                           for (auto pos = ctx.beg; pos != src;) {
                               *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
@@ -103,7 +104,7 @@ namespace webpp::uri {
                                   *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
                               }
                           }
-                          return max_length;
+                          return static_cast<stl::size_t>(buf - start);
                       });
 
                     ctx.beg = sanitized.data();
