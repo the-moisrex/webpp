@@ -59,6 +59,7 @@ namespace webpp::uri::details {
         iterator   colon_pos                = ctx.end; // start of password or port
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
+        bool       found_credentials          = false;
         auto       buffer                   = create_buffer(ctx);
 
         for (;;) {
@@ -107,6 +108,9 @@ namespace webpp::uri::details {
 
                         // rollback if it's not a port, we roll back and assume it's a password
                         if (has(ctx.status, port_invalid)) {
+                            if (found_credentials) {
+                                return;
+                            }
                             must_contain_credentials = true;
                             clear_port(ctx.out);
                             unset_flag(ctx.status, has_non_null_port);
@@ -188,6 +192,7 @@ namespace webpp::uri::details {
                     if constexpr (Options.parse_credentials) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
+                        found_credentials          = true;
                         clear_hostname(ctx.out);
                         host_begin               = ctx.pos;
                         must_contain_credentials = false;
