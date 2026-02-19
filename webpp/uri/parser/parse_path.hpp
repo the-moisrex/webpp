@@ -272,13 +272,8 @@ namespace webpp::uri {
         unset_flag(ctx.status, opaque_path);
 
         auto buffer = create_buffer(ctx);
-
         details::handle_windows_driver_letter<Options>(ctx, buffer);
-
-        using buffer_type                      = stl::remove_cvref_t<decltype(buffer)>;
-        static constexpr bool is_string_buffer = istl::String<buffer_type>;
-        stl::size_t           segment_start    = is_string_buffer ? buffer.size() : 0U;
-
+        stl::size_t segment_start = 0U;
         while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
