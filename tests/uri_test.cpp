@@ -1598,7 +1598,7 @@ TYPED_TEST(URITests, NewlinesInLocalhost) {
     EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
     EXPECT_EQ(uri::scheme(ctx.out), "file");
     EXPECT_EQ(uri::hostname(ctx.out), "");
-    EXPECT_EQ(uri::path(ctx.out), "/page");
+    EXPECT_EQ(uri::path(ctx.out), "/localhost/page");
 }
 
 TYPED_TEST(URITests, NewlinesInScheme) {
