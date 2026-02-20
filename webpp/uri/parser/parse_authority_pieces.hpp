@@ -12,10 +12,9 @@
 
 namespace webpp::uri::details {
 
-    template <uri_options Options, URIContext CtxT>
+    template <uri_options Options, URIContext CtxT, typename HostBufferT>
     [[nodiscard]] static constexpr bool
-    set_parsed_hostname(CtxT& ctx, bool const is_special, typename CtxT::seg_type const& normalized_host)
-      noexcept(CtxT::is_nothrow) {
+    set_parsed_hostname(CtxT& ctx, bool const is_special, HostBufferT& normalized_host) noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable) {
             if (is_special) {
                 auto const host_is_empty = [&]() constexpr noexcept {
@@ -27,6 +26,7 @@ namespace webpp::uri::details {
                 }();
                 if (host_is_empty) {
                     clear_hostname(ctx.out);
+                    clear_segment(ctx, normalized_host);
                     return true;
                 }
                 auto       host_out = create_buffer(ctx);
@@ -38,8 +38,9 @@ namespace webpp::uri::details {
                 }
                 set_hostname(ctx.out, stl::move(host_out));
             } else {
-                set_hostname(ctx.out, typename CtxT::seg_type{normalized_host});
+                set_hostname(ctx.out, stl::move(normalized_host));
             }
+            clear_segment(ctx, normalized_host);
         } else {
             set_hostname(ctx.out, normalized_host);
         }
