@@ -77,6 +77,7 @@ TYPED_TEST(URITests, Generation) {
     EXPECT_EQ(url.as_string(), "https:");
     url.hostname("webpp.dev");
     EXPECT_EQ(url.as_string(), "https://webpp.dev/");
+    EXPECT_EQ(url.path_view(), "/");
 }
 
 TYPED_TEST(URITests, PortStateOverride) {
