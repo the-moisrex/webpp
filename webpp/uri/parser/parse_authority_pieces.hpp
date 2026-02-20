@@ -59,7 +59,6 @@ namespace webpp::uri::details {
         iterator   colon_pos                = ctx.end; // start of password or port
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
-        bool       found_credentials        = false;
         auto       buffer                   = create_buffer(ctx);
 
         for (;;) {
@@ -73,12 +72,29 @@ namespace webpp::uri::details {
                 done = decode_or_tolower(ctx, buffer, special_chars);
             }
             if (done) {
+                if (must_contain_credentials) [[unlikely]] {
+                    return;
+                }
                 if (Options.empty_host_is_error && !is_special && ctx.pos == authority_begin) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
                 set(ctx.status, valid_path);
                 break;
+            }
+
+            if (must_contain_credentials) [[unlikely]] {
+                if (*ctx.pos == '@') {
+                    // confirmed: this section was credentials, not a port
+                    unset_flag(ctx.status, port_invalid);
+                } else if (*ctx.pos == '/' || *ctx.pos == '\\' || *ctx.pos == '?' || *ctx.pos == '#') {
+                    // no '@' before authority delimiter: keep port_invalid
+                    return;
+                } else {
+                    // keep scanning for a confirming '@' without parsing as host/port
+                    ++ctx.pos;
+                    continue;
+                }
             }
 
             switch (*ctx.pos) {
@@ -108,14 +124,10 @@ namespace webpp::uri::details {
 
                         // rollback if it's not a port, we roll back and assume it's a password
                         if (has(ctx.status, port_invalid)) {
-                            if (found_credentials) {
-                                return;
-                            }
                             must_contain_credentials = true;
                             clear_port(ctx.out);
                             unset_flag(ctx.status, has_non_null_port);
-                            unset_flag(ctx.status, port_invalid);
-                            // it might be a "password" or it's invalid port
+                            // keep port_invalid for now; we'll unset it only if we later see another '@'
                             ctx.pos = pre_port_pos + 1;
                             continue;
                         }
@@ -144,18 +156,8 @@ namespace webpp::uri::details {
                         break;
                     }
                     [[fallthrough]];
-                case '/':
-                    // escape if invalid port found
-                    if (must_contain_credentials) [[unlikely]] {
-                        return;
-                    }
-                    set(ctx.status, valid_path);
-                    break;
+                case '/': set(ctx.status, valid_path); break;
                 case '?':
-                    // escape if invalid port found
-                    if (must_contain_credentials) [[unlikely]] {
-                        return;
-                    }
                     if constexpr (Options.parse_queries) {
                         skip_last_char = true;
                         set(ctx.status, valid_queries);
@@ -166,10 +168,6 @@ namespace webpp::uri::details {
                     }
                     break;
                 case '#':
-                    // escape if invalid port found
-                    if (must_contain_credentials) [[unlikely]] {
-                        return;
-                    }
                     if constexpr (Options.parse_fragment) {
                         skip_last_char = true;
                         set(ctx.status, valid_fragment);
@@ -192,7 +190,6 @@ namespace webpp::uri::details {
                     if constexpr (Options.parse_credentials) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
-                        found_credentials = true;
                         clear_hostname(ctx.out);
                         host_begin               = ctx.pos;
                         must_contain_credentials = false;
@@ -202,9 +199,6 @@ namespace webpp::uri::details {
                         return;
                     }
                 default: set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point); return;
-            }
-            if (must_contain_credentials) {
-                return;
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
