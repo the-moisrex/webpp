@@ -123,8 +123,12 @@ namespace webpp::uri::details {
                     }
             }
 
-            // todo: double check this logic:
+            // If buffer starts with a Windows drive letter, the parser records a warning and
+            // normalizes the drive separator to a colon.
             set_warning(ctx.status, uri_status::windows_drive_letter_used);
+            if (ctx.pos != ctx.end && (*ctx.pos == '/' || *ctx.pos == '\\')) {
+                append_inplace_of(ctx, buffer, '/');
+            }
             append_inplace_of(ctx, buffer, letters[0]);
             append_inplace_of(ctx, buffer, letters[1]);
             ctx.pos += pos - ctx.pos - 1; // ignore characters
