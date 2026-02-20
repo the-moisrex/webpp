@@ -173,7 +173,8 @@ namespace webpp::uri {
                         auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
                         buffer.resize(seg_start);
 
-                        if (!buffer.empty() && buffer.back() == '/') {
+                        // Keep a lone root slash ("/") while trimming separator before the previous segment.
+                        if (buffer.size() > 1U && buffer.back() == '/') {
                             buffer.pop_back();
                         }
 
