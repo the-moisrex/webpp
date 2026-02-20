@@ -29,49 +29,41 @@ namespace webpp::uri::details {
     static constexpr bool is_possible_ends_with_ipv4(Iter beg, Iter fin, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#ends-in-a-number-checker
 
-        // webpp_assume(fin != ctx.end);
+        assert(fin != ctx.end);
 
-        // Pruning last dot characters (considering them as empty IPv4 octets)
-        // todo: move this to the end of the algorithm if possible
-        if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
-            while (*fin == '.') {
-                set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
-                if (--fin == beg) {
-                    return false;
-                }
+        // Pruning trailing dots (empty IPv4 octets) only for this checker.
+        // The full IPv4 parser still receives the original input and decides if trailing dots are valid.
+        while (*fin == '.') [[unlikely]] {
+            set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+            if (--fin == beg) [[unlikely]] {
+                return false;
             }
-        } else {
-            if (*fin == '.') {
-                set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
-                if (--fin == beg) {
-                    return false;
-                }
+            if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
+                break;
             }
         }
 
         enum struct operation_type : stl::uint8_t {
-            op_no, // return false
-            op_dot,
-            op_continue,
-            op_possible_hex,
-            op_hex, // must be hex
+            op_no  = 0U,      // return false
+            op_dot = 0b1U,
+            op_dec = 0b10U,
+            op_hex = 0b100U,  // hex characters [a-fA-F]
+            op_x   = 0b1000U, // x or X in 0x
         };
 
         webpp_static_constexpr auto interesting_characters = categorize<operation_type, 256U>(
-          cat{.set = INVALID_IPV4, .value = operation_type::op_no},
-          cat{.set = VALID_IPV4, .value = operation_type::op_continue},
-          cat{.set = u8"abcdefABCDEF", .value = operation_type::op_possible_hex},
-          cat{.set = u8"xX", .value = operation_type::op_hex},
-          cat{.set = u8".", .value = operation_type::op_dot});
+          cat{.set = u8".", .value = operation_type::op_dot},
+          cat{.set = u8"0123456789", .value = operation_type::op_dec},
+          cat{.set = u8"abcdefABCDEF", .value = operation_type::op_hex},
+          cat{.set = u8"xX", .value = operation_type::op_x});
 
         bool is_hex      = false;
         bool must_be_hex = false;
-        auto pos         = fin;
-        for (; pos != beg; --pos) {
+        for (auto pos = fin; pos != beg; --pos) {
             switch (static_cast<operation_type>(or_one(interesting_characters, *pos))) {
+                case operation_type::op_dec: continue;
                 case operation_type::op_dot: break;
-                case operation_type::op_continue: continue;
-                case operation_type::op_hex:
+                case operation_type::op_x:
                     // next characters now must be ".0x"
                     // NOLINTNEXTLINE(*-inc-dec-in-conditions)
                     if (pos - beg < 1 || *--pos != '0' || (pos != beg && *--pos != '.')) {
@@ -79,7 +71,7 @@ namespace webpp::uri::details {
                     }
                     is_hex = true;
                     break;
-                case operation_type::op_possible_hex: must_be_hex = true; continue;
+                case operation_type::op_hex: must_be_hex = true; continue;
                 case operation_type::op_no: return false;
                 default: assert(false); stl::unreachable();
             }

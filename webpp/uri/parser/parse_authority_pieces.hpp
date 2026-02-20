@@ -59,7 +59,7 @@ namespace webpp::uri::details {
         iterator   colon_pos                = ctx.end; // start of password or port
         bool       skip_last_char           = false;
         bool       must_contain_credentials = false;
-        bool       found_credentials          = false;
+        bool       found_credentials        = false;
         auto       buffer                   = create_buffer(ctx);
 
         for (;;) {
@@ -73,7 +73,7 @@ namespace webpp::uri::details {
                 done = decode_or_tolower(ctx, buffer, special_chars);
             }
             if (done) {
-                if (Options.empty_host_is_error && !is_special && ctx.pos == authority_begin) {
+                if (Options.empty_host_is_error && !is_special && ctx.pos == authority_begin) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -192,7 +192,7 @@ namespace webpp::uri::details {
                     if constexpr (Options.parse_credentials) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
-                        found_credentials          = true;
+                        found_credentials = true;
                         clear_hostname(ctx.out);
                         host_begin               = ctx.pos;
                         must_contain_credentials = false;
@@ -208,7 +208,7 @@ namespace webpp::uri::details {
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
-                if (Options.empty_host_is_error && is_special) {
+                if (Options.empty_host_is_error && is_special) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
