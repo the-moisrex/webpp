@@ -35,7 +35,8 @@ struct URITests : testing::Test {
 
   public:
     template <typename SpecifiedTypeParam, typename StrT = stl::string_view>
-    [[nodiscard]] constexpr SpecifiedTypeParam get_context(StrT str) {
+    [[nodiscard]] constexpr SpecifiedTypeParam get_context(StrT const& str) {
+        // Keep the caller-provided storage alive for iterator-based contexts.
         using ctx_type    = SpecifiedTypeParam;
         using string_type = stl::remove_cvref_t<StrT>;
         using str_iter    = typename string_type::const_iterator;
