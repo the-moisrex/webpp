@@ -12,28 +12,36 @@
 
 namespace webpp::uri::details {
 
-    template <uri_options Options, URIContext CtxT, typename Iter>
+    template <uri_options Options, URIContext CtxT>
     [[nodiscard]] static constexpr bool
-    set_parsed_hostname(CtxT& ctx, bool const is_special, Iter const host_begin, Iter const host_end)
+    set_parsed_hostname(CtxT& ctx, bool const is_special, typename CtxT::seg_type const& normalized_host)
       noexcept(CtxT::is_nothrow) {
         if constexpr (CtxT::is_modifiable) {
             if (is_special) {
-                if (host_begin == host_end) {
+                auto const host_is_empty = [&]() constexpr noexcept {
+                    if constexpr (CtxT::is_modifiable) {
+                        return normalized_host.empty();
+                    } else {
+                        return normalized_host.beg == normalized_host.end;
+                    }
+                }();
+                if (host_is_empty) {
                     clear_hostname(ctx.out);
                     return true;
                 }
-                auto       host_out     = create_buffer(ctx);
-                auto const to_ascii_res = idna::domain_to_ascii<Options>(host_begin, host_end, host_out);
+                auto       host_out = create_buffer(ctx);
+                auto const to_ascii_res =
+                  idna::domain_to_ascii<Options>(normalized_host.begin(), normalized_host.end(), host_out);
                 if (!idna::is_valid(to_ascii_res)) [[unlikely]] {
                     idna::set_error(ctx.status, to_ascii_res);
                     return false;
                 }
                 set_hostname(ctx.out, stl::move(host_out));
             } else {
-                set_hostname(ctx.out, create_buffer(ctx, host_begin, host_end));
+                set_hostname(ctx.out, typename CtxT::seg_type{normalized_host});
             }
         } else {
-            set_hostname(ctx.out, create_buffer(ctx, host_begin, host_end));
+            set_hostname(ctx.out, normalized_host);
         }
         return true;
     }
@@ -132,9 +140,7 @@ namespace webpp::uri::details {
                             continue;
                         }
 
-                        if (!details::set_parsed_hostname<Options>(ctx, is_special, host_begin, pre_port_pos))
-                          [[unlikely]]
-                        {
+                        if (!details::set_parsed_hostname<Options>(ctx, is_special, buffer)) [[unlikely]] {
                             return;
                         }
 
@@ -191,7 +197,8 @@ namespace webpp::uri::details {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
                         ++ctx.pos;
                         clear_hostname(ctx.out);
-                        host_begin               = ctx.pos;
+                        host_begin = ctx.pos;
+                        clear_segment(ctx, buffer);
                         must_contain_credentials = false;
                         continue;
                     } else {
@@ -235,7 +242,7 @@ namespace webpp::uri::details {
             }
         }
 
-        if (!details::set_parsed_hostname<Options>(ctx, is_special, host_begin, ctx.pos)) [[unlikely]] {
+        if (!details::set_parsed_hostname<Options>(ctx, is_special, buffer)) [[unlikely]] {
             return;
         }
         if (skip_last_char) {
