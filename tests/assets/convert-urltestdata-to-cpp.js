@@ -66,14 +66,7 @@ let result =
 using namespace webpp;
 
 
-using Types =
-  testing::Types<uri::uri_context_string<stl::string>,
-                 uri::uri_context_string<stl::string_view>,
-                 // uri::uri_context_string<stl::basic_string_view<char8_t>>,
-                 uri::uri_context_u32,
-                 uri::uri_context_segregated<>,
-                 uri::uri_context_segregated_view<>,
-                 uri::uri_context<stl::string_view, char const*>>;
+using Types = testing::Types<uri::uri_context<uri::uri_components_owning<char>>>;
 
 template <class T>
 struct URIWhatwgTest : testing::Test {
@@ -108,18 +101,8 @@ struct URIWhatwgTest : testing::Test {
 
 
     template <typename SpecifiedTypeParam>
-    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str, stl::string_view const base_str) {
-        auto ctx = get_context<SpecifiedTypeParam, stl::string_view>(str);
-        uri::parse_uri(ctx);
-
-        using iterator = typename stl::string_view::const_iterator;
-        using base_context_type = uri::uri_context<stl::uint32_t, iterator>;
-
-        base_context_type origin_context{.beg = base_str.begin(), .pos = base_str.begin(), .end = base_str.end()};
-        uri::parse_uri(origin_context);
-
-        uri::parse_uri(str, origin_context.out);
-        return ctx;
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str, [[maybe_unused]] stl::string_view const base_str) {
+        return parse_from_string<SpecifiedTypeParam>(str);
     }
 
 };
@@ -183,7 +166,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // scheme
   if (test.protocol !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_scheme(), "${
+    EXPECT_EQ(uri::scheme(ctx.out), "${
         escapeForCppString(
             test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
   }
@@ -191,14 +174,14 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // username
   if (test.username !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_username(), "${
+    EXPECT_EQ(uri::username(ctx.out), "${
         escapeForCppString(test.username)}") << ${testDetails(test)};`;
   }
 
   // password
   if (test.password !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_password(), "${
+    EXPECT_EQ(uri::password(ctx.out), "${
         escapeForCppString(test.password)}") << ${testDetails(test)};`;
   }
 
@@ -212,14 +195,14 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // hostname
   if (test.hostname !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_hostname(), "${
+    EXPECT_EQ(uri::hostname(ctx.out), "${
         escapeForCppString(test.hostname)}") << ${testDetails(test)};`;
   }
 
   // port
   if (test.port !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_port(), "${escapeForCppString(test.port)}") << ${
+    EXPECT_EQ(uri::port(ctx.out), "${escapeForCppString(test.port)}") << ${
         testDetails(test)};`;
   }
 
@@ -229,23 +212,23 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       try {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_path(), "${
+        EXPECT_EQ(uri::path(ctx.out), "${
             escapeForCppString(test.pathname)}") << ${testDetails(test)};
     } else {
-        EXPECT_EQ(ctx.out.get_path(), "${
+        EXPECT_EQ(uri::path(ctx.out), "${
             escapeForCppString(
                 decodeURIComponent(test.pathname))}") << ${testDetails(test)};
     }`;
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_path(), "${
+        EXPECT_EQ(uri::path(ctx.out), "${
             escapeForCppString(test.pathname)}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
-    EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}") << ${
+    EXPECT_EQ(uri::path(ctx.out), "${escapeForCppString(test.pathname)}") << ${
           testDetails(test)};`;
     }
   }
@@ -256,25 +239,25 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       try {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_queries(), "${
+        EXPECT_EQ(uri::queries(ctx.out), "${
             escapeForCppString(
                 test.search.substring(1))}") << ${testDetails(test)};
     } else {
-        EXPECT_EQ(ctx.out.get_queries(), "${
+        EXPECT_EQ(uri::queries(ctx.out), "${
             escapeForCppString(decodeURIComponent(
                 test.search.substring(1)))}") << ${testDetails(test)};
     }`;
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_queries(), "${
+        EXPECT_EQ(uri::queries(ctx.out), "${
             escapeForCppString(
                 test.search.substring(1))}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
-    EXPECT_EQ(ctx.out.get_queries(), "${
+    EXPECT_EQ(uri::queries(ctx.out), "${
           escapeForCppString(
               test.search.substring(1))}") << ${testDetails(test)};`;
     }
@@ -283,7 +266,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // fragment
   if (test.hash !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_fragment(), "${
+    EXPECT_EQ(uri::fragment(ctx.out), "${
         escapeForCppString(test.hash.substring(1))}") << ${testDetails(test)};`;
   }
 
