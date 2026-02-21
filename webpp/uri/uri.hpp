@@ -57,7 +57,7 @@ namespace webpp::uri {
 
             auto ctx   = create<context_type>(beg, end, stl::move(components));
             ctx.status = +status | info_of(m_status);
-            details::parse_uri_step<Options | state_override>(ctx);
+            parse_uri<Options | state_override>(ctx);
             components = stl::move(ctx.out);
             set_flags(m_status, flags_of(ctx.status));
             return m_status;

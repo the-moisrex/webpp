@@ -341,8 +341,9 @@ namespace webpp::uri {
                 return;
             }
             [[unlikely]] default: {
-                // If url’s scheme is not a special scheme and buffer is a special scheme, then return.
-                if (Options.state_override && !is_special_scheme(ctx.status)) [[unlikely]] {
+                // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+                // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+                if (Options.state_override && is_special_scheme(ctx.status)) [[unlikely]] {
                     return;
                 }
 
@@ -364,11 +365,6 @@ namespace webpp::uri {
                 set(ctx.status, valid_opaque_path);
                 return;
             }
-        }
-
-        // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
-        if (Options.state_override && !is_special_scheme(ctx.status)) [[unlikely]] {
-            return;
         }
 
         ++ctx.pos;

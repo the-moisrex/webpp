@@ -79,7 +79,13 @@ namespace webpp::uri {
         using enum uri_status;
 
         if (ctx.pos == ctx.end) {
-            // todo: I'm guessing
+            // Otherwise, if state override is given and url’s host is null, append the empty string to url’s path
+            // For owning/non-segregated components this is represented as a single '/'.
+            if (is_special_scheme(scheme(ctx.out)) && has_hostname(ctx.out) && !has_path(ctx.out)) {
+                auto buffer = create_buffer(ctx);
+                details::append_inplace_of(ctx, buffer, '/');
+                set_path(ctx.out, stl::move(buffer));
+            }
             set(ctx.status, valid);
             return;
         }

@@ -279,6 +279,18 @@ namespace webpp::ascii {
           });
     }
 
+    template <typename InpIter>
+    [[nodiscard]] constexpr bool is_lower(InpIter inp, InpIter const end) noexcept {
+        using char_type = stl::iter_value_t<InpIter>;
+        // todo: SWAR optimization
+        for (; inp != end; ++inp) {
+            if (*inp >= static_cast<char_type>('a') && *inp <= static_cast<char_type>('z')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 } // namespace webpp::ascii
 
 
