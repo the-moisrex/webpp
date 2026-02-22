@@ -278,9 +278,14 @@ namespace testing {
         cout << color << "[ ======== ] Run Time: " << color::RESET;
         format_duration(cout, total_ns);
         cout << "\n";
-        cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << assertions << " assertions, " << failures
-             << " failed assertions, " << color::GREEN << successes << color << " success assertions." << color::RESET
-             << "\n";
+        if (failures == 0) {
+            cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << successes << " assertions."
+                 << color::RESET << "\n";
+        } else {
+            cout << color << "[  SUMMARY ] " << tests.size() << " tests, " << color::GREEN << successes
+                 << " assertions succeeded, " << color << failures << "/" << assertions << " assertions failed."
+                 << color::RESET << "\n";
+        }
 
         // std::cout << color::YELLOW << "Per-test timing (ns / us):\n" << color::RESET;
         // for (auto& t : tests) {
