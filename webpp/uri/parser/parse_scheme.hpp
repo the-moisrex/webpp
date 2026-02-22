@@ -73,13 +73,20 @@ namespace webpp::uri {
                 assert(!is_file_scheme(scheme(ctx.base)));
                 set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
             }
-            if (*ctx.pos == '\\' && is_special_scheme(ctx.status)) [[unlikely]] {
-                set_warning(ctx.status, reverse_solidus_used);
-            }
-            ++ctx.pos;
-            if (ctx.pos == ctx.end) {
-                set(ctx.status, valid);
-                return;
+            // WHATWG URL Standard, relative state:
+            // "If c is U+002F (/), then set state to relative slash state."
+            // "Otherwise... set url’s username, password, host, port, path, and query to base’s ..."
+            // So we consume the current code point only for slash handling; otherwise it remains
+            // the first code point of the relative path.
+            if (*ctx.pos == '/' || (*ctx.pos == '\\' && is_special_scheme(ctx.status))) {
+                if (*ctx.pos == '\\') [[unlikely]] {
+                    set_warning(ctx.status, reverse_solidus_used);
+                }
+                ++ctx.pos;
+                if (ctx.pos == ctx.end) {
+                    set(ctx.status, valid);
+                    return;
+                }
             }
 
 
