@@ -99,10 +99,14 @@ struct URIWhatwgTest : testing::Test {
         return ctx;
     }
 
-
     template <typename SpecifiedTypeParam>
-    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str, [[maybe_unused]] stl::string_view const base_str) {
-        return parse_from_string<SpecifiedTypeParam>(str);
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str,
+                                                                 stl::string_view const base_str) {
+        auto ctx = uri::parse_uri(str, base_str);
+        SpecifiedTypeParam out_ctx{};
+        out_ctx.status = ctx.status;
+        out_ctx.out    = stl::move(ctx.out);
+        return out_ctx;
     }
 
 };

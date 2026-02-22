@@ -137,9 +137,12 @@ namespace webpp::uri {
     template <uri_options Options = {}, typename CharT, URIComponents BaseCompT>
     static constexpr auto parse_uri(stl::basic_string_view<CharT> const the_url, BaseCompT&& base_comps)
       noexcept(false) {
-        using context_type = uri_context<uri_components_owning<CharT>, BaseCompT>;
-        auto context =
-          create<context_type>(the_url.data(), the_url.data() + the_url.size(), stl::forward<BaseCompT>(base_comps));
+        using context_type = uri_context<uri_components_owning<CharT>, stl::remove_cvref_t<BaseCompT>>;
+        auto context       = create<context_type>(
+          the_url.data(),
+          the_url.data() + the_url.size(),
+          stl::forward<BaseCompT>(base_comps),
+          allocator_from(base_comps));
         parse_uri<Options>(context);
         return context;
     }
@@ -148,7 +151,7 @@ namespace webpp::uri {
     template <uri_options Options = {}, typename CharT, typename AllocT, URIComponents BaseCompT>
     static constexpr auto parse_uri(stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& the_url,
                                     BaseCompT&& base_comps) noexcept(false) {
-        using context_type = uri_context<uri_components_owning<CharT, AllocT>, BaseCompT>;
+        using context_type = uri_context<uri_components_owning<CharT, AllocT>, stl::remove_cvref_t<BaseCompT>>;
         auto context       = create<context_type>(
           the_url.data(),
           the_url.data() + the_url.size(),
@@ -164,14 +167,12 @@ namespace webpp::uri {
         using url_char_type = typename stl::remove_cvref_t<StrT>::value_type;
         static_assert(stl::same_as<url_char_type, CharT>,
                       "Origin's string's char type must be the same as the specified URI's string's char type.");
-        using base_context_type = uri_context<uri_components_u32_view<CharT>>;
 
-        base_context_type origin_context{.beg = base_uri.data(),
-                                         .pos = base_uri.data(),
-                                         .end = base_uri.data() + base_uri.size()};
+        using base_context_type = uri_context<uri_components_owning<CharT>>;
+        auto origin_context = create<base_context_type>(base_uri.data(), base_uri.data() + base_uri.size());
         parse_uri<Options>(origin_context);
 
-        return parse_uri<Options>(the_url, origin_context.out);
+        return parse_uri<Options>(the_url, stl::move(origin_context.out));
     }
 
 } // namespace webpp::uri

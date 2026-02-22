@@ -185,7 +185,7 @@ namespace webpp::uri {
 
             using enum uri_status;
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                if (path(ctx.base)) { // todo: specs say opaque path
+                if (has_path(ctx.base)) { // todo: specs say opaque path
                     if constexpr (Options.parse_fragment) {
                         for (; ctx.pos != ctx.end; ++ctx.pos) {
                             if (*ctx.pos == '#') [[unlikely]] {
@@ -234,7 +234,7 @@ namespace webpp::uri {
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
-            if (ascii::inc_if<Options>(ctx, '/', '/')) {
+            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
