@@ -42,6 +42,12 @@ namespace webpp::uri {
         }
 
         template <URIContext CtxT>
+        constexpr auto base_component_buffer(CtxT& ctx, stl::basic_string_view<typename CtxT::char_type> const value)
+          noexcept(CtxT::is_nothrow) {
+            return create_buffer(ctx, value.begin(), value.end());
+        }
+
+        template <URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
                 set_scheme(ctx.out, create_buffer(ctx, ctx.beg, ctx.pos));
@@ -65,7 +71,7 @@ namespace webpp::uri {
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
-                set_scheme(ctx, scheme(ctx.base));
+                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
             }
             if (*ctx.pos == '\\' && is_special_scheme(ctx.status)) [[unlikely]] {
                 set_warning(ctx.status, reverse_solidus_used);
@@ -80,12 +86,13 @@ namespace webpp::uri {
             // from now on in the algorithms: relative slash state
             // https://url.spec.whatwg.org/#relative-slash-state
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                set_username(ctx, username(ctx.base));
-                set_password(ctx, password(ctx.base));
-                set_hostname(ctx, hostname(ctx.base));
-                set_port(ctx, port(ctx.base));
-                set_path(ctx, path(ctx.base)); // todo: https://infra.spec.whatwg.org/#list-clone
-                set_queries(ctx, queries(ctx.base));
+                set_username(ctx.out, base_component_buffer(ctx, username(ctx.base)));
+                set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
+                set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
+                set_port(ctx.out, base_component_buffer(ctx, port(ctx.base)));
+                set_path(ctx.out,
+                         base_component_buffer(ctx, path(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
+                set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
             }
             switch (*ctx.pos) {
                 case '?':
@@ -120,7 +127,7 @@ namespace webpp::uri {
             }
             if constexpr (!stl::is_void_v<typename ctx_type::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
-                    set_scheme(ctx, scheme(ctx.base));
+                    set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
 
                     // todo:
                     // 2. If the code point substring from pointer to the end of input does not
@@ -189,9 +196,9 @@ namespace webpp::uri {
                     if constexpr (Options.parse_fragment) {
                         for (; ctx.pos != ctx.end; ++ctx.pos) {
                             if (*ctx.pos == '#') [[unlikely]] {
-                                set_scheme(ctx, scheme(ctx.base));
-                                set_path(ctx, path(ctx.base));
-                                set_queries(ctx, queries(ctx.base));
+                                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+                                set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
+                                set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
                                 clear_fragment(ctx.out);
                                 set(ctx.status, valid_fragment);
                                 return;
