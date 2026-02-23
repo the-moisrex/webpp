@@ -43,6 +43,10 @@ namespace webpp::uri::details {
             }
         }
 
+        if (beg == fin) [[unlikely]] {
+            return *beg >= '0' && *beg <= '9';
+        }
+
         enum struct operation_type : stl::uint8_t {
             op_no  = 0U,      // return false
             op_dot = 0b1U,
