@@ -31,14 +31,18 @@ namespace webpp::uri::details {
 
         assert(fin != ctx.end);
 
-        // Pruning trailing dots (empty IPv4 octets) only for this checker.
-        // The full IPv4 parser still receives the original input and decides if trailing dots are valid.
+        // WHATWG only removes one trailing empty part for this check.
+        // If there are still trailing dots after that, then the last component is empty and the host
+        // definitely does not end in a number.
         while (*fin == '.') [[unlikely]] {
             set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
             if (--fin == beg) [[unlikely]] {
                 return false;
             }
-            if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
+            if constexpr (!Options.allow_multiple_trailing_empty_ipv4_octets) {
+                if (*fin == '.') [[unlikely]] {
+                    return false;
+                }
                 break;
             }
         }
