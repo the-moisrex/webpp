@@ -140,11 +140,10 @@ namespace webpp::ascii {
      * I benchmarked it, and it seems like a lookup table has no value here.
      * todo: write an specific benchmark for the lookup-table implementation
      */
-    template <typename IntegerType   = int,
-              bool        SupportHex = true,
-              IntegerType NotANumber = static_cast<IntegerType>(-1),
-              typename CharT         = char>
-    [[nodiscard]] static constexpr IntegerType hex_digit(CharT inp_char) noexcept {
+    template <typename IntegerType = int, bool SupportHex = true, typename CharT = char>
+    [[nodiscard]] static constexpr IntegerType hex_digit(
+      CharT       inp_char,
+      IntegerType NotANumber = static_cast<IntegerType>(-1)) noexcept {
         // if constexpr (sizeof(CharT) == sizeof(std::uint8_t)) {
         //     return details::hex_to_binary_table_full<IntegerType, NotANumber, SupportHex>[static_cast<
         //       std::uint8_t>(inp_char)];

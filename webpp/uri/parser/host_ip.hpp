@@ -137,13 +137,23 @@ namespace webpp::uri::details {
                 // parse an octet
                 octet = 0;
                 for (; src != end; ++src) {
+                    stl::uint64_t parsed_digit; // NOLINT(*-init-variables)
                     stl::uint64_t digit  = octet;
                     digit               *= octet_base;
                     if (Options.allow_ipv4_hex_octal_octets && octet_base == 16) [[unlikely]] {
-                        digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(*src);
+                        parsed_digit = ascii::hex_digit<stl::uint64_t, true>(*src, octet_base);
                     } else {
-                        digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(*src);
+                        parsed_digit = ascii::hex_digit<stl::uint64_t, false>(*src, octet_base);
                     }
+                    if (parsed_digit >= octet_base) [[unlikely]] {
+                        if (*src == '.') {
+                            ++src;
+                            break;
+                        }
+                        set(ctx.status, ip_invalid_character);
+                        return false;
+                    }
+                    digit += parsed_digit;
                     if (digit >= invalid_num) {
                         if (*src == '.') {
                             ++src;
