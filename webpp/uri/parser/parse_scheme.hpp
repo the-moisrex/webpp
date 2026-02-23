@@ -199,29 +199,33 @@ namespace webpp::uri {
 
             using enum uri_status;
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                if (has_path(ctx.base)) { // todo: specs say opaque path
-                    if constexpr (Options.parse_fragment) {
-                        for (; ctx.pos != ctx.end; ++ctx.pos) {
-                            if (*ctx.pos == '#') [[unlikely]] {
-                                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
-                                set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
-                                set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
-                                clear_fragment(ctx.out);
-                                set(ctx.status, valid_fragment);
-                                return;
-                            }
-                            break;
-                        }
+                if (ctx.pos != ctx.end && has_path(ctx.base) && !is_special_scheme(scheme(ctx.base))) {
+                    if (*ctx.pos == '#') {
+                        // Otherwise, if base has an opaque path and c is U+0023 (#), set url’s scheme to base’s scheme,
+                        // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
+                        // and set state to fragment state.
+                        set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+                        set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
+                        set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                        clear_fragment(ctx.out);
+                        set(ctx.status, valid_fragment);
+                        return;
                     }
+                    // ... or base has an opaque path and c is not U+0023 (#), missing-scheme-non-relative-URL
+                    // validation error, return failure.
                 } else if (!is_file_scheme(scheme(ctx.base))) {
+                    // Otherwise, if base’s scheme is not "file", set state to relative state and decrease pointer by 1.
                     relative_state(ctx);
                     return;
                 } else {
+                    // Otherwise, set state to file state and decrease pointer by 1.
                     file_state<Options>(ctx);
                     return;
                 }
             }
-            set(ctx.status, missing_scheme_non_relative_url);
+
+            // If base is null, or ..., missing-scheme-non-relative-URL validation error, return failure.
+            set(ctx.status, ctx.pos == ctx.end ? empty_string : missing_scheme_non_relative_url);
         }
 
         template <URIContext CtxT>
@@ -270,24 +274,20 @@ namespace webpp::uri {
         webpp_static_constexpr auto alnum_plus = details::ascii_bitmap(details::ASCII_ALPHA_DIGIT, '+', '-', '.');
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
-        if (ctx.pos == ctx.end) [[unlikely]] {
-            ctx.status = +empty_string;
-            return;
-        }
-
+        // WHATWG: "If c is not an ASCII alpha, then ... set state to no scheme state, and decrease pointer by 1."
+        // EOF also needs to continue into no-scheme resolution when a base URL exists.
         // handling of the first character:
-        if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
+        if (ctx.pos == ctx.end || !details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
             // if state override is not given, set buffer to the empty string, state to no
             // scheme state, and start over (from the first code point in input).
             //
             // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
             if constexpr (!Options.state_override) {
-                // ctx.pos = ctx.beg;
                 clear_scheme(ctx.out);
                 details::no_scheme_state<Options>(ctx);
             } else {
                 // otherwise, return failure
-                set(ctx.status, scheme_setter_invalid_input);
+                set(ctx.status, ctx.pos == ctx.end ? empty_string : scheme_setter_invalid_input);
             }
             return;
         }
