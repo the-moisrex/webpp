@@ -248,7 +248,7 @@ namespace webpp::uri {
             set(ctx.status, valid_authority);
         }
 
-        template <uri_options Options, URIContext CtxT>
+        template <URIContext CtxT>
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -387,7 +387,7 @@ namespace webpp::uri {
         if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
             if (scheme(ctx.out) == scheme(ctx.base)) {
                 // todo: Assert: base is special (and therefore does not have an opaque path).
-                details::special_relative_or_authority_state<Options>(ctx);
+                details::special_relative_or_authority_state(ctx);
                 return;
             }
         }
