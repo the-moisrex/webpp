@@ -63,22 +63,19 @@ namespace webpp::uri {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
             // https://url.spec.whatwg.org/#relative-slash-state
             using enum uri_status;
-            if (ctx.pos == ctx.end) {
-                set(ctx.status, valid);
-                return;
-            }
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 // Assert base's scheme is not file
                 assert(!is_file_scheme(scheme(ctx.base)));
                 set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
             }
+
             // WHATWG URL Standard, relative state:
             // "If c is U+002F (/), then set state to relative slash state."
             // "Otherwise... set url’s username, password, host, port, path, and query to base’s ..."
             // So we consume the current code point only for slash handling; otherwise it remains
             // the first code point of the relative path.
-            if (*ctx.pos == '/' || (*ctx.pos == '\\' && is_special_scheme(ctx.status))) {
+            if (ctx.pos != ctx.end && (*ctx.pos == '/' || (*ctx.pos == '\\' && is_special_scheme(ctx.status)))) {
                 if (*ctx.pos == '\\') [[unlikely]] {
                     set_warning(ctx.status, reverse_solidus_used);
                 }
@@ -101,6 +98,12 @@ namespace webpp::uri {
                          base_component_buffer(ctx, path(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
                 set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
             }
+
+            if (ctx.pos == ctx.end) {
+                set(ctx.status, valid);
+                return;
+            }
+
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
