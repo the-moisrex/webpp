@@ -302,14 +302,26 @@ namespace webpp::uri {
         // handling alpha, num, +, -, .
         for (;; ++ctx.pos) {
             if (ctx.pos == ctx.end) [[unlikely]] {
-                set(ctx.status, scheme_ended_unexpectedly);
+                if constexpr (!Options.state_override) {
+                    clear_scheme(ctx.out);
+                    ctx.pos = ctx.beg;
+                    details::no_scheme_state<Options>(ctx);
+                } else {
+                    set(ctx.status, scheme_ended_unexpectedly);
+                }
                 return;
             }
             if (*ctx.pos == ':') {
                 break;
             }
             if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
-                set(ctx.status, invalid_scheme_character);
+                if constexpr (!Options.state_override) {
+                    clear_scheme(ctx.out);
+                    ctx.pos = ctx.beg;
+                    details::no_scheme_state<Options>(ctx);
+                } else {
+                    set(ctx.status, invalid_scheme_character);
+                }
                 return;
             }
             scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
