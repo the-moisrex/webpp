@@ -99,6 +99,12 @@ struct URIWhatwgTest : testing::Test {
         return ctx;
     }
 
+    template <typename SpecifiedTypeParam, stl::size_t N>
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(char const (&str)[N]) {
+        // Keep embedded NULs from generated WHATWG fixtures.
+        return parse_from_string<SpecifiedTypeParam>(stl::string_view{str, N - 1U});
+    }
+
     template <typename SpecifiedTypeParam>
     [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str,
                                                                  stl::string_view const base_str) {
@@ -107,6 +113,13 @@ struct URIWhatwgTest : testing::Test {
         out_ctx.status = ctx.status;
         out_ctx.out    = stl::move(ctx.out);
         return out_ctx;
+    }
+
+    template <typename SpecifiedTypeParam, stl::size_t N, stl::size_t M>
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(char const (&str)[N], char const (&base_str)[M]) {
+        // Keep embedded NULs from generated WHATWG fixtures.
+        return parse_from_string<SpecifiedTypeParam>(stl::string_view{str, N - 1U},
+                                                     stl::string_view{base_str, M - 1U});
     }
 
 };
