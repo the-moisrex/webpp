@@ -32,6 +32,10 @@ namespace webpp::uri {
                         return ctx.out.path;
                     }
                 }();
+                if (out.empty()) {
+                    return;
+                }
+
                 stl::size_t slash_loc = 0;
 
                 // find the last slash
@@ -48,7 +52,32 @@ namespace webpp::uri {
             }
         }
 
-        /// Remove the current segment in a path
+        // https://url.spec.whatwg.org/#shorten-a-urls-path
+        template <URIContext CtxT>
+        static constexpr void shorten_urls_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            auto const out_path = path(ctx.out);
+
+            // If url's scheme is "file", path size is 1, and path[0] is a normalized Windows
+            // drive letter, then return.
+            if (is_file_scheme(scheme(ctx.out))) {
+                auto const is_single_normalized_drive_path = [&]() constexpr noexcept {
+                    if (out_path.size() == 2) {
+                        return details::has_normalized_windows_driver_letter(out_path.begin());
+                    }
+                    if (out_path.size() == 3 && out_path.front() == '/') {
+                        return details::has_normalized_windows_driver_letter(out_path.begin() + 1);
+                    }
+                    return false;
+                }();
+
+                if (is_single_normalized_drive_path) {
+                    return;
+                }
+            }
+
+            // Remove path's last item, if any.
+            pop_back_path(ctx);
+        }
 
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_options Options, URIContext CtxT>

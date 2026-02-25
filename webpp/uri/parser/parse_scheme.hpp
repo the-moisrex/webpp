@@ -8,9 +8,11 @@
 #include "../../strings/charset.hpp"
 #include "../../strings/peek.hpp"
 #include "../uri_status.hpp"
+#include "./parse_path.hpp"
 #include "./special_schemes.hpp"
 #include "./uri_components.hpp"
 #include "./uri_context.hpp"
+#include "./windows_drive_letter.hpp"
 
 namespace webpp::uri {
 
@@ -118,7 +120,7 @@ namespace webpp::uri {
                 default: break;
             }
             clear_queries(ctx.out);
-            // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
+            details::shorten_urls_path(ctx);
             set(ctx.status, valid_path);
         }
 
@@ -177,9 +179,50 @@ namespace webpp::uri {
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
-                    // todo
-                    // Relative file URLs such as "file:C:/" reuse the host from the base file URL.
+                    // Set url’s host to base’s host, url’s path to a clone of base’s path,
+                    // and url’s query to base’s query.
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
+                    set_path(ctx.out, base_component_buffer(ctx, path(ctx.base))); // list clone
+                    set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+
+                    // If c is U+003F (?), then set url’s query to the empty string and state to query state.
+                    // Otherwise, if c is U+0023 (#), set url’s fragment to the empty string and state to fragment
+                    // state.
+                    switch (*ctx.pos) {
+                        case '?':
+                            clear_queries(ctx.out);
+                            set(ctx.status, valid_queries);
+                            ++ctx.pos;
+                            return;
+                        case '#':
+                            clear_fragment(ctx.out);
+                            set(ctx.status, valid_fragment);
+                            ++ctx.pos;
+                            return;
+                        default: break;
+                    }
+
+                    // Otherwise, if c is not the EOF code point: Set url’s query to null.
+                    clear_queries(ctx.out);
+
+                    // If the code point substring from pointer to the end of input does not start
+                    // with a Windows drive letter, then shorten url’s path.
+                    // Otherwise: File-invalid-Windows-drive-letter validation error.
+                    // Set url’s path to « ».
+                    if constexpr (Options.handle_windows_drive_letters) {
+                        if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
+                            set_warning(ctx.status, windows_drive_letter_in_relative_url);
+                            clear_path(ctx.out);
+                        } else {
+                            details::shorten_urls_path(ctx);
+                        }
+                    } else {
+                        details::shorten_urls_path(ctx);
+                    }
+
+                    // Set state to path state and decrease pointer by 1.
+                    // Pointer adjustment is implicit in this parser architecture; `ctx.pos` remains
+                    // on the current code point and `parse_path` consumes it next.
                     set(ctx.status, valid_path);
                     return;
                 }
