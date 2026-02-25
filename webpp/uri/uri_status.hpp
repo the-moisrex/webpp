@@ -563,16 +563,6 @@ namespace webpp::uri {
         return has(+status, expected_err);
     }
 
-    /**
-     * Check if a specific flag bit is set in the status.
-     * Performs a bitwise AND check to test if the flag is present.
-     * @param status The status value to check
-     * @param flag The flag to check for
-     * @return true if the flag is set
-     */
-    [[nodiscard]] static constexpr bool has_flag(uri_status_type const status, uri_status const flag) noexcept {
-        return (status & +flag) != 0;
-    }
 
     /// Set Valid or Set Error
     static constexpr void set(uri_status_type& status, uri_status const value) noexcept {

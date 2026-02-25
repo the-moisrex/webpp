@@ -120,7 +120,7 @@ namespace webpp::unicode::idna {
     /// Check if `all_flags` has at least of of the `flags` in it
     template <typename... T>
         requires((stl::convertible_to<T, validity_flags> && ...))
-    [[nodiscard]] static constexpr bool has_flag(validity_flag_type const all_flags, T const... flags) noexcept {
+    [[nodiscard]] static constexpr bool has_flags(validity_flag_type const all_flags, T const... flags) noexcept {
         return (all_flags & static_cast<validity_flag_type>((+flags | ...))) != 0U;
     }
 
@@ -174,7 +174,7 @@ namespace webpp::unicode::idna {
     /**
      * Check if the status code, has the flag you specify.
      */
-    [[nodiscard]] static constexpr bool has_flag(validity_criteria_status_type const status,
+    [[nodiscard]] static constexpr bool has_flags(validity_criteria_status_type const status,
                                                  validity_criteria_status const      flag) noexcept {
         return (status & +flag) != 0;
     }
@@ -229,7 +229,7 @@ namespace webpp::unicode::idna {
 
 
         // 2,3,4. Check hyphens
-        if (has_flag(flags, dash)) {
+        if (has_flags(flags, dash)) {
             if constexpr (Options.CheckHyphens && Options.CheckDecodeAndValidateLabels) {
                 switch (length) {
                     [[likely]] default:
@@ -269,19 +269,19 @@ namespace webpp::unicode::idna {
 
                 status |=
                   // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                  has_flag(flags, ace) && length >= 4 && *pos++ == 'x' && *pos++ == 'n' && *pos++ == '-' && *pos == '-'
+                  has_flags(flags, ace) && length >= 4 && *pos++ == 'x' && *pos++ == 'n' && *pos++ == '-' && *pos == '-'
                     ? ~ace_found
                     : ~valid;
             }
         }
 
         auto const first_cp     = checked::next_code_point_copy<return_replacement>(spos, send);
-        bool const has_unicode  = has_flag(flags, non_ascii);
+        bool const has_unicode  = has_flags(flags, non_ascii);
         bool const check_bidi   = Options.CheckBidi && (has_unicode || charmap_half{DIGIT<char>}.contains(first_cp));
-        bool const has_mappable = has_flag(flags, non_ascii, ascii_upper);
+        bool const has_mappable = has_flags(flags, non_ascii, ascii_upper);
 
         // 5. Check if it includes any dots
-        status |= Options.CheckDotInclusions && has_flag(flags, dot) ? ~dot_found : ~valid;
+        status |= Options.CheckDotInclusions && has_flags(flags, dot) ? ~dot_found : ~valid;
 
         // Length check
         status |= Options.VerifyDnsLength && length == 0 ? ~empty_label : ~valid;
@@ -441,7 +441,7 @@ namespace webpp::unicode::idna {
         }
 
         // Remove the bidi_failure if the domain is a bidi domain name:
-        if (!has_flag(status, bidi_domain_name) && has_flag(status, bidi_failure)) {
+        if (!has_flags(status, bidi_domain_name) && has_flags(status, bidi_failure)) {
             status &= +bidi_failure;
         }
 

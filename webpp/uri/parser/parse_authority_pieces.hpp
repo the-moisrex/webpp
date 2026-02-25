@@ -42,6 +42,7 @@ namespace webpp::uri::details {
             }
             clear_segment(ctx, normalized_host);
         } else {
+            end_segment(ctx, normalized_host);
             set_hostname(ctx.out, normalized_host);
         }
         return true;
@@ -146,7 +147,7 @@ namespace webpp::uri::details {
                         }
 
                         if (pre_port_pos == host_begin) {
-                            if (Options.empty_host_is_error && is_special) [[unlikely]] {
+                            if constexpr (Options.empty_host_is_error) {
                                 set(ctx.status, host_missing);
                                 return;
                             }
@@ -210,7 +211,8 @@ namespace webpp::uri::details {
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
-                if (Options.empty_host_is_error && is_special) [[unlikely]] {
+                if (Options.empty_host_is_error && (is_special || has_flags(ctx.status, has_credentials))) [[unlikely]]
+                {
                     set(ctx.status, host_missing);
                     return;
                 }

@@ -456,7 +456,7 @@ namespace webpp::uri {
 
         /// Check if the path is an opaque path
         [[nodiscard]] constexpr bool is_opaque() const noexcept {
-            return has_flag(m_status, uri_status::opaque_path);
+            return has_flags(m_status, uri_status::opaque_path);
         }
 
         template <uri_options Options = {}>

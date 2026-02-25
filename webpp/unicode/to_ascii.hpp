@@ -114,17 +114,13 @@ namespace webpp::unicode::idna {
     }
 
     /**
-     * Check if the status code, has the flag you specify.
+     * Check if the status code, has the flags you specify.
      */
-    [[nodiscard]] static constexpr bool has_flag(to_ascii_status_type const status,
-                                                 to_ascii_status const      flag) noexcept {
-        return (status & +flag) != 0;
-    }
-
     template <typename... T>
         requires(stl::same_as<T, to_ascii_status> && ...)
     [[nodiscard]] static constexpr bool has_flags(to_ascii_status_type const status, T const... flags) noexcept {
-        return (status & (+flags | ...)) != 0;
+        constexpr auto flags_bits = (+flags | ...);
+        return (status & flags_bits) == flags_bits;
     }
 
     [[nodiscard]] static constexpr bool is_valid(to_ascii_status_type const status) noexcept {
@@ -314,7 +310,7 @@ namespace webpp::unicode::idna {
         Iter const lcbeg            = lbeg;
         Iter const lcend            = lend;
         auto const src_label_length = stl::distance(lbeg, lend);
-        bool const had_unicode      = has_flag(flag, non_ascii); // flags will change later
+        bool const had_unicode      = has_flags(flag, non_ascii); // flags will change later
 
         if (had_unicode) {
             // 1.2. Normalize inplace
@@ -325,7 +321,7 @@ namespace webpp::unicode::idna {
         }
 
         // 1.4. Convert/Validate. For each label in the domain_name string:
-        if (has_flag(flag, ace) && src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
+        if (has_flags(flag, ace) && src_label_length >= 4 && lbeg[0] == 'x' && lbeg[1] == 'n' && lbeg[2] == '-' &&
             lbeg[3] == '-')
         {
             // Found xn--.
@@ -364,7 +360,7 @@ namespace webpp::unicode::idna {
 
                 // 1.4.3. If the label is empty, or if the label contains only ASCII code points,
                 // record that there was an error.
-                bool const     all_ascii = !has_flag(flag, non_ascii);
+                bool const     all_ascii = !has_flags(flag, non_ascii);
                 constexpr auto max_label = 63U;
                 status |= Options.CheckDecodeAndValidateLabels && new_label_len == 0 ? +empty_punycode : +valid;
                 status |= Options.CheckDecodeAndValidateLabels && all_ascii ? +ascii_only_punycode : +valid;
@@ -394,7 +390,7 @@ namespace webpp::unicode::idna {
         // 3. Encode Punycode
         // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
         // This may record an error.
-        if (has_flag(flag, non_ascii)) {
+        if (has_flags(flag, non_ascii)) {
             bool const rotate_required = lcbeg == lbeg;
             Iter       outend          = rotate_required ? lcend : lcbeg;
             istl::iter_append(outend, 'x', 'n', '-', '-');

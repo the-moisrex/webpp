@@ -65,9 +65,7 @@ TYPED_TEST(URITests, Generation) {
     uri::uri url;
     EXPECT_EQ(url.scheme().size(), 0);
 
-    auto const alloc = url.get_allocator();
-
-    stl::string const str{alloc};
+    stl::string const str{url.get_allocator()};
     EXPECT_EQ(str.size(), 0);
 
     url.scheme(stl::string_view{"https"});
@@ -158,7 +156,7 @@ TYPED_TEST(URITests, ParseURI) {
     uri::parse_uri(context);
     auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
-    EXPECT_TRUE(uri::has_flag(context.status, uri::uri_status::opaque_path));
+    EXPECT_TRUE(uri::has_flags(context.status, uri::uri_status::opaque_path));
     EXPECT_EQ(uri::scheme(context.out), "urn");
     EXPECT_EQ(uri::path(context.out), "testing");
 }
