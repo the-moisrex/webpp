@@ -7,6 +7,7 @@
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
 #include "../uri_status.hpp"
+#include "./special_schemes.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -974,6 +975,14 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
         return !fragment(comp).empty();
+    }
+
+    /// Checks whether a parsed URL has an opaque path (i.e. cannot-be-a-base-URL).
+    [[nodiscard]] static constexpr bool is_opaque_path(URIComponents auto const& comp) noexcept {
+        auto const comp_scheme = scheme(comp);
+        auto const comp_path   = path(comp);
+        return !is_special_scheme(comp_scheme) && !has_hostname(comp) &&
+               (comp_path.empty() || comp_path.front() != '/');
     }
 
 

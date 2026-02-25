@@ -202,13 +202,16 @@ namespace webpp::uri {
 
             using enum uri_status;
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                if (ctx.pos != ctx.end && has_path(ctx.base) && !is_special_scheme(scheme(ctx.base))) {
+                auto const base_scheme = scheme(ctx.base);
+                auto const base_path   = path(ctx.base);
+
+                if (ctx.pos != ctx.end && is_opaque_path(ctx.base)) {
                     if (*ctx.pos == '#') {
                         // Otherwise, if base has an opaque path and c is U+0023 (#), set url’s scheme to base’s scheme,
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
-                        set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
-                        set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
+                        set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
+                        set_path(ctx.out, base_component_buffer(ctx, base_path));
                         set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
                         clear_fragment(ctx.out);
                         set(ctx.status, valid_fragment);
@@ -216,7 +219,7 @@ namespace webpp::uri {
                     }
                     // ... or base has an opaque path and c is not U+0023 (#), missing-scheme-non-relative-URL
                     // validation error, return failure.
-                } else if (!is_file_scheme(scheme(ctx.base))) {
+                } else if (!is_file_scheme(base_scheme)) {
                     // Otherwise, if base’s scheme is not "file", set state to relative state and decrease pointer by 1.
                     relative_state(ctx);
                     return;
