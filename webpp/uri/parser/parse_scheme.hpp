@@ -162,38 +162,30 @@ namespace webpp::uri {
             // Set url’s host to the empty string.
             clear_hostname(ctx.out);
 
-            // if constexpr (!stl::is_void_v<typename ctx_type::base_type>) {
-            //     // set scheme to "file"
-            //     set_scheme(ctx,
-            //                                   scheme(ctx.base).data(),
-            //                                   scheme(ctx.base).data() + scheme(ctx.base).size());
-            // }
+            if (ctx.pos == ctx.end) {
+                set(ctx.status, valid);
+                return;
+            }
 
-            for (;; ++ctx.pos) {
-                if (ctx.pos == ctx.end) {
-                    set(ctx.status, valid);
-                    return;
-                }
-
-                switch (*ctx.pos) {
-                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/': file_slash_state<Options>(ctx); return;
-                    default: break;
-                }
-                if constexpr (Options.allow_file_hosts) {
-                    set(ctx.status, valid_file_host);
-                    return;
-                }
-                break;
+            switch (*ctx.pos) {
+                [[unlikely]] case '\\':
+                    set_warning(ctx.status, reverse_solidus_used);
+                    [[fallthrough]];
+                case '/': file_slash_state<Options>(ctx); return;
+                default: break;
             }
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     // todo
+                    // Relative file URLs such as "file:C:/" reuse the host from the base file URL.
+                    set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
+                    set(ctx.status, valid_path);
+                    return;
                 }
             }
 
-            set(ctx.status, valid_path);
+            set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
         }
 
         template <uri_options Options, URIContext CtxT>
