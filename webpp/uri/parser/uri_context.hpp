@@ -429,12 +429,12 @@ namespace webpp::uri::details {
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
     template <URIContext CtxT, istl::String OutT>
-    [[nodiscard]] constexpr bool validate_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] constexpr bool next_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)
         auto       cur      = ctx.pos;
-        bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur++) && is_hex_digit(*cur);
+        bool const is_valid = cur++ + 2 <= ctx.end && is_hex_digit(*cur) && is_hex_digit(*++cur);
         append_n(ctx, out, cur - ctx.pos);
         return is_valid;
         // NOLINTEND(*-inc-dec-in-conditions)

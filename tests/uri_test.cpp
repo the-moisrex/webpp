@@ -1735,3 +1735,21 @@ TEST(URITests, HandleDotsTest) {
     EXPECT_EQ(dots(".a"), 0);        // Test 49: Invalid_SingleDotChar
     EXPECT_EQ(dots("   ."), 0);      // Test 50: Invalid_WhitespaceBeforeDot
 }
+
+// 355 - # unknown schemes and their hosts (2)
+TYPED_TEST(URITests, UnknownSchemesAndTheirHosts2) {
+    static constexpr auto details =
+      "\n{\n    \"input\": \"sc://%/\",\n    \"base\": null,\n    \"href\": \"sc://%/\",\n    \"protocol\": \"sc:\",\n "
+      "   \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"%\",\n    \"hostname\": \"%\",\n    \"port\": "
+      "\"\",\n    \"pathname\": \"/\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
+    auto const ctx = this->template parse_from_string<TypeParam>("sc://%/");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "sc") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "%") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "/") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+}

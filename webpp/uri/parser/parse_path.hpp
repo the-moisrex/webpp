@@ -212,7 +212,7 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::validate_percent_encode;
+        using details::next_percent_encode;
 
         set_flag(ctx.status, opaque_path);
 
@@ -228,10 +228,10 @@ namespace webpp::uri {
                     set(ctx.status, valid_fragment);
                     break;
                 case '%':
-                    if (validate_percent_encode(ctx, buffer)) {
-                        continue;
+                    if (!next_percent_encode(ctx, buffer)) {
+                        set_warning(ctx.status, invalid_character);
                     }
-                    [[fallthrough]];
+                    continue;
                 default:
                     ++ctx.pos;
                     set_warning(ctx.status, invalid_character);
@@ -255,7 +255,7 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::validate_percent_encode;
+        using details::next_percent_encode;
 
         webpp_static_constexpr auto encode_set =
           CtxT::is_modifiable || CtxT::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
@@ -294,7 +294,7 @@ namespace webpp::uri {
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
                 case '%':
-                    if (!validate_percent_encode(ctx, buffer)) {
+                    if (!next_percent_encode(ctx, buffer)) {
                         set_warning(ctx.status, invalid_character);
                     }
                     continue;

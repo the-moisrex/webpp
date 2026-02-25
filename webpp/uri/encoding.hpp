@@ -255,12 +255,12 @@ namespace webpp::uri {
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
     template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
-    [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, EIter end) noexcept {
+    [[nodiscard]] static constexpr bool next_percent_encode(Iter& pos, EIter end) noexcept {
         using ascii::is_hex_digit;
         webpp_assume(*pos == '%');
 
         // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-        return pos++ + 2 <= end && is_hex_digit(*pos++) && is_hex_digit(*pos++);
+        return pos + 2 <= end && is_hex_digit(*++pos) && is_hex_digit(*++pos);
     }
 
 

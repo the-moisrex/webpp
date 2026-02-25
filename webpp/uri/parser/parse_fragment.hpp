@@ -23,7 +23,7 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
         using details::encode_or_validate;
-        using details::validate_percent_encode;
+        using details::next_percent_encode;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
@@ -32,7 +32,7 @@ namespace webpp::uri {
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, details::FRAGMENT_ENCODE_SET, charset('%'))) {
-            if (*ctx.pos == '%' && validate_percent_encode(ctx, buffer)) {
+            if (*ctx.pos == '%' && next_percent_encode(ctx, buffer)) {
                 continue;
             }
             set_warning(ctx.status, invalid_character);

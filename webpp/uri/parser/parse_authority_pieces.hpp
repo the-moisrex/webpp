@@ -187,7 +187,7 @@ namespace webpp::uri::details {
                     break;
                 case '%':
                     if (!is_special) {
-                        if (!validate_percent_encode(ctx, buffer)) [[unlikely]] {
+                        if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
                             set_warning(ctx.status, invalid_character);
                         }
                         continue;
