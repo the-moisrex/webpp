@@ -63,7 +63,21 @@ namespace webpp::uri {
                 decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
 
                 if (decoded_char != ones) {
-                    *out++ = static_cast<char_type>(decoded_char);
+                    auto const decoded = static_cast<char_type>(decoded_char);
+                    if constexpr (uri_encoding_policy::skip_chars == Policy) {
+                        if (!chars.contains(decoded)) [[unlikely]] {
+                            pos  = out;
+                            *pos = zero_char;
+                            return false; // bad decoded chars
+                        }
+                    } else {
+                        if (chars.contains(decoded)) [[unlikely]] {
+                            pos  = out;
+                            *pos = zero_char;
+                            return false; // bad decoded chars
+                        }
+                    }
+                    *out++ = decoded;
                 } else [[unlikely]] {
                     pos  = out;
                     *pos = zero_char;
@@ -113,7 +127,17 @@ namespace webpp::uri {
                 decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
 
                 if (decoded_char != ones) {
-                    output += static_cast<char_type>(decoded_char);
+                    auto const decoded = static_cast<char_type>(decoded_char);
+                    if constexpr (uri_encoding_policy::skip_chars == Policy) {
+                        if (!chars.contains(decoded)) [[unlikely]] {
+                            return false; // bad decoded chars
+                        }
+                    } else {
+                        if (chars.contains(decoded)) [[unlikely]] {
+                            return false; // bad decoded chars
+                        }
+                    }
+                    output += decoded;
                 } else [[unlikely]] {
                     return false;
                 }
