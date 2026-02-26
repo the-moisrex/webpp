@@ -923,7 +923,7 @@ TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
 
     for (auto const str : strs) {
         auto strict_context = this->template get_context<TypeParam>(str);
-        uri::parse_uri(strict_context);
+        uri::parse_uri<uri::strict_uri_parsing_options>(strict_context);
         EXPECT_FALSE(uri::is_valid(strict_context.status))
           << str << "\n"
           << to_string(uri::get_value(strict_context.status));
