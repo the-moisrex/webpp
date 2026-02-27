@@ -112,44 +112,57 @@ namespace webpp::ascii {
     }
 
     /**
-     * Return the value of CH as a hexadecimal digit, or -1 if it is a different type of character.
-     * Almost the same as hex_to_binary
+     * Return the value of CH as a hexadecimal digit, or default_value if it is not a hex digit.
+     * Optimized version with a static compile-time lookup table.
      */
     template <typename IntegerType = int, bool SupportUppercase = true, bool SupportHex = true, typename CharT = char>
     [[nodiscard]] static constexpr IntegerType hex_digit_safe(
-      CharT       inp_char,
+      CharT const inp_char,
       IntegerType default_value = static_cast<IntegerType>(-1)) noexcept {
-        if (static_cast<CharT>('0') <= inp_char && inp_char <= static_cast<CharT>('9')) {
-            return static_cast<IntegerType>(inp_char - static_cast<CharT>('0'));
-        }
-        if constexpr (SupportHex) {
-            if (static_cast<CharT>('a') <= inp_char && inp_char <= static_cast<CharT>('f')) {
-                return static_cast<IntegerType>(inp_char - static_cast<CharT>('a') + static_cast<CharT>(10));
+        // Compile-time generated lookup table (one per template instantiation)
+        webpp_static_constexpr auto hex_table = []() consteval -> stl::array<stl::int8_t, 256> {
+            stl::array<stl::int8_t, 256> table{};
+            table.fill(-1);
+
+            // 0-9 (always supported)
+            for (stl::uint8_t i = '0'; i <= '9'; ++i) {
+                table.at(i) = static_cast<stl::int8_t>(i - '0');
             }
-            if constexpr (SupportUppercase) {
-                if (static_cast<CharT>('A') <= inp_char && inp_char <= static_cast<CharT>('F')) {
-                    return static_cast<IntegerType>(inp_char - static_cast<CharT>('A') + static_cast<CharT>(10));
+
+            if constexpr (SupportHex) {
+                // a-f
+                for (stl::uint8_t i = 'a'; i <= 'f'; ++i) {
+                    table.at(i) = static_cast<stl::int8_t>(10 + (i - 'a'));
+                }
+                if constexpr (SupportUppercase) {
+                    // A-F
+                    for (stl::uint8_t i = 'A'; i <= 'F'; ++i) {
+                        table.at(i) = static_cast<stl::int8_t>(10 + (i - 'A'));
+                    }
                 }
             }
+            return table;
+        }();
+
+        // One table lookup + branchless return (compilers turn this into a cmov or similar)
+        auto const val = hex_table[static_cast<stl::uint8_t>(inp_char)];
+        if constexpr (sizeof(CharT) == sizeof(char)) {
+            return val >= 0 ? static_cast<IntegerType>(val) : default_value;
+        } else {
+            return inp_char >= 0 && inp_char < hex_table.size() && val >= 0
+                     ? static_cast<IntegerType>(val)
+                     : default_value;
         }
-        return default_value;
     }
 
     /**
      * Return the value of CH as a hexadecimal digit, or NotANumber if it is a different type of character.
-     * I benchmarked it, and it seems like a lookup table has no value here.
-     * todo: write an specific benchmark for the lookup-table implementation
      */
     template <typename IntegerType = int, bool SupportHex = true, typename CharT = char>
     [[nodiscard]] static constexpr IntegerType hex_digit(
-      CharT       inp_char,
+      CharT const inp_char,
       IntegerType NotANumber = static_cast<IntegerType>(-1)) noexcept {
-        // if constexpr (sizeof(CharT) == sizeof(std::uint8_t)) {
-        //     return details::hex_to_binary_table_full<IntegerType, NotANumber, SupportHex>[static_cast<
-        //       std::uint8_t>(inp_char)];
-        // } else {
         return hex_digit_safe<IntegerType, true, SupportHex>(inp_char, NotANumber);
-        // }
     }
 
     template <typename CharT = char>
