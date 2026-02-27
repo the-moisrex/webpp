@@ -42,57 +42,59 @@ namespace webpp::uri {
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
      * longer than or equal to the decoded version thus we don't need allocations.
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              typename Iter              = char*,
-              typename ConstIter         = char const*>
+    template <uri_encoding_policy         Policy    = uri_encoding_policy::skip_chars,
+              stl::random_access_iterator Iter      = char*,
+              stl::random_access_iterator ConstIter = char const*>
     [[nodiscard]] static constexpr bool
     decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
         using char_type = stl::iter_value_t<Iter>;
 
-        webpp_static_constexpr auto ones      = static_cast<int>(~0UL);
+        webpp_static_constexpr auto bad_hex   = static_cast<int>(~0UL);
         webpp_static_constexpr auto zero_char = static_cast<char_type>('\0');
 
         auto out = pos;
-        for (; pos != end; ++pos) {
+        while (pos != end) {
             if (*pos == static_cast<char_type>('%')) {
-                if (pos++ >= end - 2) [[unlikely]] {
+                if (stl::next(pos, 2) >= end) [[unlikely]] {
                     return false;
                 }
 
-                int decoded_char  = ascii::hex_digit_safe<int>(*pos++, ones) << 4U;
-                decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
+                int decoded_char  = ascii::hex_digit_safe<int>(pos[1], bad_hex) << 4U;
+                decoded_char     |= ascii::hex_digit_safe<int>(pos[2], bad_hex);
 
-                if (decoded_char != ones) {
-                    auto const decoded = static_cast<char_type>(decoded_char);
-                    if constexpr (uri_encoding_policy::encode_chars == Policy) {
-                        if (chars.contains(decoded)) [[unlikely]] {
-                            pos  = out;
-                            *pos = zero_char;
-                            return false; // bad decoded chars
-                        }
-                    }
-                    *out++ = decoded;
-                } else [[unlikely]] {
+                if (decoded_char == bad_hex) [[unlikely]] {
                     pos  = out;
                     *pos = zero_char;
                     return false;
                 }
-            } else {
-                if constexpr (uri_encoding_policy::skip_chars == Policy) {
-                    if (!chars.contains(*pos)) [[unlikely]] {
+                auto const decoded = static_cast<char_type>(decoded_char);
+                if constexpr (uri_encoding_policy::encode_chars == Policy) {
+                    if (chars.contains(decoded)) [[unlikely]] {
                         pos  = out;
                         *pos = zero_char;
-                        return false; // bad chars
-                    }
-                } else {
-                    if (chars.contains(*pos)) [[unlikely]] {
-                        pos  = out;
-                        *pos = zero_char;
-                        return false; // bad chars
+                        return false; // bad decoded chars
                     }
                 }
-                *out++ = *pos;
+                *out++ = decoded;
+                stl::advance(pos, 3);
+                continue;
             }
+
+            if constexpr (uri_encoding_policy::skip_chars == Policy) {
+                if (!chars.contains(*pos)) [[unlikely]] {
+                    pos  = out;
+                    *pos = zero_char;
+                    return false; // bad chars
+                }
+            } else {
+                if (chars.contains(*pos)) [[unlikely]] {
+                    pos  = out;
+                    *pos = zero_char;
+                    return false; // bad chars
+                }
+            }
+            *out++ = *pos;
+            ++pos;
         }
         pos = out;
         if (pos != end) {
@@ -101,48 +103,50 @@ namespace webpp::uri {
         return true;
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
-              typename Iter,
-              typename CIter,
-              istl::String OutStrT = stl::string>
+    template <uri_encoding_policy         Policy = uri_encoding_policy::skip_chars,
+              stl::random_access_iterator Iter,
+              stl::random_access_iterator CIter,
+              istl::String                OutStrT = stl::string>
     [[nodiscard]] static constexpr bool
     decode_uri_component(Iter& pos, CIter end, OutStrT& output, CharSet auto const& chars) {
         using char_type = stl::iter_value_t<Iter>;
 
-        webpp_static_constexpr auto ones = static_cast<int>(~0UL);
+        webpp_static_constexpr auto bad_hex = static_cast<int>(~0UL);
 
-        for (; pos != end; ++pos) {
+        while (pos != end) {
             if (*pos == static_cast<char_type>('%')) {
-                if (pos++ >= end - 2) [[unlikely]] {
+                if (stl::next(pos, 2) >= end) [[unlikely]] {
                     return false;
                 }
 
-                int decoded_char  = ascii::hex_digit_safe<int>(*pos++, ones) << 4U;
-                decoded_char     |= ascii::hex_digit_safe<int>(*pos, ones);
+                int decoded_char  = ascii::hex_digit_safe<int>(pos[1], bad_hex) << 4U;
+                decoded_char     |= ascii::hex_digit_safe<int>(pos[2], bad_hex);
 
-                if (decoded_char != ones) {
-                    auto const decoded = static_cast<char_type>(decoded_char);
-                    if constexpr (uri_encoding_policy::encode_chars == Policy) {
-                        if (chars.contains(decoded)) [[unlikely]] {
-                            return false; // bad decoded chars
-                        }
-                    }
-                    output += decoded;
-                } else [[unlikely]] {
+                if (decoded_char == bad_hex) [[unlikely]] {
                     return false;
+                }
+
+                auto const decoded = static_cast<char_type>(decoded_char);
+                if constexpr (uri_encoding_policy::encode_chars == Policy) {
+                    if (chars.contains(decoded)) [[unlikely]] {
+                        return false; // bad decoded chars
+                    }
+                }
+                output.push_back(decoded);
+                stl::advance(pos, 3);
+                continue;
+            }
+            if constexpr (uri_encoding_policy::skip_chars == Policy) {
+                if (!chars.contains(*pos)) [[unlikely]] {
+                    return false; // bad chars
                 }
             } else {
-                if constexpr (uri_encoding_policy::skip_chars == Policy) {
-                    if (!chars.contains(*pos)) [[unlikely]] {
-                        return false; // bad chars
-                    }
-                } else {
-                    if (chars.contains(*pos)) [[unlikely]] {
-                        return false; // bad chars
-                    }
+                if (chars.contains(*pos)) [[unlikely]] {
+                    return false; // bad chars
                 }
-                output += *pos;
             }
+            output.push_back(*pos);
+            ++pos;
         }
         return true;
     }

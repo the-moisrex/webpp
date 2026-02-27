@@ -124,9 +124,8 @@ namespace webpp::uri {
     /// Create a URI Context, and initialize it properly
     template <URIContext CtxT>
     static constexpr CtxT
-    create(typename CtxT::iterator            beg,
-           typename CtxT::iterator            end,
-           typename CtxT::component_type&& out) noexcept(CtxT::is_nothrow) {
+    create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::component_type&& out)
+      noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
