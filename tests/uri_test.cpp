@@ -100,6 +100,26 @@ TYPED_TEST(URITests, SpecialPathRendering) {
     EXPECT_EQ(url2.as_string(), "web+demo:/.//not-a-host/");
 }
 
+TYPED_TEST(URITests, DoubleDotKeepsRootPath) {
+    uri::uri const url = "https://example.com/usr/..";
+    EXPECT_EQ(url.path_view(), "/");
+    EXPECT_EQ(url.href(), "https://example.com/");
+}
+
+TYPED_TEST(URITests, SingleDotKeepsTrailingSlashAtEnd) {
+    uri::uri const url = "https://example.com/usr/.";
+    EXPECT_EQ(url.path_view(), "/usr/");
+    EXPECT_EQ(url.href(), "https://example.com/usr/");
+}
+
+TYPED_TEST(URITests, ReverseSolidusWarningOnlyForSpecialSchemes) {
+    auto special_ctx = this->template parse_from_string<TypeParam>("https://example.com\\a");
+    EXPECT_TRUE(uri::has_warning(special_ctx.status, uri::uri_status::reverse_solidus_used));
+
+    auto non_special_ctx = this->template parse_from_string<TypeParam>("custom:foo\\bar");
+    EXPECT_FALSE(uri::has_warning(non_special_ctx.status, uri::uri_status::reverse_solidus_used));
+}
+
 TYPED_TEST(URITests, PathFromString) {
     stl::array<stl::string, 4> const   path_segments{"", "a", "b", "d"};
     uri::basic_path<stl::string> const path{path_segments};
