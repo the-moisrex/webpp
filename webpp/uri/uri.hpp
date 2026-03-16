@@ -16,6 +16,78 @@
 
 namespace webpp::uri {
 
+    /// Check if the path contains an opaque path
+    [[nodiscard]] static constexpr bool is_opaque(uri_status_type const status) noexcept {
+        return has_flags(status, uri_status::opaque_path);
+    }
+
+    /// Get port as a number, -1 if invalid
+    template <typename CharT>
+    [[nodiscard]] static constexpr int port(stl::basic_string_view<CharT> const port_view) noexcept {
+        return to_int(port_view).value_or(-1);
+    }
+
+    /**
+     * Serialize URI Components
+     */
+    template <URIComponents CompT, typename CharT, typename AllocT>
+    static constexpr void render_uri(
+      CompT const&                                               components,
+      uri_status_type const                                      status,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out) {
+        // https://url.spec.whatwg.org/#concept-url-serializer
+        static constexpr bool is_structured = URIStructuredComponents<CompT>;
+        using string_type                   = typename CompT::string_type;
+
+        // if constexpr (is_structured || !requires { length(); }) {
+        //     // todo: make this better:
+        //     out.reserve(128);
+        // } else {
+        //     out.reserve(length());
+        // }
+        render_scheme(uri::scheme(components), out, true);
+        if (uri::has_hostname(components)) {
+            out.push_back('/');
+            out.push_back('/');
+            if (uri::has_credentials(components)) {
+                render_username(uri::username(components), out);
+                if (uri::has_password(components)) {
+                    out.push_back(':');
+                    render_password(uri::password(components), out);
+                }
+                out.push_back('@');
+            }
+            render_hostname(uri::hostname(components), out);
+            if (!is_default_port(uri::port(uri::port(components)), uri::scheme(components))) {
+                render_port(uri::port(components), out, true);
+            }
+        } else if (!is_opaque(status)) {
+            bool should_prepend_dot = false;
+            if constexpr (is_structured) {
+                auto const _path   = basic_path<string_type>{uri::path(components)};
+                should_prepend_dot = _path.size() > 1 && _path.front().empty();
+            } else {
+                auto const _path   = uri::path(components);
+                should_prepend_dot = _path.size() > 1 && _path.front() == '/' && _path[1] == '/';
+            }
+
+            if (should_prepend_dot) {
+                // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
+                // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
+                // U+002E (.) to output.
+                // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed
+                // and then serialized, from ending up as web+demo://not-a-host/ (they end up as
+                // web+demo:/.//not-a-host/).
+                out.push_back('/');
+                out.push_back('.');
+            }
+        }
+
+        render_path(uri::path(components), out);
+        render_queries(uri::queries(components), out, true);
+        render_fragment(uri::fragment(components), out, true);
+    }
+
     /**
      * @brief Basic Structured URI
      */
@@ -72,7 +144,7 @@ namespace webpp::uri {
             auto ctx = create<context_type>(beg, end, stl::move(components));
             parse_uri<Options>(ctx);
             components = stl::move(ctx.out);
-            m_status = ctx.status;
+            m_status   = ctx.status;
         }
 
         template <uri_options Options = {}>
@@ -149,7 +221,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr int port() const noexcept {
-            return to_int(uri::port(components)).value_or(-1);
+            return uri::port(uri::port(components));
         }
 
         [[nodiscard]] constexpr string_view_type username() const noexcept {
@@ -270,7 +342,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
-            return has_username() || has_password();
+            return uri::has_credentials(components);
         }
 
         [[nodiscard]] constexpr bool has_port() const noexcept {
@@ -322,47 +394,7 @@ namespace webpp::uri {
             } else {
                 out.reserve(length());
             }
-            render_scheme(uri::scheme(components), out, true);
-            if (has_hostname()) {
-                out.push_back('/');
-                out.push_back('/');
-                if (has_credentials()) {
-                    render_username(uri::username(components), out);
-                    if (has_password()) {
-                        out.push_back(':');
-                        render_password(uri::password(components), out);
-                    }
-                    out.push_back('@');
-                }
-                render_hostname(uri::hostname(components), out);
-                if (!is_default_port(port(), scheme())) {
-                    render_port(uri::port(components), out, true);
-                }
-            } else if (!is_opaque()) {
-                bool should_prepend_dot = false;
-                if constexpr (is_structured) {
-                    auto const _path   = path();
-                    should_prepend_dot = _path.size() > 1 && _path.front().empty();
-                } else {
-                    auto const _path   = path_view();
-                    should_prepend_dot = _path.size() > 1 && _path.front() == '/' && _path[1] == '/';
-                }
-
-                if (should_prepend_dot) {
-                    // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
-                    // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
-                    // U+002E (.) to output.
-                    // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed
-                    // and then serialized, from ending up as web+demo://not-a-host/ (they end up as
-                    // web+demo:/.//not-a-host/).
-                    out.push_back('/');
-                    out.push_back('.');
-                }
-            }
-
-            render_path(uri::path(components), out);
-            render_queries(uri::queries(components), out, true);
-            render_fragment(uri::fragment(components), out, true);
+            render_uri(components, m_status, out);
         }
 
         template <typename... Args>
@@ -456,7 +488,7 @@ namespace webpp::uri {
 
         /// Check if the path is an opaque path
         [[nodiscard]] constexpr bool is_opaque() const noexcept {
-            return has_flags(m_status, uri_status::opaque_path);
+            return uri::is_opaque(m_status);
         }
 
         template <uri_options Options = {}>
