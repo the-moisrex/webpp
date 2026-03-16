@@ -331,9 +331,35 @@ namespace webpp::uri {
 
         unset_flag(ctx.status, opaque_path);
 
-        auto buffer = create_buffer(ctx);
-        details::handle_windows_driver_letter<Options>(ctx, buffer);
+        auto        buffer        = create_buffer(ctx);
         stl::size_t segment_start = 0U;
+
+        // Prepend the previous URL's path if the new path is not absolute
+        //
+        // WHATWG URL Standard, path state: "If buffer is a double-dot URL path segment, then ... shorten
+        // url's path" and in the default branch "append buffer to url's path".
+        // https://url.spec.whatwg.org/#path-state
+        //
+        // Also in file state, when resolving against a file base, the algorithm says to clone base's path and
+        // then shorten it before switching to path state (implemented here via details::shorten_urls_path).
+        // https://url.spec.whatwg.org/#file-state
+        //
+        // That means path state must continue from the existing path list, not start from an empty one.
+        auto const existing_path = path(ctx.out);
+        if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
+            if constexpr (istl::String<decltype(buffer)>) {
+                buffer.append(existing_path.begin(), existing_path.end());
+                if (!buffer.empty() && buffer.back() != '/') {
+                    buffer.push_back('/');
+                }
+                segment_start = buffer.size();
+            } else {
+                set(ctx.status, modification_required);
+                return;
+            }
+        }
+
+        details::handle_windows_driver_letter<Options>(ctx, buffer);
         while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
