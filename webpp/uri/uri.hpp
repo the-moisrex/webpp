@@ -28,7 +28,23 @@ namespace webpp::uri {
     }
 
     /**
+     *
+     * Try predicting the required length of the full serialized URL
+     */
+    template <URIComponents CompT>
+    [[nodiscard]] static constexpr stl::size_t estimated_length(CompT const& components) noexcept {
+        // todo: store the length in structured components for fast retrieval
+        if constexpr (!URIStructuredComponents<CompT> && requires { uri::length(components); }) {
+            return uri::length(components);
+        } else {
+            // todo: can we do a better job here? We don't want to do heavy calculations here
+            return 128;
+        }
+    }
+
+    /**
      * Serialize URI Components
+     * https://url.spec.whatwg.org/#concept-url-serializer
      */
     template <URIComponents CompT, typename CharT, typename AllocT>
     static constexpr void render_uri(
@@ -39,12 +55,6 @@ namespace webpp::uri {
         static constexpr bool is_structured = URIStructuredComponents<CompT>;
         using string_type                   = typename CompT::string_type;
 
-        // if constexpr (is_structured || !requires { length(); }) {
-        //     // todo: make this better:
-        //     out.reserve(128);
-        // } else {
-        //     out.reserve(length());
-        // }
         render_scheme(uri::scheme(components), out, true);
         if (uri::has_hostname(components)) {
             out.push_back('/');
@@ -86,6 +96,21 @@ namespace webpp::uri {
         render_path(uri::path(components), out);
         render_queries(uri::queries(components), out, true);
         render_fragment(uri::fragment(components), out, true);
+    }
+
+    template <URIContext CtxT, typename AllocT>
+    static constexpr void href(
+      CtxT const&                                                                                      ctx,
+      stl::basic_string<typename CtxT::char_type, stl::char_traits<typename CtxT::char_type>, AllocT>& out) {
+        render_uri(ctx.out, ctx.status, out);
+    }
+
+    template <URIContext CtxT, typename AllocT = allocator_type_of<CtxT>>
+    [[nodiscard]] static constexpr auto href(CtxT const& ctx) {
+        stl::basic_string<typename CtxT::char_type, stl::char_traits<typename CtxT::char_type>, AllocT> out;
+        out.reserve(estimated_length(ctx.out));
+        render_uri(ctx.out, ctx.status, out);
+        return out;
     }
 
     /**
@@ -388,18 +413,13 @@ namespace webpp::uri {
 
         constexpr void to_string(modifiable_string_type& out) const {
             // https://url.spec.whatwg.org/#concept-url-serializer
-            if constexpr (is_structured || !requires { length(); }) {
-                // todo: make this better:
-                out.reserve(128);
-            } else {
-                out.reserve(length());
-            }
             render_uri(components, m_status, out);
         }
 
         template <typename... Args>
         [[nodiscard]] constexpr modifiable_string_type as_string(Args&&... args) const {
             modifiable_string_type out{stl::forward<Args>(args)...};
+            out.reserve(estimated_length(components));
             to_string(out);
             return out;
         }

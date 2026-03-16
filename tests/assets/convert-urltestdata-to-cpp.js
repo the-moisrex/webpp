@@ -289,9 +289,9 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
 
   // href
   if (test.href !== undefined) {
-    // result += `
-    // EXPECT_EQ(ctx.out.get_href(), "${
-    //    escapeForCppString(test.href)}") << ${testDetails(test)};`;
+    result += `
+    EXPECT_EQ(uri::href(ctx), "${
+       escapeForCppString(test.href)}") << ${testDetails(test)};`;
   }
 
   // origin??
