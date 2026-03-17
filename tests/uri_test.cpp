@@ -1773,3 +1773,22 @@ TYPED_TEST(URITests, UnknownSchemesAndTheirHosts2) {
     EXPECT_EQ(uri::queries(ctx.out), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
 }
+
+// 534 - # File URLs and many (back)slashes (1)
+TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
+    static constexpr auto details =
+      "\n{\n    \"input\": \"file:\\\\\\\\//\",\n    \"base\": null,\n    \"href\": \"file:////\",\n    \"protocol\": "
+      "\"file:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
+      "\"port\": \"\",\n    \"pathname\": \"//\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
+    auto const ctx = this->template parse_from_string<TypeParam>("file:\\\\//");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "//") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), "file:////") << details;
+}

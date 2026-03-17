@@ -83,8 +83,14 @@ namespace webpp::uri {
             // For owning/non-segregated components this is represented as a single '/'.
             if (is_special_scheme(scheme(ctx.out)) && has_hostname(ctx.out) && !has_path(ctx.out)) {
                 auto buffer = create_buffer(ctx);
-                details::append_inplace_of(ctx, buffer, '/');
-                set_path(ctx.out, stl::move(buffer));
+                if constexpr (CtxT::is_modifiable) {
+                    buffer.push_back('/');
+                    ++ctx.pos;
+                    set_path(ctx.out, stl::move(buffer));
+                } else {
+                    set(ctx.status, modification_required);
+                    return;
+                }
             }
             set(ctx.status, valid);
             return;

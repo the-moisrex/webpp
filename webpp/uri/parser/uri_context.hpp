@@ -416,16 +416,6 @@ namespace webpp::uri::details {
         }
     }
 
-    template <URIContext CtxT, typename BufT>
-    constexpr void
-    append_inplace_of(CtxT& ctx, BufT& buffer, typename CtxT::char_type inp_char, diff_type_of<CtxT> count = 1)
-      noexcept(CtxT::is_nothrow) {
-        if constexpr (istl::String<BufT>) {
-            buffer.push_back(inp_char);
-        }
-        ctx.pos += count;
-    }
-
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
     template <URIContext CtxT, istl::String OutT>
     [[nodiscard]] constexpr bool next_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {

@@ -362,7 +362,14 @@ namespace webpp::uri {
         details::handle_windows_driver_letter<Options>(ctx, buffer);
         while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
             switch (*ctx.pos) {
-                case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
+                case '\\':
+                    if constexpr (!CtxT::is_modifiable) {
+                        set(ctx.status, modification_required);
+                        return;
+                    } else {
+                        set_warning(ctx.status, reverse_solidus_used);
+                    }
+                    [[fallthrough]];
                 case '/':
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, segment_start)) {
                         ++ctx.pos; // ignore character
@@ -372,8 +379,10 @@ namespace webpp::uri {
                     end_segment(ctx, buffer);
                     if constexpr (CtxT::is_segregated) {
                         push_segment(path(ctx.out), buffer);
+                    } else if constexpr (CtxT::is_modifiable) {
+                        buffer.push_back('/');
+                        ++ctx.pos;
                     }
-                    details::append_inplace_of(ctx, buffer, '/');
                     segment_start = buffer.size();
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
@@ -397,8 +406,12 @@ namespace webpp::uri {
         if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty()) {
             if constexpr (CtxT::is_segregated) {
                 push_segment(path(ctx.out), buffer);
+            } else if constexpr (CtxT::is_modifiable) {
+                buffer.push_back('/');
+            } else {
+                set(ctx.status, modification_required);
+                return;
             }
-            details::append_inplace_of(ctx, buffer, '/', 0);
         }
 
         set_path(ctx.out, stl::move(buffer));
