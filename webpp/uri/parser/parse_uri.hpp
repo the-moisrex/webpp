@@ -54,19 +54,37 @@ namespace webpp::uri {
 
     namespace details {
         template <typename CharT>
-        [[nodiscard]] static constexpr bool is_tab_or_newline(CharT const ch) noexcept {
-            return ch == static_cast<CharT>('\t') || ch == static_cast<CharT>('\n') || ch == static_cast<CharT>('\r');
+        [[nodiscard]] static constexpr bool is_tab_or_newline(CharT const code_unit) noexcept {
+            return code_unit == static_cast<CharT>('\t') || code_unit == static_cast<CharT>('\n') ||
+                   code_unit == static_cast<CharT>('\r');
+        }
+
+        template <typename CharT>
+        [[nodiscard]] static constexpr bool is_c0_whitespace(CharT const code_unit) noexcept {
+            using uchar_type = stl::make_unsigned_t<CharT>;
+            return static_cast<uchar_type>(code_unit) <= ' ';
         }
 
         /// Remove newlines and tabs from input before doing anything else, or at least validate that we don't have any
         /// of them in the input.
         template <uri_options Options, URIContext CtxT>
-        [[nodiscard]] static constexpr bool preprocess_tabs_and_newlines(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        [[nodiscard]] static constexpr bool preprocess_whitespaces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-basic-url-parser
             if constexpr (!Options.ignore_tabs_or_newlines) {
                 return true;
             } else {
-                auto src = ctx.beg;
+                // left trim C0 Control
+                while (ctx.beg != ctx.end && is_c0_whitespace(*ctx.beg)) [[unlikely]] {
+                    ++ctx.beg;
+                    ctx.pos = ctx.beg;
+                }
+                // right trim C0 Control
+                while (ctx.end != ctx.beg && is_c0_whitespace(*(ctx.end - 1))) [[unlikely]] {
+                    --ctx.end;
+                }
+
+                // check if we have tabs and newlines in between the URL or not
+                auto* src = ctx.beg;
                 for (; src != ctx.end; ++src) {
                     if (is_tab_or_newline(*src)) [[unlikely]] {
                         break;
@@ -93,14 +111,15 @@ namespace webpp::uri {
                       sanitized,
                       length,
                       [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
-                          auto* const start = buf;
+                          char_type* const start = buf;
                           // raw copy
-                          for (auto pos = ctx.beg; pos != src;) {
+                          for (char_type const* pos = ctx.beg; pos != src;) {
                               *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
                           }
 
-                          // skip copy
-                          for (auto pos = src; pos != ctx.end; ++pos) {
+                          // skip copy: skip new lines and tabs
+                          // don't need to handle C0 Controls here since they're trimmed already
+                          for (char_type const* pos = src; pos != ctx.end; ++pos) {
                               if (!is_tab_or_newline(*pos)) {
                                   *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
                               }
@@ -120,7 +139,7 @@ namespace webpp::uri {
 
     template <uri_options Options = {}, URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        if (!details::preprocess_tabs_and_newlines<Options>(ctx)) {
+        if (!details::preprocess_whitespaces<Options>(ctx)) {
             return;
         }
         details::continue_parsing_uri<Options>(ctx);
@@ -170,7 +189,7 @@ namespace webpp::uri {
                       "Origin's string's char type must be the same as the specified URI's string's char type.");
 
         using base_context_type = uri_context<uri_components_owning<CharT>>;
-        auto origin_context = create<base_context_type>(base_uri.data(), base_uri.data() + base_uri.size());
+        auto origin_context     = create<base_context_type>(base_uri.data(), base_uri.data() + base_uri.size());
         parse_uri<Options>(origin_context);
 
         return parse_uri<Options>(the_url, stl::move(origin_context.out));

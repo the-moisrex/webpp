@@ -1832,3 +1832,36 @@ TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes11) {
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(file://a/)URL") << details;
 }
+
+
+// 8 - Some Whitespaces must be removed
+TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat8) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "\t   :foo.com   \n",
+    "base": "http://example.org/foo/bar",
+    "href": "http://example.org/foo/:foo.com",
+    "origin": "http://example.org",
+    "protocol": "http:",
+    "username": "",
+    "password": "",
+    "host": "example.org",
+    "hostname": "example.org",
+    "port": "",
+    "pathname": "/foo/:foo.com",
+    "search": "",
+    "hash": ""
+})JSON-URL";
+    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(	   :foo.com
+)URL", R"URL(http://example.org/foo/bar)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "http") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "example.org") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "/foo/:foo.com") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/foo/:foo.com)URL") << details;
+}
+
