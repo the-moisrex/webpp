@@ -23,6 +23,7 @@ namespace webpp::uri {
         requires URIComponents<typename U::component_type>;
 
         // Base type (that component type would inherit from)
+        typename U::base_type;
         requires URIComponents<typename U::base_type> || stl::is_void_v<typename U::base_type>;
 
         U::is_nothrow;

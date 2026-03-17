@@ -144,10 +144,7 @@ namespace webpp::uri {
                 }
             }
 
-            if (state >= 3) {
-                return 0;
-            }
-            return state;
+            return state >= 3 ? 0 : state;
         }
 
         // https://url.spec.whatwg.org/#path-state
@@ -381,8 +378,8 @@ namespace webpp::uri {
                         push_segment(path(ctx.out), buffer);
                     } else if constexpr (CtxT::is_modifiable) {
                         buffer.push_back('/');
-                        ++ctx.pos;
                     }
+                    ++ctx.pos;
                     segment_start = buffer.size();
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;

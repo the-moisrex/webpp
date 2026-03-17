@@ -24,6 +24,8 @@ namespace webpp::uri {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
+        assert(has_flags(ctx.status, uri_status::file_scheme));
+
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
                 while (*ctx.pos != '/' && *ctx.pos != '\\') {

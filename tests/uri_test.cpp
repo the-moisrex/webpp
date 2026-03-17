@@ -57,6 +57,17 @@ struct URITests : testing::Test {
         uri::parse_uri(ctx);
         return ctx;
     }
+
+    template <typename SpecifiedTypeParam>
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(
+      stl::string_view const str,
+      stl::string_view const base_str) {
+        auto               ctx = uri::parse_uri(str, base_str);
+        SpecifiedTypeParam out_ctx{};
+        out_ctx.status = ctx.status;
+        out_ctx.out    = stl::move(ctx.out);
+        return out_ctx;
+    }
 };
 
 TYPED_TEST_SUITE(URITests, Types);
@@ -1791,4 +1802,33 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
     EXPECT_EQ(uri::queries(ctx.out), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), "file:////") << details;
+}
+
+// 831 - Scheme relative path starting with multiple slashes (11)
+TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes11) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "//a/../",
+    "base": "file:///",
+    "href": "file://a/",
+    "protocol": "file:",
+    "username": "",
+    "password": "",
+    "host": "a",
+    "hostname": "a",
+    "port": "",
+    "pathname": "/",
+    "search": "",
+    "hash": ""
+})JSON-URL";
+    auto const            ctx = this->template parse_from_string<TypeParam>(R"URL(//a/../)URL", R"URL(file:///)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "a") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "/") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(file://a/)URL") << details;
 }

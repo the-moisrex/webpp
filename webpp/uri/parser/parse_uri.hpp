@@ -23,6 +23,7 @@ namespace webpp::uri {
                     if constexpr (Options.allow_file_hosts) {
                         parse_file_host<Options>(ctx);
                     } else {
+                        assert(false);
                         stl::unreachable(); // should be impossible.
                     }
                     break;

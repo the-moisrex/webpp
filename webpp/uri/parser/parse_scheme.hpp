@@ -129,7 +129,6 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#file-slash-state
             using enum uri_status;
 
-            using ctx_type = CtxT;
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
@@ -137,7 +136,7 @@ namespace webpp::uri {
                     default: break;
                 }
             }
-            if constexpr (!stl::is_void_v<typename ctx_type::base_type>) {
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
 
