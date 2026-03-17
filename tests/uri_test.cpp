@@ -1780,7 +1780,7 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
       "\n{\n    \"input\": \"file:\\\\\\\\//\",\n    \"base\": null,\n    \"href\": \"file:////\",\n    \"protocol\": "
       "\"file:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"//\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>("file:\\\\//");
+    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(file:\\\\//)URL");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
     EXPECT_EQ(uri::username(ctx.out), "") << details;

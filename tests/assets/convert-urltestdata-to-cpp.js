@@ -155,19 +155,15 @@ for (const test of Object.values(jsonData)) {
   result += `
 // ${testNum} - ${reason} (${index})
 TYPED_TEST(URIWhatwgTest, ${testName}) {
-    static constexpr auto details = "\\n${
-      escapeForCppString(JSON.stringify(test, null, 4))}";
+    static constexpr auto details = R"JSON-URL(${JSON.stringify(test, null, 4)})JSON-URL";
 `
   if (test.base !== null) {
     result +=
-        `    auto const ctx = this->template parse_from_string<TypeParam>("${
-            escapeForCppString(
-                test.input)}", "${escapeForCppString(test.base)}");`;
+        `    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(${test.input})URL", R"URL(${escapeForCppString(test.base)})URL");`;
   }
   else {
     result +=
-        `    auto const ctx = this->template parse_from_string<TypeParam>("${
-            escapeForCppString(test.input)}");`;
+        `    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(${test.input})URL");`;
   }
 
   if (test.failure !== undefined) {
@@ -183,9 +179,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // scheme
   if (test.protocol !== undefined) {
     result += `
-    EXPECT_EQ(uri::scheme(ctx.out), "${
-        escapeForCppString(
-            test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::scheme(ctx.out), "${escapeForCppString(test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
   }
 
   // username
@@ -290,8 +284,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // href
   if (test.href !== undefined) {
     result += `
-    EXPECT_EQ(uri::href(ctx), "${
-       escapeForCppString(test.href)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::href(ctx), R"URL(${test.href})URL") << ${testDetails(test)};`;
   }
 
   // origin??
