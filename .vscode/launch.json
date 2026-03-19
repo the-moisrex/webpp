@@ -39,6 +39,48 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "(lldb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "$PATH:${command:cmake.launchTargetDirectory}"
+                },
+                {
+                    "name": "CMAKE_BUILD_TYPE",
+                    "value": "Debug"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "miDebuggerPath": "lldb-mi",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for lldb",
+                    "text": "settings set target.pretty-printing true",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(lldb-dap) Launch",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+            "env": {
+                "PATH": "$PATH:${command:cmake.launchTargetDirectory}",
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
         }
     ]
 }
