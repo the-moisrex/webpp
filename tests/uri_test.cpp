@@ -1865,3 +1865,33 @@ TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat8) {
     EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/foo/:foo.com)URL") << details;
 }
 
+// 315 - # resolving a fragment against any scheme succeeds (5)
+TYPED_TEST(URITests, ResolvingAFragmentAgainstAnySchemeSucceeds5) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "#x:y",
+    "base": "about:blank",
+    "href": "about:blank#x:y",
+    "origin": "null",
+    "protocol": "about:",
+    "username": "",
+    "password": "",
+    "host": "",
+    "hostname": "",
+    "port": "",
+    "pathname": "blank",
+    "search": "",
+    "hash": "#x:y"
+})JSON-URL";
+    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(#x:y)URL", R"URL(about:blank)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "about") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "blank") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "x:y") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(about:blank#x:y)URL") << details;
+}
+

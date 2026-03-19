@@ -346,10 +346,13 @@ target_sources(${LIB_NAME} PUBLIC
 
 target_link_libraries(${LIB_NAME}
         PUBLIC ${PROJECT_NAME}::json
-        ${BROTLI_SHARED_LIBS}
         INTERFACE ZLIB::ZLIB)
 if (NOT HAS_CPP_LIB_FORMAT)
     target_link_libraries(${LIB_NAME} PUBLIC fmt::fmt)
+endif ()
+
+if (WEBPP_USE_BROTLI)
+    target_link_libraries(${LIB_NAME} ${BROTLI_SHARED_LIBS})
 endif ()
 
 
@@ -358,7 +361,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     if (USE_OS_LIBURING)
         target_link_libraries(${LIB_NAME} PUBLIC uring)
         target_compile_definitions(${LIB_NAME} PUBLIC USE_OS_LIBURING=1)
-    else ()
+    elseif (WEBPP_USE_LIBURING)
         target_link_libraries(${LIB_NAME} PUBLIC liburing::uring)
     endif ()
 endif ()
