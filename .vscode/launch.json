@@ -29,14 +29,14 @@
             "MIMode": "gdb",
             "setupCommands": [
                 {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
+                    "description": "Disable downloading Debug info",
+                    "text": "set debuginfod enabled off",
+                    "ignoreFailures": false
                 },
                 {
-                    "description": "Set Disassembly Flavor to Intel",
-                    "text": "-gdb-set disassembly-flavor intel",
-                    "ignoreFailures": true
+                    "description": "Disable URL",
+                    "text": "set debuginfod urls",
+                    "ignoreFailures": false
                 }
             ]
         },
