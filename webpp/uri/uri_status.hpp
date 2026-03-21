@@ -563,7 +563,6 @@ namespace webpp::uri {
         return has(+status, expected_err);
     }
 
-
     /// Set Valid or Set Error
     static constexpr void set(uri_status_type& status, uri_status const value) noexcept {
         // Some algorithm has gone very wrong if we have two validation errors being set.

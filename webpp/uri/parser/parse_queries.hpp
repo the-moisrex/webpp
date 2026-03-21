@@ -25,8 +25,8 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::skip_separator;
         using details::next_percent_encode;
+        using details::skip_separator;
         using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {
@@ -95,8 +95,8 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
-        using details::skip_separator;
         using details::next_percent_encode;
+        using details::skip_separator;
         using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {

@@ -249,6 +249,7 @@ namespace webpp::uri {
                         set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
                         clear_fragment(ctx.out);
                         set(ctx.status, valid_fragment);
+                        ++ctx.pos;
                         return;
                     }
                     // ... or base has an opaque path and c is not U+0023 (#), missing-scheme-non-relative-URL
