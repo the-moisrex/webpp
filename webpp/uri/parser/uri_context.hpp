@@ -14,37 +14,38 @@ namespace webpp::uri {
     /**
      * URI Context is everything we need during parsing of a URL
      */
-    template <typename T, typename U = stl::remove_cvref_t<T>>
-    concept URIContext = requires(U ctx) {
-        typename U::iterator;
-        typename U::char_type;
+    template <typename T>
+    concept URIContext = requires(stl::remove_cvref_t<T> ctx) {
+        typename stl::remove_cvref_t<T>::iterator;
+        typename stl::remove_cvref_t<T>::char_type;
 
         // Component type
-        requires URIComponents<typename U::component_type>;
+        requires URIComponents<typename stl::remove_cvref_t<T>::component_type>;
 
         // Base type (that component type would inherit from)
-        typename U::base_type;
-        requires URIComponents<typename U::base_type> || stl::is_void_v<typename U::base_type>;
+        typename stl::remove_cvref_t<T>::base_type;
+        requires URIComponents<typename stl::remove_cvref_t<T>::base_type> ||
+                   stl::is_void_v<typename stl::remove_cvref_t<T>::base_type>;
 
-        U::is_nothrow;
-        U::is_modifiable;
-        U::is_segregated;
+        stl::remove_cvref_t<T>::is_nothrow;
+        stl::remove_cvref_t<T>::is_modifiable;
+        stl::remove_cvref_t<T>::is_segregated;
 
-        { ctx.beg } -> stl::convertible_to<typename U::iterator>;
-        { ctx.pos } -> stl::convertible_to<typename U::iterator>;
-        { ctx.end } -> stl::convertible_to<typename U::iterator>;
-        { ctx.out } -> stl::convertible_to<typename U::component_type>;
+        { ctx.beg } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
+        { ctx.pos } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
+        { ctx.end } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
+        { ctx.out } -> stl::convertible_to<typename stl::remove_cvref_t<T>::component_type>;
         ctx.status;
         requires requires {
-            { ctx.base } -> stl::convertible_to<typename U::base_type>;
+            { ctx.base } -> stl::convertible_to<typename stl::remove_cvref_t<T>::base_type>;
         } || requires {
             { ctx.base } -> stl::convertible_to<istl::nothing_type>;
         };
 
         // Compatibility Check: If base type is modifiable, then component type must be modifiable as well.
-        requires(URIModifiableComponents<typename U::component_type> &&
-                 URIModifiableComponents<typename U::base_type>) ||
-                  (!URIModifiableComponents<typename U::base_type>);
+        requires(URIModifiableComponents<typename stl::remove_cvref_t<T>::component_type> &&
+                 URIModifiableComponents<typename stl::remove_cvref_t<T>::base_type>) ||
+                  (!URIModifiableComponents<typename stl::remove_cvref_t<T>::base_type>);
     };
 
     /**
