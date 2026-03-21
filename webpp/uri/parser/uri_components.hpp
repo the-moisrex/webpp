@@ -25,16 +25,16 @@ namespace webpp::uri {
      *  - Fragments
      * Though this doesn't mean we would force them to a specific name for each the of the components.
      */
-    template <typename T, typename U = stl::remove_cvref_t<T>>
+    template <typename T>
     concept URIComponents = requires {
-        typename U::seg_type; // segment type (string/string-view/uint32_t/...)
-        typename U::char_type;
+        typename stl::remove_cvref_t<T>::seg_type; // segment type (string/string-view/uint32_t/...)
+        typename stl::remove_cvref_t<T>::char_type;
         // requires can_get_allocator<U>;
 
-        U::is_nothrow;
-        U::is_modifiable;
-        U::is_segregated;
-        U::max_supported_length;
+        stl::remove_cvref_t<T>::is_nothrow;
+        stl::remove_cvref_t<T>::is_modifiable;
+        stl::remove_cvref_t<T>::is_segregated;
+        stl::remove_cvref_t<T>::max_supported_length;
     };
 
     /// Relative Components are components that only point to the components of a URL using numbers or iterators or a
@@ -59,35 +59,35 @@ namespace webpp::uri {
     concept URIHrefComponents = URIComponents<T> && requires(stl::remove_cvref_t<T> comps) { comps.href; };
 
     /// Structured Components are components that store each URI's components separately.
-    template <typename T, typename U = stl::remove_cvref_t<T>>
-    concept URIStructuredComponents = URIComponents<T> && requires(U& comps) {
-        typename U::string_type;
-        typename U::vec_type;
-        typename U::map_type;
-        { comps.scheme } -> stl::same_as<typename U::string_type&>;
-        { comps.username } -> stl::same_as<typename U::string_type&>;
-        { comps.password } -> stl::same_as<typename U::string_type&>;
-        { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        requires stl::same_as<decltype((comps.port)), typename U::string_type&> ||
+    template <typename T>
+    concept URIStructuredComponents = URIComponents<T> && requires(stl::remove_cvref_t<T>& comps) {
+        typename stl::remove_cvref_t<T>::string_type;
+        typename stl::remove_cvref_t<T>::vec_type;
+        typename stl::remove_cvref_t<T>::map_type;
+        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        requires stl::same_as<decltype((comps.port)), typename stl::remove_cvref_t<T>::string_type&> ||
                    stl::same_as<decltype((comps.port)), stl::uint16_t&>;
-        { comps.path } -> stl::same_as<typename U::vec_type&>;
-        { comps.queries } -> stl::same_as<typename U::map_type&>;
-        { comps.fragment } -> stl::same_as<typename U::string_type&>;
+        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::vec_type&>;
+        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::map_type&>;
+        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
     };
 
     /// Owning Components are components that are using strings and not string views.
-    template <typename T, typename U = stl::remove_cvref_t<T>>
-    concept URIOwningComponents = URIComponents<T> && requires(U& comps) {
-        requires istl::String<typename U::string_type>;
-        { comps.scheme } -> stl::same_as<typename U::string_type&>;
-        { comps.username } -> stl::same_as<typename U::string_type&>;
-        { comps.password } -> stl::same_as<typename U::string_type&>;
-        { comps.hostname } -> stl::same_as<typename U::string_type&>;
-        requires stl::same_as<decltype((comps.port)), typename U::string_type&> ||
+    template <typename T>
+    concept URIOwningComponents = URIComponents<T> && requires(stl::remove_cvref_t<T>& comps) {
+        requires istl::String<typename stl::remove_cvref_t<T>::string_type>;
+        { comps.scheme } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.username } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.password } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.hostname } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        requires stl::same_as<decltype((comps.port)), typename stl::remove_cvref_t<T>::string_type&> ||
                    stl::same_as<decltype((comps.port)), stl::uint16_t&>;
-        { comps.path } -> stl::same_as<typename U::string_type&>;
-        { comps.queries } -> stl::same_as<typename U::string_type&>;
-        { comps.fragment } -> stl::same_as<typename U::string_type&>;
+        { comps.path } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.queries } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
+        { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
     };
 
     template <typename CompT, auto MemberPtr, typename... Args>
