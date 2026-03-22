@@ -5,10 +5,10 @@
 
 #include "../socket/socket.hpp"
 #include "../std/concepts.hpp"
-#include "../std/vector.hpp"
 #include "ip_address.hpp"
 
 #include <array>
+#include <vector>
 
 namespace webpp {
 
@@ -18,32 +18,18 @@ namespace webpp {
         requires stl::derived_from<stl::remove_cvref_t<T>, ip_address>;
 
         // it should be noexcept, even if you have to use "try-catch"
-        {
-            endpoint.is_bindable()
-        } noexcept -> stl::same_as<bool>;
+        { endpoint.is_bindable() } noexcept -> stl::same_as<bool>;
 
-        {
-            endpoint.is_tcp()
-        } noexcept -> stl::same_as<bool>;
-        {
-            endpoint.is_udp()
-        } noexcept -> stl::same_as<bool>;
-        {
-            endpoint.port()
-        } noexcept -> stl::same_as<stl::uint16_t>;
+        { endpoint.is_tcp() } noexcept -> stl::same_as<bool>;
+        { endpoint.is_udp() } noexcept -> stl::same_as<bool>;
+        { endpoint.port() } noexcept -> stl::same_as<stl::uint16_t>;
     };
 
     template <typename T>
     concept EndpointList = requires(T ep) {
-        {
-            stl::begin(ep)
-        } -> stl::random_access_iterator;
-        {
-            stl::end(ep)
-        } -> stl::random_access_iterator;
-        {
-            *stl::begin(ep)
-        } -> Endpoint;
+        { stl::begin(ep) } -> stl::random_access_iterator;
+        { stl::end(ep) } -> stl::random_access_iterator;
+        { *stl::begin(ep) } -> Endpoint;
     };
 
     /**

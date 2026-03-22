@@ -112,7 +112,6 @@ set(ALL_SOURCES_SHORT
         std/unordered_map.hpp
         std/unordered_set.hpp
         std/utility.hpp
-        std/vector.hpp
 
         io/buffer.hpp
         io/file_handle.hpp

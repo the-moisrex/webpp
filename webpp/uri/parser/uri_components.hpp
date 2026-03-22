@@ -5,12 +5,12 @@
 
 #include "../../std/collection.hpp"
 #include "../../std/string_like.hpp"
-#include "../../std/vector.hpp"
 #include "../uri_status.hpp"
 #include "./special_schemes.hpp"
 
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 namespace webpp::uri {
 

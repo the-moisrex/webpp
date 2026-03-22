@@ -2,7 +2,6 @@
 #define WEBPP_RESPONSE_BODY_HPP
 
 #include "../std/functional.hpp"
-#include "../std/vector.hpp"
 #include "../traits/enable_traits.hpp"
 #include "body.hpp"
 #include "http_concepts.hpp"

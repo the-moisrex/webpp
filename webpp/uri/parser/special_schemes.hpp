@@ -3,10 +3,8 @@
 #ifndef WEBPP_SPECIAL_SCHEMES_HPP
 #define WEBPP_SPECIAL_SCHEMES_HPP
 
-#include "../../std/string_like.hpp"
 #include "../../std/string_view.hpp"
 #include "../uri_status.hpp"
-#include "./constants.hpp"
 #include "./iiequals.hpp"
 
 #include <cstdint>

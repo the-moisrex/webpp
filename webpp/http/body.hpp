@@ -7,13 +7,13 @@
 #include "../std/concepts.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
-#include "../std/vector.hpp"
 #include "../traits/traits.hpp"
 #include "./bodies/string.hpp"
 #include "./http_concepts.hpp"
 
 #include <exception>
 #include <variant>
+#include <vector>
 
 // This file is for common types for bodies; request and response bodies alike
 namespace webpp::http {
@@ -613,10 +613,9 @@ namespace webpp::http {
         template <typename T>
         constexpr body_writer& set(T&& obj) {
             clear();
-            if constexpr (BodyReader<T> && requires {
-                              {
-                                  obj.as_string_communicator()
-                              } -> stl::same_as<string_communicator_type>;
+            if constexpr (BodyReader<T> &&
+                          requires {
+                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
                           })
             {
                 this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());

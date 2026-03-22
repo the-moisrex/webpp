@@ -3,15 +3,14 @@
 #ifndef WEBPP_THREAD_POOL_HPP
 #define WEBPP_THREAD_POOL_HPP
 
-#include "../std/vector.hpp"
-
 #include <thread>
+#include <vector>
 
 namespace webpp {
 
     template <typename AllocType>
     struct thread_pool {
-        stl::vector<stl::thread, AllocType> threads;
+        std::vector<std::thread, AllocType> threads;
     };
 
 } // namespace webpp

@@ -4,7 +4,6 @@
 #define WEBPP_VALVE_TRAVERSER_HPP
 
 #include "../../std/string.hpp"
-#include "../../std/vector.hpp"
 
 namespace webpp::http {
 
