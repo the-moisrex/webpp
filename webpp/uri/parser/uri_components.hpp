@@ -224,7 +224,7 @@ namespace webpp::uri {
 
         /// is resetting the values are noexcept or not
         static constexpr bool is_nothrow    = stl::is_nothrow_assignable_v<string_type, char_type const*>;
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable = istl::String<string_type>;
         static constexpr bool is_segregated = false;
 
         string_type scheme;

@@ -23,11 +23,11 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#query-state
 
         using enum uri_status;
+        using enum uri_encoding_policy;
         using details::ascii_bitmap;
         using details::encode_or_validate;
         using details::next_percent_encode;
         using details::skip_separator;
-        using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
@@ -94,11 +94,11 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#query-state
 
         using enum uri_status;
+        using enum uri_encoding_policy;
         using details::ascii_bitmap;
         using details::encode_or_validate;
         using details::next_percent_encode;
         using details::skip_separator;
-        using enum uri_encoding_policy;
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
