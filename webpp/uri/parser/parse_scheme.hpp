@@ -422,7 +422,6 @@ namespace webpp::uri {
             }
             [[unlikely]] default: {
                 // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
-                // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
                 if (Options.state_override && is_special_scheme(ctx.status)) [[unlikely]] {
                     return;
                 }

@@ -54,8 +54,6 @@ namespace webpp::uri {
       uri_status_type const                                      status,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out) {
         // https://url.spec.whatwg.org/#concept-url-serializer
-        static constexpr bool is_structured = URIStructuredComponents<CompT>;
-        using string_type                   = typename CompT::string_type;
 
         render_scheme(uri::scheme(components), out, true);
         if (uri::has_hostname(components)) {
@@ -73,26 +71,15 @@ namespace webpp::uri {
             if (!is_default_port(uri::port(uri::port(components)), uri::scheme(components))) {
                 render_port(uri::port(components), out, true);
             }
-        } else if (!is_opaque(status)) {
-            bool should_prepend_dot = false;
-            if constexpr (is_structured) {
-                auto const _path   = basic_path<string_type>{uri::path(components)};
-                should_prepend_dot = _path.size() > 1 && _path.front().empty();
-            } else {
-                auto const _path   = uri::path(components);
-                should_prepend_dot = _path.size() > 1 && _path.front() == '/' && _path[1] == '/';
-            }
-
-            if (should_prepend_dot) {
-                // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
-                // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
-                // U+002E (.) to output.
-                // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed
-                // and then serialized, from ending up as web+demo://not-a-host/ (they end up as
-                // web+demo:/.//not-a-host/).
-                out.push_back('/');
-                out.push_back('.');
-            }
+        } else if (!is_opaque(status) && uri::path(components).starts_with("//")) {
+            // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
+            // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
+            // U+002E (.) to output.
+            // This prevents web+demo:/.//not-a-host/ or web+demo:/path/..//not-a-host/, when parsed
+            // and then serialized, from ending up as web+demo://not-a-host/ (they end up as
+            // web+demo:/.//not-a-host/).
+            out.push_back('/');
+            out.push_back('.');
         }
 
         render_path(uri::path(components), out);
