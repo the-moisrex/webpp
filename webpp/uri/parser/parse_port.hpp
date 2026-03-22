@@ -75,7 +75,7 @@ namespace webpp::uri {
         }
 
         // it's unsigned, we don't need to check for it being lower than 0
-        if (port_value == known_port(scheme(ctx.out))) {
+        if (port_value == known_port(scheme(ctx.out)) && port_value != 0) {
             clear_port(ctx.out);
             unset_flag(ctx.status, has_non_null_port);
         } else {
