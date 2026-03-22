@@ -322,7 +322,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
-    EXPECT_EQ(uri::uri_status::has_credentials, uri::get_warning(context.status))
+    EXPECT_EQ(uri::uri_status::contains_credentials, uri::get_warning(context.status))
       << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(uri::scheme(context.out), "https");

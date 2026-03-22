@@ -909,44 +909,44 @@ namespace webpp::uri {
         comps.fragment = stl::move(value);
     }
 
-    static constexpr void clear_scheme(URIComponents auto& comp) noexcept {
-        istl::clear(comp.scheme);
+    static constexpr void clear_scheme(URIComponents auto& components) noexcept {
+        istl::clear(components.scheme);
     }
 
-    static constexpr void clear_username(URIComponents auto& comp) noexcept {
-        istl::clear(comp.username);
+    static constexpr void clear_username(URIComponents auto& components) noexcept {
+        istl::clear(components.username);
     }
 
-    static constexpr void clear_password(URIComponents auto& comp) noexcept {
-        istl::clear(comp.password);
+    static constexpr void clear_password(URIComponents auto& components) noexcept {
+        istl::clear(components.password);
     }
 
-    static constexpr void clear_hostname(URIComponents auto& comp) noexcept {
-        istl::clear(comp.hostname);
+    static constexpr void clear_hostname(URIComponents auto& components) noexcept {
+        istl::clear(components.hostname);
     }
 
-    static constexpr void clear_port(URIComponents auto& comp) noexcept {
-        istl::clear(comp.port);
+    static constexpr void clear_port(URIComponents auto& components) noexcept {
+        istl::clear(components.port);
     }
 
-    static constexpr void clear_path(URIComponents auto& comp) noexcept {
-        istl::clear(comp.path);
+    static constexpr void clear_path(URIComponents auto& components) noexcept {
+        istl::clear(components.path);
     }
 
-    static constexpr void clear_queries(URIComponents auto& comp) noexcept {
-        istl::clear(comp.queries);
+    static constexpr void clear_queries(URIComponents auto& components) noexcept {
+        istl::clear(components.queries);
     }
 
-    static constexpr void clear_fragment(URIComponents auto& comp) noexcept {
-        istl::clear(comp.fragment);
+    static constexpr void clear_fragment(URIComponents auto& components) noexcept {
+        istl::clear(components.fragment);
     }
 
-    [[nodiscard]] static constexpr bool has_scheme(URIComponents auto const& comp) noexcept {
-        return !scheme(comp).empty();
+    [[nodiscard]] static constexpr bool has_scheme(URIComponents auto const& components) noexcept {
+        return !scheme(components).empty();
     }
 
-    [[nodiscard]] static constexpr bool has_username(URIComponents auto const& comp) noexcept {
-        return !username(comp).empty();
+    [[nodiscard]] static constexpr bool has_username(URIComponents auto const& components) noexcept {
+        return !username(components).empty();
     }
 
     [[nodiscard]] static constexpr bool has_password(URIComponents auto const& components) noexcept {
@@ -957,31 +957,31 @@ namespace webpp::uri {
         return has_username(components) || has_password(components);
     }
 
-    [[nodiscard]] static constexpr bool has_hostname(URIComponents auto const& comp) noexcept {
-        return !hostname(comp).empty();
+    [[nodiscard]] static constexpr bool has_hostname(URIComponents auto const& components) noexcept {
+        return !hostname(components).empty();
     }
 
-    [[nodiscard]] static constexpr bool has_port(URIComponents auto const& comp) noexcept {
-        return !port(comp).empty();
+    [[nodiscard]] static constexpr bool has_port(URIComponents auto const& components) noexcept {
+        return !port(components).empty();
     }
 
-    [[nodiscard]] static constexpr bool has_path(URIComponents auto const& comp) noexcept {
-        return !path(comp).empty();
+    [[nodiscard]] static constexpr bool has_path(URIComponents auto const& components) noexcept {
+        return !path(components).empty();
     }
 
-    [[nodiscard]] static constexpr bool has_queries(URIComponents auto const& comp) noexcept {
-        return !queries(comp).empty();
+    [[nodiscard]] static constexpr bool has_queries(URIComponents auto const& components) noexcept {
+        return !queries(components).empty();
     }
 
-    [[nodiscard]] static constexpr bool has_fragment(URIComponents auto const& comp) noexcept {
-        return !fragment(comp).empty();
+    [[nodiscard]] static constexpr bool has_fragment(URIComponents auto const& components) noexcept {
+        return !fragment(components).empty();
     }
 
     /// Checks whether a parsed URL has an opaque path (i.e. cannot-be-a-base-URL).
-    [[nodiscard]] static constexpr bool is_opaque_path(URIComponents auto const& comp) noexcept {
-        auto const comp_scheme = scheme(comp);
-        auto const comp_path   = path(comp);
-        return !is_special_scheme(comp_scheme) && !has_hostname(comp) &&
+    [[nodiscard]] static constexpr bool is_opaque_path(URIComponents auto const& components) noexcept {
+        auto const comp_scheme = scheme(components);
+        auto const comp_path   = path(components);
+        return !is_special_scheme(comp_scheme) && !has_hostname(components) &&
                (comp_path.empty() || comp_path.front() != '/');
     }
 

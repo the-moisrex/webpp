@@ -212,7 +212,7 @@ namespace webpp::uri {
         invalid_host_code_point   = error_bit | 14U, // non-special (opaque) host contains invalid character
         invalid_domain_code_point = error_bit | 15U, // domain name contains invalid chars
         domain_to_ascii_error     = error_bit | 16U, // domain to ascii process has failed
-        has_credentials           = warning_bit >> 2U,
+        contains_credentials      = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
         ipv4_trailing_empty_octet = warning_bit >> 3U,
@@ -357,7 +357,7 @@ namespace webpp::uri {
                 return {
                   "Domain could not be converted to ASCII; "
                   "more info: https://url.spec.whatwg.org/#validation-error-domain-to-ascii"};
-            case has_credentials:
+            case contains_credentials:
                 return {
                   "The input has credentials (username or password), it is a deprecated feature of URIs; "
                   "more info: https://url.spec.whatwg.org/#invalid-credentials "

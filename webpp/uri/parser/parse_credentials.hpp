@@ -13,7 +13,7 @@ namespace webpp::uri {
     // https://url.spec.whatwg.org/#cannot-have-a-username-password-port
     template <URIComponents CompT>
     [[nodiscard]] static constexpr bool cannot_have_a_username_password_port(
-      CompT const& comps,
+      CompT const&          comps,
       uri_status_type const status) noexcept {
         return !has_hostname(comps) || is_file_scheme(status);
     }
@@ -36,7 +36,7 @@ namespace webpp::uri {
 
             // webpp_assume(ctx.pos < ctx.end);
 
-            set_warning(ctx.status, uri_status::has_credentials);
+            set_warning(ctx.status, uri_status::contains_credentials);
             auto const atsign_pos = ctx.pos;
 
             // append to the username and password
@@ -91,7 +91,7 @@ namespace webpp::uri {
             }
 
             webpp_assume(ctx.pos < ctx.end);
-            set_warning(ctx.status, uri_status::has_credentials);
+            set_warning(ctx.status, uri_status::contains_credentials);
 
             auto user_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, user_buffer, details::USER_INFO_ENCODE_SET);
@@ -121,7 +121,7 @@ namespace webpp::uri {
             }
 
             webpp_assume(ctx.pos < ctx.end);
-            set_warning(ctx.status, uri_status::has_credentials);
+            set_warning(ctx.status, uri_status::contains_credentials);
 
             auto pass_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, pass_buffer, USER_INFO_ENCODE_SET);

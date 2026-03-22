@@ -211,7 +211,8 @@ namespace webpp::uri::details {
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
-                if (Options.empty_host_is_error && (is_special || has_flags(ctx.status, has_credentials))) [[unlikely]]
+                if (Options.empty_host_is_error && (is_special || has_flags(ctx.status, contains_credentials)))
+                  [[unlikely]]
                 {
                     set(ctx.status, host_missing);
                     return;

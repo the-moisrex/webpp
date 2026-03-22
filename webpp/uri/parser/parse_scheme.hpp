@@ -406,7 +406,7 @@ namespace webpp::uri {
                 // If url includes credentials or has a non-null port, and buffer is "file", then return
                 // If url’s scheme is a special scheme and buffer is not a special scheme, then return.
                 if (Options.state_override &&
-                    (has_flags(ctx.status, has_credentials, has_non_null_port) || !is_special_scheme(ctx.status)))
+                    (has_flags(ctx.status, contains_credentials, has_non_null_port) || !is_special_scheme(ctx.status)))
                   [[unlikely]]
                 {
                     return;
