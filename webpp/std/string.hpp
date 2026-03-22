@@ -4,9 +4,9 @@
 #define WEBPP_STD_STRING_HPP
 
 #include "../common/meta.hpp"
+#include "../memory/allocators.hpp"
 #include "./string_concepts.hpp"
 #include "./type_traits.hpp"
-#include "memory/allocators.hpp"
 
 #include <string>
 
