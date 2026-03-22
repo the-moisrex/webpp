@@ -9,6 +9,7 @@
 #include "credentials.hpp"
 #include "fragment.hpp"
 #include "host.hpp"
+#include "parser/uri_components.hpp"
 #include "path.hpp"
 #include "port.hpp"
 #include "queries.hpp"
@@ -167,6 +168,11 @@ namespace webpp::uri {
             using context_type = uri_context<component_type, void>;
             static_assert(URIContext<context_type>, "Component types of output and base must match.");
 
+            clear_scheme();
+            clear_authority();
+            clear_port();
+            clear_path();
+            clear_fragment();
             auto ctx = create<context_type>(beg, end, stl::move(components));
             parse_uri<Options>(ctx);
             components = stl::move(ctx.out);
