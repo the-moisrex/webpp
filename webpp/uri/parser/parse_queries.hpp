@@ -80,6 +80,7 @@ namespace webpp::uri {
         }
         end_segment(ctx, buffer);
         set_queries(ctx.out, stl::move(buffer));
+        set_flag(ctx.status, has_non_null_queries);
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);

@@ -13,6 +13,7 @@
 #include "port.hpp"
 #include "queries.hpp"
 #include "scheme.hpp"
+#include "uri_status.hpp"
 
 namespace webpp::uri {
 
@@ -94,7 +95,7 @@ namespace webpp::uri {
         }
 
         render_path(uri::path(components), out);
-        render_queries(uri::queries(components), out, true);
+        render_queries(uri::queries(components), out, status, true);
         render_fragment(uri::fragment(components), out, true);
     }
 
@@ -156,7 +157,7 @@ namespace webpp::uri {
             ctx.status = +status | info_of(m_status);
             parse_uri<Options | state_override>(ctx);
             components = stl::move(ctx.out);
-            set_flags(m_status, flags_of(ctx.status));
+            reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
 
@@ -329,6 +330,7 @@ namespace webpp::uri {
 
         constexpr void clear_queries() noexcept(is_nothrow) {
             uri::clear_queries(components);
+            unset_flag(m_status, uri_status::has_non_null_queries);
         }
 
         constexpr void clear_fragment() noexcept(is_nothrow) {
@@ -541,7 +543,7 @@ namespace webpp::uri {
             parse_username<Options | state_override>(ctx);
 
             components = stl::move(ctx.out);
-            set_flags(m_status, flags_of(ctx.status));
+            reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
 
@@ -555,7 +557,7 @@ namespace webpp::uri {
             parse_password<Options | state_override>(ctx);
 
             components = stl::move(ctx.out);
-            set_flags(m_status, flags_of(ctx.status));
+            reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
 

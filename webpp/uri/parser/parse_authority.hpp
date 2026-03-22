@@ -109,6 +109,7 @@ namespace webpp::uri {
                         set(ctx.status, valid_queries);
                         ++ctx.pos;
                         clear_queries(ctx.out);
+                        unset_flag(ctx.status, has_non_null_queries);
                     } else {
                         set_warning(ctx.status, invalid_character);
                     }

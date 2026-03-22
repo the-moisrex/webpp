@@ -261,11 +261,12 @@ namespace webpp::uri {
         found_tabs_or_newlines          = error_bit | 28U, // only thrown on read-only APIs
 
         // Other flags (or states):
-        special_scheme     = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
-        file_scheme        = flags_bit >> 0U | flags_bit >> 1U, // file is also special
-        has_non_null_port  = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
-        has_non_empty_host = flags_bit >> 3U, // the URI has a non-empty host
-        opaque_path        = flags_bit >> 4U,
+        special_scheme       = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
+        file_scheme          = flags_bit >> 0U | flags_bit >> 1U, // file is also special
+        has_non_null_port    = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
+        has_non_empty_host   = flags_bit >> 3U, // the URI has a non-empty host
+        opaque_path          = flags_bit >> 4U,
+        has_non_null_queries = flags_bit >> 5U,
     };
 
     [[nodiscard]] static constexpr stl::underlying_type_t<uri_status> operator+(uri_status const status) noexcept {
@@ -480,6 +481,7 @@ namespace webpp::uri {
                   "are also considered null."};
             case has_non_empty_host: return {"The URI has a non-empty host."};
             case opaque_path: return {"The URI has opaque path."};
+            case has_non_null_queries: return {"The URI has non-null (but possibly empty) queries."};
 
             default: return {"Clean up the URI status first to get individual errors and warnings."};
         }
@@ -565,9 +567,11 @@ namespace webpp::uri {
 
     /// Set Valid or Set Error
     static constexpr void set(uri_status_type& status, uri_status const value) noexcept {
-        // Some algorithm has gone very wrong if we have two validation errors being set.
+        // Things have gone very wrong if we have two validation errors being set.
         // But it's okay if we keep changing the valid status.
         assert((status & error_bit) != error_bit);
+        assert((+value & values_mask) != 0); // use set_flags/warning if it's not a value
+
         status &= ~values_mask;
         status |= +value;
     }
@@ -587,7 +591,7 @@ namespace webpp::uri {
         status &= ~+flag;
     }
 
-    static constexpr void set_flags(uri_status_type& status, uri_status_type const value) noexcept {
+    static constexpr void reset_flags(uri_status_type& status, uri_status_type const value) noexcept {
         status &= ~flags_mask;
         status |= value & flags_mask;
     }

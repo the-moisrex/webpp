@@ -99,6 +99,9 @@ namespace webpp::uri {
                 set_path(ctx.out,
                          base_component_buffer(ctx, path(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
                 set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                if (!queries(ctx.out).empty()) {
+                    set_flag(ctx.status, has_non_null_queries);
+                }
             }
 
             if (ctx.pos == ctx.end) {
@@ -109,6 +112,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
+                    unset_flag(ctx.status, has_non_null_queries);
                     set(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
@@ -120,6 +124,7 @@ namespace webpp::uri {
                 default: break;
             }
             clear_queries(ctx.out);
+            unset_flag(ctx.status, has_non_null_queries);
             details::shorten_urls_path(ctx);
             set(ctx.status, valid_path);
         }
@@ -183,6 +188,9 @@ namespace webpp::uri {
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                     set_path(ctx.out, base_component_buffer(ctx, path(ctx.base))); // list clone
                     set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                    if (!queries(ctx.out).empty()) {
+                        set_flag(ctx.status, has_non_null_queries);
+                    }
 
                     // If c is U+003F (?), then set url’s query to the empty string and state to query state.
                     // Otherwise, if c is U+0023 (#), set url’s fragment to the empty string and state to fragment
@@ -190,6 +198,7 @@ namespace webpp::uri {
                     switch (*ctx.pos) {
                         case '?':
                             clear_queries(ctx.out);
+                            unset_flag(ctx.status, has_non_null_queries);
                             set(ctx.status, valid_queries);
                             ++ctx.pos;
                             return;
@@ -203,6 +212,7 @@ namespace webpp::uri {
 
                     // Otherwise, if c is not the EOF code point: Set url’s query to null.
                     clear_queries(ctx.out);
+                    unset_flag(ctx.status, has_non_null_queries);
 
                     // If the code point substring from pointer to the end of input does not start
                     // with a Windows drive letter, then shorten url’s path.
@@ -247,6 +257,9 @@ namespace webpp::uri {
                         set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
                         set_path(ctx.out, base_component_buffer(ctx, base_path));
                         set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                        if (!queries(ctx.out).empty()) {
+                            set_flag(ctx.status, has_non_null_queries);
+                        }
                         clear_fragment(ctx.out);
                         set(ctx.status, valid_fragment);
                         ++ctx.pos;

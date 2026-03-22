@@ -4,6 +4,7 @@
 #define WEBPP_URI_QUERIES_HPP
 
 #include "./parser/parse_queries.hpp"
+#include "uri_status.hpp"
 
 #include <array>
 
@@ -16,8 +17,9 @@ namespace webpp::uri {
     static constexpr void render_queries(
       stl::basic_string_view<CharT>                              storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      uri_status_type const                                      status,
       bool const                                                 add_separators = false) {
-        if (storage.empty()) {
+        if (!has_flags(status, uri_status::has_non_null_queries)) {
             return;
         }
         if (add_separators) {
@@ -33,9 +35,10 @@ namespace webpp::uri {
     static constexpr void render_queries(
       stl::span<KeyValT const>                                   storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      uri_status_type const                                      status,
       bool const                                                 add_separators = false) {
         // https://url.spec.whatwg.org/#url-serializing
-        if (storage.empty()) {
+        if (!has_flags(status, uri_status::has_non_null_queries)) {
             return;
         }
         if (add_separators) {

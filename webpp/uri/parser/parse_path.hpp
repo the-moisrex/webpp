@@ -277,6 +277,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     clear_queries(ctx.out);
+                    unset_flag(ctx.status, has_non_null_queries);
                     set(ctx.status, valid_queries);
                     break;
                 case '#':
