@@ -11,6 +11,8 @@
 
 #include <array>
 #include <compare>
+#include <concepts>
+#include <string_view>
 
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp {
@@ -61,6 +63,10 @@ namespace webpp {
         return 0U;
     }
 
+    constexpr ipv4_octet to_prefix(stl::string_view const str) noexcept {
+        return to_prefix<char>(str);
+    }
+
     /**
      * Convert a prefix to a subnet
      * @param prefix
@@ -90,7 +96,7 @@ namespace webpp {
     }
 
     template <bool WithPrefix = true>
-    struct basic_ipv4 {
+    struct [[nodiscard]] basic_ipv4 {
         using octets_t = ipv4_octets;
 
       private:
@@ -127,7 +133,7 @@ namespace webpp {
             return cur_prefix;
         }
 
-        static constexpr stl::uint32_t parse(ipv4_octets const ip_addr) noexcept {
+        [[nodiscard]] static constexpr stl::uint32_t parse(ipv4_octets const ip_addr) noexcept {
             return static_cast<stl::uint32_t>(ip_addr[0] << 24U) | static_cast<stl::uint32_t>(ip_addr[1] << 16U) |
                    static_cast<stl::uint32_t>(ip_addr[2] << 8U) | static_cast<stl::uint32_t>(ip_addr[3]);
         }
@@ -168,17 +174,19 @@ namespace webpp {
         // initialize with 0.0.0.0
         constexpr basic_ipv4() noexcept = default;
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename CharT>
         constexpr explicit basic_ipv4(stl::basic_string_view<CharT> const ip_addr) noexcept {
             parse(ip_addr);
         }
 
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+        // specialization to force ipv4::create("...") work
+        constexpr explicit basic_ipv4(stl::string_view const ip_addr) noexcept {
+            parse(ip_addr);
+        }
 
         template <stl::random_access_iterator IterT>
             requires(!istl::StringViewifiable<IterT>)
-        constexpr explicit basic_ipv4(IterT startp, IterT endp) noexcept { // todo: nothrow
+        constexpr explicit basic_ipv4(IterT startp, IterT endp) noexcept {
             parse(startp, endp);
         }
 

@@ -9,6 +9,7 @@
 #include "./inet_pton.hpp"
 
 #include <array>
+#include <type_traits>
 
 namespace webpp::is {
 
@@ -20,8 +21,10 @@ namespace webpp::is {
      */
     template <stl::integral Integer>
     [[nodiscard]] constexpr bool subnet_octet(Integer octet) noexcept {
-        webpp_static_constexpr auto mask = static_cast<Integer>(1) << ((sizeof(Integer) * 8) - 1);
-        while ((octet & mask) == mask) {
+        using uint_type = stl::make_unsigned_t<Integer>;
+        webpp_static_constexpr auto mask =
+          static_cast<uint_type>(static_cast<uint_type>(1) << ((sizeof(Integer) * CHAR_BIT) - 1));
+        while ((static_cast<uint_type>(octet) & mask) == mask) {
             octet <<= 1U;
         }
         return octet == 0U;
@@ -34,7 +37,7 @@ namespace webpp::is {
      * valid ipv4 subnet mask or not
      */
     template <typename CharT>
-    [[nodiscard]] constexpr bool subnet(stl::basic_string_view<CharT> const subnet) noexcept {
+    [[nodiscard]] constexpr bool subnet(stl::basic_string_view<CharT> subnet) noexcept {
         stl::size_t next_dot = 0;
         for (uint8_t octet_index = 0U; octet_index != 4U; octet_index++) {
             next_dot       = subnet.find('.');
@@ -79,6 +82,10 @@ namespace webpp::is {
         return inet_pton4(beg, str.end(), out.data()) == valid;
     }
 
+    [[nodiscard]] constexpr bool ipv4(stl::string_view const str) noexcept {
+        return ipv4<char>(str);
+    }
+
     /**
      * @brief this function template will check if the ipv4 with its prefix
      * is valid or not.
@@ -91,6 +98,10 @@ namespace webpp::is {
         stl::array<stl::uint8_t, ipv4_byte_count> bin; // NOLINT(*-member-init)
         auto                                      beg = str.begin();
         return is_valid(inet_pton4(beg, str.end(), bin.data(), prefix_val)) && prefix_val <= ipv4_max_prefix;
+    }
+
+    [[nodiscard]] constexpr bool ipv4_prefix(stl::string_view const str) noexcept {
+        return ipv4_prefix<char>(str);
     }
 
     /**
@@ -111,6 +122,10 @@ namespace webpp::is {
         auto                                      beg = ip_addr.begin();
         stl::array<stl::uint8_t, ipv6_byte_count> out;              // NOLINT(*-member-init)
         return inet_pton6(beg, ip_addr.end(), out.data()) == valid; // valid_special is not valid here
+    }
+
+    [[nodiscard]] constexpr bool ipv6(stl::string_view const ip_addr) noexcept {
+        return ipv6<char>(ip_addr);
     }
 
     template <typename CharT>

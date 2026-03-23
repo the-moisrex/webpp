@@ -5,6 +5,8 @@
 
 #include "./test.hpp"
 
+#include <functional>
+
 template <typename T>
 void fuzz_passer(T&& fuzzer, uint8_t const* data, size_t const size) {
     using std::invocable;

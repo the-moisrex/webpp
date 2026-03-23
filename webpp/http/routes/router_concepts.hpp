@@ -18,9 +18,7 @@ namespace webpp::http {
         requires EnabledTraits<typename stl::remove_cvref_t<T>>;
         requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
         requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
-        {
-            c.request
-        } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
+        { c.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
     };
 
 
@@ -44,25 +42,15 @@ namespace webpp::http {
     template <typename T, typename C>
     concept PotentialRoute = requires(T route, C& ctx, typename C::request_type const& req) {
         requires requires {
-            {
-                route()
-            };
+            { route() };
         } || requires {
-            {
-                route(ctx)
-            };
+            { route(ctx) };
         } || requires {
-            {
-                route(req)
-            };
+            { route(req) };
         } || requires {
-            {
-                route(ctx, req)
-            };
+            { route(ctx, req) };
         } || requires {
-            {
-                route(req, ctx)
-            };
+            { route(req, ctx) };
         };
     };
 

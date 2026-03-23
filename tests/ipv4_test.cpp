@@ -17,6 +17,7 @@ TEST(IPv4Tests, ConstEvalCraetion) {
 }
 
 TEST(IPv4Tests, FreeFunctions) {
+    EXPECT_EQ(to_prefix(stl::string_view{"255.255.255.0"}), 24);
     EXPECT_EQ(to_prefix("255.255.255.0"), 24);
     EXPECT_EQ(to_prefix("255.255.255.128"), 25);
     EXPECT_EQ(to_prefix("0.255.255.128"), 0);
@@ -188,9 +189,10 @@ TEST(IPv4Tests, InetP2NValidation) {
 }
 
 TEST(IPv4Tests, ErrorMessages) {
+    using namespace stl::string_view_literals;
     EXPECT_EQ(to_string(inet_pton4_status::invalid_character), (ipv4{"1.1.a.1"}.status_string()));
     EXPECT_EQ(to_string(inet_pton4_status::valid), (ipv4{"1.1.1.1"}.status_string()));
-    EXPECT_EQ(to_string(inet_pton4_status::invalid_prefix), (ipv4{"1.1.1.1", "-1.255.1.3"}.status_string()));
+    EXPECT_EQ(to_string(inet_pton4_status::invalid_prefix), (ipv4{"1.1.1.1"sv, "-1.255.1.3"sv}.status_string()));
 }
 
 TEST(IPv4Tests, StartsWith) {
