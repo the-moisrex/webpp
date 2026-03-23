@@ -7,6 +7,7 @@
 #include "../std/string_view.hpp"
 #include "../strings/size.hpp"
 
+#include <climits>
 #include <cstdint>
 
 namespace webpp::http {
@@ -14,16 +15,15 @@ namespace webpp::http {
     // Wrapper for an HTTP (major,minor) version pair.
     struct [[nodiscard]] version {
       private:
-        static constexpr auto uint_16_bits     = sizeof(stl::uint16_t) * 8u;
+        static constexpr auto uint_16_bits     = sizeof(stl::uint16_t) * CHAR_BIT;
         static constexpr auto minor_value_mask = 0xFFFFU;
 
         // parse version from string
-        template <typename CharT>
-        constexpr stl::uint32_t parse_string(stl::basic_string_view<CharT> const str) noexcept {
+        [[nodiscard]] static constexpr stl::uint32_t parse_string(stl::string_view const str) noexcept {
             auto dot   = str.find('.');
             auto major = to_uint16(str.substr(0, dot));
             auto minor = to_uint16(str.substr(dot + 1, str.size()));
-            return static_cast<stl::uint32_t>(major << uint_16_bits | minor);
+            return static_cast<stl::uint32_t>(static_cast<stl::uint32_t>(major << uint_16_bits) | minor);
         }
 
 
@@ -31,9 +31,7 @@ namespace webpp::http {
         // Default constructor (major=0, minor=0).
         constexpr version() noexcept = default;
 
-        template <typename CharT>
-        explicit(false) constexpr version(stl::basic_string_view<CharT> const str) noexcept
-          : value(parse_string(str)) {}
+        explicit constexpr version(stl::string_view const str) noexcept : value(parse_string(str)) {}
 
         constexpr version(version const&) noexcept            = default;
         constexpr version(version&&) noexcept                 = default;
@@ -44,7 +42,7 @@ namespace webpp::http {
 
         // Build from unsigned major/minor pair.
         constexpr version(stl::uint16_t const major, stl::uint16_t const minor) noexcept
-          : value(static_cast<stl::uint32_t>(major << uint_16_bits | minor)) {}
+          : value(static_cast<stl::uint32_t>(static_cast<stl::uint32_t>(major << uint_16_bits) | minor)) {}
 
         // Major version number.
         [[nodiscard]] constexpr stl::uint16_t major_value() const noexcept {
@@ -92,28 +90,28 @@ namespace webpp::http {
 
         // Overloaded operators:
 
-        [[nodiscard]] constexpr bool operator==(version const& v) const noexcept {
-            return value == v.value;
+        [[nodiscard]] constexpr bool operator==(version const& other) const noexcept {
+            return value == other.value;
         }
 
-        [[nodiscard]] constexpr bool operator!=(version const& v) const noexcept {
-            return value != v.value;
+        [[nodiscard]] constexpr bool operator!=(version const& other) const noexcept {
+            return value != other.value;
         }
 
-        [[nodiscard]] constexpr bool operator>(version const& v) const noexcept {
-            return value > v.value;
+        [[nodiscard]] constexpr bool operator>(version const& other) const noexcept {
+            return value > other.value;
         }
 
-        [[nodiscard]] constexpr bool operator>=(version const& v) const noexcept {
-            return value >= v.value;
+        [[nodiscard]] constexpr bool operator>=(version const& other) const noexcept {
+            return value >= other.value;
         }
 
-        [[nodiscard]] constexpr bool operator<(version const& v) const noexcept {
-            return value < v.value;
+        [[nodiscard]] constexpr bool operator<(version const& other) const noexcept {
+            return value < other.value;
         }
 
-        [[nodiscard]] constexpr bool operator<=(version const& v) const noexcept {
-            return value <= v.value;
+        [[nodiscard]] constexpr bool operator<=(version const& other) const noexcept {
+            return value <= other.value;
         }
 
         // todo: use <=> operator

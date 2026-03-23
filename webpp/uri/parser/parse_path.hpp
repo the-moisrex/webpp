@@ -186,8 +186,8 @@ namespace webpp::uri {
             using stl::begin;
             using stl::end;
 
-            using buffer_type                      = stl::remove_cvref_t<decltype(buffer)>;
-            static constexpr bool is_string_buffer = istl::String<buffer_type>;
+            using buffer_type                            = stl::remove_cvref_t<decltype(buffer)>;
+            webpp_static_constexpr bool is_string_buffer = istl::String<buffer_type>;
 
             auto segment_begin = begin(buffer);
             if constexpr (is_string_buffer) {
