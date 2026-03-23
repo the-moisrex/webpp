@@ -137,6 +137,12 @@ namespace webpp::ascii {
         stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> str = stl::move(_str);                          \
         method(str);                                                                                              \
         return str;                                                                                               \
+    }                                                                                                             \
+                                                                                                                  \
+    [[nodiscard]] static constexpr_state auto method##_copy(stl::string _str) noexcept {                          \
+        stl::string str = stl::move(_str);                                                                        \
+        method(str);                                                                                              \
+        return str;                                                                                               \
     }
 
 

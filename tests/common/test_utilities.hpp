@@ -337,7 +337,7 @@ namespace testing {
            }
         };
 
-        auto   value = static_cast<double>(dur.count());
+        auto        value = static_cast<double>(dur.count());
         Unit const* unit  = &units.front();
 
         for (auto const& cur_unit : units) {
@@ -778,7 +778,7 @@ namespace testing {
             // 3) string-like (std::string, std::string_view, C-style char const*)
             std::ostringstream oss;
             oss << '"';
-            for (auto const uch : value) {
+            for (auto const uch : std::string_view{value}) {
                 if (std::isprint(uch)) {
                     oss << static_cast<char>(uch);
                 } else {
