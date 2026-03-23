@@ -30,6 +30,9 @@ namespace webpp::uri {
         }
     };
 
+    template <typename CharT>
+    basic_domain(CharT const*) -> basic_domain<CharT>;
+
 } // namespace webpp::uri
 
 #endif // WEBPP_URI_DOMAIN_HPP

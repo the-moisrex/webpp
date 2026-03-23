@@ -4,17 +4,16 @@
 #define WEBPP_URI_HPP
 
 #include "../std/string_view.hpp"
-#include "../strings/to_case.hpp"
+#include "./credentials.hpp"
+#include "./fragment.hpp"
+#include "./host.hpp"
 #include "./parser/parse_uri.hpp"
-#include "credentials.hpp"
-#include "fragment.hpp"
-#include "host.hpp"
-#include "parser/uri_components.hpp"
-#include "path.hpp"
-#include "port.hpp"
-#include "queries.hpp"
-#include "scheme.hpp"
-#include "uri_status.hpp"
+#include "./parser/uri_components.hpp"
+#include "./path.hpp"
+#include "./port.hpp"
+#include "./queries.hpp"
+#include "./scheme.hpp"
+#include "./uri_status.hpp"
 
 namespace webpp::uri {
 

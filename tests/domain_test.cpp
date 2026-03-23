@@ -269,7 +269,7 @@ TEST(DomainsTest, SubDomainTooLongError) {
 }
 
 TEST(DomainsTest, DomainTooLongError) {
-    std::string str = "";
+    std::string str;
     for (int i = 0; i <= 255 / 2; ++i) {
         str += 'd';
         str += '.';

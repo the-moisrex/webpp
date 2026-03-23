@@ -1895,3 +1895,34 @@ TYPED_TEST(URITests, ResolvingAFragmentAgainstAnySchemeSucceeds5) {
     EXPECT_EQ(uri::fragment(ctx.out), "x:y") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(about:blank#x:y)URL") << details;
 }
+
+// 708 - Tests for the distinct percent-encode sets (2)
+TYPED_TEST(URITests, TestsForTheDistinctPercentEncodeSets2) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "wss:// !\"$%&'()*+,-.;<=>@[]^_`{|}~@host/",
+    "base": null,
+    "hash": "",
+    "host": "host",
+    "hostname": "host",
+    "href": "wss://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~@host/",
+    "origin": "wss://host",
+    "password": "",
+    "pathname": "/",
+    "port": "",
+    "protocol": "wss:",
+    "search": "",
+    "username": "%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~"
+})JSON-URL";
+    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(wss:// !"$%&'()*+,-.;<=>@[]^_`{|}~@host/)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "wss") << details;
+    EXPECT_EQ(uri::username(ctx.out), "%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "host") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::path(ctx.out), "/") << details;
+    EXPECT_EQ(uri::queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(wss://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~@host/)URL")
+      << details;
+}

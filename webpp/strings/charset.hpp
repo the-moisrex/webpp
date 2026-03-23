@@ -610,6 +610,10 @@ namespace webpp {
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
     charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
 
+    template <typename CharT, stl::size_t N1, stl::size_t N2, stl::size_t... N>
+    charmap(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
+      -> charmap<stl::max({N1, N2, N...})>;
+
 
     // Half Table (excluding negative chars)
     using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>;

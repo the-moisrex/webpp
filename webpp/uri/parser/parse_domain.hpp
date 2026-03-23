@@ -83,9 +83,13 @@ namespace webpp::uri {
             default: break;
         }
 
-        constexpr auto nonascii = charmap{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}};
-        bool           has_punycode    = false;
-        auto           subdomain_start = pos;
+        webpp_static_constexpr auto nonascii =
+          charmap{charmap_range<'a', 'z'>(),
+                  charmap_range<'A', 'Z'>(),
+                  charmap_range<'0', '9'>(),
+                  charmap_range<'-', '-'>()};
+        bool has_punycode    = false;
+        auto subdomain_start = pos;
         while (pos != end) {
             if (*pos == static_cast<char_type>('x') && end - pos > 4 && *++pos == static_cast<char_type>('n') &&
                 *++pos == static_cast<char_type>('-') && *++pos == static_cast<char_type>('-'))
