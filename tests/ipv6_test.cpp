@@ -314,7 +314,7 @@ TEST(IPv6Tests, ShortStrEquality) {
         auto const ip6 = ipv6{_ip};
         ::inet_pton(AF_INET6, _ip.data(), ip_bin.data());
         ::inet_ntop(AF_INET6, ip_bin.data(), ip_str.data(), ip_str.size());
-        EXPECT_STREQ(ip_str.data(), ip6.ip_string().c_str()) << _ip;
+        EXPECT_TRUE(std::strcmp(ip_str.data(), ip6.ip_string().c_str()) == 0) << _ip;
     }
 }
 #endif

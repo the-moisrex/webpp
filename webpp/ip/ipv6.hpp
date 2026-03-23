@@ -179,6 +179,10 @@ namespace webpp {
             }
         }
 
+        constexpr void parse(stl::string_view const ipv6_data) noexcept {
+            parse<char>(ipv6_data);
+        }
+
       public:
         static consteval basic_ipv6 invalid() noexcept {
             return basic_ipv6{prefix_status(inet_pton6_status::invalid_prefix)};

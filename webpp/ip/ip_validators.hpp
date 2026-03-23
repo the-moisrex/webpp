@@ -137,6 +137,10 @@ namespace webpp::is {
         return is_valid(inet_pton6(beg, ip_addr.end(), bin.data(), prefix_val, '/')) && prefix_val <= ipv6_max_prefix;
     }
 
+    [[nodiscard]] constexpr bool ipv6_prefix(stl::string_view const ip_addr) noexcept {
+        return ipv6_prefix<char>(ip_addr);
+    }
+
     /**
      * @brief check if the specified string is an ipv4 or ipv6
      * @param ip_str
@@ -148,6 +152,9 @@ namespace webpp::is {
         return is::ipv4(ip_str) || ipv6(ip_str);
     }
 
+    [[nodiscard]] constexpr bool ip(stl::string_view const ip_addr) noexcept {
+        return ip<char>(ip_addr);
+    }
 
 } // namespace webpp::is
 
