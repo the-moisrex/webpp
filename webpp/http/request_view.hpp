@@ -3,19 +3,19 @@
 #ifndef WEBPP_REQUEST_VIEW_HPP
 #define WEBPP_REQUEST_VIEW_HPP
 
-#include "../std/span.hpp"
-#include "../traits/default_traits.hpp"
 #include "header_fields.hpp"
 #include "http_concepts.hpp"
 #include "http_version.hpp"
 #include "request_headers.hpp"
 
+#include <span>
+#include <string>
 #include <variant>
 
 namespace webpp::http {
 
 
-    template <Traits = default_dynamic_traits>
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
     struct basic_request_view;
 
     namespace details {
@@ -56,16 +56,15 @@ namespace webpp::http {
         /**
          * This request type can hold other HTTP request types.
          */
-        template <typename TraitsType>
+        template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
         struct request_view_interface {
-            using traits_type      = TraitsType;
-            using string_view_type = traits::string_view<traits_type>;
-            using string_type      = traits::string<traits_type>;
+            using string_view_type = stl::basic_string_view<CharT>;
+            using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
 
           protected:
-            template <typename StrT, EnabledTraits ET>
-            inline string_type stringify(StrT&& str, ET&& et) const {
-                return istl::stringify_of<string_type>(str, get_alloc_for<string_type>(et));
+            template <typename StrT>
+            [[nodiscard]] string_type stringify(StrT&& str) const {
+                return istl::stringify_of<string_type>(str, alloc);
             }
 
             [[nodiscard]] virtual string_type   get_uri() const              = 0;
@@ -73,7 +72,7 @@ namespace webpp::http {
             [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-            friend struct basic_request_view<traits_type>;
+            friend struct basic_request_view<CharT, AllocT>;
 
           public:
             constexpr request_view_interface() noexcept                               = default;
@@ -87,20 +86,19 @@ namespace webpp::http {
         /**
          * An HTTPRequest that meets the requirements of a "request view".
          */
-        template <typename TraitsType, typename T>
+        template <typename CharT, typename AllocT, typename T>
         concept HTTPRequestViewifiable =
-          stl::is_base_of_v<request_view_interface<TraitsType>, stl::remove_cvref_t<T>> && HTTPRequest<T>;
+          stl::is_base_of_v<request_view_interface<CharT, AllocT>, stl::remove_cvref_t<T>> && HTTPRequest<T>;
 
         /**
          * Will provide a std::span of the provided parent request header type;
          * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
          * they have to make sure this dynamic provider works for their provider as well.
          */
-        template <Traits TraitsType>
+        template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
         struct dynamic_header_fields_provider {
-            using traits_type      = TraitsType;
-            using string_view_type = traits::string_view<traits_type>;
-            using field_type       = header_field_of<traits_type>;
+            using string_view_type = stl::basic_string_view<CharT>;
+            using field_type       = header_field_of<CharT, AllocT>;
             using name_type        = typename field_type::string_type;
             using value_type       = typename field_type::string_type;
             using fields_type      = stl::span<stl::add_const_t<field_type>>;
@@ -117,7 +115,7 @@ namespace webpp::http {
             constexpr dynamic_header_fields_provider& operator=(dynamic_header_fields_provider&&) noexcept = default;
 
             template <typename ReqType>
-                requires(HTTPRequestViewifiable<traits_type, ReqType>)
+                requires(HTTPRequestViewifiable<CharT, AllocT, ReqType>)
             explicit constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
               : dynamic_header_fields_provider{inp_req.headers.as_view()} {}
 
@@ -141,16 +139,16 @@ namespace webpp::http {
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
-    template <Traits TraitsType>
+    template <istl::CharType CharT, Allocator AllocT>
     struct basic_request_view {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::string<traits_type>;
-        using fields_provider  = details::dynamic_header_fields_provider<traits_type>;
+        using char_type        = CharT;
+        using string_view_type = stl::basic_string_view<CharT>;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using fields_provider  = details::dynamic_header_fields_provider<CharT, AllocT>;
         using headers_type     = request_headers<fields_provider>;
 
       private:
-        using interface_ptr = details::request_view_interface<traits_type> const*;
+        using interface_ptr = details::request_view_interface<CharT, AllocT> const*;
         interface_ptr req   = nullptr;
 
       public:
@@ -161,13 +159,13 @@ namespace webpp::http {
 
         // An HTTP Request is passed down
         template <typename ReqType>
-            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
+            requires(details::HTTPRequestViewifiable<CharT, AllocT, ReqType>)
         explicit constexpr basic_request_view(ReqType const& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
         template <typename ReqType>
-            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
+            requires(details::HTTPRequestViewifiable<CharT, AllocT, ReqType>)
         explicit constexpr basic_request_view(ReqType& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
@@ -180,7 +178,7 @@ namespace webpp::http {
 
         // An HTTP Request is passed down
         template <typename ReqType>
-            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
+            requires(details::HTTPRequestViewifiable<CharT, AllocT, ReqType>)
         constexpr basic_request_view& operator=(ReqType const& inp_req) noexcept {
             req     = static_cast<interface_ptr>(&inp_req);
             headers = inp_req.headers.as_view();
@@ -206,7 +204,7 @@ namespace webpp::http {
         }
     };
 
-    using request_view = basic_request_view<>;
+    using request_view = basic_request_view<char>;
 
 } // namespace webpp::http
 

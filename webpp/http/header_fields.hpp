@@ -108,11 +108,11 @@ namespace webpp::http {
     using header_field_view = basic_header_field<StringType>;
 
 
-    template <Traits TraitsType>
-    using header_field_view_of = basic_header_field<traits::string_view<TraitsType>>;
+    template <istl::CharType CharT>
+    using header_field_view_of = basic_header_field<stl::basic_string_view<CharT>>;
 
-    template <Traits TraitsType>
-    using header_field_of = basic_header_field<traits::string<TraitsType>>;
+    template <istl::CharType CharT, Allocator AllocT>
+    using header_field_of = basic_header_field<stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>>;
 
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
