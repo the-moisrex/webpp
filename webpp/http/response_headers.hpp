@@ -4,12 +4,11 @@
 #define WEBPP_RESPONSE_HEADERS_HPP
 
 #include "../std/format.hpp"
-#include "../traits/traits.hpp"
 #include "header_fields.hpp"
 #include "headers.hpp"
 #include "status_code.hpp"
 
-#include <vector>
+#include <type_traits>
 
 namespace webpp::http {
 
@@ -35,23 +34,11 @@ namespace webpp::http {
             requires(stl::is_constructible_v<container, Args...>)
         explicit constexpr response_headers(Args&&... args) noexcept : container{stl::forward<Args>(args)...} {}
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-
-        template <EnabledTraits ET>
-            requires(stl::is_constructible_v<container, ET>)
-        explicit constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok)
-          noexcept(stl::is_nothrow_constructible_v<container, ET>)
-          : container{et},
-            m_status_code{static_cast<http::status_code_type>(code)} {}
-
-        template <EnabledTraits ET>
-            requires(!stl::is_constructible_v<container, ET> && stl::is_default_constructible_v<container>)
-        explicit constexpr response_headers(ET&&, http::status_code code = http::status_code::ok)
+        explicit constexpr response_headers(http::status_code code = http::status_code::ok)
           noexcept(stl::is_nothrow_default_constructible_v<container>)
           : container{},
             m_status_code{static_cast<http::status_code_type>(code)} {}
 
-        // NOLINTEND(bugprone-forwarding-reference-overload)
 
       private:
         http::status_code_type m_status_code = static_cast<http::status_code_type>(http::status_code::ok);

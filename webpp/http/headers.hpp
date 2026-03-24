@@ -5,6 +5,7 @@
 
 #include "../convert/lexical_cast.hpp"
 #include "../std/tuple.hpp"
+#include "./http_concepts.hpp"
 
 #include <algorithm>
 
@@ -99,10 +100,6 @@ namespace webpp::http {
         template <HTTPHeadersHolder H>
         explicit constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
           : Container{holder.headers} {}
-
-        template <EnabledTraits ET>
-            requires(!HTTPHeadersHolder<ET>)
-        explicit constexpr headers_container(ET&& et) noexcept : Container{stl::forward<ET>(et)} {}
 
         constexpr headers_container(headers_container const&)                = default;
         constexpr headers_container(headers_container&&) noexcept            = default;
