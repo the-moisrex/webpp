@@ -62,6 +62,3 @@ Protocols are the way the HTTP is transported to the user of the app.
 
 Dynamic routing system is a runtime initialized dynamic router and lets you
 use it without caring much about its type.
-
-### Request View
-

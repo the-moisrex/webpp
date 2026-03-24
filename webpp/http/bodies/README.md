@@ -140,7 +140,7 @@ CustomBodyType tag_invoke(
         HTTPBody auto const& body);                 // The request body (not the request itself)
 ```
 
-if you specify the `HTTPResponse`, then you'll get a response, if you specify
+if you specify the `HTTPRequest`, then you'll get a response, if you specify
 that you want a body, you'll get a body.
 
 

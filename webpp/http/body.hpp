@@ -7,11 +7,11 @@
 #include "../std/concepts.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
-#include "../traits/traits.hpp"
 #include "./bodies/string.hpp"
 #include "./http_concepts.hpp"
 
 #include <exception>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -23,39 +23,37 @@ namespace webpp::http {
         using stl::invalid_argument::invalid_argument;
     };
 
-    template <Traits TraitsType>
-    struct callback_response_body_communicator {
-        using traits_type = TraitsType;
-        using char_type   = traits::char_type<traits_type>;
-        // using function_type = istl::function<void()>; // Oops; no concepts allowed!
+    // template <Traits TraitsType>
+    // struct callback_response_body_communicator {
+    //     using traits_type = TraitsType;
+    //     using char_type   = traits::char_type<traits_type>;
+    //     // using function_type = istl::function<void()>; // Oops; no concepts allowed!
 
-        // todo
-      private:
-      public:
-    };
+    //     // todo
+    //   private:
+    //   public:
+    // };
 
-    template <Traits TraitsType>
-    using string_response_body_communicator = traits::string<TraitsType>;
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    using string_response_body_communicator = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
 
-    template <Traits TraitsType>
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
     using stream_response_body_communicator =
-      stl::shared_ptr<stl::basic_stringstream<traits::char_type<TraitsType>,
-                                              stl::char_traits<traits::char_type<TraitsType>>,
-                                              traits::allocator_type_of<TraitsType, traits::char_type<TraitsType>>>>;
+      stl::shared_ptr<stl::basic_stringstream<CharT, stl::char_traits<CharT>, AllocT>>;
 
     /**
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
      * used to get a better performance)
      */
-    template <Traits TraitsType>
-    struct cstream_response_body_communicator : istl::vector<stl::byte, TraitsType> {
-        using traits_type     = TraitsType;
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    struct cstream_response_body_communicator : stl::vector<stl::byte, AllocT> {
         using byte_type       = stl::byte;
-        using vector_type     = istl::vector<stl::byte, traits_type>;
+        using allocator_type  = AllocT;
+        using vector_type     = stl::vector<stl::byte, AllocT>;
         using iterator        = typename vector_type::iterator;
         using difference_type = stl::iter_difference_t<iterator>;
 
-        using istl::vector<stl::byte, TraitsType>::vector; // ctors
+        using stl::vector<stl::byte, AllocT>::vector; // ctors
 
 
       private:
@@ -63,8 +61,7 @@ namespace webpp::http {
 
       public:
         [[nodiscard]] constexpr stl::streamsize write(byte_type const* data, stl::streamsize const count) {
-            this->insert(this->begin(), data,
-                         data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            this->insert(this->begin(), data, data + count); // NOLINT(*-bounds-pointer-arithmetic)
             return count;
         }
 
@@ -104,15 +101,14 @@ namespace webpp::http {
     /**
      * This is the dynamic parent for body readers and body writers.
      */
-    template <Traits TraitsType>
-    struct body_communicator : enable_traits<TraitsType> {
-        using traits_type               = TraitsType;
-        using etraits_type              = enable_traits<traits_type>;
-        using char_type                 = traits::char_type<traits_type>;
-        using string_communicator_type  = string_response_body_communicator<traits_type>;
-        using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
-        using stream_communicator_type  = stream_response_body_communicator<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    struct body_communicator {
+        using char_type                 = CharT;
+        using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
+        using string_type               = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
 
         using byte_type  = stl::byte;                                     // required by CStreamBasedBodyWriter
         using value_type = typename string_communicator_type::value_type; // required by the
@@ -140,73 +136,38 @@ namespace webpp::http {
         communicator_storage_type communicator_var{stl::monostate{}};
 
       public:
-        using enable_traits<TraitsType>::enable_traits;
-
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <EnabledTraits ET>
-            requires(!istl::cvref_as<ET, body_communicator>)
-        explicit constexpr body_communicator(ET&& etraits) : enable_traits<TraitsType>(stl::forward<ET>(etraits)) {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
-
-        template <EnabledTraits ET, typename ComT>
+        template <typename ComT>
             requires(istl::part_of<stl::remove_cvref_t<ComT>,
                                    string_communicator_type,
                                    stream_communicator_type,
                                    cstream_communicator_type>)
-        explicit constexpr body_communicator(ET&& etraits, ComT&& inp_communicator)
-          : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{stl::forward<ComT>(inp_communicator)} {}
+        explicit constexpr body_communicator(ComT&& inp_communicator)
+          : communicator_var{stl::forward<ComT>(inp_communicator)} {}
 
         template <typename ComT>
-            requires(EnabledTraits<ComT> &&
-                     istl::part_of<stl::remove_cvref_t<ComT>,
+            requires(istl::part_of<stl::remove_cvref_t<ComT>,
                                    string_communicator_type,
                                    stream_communicator_type,
                                    cstream_communicator_type> &&
                      !istl::cvref_as<ComT, body_communicator>)
         explicit constexpr body_communicator(ComT&& inp_communicator)
-          : etraits_type{inp_communicator},
-            communicator_var{stl::forward<ComT>(inp_communicator)} {}
+          : communicator_var{stl::forward<ComT>(inp_communicator)} {}
 
         template <typename ComT>
-            requires(EnabledTraits<ComT> && requires(ComT com) { com.as_string_communicator(); })
+            requires(requires(ComT com) { com.as_string_communicator(); })
         explicit constexpr body_communicator(ComT&& inp_communicator)
-          : etraits_type{inp_communicator},
-            communicator_var{stl::forward<ComT>(inp_communicator).as_string_communicator()} {}
+          : communicator_var{stl::forward<ComT>(inp_communicator).as_string_communicator()} {}
 
         template <TextBasedBodyReader ComT>
-            requires(EnabledTraits<ComT>)
-        explicit constexpr body_communicator(ComT& body)
-          : etraits_type{body},
-            communicator_var{string_communicator_type{body}} {}
+        explicit constexpr body_communicator(ComT& body) : communicator_var{string_communicator_type{body}} {}
 
         template <CStreamBasedBodyReader ComT>
-            requires(EnabledTraits<ComT>)
         explicit constexpr body_communicator(ComT& body)
-          : etraits_type{body},
-            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
+          : communicator_var{string_communicator_type{details::get_as<string_type>(body)}} {}
 
         template <StreamBasedBodyReader ComT>
-            requires(EnabledTraits<ComT>)
         explicit constexpr body_communicator(ComT& body)
-          : etraits_type{body},
-            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
-
-        template <EnabledTraits ET, TextBasedBodyReader ComT>
-        constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{string_communicator_type{body}} {}
-
-        template <EnabledTraits ET, CStreamBasedBodyReader ComT>
-        constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
-
-        template <EnabledTraits ET, StreamBasedBodyReader ComT>
-        constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
+          : communicator_var{string_communicator_type{details::get_as<string_type>(body)}} {}
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
@@ -228,30 +189,25 @@ namespace webpp::http {
         }
     };
 
-    template <Traits TraitsType>
-    struct body_reader : body_communicator<TraitsType> {
-        using traits_type               = TraitsType;
-        using char_type                 = traits::char_type<traits_type>;
-        using string_communicator_type  = string_response_body_communicator<traits_type>;
-        using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
-        using stream_communicator_type  = stream_response_body_communicator<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    struct body_reader : body_communicator<CharT, AllocT> {
+        using char_type                 = CharT;
+        using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
-
-        using stream_char_type  = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
-        using string_char_type  = typename string_communicator_type::value_type;
-        using cstream_byte_type = typename cstream_communicator_type::byte_type;
-
-        using byte_type = stl::byte; // required by CStreamBasedBodyReader
+        using string_type               = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using cstream_byte_type         = typename cstream_communicator_type::byte_type;
+        using byte_type                 = stl::byte; // required by CStreamBasedBodyReader
 
         static constexpr auto log_cat = "BodyReader";
 
-        using body_communicator<TraitsType>::body_communicator;
+        using body_communicator<CharT, AllocT>::body_communicator;
 
         constexpr body_reader(body_reader const& other)
-          : body_communicator<TraitsType>{other.get_traits(), other.as_string_communicator()} {}
+          : body_communicator<CharT, AllocT>{other.as_string_communicator()} {}
 
         template <HTTPBodyHolder H>
-            requires(EnabledTraits<H>)
         explicit constexpr body_reader(H& holder) : body_reader{holder.body} {}
 
         constexpr body_reader(body_reader&&) noexcept = default;
@@ -327,11 +283,11 @@ namespace webpp::http {
             if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
                 // this->logger.warning(log_cat, "Stream to CStream Cross-Talk is discouraged.");
                 // todo: this is kinda implementation defined, it may falsely return 0
-                return (*stream_reader)->readsome(reinterpret_cast<stream_char_type*>(data), count);
+                return (*stream_reader)->readsome(reinterpret_cast<char_type*>(data), count);
             }
             if (auto* string_reader = stl::get_if<string_communicator_type>(&this->communicator())) {
                 // this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
-                auto* begin = reinterpret_cast<string_char_type*>(data);
+                auto* begin = reinterpret_cast<char_type*>(data);
                 stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
                 return 0; // return 0 to skip the loop
             }
@@ -352,7 +308,7 @@ namespace webpp::http {
               "calls. Cross-Talks are discouraged.)");
         }
 
-        constexpr stl::streamsize readsome(stream_char_type* data, stl::streamsize count) {
+        constexpr stl::streamsize readsome(char_type* data, stl::streamsize count) {
             if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
                 return (*stream_reader)->readsome(data, count);
             }
@@ -447,12 +403,12 @@ namespace webpp::http {
             return as_string();
         }
 
-        [[nodiscard]] constexpr traits::string<traits_type> as_string() const {
-            return as<traits::string<traits_type>>();
+        [[nodiscard]] constexpr string_type as_string() const {
+            return as<string_type>();
         }
 
-        [[nodiscard]] constexpr traits::string<traits_type> as_string() {
-            return as<traits::string<traits_type>>();
+        [[nodiscard]] constexpr string_type as_string() {
+            return as<string_type>();
         }
 
         [[nodiscard]] constexpr bool operator==(body_reader const& body) const noexcept {
@@ -483,26 +439,20 @@ namespace webpp::http {
         }
     };
 
-    template <Traits TraitsType>
-    struct body_writer : body_reader<TraitsType> {
-        using traits_type               = TraitsType;
-        using char_type                 = traits::char_type<traits_type>;
-        using string_communicator_type  = string_response_body_communicator<traits_type>;
-        using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
-        using stream_communicator_type  = stream_response_body_communicator<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    struct body_writer : body_reader<CharT, AllocT> {
+        using char_type                 = CharT;
+        using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
-
-        using stream_char_type  = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
-        using string_char_type  = typename string_communicator_type::value_type;
-        using cstream_byte_type = typename cstream_communicator_type::byte_type;
-
-        using byte_type  = stl::byte;                                     // required by CStreamBasedBodyWriter
-        using value_type = typename string_communicator_type::value_type; // required by the
-                                                                          // TextBasedBodyWriter
+        using byte_type                 = stl::byte; // required by CStreamBasedBodyWriter
+        using value_type                = typename string_communicator_type::value_type; // required by the
+                                                                                         // TextBasedBodyWriter
 
         static constexpr auto log_cat = "BodyWriter";
 
-        using body_reader<TraitsType>::body_reader;
+        using body_reader<CharT, AllocT>::body_reader;
         constexpr body_writer(body_writer const&)                = default;
         constexpr body_writer(body_writer&&) noexcept            = default;
         constexpr body_writer& operator=(body_writer const&)     = default;
@@ -516,7 +466,7 @@ namespace webpp::http {
             } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
                 (*stream_writer)->write(data, static_cast<stl::streamsize>(count));
             } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&this->communicator())) {
-                auto*           byte_data = reinterpret_cast<cstream_byte_type const*>(data);
+                auto*           byte_data = reinterpret_cast<byte_type const*>(data);
                 auto            size      = static_cast<stl::streamsize>(count);
                 stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
                 for (;;) {
@@ -562,11 +512,11 @@ namespace webpp::http {
                 return writer->write(data, count);
             }
             if (auto* string_writer = stl::get_if<string_communicator_type>(&this->communicator())) {
-                string_writer->append(reinterpret_cast<string_char_type const*>(data), static_cast<stl::size_t>(count));
+                string_writer->append(reinterpret_cast<char_type const*>(data), static_cast<stl::size_t>(count));
                 return count;
             }
             if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_writer)->write(reinterpret_cast<stream_char_type const*>(data), count);
+                (*stream_writer)->write(reinterpret_cast<char_type const*>(data), count);
                 return count;
             }
             this->communicator().template emplace<cstream_communicator_type>(

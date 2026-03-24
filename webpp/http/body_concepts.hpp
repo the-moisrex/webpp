@@ -12,9 +12,7 @@ namespace webpp::http {
 
     template <typename T>
     concept SizableBody = requires(T body) {
-        {
-            body.size()
-        } -> stl::same_as<stl::size_t>;
+        { body.size() } -> stl::same_as<stl::size_t>;
     };
 
     /**
@@ -25,12 +23,8 @@ namespace webpp::http {
         // requires stl::copy_constructible<T>;
         typename T::byte_type;
         requires requires(T communicator, typename T::byte_type* data, stl::streamsize size) {
-            {
-                communicator.read(data, size)
-            } -> stl::same_as<stl::streamsize>;
-            {
-                communicator.empty()
-            } -> stl::same_as<bool>;
+            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+            { communicator.empty() } -> stl::same_as<bool>;
         };
     };
 
@@ -42,9 +36,7 @@ namespace webpp::http {
         // requires stl::copy_constructible<T>;
         typename T::byte_type;
         requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
-            {
-                communicator.write(data, size)
-            } -> stl::same_as<stl::streamsize>;
+            { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
             communicator.seek(size);
             communicator.clear();
         };
@@ -66,9 +58,7 @@ namespace webpp::http {
         // requires stl::copy_constructible<T>;
         requires SizableBody<T>;
         body.data();
-        {
-            body.empty()
-        } -> stl::same_as<bool>;
+        { body.empty() } -> stl::same_as<bool>;
     };
 
     /**
@@ -107,15 +97,11 @@ namespace webpp::http {
         body.rdbuf();
         body.tellg();
         body.seekg(0);
-        {
-            body.eof()
-        } -> stl::same_as<bool>;
+        { body.eof() } -> stl::same_as<bool>;
         typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
         requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type* data,
                           stl::streamsize                                                          count) {
-            {
-                body.readsome(data, count)
-            } -> stl::same_as<stl::streamsize>;
+            { body.readsome(data, count) } -> stl::same_as<stl::streamsize>;
         };
     };
 
@@ -164,9 +150,7 @@ namespace webpp::http {
     concept CallbackBasedBodyCommunicator = requires(T communicator) {
         requires requires {
             // Returns a primitive
-            {
-                communicator()
-            } -> BodyCommunicatorPrimitives;
+            { communicator() } -> BodyCommunicatorPrimitives;
         };
     };
 
@@ -248,9 +232,7 @@ namespace webpp::http {
 
     template <typename T>
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
-        {
-            body.which_communicator()
-        } -> stl::same_as<communicator_type>;
+        { body.which_communicator() } -> stl::same_as<communicator_type>;
     };
 
     ////////////////////////////// Deserialize //////////////////////////////

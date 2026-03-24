@@ -14,11 +14,9 @@ namespace webpp::http {
      *
      * All request bodies will come from here, you can add all the nice features for the request body here.
      */
-    template <Traits TraitsType, HTTPRequestBodyCommunicator Communicator>
+    template <HTTPRequestBodyCommunicator Communicator>
     struct request_body : public Communicator {
-        using traits_type               = TraitsType;
         using request_body_communicator = Communicator; // the way that the Protocol gives us the body
-        using char_type                 = traits::char_type<traits_type>;
         using size_type                 = stl::streamsize;
 
         constexpr request_body(request_body const&)                     = default;
