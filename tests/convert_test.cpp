@@ -16,7 +16,7 @@ TEST(Convert, LexicalCast) {
     EXPECT_EQ("-43", cast<std::string>("-43"));
     EXPECT_EQ("-43", cast<std::string>(-43));
 
-    EXPECT_FLOAT_EQ(-43.3F, cast<float>("-43.3"));
-    EXPECT_FLOAT_EQ(0.1233F, cast<float>(".1233"));
-    EXPECT_DOUBLE_EQ(0.1233, cast<double>(".1233"));
+    EXPECT_EQ(-43.3F, cast<float>("-43.3"));
+    EXPECT_EQ(0.1233F, cast<float>(".1233"));
+    EXPECT_EQ(0.1233, cast<double>(".1233"));
 }

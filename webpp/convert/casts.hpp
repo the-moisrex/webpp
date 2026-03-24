@@ -142,6 +142,11 @@ namespace webpp {
         return ret;
     }
 
+    template <typename T, T base = 10>
+    static constexpr integer_cast_result<T> to(stl::string_view const str) noexcept {
+        return to<T, base, char>(str);
+    }
+
     // NOLINTNEXTLINE(*-macro-usage)
 #define WEBPP_TO_FUNCTION(name, type)                                                       \
     template <type base = 10, typename CharT>                                               \

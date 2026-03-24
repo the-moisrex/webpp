@@ -9,9 +9,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/append.hpp"
-#include "../traits/default_traits.hpp"
-#include "../traits/enable_traits.hpp"
-#include "casts.hpp"
+#include "./casts.hpp"
 
 #include <charconv>
 
@@ -40,8 +38,7 @@ namespace webpp::lexical {
             return istl::view_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t>) {
             // Target == string
-            auto const the_alloc =
-              extract_allocator_of_or_default<allocator_type_of<target_t>>(allocs..., source);
+            auto const the_alloc = extract_allocator_of_or_default<allocator_type_of<target_t>>(allocs..., source);
             if constexpr (istl::StringifiableOf<target_t, src_t>) {
                 // Source is convertible to string
                 return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
@@ -125,7 +122,8 @@ namespace webpp::lexical {
         {
             return istl::view_of<Target>(stl::forward<Source>(source));
         } else if constexpr (
-          istl::StringifiableOfTemplate<Target, src_t> && requires {
+          istl::StringifiableOfTemplate<Target, src_t> &&
+          requires {
               istl::stringify_of<Target>(stl::forward<Source>(source), extract_allocator_or_default(allocs..., source));
           })
         {
@@ -155,10 +153,8 @@ namespace webpp::lexical {
 
 
     template <typename T, typename To>
-    concept CastableTo = requires(T obj, enable_owner_traits<default_traits> etraits) {
-        {
-            cast<To>(obj, etraits)
-        } -> stl::same_as<To>;
+    concept CastableTo = requires(T obj) {
+        { cast<To>(obj, alloc) } -> stl::same_as<To>;
     };
 } // namespace webpp::lexical
 
