@@ -15,7 +15,7 @@
 namespace webpp::http {
 
 
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_request_view;
 
     namespace details {
@@ -33,6 +33,7 @@ namespace webpp::http {
           private:
             servers_variant svrvar; // server variant
 
+                                    // NOLINTNEXTLINE(*-macro-usage)
 #define call_svr(mem, ...)                                                \
     stl::visit(                                                           \
       [](auto* svr) constexpr noexcept(noexcept(svr->mem(__VA_ARGS__))) { \
@@ -56,7 +57,7 @@ namespace webpp::http {
         /**
          * This request type can hold other HTTP request types.
          */
-        template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+        template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
         struct request_view_interface {
             using string_view_type = stl::basic_string_view<CharT>;
             using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
@@ -95,7 +96,7 @@ namespace webpp::http {
          * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
          * they have to make sure this dynamic provider works for their provider as well.
          */
-        template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+        template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
         struct dynamic_header_fields_provider {
             using string_view_type = stl::basic_string_view<CharT>;
             using field_type       = header_field_of<CharT, AllocT>;

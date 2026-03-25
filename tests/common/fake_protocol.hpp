@@ -1,17 +1,17 @@
 #ifndef WEBPP_TEST_FAKE_PROTOCOL_HPP
 #define WEBPP_TEST_FAKE_PROTOCOL_HPP
 
-#include "../webpp/convert/casts.hpp"
-#include "../webpp/http/app_wrapper.hpp"
-#include "../webpp/http/protocol/common_http_protocol.hpp"
-#include "../webpp/http/request.hpp"
-#include "../webpp/http/request_view.hpp"
-#include "../webpp/http/response.hpp"
-#include "../webpp/http/routes/static_router.hpp"
-#include "../webpp/std/string_view.hpp"
-#include "../webpp/strings/to_case.hpp"
-#include "../webpp/traits/enable_traits.hpp"
-#include "../webpp/traits/std_traits.hpp"
+#include "../../webpp/convert/casts.hpp"
+#include "../../webpp/http/app_wrapper.hpp"
+#include "../../webpp/http/protocol/common_http_protocol.hpp"
+#include "../../webpp/http/request.hpp"
+#include "../../webpp/http/request_view.hpp"
+#include "../../webpp/http/response.hpp"
+#include "../../webpp/http/routes/static_router.hpp"
+#include "../../webpp/std/string_view.hpp"
+#include "../../webpp/strings/to_case.hpp"
+#include "../../webpp/traits/enable_traits.hpp"
+#include "../../webpp/traits/std_traits.hpp"
 #include "test.hpp"
 
 namespace webpp {

@@ -10,7 +10,7 @@ namespace webpp::http {
      *
      * Implements: CStreamBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
      */
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct response_body : public body_writer<CharT, AllocT> {
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
         using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;

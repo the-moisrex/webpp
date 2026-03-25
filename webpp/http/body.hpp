@@ -34,10 +34,10 @@ namespace webpp::http {
     //   public:
     // };
 
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     using string_response_body_communicator = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
 
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     using stream_response_body_communicator =
       stl::shared_ptr<stl::basic_stringstream<CharT, stl::char_traits<CharT>, AllocT>>;
 
@@ -45,7 +45,7 @@ namespace webpp::http {
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
      * used to get a better performance)
      */
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct cstream_response_body_communicator : stl::vector<stl::byte, AllocT> {
         using byte_type       = stl::byte;
         using allocator_type  = AllocT;
@@ -101,7 +101,7 @@ namespace webpp::http {
     /**
      * This is the dynamic parent for body readers and body writers.
      */
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct body_communicator {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
@@ -189,7 +189,7 @@ namespace webpp::http {
         }
     };
 
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct body_reader : body_communicator<CharT, AllocT> {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
@@ -439,7 +439,7 @@ namespace webpp::http {
         }
     };
 
-    template <istl::CharType CharT, Allocator AllocT = allocator_type_of<CharT>>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct body_writer : body_reader<CharT, AllocT> {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
