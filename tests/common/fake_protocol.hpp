@@ -10,21 +10,19 @@
 #include "../../webpp/http/routes/static_router.hpp"
 #include "../../webpp/std/string_view.hpp"
 #include "../../webpp/strings/to_case.hpp"
-#include "../../webpp/traits/enable_traits.hpp"
-#include "../../webpp/traits/std_traits.hpp"
 #include "test.hpp"
+
+#include <map>
 
 namespace webpp {
     using namespace webpp::http;
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
     template <typename CommonHTTPRequest>
-    struct fake_proto_request : public CommonHTTPRequest,
-                                http::details::request_view_interface<default_dynamic_traits> {
+    struct fake_proto_request : public CommonHTTPRequest, http::details::request_view_interface<char> {
         using super       = CommonHTTPRequest;
-        using traits_type = typename super::traits_type;
-        using string_type = traits::string<traits_type>;
-        using string_view = traits::string_view<traits_type>;
+        using string_type = typename super::string_type;
+        using string_view = typename super::string_view_type;
 
         stl::map<string_type, string_type> data{};
 
@@ -267,7 +265,6 @@ namespace webpp {
 
     template <Application App>
     struct fake_proto : public common_http_protocol<default_dynamic_traits, App> {
-        using traits_type               = default_dynamic_traits;
         using super                     = common_http_protocol<traits_type, App>;
         using char_type                 = traits::char_type<traits_type>;
         using fields_allocator_type     = traits::allocator_type_of<traits_type, char_type>;

@@ -3,7 +3,7 @@
 #ifndef WEBPP_ROUTER_CONCEPTS_HPP
 #define WEBPP_ROUTER_CONCEPTS_HPP
 
-#include "../../std/type_traits.hpp"
+#include "../../memory/allocators.hpp"
 #include "../http_concepts.hpp"
 
 namespace webpp::http {
@@ -62,13 +62,13 @@ namespace webpp::http {
 
 
 
-    template <Traits>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_dynamic_router;
 
-    template <Traits>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_context;
 
-    template <Traits T, typename Callable = void>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>, typename Callable = void>
     struct dynamic_route;
 
     template <typename Self = void>

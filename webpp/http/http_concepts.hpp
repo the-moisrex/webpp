@@ -34,16 +34,10 @@ namespace webpp::http {
         typename T::name_type;
         typename T::value_type;
         requires requires(typename T::name_type name) {
-            {
-                field.is_name(name)
-            } -> stl::same_as<bool>;
+            { field.is_name(name) } -> stl::same_as<bool>;
         };
-        {
-            field.name
-        } -> istl::StringViewifiable;
-        {
-            field.value
-        } -> istl::StringViewifiable;
+        { field.name } -> istl::StringViewifiable;
+        { field.value } -> istl::StringViewifiable;
     };
 
 
@@ -109,7 +103,9 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
-        requires EnabledTraits<stl::remove_cvref_t<T>>;
+        typename stl::remove_cvref_t<T>::char_type;
+        typename stl::remove_cvref_t<T>::allocator_type;
+        typename stl::remove_cvref_t<T>::string_type;
         typename stl::remove_cvref_t<T>::headers_type;
         typename stl::remove_cvref_t<T>::body_type;
         requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
@@ -172,17 +168,13 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeadersHolder = requires(stl::remove_cvref_t<T> server) {
-        {
-            server.headers
-        } -> HTTPHeaders;
+        { server.headers } -> HTTPHeaders;
     };
 
 
     template <typename T>
     concept HTTPBodyHolder = requires(stl::remove_cvref_t<T> server) {
-        {
-            server.body
-        } -> HTTPBody;
+        { server.body } -> HTTPBody;
     };
 
 
@@ -215,17 +207,11 @@ namespace webpp::http {
         requires HTTPRequest<typename T::request_type>;
         requires Application<typename T::application_type>;
         requires ApplicationWrapper<typename T::app_wrapper_type>;
-        {
-            proto.app
-        } -> ApplicationWrapper; // get the app
+        { proto.app } -> ApplicationWrapper; // get the app
         // should be able to pass an app to it as well
 
-        {
-            proto.is_ssl_available()
-        } -> stl::same_as<bool>;
-        {
-            proto()
-        } -> stl::same_as<int>;
+        { proto.is_ssl_available() } -> stl::same_as<bool>;
+        { proto() } -> stl::same_as<int>;
     };
 
     /**

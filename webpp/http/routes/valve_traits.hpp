@@ -9,7 +9,6 @@
 #include "../../std/tag_invoke.hpp"
 #include "../../std/types.hpp"
 #include "../../strings/replace.hpp"
-#include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
 #include "router_concepts.hpp"
@@ -17,21 +16,21 @@
 namespace webpp::http {
 
 
-    template <typename TraitsType>
-    using basic_next_route = istl::member_function_ref<void(basic_context<TraitsType>&)>;
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    using basic_next_route = istl::member_function_ref<void(basic_context<CharT, AllocT>&)>;
 
-    using next_route = basic_next_route<default_dynamic_traits>;
+    using next_route = basic_next_route<char>;
 
     /**
      * Checks if the type is a valve type.
      */
-    template <typename TraitsType, typename T>
-    concept ValveOf =
-      Traits<TraitsType> && (stl::is_invocable_v<T, basic_context<TraitsType>&> || istl::StringViewifiable<T>);
+    template <typename CharT, typename AllocT, typename T>
+    concept ValveOf = istl::CharType<CharT> && Allocator<AllocT> &&
+                      (stl::is_invocable_v<T, basic_context<CharT, AllocT>&> || istl::StringViewifiable<T>);
 
     /// A single valve
     template <typename T>
-    concept Valve = ValveOf<default_dynamic_traits, T>;
+    concept Valve = ValveOf<char, default_allocator_t<char>, T>;
 
     template <typename TraitsType, typename T>
     concept Mangler =
@@ -102,7 +101,7 @@ namespace webpp::http {
      * The valve traits
      * Central place for dealing with all valves
      */
-    template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
+    template <typename Callable, typename ContextType = basic_context<char>>
     struct valve_traits {
         using callable_type      = stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<Callable>>>;
         using context_type       = ContextType;

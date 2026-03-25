@@ -3,7 +3,6 @@
 #ifndef WEBPP_HTTP_ROUTES_CONTEXT_HPP
 #define WEBPP_HTTP_ROUTES_CONTEXT_HPP
 
-#include "../../traits/enable_traits.hpp"
 #include "../../uri/path_traverser.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -16,16 +15,14 @@ namespace webpp::http {
 
 
         template <HTTPRequest RequestType>
-        struct common_context_methods : enable_traits<typename RequestType::traits_type> {
-            using request_type  = RequestType;
-            using traits_type   = typename request_type::traits_type;
-            using etraits       = enable_traits<traits_type>;
-            using response_type = simple_response<traits_type>;
-            using request_ref   = request_type&;
-            using request_cref  = request_type const&;
-
-            template <HTTPRequest ReqT>
-            explicit constexpr common_context_methods(ReqT const& inp_req) noexcept : etraits{inp_req} {}
+        struct common_context_methods {
+            using request_type   = RequestType;
+            using char_type      = typename request_type::char_type;
+            using allocator_type = typename request_type::allocator_type;
+            using string_type    = typename request_type::string_type;
+            using response_type  = simple_response<char_type, allocator_type>;
+            using request_ref    = request_type&;
+            using request_cref   = request_type const&;
 
             template <Context CtxT>
                 requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
@@ -87,8 +84,7 @@ namespace webpp::http {
              * @return An HTTP response with the error message.
              */
             [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
-                using str_t = traits::string<traits_type>;
-                str_t msg{get_alloc_for<str_t>(*this)};
+                string_type msg{alloc};
                 fmt::format_to(stl::back_inserter(msg),
                                R"(<!doctype html>
 <html lang="en">
@@ -145,8 +141,10 @@ namespace webpp::http {
     template <HTTPRequest RequestType>
     struct common_context_view : details::common_context_methods<RequestType> {
         using request_type       = RequestType;
-        using traits_type        = typename request_type::traits_type;
-        using response_type      = simple_response<traits_type>;
+        using char_type          = typename request_type::char_type;
+        using allocator_type     = typename request_type::allocator_type;
+        using string_type        = typename request_type::string_type;
+        using response_type      = simple_response<char_type, allocator_type>;
         using basic_context_type = common_context_view;
         using request_ref        = request_type&;
         using request_cref       = request_type const&;
@@ -181,16 +179,15 @@ namespace webpp::http {
     /**
      * The standard and dynamic context which will own its data
      */
-    template <Traits TraitsType = default_dynamic_traits>
-    struct basic_context : details::common_context_methods<basic_request<TraitsType>> {
-        using traits_type         = TraitsType;
-        using request_type        = basic_request<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    struct basic_context : details::common_context_methods<basic_request<CharT, AllocT>> {
+        using request_type        = basic_request<CharT, AllocT>;
         using static_context_type = simple_context<request_type>;
-        using response_type       = basic_response<traits_type>;
-        using string_type         = traits::string<traits_type>;
+        using response_type       = basic_response<CharT, AllocT>;
+        using string_type         = typename request_type::string_type;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_traverser<string_type>;
-        using dynamic_route_type  = dynamic_route<traits_type>;
+        using dynamic_route_type  = dynamic_route<CharT, AllocT>;
         using dynamic_route_ptr   = dynamic_route_type*;
 
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
@@ -200,7 +197,7 @@ namespace webpp::http {
 
 
       private:
-        using context_methods = details::common_context_methods<basic_request<TraitsType>>;
+        using context_methods = details::common_context_methods<basic_request<CharT, AllocT>>;
 
         path_traverser_type traverser;
         dynamic_route_ptr   current_route_ptr = nullptr;
@@ -211,13 +208,13 @@ namespace webpp::http {
         explicit constexpr basic_context(ReqT& req)
           : context_methods{req},
             request{req},
-            response{req.get_traits()},
+            response{},
             traverser{request.uri()} {}
 
         explicit constexpr basic_context(request_type& req)
           : context_methods{req},
             request{req},
-            response{req.get_traits()},
+            response{},
             traverser{request.uri()} {}
 
         template <Context CtxT>
@@ -277,7 +274,7 @@ namespace webpp::http {
         }
     };
 
-    using context = basic_context<>;
+    using context = basic_context<char>;
 
 } // namespace webpp::http
 

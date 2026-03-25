@@ -36,11 +36,11 @@ namespace webpp::http {
 
 
         template <typename T>
-        constexpr common_http_response(T&& body_obj)
+        explicit constexpr common_http_response(T&& body_obj)
           : headers{},
             body{stl::forward<T>(body_obj)} {}
 
-        constexpr common_http_response(http::status_code code) : headers{code}, body{} {}
+        explicit constexpr common_http_response(http::status_code code) : headers{code}, body{} {}
 
         constexpr ~common_http_response()                                        = default;
         constexpr common_http_response(common_http_response const& res) noexcept = default;
