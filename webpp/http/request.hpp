@@ -1,7 +1,6 @@
 #ifndef WEBPP_HTTP_REQUEST_HPP
 #define WEBPP_HTTP_REQUEST_HPP
 
-#include "../traits/enable_traits.hpp"
 #include "../uri/path_traverser.hpp"
 #include "../version.hpp"
 #include "./body.hpp"
@@ -25,13 +24,11 @@ namespace webpp::http {
      *
      */
     template <typename HeadersType, typename BodyType>
-    struct common_http_request :  enable_traits<typename BodyType::traits_type> {
+    struct common_http_request {
         using headers_type     = HeadersType;
         using body_type        = BodyType;
-        using traits_type      = typename body_type::traits_type;
-        using etraits          = enable_traits<traits_type>;
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = typename body_type::string_type;
+        using string_view_type = typename body_type::string_view_type;
 
         static_assert(HTTPRequestHeaders<headers_type>, "Something is wrong with the request's headers type.");
         static_assert(HTTPRequestBody<body_type>, "Something is wrong with the request's body type.");
@@ -41,20 +38,18 @@ namespace webpp::http {
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename ServerT>
-            requires(EnabledTraits<ServerT> && !HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
+            requires(!HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
                      !istl::cvref_as<ServerT, common_http_request>)
         constexpr explicit common_http_request(ServerT& inp_server) noexcept
-          : etraits{inp_server},
-            headers{inp_server},
+          : headers{inp_server},
             body{inp_server} {}
 
         template <typename ReqT>
-            requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> && EnabledTraits<ReqT> &&
+            requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
                      !istl::cvref_as<ReqT, common_http_request>)
         constexpr explicit common_http_request(ReqT& inp_req)
-          : etraits{inp_req},
-            headers{inp_req.headers},
-            body{inp_req.get_traits(), inp_req.body} {}
+          : headers{inp_req.headers},
+            body{inp_req.body} {}
 
         constexpr common_http_request(common_http_request const&)                     = default;
         constexpr common_http_request(common_http_request&&) noexcept                 = default;
@@ -131,20 +126,19 @@ namespace webpp::http {
      *   3. This request's body is writable as well as readable.
      *
      */
-    template <Traits TraitsType = default_dynamic_traits>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_request final
-      : public common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
-                                   request_body<TraitsType, body_writer<TraitsType>>>,
-        public details::request_view_interface<TraitsType> {
+      : public common_http_request<request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>,
+                                   request_body<body_writer<CharT, AllocT>>>,
+        public details::request_view_interface<CharT, AllocT> {
         using common_request_type =
-          common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
-                              request_body<TraitsType, body_writer<TraitsType>>>;
-        using headers_type = request_headers<header_fields_provider<header_field_of<TraitsType>>>;
-        using body_type    = request_body<TraitsType, body_writer<TraitsType>>;
-        using traits_type  = typename body_type::traits_type;
+          common_http_request<request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>,
+                              request_body<body_writer<CharT, AllocT>>>;
+        using headers_type = request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>;
+        using body_type    = request_body<body_writer<CharT, AllocT>>;
 
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = typename body_type::string_type;
+        using string_view_type = typename body_type::string_view_type;
 
       private:
         string_type   requested_uri;
@@ -176,23 +170,20 @@ namespace webpp::http {
             requires(!istl::cvref_as<ReqType, basic_request>)
         constexpr explicit basic_request(ReqType& req)
           : common_request_type{req},
-            requested_uri{req.uri(), get_alloc_for<string_type>(*this)},
-            requested_method{req.method(), get_alloc_for<string_type>(*this)},
+            requested_uri{req.uri(), alloc},
+            requested_method{req.method(), alloc},
             request_version{req.version()} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
-            requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
-                     istl::StringifiableOf<string_type, MStrT>)
+        template <typename MStrT = string_view_type, typename UStrT = string_view_type>
+            requires(istl::StringifiableOf<string_type, UStrT> && istl::StringifiableOf<string_type, MStrT>)
         constexpr explicit basic_request(
-          ET&&                inp_etraits,
           MStrT&&             inp_method = "GET",
           UStrT&&             url        = "/",
           http::version const ver        = http::http_2_0)
-          : common_request_type{inp_etraits},
-            requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url), get_alloc_for<string_type>(*this))},
-            requested_method{
-              istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method), get_alloc_for<string_type>(*this))},
+          : common_request_type{},
+            requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url), alloc)},
+            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method), alloc)},
             request_version{ver} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -245,7 +236,7 @@ namespace webpp::http {
         }
     };
 
-    using request = basic_request<default_dynamic_traits>;
+    using request = basic_request<char>;
 
 } // namespace webpp::http
 
