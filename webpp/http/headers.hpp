@@ -94,6 +94,8 @@ namespace webpp::http {
         using value_type           = typename field_type::value_type;
         using reference_type       = header_field_reference<headers_container>;
         using const_reference_type = header_field_reference<headers_container const>;
+        using char_type            = typename value_type::value_type;
+        using string_view_type     = stl::basic_string_view<char_type>;
 
         using Container::Container;
 
@@ -131,6 +133,15 @@ namespace webpp::http {
         [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
             auto const res = iter(name);
             return res == this->end() ? value_type{} : res->value;
+        }
+
+        /**
+         * Get the value of a header
+         * Returns an empty string view if there are no header with that name
+         */
+        [[nodiscard]] constexpr string_view_type view(name_type name) const noexcept {
+            auto const res = iter(name);
+            return res == this->end() ? string_view_type{} : string_view_type{res->value.data(), res->value.size()};
         }
 
         /**

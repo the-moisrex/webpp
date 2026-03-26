@@ -1,10 +1,10 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
-#include "../std/span.hpp"
 #include "../strings/iequals.hpp"
-#include "../traits/enable_traits.hpp"
-#include "http_concepts.hpp"
+#include "./http_concepts.hpp"
+
+#include <span>
 
 namespace webpp::http {
 
@@ -18,6 +18,8 @@ namespace webpp::http {
     template <typename StringType>
     struct basic_header_field {
         using string_type                = StringType;
+        using char_type                  = typename string_type::value_type;
+        using string_view_type           = stl::basic_string_view<char_type>;
         using name_type                  = string_type;
         using value_type                 = string_type;
         static constexpr bool is_mutable = istl::String<string_type> && !istl::StringView<string_type>;
@@ -159,12 +161,12 @@ namespace webpp::http {
      */
     template <HTTPHeaderField FieldType>
     struct header_fields_provider {
-        using field_type     = FieldType;
-        using name_type      = typename field_type::string_type;
-        using value_type     = typename field_type::string_type;
-        using string_type    = typename field_type::string_type;
-        using allocator_type = typename string_type::allocator_type;
-        // using field_allocator_type = traits::allocator_type_of<traits_type, field_type>;
+        using field_type       = FieldType;
+        using name_type        = typename field_type::string_type;
+        using value_type       = typename field_type::string_type;
+        using string_type      = typename field_type::string_type;
+        using string_view_type = typename field_type::string_view_type;
+        using allocator_type   = typename string_type::allocator_type;
 
       private:
         using vector_allocator_type = typename stl::allocator_traits<allocator_type>::template rebind_alloc<field_type>;
@@ -173,17 +175,13 @@ namespace webpp::http {
         fields_type fields;
 
       public:
-        template <EnabledTraits ET>
-            requires(!HTTPHeaderFieldsProvider<ET>)
-        explicit constexpr header_fields_provider(ET& etraits) : fields{get_alloc_for<fields_type>(etraits)} {}
+        constexpr header_fields_provider() : fields{alloc} {}
+
+        explicit constexpr header_fields_provider(vector_allocator_type const& inp_alloc) : fields{inp_alloc} {}
 
         template <HTTPHeaderFieldsProvider T>
-            requires(!istl::cvref_as<T, header_fields_provider> && requires(T other) { other.get_allocator(); })
+            requires(!istl::cvref_as<T, header_fields_provider> && has_allocator<T>)
         explicit constexpr header_fields_provider(T const& other)
-          : fields{other.begin(), other.end(), other.get_allocator()} {}
-
-        template <EnabledTraits ET, HTTPHeaderFieldsProvider T>
-        constexpr header_fields_provider([[maybe_unused]] ET const& etraits, T const& other)
           : fields{other.begin(), other.end(), other.get_allocator()} {}
 
         constexpr header_fields_provider(header_fields_provider const&)                = default;

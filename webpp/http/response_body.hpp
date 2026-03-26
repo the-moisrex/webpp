@@ -13,7 +13,7 @@ namespace webpp::http {
     template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct response_body : public body_writer<CharT, AllocT> {
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
-        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<AllocT>;
         using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
         using body_communicator_type    = body_writer<CharT, AllocT>;

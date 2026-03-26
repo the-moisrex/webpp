@@ -4,10 +4,11 @@
 #define WEBPP_REQUEST_HEADERS_HPP
 
 #include "../convert/casts.hpp"
-#include "../traits/traits.hpp"
-#include "header_fields.hpp"
-#include "headers.hpp"
-#include "http_concepts.hpp"
+#include "./header_fields.hpp"
+#include "./headers.hpp"
+#include "./http_concepts.hpp"
+
+#include <concepts>
 
 namespace webpp::http {
 
@@ -29,16 +30,18 @@ namespace webpp::http {
                       "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
       public:
-        using field_type = typename fields_provider_type::field_type;
-        using name_type  = typename field_type::name_type;
-        using value_type = typename field_type::value_type;
+        using field_type       = typename fields_provider_type::field_type;
+        using name_type        = typename field_type::name_type;
+        using value_type       = typename field_type::value_type;
+        using string_type      = typename fields_provider_type::string_type;
+        using string_view_type = typename fields_provider_type::string_view_type;
 
         /**
          * The Args template parameters here are reserved for any other field providers
          */
-        template <EnabledTraits ET, typename... Args>
-        explicit constexpr request_headers(ET&& et, Args&&... args)
-          : fields_provider_type{et, stl::forward<Args>(args)...} {}
+        template <typename... Args>
+            requires stl::constructible_from<fields_provider_type, Args...>
+        explicit constexpr request_headers(Args&&... args) : fields_provider_type{stl::forward<Args>(args)...} {}
 
         template <HTTPHeadersHolder T>
         explicit constexpr request_headers(T& holder) : fields_provider_type{holder} {}
@@ -53,8 +56,7 @@ namespace webpp::http {
          * Get the Content-Type as a size_t; if not specified, zero is returned.
          */
         [[nodiscard]] constexpr stl::size_t content_length() const noexcept {
-            // todo: this might not be as safe as you thought
-            return to_size_t(this->get("content-length"));
+            return try_to_size_t(this->view("content-length")).value_or(0);
         }
     };
 

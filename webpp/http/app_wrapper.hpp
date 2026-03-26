@@ -5,11 +5,9 @@
 
 #include "../application/application_concepts.hpp"
 #include "../common/meta.hpp"
-#include "../std/type_traits.hpp"
-#include "http_concepts.hpp"
-#include "routes/router_concepts.hpp"
-#include "status_code.hpp"
-
+#include "./http_concepts.hpp"
+#include "./routes/router_concepts.hpp"
+#include "./status_code.hpp"
 
 namespace webpp::http {
 
@@ -21,14 +19,12 @@ namespace webpp::http {
      * todo: add rebind feature here
      * todo: add other version of constructor as well here
      */
-    template <Traits TraitsType, Application AppType>
+    template <Application AppType>
     struct http_app_wrapper : AppType {
         using application_type = AppType;
-        using traits_type      = TraitsType;
 
         struct enable_throws {};
 
-        // ctor that passes the enabled_traits object to daddy :)
         template <typename... Args>
             requires(stl::is_constructible_v<application_type, Args...>)
         explicit constexpr http_app_wrapper(Args&&... args) : application_type{stl::forward<Args>(args)...} {}
@@ -117,24 +113,8 @@ namespace webpp::http {
                 return fix_response(req, application_type::operator()());
             } else if constexpr (stl::is_invocable_v<application_type, ReqType>) {
                 using enum status_code;
-                using request_type = stl::remove_cvref_t<ReqType>;
-                using etraits_type = typename request_type::enable_traits_type;
-                using return_type  = stl::invoke_result_t<application_type, ReqType>;
-                if constexpr (stl::is_constructible_v<return_type, etraits_type>) {
-                    try {
-                        return operator()(stl::forward<ReqType>(req), enable_throws{});
-                    } catch (stl::exception const& ex) {
-                        // todo: log
-                        return_type res{req.get_traits()};
-                        error(req, internal_server_error, res);
-                        return res;
-                    } catch (...) {
-                        // todo: log
-                        return_type res{req.get_traits()};
-                        error(req, internal_server_error, res);
-                        return res;
-                    }
-                } else if constexpr (stl::is_default_constructible_v<return_type>) {
+                using return_type = stl::invoke_result_t<application_type, ReqType>;
+                if constexpr (stl::is_default_constructible_v<return_type>) {
                     try {
                         return operator()(stl::forward<ReqType>(req), enable_throws{});
                     } catch (stl::exception const& ex) {

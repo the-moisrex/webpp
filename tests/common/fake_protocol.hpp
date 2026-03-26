@@ -31,11 +31,11 @@ namespace webpp {
 
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
-            return istl::stringify_of<pstring_type>(stl::forward<T>(str), get_alloc_for<pstring_type>(*this));
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str), alloc);
         }
 
         // get the dynamic request object
-        inline request_view const& dreq() const noexcept {
+        request_view const& dreq() const noexcept {
             return static_cast<request_view const&>(*this);
         }
 
@@ -264,14 +264,16 @@ namespace webpp {
     };
 
     template <Application App>
-    struct fake_proto : public common_http_protocol<default_dynamic_traits, App> {
-        using super                     = common_http_protocol<traits_type, App>;
-        using char_type                 = traits::char_type<traits_type>;
-        using fields_allocator_type     = traits::allocator_type_of<traits_type, char_type>;
-        using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
+    struct fake_proto : public common_http_protocol<App> {
+        using super                     = common_http_protocol<App>;
+        using char_type                 = char;
+        using string_type               = stl::string;
+        using string_view_type          = stl::string_view;
+        using allocator_type            = stl::allocator<char_type>;
+        using fields_provider           = header_fields_provider<header_field_of<char_type, allocator_type>>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;
         using request_headers_type      = request_headers<fields_provider>;
-        using request_body_type         = request_body<traits_type, request_body_communicator>;
+        using request_body_type         = request_body<request_body_communicator>;
 
         using request_type = simple_request<fake_proto_request, request_headers_type, request_body_type>;
 

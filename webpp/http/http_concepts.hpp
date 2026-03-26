@@ -5,7 +5,6 @@
 
 #include "../application/application_concepts.hpp"
 #include "../std/optional.hpp"
-#include "../traits/std_traits.hpp"
 #include "./body_concepts.hpp"
 
 namespace webpp::http {
@@ -53,6 +52,8 @@ namespace webpp::http {
         typename T::field_type;
         typename T::name_type;
         typename T::value_type;
+        typename T::string_type;
+        typename T::string_view_type;
     };
 
     template <typename T>
@@ -103,9 +104,8 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
-        typename stl::remove_cvref_t<T>::char_type;
-        typename stl::remove_cvref_t<T>::allocator_type;
         typename stl::remove_cvref_t<T>::string_type;
+        typename stl::remove_cvref_t<T>::string_view_type;
         typename stl::remove_cvref_t<T>::headers_type;
         typename stl::remove_cvref_t<T>::body_type;
         requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
@@ -192,7 +192,6 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPCommunicator = requires(T proto) {
-        requires EnabledTraits<T>;
         requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
         // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
     };
@@ -202,8 +201,7 @@ namespace webpp::http {
      * file.
      */
     template <typename T>
-    concept HTTPProtocol = requires(T proto) {
-        requires HTTPCommunicator<T>;
+    concept HTTPProtocol = HTTPCommunicator<T> && requires(T proto) {
         requires HTTPRequest<typename T::request_type>;
         requires Application<typename T::application_type>;
         requires ApplicationWrapper<typename T::app_wrapper_type>;

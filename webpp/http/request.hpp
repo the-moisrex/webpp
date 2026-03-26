@@ -1,6 +1,7 @@
 #ifndef WEBPP_HTTP_REQUEST_HPP
 #define WEBPP_HTTP_REQUEST_HPP
 
+#include "../memory/allocators.hpp"
 #include "../uri/path_traverser.hpp"
 #include "../version.hpp"
 #include "./body.hpp"
@@ -9,6 +10,9 @@
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
 #include "./request_view.hpp"
+#include "body_concepts.hpp"
+
+#include <concepts>
 
 namespace webpp::http {
 
@@ -23,13 +27,16 @@ namespace webpp::http {
      * giving information that the user or other modules need.
      *
      */
-    template <typename HeadersType, typename BodyType>
+    template <HTTPHeaders HeadersType, HTTPBody BodyType>
     struct common_http_request {
         using headers_type     = HeadersType;
         using body_type        = BodyType;
-        using string_type      = typename body_type::string_type;
-        using string_view_type = typename body_type::string_view_type;
+        using string_type      = typename headers_type::string_type;
+        using string_view_type = typename headers_type::string_view_type;
+        using allocator_type   = typename string_type::allocator_type;
 
+        static_assert(stl::same_as<typename headers_type::allocator_type, allocator_type>,
+                      "They should have the same allocator type.");
         static_assert(HTTPRequestHeaders<headers_type>, "Something is wrong with the request's headers type.");
         static_assert(HTTPRequestBody<body_type>, "Something is wrong with the request's body type.");
 
@@ -37,12 +44,9 @@ namespace webpp::http {
         headers_type                    headers; // NOLINT(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
 
-        template <typename ServerT>
-            requires(!HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
-                     !istl::cvref_as<ServerT, common_http_request>)
-        constexpr explicit common_http_request(ServerT& inp_server) noexcept
-          : headers{inp_server},
-            body{inp_server} {}
+        constexpr explicit common_http_request(allocator_type const& inp_alloc) noexcept
+          : headers{inp_alloc},
+            body{inp_alloc} {}
 
         template <typename ReqT>
             requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
@@ -137,8 +141,8 @@ namespace webpp::http {
         using headers_type = request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>;
         using body_type    = request_body<body_writer<CharT, AllocT>>;
 
-        using string_type      = typename body_type::string_type;
-        using string_view_type = typename body_type::string_view_type;
+        using string_type      = typename headers_type::string_type;
+        using string_view_type = typename headers_type::string_view_type;
 
       private:
         string_type   requested_uri;
@@ -149,7 +153,7 @@ namespace webpp::http {
         using pstring_type = typename request_view::string_type;
 
         template <typename T>
-        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+        [[nodiscard]] pstring_type pstringify(T&& str) const {
             return istl::stringify_of<pstring_type>(stl::forward<T>(str), get_alloc_for<pstring_type>(*this));
         }
 

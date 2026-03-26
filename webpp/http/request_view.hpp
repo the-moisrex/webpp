@@ -3,10 +3,10 @@
 #ifndef WEBPP_REQUEST_VIEW_HPP
 #define WEBPP_REQUEST_VIEW_HPP
 
-#include "header_fields.hpp"
-#include "http_concepts.hpp"
-#include "http_version.hpp"
-#include "request_headers.hpp"
+#include "./header_fields.hpp"
+#include "./http_concepts.hpp"
+#include "./http_version.hpp"
+#include "./request_headers.hpp"
 
 #include <span>
 #include <string>
@@ -23,11 +23,9 @@ namespace webpp::http {
         /**
          * This is a dynamic server which holds a reference to the servers
          */
-        template <Traits TraitsType, typename... ServerTypes>
+        template <typename... ServerTypes>
         struct basic_dynamic_server {
             using servers_variant   = stl::variant<ServerTypes*...>;
-            using traits_type       = TraitsType;
-            using string_view_type  = traits::string_view<traits_type>;
             using supported_servers = stl::tuple<ServerTypes...>;
 
           private:
@@ -47,7 +45,7 @@ namespace webpp::http {
             explicit constexpr basic_dynamic_server(ReqT& inp_server) : svrvar{&inp_server} {}
 
             // Get the server name that's being used
-            [[nodiscard]] constexpr string_view_type server_name() const noexcept {
+            [[nodiscard]] constexpr auto server_name() const noexcept {
                 return call_svr(server_name);
             }
 
@@ -98,11 +96,12 @@ namespace webpp::http {
          */
         template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
         struct dynamic_header_fields_provider {
-            using string_view_type = stl::basic_string_view<CharT>;
             using field_type       = header_field_of<CharT, AllocT>;
             using name_type        = typename field_type::string_type;
             using value_type       = typename field_type::string_type;
             using fields_type      = stl::span<stl::add_const_t<field_type>>;
+            using string_type      = typename field_type::string_type;
+            using string_view_type = typename field_type::string_view_type;
 
           private:
             fields_type view;
@@ -143,10 +142,10 @@ namespace webpp::http {
     template <istl::CharType CharT, Allocator AllocT>
     struct basic_request_view {
         using char_type        = CharT;
-        using string_view_type = stl::basic_string_view<CharT>;
-        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
         using fields_provider  = details::dynamic_header_fields_provider<CharT, AllocT>;
         using headers_type     = request_headers<fields_provider>;
+        using string_type      = typename fields_provider::string_type;
+        using string_view_type = typename fields_provider::string_view_type;
 
       private:
         using interface_ptr = details::request_view_interface<CharT, AllocT> const*;

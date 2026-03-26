@@ -11,6 +11,7 @@
 #include "./http_concepts.hpp"
 
 #include <exception>
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
@@ -23,10 +24,9 @@ namespace webpp::http {
         using stl::invalid_argument::invalid_argument;
     };
 
-    // template <Traits TraitsType>
+    // template <istl::CharType CharT>
     // struct callback_response_body_communicator {
-    //     using traits_type = TraitsType;
-    //     using char_type   = traits::char_type<traits_type>;
+    //     using char_type   = CharT;
     //     // using function_type = istl::function<void()>; // Oops; no concepts allowed!
 
     //     // todo
@@ -45,15 +45,16 @@ namespace webpp::http {
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
      * used to get a better performance)
      */
-    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
-    struct cstream_response_body_communicator : stl::vector<stl::byte, AllocT> {
+    template <Allocator AllocT = default_allocator_t<stl::byte>>
+    struct cstream_response_body_communicator
+      : stl::vector<stl::byte, typename stl::allocator_traits<AllocT>::template rebind_alloc<stl::byte>> {
         using byte_type       = stl::byte;
-        using allocator_type  = AllocT;
-        using vector_type     = stl::vector<stl::byte, AllocT>;
+        using allocator_type  = typename stl::allocator_traits<AllocT>::template rebind_alloc<stl::byte>;
+        using vector_type     = stl::vector<stl::byte, allocator_type>;
         using iterator        = typename vector_type::iterator;
         using difference_type = stl::iter_difference_t<iterator>;
 
-        using stl::vector<stl::byte, AllocT>::vector; // ctors
+        using stl::vector<stl::byte, allocator_type>::vector; // ctors
 
 
       private:
@@ -105,7 +106,7 @@ namespace webpp::http {
     struct body_communicator {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
-        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<AllocT>;
         using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
         using string_type               = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
@@ -193,7 +194,7 @@ namespace webpp::http {
     struct body_reader : body_communicator<CharT, AllocT> {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
-        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<AllocT>;
         using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
         using string_type               = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
@@ -443,7 +444,7 @@ namespace webpp::http {
     struct body_writer : body_reader<CharT, AllocT> {
         using char_type                 = CharT;
         using string_communicator_type  = string_response_body_communicator<CharT, AllocT>;
-        using cstream_communicator_type = cstream_response_body_communicator<CharT, AllocT>;
+        using cstream_communicator_type = cstream_response_body_communicator<AllocT>;
         using stream_communicator_type  = stream_response_body_communicator<CharT, AllocT>;
         using stream_type               = typename stream_communicator_type::element_type;
         using byte_type                 = stl::byte; // required by CStreamBasedBodyWriter

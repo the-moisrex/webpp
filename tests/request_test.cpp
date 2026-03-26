@@ -2,7 +2,6 @@
 
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/request_view.hpp"
-#include "../webpp/traits/default_traits.hpp"
 #include "common/fake_protocol.hpp"
 #include "common/test.hpp"
 
@@ -25,7 +24,7 @@ TEST(HTTPRequestTest, ConceptTests) {
 
 TEST(HTTPRequestTest, Constructors) {
     fake_protocol pt;
-    req_t         req1{pt};
+    req_t         req1{alloc};
 
     // content-length
     req1.data.emplace("Content-Length", "23");
@@ -35,7 +34,7 @@ TEST(HTTPRequestTest, Constructors) {
 
 TEST(HTTPRequestTest, DynamicRequest) {
     fake_protocol pt;
-    req_t         req{pt};
+    req_t         req{alloc};
     request       dreq{req};
     EXPECT_EQ(dreq.version(), req.version());
     EXPECT_EQ(dreq.method(), req.method());
