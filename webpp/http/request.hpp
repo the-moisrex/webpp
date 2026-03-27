@@ -44,7 +44,7 @@ namespace webpp::http {
         headers_type                    headers; // NOLINT(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
 
-        constexpr explicit common_http_request(allocator_type const& inp_alloc) noexcept
+        constexpr explicit common_http_request(allocator_type const& inp_alloc = alloc) noexcept
           : headers{inp_alloc},
             body{inp_alloc} {}
 
@@ -154,7 +154,7 @@ namespace webpp::http {
 
         template <typename T>
         [[nodiscard]] pstring_type pstringify(T&& str) const {
-            return istl::stringify_of<pstring_type>(stl::forward<T>(str), get_alloc_for<pstring_type>(*this));
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str), alloc);
         }
 
         [[nodiscard]] pstring_type get_method() const override {

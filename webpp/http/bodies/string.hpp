@@ -283,6 +283,11 @@ namespace webpp::http {
         }
     }
 
+    template <typename CharT, stl::size_t N, HTTPBody BodyType>
+    constexpr void tag_invoke(serialize_body_tag, CharT const (&str)[N], BodyType& body) { // NOLINT(*-c-arrays)
+        tag_invoke(serialize_body_tag{}, stl::basic_string_view<CharT>{str, N}, body);
+    }
+
     template <typename CharT, HTTPResponse ResponseType>
     constexpr void tag_invoke(serialize_response_body_tag, stl::basic_string_view<CharT> const str, ResponseType& res) {
         res.headers.set("Content-Length", ascii::size(str));

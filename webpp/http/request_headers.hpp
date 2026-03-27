@@ -23,13 +23,12 @@ namespace webpp::http {
      * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
     template <HTTPRequestHeaderFieldsProvider FieldsProviderType>
-    class request_headers : public headers_container<FieldsProviderType> {
+    struct request_headers : headers_container<FieldsProviderType> {
         using fields_provider_type = headers_container<FieldsProviderType>;
 
         static_assert(HTTPRequestHeaderFieldsProvider<fields_provider_type>,
                       "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
-      public:
         using field_type       = typename fields_provider_type::field_type;
         using name_type        = typename field_type::name_type;
         using value_type       = typename field_type::value_type;

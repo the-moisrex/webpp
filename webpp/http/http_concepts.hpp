@@ -5,6 +5,7 @@
 
 #include "../application/application_concepts.hpp"
 #include "../std/optional.hpp"
+#include "../std/string_concepts.hpp"
 #include "./body_concepts.hpp"
 
 namespace webpp::http {

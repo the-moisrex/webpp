@@ -286,7 +286,7 @@ namespace webpp {
         template <typename... Args>
         explicit fake_proto(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
-            req{*this} {}
+            req{} {}
 
         [[nodiscard]] constexpr bool is_ssl_available() const noexcept {
             return false;

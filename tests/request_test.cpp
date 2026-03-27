@@ -2,8 +2,8 @@
 
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/request_view.hpp"
-#include "common/fake_protocol.hpp"
-#include "common/test.hpp"
+#include "./common/fake_protocol.hpp"
+#include "./common/test.hpp"
 
 
 using namespace webpp;
@@ -13,6 +13,8 @@ using namespace webpp::http;
 
 using fake_protocol = fake_proto<fake_app>;
 using req_t         = typename fake_protocol::request_type;
+
+static_assert(SerializableBody<stl::string_view, typename req_t::body_type>, "Text Based request body");
 
 TEST(HTTPRequestTest, ConceptTests) {
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<request>)) << "Request is not a valid request!!";
@@ -49,7 +51,7 @@ TEST(HTTPRequestTest, DynamicRequest) {
 
 TEST(HTTPRequestTest, RequestViewTest) {
     fake_protocol pt;
-    req_t         req1{pt};
+    req_t         req1;
 
     req1.data.emplace("Content-Length", "23");
     req1.data.emplace("SERVER_PROTOCOL", "HTTP/1.1");
@@ -65,7 +67,7 @@ TEST(HTTPRequestTest, RequestViewTest) {
 
 TEST(HTTPRequestTest, RequestCopying) {
     fake_protocol pt;
-    req_t         req1{pt};
+    req_t         req1;
 
     req1.data.emplace("Content-Length", "23");
     req1.data.emplace("SERVER_PROTOCOL", "HTTP/1.1");

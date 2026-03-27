@@ -188,6 +188,8 @@ namespace webpp::http {
         [[nodiscard]] constexpr http::communicator_type which_communicator() const noexcept {
             return static_cast<http::communicator_type>(communicator().index());
         }
+
+        // todo: add get_allocator and use it in children?
     };
 
     template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
@@ -479,8 +481,7 @@ namespace webpp::http {
                     }
                 }
             } else {
-                this->communicator().template emplace<string_communicator_type>(
-                  get_alloc_for<string_communicator_type>(*this));
+                this->communicator().template emplace<string_communicator_type>(alloc);
                 auto& text_writer = stl::get<string_communicator_type>(this->communicator());
                 text_writer.append(data, count);
             }
@@ -520,8 +521,7 @@ namespace webpp::http {
                 (*stream_writer)->write(reinterpret_cast<char_type const*>(data), count);
                 return count;
             }
-            this->communicator().template emplace<cstream_communicator_type>(
-              get_alloc_for<cstream_communicator_type>(*this));
+            this->communicator().template emplace<cstream_communicator_type>(alloc);
             auto& cstream_writer = stl::get<cstream_communicator_type>(this->communicator());
             return cstream_writer.write(data, count);
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -596,9 +596,8 @@ namespace webpp::http {
 
       private:
         void init_stream() {
-            this->communicator().template emplace<stream_communicator_type>(stl::allocate_shared<stream_type>(
-              get_allocator<stream_type>(*this),
-              std::ios_base::in | std::ios_base::out));
+            this->communicator().template emplace<stream_communicator_type>(
+              stl::allocate_shared<stream_type>(alloc.of<CharT>(), std::ios_base::in | std::ios_base::out));
         }
     };
 
