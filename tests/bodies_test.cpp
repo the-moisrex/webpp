@@ -3,7 +3,7 @@
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/response_body.hpp"
 #include "../webpp/std/string.hpp"
-#include "common/test.hpp"
+#include "./common/test.hpp"
 
 #include <filesystem>
 
@@ -13,13 +13,13 @@ using namespace webpp::details;
 using namespace webpp::http::details;
 
 
-using string_type = traits::string<default_traits>;
-using body_type   = response_body<default_traits>;
+using string_type = stl::string;
+using body_type   = response_body<char>;
 
 TEST(Body, Concepts) {
-    EXPECT_TRUE(bool(BodyReader<body_reader<default_traits>>));
-    EXPECT_TRUE(bool(BodyReader<body_writer<default_traits>>));
-    EXPECT_TRUE(bool(BodyWriter<body_writer<default_traits>>));
+    EXPECT_TRUE(bool(BodyReader<body_reader<char>>));
+    EXPECT_TRUE(bool(BodyReader<body_writer<char>>));
+    EXPECT_TRUE(bool(BodyWriter<body_writer<char>>));
 }
 
 struct custom_body_type {
@@ -33,17 +33,15 @@ static_assert(DeserializableBody<stl::string_view, body_type>, "string view is n
 static_assert(DeserializableBody<char const*, body_type>, "c-string is not deserializable but it should be.");
 
 TEST(Body, CustomBodyTypeSerializerTest) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
+    body_type body;
     body = custom_body_type{};
     EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
 }
 
 TEST(Body, Text) {
-    enable_owner_traits<default_traits> et;
-    body_type                           b{et, "Testing"};
+    body_type b{"Testing"};
     EXPECT_EQ(b.template as<std::string_view>(), "Testing");
-    EXPECT_STREQ(b.template as<char const*>(), "Testing") << stl::string_view{b.as<char const*>()};
+    EXPECT_TRUE(std::strcmp(b.template as<char const*>(), "Testing") == 0) << stl::string_view{b.as<char const*>()};
 
     // todo
     // EXPECT_TRUE(b == "Testing");
@@ -51,21 +49,21 @@ TEST(Body, Text) {
     string_type const str = "hello";
     b                     = str;
 
-    EXPECT_STREQ(b.as<char const*>(), "hello");
+    EXPECT_TRUE(std::strcmp(b.as<char const*>(), "hello") == 0);
 
     constexpr std::string_view sth = "nice";
     b                              = sth;
-    EXPECT_STREQ(b.as<char const*>(), "nice");
+    EXPECT_TRUE(std::strcmp(b.as<char const*>(), "nice") == 0);
 
     b = string_type("cool");
     EXPECT_EQ(b.as<stl::string_view>(), "cool");
 
-    body_type bt{et};
+    body_type bt;
     {
         string_type            _str = "testing";
         std::string_view const test = _str;
         bt                          = test;
-        EXPECT_STREQ(bt.as(), test.data());
+        EXPECT_TRUE(std::strcmp(bt.as(), test.data()) == 0);
         _str = "";
     }
     // EXPECT_NE(bt.string(), "testing") << "The test should be empty since it was a string_view and not a
@@ -73,8 +71,7 @@ TEST(Body, Text) {
 }
 
 TEST(Body, File) {
-    enable_owner_traits<default_traits> et;
-    std::filesystem::path               file = std::filesystem::temp_directory_path();
+    std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};
     handle << "Hello World";
@@ -89,24 +86,23 @@ TEST(Body, File) {
 
     // so the file is okay
 
-    body_type the_body{et};
+    body_type the_body;
     the_body = "data";
-    EXPECT_STREQ(the_body.as<char const*>(), "data");
+    EXPECT_TRUE(std::strcmp(the_body.as<char const*>(), "data") == 0);
     // ASSERT_TRUE(the_body.load(file));
     // EXPECT_EQ(the_body.as(), "Hello World");
     std::filesystem::remove(file);
 }
 
 TEST(Body, StringCustomBody) {
-    enable_owner_traits<default_traits> et;
     static_assert(istl::String<stl::string> && stl::is_default_constructible_v<stl::string>,
                   "We need string to be default constructible for this test to work.");
-    body_type body{et, "Testing"};
+    body_type body{"Testing"};
     EXPECT_EQ(as<std::string>(body), "Testing");
     body                       = "Hello World";
     stl::string const body_str = body.as();
     EXPECT_EQ(body_str, "Hello World");
-    body_type body2{et};
+    body_type body2;
     body2          = "Hello World";
     auto body_str2 = body2.template as<stl::string>();
     EXPECT_EQ(body_str, body_str2);
@@ -120,9 +116,8 @@ TEST(Body, StringCustomBody) {
 ////////////////////////////////////////////////// Read & Write //////////////////////////////////////////////////
 
 TEST(Body, BodyStreamToStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "one two three";
+    body_type         body;
+    stl::string const str = "one two three";
     body << str;
     stl::string one, two, three;
     body >> one >> two >> three;
@@ -137,9 +132,8 @@ TEST(Body, BodyStreamToStream) {
 }
 
 TEST(Body, BodyCStreamToCStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
@@ -151,9 +145,8 @@ TEST(Body, BodyCStreamToCStream) {
 }
 
 TEST(Body, BodyTextToText) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.append(str.data(), str.size());
     stl::string const str2{body.data(), body.size()};
     EXPECT_EQ(str, str2);
@@ -162,9 +155,8 @@ TEST(Body, BodyTextToText) {
 ////////////////////////////////////////////////// Cross Talk //////////////////////////////////////////////////
 
 TEST(Body, BodyCrossTalkCStreamToText) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
     ASSERT_NE(body.data(), nullptr);
     stl::string const str2{body.data(), body.size()};
@@ -172,9 +164,8 @@ TEST(Body, BodyCrossTalkCStreamToText) {
 }
 
 TEST(Body, BodyCrossTalkCStreamToStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
     stl::string str2;
     body >> str2;
@@ -182,9 +173,8 @@ TEST(Body, BodyCrossTalkCStreamToStream) {
 }
 
 TEST(Body, BodyCrossTalkTextToStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.append(str.data(), str.size());
     stl::string str2;
     body >> str2;
@@ -192,9 +182,8 @@ TEST(Body, BodyCrossTalkTextToStream) {
 }
 
 TEST(Body, BodyCrossTalkTextToCStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body.append(str.data(), str.size());
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
@@ -206,9 +195,8 @@ TEST(Body, BodyCrossTalkTextToCStream) {
 }
 
 TEST(Body, BodyCrossTalkStreamToCStream) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    body_type         body;
+    stl::string const str = "this is a test";
     body << str;
     stl::string                 str2;
     static constexpr auto       buff_size = 10;

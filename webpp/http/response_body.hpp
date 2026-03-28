@@ -21,6 +21,8 @@ namespace webpp::http {
 
         static constexpr auto log_cat = "ResBody";
 
+        using body_writer<CharT, AllocT>::body_writer; // ctor
+
         constexpr response_body(response_body const&)                = default;
         constexpr response_body(response_body&&) noexcept            = default;
         constexpr response_body& operator=(response_body const&)     = default;

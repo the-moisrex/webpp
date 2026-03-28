@@ -137,6 +137,8 @@ namespace webpp::http {
         communicator_storage_type communicator_var{stl::monostate{}};
 
       public:
+        constexpr body_communicator() noexcept = default;
+
         template <typename ComT>
             requires(istl::part_of<stl::remove_cvref_t<ComT>,
                                    string_communicator_type,
@@ -456,6 +458,7 @@ namespace webpp::http {
         static constexpr auto log_cat = "BodyWriter";
 
         using body_reader<CharT, AllocT>::body_reader;
+
         constexpr body_writer(body_writer const&)                = default;
         constexpr body_writer(body_writer&&) noexcept            = default;
         constexpr body_writer& operator=(body_writer const&)     = default;
