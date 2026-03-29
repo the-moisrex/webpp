@@ -7,8 +7,7 @@
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/response_body.hpp"
 #include "../webpp/traits/enable_traits.hpp"
-#include "common/test.hpp"
-#include "traits/default_traits.hpp"
+#include "./common/test.hpp"
 
 #include <string>
 
@@ -17,12 +16,11 @@ using namespace webpp;
 using namespace webpp::http;
 
 
-using res_t = simple_response<default_traits>;
+using res_t = simple_response<char>;
 
 TEST(HTTPResponseTest, Type) {
-    enable_owner_traits<default_traits> et;
-    auto                                return_callback = [&] {
-        return res_t::with_body(et, "Hello");
+    auto return_callback = [&] {
+        return res_t::with_body("Hello");
     };
     using ret_type       = stl::remove_cvref_t<::std::invoke_result_t<decltype(return_callback)>>;
     constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
@@ -50,10 +48,9 @@ TEST(HTTPResponseTest, VariantCopyAssignment) {
 }
 
 TEST(HTTPResponseTest, ResponseBodyCopyCtor) {
-    using body_type = response_body<default_dynamic_traits>;
-    enable_owner_traits<default_dynamic_traits> et;
+    using body_type = response_body<char>;
 
-    body_type one{et};
+    body_type one;
     one = "hello world";
     EXPECT_EQ(as<std::string>(one), "hello world");
     body_type two{one};
@@ -62,11 +59,10 @@ TEST(HTTPResponseTest, ResponseBodyCopyCtor) {
 }
 
 TEST(HTTPResponseTest, ResponseBodyCopyAssignment) {
-    using body_type = response_body<default_dynamic_traits>;
-    enable_owner_traits<default_dynamic_traits> et;
+    using body_type = response_body<char>;
 
-    body_type one{et};
-    body_type two{et};
+    body_type one;
+    body_type two;
     one = "hello world";
     EXPECT_EQ(as<std::string>(one), "hello world");
     two = one;
@@ -75,9 +71,8 @@ TEST(HTTPResponseTest, ResponseBodyCopyAssignment) {
 }
 
 TEST(HTTPResponseTest, Init) {
-    enable_owner_traits<default_traits> et;
-    HTTPResponse auto                   res  = res_t::create(et);
-    HTTPResponse auto                   res2 = res_t::create(et);
+    HTTPResponse auto res  = res_t::create();
+    HTTPResponse auto res2 = res_t::create();
 
     EXPECT_TRUE(res == res2);
 
@@ -92,8 +87,7 @@ TEST(HTTPResponseTest, Init) {
 }
 
 TEST(HTTPResponseTest, ResHeaders) {
-    enable_owner_traits<default_traits> et;
-    HTTPResponse auto                   res = res_t::create(et);
+    HTTPResponse auto res = res_t::create();
     res.headers.set("one", "1");
     EXPECT_EQ(res.headers["one"], "1");
     res.headers.set("two", "2");
@@ -102,17 +96,15 @@ TEST(HTTPResponseTest, ResHeaders) {
 }
 
 TEST(HTTPResponseTest, ResHeadersReference) {
-    enable_owner_traits<default_traits> et;
-    HTTPResponse auto                   res = res_t::create(et);
-    res.headers["Content-Length"]           = "10";
+    HTTPResponse auto res         = res_t::create();
+    res.headers["Content-Length"] = "10";
     EXPECT_EQ(res.headers["Content-Length"], "10");
 }
 
 TEST(HTTPResponseTest, ResHeadersMultiGet) {
-    enable_owner_traits<default_traits> et;
-    HTTPResponse auto                   res = res_t::create(et);
-    res.headers["Content-Length"]           = "10";
-    res.headers["Accept-Encoding"]          = "gzip, deflate, br";
+    HTTPResponse auto res          = res_t::create();
+    res.headers["Content-Length"]  = "10";
+    res.headers["Accept-Encoding"] = "gzip, deflate, br";
 
     auto const [length, encoding] = res.headers.get("Content-Length", "Accept-Encoding");
     EXPECT_EQ(length, "10");
@@ -121,10 +113,9 @@ TEST(HTTPResponseTest, ResHeadersMultiGet) {
 
 #if __cpp_multidimensional_subscript
 TEST(HTTPResponseTest, ResHeadersMultiGetCPP23MultiSubsOp) {
-    enable_owner_traits<default_traits> et;
-    HTTPResponse auto                   res = res_t::create(et);
-    res.headers["Content-Length"]           = "10";
-    res.headers["Accept-Encoding"]          = "gzip, deflate, br";
+    HTTPResponse auto res          = res_t::create();
+    res.headers["Content-Length"]  = "10";
+    res.headers["Accept-Encoding"] = "gzip, deflate, br";
 
     auto const [length, encoding] = res.headers["Content-Length", "Accept-Encoding"];
     EXPECT_EQ(length, "10");
@@ -133,22 +124,19 @@ TEST(HTTPResponseTest, ResHeadersMultiGetCPP23MultiSubsOp) {
 #endif
 
 TEST(HTTPResponseTest, File) {
-    enable_owner_traits<default_traits> et;
-    std::filesystem::path               file = std::filesystem::temp_directory_path();
+    std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};
     handle << "Hello World";
     handle.close();
-    EXPECT_EQ(res_t::with_body(et, file).body.as<stl::string_view>(), "Hello World");
+    EXPECT_EQ(res_t::with_body(file).body.as<stl::string_view>(), "Hello World");
     std::filesystem::remove(file);
 }
 
 TEST(HTTPResponseTest, DynamicResponse) {
-    enable_owner_traits<default_dynamic_traits> et;
-
-    response       res{et};
+    response       res;
     response const res2{res};
-    response       res3{et};
+    response       res3;
     EXPECT_EQ(res, res2) << as<std::string>(res) << as<std::string>(res2);
     EXPECT_EQ(res2, res3) << as<std::string>(res2) << as<std::string>(res3);
     res  = "string";
