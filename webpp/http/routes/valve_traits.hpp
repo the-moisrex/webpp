@@ -11,7 +11,7 @@
 #include "../../strings/replace.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
-#include "router_concepts.hpp"
+#include "./router_concepts.hpp"
 
 namespace webpp::http {
 
@@ -32,16 +32,15 @@ namespace webpp::http {
     template <typename T>
     concept Valve = ValveOf<char, default_allocator_t<char>, T>;
 
-    template <typename TraitsType, typename T>
+    template <typename CharT, typename AllocT, typename T>
     concept Mangler =
-      Traits<TraitsType> &&
-      stl::is_invocable_v<T,                           // type
-                          basic_context<TraitsType>&,  // context
-                          basic_next_route<TraitsType> // next valve
+      stl::is_invocable_v<T,                              // type
+                          basic_context<CharT, AllocT>&,  // context
+                          basic_next_route<CharT, AllocT> // next valve
                           >;
 
-    template <typename TraitsType, typename T>
-    concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
+    template <typename CharT, typename AllocT, typename T>
+    concept RouteSetter = stl::is_invocable_v<T, basic_dynamic_router<CharT, AllocT>&>;
 
     /// Get the string representation of the value and append it to the output
     template <istl::String StrT, typename Callable>
@@ -110,7 +109,6 @@ namespace webpp::http {
         using response_body_type = typename response_type::body_type;
         using invocable_inorder_type =
           istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
-        using traits_type = typename context_type::traits_type;
         using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
         static constexpr bool is_nothrow = invocable_inorder_type::is_nothrow;

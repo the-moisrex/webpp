@@ -2,11 +2,11 @@
 #define WEBPP_HTTP_RESPONSE_HPP
 
 #include "../strings/append.hpp"
-#include "header_fields.hpp"
-#include "http_concepts.hpp"
-#include "response_body.hpp"
-#include "response_headers.hpp"
-#include "status_code.hpp"
+#include "./header_fields.hpp"
+#include "./http_concepts.hpp"
+#include "./response_body.hpp"
+#include "./response_headers.hpp"
+#include "./status_code.hpp"
 
 namespace webpp::http {
 
@@ -19,7 +19,6 @@ namespace webpp::http {
         // we're not going to use trait's string type here.
         using body_type           = BodyType;
         using headers_type        = ResponseHeaderType;
-        using traits_type         = typename body_type::traits_type;
         using basic_response_type = common_http_response<ResponseHeaderType, BodyType>;
         using field_type          = typename headers_type::field_type;
 

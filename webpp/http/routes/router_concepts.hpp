@@ -14,11 +14,10 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept Context = requires(stl::remove_cvref_t<T> c) {
-        requires EnabledTraits<typename stl::remove_cvref_t<T>>;
+    concept Context = requires(stl::remove_cvref_t<T> ctx) {
         requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
         requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
-        { c.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
+        { ctx.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
     };
 
 
@@ -68,7 +67,7 @@ namespace webpp::http {
     template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_context;
 
-    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>, typename Callable = void>
+    template <typename Callable = void, istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct dynamic_route;
 
     template <typename Self = void>

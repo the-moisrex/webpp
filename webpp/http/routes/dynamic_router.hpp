@@ -3,17 +3,16 @@
 
 #include "../../std/memory.hpp"
 #include "../../std/string.hpp"
-#include "../../traits/enable_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
-#include "dynamic_route.hpp"
+#include "./dynamic_route.hpp"
 
 #include <any>
 #include <vector>
 
 namespace webpp::http {
 
-    template <Traits>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_response;
 
     /**
@@ -22,11 +21,9 @@ namespace webpp::http {
      * This class will be used directly by the developers using this whole library. So be nice and careful
      * and user-friendly.
      */
-    template <Traits TraitsType>
-    struct basic_dynamic_router : enable_traits<TraitsType>, valve<void> {
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    struct basic_dynamic_router : valve<void> {
         using valve_type             = valve<void>;
-        using traits_type            = TraitsType;
-        using etraits                = enable_traits<traits_type>;
         using route_type             = dynamic_route<traits_type>;
         using dynamic_route_type     = istl::dynamic<route_type, traits::allocator_type_of<traits_type>>;
         using vector_allocator       = traits::allocator_type_of<traits_type, dynamic_route_type>;

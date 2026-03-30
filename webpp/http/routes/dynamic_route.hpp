@@ -3,20 +3,23 @@
 #ifndef WEBPP_DYNAMIC_ROUTE_HPP
 #define WEBPP_DYNAMIC_ROUTE_HPP
 
-#include "../../traits/traits.hpp"
-#include "valves.hpp"
+#include "./router_concepts.hpp"
+#include "./valves.hpp"
 
 namespace webpp::http {
 
 
 
-    template <Traits TraitsType, typename Callable>
-    struct dynamic_route final : dynamic_route<TraitsType, void> {
-        using traits_type   = TraitsType;
-        using string_type   = traits::string<traits_type>;
-        using context_type  = basic_context<traits_type>;
-        using callable_type = stl::remove_cvref_t<Callable>;
-        using router_type   = basic_dynamic_router<traits_type>;
+    template <typename Callable, istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    struct dynamic_route final : dynamic_route<void, CharT, AllocT> {
+        using callable_type  = Callable;
+        using allocator_type = AllocT;
+        using char_type      = CharT;
+        using string_type    = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using context_type   = basic_context<CharT, AllocT>;
+        using router_type    = basic_dynamic_router<CharT, AllocT>;
+
+        static_assert(stl::is_reference_v<callable_type>, "Remove the references.");
 
       private:
         callable_type callable;
@@ -32,13 +35,13 @@ namespace webpp::http {
         dynamic_route(dynamic_route&&) noexcept                 = default;
         dynamic_route& operator=(dynamic_route const&) noexcept = delete;
         dynamic_route& operator=(dynamic_route&&) noexcept      = default;
-        ~dynamic_route() final                                  = default;
+        ~dynamic_route()                                        = default;
 
-        void operator()(context_type& ctx) final {
+        void operator()(context_type& ctx) {
             callable(ctx);
         }
 
-        void operator()(context_type& ctx, [[maybe_unused]] router_type& router) final {
+        void operator()(context_type& ctx, [[maybe_unused]] router_type& router) {
             if constexpr (stl::is_invocable_v<callable_type, context_type&, router_type&>) {
                 callable(ctx, router);
             } else {
@@ -46,23 +49,25 @@ namespace webpp::http {
             }
         }
 
-        void to_string(string_type& out) const final {
+        void to_string(string_type& out) const {
             valve_to_string(out, callable);
         }
 
-        void setup([[maybe_unused]] router_type& router) final {
+        void setup([[maybe_unused]] router_type& router) {
             if constexpr (ValveRequiresSetup<router_type, callable_type>) {
                 callable.setup(router);
             }
         }
     };
 
-    template <Traits TraitsType>
-    struct dynamic_route<TraitsType, void> {
-        using traits_type  = TraitsType;
-        using string_type  = traits::string<traits_type>;
-        using context_type = basic_context<traits_type>;
-        using router_type  = basic_dynamic_router<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT>
+    struct dynamic_route<void, CharT, AllocT> {
+        using callable_type  = void;
+        using allocator_type = AllocT;
+        using char_type      = CharT;
+        using string_type    = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using context_type   = basic_context<CharT, AllocT>;
+        using router_type    = basic_dynamic_router<CharT, AllocT>;
 
         dynamic_route()                                         = default;
         dynamic_route(dynamic_route const&)                     = default;
@@ -80,7 +85,8 @@ namespace webpp::http {
         /**
          * Utility to get a string more easily; this method should not be used in the library itself.
          */
-        template <typename StrT = string_type, typename... Args>
+        template <typename StrT = stl::basic_string<char, stl::char_traits<char>, default_allocator_t<char>>,
+                  typename... Args>
             requires((!istl::String<Args> && ...))
         [[nodiscard]] StrT to_string(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
