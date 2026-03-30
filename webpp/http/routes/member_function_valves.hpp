@@ -3,7 +3,7 @@
 #ifndef WEBPP_HTTP_ROUTER_MEMBER_FUNCTION_VALVES_HPP
 #define WEBPP_HTTP_ROUTER_MEMBER_FUNCTION_VALVES_HPP
 
-#include "valve_traits.hpp"
+#include "./valve_traits.hpp"
 
 #include <any>
 #include <typeinfo>
@@ -47,9 +47,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type    = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr void operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type    = basic_context<CharT, AllocT>;
             using callable_traits = valve_traits<method_holder, context_type>;
             callable_traits::call_set(holder, ctx);
         }

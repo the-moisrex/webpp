@@ -3,7 +3,7 @@
 #ifndef WEBPP_LOGICAL_VALVES_HPP
 #define WEBPP_LOGICAL_VALVES_HPP
 
-#include "valve_traits.hpp"
+#include "./valve_traits.hpp"
 
 namespace webpp::http {
     template <typename Callable>
@@ -29,9 +29,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using ctraits = valve_traits<next_type, basic_context<TraitsType>>;
+        template <istl::CharType CharT, Allocator AllocT>
+        [[nodiscard]] constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using ctraits = valve_traits<next_type, basic_context<CharT, AllocT>>;
             return !ctraits::call_set_get(next, ctx);
         }
 
@@ -75,9 +75,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             using ctraits      = valve_traits<next_type, context_type>;
 
             ctraits::call_set(next, ctx);
@@ -121,9 +121,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             using ctraits      = valve_traits<next_type, context_type>;
 
             ctraits::call_set(next, ctx);
@@ -167,9 +167,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 
@@ -223,9 +223,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 

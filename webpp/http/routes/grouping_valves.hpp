@@ -49,22 +49,23 @@ namespace webpp::http {
                 next{&inp_next} {}
 
             // to make sure it matches the "basic_next_route"'s return type
-            template <Traits TraitsType>
-            constexpr void call_next(basic_context<TraitsType>& ctx) const {
-                valve_traits<NextCallable, basic_context<TraitsType>>::call_set(*next, ctx);
+            template <istl::CharType CharT, Allocator AllocT>
+            constexpr void call_next(basic_context<CharT, AllocT>& ctx) const {
+                valve_traits<NextCallable, basic_context<CharT, AllocT>>::call_set(*next, ctx);
             }
 
-            template <Traits TraitsType, stl::size_t Index = 0>
-            constexpr void operator()(basic_context<TraitsType>& ctx) const {
+            template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>, stl::size_t Index = 0>
+            constexpr void operator()(basic_context<CharT, AllocT>& ctx) const {
                 if constexpr (Index == stl::tuple_size_v<tuple_type> - 1) {
                     (stl::get<stl::tuple_size_v<tuple_type> - 1>(*manglers_ptr))(
                       ctx,
-                      basic_next_route<TraitsType>{*this, &next_callable<NextCallable>::call_next<TraitsType>});
+                      basic_next_route<CharT, AllocT>{*this, &next_callable<NextCallable>::call_next<CharT, AllocT>});
                 } else if constexpr (stl::tuple_size_v<tuple_type> != 0) {
                     (stl::get<Index>(*manglers_ptr))(
                       ctx,
-                      basic_next_route<TraitsType>{*this,
-                                                   &next_callable<NextCallable>::operator()<TraitsType, Index + 1>});
+                      basic_next_route<CharT, AllocT>{
+                        *this,
+                        &next_callable<NextCallable>::operator()<CharT, AllocT, Index + 1>});
                 }
             }
         };
@@ -84,10 +85,10 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType, typename NextCallable>
-        constexpr bool operator()(basic_context<TraitsType>& ctx, NextCallable&& next) {
+        template <istl::CharType CharT, Allocator AllocT, typename NextCallable>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx, NextCallable&& next) {
             if constexpr (sizeof...(ManglerType) == 0) {
-                return valve_traits<NextCallable, basic_context<TraitsType>>::call_set_get(next, ctx);
+                return valve_traits<NextCallable, basic_context<CharT, AllocT>>::call_set_get(next, ctx);
             } else {
                 next_callable<stl::remove_cvref_t<NextCallable>> const callers{manglers, next};
                 callers(ctx);
@@ -149,9 +150,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             return stl::apply(
               [&ctx]<typename... T>(T&&... funcs) constexpr {
                   return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(funcs), ctx) && ...);
@@ -242,9 +243,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr void operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             using pre_traits   = valve_traits<pre_type, context_type>;
             using post_traits  = valve_traits<post_type, context_type>;
             if constexpr (sizeof...(Pres) > 0) {

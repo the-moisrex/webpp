@@ -7,13 +7,13 @@
 #include "../../std/string.hpp"
 #include "../../std/string_concepts.hpp"
 #include "../../std/string_view.hpp"
-#include "valve_traits.hpp"
+#include "./valve_traits.hpp"
 
 namespace webpp::http {
 
     static constexpr struct endpath_valve {
-        template <Traits TraitsType>
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
+        template <istl::CharType CharT, Allocator AllocT>
+        [[nodiscard]] constexpr bool operator()(basic_context<CharT, AllocT>& ctx) const noexcept {
             return ctx.path_traverser().at_end();
         }
 
@@ -48,9 +48,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>& ctx) {
+            using context_type = basic_context<CharT, AllocT>;
             return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
                   return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
@@ -110,8 +110,8 @@ namespace webpp::http {
         constexpr segment_string& operator=(segment_string const&)     = default;
         constexpr segment_string& operator=(segment_string&&) noexcept = default;
 
-        template <typename TraitsType>
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
+        template <istl::CharType CharT, Allocator AllocT>
+        [[nodiscard]] constexpr bool operator()(basic_context<CharT, AllocT>& ctx) const noexcept {
             return ctx.check_segment(seg);
         }
 

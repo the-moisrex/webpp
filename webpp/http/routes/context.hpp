@@ -179,7 +179,7 @@ namespace webpp::http {
     /**
      * The standard and dynamic context which will own its data
      */
-    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    template <istl::CharType CharT, Allocator AllocT>
     struct basic_context : details::common_context_methods<basic_request<CharT, AllocT>> {
         using request_type        = basic_request<CharT, AllocT>;
         using static_context_type = simple_context<request_type>;
@@ -187,7 +187,7 @@ namespace webpp::http {
         using string_type         = typename request_type::string_type;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_traverser<string_type>;
-        using dynamic_route_type  = dynamic_route<CharT, AllocT>;
+        using dynamic_route_type  = dynamic_route<void, CharT, AllocT>;
         using dynamic_route_ptr   = dynamic_route_type*;
 
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)

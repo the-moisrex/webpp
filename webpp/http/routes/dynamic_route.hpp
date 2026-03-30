@@ -10,7 +10,7 @@ namespace webpp::http {
 
 
 
-    template <typename Callable, istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    template <typename Callable, istl::CharType CharT, Allocator AllocT>
     struct dynamic_route final : dynamic_route<void, CharT, AllocT> {
         using callable_type  = Callable;
         using allocator_type = AllocT;

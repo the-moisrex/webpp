@@ -143,6 +143,8 @@ namespace webpp::http {
 
         using string_type      = typename headers_type::string_type;
         using string_view_type = typename headers_type::string_view_type;
+        using char_type        = CharT;
+        using allocator_type   = AllocT;
 
       private:
         string_type   requested_uri;
