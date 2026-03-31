@@ -12,7 +12,7 @@
 
 namespace webpp::http {
 
-    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
+    template <istl::CharType CharT, Allocator AllocT>
     struct basic_response;
 
     /**

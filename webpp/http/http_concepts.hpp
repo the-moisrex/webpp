@@ -105,6 +105,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
+        typename stl::remove_cvref_t<T>::char_type;
         typename stl::remove_cvref_t<T>::string_type;
         typename stl::remove_cvref_t<T>::string_view_type;
         typename stl::remove_cvref_t<T>::headers_type;

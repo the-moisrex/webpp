@@ -10,7 +10,7 @@
 #include "../../webpp/http/routes/static_router.hpp"
 #include "../../webpp/std/string_view.hpp"
 #include "../../webpp/strings/to_case.hpp"
-#include "test.hpp"
+#include "./test.hpp"
 
 #include <map>
 
@@ -23,6 +23,7 @@ namespace webpp {
         using super       = CommonHTTPRequest;
         using string_type = typename super::string_type;
         using string_view = typename super::string_view_type;
+        using char_type   = char;
 
         stl::map<string_type, string_type> data{};
 
@@ -30,7 +31,7 @@ namespace webpp {
         using pstring_type = typename request_view::string_type;
 
         template <typename T>
-        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+        [[nodiscard]] pstring_type pstringify(T&& str) const {
             return istl::stringify_of<pstring_type>(stl::forward<T>(str), alloc);
         }
 

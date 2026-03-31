@@ -2,8 +2,8 @@
 #include "../webpp/http/routes/context.hpp"
 
 #include "../webpp/http/bodies/string.hpp"
-#include "common/fake_protocol.hpp"
-#include "common/test.hpp"
+#include "./common/fake_protocol.hpp"
+#include "./common/test.hpp"
 
 using namespace webpp;
 using namespace webpp::http;
@@ -26,20 +26,18 @@ TEST(Routes, ContextTests) {
     // todo: do we need this?
     // EXPECT_TRUE(static_cast<bool>(Protocol<typename request_type::protocol_type>));
 
-    EXPECT_TRUE(static_cast<bool>(Traits<typename context_type::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type::request_type>));
     EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
     fake_protocol server1;
-    request_type  req{server1};
+    request_type  req;
     context_type  ctx{req};
 
 
     using request_type2 = typename fake_proto<fake::app>::request_type;
     using context_type2 = simple_context<request_type2>;
-    EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));
     EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<context_type2>));
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type2>));

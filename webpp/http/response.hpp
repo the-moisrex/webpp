@@ -204,7 +204,7 @@ namespace webpp::http {
       common_http_response<response_headers<header_fields_provider<header_field_of<CharT, AllocT>>>,
                            response_body<CharT, AllocT>>;
 
-    template <istl::CharType CharT, Allocator AllocT>
+    template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_response : public simple_response<CharT, AllocT> {
         using common_http_response_type = simple_response<CharT, AllocT>;
         using body_type                 = typename common_http_response_type::body_type;
