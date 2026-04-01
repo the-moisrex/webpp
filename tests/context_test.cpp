@@ -47,7 +47,7 @@ TEST(Routes, ContextTests) {
     //               "Both should produce the same type for the copying below to work");
 
     fake_protocol               server;
-    context_type2::request_type req2{server};
+    context_type2::request_type req2;
     context_type2 const         ctx2{req2};
     auto                        res = ctx2.create_response("test");
     EXPECT_EQ(res.body.as_string(), "test") << res.body.as_string();
