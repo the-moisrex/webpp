@@ -24,10 +24,7 @@ namespace webpp::http {
             using request_ref    = request_type&;
             using request_cref   = request_type const&;
 
-            template <Context CtxT>
-                requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-            explicit constexpr common_context_methods(CtxT const& ctx) noexcept : common_context_methods{ctx.request} {}
-
+            constexpr common_context_methods() noexcept                                    = default;
             constexpr common_context_methods(common_context_methods&& ctx) noexcept        = default;
             constexpr common_context_methods(common_context_methods const& ctx) noexcept   = default;
             constexpr common_context_methods& operator=(common_context_methods const&)     = default;
@@ -44,7 +41,7 @@ namespace webpp::http {
              */
             template <typename... Args>
             [[nodiscard]] constexpr HTTPResponse auto create_response(Args&&... args) const noexcept {
-                return response_type::create(*this, stl::forward<Args>(args)...);
+                return response_type::create(stl::forward<Args>(args)...);
             }
 
             /**
@@ -52,7 +49,7 @@ namespace webpp::http {
              */
             template <typename... Args>
             [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
-                return with_body(*this, stl::forward<Args>(args)...);
+                return response_type::with_body(stl::forward<Args>(args)...);
             }
 
             [[nodiscard]] static consteval bool is_debug() noexcept {
@@ -158,9 +155,7 @@ namespace webpp::http {
 
         // NOLINTEND(*-non-private-member-variables-in-classes)
 
-        explicit constexpr common_context_view(request_ref inp_req) noexcept
-          : context_methods{inp_req},
-            request{inp_req} {}
+        explicit constexpr common_context_view(request_ref inp_req) noexcept : context_methods{}, request{inp_req} {}
 
         template <Context CtxT>
             requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)

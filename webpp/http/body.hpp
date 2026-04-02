@@ -10,6 +10,7 @@
 #include "./bodies/string.hpp"
 #include "./http_concepts.hpp"
 
+#include <concepts>
 #include <exception>
 #include <memory>
 #include <string>
@@ -171,6 +172,21 @@ namespace webpp::http {
         template <StreamBasedBodyReader ComT>
         explicit constexpr body_communicator(ComT& body)
           : communicator_var{string_communicator_type{details::get_as<string_type>(body)}} {}
+
+        template <typename... Args>
+            requires(stl::constructible_from<string_communicator_type, Args...> && sizeof...(Args) >= 1)
+        explicit constexpr body_communicator(Args&&... args)
+          : communicator_var{string_communicator_type{stl::forward<Args>(args)...}} {}
+
+        template <typename... Args>
+            requires(stl::constructible_from<stream_communicator_type, Args...> && sizeof...(Args) >= 1)
+        explicit constexpr body_communicator(Args&&... args)
+          : communicator_var{stream_communicator_type{stl::forward<Args>(args)...}} {}
+
+        template <typename... Args>
+            requires(stl::constructible_from<cstream_communicator_type, Args...> && sizeof...(Args) >= 1)
+        explicit constexpr body_communicator(Args&&... args)
+          : communicator_var{cstream_communicator_type{stl::forward<Args>(args)...}} {}
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;

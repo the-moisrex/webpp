@@ -8,6 +8,8 @@
 #include "./response_headers.hpp"
 #include "./status_code.hpp"
 
+#include <concepts>
+
 namespace webpp::http {
 
 
@@ -35,6 +37,7 @@ namespace webpp::http {
 
 
         template <typename T>
+            requires stl::constructible_from<body_type, T>
         explicit constexpr common_http_response(T&& body_obj)
           : headers{},
             body{stl::forward<T>(body_obj)} {}
@@ -113,6 +116,7 @@ namespace webpp::http {
          * Generate a response
          */
         template <typename... Args>
+            requires stl::constructible_from<body_type, Args...>
         [[nodiscard]] static constexpr HTTPResponse auto create(Args&&... args) {
             return common_http_response{stl::forward<Args>(args)...};
         }
