@@ -33,7 +33,7 @@ TEST(HTTPResponseTest, Type) {
     EXPECT_TRUE(three);
     //    EXPECT_TRUE(four);
     //    EXPECT_TRUE(five);
-    EXPECT_TRUE(std::strcmp("Hello", return_callback().body.as<char const*>()) == 0);
+    EXPECT_STREQ("Hello", return_callback().body.as<char const*>());
 }
 
 TEST(HTTPResponseTest, VariantCopyAssignment) {

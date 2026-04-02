@@ -182,6 +182,24 @@ namespace testing {
         }
     };
 
+    struct cmp_cstr_equal {
+        template <typename L, typename R>
+        constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {
+            auto to_view = [](auto const& value) -> std::string_view {
+                using value_type = std::remove_cvref_t<decltype(value)>;
+                if constexpr (std::is_same_v<value_type, std::nullptr_t>) {
+                    return {};
+                } else if constexpr (std::is_convertible_v<value_type, char const*>) {
+                    auto const* ptr = static_cast<char const*>(value);
+                    return ptr == nullptr ? std::string_view{} : std::string_view{ptr};
+                } else {
+                    return std::string_view{value};
+                }
+            };
+            return to_view(lhs) == to_view(rhs);
+        }
+    };
+
     struct cmp_less {
         template <typename L, typename R>
         constexpr bool operator()(L const& lhs, R const& rhs) const noexcept {

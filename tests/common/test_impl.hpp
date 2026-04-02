@@ -365,6 +365,10 @@ namespace testing {
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_NE", ::testing::cmp_not_equal{}))
 #define ASSERT_NE(a, b) \
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_NE", ::testing::cmp_not_equal{}))
+#define EXPECT_STREQ(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_STREQ", ::testing::cmp_cstr_equal{}))
+#define ASSERT_STREQ(a, b) \
+    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_STREQ", ::testing::cmp_cstr_equal{}))
 #define EXPECT_TRUE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), true, __FILE__, __LINE__, #x, "EXPECT_TRUE"))
 #define ASSERT_TRUE(x) \
