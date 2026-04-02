@@ -225,11 +225,14 @@ namespace webpp::http {
 
         using body_communicator<CharT, AllocT>::body_communicator;
 
+        constexpr body_reader() noexcept = default;
+
         constexpr body_reader(body_reader const& other)
           : body_communicator<CharT, AllocT>{other.as_string_communicator()} {}
 
         template <HTTPBodyHolder H>
-        explicit constexpr body_reader(H& holder) : body_reader{holder.body} {}
+        explicit constexpr body_reader(H& holder)
+          : body_communicator<CharT, AllocT>{holder.body.as_string_communicator()} {}
 
         constexpr body_reader(body_reader&&) noexcept = default;
 
@@ -438,8 +441,10 @@ namespace webpp::http {
             }
             auto const this_communicator = this->which_communicator();
             if (this_communicator != body.which_communicator()) {
+                // Cross-communicator equality can require unsafe reinterpretation or lossy normalization.
                 return false;
             }
+
             switch (this_communicator) {
                 using enum communicator_type;
                 case nothing: return true;
@@ -447,12 +452,19 @@ namespace webpp::http {
                     auto const this_size = size();
                     return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
                 }
-                case stream_based: // we can't check equality of streams without changing them
-                case cstream_based:
-                    return false;  // c-streams don't have a mechanism to read but don't modify, so always
-                    // false too
+                case stream_based: {
+                    auto const* this_stream = stl::get_if<stream_communicator_type>(&this->communicator());
+                    auto const* that_stream = stl::get_if<stream_communicator_type>(&body.communicator());
+                    return this_stream != nullptr && that_stream != nullptr &&
+                           (*this_stream)->str() == (*that_stream)->str();
+                }
+                case cstream_based: {
+                    auto const* this_cstream = stl::get_if<cstream_communicator_type>(&this->communicator());
+                    auto const* that_cstream = stl::get_if<cstream_communicator_type>(&body.communicator());
+                    return this_cstream != nullptr && that_cstream != nullptr && *this_cstream == *that_cstream;
+                }
                 default: stl::unreachable();
-            }
+            };
         }
 
         [[nodiscard]] constexpr bool operator!=(body_reader const& body) const noexcept {
@@ -474,6 +486,8 @@ namespace webpp::http {
         static constexpr auto log_cat = "BodyWriter";
 
         using body_reader<CharT, AllocT>::body_reader;
+
+        constexpr body_writer() noexcept = default;
 
         constexpr body_writer(body_writer const&)                = default;
         constexpr body_writer(body_writer&&) noexcept            = default;
@@ -583,18 +597,20 @@ namespace webpp::http {
         template <typename T>
         constexpr body_writer& set(T&& obj) {
             clear();
-            if constexpr (BodyReader<T> &&
-                          requires {
-                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
-                          })
-            {
-                this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
+            if constexpr (requires { obj.communicator(); }) {
+                this->communicator() = obj.communicator();
             } else if constexpr (stl::constructible_from<string_communicator_type, T>) {
                 this->communicator().template emplace<string_communicator_type>(stl::forward<T>(obj));
             } else if constexpr (stl::constructible_from<stream_communicator_type, T>) {
                 this->communicator().template emplace<stream_communicator_type>(stl::forward<T>(obj));
             } else if constexpr (stl::constructible_from<cstream_communicator_type, T>) {
                 this->communicator().template emplace<cstream_communicator_type>(stl::forward<T>(obj));
+            } else if constexpr (BodyReader<T> &&
+                                 requires {
+                                     { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
+                                 })
+            {
+                this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
             } else {
                 add(stl::forward<T>(obj));
             }
