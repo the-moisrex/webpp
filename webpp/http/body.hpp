@@ -602,6 +602,8 @@ namespace webpp::http {
             clear();
             if constexpr (requires { obj.communicator(); }) {
                 this->communicator() = obj.communicator();
+            } else if constexpr (SerializableResponseBody<T, body_writer> || SerializableBody<T, body_writer>) {
+                add(stl::forward<T>(obj));
             } else if constexpr (stl::constructible_from<string_communicator_type, T>) {
                 this->communicator().template emplace<string_communicator_type>(stl::forward<T>(obj));
             } else if constexpr (stl::constructible_from<stream_communicator_type, T>) {
@@ -615,7 +617,7 @@ namespace webpp::http {
             {
                 this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
             } else {
-                add(stl::forward<T>(obj));
+                static_assert_false(T, "Cannot serialize/move the specified type and use it as a body.");
             }
             return *this;
         }
