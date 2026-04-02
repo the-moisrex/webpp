@@ -285,7 +285,8 @@ namespace webpp::http {
 
     template <typename CharT, stl::size_t N, HTTPBody BodyType>
     constexpr void tag_invoke(serialize_body_tag, CharT const (&str)[N], BodyType& body) { // NOLINT(*-c-arrays)
-        tag_invoke(serialize_body_tag{}, stl::basic_string_view<CharT>{str, N}, body);
+        auto const body_size = N > 0 && str[N - 1] == CharT{} ? N - 1 : N;
+        tag_invoke(serialize_body_tag{}, stl::basic_string_view<CharT>{str, body_size}, body);
     }
 
     template <typename CharT, HTTPResponse ResponseType>
