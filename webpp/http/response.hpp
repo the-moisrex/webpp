@@ -33,11 +33,11 @@ namespace webpp::http {
 
         // NOLINTEND(*-non-private-member-variables-in-classes)
 
-
-
+        constexpr common_http_response() = default;
 
         template <typename T>
-            requires stl::constructible_from<body_type, T>
+            requires(stl::constructible_from<body_type, T> && !HTTPResponse<stl::remove_cvref_t<T>> &&
+                     !stl::same_as<stl::remove_cvref_t<T>, body_type>)
         explicit constexpr common_http_response(T&& body_obj)
           : headers{},
             body{stl::forward<T>(body_obj)} {}
@@ -104,7 +104,9 @@ namespace webpp::http {
 
         template <typename T>
         [[nodiscard]] static constexpr auto with_body(T&& obj) {
-            return create(stl::forward<T>(obj));
+            basic_response_type res{};
+            res.set(stl::forward<T>(obj));
+            return res;
         }
 
         // template <typename... Args>
@@ -116,9 +118,9 @@ namespace webpp::http {
          * Generate a response
          */
         template <typename... Args>
-            requires stl::constructible_from<body_type, Args...>
+            requires stl::constructible_from<basic_response_type, Args...>
         [[nodiscard]] static constexpr HTTPResponse auto create(Args&&... args) {
-            return common_http_response{stl::forward<Args>(args)...};
+            return basic_response_type{stl::forward<Args>(args)...};
         }
 
         template <HTTPResponse ResType>
@@ -224,6 +226,7 @@ namespace webpp::http {
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
+            requires(!HTTPResponse<stl::remove_cvref_t<T>> && !stl::same_as<stl::remove_cvref_t<T>, body_type>)
         explicit constexpr basic_response(T&& body_obj) : common_http_response_type{stl::forward<T>(body_obj)} {}
 
         template <HTTPResponse ResT>
