@@ -140,6 +140,11 @@ namespace webpp::http {
       public:
         constexpr body_communicator() noexcept = default;
 
+        explicit constexpr body_communicator(communicator_storage_type&& inp_var) noexcept
+          : communicator_var{stl::move(inp_var)} {}
+
+        explicit constexpr body_communicator(communicator_storage_type const& inp_var) : communicator_var{inp_var} {}
+
         template <typename ComT>
             requires(istl::part_of<stl::remove_cvref_t<ComT>,
                                    string_communicator_type,
@@ -227,12 +232,10 @@ namespace webpp::http {
 
         constexpr body_reader() noexcept = default;
 
-        constexpr body_reader(body_reader const& other)
-          : body_communicator<CharT, AllocT>{other.as_string_communicator()} {}
+        constexpr body_reader(body_reader const& other) : body_communicator<CharT, AllocT>{other.communicator()} {}
 
         template <HTTPBodyHolder H>
-        explicit constexpr body_reader(H& holder)
-          : body_communicator<CharT, AllocT>{holder.body.as_string_communicator()} {}
+        explicit constexpr body_reader(H& holder) : body_communicator<CharT, AllocT>{holder.body.comunicator()} {}
 
         constexpr body_reader(body_reader&&) noexcept = default;
 
