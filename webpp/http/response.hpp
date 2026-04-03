@@ -215,6 +215,7 @@ namespace webpp::http {
         using common_http_response_type = simple_response<CharT, AllocT>;
         using body_type                 = typename common_http_response_type::body_type;
 
+        using simple_response<CharT, AllocT>::simple_response;
         using simple_response<CharT, AllocT>::operator=;
 
         constexpr basic_response()                                          = default;
@@ -223,19 +224,6 @@ namespace webpp::http {
         constexpr basic_response& operator=(basic_response const&) noexcept = default;
         constexpr basic_response& operator=(basic_response&&) noexcept      = default;
         constexpr ~basic_response()                                         = default;
-
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <typename T>
-            requires(!HTTPResponse<stl::remove_cvref_t<T>> && !stl::same_as<stl::remove_cvref_t<T>, body_type>)
-        explicit constexpr basic_response(T&& body_obj) : common_http_response_type{stl::forward<T>(body_obj)} {}
-
-        template <HTTPResponse ResT>
-            requires(!istl::cvref_as<basic_response, ResT>)
-        explicit constexpr basic_response(ResT&& res) : common_http_response_type{stl::forward<ResT>(res)} {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
-
-        constexpr explicit basic_response(body_type const& inp_body) : common_http_response_type{inp_body} {}
     };
 
     using response = basic_response<char>;
