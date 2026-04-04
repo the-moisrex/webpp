@@ -16,25 +16,23 @@
 
 namespace webpp::http {
 
-    template <Application App, Traits TraitsType = default_traits>
-    struct cgi : common_http_protocol<TraitsType, App> {
-        using traits_type               = TraitsType;
-        using etraits                   = enable_owner_traits<traits_type>;
+    template <Application App, istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
+    struct cgi : common_http_protocol<App> {
         using application_type          = App;
         using protocol_type             = cgi;
-        using string_view_type          = traits::string_view<traits_type>;
-        using char_type                 = traits::char_type<traits_type>;
-        using string_type               = traits::string<traits_type>;
-        using general_allocator_type    = traits::allocator_type_of<traits_type, char_type>;
-        using common_protocol_type      = common_http_protocol<TraitsType, App>;
+        using string_view_type          = stl::basic_string_view<CharT>;
+        using char_type                 = CharT;
+        using string_type               = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using allocator_type            = AllocT;
+        using common_protocol_type      = common_http_protocol<App>;
         using app_wrapper_type          = typename common_protocol_type::app_wrapper_type;
         using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;
 
-        using fields_provider      = header_fields_provider<header_field_of<traits_type>>;
+        using fields_provider      = header_fields_provider<header_field_of<CharT, AllocT>>;
         using request_headers_type = request_headers<fields_provider>;
-        using request_body_type    = request_body<traits_type, request_body_communicator>;
+        using request_body_type    = request_body<request_body_communicator>;
         using request_type         = simple_request<cgi_request, request_headers_type, request_body_type>;
-        using response_type        = simple_response<traits_type>;
+        using response_type        = simple_response<CharT, AllocT>;
 
 
         static_assert(HTTPRequest<request_type>,
@@ -47,7 +45,7 @@ namespace webpp::http {
         static_assert(AllocatorHolder<common_protocol_type>, "No allocator is available?");
 
       private:
-        using super = common_http_protocol<TraitsType, App>;
+        using super = common_http_protocol<App>;
 
       public:
         template <typename... Args>
@@ -109,8 +107,9 @@ namespace webpp::http {
         /**
          * Get the environment value safely
          */
-        [[nodiscard]] static inline stl::string_view env(char const* key) noexcept {
-            if (auto const value = getenv(key)) {
+        [[nodiscard]] static stl::string_view env(char const* key) noexcept {
+            // todo: getenv is not thread-safe
+            if (auto* const value = getenv(key)) {
                 return value;
             }
             return {};
@@ -118,12 +117,12 @@ namespace webpp::http {
 
       private:
         template <typename BodyType>
-        inline void write_text(BodyType& body) {
+        void write_text(BodyType& body) {
             write(body.data(), static_cast<stl::streamsize>(body.size()));
         }
 
         template <typename BodyType>
-        inline void write_cstream(BodyType& body) {
+        void write_cstream(BodyType& body) {
             using body_type         = stl::remove_cvref_t<BodyType>;
             using cstream_byte_type = typename body_type::byte_type;
 
@@ -139,7 +138,7 @@ namespace webpp::http {
         }
 
         template <typename BodyType>
-        inline void write_response_body(BodyType& body) {
+        void write_response_body(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {

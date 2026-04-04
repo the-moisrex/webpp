@@ -3,8 +3,8 @@
 #ifndef WEBPP_CGI_REQUEST_BODY_COMMUNICATOR_HPP
 #define WEBPP_CGI_REQUEST_BODY_COMMUNICATOR_HPP
 
+#include "../memory/allocators.hpp"
 #include "../std/type_traits.hpp"
-#include "../traits/traits.hpp"
 
 #include <iostream>
 
@@ -18,19 +18,18 @@ namespace webpp::http::cgi_proto {
     template <typename ProtocolType>
     struct cgi_request_body_communicator {
         using protocol_type    = ProtocolType;
-        using traits_type      = typename protocol_type::traits_type;
-        using char_type        = traits::char_type<traits_type>;
         using byte_type        = stl::byte;
+        using char_type        = typename protocol_type::char_type;
         using size_type        = stl::streamsize;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::string<traits_type>;
+        using string_view_type = typename protocol_type::string_view_type;
+        using string_type      = typename protocol_type::string_type;
 
 
       private:
         string_type body_content;
 
       public:
-        explicit cgi_request_body_communicator(auto& inp_cgi) : body_content{get_alloc_for<string_type>(inp_cgi)} {
+        explicit cgi_request_body_communicator(auto& inp_cgi) : body_content{alloc} {
             auto const content_length_str = inp_cgi.env("CONTENT_LENGTH");
             if (!content_length_str.empty()) {
                 auto const content_length = to_uint(content_length_str);
