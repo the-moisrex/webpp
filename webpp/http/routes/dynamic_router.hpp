@@ -24,7 +24,7 @@ namespace webpp::http {
     template <istl::CharType CharT, Allocator AllocT>
     struct basic_dynamic_router : valve<void> {
         using valve_type     = valve<void>;
-        using route_type     = dynamic_route<CharT, AllocT>;
+        using route_type     = dynamic_route<void, CharT, AllocT>;
         using allocator_type = AllocT;
 
       private:

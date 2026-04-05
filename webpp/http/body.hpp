@@ -98,6 +98,31 @@ namespace webpp::http {
             }
         }
 
+        template <typename CharT, typename AllocT, typename... Args>
+        struct communicator_constructor_from : stl::false_type {
+            using type = void;
+        };
+
+        template <typename CharT, typename AllocT, typename... Args>
+            requires stl::constructible_from<string_response_body_communicator<CharT, AllocT>, Args...>
+        struct communicator_constructor_from<CharT, AllocT, Args...> : stl::true_type {
+            using type = string_response_body_communicator<CharT, AllocT>;
+        };
+
+        template <typename CharT, typename AllocT, typename... Args>
+            requires(stl::constructible_from<stream_response_body_communicator<CharT, AllocT>, Args...> &&
+                     !stl::constructible_from<string_response_body_communicator<CharT, AllocT>, Args...>)
+        struct communicator_constructor_from<CharT, AllocT, Args...> : stl::true_type {
+            using type = stream_response_body_communicator<CharT, AllocT>;
+        };
+
+        template <typename CharT, typename AllocT, typename... Args>
+            requires(stl::constructible_from<cstream_response_body_communicator<CharT>, Args...> &&
+                     !stl::constructible_from<string_response_body_communicator<CharT, AllocT>, Args...>)
+        struct communicator_constructor_from<CharT, AllocT, Args...> : stl::true_type {
+            using type = cstream_response_body_communicator<CharT>;
+        };
+
     } // namespace details
 
     /**
@@ -179,19 +204,10 @@ namespace webpp::http {
           : communicator_var{string_communicator_type{details::get_as<string_type>(body)}} {}
 
         template <typename... Args>
-            requires(stl::constructible_from<string_communicator_type, Args...> && sizeof...(Args) >= 1)
+            requires(sizeof...(Args) >= 1 && details::communicator_constructor_from<CharT, AllocT, Args...>::value)
         explicit constexpr body_communicator(Args&&... args)
-          : communicator_var{string_communicator_type{stl::forward<Args>(args)...}} {}
-
-        template <typename... Args>
-            requires(stl::constructible_from<stream_communicator_type, Args...> && sizeof...(Args) >= 1)
-        explicit constexpr body_communicator(Args&&... args)
-          : communicator_var{stream_communicator_type{stl::forward<Args>(args)...}} {}
-
-        template <typename... Args>
-            requires(stl::constructible_from<cstream_communicator_type, Args...> && sizeof...(Args) >= 1)
-        explicit constexpr body_communicator(Args&&... args)
-          : communicator_var{cstream_communicator_type{stl::forward<Args>(args)...}} {}
+          : communicator_var{typename details::communicator_constructor_from<CharT, AllocT, Args...>::type{
+              stl::forward<Args>(args)...}} {}
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
@@ -641,20 +657,19 @@ namespace webpp::http {
         }
     };
 
-    template <typename TraitsType>
-    constexpr body_reader<TraitsType>& as_body_reader(body_reader<TraitsType>& body) noexcept {
+    template <typename CharT, typename AllocT>
+    constexpr body_reader<CharT, AllocT>& as_body_reader(body_reader<CharT, AllocT>& body) noexcept {
         return body;
     }
 
-    template <typename TraitsType>
-    constexpr body_reader<TraitsType>& as_body_reader(body_writer<TraitsType>& body) noexcept {
-        return static_cast<body_reader<TraitsType>&>(body);
+    template <typename CharT, typename AllocT>
+    constexpr body_reader<CharT, AllocT>& as_body_reader(body_writer<CharT, AllocT>& body) noexcept {
+        return static_cast<body_reader<CharT, AllocT>&>(body);
     }
 
     template <HTTPBodyHolder T>
-        requires(EnabledTraits<T>)
-    constexpr body_reader<typename T::traits_type>& as_body_reader(T& holder) noexcept {
-        return static_cast<body_reader<typename T::traits_type>&>(holder.body);
+    constexpr body_reader<typename T::char_type, typename T::allocator_type>& as_body_reader(T& holder) noexcept {
+        return static_cast<body_reader<typename T::char_type, typename T::allocator_type>&>(holder.body);
     }
 
 

@@ -19,18 +19,13 @@ namespace webpp::http {
         using request_body_communicator = Communicator; // the way that the Protocol gives us the body
         using size_type                 = stl::streamsize;
 
+        using Communicator::Communicator;
+
         constexpr request_body(request_body const&)                     = default;
         constexpr request_body(request_body&&) noexcept                 = default;
         constexpr request_body& operator=(request_body&&) noexcept      = default;
         constexpr request_body& operator=(request_body const&) noexcept = default;
         constexpr ~request_body()                                       = default;
-
-        constexpr request_body()
-            requires(stl::is_default_constructible_v<request_body_communicator>)
-        = default;
-
-
-        using Communicator::Communicator;
 
         template <typename T>
         // requires(HTTPGenerallyDeserializableBody<T, request_body>)
