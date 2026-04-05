@@ -23,18 +23,22 @@ namespace webpp::http {
      */
     template <istl::CharType CharT, Allocator AllocT>
     struct basic_dynamic_router : valve<void> {
-        using valve_type         = valve<void>;
-        using route_type         = dynamic_route<CharT, AllocT>;
-        using dynamic_route_type = istl::dynamic<route_type, AllocT>;
-        using vector_allocator   = typename stl::allocator_traits<AllocT>::template rebind_alloc<dynamic_route_type>;
-        using string_type        = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
-        using string_view_type   = stl::basic_string_view<CharT>;
-        using objects_type =
-          stl::vector<stl::any, typename stl::allocator_traits<AllocT>::template rebind_alloc<stl::any>>;
-        using objects_allocator_type = typename objects_type::allocator_type;
-        using routes_type            = stl::vector<dynamic_route_type, vector_allocator>;
-        using response_type          = basic_response<CharT, AllocT>;
-        using context_type           = basic_context<CharT, AllocT>;
+        using valve_type     = valve<void>;
+        using route_type     = dynamic_route<CharT, AllocT>;
+        using allocator_type = AllocT;
+
+      private:
+        using dynamic_route_type     = istl::dynamic<route_type, AllocT>;
+        using objects_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<stl::any>;
+
+      public:
+        using vector_allocator = typename stl::allocator_traits<AllocT>::template rebind_alloc<dynamic_route_type>;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using string_view_type = stl::basic_string_view<CharT>;
+        using objects_type     = stl::vector<stl::any, objects_allocator_type>;
+        using routes_type      = stl::vector<dynamic_route_type, vector_allocator>;
+        using response_type    = basic_response<CharT, AllocT>;
+        using context_type     = basic_context<CharT, AllocT>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -56,10 +60,6 @@ namespace webpp::http {
         /// These are the objects that will be used by the valves to make it
         /// easier for the user to pass member functions as valves in the routes.
         objects_type objects; // NOLINT(*-non-private-member-variables-in-classes)
-
-        constexpr basic_dynamic_router() noexcept
-          // do not use {} instead of () here, it'll construct an "any" object instead.
-          : objects(get_allocator<objects_allocator_type>(*this)) {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         explicit constexpr basic_dynamic_router(AllocT inp_alloc = alloc)
@@ -141,7 +141,7 @@ namespace webpp::http {
                     route->to_string(out);
                 } else {
                     // I know, looks not great, but to_string is a virtual call
-                    string_type inout{get_alloc_for<string_type>(*this)};
+                    string_type inout{routes.get_allocator()};
                     to_string(inout);
                     out.append(stl::move(inout));
                 }
@@ -151,7 +151,7 @@ namespace webpp::http {
 
         template <istl::String StrT = string_type>
         [[nodiscard]] constexpr StrT to_string() const {
-            StrT out{get_alloc_for<StrT>(*this)};
+            StrT out{routes.get_allocator()};
             to_string(out);
             return out;
         }
