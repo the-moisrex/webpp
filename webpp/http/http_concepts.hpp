@@ -8,6 +8,9 @@
 #include "../std/string_view.hpp"
 #include "./body_concepts.hpp"
 
+#include <concepts>
+#include <type_traits>
+
 namespace webpp::http {
 
 
@@ -18,7 +21,14 @@ namespace webpp::http {
      * This concept is what the underlying Protocols expect to see in a response's header from apps.
      */
     template <typename T>
-    concept HTTPHeaders = requires(stl::remove_cvref_t<T> headers) { typename stl::remove_cvref_t<T>::field_type; };
+    concept HTTPHeaders = requires(stl::remove_cvref_t<T> headers) {
+        typename stl::remove_cvref_t<T>::field_type;
+        typename stl::remove_cvref_t<T>::string_type;
+        typename stl::remove_cvref_t<T>::string_view_type;
+        typename stl::remove_cvref_t<T>::allocator_type;
+        requires stl::copyable<stl::remove_reference_t<T>>;
+        requires stl::constructible_from<stl::remove_cvref_t<T>, typename stl::remove_cvref_t<T>::allocator_type>;
+    };
 
     template <typename T>
     concept HTTPRequestHeaders =
@@ -134,10 +144,8 @@ namespace webpp::http {
             typename ResType::headers_type;
             requires HTTPResponseBody<typename ResType::body_type>;
             requires HTTPHeaders<typename ResType::headers_type>;
-            res.body;
-            res.headers;
-            requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
-            requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>, typename ResType::headers_type>;
+            { res.body } -> stl::same_as<typename ResType::body_type>;
+            { res.headers } -> stl::same_as<typename ResType::headers_type>;
         };
 
         template <typename T>
@@ -161,8 +169,7 @@ namespace webpp::http {
 
     template <typename T>
     concept ConvertibleToResponse =
-      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
-      (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
+      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> && (HTTPResponse<T> || istl::StringViewifiable<T>);
 
 
 

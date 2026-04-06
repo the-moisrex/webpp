@@ -76,7 +76,6 @@ namespace webpp::http {
              * This function generates an HTTP response with an error message based on the given error code.
              *
              * @param error_code The error code indicating the type of error.
-             *
              * @return An HTTP response with the error message.
              */
             [[nodiscard]] HTTPResponse auto error(http::status_code_type error_code) const {
@@ -225,13 +224,6 @@ namespace webpp::http {
         constexpr basic_context& operator=(basic_context const&)     = default;
         constexpr basic_context& operator=(basic_context&&) noexcept = default;
         constexpr ~basic_context()                                   = default;
-
-        /**
-         * Clone this context
-         */
-        [[nodiscard]] constexpr auto clone() const noexcept {
-            return basic_context{*this};
-        }
 
         /**
          * @brief Check if a given variable is a valid path slug.
