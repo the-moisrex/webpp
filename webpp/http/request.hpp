@@ -152,19 +152,12 @@ namespace webpp::http {
         http::version request_version;
 
       protected:
-        using pstring_type = typename request_view::string_type;
-
-        template <typename T>
-        [[nodiscard]] pstring_type pstringify(T&& str) const {
-            return istl::stringify_of<pstring_type>(stl::forward<T>(str), alloc);
+        [[nodiscard]] string_type get_method() const override {
+            return this->method();
         }
 
-        [[nodiscard]] pstring_type get_method() const override {
-            return pstringify(this->method());
-        }
-
-        [[nodiscard]] pstring_type get_uri() const override {
-            return pstringify(this->uri());
+        [[nodiscard]] string_type get_uri() const override {
+            return this->uri();
         }
 
         [[nodiscard]] http::version get_version() const noexcept override {

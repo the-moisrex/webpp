@@ -125,7 +125,11 @@ namespace webpp::http {
         requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
         req.headers;
         req.body;
-        req.uri();
+        req.uri(); // get the url
+        // requires requires(typename stl::remove_cvref_t<T>::string_view_type str) {
+        //     // set the url
+        //     req.uri(str);
+        // };
 
         // so we can make a copy of it (initial request)
         // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
@@ -144,8 +148,8 @@ namespace webpp::http {
             typename ResType::headers_type;
             requires HTTPResponseBody<typename ResType::body_type>;
             requires HTTPHeaders<typename ResType::headers_type>;
-            { res.body } -> stl::same_as<typename ResType::body_type>;
-            { res.headers } -> stl::same_as<typename ResType::headers_type>;
+            { res.body } -> stl::convertible_to<typename ResType::body_type>;
+            { res.headers } -> stl::convertible_to<typename ResType::headers_type>;
         };
 
         template <typename T>

@@ -4,9 +4,41 @@
 #define WEBPP_UTILITY_HPP
 
 #include "../common/meta.hpp"
-#include "std.hpp"
+#include "./std.hpp"
 
 #include <utility>
+
+namespace webpp {
+    /**
+     * Force implicitly convert and use the explicit conversion.
+     */
+    template <typename From>
+    struct [[nodiscard]] implicitly_explicit_convert {
+        static_assert(stl::is_reference_v<From>, "It must be a reference.");
+        From _ref;
+
+        template <typename To>
+        [[nodiscard]] explicit(false) constexpr operator To() const {
+            static_assert(!std::is_reference_v<To>, "Must not be a reference.");
+            // The paranthesis here are the magic part
+            return To(static_cast<From&&>(_ref));
+        }
+    };
+
+    template <typename From>
+    implicitly_explicit_convert(From&&) -> implicitly_explicit_convert<From&&>;
+
+    /*
+     * Use this operator for example on string_view to like `string = +strv_obj` to automatically use the explicit
+     * constructor of the string.
+     */
+    template <typename T>
+    constexpr auto operator+(T&& obj) noexcept {
+        return implicitly_explicit_convert<T&&>{std::forward<T>(obj)};
+    }
+
+
+} // namespace webpp
 
 namespace webpp::istl {
 

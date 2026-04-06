@@ -8,7 +8,6 @@
 #include "../http/request_headers.hpp"
 #include "../http/request_view.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/traits.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
 #include <unistd.h> // for environ
@@ -18,15 +17,15 @@ namespace webpp::http {
     template <typename CommonHTTPRequest>
     struct [[nodiscard]] cgi_request final
       : CommonHTTPRequest,
-        details::request_view_interface<typename CommonHTTPRequest::traits_type> {
+        details::request_view_interface<typename CommonHTTPRequest::char_type,
+                                        typename CommonHTTPRequest::allocator_type> {
         using common_http_request_type = CommonHTTPRequest;
-        using traits_type              = typename common_http_request_type::traits_type;
 
       private:
         using super            = CommonHTTPRequest;
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
-        using char_type        = traits::char_type<traits_type>;
+        using char_type        = typename super::char_type;
 
         string_type cache;
 
@@ -83,24 +82,17 @@ namespace webpp::http {
         }
 
       protected:
-        using pstring_type = typename request_view::string_type;
-
-        template <typename T>
-        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
-            return istl::stringify_of<pstring_type>(stl::forward<T>(str), get_alloc_for<pstring_type>(*this));
-        }
-
         // get the dynamic request object
-        [[nodiscard]] inline request_view const& dreq() const noexcept {
+        [[nodiscard]] request_view const& dreq() const noexcept {
             return static_cast<request_view const&>(*this);
         }
 
-        [[nodiscard]] pstring_type get_method() const override {
-            return pstringify(this->method());
+        [[nodiscard]] string_type get_method() const override {
+            return this->method();
         }
 
-        [[nodiscard]] pstring_type get_uri() const override {
-            return pstringify(this->uri());
+        [[nodiscard]] string_type get_uri() const override {
+            return this->uri();
         }
 
         [[nodiscard]] http::version get_version() const noexcept override {
@@ -111,7 +103,7 @@ namespace webpp::http {
         template <typename ReqT>
         explicit cgi_request(ReqT& svr)
           : super{svr},
-            cache{get_alloc_for<string_type>(*this)} {
+            cache{alloc} {
             fill_headers();
         }
 
@@ -124,7 +116,7 @@ namespace webpp::http {
         /**
          * Get the environment value safely
          */
-        [[nodiscard]] inline string_view_type env(char const* key) const noexcept {
+        [[nodiscard]] string_view_type env(char const* key) const noexcept {
             if (auto const value = getenv(key)) {
                 return value;
             }
@@ -265,15 +257,14 @@ namespace webpp::http {
         }
 
         /**
-         * @brief get the remote user or auth user value (both should be the
-         * same)
+         * @brief get the remote user or auth user value (both should be the same)
          * @details If the server supports user authentication, and the script
          * is protected, the username the user has authenticated as. (Also
          * available as AUTH_USER.)
          */
         [[nodiscard]] string_view_type remote_user() const noexcept {
-            if (auto a = env("REMOTE_USER"); !a.empty()) {
-                return a;
+            if (auto cur_env = env("REMOTE_USER"); !cur_env.empty()) {
+                return cur_env;
             }
             return env("AUTH_USER");
         }
@@ -286,8 +277,8 @@ namespace webpp::http {
          * available as AUTH_USER.)
          */
         [[nodiscard]] string_view_type auth_user() const noexcept {
-            if (auto a = env("AUTH_USER"); !a.empty()) {
-                return a;
+            if (auto cur_env = env("AUTH_USER"); !cur_env.empty()) {
+                return cur_env;
             }
             return env("REMOTE_USER");
         }

@@ -4,7 +4,7 @@
 #define WEBPP_URI_PATH_TRAVERSER_HPP
 
 #include "../std/optional.hpp"
-#include "path.hpp"
+#include "./path.hpp"
 
 namespace webpp::uri {
 
@@ -45,9 +45,8 @@ namespace webpp::uri {
             return *this;
         }
 
-        template <istl::StringViewifiable StrT = string_view_type>
-        constexpr path_traverser& operator=(StrT&& inp_path_str) {
-            path = stl::forward<StrT>(inp_path_str);
+        constexpr path_traverser& operator=(string_view_type const inp_path_str) {
+            path = inp_path_str;
             pos  = path.begin();
             return *this;
         }
