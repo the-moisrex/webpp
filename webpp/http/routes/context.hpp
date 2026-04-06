@@ -20,7 +20,7 @@ namespace webpp::http {
             using char_type      = typename request_type::char_type;
             using allocator_type = typename request_type::allocator_type;
             using string_type    = typename request_type::string_type;
-            using response_type  = simple_response<char_type, allocator_type>;
+            using response_type  = basic_response<char_type, allocator_type>;
             using request_ref    = request_type&;
             using request_cref   = request_type const&;
 
@@ -40,7 +40,7 @@ namespace webpp::http {
              * Generate a response
              */
             template <typename... Args>
-            [[nodiscard]] constexpr HTTPResponse auto create_response(Args&&... args) const noexcept {
+            [[nodiscard]] constexpr HTTPResponse auto create_response(Args&&... args) const {
                 return response_type::create(stl::forward<Args>(args)...);
             }
 
@@ -48,7 +48,7 @@ namespace webpp::http {
              * Generate a response while passing the specified arguments as the body of that response
              */
             template <typename... Args>
-            [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
+            [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const {
                 return response_type::with_body(stl::forward<Args>(args)...);
             }
 
@@ -61,13 +61,12 @@ namespace webpp::http {
 #endif
             }
 
-            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code) const noexcept {
+            [[nodiscard]] HTTPResponse auto error(http::status_code error_code) const {
                 return error(static_cast<http::status_code_type>(error_code));
             }
 
             template <typename DataType>
-            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code,
-                                                            DataType&&        data) const noexcept {
+            [[nodiscard]] HTTPResponse auto error(http::status_code error_code, DataType&& data) const {
                 return error(static_cast<http::status_code_type>(error_code), stl::forward<DataType>(data));
             }
 
@@ -80,7 +79,7 @@ namespace webpp::http {
              *
              * @return An HTTP response with the error message.
              */
-            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
+            [[nodiscard]] HTTPResponse auto error(http::status_code_type error_code) const {
                 string_type msg{alloc};
                 fmt::format_to(stl::back_inserter(msg),
                                R"(<!doctype html>
@@ -109,8 +108,7 @@ namespace webpp::http {
              * @param data The data to be used to construct the response.
              * @return An HTTP response generated based on the provided error code and data.
              */
-            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code,
-                                                            auto&&                 data) const noexcept {
+            [[nodiscard]] HTTPResponse auto error(http::status_code_type error_code, auto&& data) const {
                 using data_type = stl::remove_cvref_t<decltype(data)>;
                 if constexpr (istl::StringViewifiable<data_type>) {
                     // data type is a string
@@ -137,19 +135,19 @@ namespace webpp::http {
 
     template <HTTPRequest RequestType>
     struct common_context_view : details::common_context_methods<RequestType> {
-        using request_type       = RequestType;
-        using char_type          = typename request_type::char_type;
-        using allocator_type     = typename request_type::allocator_type;
-        using string_type        = typename request_type::string_type;
-        using response_type      = simple_response<char_type, allocator_type>;
-        using basic_context_type = common_context_view;
-        using request_ref        = request_type&;
-        using request_cref       = request_type const&;
-
       private:
         using context_methods = details::common_context_methods<RequestType>;
 
       public:
+        using request_type       = typename context_methods::request_type;
+        using char_type          = typename context_methods::char_type;
+        using allocator_type     = typename context_methods::allocator_type;
+        using string_type        = typename context_methods::string_type;
+        using response_type      = typename context_methods::response_type;
+        using basic_context_type = common_context_view;
+        using request_ref        = typename context_methods::request_ref;
+        using request_cref       = typename context_methods::request_cref;
+
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         request_ref request;
 
@@ -176,10 +174,18 @@ namespace webpp::http {
      */
     template <istl::CharType CharT, Allocator AllocT>
     struct basic_context : details::common_context_methods<basic_request<CharT, AllocT>> {
-        using request_type        = basic_request<CharT, AllocT>;
+      private:
+        using context_methods = details::common_context_methods<basic_request<CharT, AllocT>>;
+
+      public:
+        using request_type        = typename context_methods::request_type;
+        using char_type           = typename context_methods::char_type;
+        using allocator_type      = typename context_methods::allocator_type;
+        using string_type         = typename context_methods::string_type;
+        using response_type       = typename context_methods::response_type;
+        using request_ref         = typename context_methods::request_ref;
+        using request_cref        = typename context_methods::request_cref;
         using static_context_type = simple_context<request_type>;
-        using response_type       = basic_response<CharT, AllocT>;
-        using string_type         = typename request_type::string_type;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_traverser<string_type>;
         using dynamic_route_type  = dynamic_route<void, CharT, AllocT>;
@@ -192,8 +198,6 @@ namespace webpp::http {
 
 
       private:
-        using context_methods = details::common_context_methods<basic_request<CharT, AllocT>>;
-
         path_traverser_type traverser;
         dynamic_route_ptr   current_route_ptr = nullptr;
 
@@ -201,13 +205,13 @@ namespace webpp::http {
         template <HTTPRequest ReqT>
             requires(!istl::cvref_as<ReqT, request_type>)
         explicit constexpr basic_context(ReqT& req)
-          : context_methods{req},
+          : context_methods{},
             request{req},
             response{},
             traverser{request.uri()} {}
 
         explicit constexpr basic_context(request_type& req)
-          : context_methods{req},
+          : context_methods{},
             request{req},
             response{},
             traverser{request.uri()} {}
@@ -256,10 +260,12 @@ namespace webpp::http {
         }
 
         constexpr dynamic_route_type const& current_route() const noexcept {
+            assert(current_route_ptr != nullptr);
             return *current_route_ptr;
         }
 
         constexpr dynamic_route_type& current_route() noexcept {
+            assert(current_route_ptr != nullptr);
             return *current_route_ptr;
         }
 

@@ -110,6 +110,7 @@ namespace webpp::http {
         typename stl::remove_cvref_t<T>::string_view_type;
         typename stl::remove_cvref_t<T>::headers_type;
         typename stl::remove_cvref_t<T>::body_type;
+        typename stl::remove_cvref_t<T>::allocator_type;
         requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
         requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
         req.headers;
