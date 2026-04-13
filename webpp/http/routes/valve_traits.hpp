@@ -130,7 +130,7 @@ namespace webpp::http {
         /// Should we consider the return type as a positive value or a false value,
         /// You can use this information in your routing decisions
         template <typename R>
-        static constexpr bool is_positive(R const& ret) noexcept {
+        static constexpr bool is_successful_result(R const& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
             if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
@@ -204,7 +204,7 @@ namespace webpp::http {
                 return true;
             } else {
                 auto       ret = call(stl::forward<C>(segment), ctx);
-                bool const res = is_positive(ret);
+                bool const res = is_successful_result(ret);
                 set_response(stl::move(ret), ctx);
                 return res;
             }

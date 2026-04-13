@@ -19,7 +19,7 @@ namespace webpp::http {
         using context_type   = basic_context<CharT, AllocT>;
         using router_type    = basic_dynamic_router<CharT, AllocT>;
 
-        static_assert(stl::is_reference_v<callable_type>, "Remove the references.");
+        static_assert(!stl::is_reference_v<callable_type>, "Remove the references.");
 
       private:
         callable_type callable;
