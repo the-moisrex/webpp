@@ -182,7 +182,7 @@ namespace webpp::unicode {
 
     namespace details {
         /// Run this while you're looping through a range to fill the bidi_info
-        static constexpr void bidi_info_step(bidi_info& info, char32_t code_point) noexcept {
+        static constexpr void update_bidi_info(bidi_info& info, char32_t code_point) noexcept {
             using enum direction;
 
             auto const last  = direction_mask_of(code_point);
@@ -192,7 +192,7 @@ namespace webpp::unicode {
             }
         }
 
-        static constexpr void bidi_info_first(bidi_info& info, char32_t code_point) noexcept {
+        static constexpr void bidi_info_init(bidi_info& info, char32_t code_point) noexcept {
             using enum direction;
 
             auto const first = direction_mask_of(code_point);

@@ -175,7 +175,7 @@ namespace webpp::unicode::idna {
      * Check if the status code, has the flag you specify.
      */
     [[nodiscard]] static constexpr bool has_flags(validity_criteria_status_type const status,
-                                                 validity_criteria_status const      flag) noexcept {
+                                                  validity_criteria_status const      flag) noexcept {
         return (status & +flag) != 0;
     }
 
@@ -313,7 +313,7 @@ namespace webpp::unicode::idna {
 
         // 9. (partially) initialize bidi information
         if (check_bidi && spos != send) [[likely]] {
-            unicode::details::bidi_info_first(b_info, first_cp);
+            unicode::details::bidi_info_init(b_info, first_cp);
         }
 
         for (Iter pos = spos; pos != send && is_valid(status);) {
@@ -392,7 +392,7 @@ namespace webpp::unicode::idna {
 
             // 9. Check bidi rule (get the information)
             if (check_bidi) {
-                unicode::details::bidi_info_step(b_info, code_point);
+                unicode::details::update_bidi_info(b_info, code_point);
             }
 
             last_cp = code_point;
