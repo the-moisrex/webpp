@@ -25,11 +25,11 @@ namespace webpp::http {
         callable_type callable;
 
       public:
-        explicit(false) dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
+        explicit(false) dynamic_route(Callable&& inp_callable) noexcept : callable(stl::move(inp_callable)) {}
 
-        explicit(false) dynamic_route(Callable const& new_callable)
+        explicit(false) dynamic_route(Callable const& inp_callable)
           noexcept(stl::is_nothrow_copy_constructible_v<callable_type>)
-          : callable(new_callable) {}
+          : callable(inp_callable) {}
 
         dynamic_route(dynamic_route const&)                     = delete;
         dynamic_route(dynamic_route&&) noexcept                 = default;
@@ -79,8 +79,8 @@ namespace webpp::http {
 
         virtual void operator()(context_type& ctx, [[maybe_unused]] router_type& router) = 0;
         virtual void operator()(context_type& ctx)                                       = 0;
-        virtual void to_string(string_type& out) const                                   = 0;
-        virtual void setup(router_type& out)                                             = 0;
+        virtual void to_string(string_type& result) const                                = 0;
+        virtual void setup(router_type& out_router)                                      = 0;
 
         /**
          * Utility to get a string more easily; this method should not be used in the library itself.
