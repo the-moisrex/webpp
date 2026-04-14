@@ -67,7 +67,7 @@ struct app_impl : public enable_traits<traits_type> {
     }
 
     // all pages
-    auto operator()(request_view req) {
+    auto operator()(request req) {
         return router(req);
     }
 };
@@ -75,6 +75,6 @@ struct app_impl : public enable_traits<traits_type> {
 // app impl
 app::app(typename app::etraits const& et) : the_app{stl::make_unique<app_impl>(et)} {}
 
-response operator()(request_view req) {
+response operator()(request req) {
     the_app->operator()(req);
 }

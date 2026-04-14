@@ -13,26 +13,22 @@
 namespace webpp::fastcgi {
 
 
-    template <typename App, Traits TraitsType = default_traits>
-    struct fcgi : public enable_traits<typename ReqT::traits_type> {
-        using traits_type      = TraitsType;
+    template <typename App>
+    struct fcgi {
         using endpoint_type    = stl::net::ip::tcp::endpoint;
         using application_type = stl::remove_cvref_t<App>;
         using interface_type   = fcgi<server_type, application_type>;
-        using request_type     = simple_request<traits_type, fcgi_request, interface_type>;
-        using logger_type      = traits::logger<traits_type>;
-        using logger_ref       = typename logger_type::logger_ref;
+        using request_type     = simple_request<fcgi_request, interface_type>;
         using allocator_type   = typename app_wrapper_type::allocator_type;
-        using etraits          = enable_traits<traits_type>;
-        using app_wrapper_type = http_app_wrapper<traits_type, application_type>;
+        using app_wrapper_type = http_app_wrapper<application_type>;
 
         static constexpr auto default_listen_address = "0.0.0.0";
         static constexpr auto default_listen_port    = 8080u;
         static constexpr auto logging_category       = "FastCGI";
 
-        stl::set<traits_type, endpoint_type> endpoints;
-        server_type                          server;
-        app_wrapper_type                     app;
+        stl::set<endpoint_type> endpoints;
+        server_type             server;
+        app_wrapper_type        app;
 
         template <typename... Args>
         explicit fcgi(Args&&... args)
