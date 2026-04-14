@@ -12,12 +12,16 @@ namespace webpp::http {
 
     template <typename Callable, istl::CharType CharT, Allocator AllocT>
     struct dynamic_route final : dynamic_route<void, CharT, AllocT> {
-        using callable_type  = Callable;
+        using callable_type = Callable;
+
+      private:
         using allocator_type = AllocT;
-        using char_type      = CharT;
-        using string_type    = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
-        using context_type   = basic_context<CharT, AllocT>;
-        using router_type    = basic_dynamic_router<CharT, AllocT>;
+
+      public:
+        using char_type    = CharT;
+        using string_type  = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using context_type = basic_context<CharT, AllocT>;
+        using router_type  = basic_dynamic_router<CharT, AllocT>;
 
         static_assert(!stl::is_reference_v<callable_type>, "Remove the references.");
 
