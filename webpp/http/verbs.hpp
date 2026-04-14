@@ -1,5 +1,5 @@
-#ifndef WEBPP_VERBS_HPP
-#define WEBPP_VERBS_HPP
+#ifndef WEBPP_HTTP_VERBS_HPP
+#define WEBPP_HTTP_VERBS_HPP
 
 #include "../std/string_view.hpp"
 
@@ -11,7 +11,7 @@ namespace webpp::http {
      * Each verb corresponds to a particular method string
      * used in HTTP request messages.
      */
-    enum struct verb {
+    enum struct [[nodiscard]] verb : stl::uint8_t {
         /**
          * An unknown method.
          *
@@ -127,102 +127,103 @@ namespace webpp::http {
      * If the string does not match a known request method,
      * @ref verb::unknown is returned.
      */
-    static constexpr verb string_to_verb(stl::string_view v) noexcept {
+    static constexpr verb string_to_verb(stl::string_view str) noexcept {
         using namespace std::literals::string_view_literals;
-        if (v.size() < 3) {
+        if (str.size() < 3) {
             return verb::unknown;
         }
-        auto c = v[0];
-        v.remove_prefix(1);
-        switch (c) {
+        auto cur = str[0];
+        str.remove_prefix(1);
+        // todo: add lowercase as well
+        switch (cur) {
             case 'A':
-                if (v == "CL"sv) {
+                if (str == "CL"sv) {
                     return verb::acl;
                 }
                 break;
 
             case 'B':
-                if (v == "IND"sv) {
+                if (str == "IND"sv) {
                     return verb::bind;
                 }
                 break;
 
             case 'C':
-                c = v[0];
-                v.remove_prefix(1);
-                switch (c) {
+                cur = str[0];
+                str.remove_prefix(1);
+                switch (cur) {
                     case 'H':
-                        if (v == "ECKOUT"sv) {
+                        if (str == "ECKOUT"sv) {
                             return verb::checkout;
                         }
                         break;
 
                     case 'O':
-                        if (v == "NNECT"sv) {
+                        if (str == "NNECT"sv) {
                             return verb::connect;
                         }
-                        if (v == "PY"sv) {
+                        if (str == "PY"sv) {
                             return verb::copy;
                         }
-                        [[fallthrough]];
+                        break;
 
                     default: break;
                 }
                 break;
 
             case 'D':
-                if (v == "ELETE"sv) {
+                if (str == "ELETE"sv) {
                     return verb::del;
                 }
                 break;
 
             case 'G':
-                if (v == "ET"sv) {
+                if (str == "ET"sv) {
                     return verb::get;
                 }
                 break;
 
             case 'H':
-                if (v == "EAD"sv) {
+                if (str == "EAD"sv) {
                     return verb::head;
                 }
                 break;
 
             case 'L':
-                if (v == "INK"sv) {
+                if (str == "INK"sv) {
                     return verb::link;
                 }
-                if (v == "OCK"sv) {
+                if (str == "OCK"sv) {
                     return verb::lock;
                 }
                 break;
 
             case 'M':
-                c = v[0];
-                v.remove_prefix(1);
-                switch (c) {
+                cur = str[0];
+                str.remove_prefix(1);
+                switch (cur) {
                     case '-':
-                        if (v == "SEARCH"sv) {
+                        if (str == "SEARCH"sv) {
                             return verb::msearch;
                         }
                         break;
 
                     case 'E':
-                        if (v == "RGE"sv) {
+                        if (str == "RGE"sv) {
                             return verb::merge;
                         }
                         break;
 
                     case 'K':
-                        if (v == "ACTIVITY"sv) {
+                        if (str == "ACTIVITY"sv) {
                             return verb::mkactivity;
                         }
-                        if (v[0] == 'C') {
-                            v.remove_prefix(1);
-                            if (v == "ALENDAR"sv) {
+                        if (str[0] == 'C') {
+                            str.remove_prefix(1);
+                            if (str == "ALENDAR"sv) {
                                 return verb::mkcalendar;
                             }
-                            if (v == "OL"sv) {
+                            if (str == "OL"sv) {
                                 return verb::mkcol;
                             }
                             break;
@@ -230,108 +231,108 @@ namespace webpp::http {
                         break;
 
                     case 'O':
-                        if (v == "VE"sv) {
+                        if (str == "VE"sv) {
                             return verb::move;
                         }
-                        [[fallthrough]];
+                        break;
 
                     default: break;
                 }
                 break;
 
             case 'N':
-                if (v == "OTIFY"sv) {
+                if (str == "OTIFY"sv) {
                     return verb::notify;
                 }
                 break;
 
             case 'O':
-                if (v == "PTIONS"sv) {
+                if (str == "PTIONS"sv) {
                     return verb::options;
                 }
                 break;
 
             case 'P':
-                c = v[0];
-                v.remove_prefix(1);
-                switch (c) {
+                cur = str[0];
+                str.remove_prefix(1);
+                switch (cur) {
                     case 'A':
-                        if (v == "TCH"sv) {
+                        if (str == "TCH"sv) {
                             return verb::patch;
                         }
                         break;
 
                     case 'O':
-                        if (v == "ST"sv) {
+                        if (str == "ST"sv) {
                             return verb::post;
                         }
                         break;
 
                     case 'R':
-                        if (v == "OPFIND"sv) {
+                        if (str == "OPFIND"sv) {
                             return verb::propfind;
                         }
-                        if (v == "OPPATCH"sv) {
+                        if (str == "OPPATCH"sv) {
                             return verb::proppatch;
                         }
                         break;
 
                     case 'U':
-                        if (v == "RGE"sv) {
+                        if (str == "RGE"sv) {
                             return verb::purge;
                         }
-                        if (v == "T"sv) {
+                        if (str == "T"sv) {
                             return verb::put;
                         }
-                        [[fallthrough]];
+                        break;
 
                     default: break;
                 }
                 break;
 
             case 'R':
-                if (v[0] != 'E') {
+                if (str[0] != 'E') {
                     break;
                 }
-                v.remove_prefix(1);
-                if (v == "BIND"sv) {
+                str.remove_prefix(1);
+                if (str == "BIND"sv) {
                     return verb::rebind;
                 }
-                if (v == "PORT"sv) {
+                if (str == "PORT"sv) {
                     return verb::report;
                 }
                 break;
 
             case 'S':
-                if (v == "EARCH"sv) {
+                if (str == "EARCH"sv) {
                     return verb::search;
                 }
-                if (v == "UBSCRIBE"sv) {
+                if (str == "UBSCRIBE"sv) {
                     return verb::subscribe;
                 }
                 break;
 
             case 'T':
-                if (v == "RACE"sv) {
+                if (str == "RACE"sv) {
                     return verb::trace;
                 }
                 break;
 
             case 'U':
-                if (v[0] != 'N') {
+                if (str[0] != 'N') {
                     break;
                 }
-                v.remove_prefix(1);
-                if (v == "BIND"sv) {
+                str.remove_prefix(1);
+                if (str == "BIND"sv) {
                     return verb::unbind;
                 }
-                if (v == "LINK"sv) {
+                if (str == "LINK"sv) {
                     return verb::unlink;
                 }
-                if (v == "LOCK"sv) {
+                if (str == "LOCK"sv) {
                     return verb::unlock;
                 }
-                if (v == "SUBSCRIBE"sv) {
+                if (str == "SUBSCRIBE"sv) {
                     return verb::unsubscribe;
                 }
                 break;
@@ -343,7 +344,7 @@ namespace webpp::http {
     }
 
     // Returns the text representation of a request method verb.
-    static constexpr stl::string_view to_string(verb const inp_verb) noexcept {
+    [[nodiscard]] static constexpr stl::string_view to_string(verb const inp_verb) noexcept {
         using namespace std::literals::string_view_literals;
         switch (inp_verb) {
             case verb::del: return "DELETE"sv;
@@ -387,13 +388,14 @@ namespace webpp::http {
             case verb::unlink: return "UNLINK"sv;
 
             case verb::unknown:
-            default: return "<unknown>"sv;
+            default: return ""sv;
         }
     }
 
     // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
     [[nodiscard]] static constexpr bool is_verb_safe(stl::string_view const method) noexcept {
-        return method == "GET" || method == "HEAD" || method == "OPTIONS" || method == "TRACE";
+        using namespace std::literals::string_view_literals;
+        return method == "GET"sv || method == "HEAD"sv || method == "OPTIONS"sv || method == "TRACE"sv;
     }
 
     // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
@@ -408,11 +410,6 @@ namespace webpp::http {
     }
 
     // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
-    [[nodiscard]] static constexpr bool is_verb_idempotent(stl::string_view const method) noexcept {
-        return is_verb_safe(method) || method == "PUT" || method == "DELETE";
-    }
-
-    // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
     [[nodiscard]] static constexpr bool is_verb_idempotent(verb const method) noexcept {
         switch (method) {
             case verb::put:
@@ -421,6 +418,11 @@ namespace webpp::http {
         }
     }
 
+    // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
+    [[nodiscard]] static constexpr bool is_verb_idempotent(stl::string_view const method) noexcept {
+        return is_verb_idempotent(string_to_verb(method));
+    }
+
 } // namespace webpp::http
 
-#endif // WEBPP_VERBS_HPP
+#endif // WEBPP_HTTP_VERBS_HPP
