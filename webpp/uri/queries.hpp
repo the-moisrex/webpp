@@ -6,8 +6,6 @@
 #include "./parser/parse_queries.hpp"
 #include "uri_status.hpp"
 
-#include <array>
-
 namespace webpp::uri {
 
     /**
@@ -44,6 +42,9 @@ namespace webpp::uri {
         if (add_separators) {
             out += '?';
         }
+        if (storage.empty()) [[unlikely]] {
+            return;
+        }
         for (auto pos = storage.begin();;) {
             auto const [name, value]  = *pos;
             out                      += name;
@@ -66,6 +67,8 @@ namespace webpp::uri {
         using string_view_type = stl::basic_string_view<CharT>;
         using char_type        = CharT;
 
+        using string_view_type::string_view_type; // inherit constructors
+
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         [[nodiscard]] constexpr bool contains_key(string_view_type key) const noexcept {
@@ -74,13 +77,12 @@ namespace webpp::uri {
             }
             auto pos = string_view_type::find(key);
             while (pos != string_view_type::npos) {
-                bool       found   = false;
                 auto const key_end = pos + key.size();
 
-                // starts with '&'
-                found &= pos == 0 || (*this)[pos - 1] == '&';
+                // start boundary: starts with '&'
+                bool found = pos == 0 || (*this)[pos - 1] == '&';
 
-                // and ends with '=' or '&'
+                // end boundary: and ends with '=' or '&'
                 found &= key_end == string_view_type::size() || (*this)[key_end] == '=' || (*this)[key_end] == '&';
 
                 if (found) {
@@ -96,28 +98,7 @@ namespace webpp::uri {
             return (contains_key(stl::forward<KeyT>(keys)) && ...);
         }
 
-        /// Equality check
-        /// Attention: this function doesn't parse your input
-        [[nodiscard]] constexpr bool has_all(string_view_type str) const noexcept {
-            webpp_static_constexpr stl::array queries_separators{'=', '&'};
-
-            while (!str.empty()) {
-                auto const name = str.substr(0, str.find_first_of(queries_separators));
-                str.remove_prefix(name.size());
-                if (str.starts_with('=')) {
-                    str.remove_prefix(1);
-                }
-                auto const value = str.substr(0, str.find_first_of('&'));
-                if (auto const res = this->find(name); name.empty() || res == this->end() || res->second != value) {
-                    return false;
-                }
-                str.remove_prefix(value.size());
-                if (str.starts_with('&')) {
-                    str.remove_prefix(1);
-                }
-            }
-            return true;
-        }
+        // todo: add equality check has_all("key2=val2&key1=val1") that would check if two queries are the same, even if their key ordering are not
     };
 
 } // namespace webpp::uri
