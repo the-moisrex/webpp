@@ -5,6 +5,7 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "./parser/special_schemes.hpp"
 
 namespace webpp::uri {
 
@@ -37,8 +38,14 @@ namespace webpp::uri {
         using stl::basic_string_view<CharT>::basic_string_view;
 
         // Explicit constructor to handle basic_string_view initialization
-        explicit constexpr basic_scheme(stl::basic_string_view<CharT> sv) noexcept
-          : stl::basic_string_view<CharT>(sv) {}
+        explicit constexpr basic_scheme(stl::basic_string_view<CharT> src) noexcept
+          : stl::basic_string_view<CharT>(src) {}
+
+        basic_scheme(basic_scheme const&)                = default;
+        basic_scheme(basic_scheme&&) noexcept            = default;
+        basic_scheme& operator=(basic_scheme const&)     = default;
+        basic_scheme& operator=(basic_scheme&&) noexcept = default;
+        ~basic_scheme() noexcept                         = default;
 
         /**
          * Return the default for the current scheme.

@@ -3,13 +3,38 @@
 #ifndef WEBPP_SPECIAL_SCHEMES_HPP
 #define WEBPP_SPECIAL_SCHEMES_HPP
 
-#include "../../std/string_view.hpp"
 #include "../uri_status.hpp"
 #include "./iiequals.hpp"
 
 #include <cstdint>
+#include <string_view>
 
 namespace webpp::uri {
+
+    enum struct [[nodiscard]] special_scheme : stl::uint8_t {
+        unknown = 0, // not special at all
+        http,
+        https,
+        file,
+        ftp,
+        ws,
+        wss
+    };
+
+    [[nodiscard]] static constexpr stl::string_view to_string(special_scheme const scheme) noexcept {
+        using enum special_scheme;
+        switch (scheme) {
+            case unknown: return {};
+            case http: return {"http"};
+            case https: return {"https"};
+            case file: return {"file"};
+            case ftp: return {"ftp"};
+            case ws: return {"ws"};
+            case wss: return {"wss"};
+            default: break;
+        }
+        return {};
+    }
 
     namespace details {
 
@@ -79,6 +104,7 @@ namespace webpp::uri {
                 if (iiequals_fl("http", scheme)) {
                     return 80U;
                 }
+                // "file" scheme is not checked since it would be "0" anyway
                 break;
             case 5U:
                 if (iiequals_fl("https", scheme)) {
@@ -88,6 +114,44 @@ namespace webpp::uri {
             default: break;
         }
         return 0U;
+        // NOLINTEND(*-magic-numbers)
+    }
+
+    template <typename CharT>
+    [[nodiscard]] static constexpr special_scheme to_special_scheme(
+      stl::basic_string_view<CharT> const scheme) noexcept {
+        // NOLINTBEGIN(*-magic-numbers)
+        using enum special_scheme;
+        switch (scheme.size()) {
+            case 2U:
+                if (iiequals_fl("ws", scheme)) {
+                    return ws;
+                }
+                break;
+            case 3U:
+                if (iiequals_fl("wss", scheme)) {
+                    return wss;
+                }
+                if (iiequals_fl("ftp", scheme)) {
+                    return ftp;
+                }
+                break;
+            case 4U:
+                if (iiequals_fl("http", scheme)) {
+                    return http;
+                }
+                if (iiequals_fl("file", scheme)) {
+                    return file;
+                }
+                break;
+            case 5U:
+                if (iiequals_fl("https", scheme)) {
+                    return https;
+                }
+                break;
+            default: break;
+        }
+        return unknown;
         // NOLINTEND(*-magic-numbers)
     }
 
@@ -115,6 +179,10 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr bool is_special_scheme(scheme_type const scheme) noexcept {
         return scheme != scheme_type::not_special;
+    }
+
+    [[nodiscard]] static constexpr bool is_special_scheme(special_scheme const scheme) noexcept {
+        return scheme != special_scheme::unknown;
     }
 
     [[nodiscard]] static constexpr bool is_special_scheme(uri_status_type const status) noexcept {
