@@ -5,6 +5,7 @@
 
 #include "../http/bodies/string.hpp" // for setting the request body; CGI uses string views for body
 #include "../http/http_concepts.hpp"
+#include "../http/http_version.hpp"
 #include "../http/request_headers.hpp"
 #include "../std/string_view.hpp"
 
@@ -23,10 +24,8 @@ namespace webpp::http {
         using string_type      = typename super::string_type;
         using char_type        = typename super::char_type;
         using allocator_type   = typename super::allocator_type;
-        using target_type      = basic_request_target<char_type, allocator_type>;
 
         string_type cache;
-        target_type requested_target;
 
         string_view_type put_header_name(string_view_type name) {
             using diff_t = stl::iter_difference_t<typename string_type::iterator>;
@@ -83,10 +82,8 @@ namespace webpp::http {
         template <typename ReqT>
         explicit cgi_request(ReqT& svr)
           : super{svr},
-            cache{alloc},
-            requested_target{alloc} {
+            cache{alloc} {
             fill_headers();
-            requested_target = this->uri();
         }
 
         cgi_request(cgi_request const&)                = default;
@@ -252,8 +249,7 @@ namespace webpp::http {
         }
 
         /**
-         * @brief get the remote user or auth user value (both should be the
-         * same)
+         * @brief get the remote user or auth user value (both should be the same)
          * @details If the server supports user authentication, and the script
          * is protected, the username the user has authenticated as. (Also
          * available as AUTH_USER.)
@@ -358,11 +354,6 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type script_filename() const noexcept {
             return env("SCRIPT_FILENAME");
-        }
-
-        /// Get the requested target
-        [[nodiscard]] target_type const& target() const noexcept {
-            return requested_target;
         }
     };
 

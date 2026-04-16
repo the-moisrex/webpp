@@ -12,6 +12,7 @@
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
 #include "./verbs.hpp"
+#include "methods.hpp"
 
 #include <concepts>
 
@@ -142,15 +143,15 @@ namespace webpp::http {
         http::verb          requested_method = verb::unknown;
         http::version       request_version;
         uri::special_scheme requested_scheme = uri::special_scheme::unknown;
-        string_type         requested_method_str; // It's a string because the user might send a custom method
+        stl::string         requested_method_str; // It's a string because the user might send a custom method
 
         // Even when schemes cannot be mixed arbitrarily, the scheme is still a per‑request property because HTTP/2/3
         // does not implicitly know it from the connection.
-        string_type requested_scheme_str;
+        stl::string requested_scheme_str;
 
-        string_type requested_authority;
-        string_type requested_target; // path + query = target
-        string_type requested_protocol;
+        stl::string requested_authority;
+        stl::string requested_target; // path + query = target
+        stl::string requested_protocol;
 
       public:
         template <HTTPRequest ReqType>
@@ -200,7 +201,14 @@ namespace webpp::http {
             return *this;
         }
 
-        [[nodiscard]] constexpr string_type const& method() const noexcept {
+        [[nodiscard]] constexpr stl::string_view method_string() const noexcept {
+            if (requested_method != verb::unknown) [[unlikely]] {
+                return +requested_method_str;
+            }
+            return to_string(requested_method);
+        }
+
+        [[nodiscard]] constexpr verb method() const noexcept {
             return requested_method;
         }
 

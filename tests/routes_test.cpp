@@ -16,12 +16,11 @@ struct fake_app {
     }
 };
 
-using request_type = basic_request<default_traits>;
+using request_type = basic_request<>;
 
 TEST(Routes, Path) {
-    enable_owner_traits<default_traits> et;
-    request_type                        req{et};
-    context                             ctx{req};
+    request_type req;
+    context      ctx{req};
 
 
     //  EXPECT_TRUE((root / number{"integer name"})(ctx));

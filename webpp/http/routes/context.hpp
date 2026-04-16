@@ -132,42 +132,6 @@ namespace webpp::http {
         };
     } // namespace details
 
-    template <HTTPRequest RequestType>
-    struct common_context_view : details::common_context_methods<RequestType> {
-      private:
-        using context_methods = details::common_context_methods<RequestType>;
-
-      public:
-        using request_type       = typename context_methods::request_type;
-        using char_type          = typename context_methods::char_type;
-        using allocator_type     = typename context_methods::allocator_type;
-        using string_type        = typename context_methods::string_type;
-        using response_type      = typename context_methods::response_type;
-        using basic_context_type = common_context_view;
-        using request_ref        = typename context_methods::request_ref;
-        using request_cref       = typename context_methods::request_cref;
-
-        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
-        request_ref request;
-
-        // NOLINTEND(*-non-private-member-variables-in-classes)
-
-        explicit constexpr common_context_view(request_ref inp_req) noexcept : context_methods{}, request{inp_req} {}
-
-        template <Context CtxT>
-            requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-        explicit constexpr common_context_view(CtxT const& ctx) noexcept : common_context_view{ctx.request} {}
-
-        constexpr common_context_view(common_context_view&& ctx) noexcept        = default;
-        constexpr common_context_view(common_context_view const& ctx) noexcept   = default;
-        constexpr common_context_view& operator=(common_context_view const&)     = default;
-        constexpr common_context_view& operator=(common_context_view&&) noexcept = default;
-        constexpr ~common_context_view()                                         = default;
-    };
-
-    template <HTTPRequest ReqType>
-    using simple_context = common_context_view<ReqType>;
-
     /**
      * The standard and dynamic context which will own its data
      */
@@ -184,7 +148,6 @@ namespace webpp::http {
         using response_type       = typename context_methods::response_type;
         using request_ref         = typename context_methods::request_ref;
         using request_cref        = typename context_methods::request_cref;
-        using static_context_type = simple_context<request_type>;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_traverser<string_type>;
         using dynamic_route_type  = dynamic_route<void, CharT, AllocT>;
