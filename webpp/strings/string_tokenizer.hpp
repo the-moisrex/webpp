@@ -479,6 +479,75 @@ namespace webpp {
         bool           _is_delim = true;
     };
 
+    struct [[nodiscard]] parsed_quoted {
+        /// inner quoted string
+        stl::string_view value;
+
+        /// parser position after closing quote
+        char const* next;
+    };
+
+    /**
+     * Extracts a quoted string starting at `pos`.
+     *
+     * Behavior:
+     *   - Assumes *pos == '"'
+     *   - Scans forward until matching closing quote
+     *   - Honors backslash escape rules (optional)
+     *   - Does NOT allocate
+     *   - Leaves semicolon and whitespace handling to caller
+     *
+     * On success:
+     *   value = substring between quotes
+     *   next = position after closing quote
+     *
+     * On malformed/unterminated quotes:
+     *   value = entire text after initial `"`
+     *   next = end
+     **/
+    template <istl::CharType CharT = char>
+    constexpr parsed_quoted parse_quoted(CharT const* pos, CharT const* end, CharT quote_char = '"') noexcept {
+        // Must start with a quote
+        if (pos == end || *pos != quote_char) {
+            return {.value = stl::string_view{}, .next = pos};
+        }
+
+        stl::advance(pos, 1); // skip opening quote
+
+        bool        in_escape = false;
+        char const* start     = pos;
+        while (pos != end) {
+            auto const cur = *pos;
+
+            if (in_escape) {
+                // previous char was backslash, so this is literal
+                in_escape = false;
+                stl::advance(pos, 1);
+                continue;
+            }
+
+            if (cur == '\\') {
+                // enter escape mode
+                in_escape = true;
+                stl::advance(pos, 1);
+                continue;
+            }
+
+            if (cur == quote_char) {
+                // proper closing-quote
+                stl::string_view val(start, static_cast<stl::size_t>(pos - start));
+                return {.value = val, .next = pos + 1}; // consume closing quote
+            }
+
+            stl::advance(pos, 1);
+        }
+
+
+        // Unterminated quote — return what we have until end
+        return {.value = stl::string_view(start, static_cast<stl::size_t>(end - start)), .next = end};
+    }
+
+
 } // namespace webpp
 
 #endif // WEBPP_STRING_TOKENIZER_HPP

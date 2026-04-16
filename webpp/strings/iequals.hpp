@@ -121,8 +121,8 @@ namespace webpp::ascii {
      * todo: update with the new eve project tools; example: https://godbolt.org/z/qzjsG4Prd
      */
     template <char_case_side Side = char_case_side::both_unknown>
-    [[nodiscard]] static inline bool iequals(istl::StringViewifiable auto&& _str1,
-                                             istl::StringViewifiable auto&& _str2) noexcept {
+    [[nodiscard]] static constexpr bool iequals(istl::StringViewifiable auto&& _str1,
+                                                istl::StringViewifiable auto&& _str2) noexcept {
         using enum char_case_side;
         using str1_type = decltype(_str1);
         using str1_t    = stl::remove_cvref_t<str1_type>;
