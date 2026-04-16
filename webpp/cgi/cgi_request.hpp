@@ -6,7 +6,6 @@
 #include "../http/bodies/string.hpp" // for setting the request body; CGI uses string views for body
 #include "../http/http_concepts.hpp"
 #include "../http/request_headers.hpp"
-#include "../http/request_view.hpp"
 #include "../std/string_view.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
@@ -15,10 +14,7 @@
 namespace webpp::http {
 
     template <typename CommonHTTPRequest>
-    struct [[nodiscard]] cgi_request final
-      : CommonHTTPRequest,
-        details::request_view_interface<typename CommonHTTPRequest::char_type,
-                                        typename CommonHTTPRequest::allocator_type> {
+    struct [[nodiscard]] cgi_request final : CommonHTTPRequest {
         using common_http_request_type = CommonHTTPRequest;
 
       private:
@@ -26,8 +22,11 @@ namespace webpp::http {
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
         using char_type        = typename super::char_type;
+        using allocator_type   = typename super::allocator_type;
+        using target_type      = basic_request_target<char_type, allocator_type>;
 
         string_type cache;
+        target_type requested_target;
 
         string_view_type put_header_name(string_view_type name) {
             using diff_t = stl::iter_difference_t<typename string_type::iterator>;
@@ -48,7 +47,7 @@ namespace webpp::http {
 
         void fill_headers() {
             static constexpr string_view_type HTTP_prefix = "HTTP_";
-            for (auto it = ::environ; *it; it++) {
+            for (auto it = ::environ; *it; ++it) {
                 switch (**it) {
                     case 'C': {
                         string_view_type       hdr{*it};
@@ -81,30 +80,13 @@ namespace webpp::http {
             }
         }
 
-      protected:
-        // get the dynamic request object
-        [[nodiscard]] request_view const& dreq() const noexcept {
-            return static_cast<request_view const&>(*this);
-        }
-
-        [[nodiscard]] string_type get_method() const override {
-            return this->method();
-        }
-
-        [[nodiscard]] string_type get_uri() const override {
-            return this->uri();
-        }
-
-        [[nodiscard]] http::version get_version() const noexcept override {
-            return this->version();
-        }
-
-      public:
         template <typename ReqT>
         explicit cgi_request(ReqT& svr)
           : super{svr},
-            cache{alloc} {
+            cache{alloc},
+            requested_target{alloc} {
             fill_headers();
+            requested_target = this->uri();
         }
 
         cgi_request(cgi_request const&)                = default;
@@ -376,6 +358,11 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type script_filename() const noexcept {
             return env("SCRIPT_FILENAME");
+        }
+
+        /// Get the requested target
+        [[nodiscard]] target_type const& target() const noexcept {
+            return requested_target;
         }
     };
 

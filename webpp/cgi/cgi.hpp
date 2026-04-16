@@ -7,8 +7,6 @@
 #include "../http/request_body.hpp"
 #include "../http/response.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/default_traits.hpp"
-#include "../traits/enable_traits.hpp"
 #include "./cgi_request.hpp"
 #include "./cgi_request_body_communicator.hpp"
 
@@ -211,7 +209,7 @@ namespace webpp::http {
     };
 
     template <typename App>
-    cgi(App&&) -> cgi<App, default_traits>;
+    cgi(App&&) -> cgi<App>;
 
     // fixme: implement these too:
     //    AUTH_PASSWORD

@@ -251,7 +251,6 @@ set(ALL_SOURCES_SHORT
         http/request.hpp
         http/request_body.hpp
         http/request_headers.hpp
-        http/request_view.hpp
         http/response.hpp
         http/response_body.hpp
         http/response_headers.hpp

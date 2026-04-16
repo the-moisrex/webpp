@@ -3,14 +3,15 @@
 
 #include "../memory/allocators.hpp"
 #include "../uri/path_traverser.hpp"
-#include "../version.hpp"
+#include "../uri/scheme.hpp"
 #include "./body.hpp"
+#include "./body_concepts.hpp"
 #include "./header_fields.hpp"
 #include "./http_concepts.hpp"
+#include "./http_version.hpp"
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
-#include "./request_view.hpp"
-#include "body_concepts.hpp"
+#include "./verbs.hpp"
 
 #include <concepts>
 
@@ -62,13 +63,6 @@ namespace webpp::http {
 
         constexpr ~common_http_request() = default;
 
-        /**
-         * Get the Web++ Library version
-         */
-        [[nodiscard]] string_view_type framework_version() const noexcept {
-            return webpp_version;
-        }
-
         template <typename T>
             requires(HTTPGenerallyDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() const {
@@ -104,13 +98,13 @@ namespace webpp::http {
         }
 
         template <typename T>
-            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
+            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type>)
         explicit constexpr operator T() const {
             return as<T>();
         }
 
         template <typename T>
-            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
+            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type>)
         explicit constexpr operator T() {
             return as<T>();
         }
@@ -122,67 +116,65 @@ namespace webpp::http {
     /**
      * Dynamic Request type
      *
-     *   1. The difference between this request type and the `request_view` type is that this class
-     *      owns its data while the request view class doesn't own its data.
-     *   2. The difference between this request type and the `simple_request` alias is that this request
+     *   1. The difference between this request type and the `simple_request` alias is that this request
      *      type is dynamic and easy to use while the other one requires the Protocol to specify the
      *      right template parameters. This class can copy the data from that type of request directly.
-     *   3. This request's body is writable as well as readable.
+     *   2. This request's body is writable as well as readable.
      *
      */
     template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct basic_request final
       : public common_http_request<request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>,
-                                   request_body<body_writer<CharT, AllocT>>>,
-        public details::request_view_interface<CharT, AllocT> {
+                                   request_body<body_writer<CharT, AllocT>>> {
         using common_request_type =
           common_http_request<request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>,
                               request_body<body_writer<CharT, AllocT>>>;
-        using headers_type = request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>;
-        using body_type    = request_body<body_writer<CharT, AllocT>>;
-
+        using headers_type     = request_headers<header_fields_provider<header_field_of<CharT, AllocT>>>;
+        using body_type        = request_body<body_writer<CharT, AllocT>>;
         using string_type      = typename headers_type::string_type;
         using string_view_type = typename headers_type::string_view_type;
         using char_type        = CharT;
         using allocator_type   = AllocT;
+        using scheme_type      = uri::basic_scheme<char_type>;
 
       private:
-        string_type   requested_uri;
-        string_type   requested_method; // It's a string because the user might send a custom method
-        http::version request_version;
+        // Request Pseudo-Headers (method, scheme, authority, path, protocol)
+        http::verb          requested_method = verb::unknown;
+        http::version       request_version;
+        uri::special_scheme requested_scheme = uri::special_scheme::unknown;
+        string_type         requested_method_str; // It's a string because the user might send a custom method
 
-      protected:
-        [[nodiscard]] string_type get_method() const override {
-            return this->method();
-        }
+        // Even when schemes cannot be mixed arbitrarily, the scheme is still a per‑request property because HTTP/2/3
+        // does not implicitly know it from the connection.
+        string_type requested_scheme_str;
 
-        [[nodiscard]] string_type get_uri() const override {
-            return this->uri();
-        }
-
-        [[nodiscard]] http::version get_version() const noexcept override {
-            return this->version();
-        }
+        string_type requested_authority;
+        string_type requested_target; // path + query = target
+        string_type requested_protocol;
 
       public:
         template <HTTPRequest ReqType>
             requires(!istl::cvref_as<ReqType, basic_request>)
         constexpr explicit basic_request(ReqType& req)
           : common_request_type{req},
-            requested_uri{req.uri(), alloc},
             requested_method{req.method(), alloc},
+            requested_target{req.uri(), alloc},
             request_version{req.version()} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <typename MStrT = string_view_type, typename UStrT = string_view_type>
-            requires(istl::StringifiableOf<string_type, UStrT> && istl::StringifiableOf<string_type, MStrT>)
         constexpr explicit basic_request(
-          MStrT&&             inp_method = "GET",
-          UStrT&&             url        = "/",
-          http::version const ver        = http::http_2_0)
+          string_type         inp_method    = "GET",
+          string_type         inp_scheme    = "http",
+          string_type         inp_authority = "",
+          string_type         inp_target    = "/",
+          string_type         inp_protocol  = "",
+          http::version const ver           = http::http_2_0)
           : common_request_type{},
-            requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url), alloc)},
-            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method), alloc)},
+            requested_method{stl::move(inp_method)},
+            requested_scheme{stl::move(inp_scheme)},
+            requested_authority{stl::move(inp_authority)},
+            requested_target{stl::move(inp_target)},
+            requested_protocol{stl::move(inp_protocol)},
             request_version{ver} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -194,19 +186,17 @@ namespace webpp::http {
 
         constexpr ~basic_request() = default;
 
-        // Get a request view from this request
-        [[nodiscard]] constexpr request_view view() const noexcept {
-            return {*this};
+        [[nodiscard]] constexpr string_view_type target() const noexcept {
+            return +requested_target;
         }
 
-        [[nodiscard]] constexpr string_type const& uri() const noexcept {
-            return requested_uri;
+        constexpr basic_request& target(string_type inp_target) {
+            requested_target = stl::move(inp_target);
+            return *this;
         }
 
-        template <typename T>
-            requires(istl::StringifiableOf<string_type, T>)
-        constexpr basic_request& uri(T&& str) {
-            requested_uri = istl::stringify_of<string_type>(stl::forward<T>(str), requested_uri.get_allocator());
+        constexpr basic_request& target(string_view_type inp_target) {
+            requested_target = inp_target;
             return *this;
         }
 
@@ -214,10 +204,13 @@ namespace webpp::http {
             return requested_method;
         }
 
-        template <typename T>
-            requires(istl::StringifiableOf<string_type, T>)
-        constexpr basic_request& method(T&& str) {
-            requested_method = istl::stringify_of<string_type>(stl::forward<T>(str), requested_method.get_allocator());
+        constexpr basic_request& method(string_type str) {
+            requested_method = string_to_verb(str);
+            if (requested_method == verb::unknown) [[unlikely]] {
+                requested_method_str = stl::move(str);
+            } else {
+                requested_method_str.clear();
+            }
             return *this;
         }
 
@@ -231,7 +224,11 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr bool empty() const noexcept {
-            return this->heeaders.empty() && this->body.empty() && requested_uri.empty() && requested_method.empty();
+            return this->heeaders.empty() && this->body.empty() && requested_target.empty() && requested_method.empty();
+        }
+
+        [[nodiscard]] constexpr scheme_type scheme() const noexcept {
+            return +requested_scheme;
         }
     };
 

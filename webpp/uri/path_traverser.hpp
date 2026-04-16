@@ -3,8 +3,9 @@
 #ifndef WEBPP_URI_PATH_TRAVERSER_HPP
 #define WEBPP_URI_PATH_TRAVERSER_HPP
 
-#include "../std/optional.hpp"
 #include "./path.hpp"
+
+#include <optional>
 
 namespace webpp::uri {
 
@@ -28,11 +29,6 @@ namespace webpp::uri {
 
         constexpr explicit path_traverser(path_type&& inp_path) : path{stl::move(inp_path)}, pos(path.begin()) {}
 
-        template <istl::StringViewifiable StrT = string_view_type>
-        constexpr explicit path_traverser(StrT&& inp_path_str)
-          : path{stl::forward<StrT>(inp_path_str)},
-            pos(path.begin()) {}
-
         constexpr path_traverser& operator=(path_type const& inp_path) {
             path = inp_path;
             pos  = path.begin();
@@ -41,12 +37,6 @@ namespace webpp::uri {
 
         constexpr path_traverser& operator=(path_type&& inp_path) {
             path = stl::move(inp_path);
-            pos  = path.begin();
-            return *this;
-        }
-
-        constexpr path_traverser& operator=(string_view_type const inp_path_str) {
-            path = inp_path_str;
             pos  = path.begin();
             return *this;
         }

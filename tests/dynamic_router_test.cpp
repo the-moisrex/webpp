@@ -51,7 +51,7 @@ struct pages {
     }
 
     void rot13_path(context& ctx) const {
-        auto uri = ctx.request.uri();
+        auto uri = ctx.request.target();
         rot13(uri);
         // todo: setting ctx.request.uri(uri) will not affect path traverser
         ctx.reset_path(uri); // set the uri again
@@ -79,9 +79,9 @@ TEST(DynamicRouter, RouteRegistration) {
     EXPECT_EQ(empty_res.headers.status_code(), status_code::not_found) << router.to_string();
 
     req.method("GET");
-    req.uri("/page/about");
-    EXPECT_EQ(req.uri(), "/page/about");
-    auto iter = uri::path_iterator(req.uri());
+    req.target("/page/about");
+    EXPECT_EQ(req.target(), "/page/about");
+    auto iter = uri::path_iterator(req.target());
     EXPECT_TRUE(iter.check_segment("page")) << *iter;
     EXPECT_TRUE(iter.check_segment("about")) << *iter;
 
@@ -98,7 +98,7 @@ TEST(DynamicRouter, MemFuncPtr) {
 
     request req;
     req.method("GET");
-    req.uri("/about");
+    req.target("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
@@ -111,7 +111,7 @@ TEST(DynamicRouter, NotNotTest) {
 
     request req;
     req.method("GET");
-    req.uri("/about");
+    req.target("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "about page") << router.to_string();
 }
@@ -125,7 +125,7 @@ TEST(DynamicRouter, DynamicString) {
 
     request req;
     req.method("GET");
-    req.uri("/about");
+    req.target("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
@@ -145,7 +145,7 @@ TEST(DynamicRouter, ManglerTest) {
 
     request req;
     req.method("GET");
-    req.uri("/about");
+    req.target("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
 }
@@ -163,7 +163,7 @@ TEST(DynamicRouter, MuliManglerTest) {
 
     request req;
     req.method("GET");
-    req.uri("/about");
+    req.target("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "<body><body>about page</body></body>") << router.to_string();
 }
@@ -178,7 +178,7 @@ TEST(DynamicRouter, CacheDeceptionTest) {
 
     request req;
     req.method("GET");
-    req.uri("/about/style.css");
+    req.target("/about/style.css");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found) << router.to_string();
@@ -195,7 +195,7 @@ TEST(DynamicRouter, NormalizationTest) {
     req.method("GET");
 
     for (auto const* path_str : {"/%2e/admin", "/admin/.", "//admin//"}) {
-        req.uri(path_str);
+        req.target(path_str);
         auto const res        = router(req);
         auto       parsed_uri = uri::basic_path<stl::string>(path_str);
         parsed_uri.normalize(true);
@@ -218,7 +218,7 @@ TEST(DynamicRouter, CommonBypassTests) {
     req.method("GET");
 
     for (auto const* path_str : {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"}) {
-        req.uri(path_str);
+        req.target(path_str);
         auto parsed_uri = uri::basic_path<stl::string>(path_str);
         parsed_uri.normalize(true);
         auto const res = router(req);
@@ -241,7 +241,7 @@ TEST(DynamicRouter, DoubleForwardingEarlyStoppingTest) {
 
     request req;
     req.method("GET");
-    req.uri("/page/about");
+    req.target("/page/about");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -256,7 +256,7 @@ TEST(DynamicRouter, DoubleForwardingTest) {
 
     request req;
     req.method("GET");
-    req.uri("/page/about");
+    req.target("/page/about");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -270,7 +270,7 @@ TEST(DynamicRouter, DoubleSegmentingTest) {
     router += router / "page" % "about" >> &pages::about >> &pages::add_body;
 
     request req;
-    req.uri("/page/about");
+    req.target("/page/about");
 
     stl::string route_str;
     router.to_string(route_str);
@@ -287,7 +287,7 @@ TEST(DynamicRouter, PostRoutingTest) {
 
     request req;
     req.method("GET");
-    req.uri("/page/about");
+    req.target("/page/about");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -305,11 +305,11 @@ TEST(DynamicRouter, PreRoutingTest) {
     rot13(uri);
     request req;
     req.method("GET");
-    req.uri(uri);
+    req.target(uri);
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
-    EXPECT_EQ(as<std::string>(res.body), "about page") << req.uri();
+    EXPECT_EQ(as<std::string>(res.body), "about page") << req.target();
 }
 
 TEST(DynamicRouter, SameOrderPreRoutingTest) {
@@ -336,7 +336,7 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
     rot13(uri);
     request req;
     req.method("GET");
-    req.uri(uri);
+    req.target(uri);
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -364,7 +364,7 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
 
     request req;
     req.method("GET");
-    req.uri("/page/about");
+    req.target("/page/about");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -383,7 +383,7 @@ TEST(DynamicRouter, PrePostRoutingTest) {
     rot13(uri);
     request req;
     req.method("GET");
-    req.uri(uri);
+    req.target(uri);
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -398,7 +398,7 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
 
     request req{et};
     req.method("GET");
-    req.uri("/about/style.css");
+    req.target("/about/style.css");
 
     HTTPResponse auto const res = _router(req);
     EXPECT_NE(res.headers.status_code(), status_code::ok);
@@ -413,7 +413,7 @@ TEST(DynamicRouter, ContextCurrentRoute) {
 
     request req;
     req.method("GET");
-    req.uri("/home");
+    req.target("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
@@ -478,7 +478,7 @@ TEST(DynamicRouter, CustomValvifier) {
 
     request req;
     req.method("GET");
-    req.uri("/home");
+    req.target("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(cc.get_res(), 1);
@@ -494,7 +494,7 @@ TEST(DynamicRouter, CrossStringTypeSupport) {
 
     request req;
     req.method("GET");
-    req.uri("/home");
+    req.target("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
@@ -517,7 +517,7 @@ TEST(DynamicRouter, ContextCallChaining) {
 
     request req;
     req.method("GET");
-    req.uri("/home");
+    req.target("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
@@ -534,7 +534,7 @@ TEST(DynamicRouter, RouteDisabler) {
 
     request req;
     req.method("GET");
-    req.uri("/home");
+    req.target("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
@@ -562,32 +562,32 @@ TEST(DynamicRouter, RootRoute) {
 
     request req;
     req.method("GET");
-    req.uri("/");
+    req.target("/");
 
     HTTPResponse auto res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "home") << as<std::string>(res.body) << "\n" << router.to_string();
 
 
-    req.uri("/parse-uri");
+    req.target("/parse-uri");
 
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found);
 
-    req.uri("/parse-uri?uri=test");
+    req.target("/parse-uri?uri=test");
 
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found) << stl::to_underlying(res.headers.status_code());
 
 
-    req.uri("/normal");
+    req.target("/normal");
 
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "normal route") << as<std::string>(res.body);
 
 
-    req.uri("/undefined");
+    req.target("/undefined");
 
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found);
@@ -601,7 +601,7 @@ TEST(DynamicRouter, PathWithQueries) {
     };
     request req;
     req.method("GET");
-    req.uri("/parse-uri?uri=test");
+    req.target("/parse-uri?uri=test");
 
     HTTPResponse auto res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);

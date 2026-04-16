@@ -248,7 +248,7 @@ namespace webpp::http {
         template <typename URIOrStringType>
         constexpr void reset_path(URIOrStringType&& new_path) {
             request.uri(stl::forward<URIOrStringType>(new_path));
-            traverser = request.uri();
+            traverser = request.uri().path();
         }
 
         constexpr dynamic_route_type const& current_route() const noexcept {

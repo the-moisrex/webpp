@@ -5,7 +5,6 @@
 #include "../../webpp/http/app_wrapper.hpp"
 #include "../../webpp/http/protocol/common_http_protocol.hpp"
 #include "../../webpp/http/request.hpp"
-#include "../../webpp/http/request_view.hpp"
 #include "../../webpp/http/response.hpp"
 #include "../../webpp/http/routes/static_router.hpp"
 #include "../../webpp/std/string_view.hpp"
@@ -19,33 +18,15 @@ namespace webpp {
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
     template <typename CommonHTTPRequest>
-    struct fake_proto_request : public CommonHTTPRequest, http::details::request_view_interface<char> {
+    struct fake_proto_request : public CommonHTTPRequest {
         using super       = CommonHTTPRequest;
         using string_type = typename super::string_type;
         using string_view = typename super::string_view_type;
         using char_type   = char;
+        using target_type = basic_request_target<char>;
 
         stl::map<string_type, string_type> data{};
 
-      protected:
-        // get the dynamic request object
-        request_view const& dreq() const noexcept {
-            return static_cast<request_view const&>(*this);
-        }
-
-        [[nodiscard]] string_type get_method() const override {
-            return +this->method();
-        }
-
-        [[nodiscard]] string_type get_uri() const override {
-            return +this->uri();
-        }
-
-        [[nodiscard]] http::version get_version() const noexcept override {
-            return this->version();
-        }
-
-      public:
         using super::super;
 
         fake_proto_request(fake_proto_request const&)     = default;
@@ -158,6 +139,10 @@ namespace webpp {
 
         [[nodiscard]] string_view uri() const noexcept {
             return get_data("REQUEST_URI");
+        }
+
+        [[nodiscard]] target_type const& target() const noexcept {
+            return requested_target;
         }
 
         [[nodiscard]] string_view content_type() const noexcept {

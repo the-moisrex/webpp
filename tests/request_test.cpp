@@ -1,7 +1,6 @@
 #include "../webpp/http/request.hpp"
 
 #include "../webpp/http/bodies/string.hpp"
-#include "../webpp/http/request_view.hpp"
 #include "./common/fake_protocol.hpp"
 #include "./common/test.hpp"
 
@@ -47,22 +46,6 @@ TEST(HTTPRequestTest, DynamicRequest) {
     dreq.body = "this is a nice code";
     req.body  = "this is a nice code";
     EXPECT_EQ(as<std::string>(dreq.body), as<std::string>(req.body));
-}
-
-TEST(HTTPRequestTest, RequestViewTest) {
-    fake_protocol pt;
-    req_t         req1;
-
-    req1.data.emplace("Content-Length", "23");
-    req1.data.emplace("SERVER_PROTOCOL", "HTTP/1.1");
-    req1.reload();
-
-    request_view const view{req1};
-
-    EXPECT_FALSE(view.headers.iter("content-length") == view.headers.end());
-    EXPECT_EQ("23", view.headers.get("content-length"));
-    EXPECT_EQ(23, view.headers.content_length());
-    EXPECT_EQ(http::http_1_1, view.version());
 }
 
 TEST(HTTPRequestTest, RequestCopying) {
