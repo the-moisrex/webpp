@@ -5,7 +5,7 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "charset.hpp"
+#include "./charset.hpp"
 
 namespace webpp::ascii {
 
@@ -107,28 +107,22 @@ namespace webpp::ascii {
     }
 
     // trim from start (copying)
-    template <CharSet CS = decltype(standard_whitespaces), istl::Stringifiable StrT = stl::string_view>
-    [[nodiscard]] static inline auto
-    ltrim_copy(StrT&& inp_str, auto const& allocator, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::stringify(stl::forward<StrT>(inp_str), allocator);
+    template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
+    [[nodiscard]] static inline auto ltrim_copy(StrT str, CS whitespaces = standard_whitespaces) noexcept {
         ltrim(str, whitespaces);
         return str;
     }
 
     // trim from end (copying)
-    template <CharSet CS = decltype(standard_whitespaces), istl::Stringifiable StrT = stl::string_view>
-    [[nodiscard]] static inline auto
-    rtrim_copy(StrT&& inp_str, auto const& allocator, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::stringify(stl::forward<StrT>(inp_str), allocator);
+    template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
+    [[nodiscard]] static inline auto rtrim_copy(StrT str, CS whitespaces = standard_whitespaces) noexcept {
         rtrim(str, whitespaces);
         return str;
     }
 
     // trim from both ends (copying)
-    template <CharSet CS = decltype(standard_whitespaces), istl::Stringifiable StrT = stl::string_view>
-    [[nodiscard]] inline auto
-    trim_copy(StrT&& inp_str, auto const& allocator, CS whitespaces = standard_whitespaces) noexcept {
-        auto str = istl::stringify(stl::forward<StrT>(inp_str), allocator);
+    template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
+    [[nodiscard]] inline auto trim_copy(StrT str, CS whitespaces = standard_whitespaces) noexcept {
         trim(str, whitespaces);
         return str;
     }

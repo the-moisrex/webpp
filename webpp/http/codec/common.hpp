@@ -87,21 +87,24 @@ namespace webpp::http {
     }
 
     // trim from start (copying)
-    template <typename CharT>
-    [[nodiscard]] static auto ltrim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
-        return ascii::ltrim_copy(str, allocator, http_lws);
+    template <typename CharT, typename AllocT>
+    [[nodiscard]] static auto ltrim_copy_lws(
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& str) noexcept {
+        return ascii::ltrim_copy(str, http_lws);
     }
 
     // trim from end (copying)
-    template <typename CharT>
-    [[nodiscard]] static auto rtrim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
-        return ascii::rtrim_copy(str, allocator, http_lws);
+    template <typename CharT, typename AllocT>
+    [[nodiscard]] static auto rtrim_copy_lws(
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& str) noexcept {
+        return ascii::rtrim_copy(str, http_lws);
     }
 
     // trim from both ends (copying)
-    template <typename CharT>
-    [[nodiscard]] static auto trim_copy_lws(stl::basic_string_view<CharT> const str, auto const& allocator) noexcept {
-        return ascii::trim_copy(str, allocator, http_lws);
+    template <typename CharT, typename AllocT>
+    [[nodiscard]] static auto trim_copy_lws(
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& str) noexcept {
+        return ascii::trim_copy(str, http_lws);
     }
 } // namespace webpp::http
 

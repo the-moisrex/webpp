@@ -61,7 +61,7 @@ namespace webpp::http {
         header_views_type header_views{};
         http::status_code status_code = http::status_code::ok;
 
-        inline auto consume_next(auto&&... what_to_find) noexcept {
+        auto consume_next(auto&&... what_to_find) noexcept {
             auto res = raw_view.find(stl::forward<decltype(what_to_find)>(what_to_find)...);
             if (res != string_view_type::npos) {
                 raw_view.remove_prefix(res);
