@@ -9,6 +9,7 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../strings/validators.hpp"
+#include "./header_concepts.hpp"
 
 #include <vector>
 
@@ -37,16 +38,15 @@ namespace webpp::http {
      *
      * todo: add support for pack200-gzip, exi, zstd
      */
-    template <Allocator               AllocT,
-              istl::StringView        StrViewT = stl::string_view,
-              accept_encoding_options Options  = accept_encoding_options{}>
-    struct basic_accept_encoding {
-        using str_v                                      = StrViewT;
-        using char_type                                  = typename str_v::value_type;
-        using str_const_iterator                         = typename str_v::const_iterator;
-        using allocator_type                             = AllocT;
-        using string_tokenizer_type                      = string_tokenizer<str_v, str_const_iterator>;
-        static constexpr accept_encoding_options options = Options;
+    template <Allocator AllocT = default_allocator_t<char>, accept_encoding_options Options = accept_encoding_options{}>
+    struct basic_accept_encoding : header_field_base<basic_accept_encoding<AllocT, Options>> {
+        using str_v              = stl::string_view;
+        using char_type          = typename str_v::value_type;
+        using str_const_iterator = typename str_v::const_iterator;
+        using allocator_type     = AllocT;
+
+        static constexpr accept_encoding_options options     = Options;
+        static constexpr stl::string_view        header_name = "accept-encoding";
 
         /**
          * Known encoding types
@@ -84,17 +84,20 @@ namespace webpp::http {
                       typename stl::allocator_traits<allocator_type>::template rebind_alloc<compression_algo_type>>;
 
         // ctor
-        explicit constexpr basic_accept_encoding(auto&&... args) noexcept
-          : data{stl::forward<decltype(args)>(args)...} {}
+        explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
+          : header_field_base<basic_accept_encoding<AllocT, Options>>{src} {
+            parse();
+        }
 
+      private:
         void parse() noexcept {
-            if (data.find_first_of('\"') != str_v::npos) {
+            if (this->view().find_first_of('\"') != str_v::npos) {
                 _is_valid = false;
                 return;
             }
             _allowed_encodings.clear();
 
-            string_tokenizer_type tokenizer(data);
+            string_tokenizer<str_v, str_const_iterator> tokenizer(this->view());
             while (tokenizer.next(charset<char_type, 1>(','))) {
                 auto entry = tokenizer.token();
                 http::trim_lws(entry);
@@ -221,11 +224,12 @@ namespace webpp::http {
             _is_valid = true;
         }
 
+      public:
         template <ascii::char_case Case = ascii::char_case::unknown>
         [[nodiscard]] static constexpr encoding_types to_known_algo(istl::StringView auto&& str) noexcept {
             constexpr auto the_case = ascii::char_case_to_side(Case, ascii::char_case::lowered);
             if (str.empty()) {
-                return all;
+                return identity;
             }
             // clang-format off
             switch(str[0]) {
@@ -264,7 +268,7 @@ namespace webpp::http {
                     break;
             }
             // clang-format on
-            return all;
+            return identity;
         }
 
         [[nodiscard]] allowed_encodings_type const& allowed_encodings() const noexcept {
@@ -287,8 +291,14 @@ namespace webpp::http {
                 return _allowed_encodings.cend();
             }
             return stl::find_if(_allowed_encodings.cbegin(), _allowed_encodings.cend(), [&](auto&& item) noexcept {
-                return (
-                  ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding, str) || ...);
+                if constexpr (allow_unknown_algos) {
+                    return (
+                      ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding, str) ||
+                      ...);
+
+                } else {
+                    return ((item.encoding == to_known_algo(str)) || ...);
+                }
             });
         }
 
@@ -331,17 +341,13 @@ namespace webpp::http {
 
         [[nodiscard]] encoding_types best_algorithm() const noexcept {
             // todo: fill this
+            return identity;
         }
 
       private:
-        str_v                  data;
         allowed_encodings_type _allowed_encodings{};
         bool                   _is_valid = false;
     };
-
-    template <Traits TraitsType>
-    using accept_encoding =
-      basic_accept_encoding<traits::string_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 
