@@ -6,37 +6,27 @@
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
+#include "./header_concepts.hpp"
 
 namespace webpp::http {
 
-    struct basic_content_type {
-        using string_tokenizer_type = string_tokenizer<stl::string_view>;
+    struct basic_content_type : header_field_base<basic_content_type> {
+        static constexpr stl::string_view header_name = "content-type";
 
       private:
-        stl::string_view _raw;
         stl::string_view _media_type;
         stl::string_view _boundary;
         stl::string_view _charset;
 
       public:
-        constexpr explicit basic_content_type(stl::string_view const str) noexcept : _raw{str} {
+        constexpr explicit basic_content_type(std::string_view const str) noexcept : header_field_base{str} {
             parse();
-        }
-
-        constexpr basic_content_type& operator=(stl::string_view const str) noexcept {
-            _raw = str;
-            parse();
-            return *this;
         }
 
         // A Content-Type header is only valid if it contains at least a valid media type.
         // For instance, "text/html" is valid, but an empty string or just parameters without a media type is not.
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return !_media_type.empty();
-        }
-
-        [[nodiscard]] constexpr stl::string_view view() const noexcept {
-            return _raw;
         }
 
         [[nodiscard]] constexpr stl::string_view media_type_string() const noexcept {
@@ -58,11 +48,11 @@ namespace webpp::http {
       private:
         constexpr void parse() noexcept {
             using webpp::charset;
-            if (_raw.empty()) {
+            if (view().empty()) {
                 return;
             }
 
-            string_tokenizer_type tok{_raw};
+            string_tokenizer<stl::string_view> tok{view()};
 
             // 1. Extract the main media type (everything before the first ';')
             if (tok.next(charset<char, 1>{';'}, _media_type)) {
@@ -94,16 +84,16 @@ namespace webpp::http {
 
                             if (*value_start == '"') {
                                 // Delegate to parse_quoted when encountering double quotes
-                                auto const pq = parse_quoted(value_start, _raw.end(), '"');
+                                auto const pq = parse_quoted(value_start, view().end(), '"');
                                 assign_parameter(key, pq.value);
                                 // Advance our tokenizer past the extracted quote
-                                tok.reset(pq.next, _raw.end());
+                                tok.reset(pq.next, view().end());
                             } else if (tok.next(charset<char, 1>{';'}, value)) {
                                 assign_parameter(key, ascii::trim_copy(value));
                             } else {
                                 // Last parameter in the string
                                 // USE CAPTURED POSITION INSTEAD OF tok.token_begin()
-                                value = stl::string_view{value_start, _raw.end()};
+                                value = stl::string_view{value_start, view().end()};
                                 assign_parameter(key, ascii::trim_copy(value));
                                 break;
                             }
@@ -114,7 +104,7 @@ namespace webpp::http {
                 }
             } else {
                 // No parameters found, the entire string is the media type
-                _media_type = ascii::trim_copy(_raw);
+                _media_type = ascii::trim_copy(view());
             }
         }
 
