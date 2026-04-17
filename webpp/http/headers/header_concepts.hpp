@@ -82,6 +82,7 @@ namespace webpp::http {
       private:
         std::string_view raw;
 
+        // We're in C++20 land, no `this auto` here
         [[nodiscard]] constexpr H const& self() const noexcept {
             return static_cast<H const&>(*this);
         }

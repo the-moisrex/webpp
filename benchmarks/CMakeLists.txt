@@ -44,7 +44,7 @@ set(FILE_SOURCES
         sorted_combining_marks/sorted_combining_marks_benchmark.cpp
         to_ascii/to_ascii_benchmark.cpp
 )
-file(GLOB FILE_PCH *_pch.hpp)
+# file(GLOB FILE_PCH *_pch.hpp)
 
 
 find_package(Threads REQUIRED)
@@ -111,7 +111,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(${exec_name} PUBLIC ${OPTIMIZATION_FLAGS})
 endif ()
 
-target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
+# target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
 
 # don't compile this if you don't need it
 set_target_properties(${exec_name} PROPERTIES EXCLUDE_FROM_ALL TRUE)

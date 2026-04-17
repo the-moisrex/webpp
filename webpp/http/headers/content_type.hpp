@@ -84,10 +84,10 @@ namespace webpp::http {
 
                             if (*value_start == '"') {
                                 // Delegate to parse_quoted when encountering double quotes
-                                auto const pq = parse_quoted(value_start, view().end(), '"');
-                                assign_parameter(key, pq.value);
+                                auto const parsed_quote = parse_quoted(value_start, view().end(), '"');
+                                assign_parameter(key, parsed_quote.value);
                                 // Advance our tokenizer past the extracted quote
-                                tok.reset(pq.next, view().end());
+                                tok.reset(parsed_quote.next, view().end());
                             } else if (tok.next(charset<char, 1>{';'}, value)) {
                                 assign_parameter(key, ascii::trim_copy(value));
                             } else {

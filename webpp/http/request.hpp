@@ -12,7 +12,6 @@
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
 #include "./verbs.hpp"
-#include "methods.hpp"
 
 #include <concepts>
 

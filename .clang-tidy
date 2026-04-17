@@ -1,4 +1,5 @@
 # Generated from CLion Inspection settings
+# Run `clang-tidy --verify-config`
 ---
 Checks: >
   *,
@@ -16,7 +17,7 @@ Checks: >
   portability-*,
   mpi-*,
   cert-*,
-    -cert-dcl21-cpp,
+    -cert-dcl51-cpp,
   clang-analyzer-*,
   -llvmlibc-*,
   llvm-*,
