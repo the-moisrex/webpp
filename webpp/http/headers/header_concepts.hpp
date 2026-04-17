@@ -23,7 +23,7 @@ namespace webpp::http {
     /// Get the header id
     template <typename H>
         requires requires { H::header_id; }
-    [[nodiscard]] consteval hash_type header_hash_id(H const&) noexcept {
+    [[nodiscard]] consteval hash_type header_id(H const&) noexcept {
         return H::header_id;
     }
 
@@ -41,25 +41,38 @@ namespace webpp::http {
         };
     } // namespace details
 
-    template <typename H>
-        requires(details::has_header_name<H> && !requires { H::header_id; })
-    [[nodiscard]] consteval hash_type header_hash_id(H const& header) noexcept {
-        return ci_hash(header_name(header));
-    }
-
     /**
      * A header type is a type that is responsible for one single header field.
      * For example the class that parses `Content-Type`'s value should comply with this concept.
      */
-    template <typename T>
-    concept Header = requires(T header) {
-        requires details::has_header_name<T>;
-        requires details::has_header_id<T>;
+    template <typename H>
+    concept HeaderField = requires(H header) {
+        // It should provide identification
+        requires details::has_header_name<H>;
+        requires details::has_header_id<H>;
 
-        T{""};
+        // Constructor
+        H{std::string_view{""}};
+
+        // Check validity of the parsed value
         header.is_valid();
-        static_cast<bool>(header); // is_valid
+        static_cast<bool>(header);
+
+        // Necessary for proxying requests, serialization, or unhandled edge cases.
+        { header.view() } -> std::convertible_to<std::string_view>;
     };
+
+    template <typename H>
+        requires(details::has_header_name<H> && !requires { H::header_id; })
+    [[nodiscard]] consteval hash_type header_id(H const& header) noexcept {
+        return ci_hash(header_name(header));
+    }
+
+    template <HeaderField T>
+    [[nodiscard]] constexpr bool has_value(T const& header) noexcept {
+        return !header.view().empty();
+    }
+
 
 } // namespace webpp::http
 
