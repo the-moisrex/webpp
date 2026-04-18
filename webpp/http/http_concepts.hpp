@@ -24,7 +24,6 @@ namespace webpp::http {
     concept HTTPHeaders = requires(stl::remove_cvref_t<T> headers) {
         typename stl::remove_cvref_t<T>::field_type;
         typename stl::remove_cvref_t<T>::string_type;
-        typename stl::remove_cvref_t<T>::string_view_type;
         typename stl::remove_cvref_t<T>::allocator_type;
         requires stl::copyable<stl::remove_reference_t<T>>;
         requires stl::constructible_from<stl::remove_cvref_t<T>, typename stl::remove_cvref_t<T>::allocator_type>;

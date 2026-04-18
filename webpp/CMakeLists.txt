@@ -274,7 +274,6 @@ set(ALL_SOURCES_SHORT
         http/headers/keep_alive.hpp
 
         http/cookies/cookie.hpp
-        http/cookies/cookie_extensions.hpp
         http/cookies/cookie_jar.hpp
         http/cookies/cookies_concepts.hpp
         http/cookies/request_cookie.hpp
