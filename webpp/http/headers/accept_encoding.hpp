@@ -123,7 +123,7 @@ namespace webpp::http {
             while (_count < MaxSupported && tokenizer.next(charset{','})) {
                 auto entry = tokenizer.token();
                 http::trim_lws(entry);
-                std::size_t semicolon_pos = entry.find(';');
+                std::size_t const semicolon_pos = entry.find(';');
                 if (semicolon_pos == stl::string_view::npos) {
                     if (entry.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
                         _count = 0; // not valid
@@ -141,7 +141,7 @@ namespace webpp::http {
                 }
                 auto params = entry.substr(semicolon_pos + 1);
                 http::trim_lws(params);
-                std::size_t equals_pos = params.find('=');
+                std::size_t const equals_pos = params.find('=');
                 if (equals_pos == stl::string_view::npos) {
                     _count = 0; // not valid
                     return;
@@ -163,7 +163,7 @@ namespace webpp::http {
                     _count = 0; // not valid
                     return;
                 }
-                if (qval > 0.0F) {
+                if (qval >= 0.0F) {
                     auto known = to_known_encoding(encoding);
                     _allowed_encodings[_count++] =
                       compression_algo{.encoding = known, .quality = qval, .name = encoding};
@@ -216,22 +216,25 @@ namespace webpp::http {
                 return -1.0F;
             }
             if (qvalue.size() == 1) {
-                return 0.0F; // "0"
+                return 0.0F;
             }
-            if (qvalue.size() < 3 || qvalue.size() > 5) {
+            constexpr std::size_t min_qvalue_length = 3; // e.g., "0.1"
+            constexpr std::size_t max_qvalue_length = 5; // e.g., "0.123"
+            if (qvalue.size() < min_qvalue_length || qvalue.size() > max_qvalue_length) {
                 return -1.0F;
             }
             if (qvalue[1] != '.') {
                 return -1.0F;
             }
-            float val = 0.0F;
-            float d   = 0.1F;
+            constexpr float base_fraction       = 0.1F;
+            float           val                 = 0.0F;
+            float           fraction_multiplier = base_fraction;
             for (std::size_t i = 2; i < qvalue.size(); ++i) {
                 if (!ascii::is::digit(qvalue[i])) {
                     return -1.0F;
                 }
-                val += d * static_cast<float>(qvalue[i] - '0');
-                d   *= 0.1F;
+                val                 += fraction_multiplier * static_cast<float>(qvalue[i] - '0');
+                fraction_multiplier *= base_fraction;
             }
             return val;
         }
@@ -244,7 +247,7 @@ namespace webpp::http {
         [[nodiscard]] static constexpr EncodingEnum to_known_encoding(std::string_view str) noexcept {
             constexpr auto the_case = ascii::char_case_to_side(Case, ascii::char_case::lowered);
             if (str.empty()) [[unlikely]] {
-                return EncodingEnum::identity;
+                return EncodingEnum::unknown;
             }
 
             switch (str[0]) {
@@ -341,7 +344,13 @@ namespace webpp::http {
          * Checks whether a specific EncodingEnum value is allowed.
          */
         [[nodiscard]] constexpr bool is_allowed(EncodingEnum const type) const noexcept {
-            return get(type) != nullptr;
+            if (auto const* algo = get(type)) {
+                return algo->quality > 0.0F;
+            }
+            if (auto const* star = get(EncodingEnum::all)) {
+                return star->quality > 0.0F;
+            }
+            return type == EncodingEnum::identity;
         }
 
         /**
