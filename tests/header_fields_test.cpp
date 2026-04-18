@@ -1,7 +1,7 @@
 // Created by moisrex on 10/9/20.
 #include "../webpp/http/headers/accept_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
-#include "common/test.hpp"
+#include "./common/test.hpp"
 
 
 using namespace webpp;
@@ -17,19 +17,23 @@ TEST(Headers, AcceptEncoding) {
     basic_accept_encoding parser{"gzip"};
     EXPECT_TRUE(parser.is_valid());
     EXPECT_EQ(parser.allowed_encodings().size(), 2); // plus identity
-    EXPECT_TRUE(parser.is_allowed<parser.gzip>());
+    EXPECT_TRUE(parser.is_allowed(encoding_type::gzip));
 
     basic_accept_encoding parser2{"gzip; q=0.05"};
     EXPECT_TRUE(parser2.is_valid());
-    EXPECT_TRUE(parser2.is_allowed<parser2.gzip>());
+    EXPECT_TRUE(parser2.is_allowed(encoding_type::gzip));
     // EXPECT_FLOAT_EQ(parser2.get<parser2.gzip>()->quality, 0.05f);
 
     basic_accept_encoding parser3{"gzip; q=0.255, br, deflate"};
     EXPECT_TRUE(parser3.is_valid());
-    EXPECT_TRUE(parser3.is_allowed<parser3.gzip>());
-    EXPECT_TRUE(parser3.is_allowed<parser3.br>());
-    EXPECT_TRUE(parser3.is_allowed<parser3.deflate>());
+    EXPECT_TRUE(parser3.is_allowed(encoding_type::gzip));
+    EXPECT_TRUE(parser3.is_allowed(encoding_type::br));
+    EXPECT_TRUE(parser3.is_allowed(encoding_type::deflate));
     // EXPECT_FLOAT_EQ(parser3.get<parser3.gzip>()->quality, 0.255f);
+
+    basic_accept_encoding parser4{"*"};
+    EXPECT_TRUE(parser4.is_valid());
+    EXPECT_TRUE(parser4.is_allowed(encoding_type::all));
 }
 
 class ContentTypeTest : public ::testing::Test {
