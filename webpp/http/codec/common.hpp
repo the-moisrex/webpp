@@ -3,6 +3,7 @@
 #ifndef WEBPP_CODEC_COMMON_HPP
 #define WEBPP_CODEC_COMMON_HPP
 
+#include "../../std/string_view.hpp"
 #include "../../strings/trim.hpp"
 
 namespace webpp::http {
@@ -105,6 +106,68 @@ namespace webpp::http {
     [[nodiscard]] static auto trim_copy_lws(
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT> const& str) noexcept {
         return ascii::trim_copy(str, http_lws);
+    }
+
+    /**
+     * Parses an HTTP qvalue and returns -1.0F when the input is invalid.
+     *
+     * Valid inputs are "0", "0.xxx", "1", and "1.000" with up to 3 decimal places.
+     */
+    [[nodiscard]] static constexpr float parse_qvalue(stl::string_view str) noexcept {
+        if (str.empty()) {
+            return -1.0F;
+        }
+
+        if (str == "1") {
+            return 1.0F;
+        }
+
+        if (str.starts_with('1')) {
+            auto decimals = str.substr(1);
+            if (decimals.empty()) {
+                return 1.0F;
+            }
+            if (!decimals.starts_with('.')) {
+                return -1.0F;
+            }
+            decimals.remove_prefix(1);
+            if (decimals.size() > 3) {
+                return -1.0F;
+            }
+            for (auto const digit : decimals) {
+                if (digit != '0') {
+                    return -1.0F;
+                }
+            }
+            return 1.0F;
+        }
+
+        if (str == "0") {
+            return 0.0F;
+        }
+
+        if (!str.starts_with("0.")) {
+            return -1.0F;
+        }
+
+        auto const decimals = str.substr(2);
+        if (decimals.size() > 3) {
+            return -1.0F;
+        }
+
+        constexpr float base_divisor = 10.0F;
+        float           quality      = 0.0F;
+        float           divisor      = base_divisor;
+
+        for (auto const digit : decimals) {
+            if (digit < '0' || digit > '9') {
+                return -1.0F;
+            }
+            quality += static_cast<float>(digit - '0') / divisor;
+            divisor *= base_divisor;
+        }
+
+        return quality;
     }
 } // namespace webpp::http
 

@@ -198,46 +198,6 @@ namespace webpp::http {
             // so no extra mirroring is needed.
         }
 
-        /**
-         * Parses a quality value string like "0.5" or "1" or "1.000".
-         * Returns the parsed float, or -1.0f on error.
-         */
-        static constexpr float parse_qvalue(std::string_view qvalue) noexcept {
-            if (qvalue.empty()) {
-                return -1.0F;
-            }
-            if (qvalue[0] == '1') {
-                if (qvalue == "1" || qvalue == "1.0" || qvalue == "1.00" || qvalue == "1.000") {
-                    return 1.0F;
-                }
-                return -1.0F;
-            }
-            if (qvalue[0] != '0') {
-                return -1.0F;
-            }
-            if (qvalue.size() == 1) {
-                return 0.0F;
-            }
-            constexpr std::size_t min_qvalue_length = 3; // e.g., "0.1"
-            constexpr std::size_t max_qvalue_length = 5; // e.g., "0.123"
-            if (qvalue.size() < min_qvalue_length || qvalue.size() > max_qvalue_length) {
-                return -1.0F;
-            }
-            if (qvalue[1] != '.') {
-                return -1.0F;
-            }
-            constexpr float base_fraction       = 0.1F;
-            float           val                 = 0.0F;
-            float           fraction_multiplier = base_fraction;
-            for (std::size_t i = 2; i < qvalue.size(); ++i) {
-                if (!ascii::is::digit(qvalue[i])) {
-                    return -1.0F;
-                }
-                val                 += fraction_multiplier * static_cast<float>(qvalue[i] - '0');
-                fraction_multiplier *= base_fraction;
-            }
-            return val;
-        }
 
         /**
          * Converts a string to the known EncodingEnum.

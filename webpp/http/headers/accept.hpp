@@ -3,9 +3,9 @@
 #ifndef WEBPP_HEADERS_ACCEPT_HPP
 #define WEBPP_HEADERS_ACCEPT_HPP
 
+#include "../../http/codec/common.hpp"
 #include "../../http/protocol/http_limits.hpp"
 #include "../../std/cstdint.hpp"
-#include "../../std/optional.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
@@ -201,22 +201,23 @@ namespace webpp::http {
                     continue;
                 }
 
-                auto const range = parse_media_range(range_str);
-                if (!range.has_value()) {
+                accept_media_range range;
+                if (!parse_media_range(range_str, range)) {
                     _count    = 0;
                     _is_valid = false;
                     return;
                 }
 
                 if (_count < _media_ranges.size()) {
-                    _media_ranges[_count++] = *range;
+                    assert(_count < _media_ranges.size());
+                    _media_ranges.at(_count++) = range;
                 }
             }
         }
 
-        [[nodiscard]] static constexpr stl::optional<accept_media_range> parse_media_range(
-          stl::string_view const str) noexcept {
-            accept_media_range res;
+        [[nodiscard]] static constexpr bool parse_media_range(stl::string_view const str,
+                                                              accept_media_range&    res) noexcept {
+            res = {};
 
             string_tokenizer<stl::string_view> tok{str};
 
@@ -244,7 +245,7 @@ namespace webpp::http {
                         if (tok.expect(charset{'='})) {
                             tok.skip(charset{' ', '\t'}); // skip OWS
                             if (tok.at_end()) {
-                                return stl::nullopt;
+                                return false;
                             }
 
                             stl::string_view value;
@@ -264,15 +265,15 @@ namespace webpp::http {
                             if (ascii::iequals_sl(key, "q")) {
                                 auto const parsed_weight = parse_qvalue(value);
                                 if (parsed_weight < 0.0F) {
-                                    return stl::nullopt;
+                                    return false;
                                 }
                                 res.weight = parsed_weight;
                             }
                         } else if (!key.empty()) {
-                            return stl::nullopt;
+                            return false;
                         }
                     } else {
-                        return stl::nullopt;
+                        return false;
                     }
                 }
             } else {
@@ -281,10 +282,10 @@ namespace webpp::http {
             }
 
             if (!is_valid_media_type(res.media_type)) {
-                return stl::nullopt;
+                return false;
             }
 
-            return res;
+            return true;
         }
 
         [[nodiscard]] static constexpr bool is_valid_media_type(stl::string_view const media_type) noexcept {
@@ -303,71 +304,11 @@ namespace webpp::http {
                 return false;
             }
             if (type.find_first_of(" \t") != stl::string_view::npos ||
-                subtype.find_first_of(" \t") != stl::string_view::npos) {
+                subtype.find_first_of(" \t") != stl::string_view::npos)
+            {
                 return false;
             }
             return true;
-        }
-
-        /**
-         * @brief Parses a quality value string into a float safely.
-         *
-         * Expects a string representing a float value up to 3 decimals, e.g., "0.9" or "1.000".
-         */
-        [[nodiscard]] static constexpr float parse_qvalue(stl::string_view str) noexcept {
-            if (str.empty()) {
-                return -1.0F;
-            }
-
-            if (str == "1") {
-                return 1.0F;
-            }
-
-            if (str.starts_with('1')) {
-                auto decimals = str.substr(1);
-                if (decimals.empty()) {
-                    return 1.0F;
-                }
-                if (!decimals.starts_with('.')) {
-                    return -1.0F;
-                }
-                decimals.remove_prefix(1);
-                if (decimals.size() > 3) {
-                    return -1.0F;
-                }
-                for (auto const digit : decimals) {
-                    if (digit != '0') {
-                        return -1.0F;
-                    }
-                }
-                return 1.0F;
-            }
-
-            if (str == "0") {
-                return 0.0F;
-            }
-
-            if (str.starts_with("0.")) {
-                float           quality      = 0.0F;
-                constexpr float base_divisor = 10.0F;
-                float           divisor      = base_divisor;
-                auto const      decimals     = str.substr(2);
-
-                if (decimals.size() > 3) {
-                    return -1.0F;
-                }
-
-                for (auto const digit : decimals) {
-                    if (digit < '0' || digit > '9') {
-                        return -1.0F;
-                    }
-                    quality += static_cast<float>(digit - '0') / divisor;
-                    divisor *= base_divisor;
-                }
-                return quality;
-            }
-
-            return -1.0F;
         }
 
         storage_type _media_ranges{};
