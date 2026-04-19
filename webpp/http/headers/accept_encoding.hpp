@@ -199,7 +199,7 @@ namespace webpp::http {
      * @tparam MaxSupported   Maximum number of encoding entries that will be parsed.
      *                        Additional entries beyond this limit are ignored.
      */
-    template <typename EncodingEnum = encoding_type, std::size_t MaxSupported = max_supported_accept_encodings>
+    template <typename EncodingEnum = encoding_type, std::size_t MaxSupported = max_supported_accept_encoding_values>
     struct [[nodiscard]] basic_accept_encoding : header_field_base<basic_accept_encoding<EncodingEnum, MaxSupported>> {
         static constexpr stl::string_view header_name = "accept-encoding";
 

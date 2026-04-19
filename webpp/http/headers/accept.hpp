@@ -14,6 +14,7 @@
 #include "./header_concepts.hpp"
 
 #include <array>
+#include <limits>
 #include <span>
 
 namespace webpp::http {
@@ -46,8 +47,8 @@ namespace webpp::http {
         if (type == "*" && subtype != "*") {
             return false;
         }
-        if (type.find_first_of(" \t") != stl::string_view::npos ||
-            subtype.find_first_of(" \t") != stl::string_view::npos)
+        if (
+          type.find_first_of(" \t") != stl::string_view::npos || subtype.find_first_of(" \t") != stl::string_view::npos)
         {
             return false;
         }
@@ -123,13 +124,12 @@ namespace webpp::http {
         return is_valid_accept_media_type(res.media_type);
     }
 
-    template <std::size_t MaxSupported = max_supported_accept_values>
-    constexpr void parse_accept_value(stl::string_view const                          value,
-                                      stl::array<accept_media_range, MaxSupported>&   media_ranges,
-                                      stl::uint8_t&                                   count,
-                                      bool&                                           is_valid) noexcept {
-        count    = 0;
-        is_valid = true;
+    template <std::size_t MaxSupported = max_supported_accept_values, stl::integral C = stl::size_t>
+    constexpr void parse_accept_value(
+      stl::string_view const                        value,
+      stl::array<accept_media_range, MaxSupported>& media_ranges,
+      C&                                            count) noexcept {
+        count = 0;
 
         string_tokenizer<stl::string_view> tok{value};
         while (!tok.at_end()) {
@@ -151,9 +151,8 @@ namespace webpp::http {
             }
 
             accept_media_range range;
-            if (!parse_accept_media_range(range_str, range)) {
-                count    = 0;
-                is_valid = false;
+            if (!parse_accept_media_range(range_str, range)) [[unlikely]] {
+                count = stl::numeric_limits<C>::max();
                 return;
             }
 
@@ -256,21 +255,23 @@ namespace webpp::http {
      *       a closed system which cannot interact with other rendering agents,
      *     this default set ought to be configurable by the user.
      */
-    struct [[nodiscard]] basic_accept : header_field_base<basic_accept> {
+    template <stl::size_t MaxSupportedValues = max_supported_accept_values>
+    struct [[nodiscard]] basic_accept : header_field_base<basic_accept<MaxSupportedValues>> {
         static constexpr stl::string_view header_name = "accept";
 
         using value_type     = accept_media_range;
-        using storage_type   = stl::array<value_type, max_supported_accept_values>;
+        using storage_type   = stl::array<value_type, MaxSupportedValues>;
         using const_iterator = storage_type::const_iterator;
+        using count_type     = stl::make_unsigned_t<istl::integer_max_t<MaxSupportedValues, stl::size_t>>;
 
       public:
-        constexpr explicit basic_accept(stl::string_view const str) noexcept : header_field_base{str} {
-            parse_accept_value(view(), _media_ranges, _count, _is_valid);
+        constexpr explicit basic_accept(stl::string_view const str) noexcept : header_field_base<basic_accept>{str} {
+            parse_accept_value(this->view(), _media_ranges, _count);
         }
 
         // An empty Accept header is valid and implies no explicit restriction.
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _is_valid;
+            return _count != stl::numeric_limits<count_type>::max();
         }
 
         [[nodiscard]] constexpr stl::span<value_type const> media_ranges() const noexcept {
@@ -293,7 +294,7 @@ namespace webpp::http {
          */
         template <typename Callback>
         constexpr void for_each(Callback&& callback) const noexcept {
-            if (!_is_valid) {
+            if (!is_valid()) [[unlikely]] {
                 return;
             }
 
@@ -311,142 +312,8 @@ namespace webpp::http {
         }
 
       private:
-        constexpr void parse() noexcept {
-            _count    = 0;
-            _is_valid = true;
-
-            string_tokenizer<stl::string_view> tok{view()};
-            while (!tok.at_end()) {
-                tok.skip(charset{',', ' '});
-                if (tok.at_end()) {
-                    break;
-                }
-
-                stl::string_view range_str;
-                if (tok.next(charset{','}, range_str)) {
-                    range_str = ascii::trim_copy(range_str);
-                } else {
-                    range_str = ascii::trim_copy(stl::string_view{tok.token_begin(), view().end()});
-                    tok.reset(view().end());
-                }
-
-                if (range_str.empty()) {
-                    continue;
-                }
-
-                accept_media_range range;
-                if (!parse_media_range(range_str, range)) {
-                    _count    = 0;
-                    _is_valid = false;
-                    return;
-                }
-
-                if (_count < _media_ranges.size()) {
-                    assert(_count < _media_ranges.size());
-                    _media_ranges.at(_count++) = range;
-                }
-            }
-        }
-
-        [[nodiscard]] static constexpr bool parse_media_range(stl::string_view const str,
-                                                              accept_media_range&    res) noexcept {
-            res = {};
-
-            string_tokenizer<stl::string_view> tok{str};
-
-            // Extract the main media type (everything before the first ';')
-            if (tok.next(charset{';'}, res.media_type)) {
-                res.media_type = ascii::trim_copy(res.media_type);
-
-                // Isolate the remaining parameters segment
-                auto const semicolon_pos = str.find(';');
-                if (semicolon_pos != stl::string_view::npos) {
-                    res.params = ascii::trim_copy(str.substr(semicolon_pos + 1));
-                }
-
-                // Process parameters to locate the weight ("q" value)
-                while (!tok.at_end()) {
-                    tok.skip(charset{';', ' '});
-                    if (tok.at_end()) {
-                        break;
-                    }
-
-                    stl::string_view key;
-                    if (tok.next(charset{'=', ';'}, key)) {
-                        key = ascii::trim_copy(key);
-
-                        if (tok.expect(charset{'='})) {
-                            tok.skip(charset{' ', '\t'}); // skip OWS
-                            if (tok.at_end()) {
-                                return false;
-                            }
-
-                            stl::string_view value;
-                            auto const*      value_start = tok.token_end();
-
-                            if (*value_start == '"') {
-                                auto const parsed = parse_quoted(value_start, str.end(), '"');
-                                value             = parsed.value;
-                                tok.reset(parsed.next, str.end());
-                            } else if (tok.next(charset{';'}, value)) {
-                                value = ascii::trim_copy(value);
-                            } else {
-                                value = ascii::trim_copy(stl::string_view{value_start, str.end()});
-                                tok.reset(str.end());
-                            }
-
-                            if (ascii::iequals_sl(key, "q")) {
-                                auto const parsed_weight = parse_qvalue(value);
-                                if (parsed_weight < 0.0F) {
-                                    return false;
-                                }
-                                res.weight = parsed_weight;
-                            }
-                        } else if (!key.empty()) {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-            } else {
-                // No parameters, the entire token is the media type
-                res.media_type = ascii::trim_copy(str);
-            }
-
-            if (!is_valid_media_type(res.media_type)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        [[nodiscard]] static constexpr bool is_valid_media_type(stl::string_view const media_type) noexcept {
-            if (media_type.empty()) {
-                return false;
-            }
-
-            auto const slash_pos = media_type.find('/');
-            if (slash_pos == stl::string_view::npos || slash_pos == 0 || slash_pos + 1 >= media_type.size()) {
-                return false;
-            }
-
-            auto const type    = media_type.substr(0, slash_pos);
-            auto const subtype = media_type.substr(slash_pos + 1);
-            if (type == "*" && subtype != "*") {
-                return false;
-            }
-            if (type.find_first_of(" \t") != stl::string_view::npos ||
-                subtype.find_first_of(" \t") != stl::string_view::npos)
-            {
-                return false;
-            }
-            return true;
-        }
-
         storage_type _media_ranges{};
-        stl::uint8_t _count    = 0;
-        bool         _is_valid = true;
+        count_type   _count = 0;
     };
 
 } // namespace webpp::http

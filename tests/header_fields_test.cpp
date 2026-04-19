@@ -1,6 +1,7 @@
 // Created by moisrex on 10/9/20.
 #include "../webpp/http/headers/accept.hpp"
 #include "../webpp/http/headers/accept_encoding.hpp"
+#include "../webpp/http/headers/content_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "./common/test.hpp"
 
@@ -39,7 +40,7 @@ TEST(Headers, AcceptEncoding) {
 
 TEST(Headers, AcceptEncodingExceedsLimit) {
     std::string header_value;
-    for (std::size_t i = 0; i < max_supported_accept_encodings + 5; ++i) {
+    for (std::size_t i = 0; i < max_supported_accept_encoding_values + 5; ++i) {
         if (!header_value.empty()) {
             header_value += ", ";
         }
@@ -49,10 +50,10 @@ TEST(Headers, AcceptEncodingExceedsLimit) {
     basic_accept_encoding parser{header_value};
 
     ASSERT_TRUE(parser.is_valid());
-    ASSERT_EQ(parser.allowed_encodings().size(), max_supported_accept_encodings);
+    ASSERT_EQ(parser.allowed_encodings().size(), max_supported_accept_encoding_values);
     EXPECT_TRUE(parser.is_allowed("custom-0"));
-    EXPECT_TRUE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encodings - 1)));
-    EXPECT_FALSE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encodings)));
+    EXPECT_TRUE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encoding_values - 1)));
+    EXPECT_FALSE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encoding_values)));
 }
 
 class ContentTypeTest : public ::testing::Test {
@@ -447,4 +448,99 @@ TEST_F(AcceptHeaderTest, ExceedsLimitKeepsOnlySupportedValues) {
     EXPECT_EQ(accept_header.begin()->media_type, "application/type0");
     EXPECT_EQ((accept_header.end() - 1)->media_type,
               "application/type" + std::to_string(max_supported_accept_values - 1));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+class ContentEncodingTest : public ::testing::Test {
+  protected:
+    void SetUp() override {}
+
+    void TearDown() override {}
+};
+
+// Test to verify it fully complies with the conceptual rules of HeaderField
+TEST_F(ContentEncodingTest, CompliesWithHeaderFieldConcept) {
+    // Asserting concept statically
+    static_assert(HeaderField<basic_content_encoding<10>>, "Must comply with HeaderField concept");
+
+    basic_content_encoding<> ce("gzip");
+    EXPECT_TRUE(ce.is_valid());
+    EXPECT_EQ(ce.view(), "gzip");
+    EXPECT_TRUE(static_cast<bool>(ce));
+}
+
+TEST_F(ContentEncodingTest, EmptyHeader) {
+    basic_content_encoding<> ce("");
+    EXPECT_TRUE(ce.is_valid());
+    EXPECT_EQ(ce.encodings().size(), 0);
+}
+
+TEST_F(ContentEncodingTest, SingleEncoding) {
+    basic_content_encoding<> ce("gzip");
+    EXPECT_TRUE(ce.is_valid());
+    ASSERT_EQ(ce.encodings().size(), 1);
+    EXPECT_EQ(ce.encodings()[0], "gzip");
+    EXPECT_TRUE(ce.contains("gzip"));
+    EXPECT_TRUE(ce.contains("GZIP")); // Case insensitive match
+    EXPECT_FALSE(ce.contains("br"));
+}
+
+TEST_F(ContentEncodingTest, MultipleEncodings) {
+    basic_content_encoding<> ce("deflate, gzip");
+    EXPECT_TRUE(ce.is_valid());
+    ASSERT_EQ(ce.encodings().size(), 2);
+    EXPECT_EQ(ce.encodings()[0], "deflate");
+    EXPECT_EQ(ce.encodings()[1], "gzip");
+    EXPECT_TRUE(ce.contains("deflate"));
+    EXPECT_TRUE(ce.contains("gzip"));
+}
+
+TEST_F(ContentEncodingTest, MultipleEncodingsWithTrailingSpacesAndCommas) {
+    basic_content_encoding<> ce("  br  ,  gzip , ");
+    EXPECT_TRUE(ce.is_valid());
+    ASSERT_EQ(ce.encodings().size(), 2);
+    EXPECT_EQ(ce.encodings()[0], "br");
+    EXPECT_EQ(ce.encodings()[1], "gzip");
+}
+
+TEST_F(ContentEncodingTest, MalformedInvalidCharacters) {
+    // Content-Encoding doesn't use standard attributes separated by semi-colon
+    basic_content_encoding<> ce1("gzip;q=1.0");
+    EXPECT_FALSE(ce1.is_valid());
+    EXPECT_FALSE(static_cast<bool>(ce1));
+
+    // Wildcards are not valid in Content-Encoding (only in Accept-Encoding)
+    basic_content_encoding<> ce2("*");
+    EXPECT_FALSE(ce2.is_valid());
+
+    // Quotes are invalid
+    basic_content_encoding<> ce3("\"gzip\"");
+    EXPECT_FALSE(ce3.is_valid());
+}
+
+TEST_F(ContentEncodingTest, MalformedInternalSpaces) {
+    // Internal spaces inside a token are considered invalid syntax
+    basic_content_encoding<> ce("gz ip");
+    EXPECT_FALSE(ce.is_valid());
+
+    // Multiple values where one is malformed
+    basic_content_encoding<> ce_multiple("br, def late, gzip");
+    EXPECT_FALSE(ce_multiple.is_valid());
+}
+
+TEST_F(ContentEncodingTest, MaxSupportedExceeded) {
+    // Set a very small MaxSupported size for testing
+    basic_content_encoding<2> ce("gzip, deflate, br, compress");
+
+    EXPECT_TRUE(ce.is_valid()); // Should still be valid, just truncated
+    ASSERT_EQ(ce.encodings().size(), 2);
+    EXPECT_EQ(ce.encodings()[0], "gzip");
+    EXPECT_EQ(ce.encodings()[1], "deflate");
+
+    // Ensure truncated ones are not reported
+    EXPECT_FALSE(ce.contains("br"));
+    EXPECT_FALSE(ce.contains("compress"));
 }
