@@ -1,4 +1,5 @@
 // Created by moisrex on 10/9/20.
+#include "../webpp/http/headers/accept.hpp"
 #include "../webpp/http/headers/accept_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "./common/test.hpp"
@@ -34,6 +35,24 @@ TEST(Headers, AcceptEncoding) {
     basic_accept_encoding parser4{"*"};
     EXPECT_TRUE(parser4.is_valid());
     EXPECT_TRUE(parser4.is_allowed(encoding_type::all));
+}
+
+TEST(Headers, AcceptEncodingExceedsLimit) {
+    std::string header_value;
+    for (std::size_t i = 0; i < max_supported_accept_encodings + 5; ++i) {
+        if (!header_value.empty()) {
+            header_value += ", ";
+        }
+        header_value += "custom-" + std::to_string(i);
+    }
+
+    basic_accept_encoding parser{header_value};
+
+    ASSERT_TRUE(parser.is_valid());
+    ASSERT_EQ(parser.allowed_encodings().size(), max_supported_accept_encodings);
+    EXPECT_TRUE(parser.is_allowed("custom-0"));
+    EXPECT_TRUE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encodings - 1)));
+    EXPECT_FALSE(parser.is_allowed("custom-" + std::to_string(max_supported_accept_encodings)));
 }
 
 class ContentTypeTest : public ::testing::Test {
@@ -277,4 +296,155 @@ TEST_F(ContentTypeTest, ParametersInMediaTypeStringNotSupported) {
     // Our parser handles it correctly because ; separates media type
     EXPECT_EQ(ct.media_type_string(), "text/html");
     EXPECT_EQ(ct.charset(), "utf-8");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+class AcceptHeaderTest : public ::testing::Test {
+  protected:
+    // Helper to collect parsed ranges into a vector for easy assertion
+    std::vector<accept_media_range> parse_to_vector(std::string_view header_value) {
+        basic_accept                    accept_header{header_value};
+        std::vector<accept_media_range> ranges;
+
+        accept_header.for_each([&](accept_media_range const& range) {
+            ranges.push_back(range);
+        });
+
+        return ranges;
+    }
+};
+
+TEST_F(AcceptHeaderTest, EmptyHeaderIsValid) {
+    EXPECT_TRUE(basic_accept("").is_valid());
+}
+
+TEST_F(AcceptHeaderTest, EmptyHeaderYieldsNoRanges) {
+    basic_accept const accept_header{""};
+    auto const         ranges = parse_to_vector("");
+
+    EXPECT_EQ(accept_header.begin(), accept_header.end());
+    EXPECT_TRUE(ranges.empty());
+}
+
+TEST_F(AcceptHeaderTest, WhiteSpaceOnlyYieldsNoRanges) {
+    auto ranges = parse_to_vector("   ,  , ");
+    EXPECT_TRUE(ranges.empty());
+}
+
+TEST_F(AcceptHeaderTest, SingleMediaRangeDefaultWeight) {
+    basic_accept const accept_header{"text/html"};
+    auto const         ranges = parse_to_vector("text/html");
+
+    ASSERT_EQ(ranges.size(), 1);
+    ASSERT_EQ(accept_header.media_ranges().size(), 1);
+    EXPECT_EQ(ranges[0].media_type, "text/html");
+    EXPECT_FLOAT_EQ(ranges[0].weight, 1.0F);
+    EXPECT_FALSE(is_wildcard(ranges[0]));
+}
+
+TEST_F(AcceptHeaderTest, MultipleMediaRangesDefaultWeights) {
+    auto ranges = parse_to_vector("text/html, application/xhtml+xml, application/xml");
+
+    ASSERT_EQ(ranges.size(), 3);
+    EXPECT_EQ(ranges[0].media_type, "text/html");
+    EXPECT_EQ(ranges[1].media_type, "application/xhtml+xml");
+    EXPECT_EQ(ranges[2].media_type, "application/xml");
+
+    for (auto const& r : ranges) {
+        EXPECT_FLOAT_EQ(r.weight, 1.0F);
+    }
+}
+
+TEST_F(AcceptHeaderTest, ParsesQValuesCorrectly) {
+    auto ranges = parse_to_vector("text/html; q=0.8, text/plain; q=0.5, image/*; q=0.001");
+
+    ASSERT_EQ(ranges.size(), 3);
+
+    EXPECT_EQ(ranges[0].media_type, "text/html");
+    EXPECT_FLOAT_EQ(ranges[0].weight, 0.8F);
+
+    EXPECT_EQ(ranges[1].media_type, "text/plain");
+    EXPECT_FLOAT_EQ(ranges[1].weight, 0.5F);
+
+    EXPECT_EQ(ranges[2].media_type, "image/*");
+    EXPECT_FLOAT_EQ(ranges[2].weight, 0.001F);
+}
+
+TEST_F(AcceptHeaderTest, EdgeCaseQValues) {
+    auto ranges = parse_to_vector("a/b;q=1.0, c/d;q=1, e/f;q=0.999, g/h;q=0, i/j;q=0.0");
+
+    ASSERT_EQ(ranges.size(), 5);
+    EXPECT_FLOAT_EQ(ranges[0].weight, 1.0F);
+    EXPECT_FLOAT_EQ(ranges[1].weight, 1.0F);
+    EXPECT_FLOAT_EQ(ranges[2].weight, 0.999F);
+    EXPECT_FLOAT_EQ(ranges[3].weight, 0.0F); // Falls back to 0.0F in parse_qvalue if missing fractional
+    EXPECT_FLOAT_EQ(ranges[4].weight, 0.0F);
+}
+
+TEST_F(AcceptHeaderTest, HandlesWildcards) {
+    auto ranges = parse_to_vector("*/*, text/*; q=0.5");
+
+    ASSERT_EQ(ranges.size(), 2);
+
+    EXPECT_EQ(ranges[0].media_type, "*/*");
+    EXPECT_TRUE(is_wildcard(ranges[0]));
+    EXPECT_FLOAT_EQ(ranges[0].weight, 1.0F);
+
+    EXPECT_EQ(ranges[1].media_type, "text/*");
+    EXPECT_FALSE(is_wildcard(ranges[1]));
+    EXPECT_FLOAT_EQ(ranges[1].weight, 0.5F);
+}
+
+TEST_F(AcceptHeaderTest, ExtensionsAndParametersPreserved) {
+    // According to RFC: q separates media params from accept-extensions
+    auto ranges = parse_to_vector("text/html;level=1;q=0.7;ext=true");
+
+    ASSERT_EQ(ranges.size(), 1);
+    EXPECT_EQ(ranges[0].media_type, "text/html");
+    EXPECT_FLOAT_EQ(ranges[0].weight, 0.7F);
+
+    // params contains raw param string
+    EXPECT_EQ(ranges[0].params, "level=1;q=0.7;ext=true");
+}
+
+TEST_F(AcceptHeaderTest, MalformedHeadersAreInvalid) {
+    EXPECT_FALSE(basic_accept{"a/b;q=invalid, c/d;q=0.abc"}.is_valid());
+    EXPECT_FALSE(basic_accept{"text html"}.is_valid());
+    EXPECT_FALSE(basic_accept{"*/json"}.is_valid());
+}
+
+TEST_F(AcceptHeaderTest, CallbackEarlyExit) {
+    basic_accept                  accept_header{"a/a, b/b, c/c"};
+    std::vector<std::string_view> visited;
+
+    accept_header.for_each([&](accept_media_range const& range) -> bool {
+        visited.push_back(range.media_type);
+        // Stop parsing when we hit "b/b"
+        return range.media_type != "b/b";
+    });
+
+    ASSERT_EQ(visited.size(), 2);
+    EXPECT_EQ(visited[0], "a/a");
+    EXPECT_EQ(visited[1], "b/b");
+}
+
+TEST_F(AcceptHeaderTest, ExceedsLimitKeepsOnlySupportedValues) {
+    std::string header_value;
+    for (std::size_t i = 0; i < max_supported_accept_values + 5; ++i) {
+        if (!header_value.empty()) {
+            header_value += ", ";
+        }
+        header_value += "application/type" + std::to_string(i);
+    }
+
+    basic_accept const accept_header{header_value};
+
+    ASSERT_TRUE(accept_header.is_valid());
+    ASSERT_EQ(accept_header.media_ranges().size(), max_supported_accept_values);
+    EXPECT_EQ(accept_header.begin()->media_type, "application/type0");
+    EXPECT_EQ((accept_header.end() - 1)->media_type,
+              "application/type" + std::to_string(max_supported_accept_values - 1));
 }

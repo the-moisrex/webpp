@@ -3,9 +3,11 @@
 
 #include "./test_utilities.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -145,7 +147,8 @@ namespace testing {
           std::string_view const rhs_expr,
           std::string            lhs_val,
           std::string            rhs_val,
-          std::string_view const macro_name) {
+          std::string_view const macro_name,
+          std::string            extra = {}) {
             ctx.success    = success;
             ctx.file       = file;
             ctx.line       = line;
@@ -154,6 +157,7 @@ namespace testing {
             ctx.lhs_value  = std::move(lhs_val);
             ctx.rhs_value  = std::move(rhs_val);
             ctx.macro_name = macro_name;
+            ctx.extra      = std::move(extra);
         }
 
         template <typename T>
@@ -357,6 +361,56 @@ namespace testing {
         return {is_ok, file, line, expr, "", !is_ok ? serialize(value) : "", "", macro_name};
     }
 
+    template <typename A, typename B>
+    inline assert_result make_float_assertion(
+      A const&               lhs,
+      B const&               rhs,
+      std::string_view const file,
+      int const              line,
+      std::string_view const exprA,
+      std::string_view const exprB,
+      std::string_view const macro_name) {
+        using common_type = std::common_type_t<A, B>;
+        using float_type  = std::conditional_t<std::is_floating_point_v<common_type>, common_type, double>;
+
+        auto const left  = static_cast<float_type>(lhs);
+        auto const right = static_cast<float_type>(rhs);
+
+        bool is_ok = false;
+        if (std::isnan(left) || std::isnan(right)) {
+            is_ok = false;
+        } else if (std::isinf(left) || std::isinf(right)) {
+            is_ok = left == right;
+        } else {
+            auto const diff      = std::fabs(left - right);
+            auto const scale     = (std::max)(float_type{1}, (std::max)(std::fabs(left), std::fabs(right)));
+            auto const tolerance = std::numeric_limits<float_type>::epsilon() * scale * float_type{4};
+            is_ok                = diff <= tolerance;
+        }
+
+        registry::instance().asserted(is_ok);
+        std::string extra;
+        if (!is_ok) {
+            auto const diff      = std::fabs(left - right);
+            auto const scale     = (std::max)(float_type{1}, (std::max)(std::fabs(left), std::fabs(right)));
+            auto const tolerance = std::numeric_limits<float_type>::epsilon() * scale * float_type{4};
+            std::ostringstream ss;
+            ss << "diff=" << diff << ", tolerance=" << tolerance;
+            extra = ss.str();
+        }
+
+        return {
+          is_ok,
+          file,
+          line,
+          exprA,
+          exprB,
+          !is_ok ? serialize(lhs) : "",
+          !is_ok ? serialize(rhs) : "",
+          macro_name,
+          std::move(extra)};
+    }
+
 #define EXPECT_EQ(a, b) \
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_EQ", ::testing::cmp_equal{}))
 #define ASSERT_EQ(a, b) \
@@ -369,6 +423,8 @@ namespace testing {
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_STREQ", ::testing::cmp_cstr_equal{}))
 #define ASSERT_STREQ(a, b) \
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_STREQ", ::testing::cmp_cstr_equal{}))
+#define EXPECT_FLOAT_EQ(a, b) \
+    (::testing::make_float_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_FLOAT_EQ"))
 #define EXPECT_TRUE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), true, __FILE__, __LINE__, #x, "EXPECT_TRUE"))
 #define ASSERT_TRUE(x) \

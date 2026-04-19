@@ -1,9 +1,35 @@
 // Created by moisrex on 10/24/20.
 
-#ifndef WEBPP_ACCEPT_HPP
-#define WEBPP_ACCEPT_HPP
+#ifndef WEBPP_HEADERS_ACCEPT_HPP
+#define WEBPP_HEADERS_ACCEPT_HPP
+
+#include "../../http/protocol/http_limits.hpp"
+#include "../../std/cstdint.hpp"
+#include "../../std/optional.hpp"
+#include "../../std/string_view.hpp"
+#include "../../strings/charset.hpp"
+#include "../../strings/iequals.hpp"
+#include "../../strings/string_tokenizer.hpp"
+#include "../../strings/trim.hpp"
+#include "./header_concepts.hpp"
+
+#include <array>
+#include <span>
 
 namespace webpp::http {
+
+    /**
+     * @brief A single media range extracted from the Accept header
+     */
+    struct [[nodiscard]] accept_media_range {
+        stl::string_view media_type;
+        stl::string_view params;        // Raw parameters string excluding the media type
+        float            weight = 1.0F; // q-value (0.0 to 1.0)
+    };
+
+    [[nodiscard]] constexpr bool is_wildcard(accept_media_range const range) noexcept {
+        return range.media_type == "*/*";
+    }
 
     /**
      * from: https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
@@ -97,8 +123,258 @@ namespace webpp::http {
      *       a closed system which cannot interact with other rendering agents,
      *     this default set ought to be configurable by the user.
      */
-    struct accept {};
+    struct [[nodiscard]] basic_accept : header_field_base<basic_accept> {
+        static constexpr stl::string_view header_name = "accept";
+
+        using value_type     = accept_media_range;
+        using storage_type   = stl::array<value_type, max_supported_accept_values>;
+        using const_iterator = storage_type::const_iterator;
+
+      public:
+        constexpr explicit basic_accept(stl::string_view const str) noexcept : header_field_base{str} {
+            parse();
+        }
+
+        // An empty Accept header is valid and implies no explicit restriction.
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            return _is_valid;
+        }
+
+        [[nodiscard]] constexpr stl::span<value_type const> media_ranges() const noexcept {
+            return {_media_ranges.data(), _count};
+        }
+
+        [[nodiscard]] constexpr const_iterator begin() const noexcept {
+            return _media_ranges.begin();
+        }
+
+        [[nodiscard]] constexpr const_iterator end() const noexcept {
+            return _media_ranges.begin() + _count;
+        }
+
+        /**
+         * @brief Iterate over all media ranges in the Accept header.
+         *
+         * Extracts each media range, parses its q-value, and invokes the callback.
+         * Return `false` from the callback to stop parsing early.
+         */
+        template <typename Callback>
+        constexpr void for_each(Callback&& callback) const noexcept {
+            if (!_is_valid) {
+                return;
+            }
+
+            auto&& callback_ref = callback;
+            for (auto const& range : media_ranges()) {
+                // Reuse the same callback object across iterations, even for rvalues.
+                if constexpr (stl::is_same_v<decltype(callback_ref(range)), bool>) {
+                    if (!callback_ref(range)) {
+                        break;
+                    }
+                } else {
+                    callback_ref(range);
+                }
+            }
+        }
+
+      private:
+        constexpr void parse() noexcept {
+            _count    = 0;
+            _is_valid = true;
+
+            string_tokenizer<stl::string_view> tok{view()};
+            while (!tok.at_end()) {
+                tok.skip(charset{',', ' '});
+                if (tok.at_end()) {
+                    break;
+                }
+
+                stl::string_view range_str;
+                if (tok.next(charset{','}, range_str)) {
+                    range_str = ascii::trim_copy(range_str);
+                } else {
+                    range_str = ascii::trim_copy(stl::string_view{tok.token_begin(), view().end()});
+                    tok.reset(view().end());
+                }
+
+                if (range_str.empty()) {
+                    continue;
+                }
+
+                auto const range = parse_media_range(range_str);
+                if (!range.has_value()) {
+                    _count    = 0;
+                    _is_valid = false;
+                    return;
+                }
+
+                if (_count < _media_ranges.size()) {
+                    _media_ranges[_count++] = *range;
+                }
+            }
+        }
+
+        [[nodiscard]] static constexpr stl::optional<accept_media_range> parse_media_range(
+          stl::string_view const str) noexcept {
+            accept_media_range res;
+
+            string_tokenizer<stl::string_view> tok{str};
+
+            // Extract the main media type (everything before the first ';')
+            if (tok.next(charset{';'}, res.media_type)) {
+                res.media_type = ascii::trim_copy(res.media_type);
+
+                // Isolate the remaining parameters segment
+                auto const semicolon_pos = str.find(';');
+                if (semicolon_pos != stl::string_view::npos) {
+                    res.params = ascii::trim_copy(str.substr(semicolon_pos + 1));
+                }
+
+                // Process parameters to locate the weight ("q" value)
+                while (!tok.at_end()) {
+                    tok.skip(charset{';', ' '});
+                    if (tok.at_end()) {
+                        break;
+                    }
+
+                    stl::string_view key;
+                    if (tok.next(charset{'=', ';'}, key)) {
+                        key = ascii::trim_copy(key);
+
+                        if (tok.expect(charset{'='})) {
+                            tok.skip(charset{' ', '\t'}); // skip OWS
+                            if (tok.at_end()) {
+                                return stl::nullopt;
+                            }
+
+                            stl::string_view value;
+                            auto const*      value_start = tok.token_end();
+
+                            if (*value_start == '"') {
+                                auto const parsed = parse_quoted(value_start, str.end(), '"');
+                                value             = parsed.value;
+                                tok.reset(parsed.next, str.end());
+                            } else if (tok.next(charset{';'}, value)) {
+                                value = ascii::trim_copy(value);
+                            } else {
+                                value = ascii::trim_copy(stl::string_view{value_start, str.end()});
+                                tok.reset(str.end());
+                            }
+
+                            if (ascii::iequals_sl(key, "q")) {
+                                auto const parsed_weight = parse_qvalue(value);
+                                if (parsed_weight < 0.0F) {
+                                    return stl::nullopt;
+                                }
+                                res.weight = parsed_weight;
+                            }
+                        } else if (!key.empty()) {
+                            return stl::nullopt;
+                        }
+                    } else {
+                        return stl::nullopt;
+                    }
+                }
+            } else {
+                // No parameters, the entire token is the media type
+                res.media_type = ascii::trim_copy(str);
+            }
+
+            if (!is_valid_media_type(res.media_type)) {
+                return stl::nullopt;
+            }
+
+            return res;
+        }
+
+        [[nodiscard]] static constexpr bool is_valid_media_type(stl::string_view const media_type) noexcept {
+            if (media_type.empty()) {
+                return false;
+            }
+
+            auto const slash_pos = media_type.find('/');
+            if (slash_pos == stl::string_view::npos || slash_pos == 0 || slash_pos + 1 >= media_type.size()) {
+                return false;
+            }
+
+            auto const type    = media_type.substr(0, slash_pos);
+            auto const subtype = media_type.substr(slash_pos + 1);
+            if (type == "*" && subtype != "*") {
+                return false;
+            }
+            if (type.find_first_of(" \t") != stl::string_view::npos ||
+                subtype.find_first_of(" \t") != stl::string_view::npos) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @brief Parses a quality value string into a float safely.
+         *
+         * Expects a string representing a float value up to 3 decimals, e.g., "0.9" or "1.000".
+         */
+        [[nodiscard]] static constexpr float parse_qvalue(stl::string_view str) noexcept {
+            if (str.empty()) {
+                return -1.0F;
+            }
+
+            if (str == "1") {
+                return 1.0F;
+            }
+
+            if (str.starts_with('1')) {
+                auto decimals = str.substr(1);
+                if (decimals.empty()) {
+                    return 1.0F;
+                }
+                if (!decimals.starts_with('.')) {
+                    return -1.0F;
+                }
+                decimals.remove_prefix(1);
+                if (decimals.size() > 3) {
+                    return -1.0F;
+                }
+                for (auto const digit : decimals) {
+                    if (digit != '0') {
+                        return -1.0F;
+                    }
+                }
+                return 1.0F;
+            }
+
+            if (str == "0") {
+                return 0.0F;
+            }
+
+            if (str.starts_with("0.")) {
+                float           quality      = 0.0F;
+                constexpr float base_divisor = 10.0F;
+                float           divisor      = base_divisor;
+                auto const      decimals     = str.substr(2);
+
+                if (decimals.size() > 3) {
+                    return -1.0F;
+                }
+
+                for (auto const digit : decimals) {
+                    if (digit < '0' || digit > '9') {
+                        return -1.0F;
+                    }
+                    quality += static_cast<float>(digit - '0') / divisor;
+                    divisor *= base_divisor;
+                }
+                return quality;
+            }
+
+            return -1.0F;
+        }
+
+        storage_type _media_ranges{};
+        stl::uint8_t _count    = 0;
+        bool         _is_valid = true;
+    };
 
 } // namespace webpp::http
 
-#endif // WEBPP_ACCEPT_HPP
+#endif // WEBPP_HEADERS_ACCEPT_HPP

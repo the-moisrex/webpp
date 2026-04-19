@@ -17,6 +17,9 @@ namespace webpp::http {
 
     /// Maximum number of Accept-Encoding values
     static constexpr std::size_t max_supported_accept_encodings = 10U;
+
+    /// Maximum number of Accept values
+    static constexpr std::size_t max_supported_accept_values = 10U;
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_PROTOCOL_LIMITS_HPP

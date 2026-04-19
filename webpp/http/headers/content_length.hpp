@@ -1,4 +1,4 @@
-// Created by USER on 2026/04/18.
+// Created by moisrex on 2026/04/18.
 
 #ifndef WEBPP_CONTENT_LENGTH_HPP
 #define WEBPP_CONTENT_LENGTH_HPP
@@ -16,7 +16,7 @@ namespace webpp::http {
      * The Content-Length header indicates the size of the message body, in bytes,
      * sent to the recipient. It satisfies the `HeaderField` concept.
      */
-    struct content_length : header_field_base<content_length> {
+    struct basic_content_length : header_field_base<basic_content_length> {
         // Required by the HeaderField concept for identification
         static constexpr stl::string_view header_name = "content-length";
 
@@ -30,8 +30,8 @@ namespace webpp::http {
          *
          * @param str The raw header string value to parse
          */
-        constexpr explicit content_length(stl::string_view const str) noexcept
-          : header_field_base<content_length>{str} {
+        constexpr explicit basic_content_length(stl::string_view const str) noexcept
+          : header_field_base<basic_content_length>{str} {
             parse();
         }
 
@@ -39,7 +39,7 @@ namespace webpp::http {
          * @brief Check if the content-length was successfully and safely parsed
          *
          * A Content-Length header is valid if it contains only numeric characters
-         * in base $10$ and fits within the bounds of `std::size_t`.
+         * in base 10 and fits within the bounds of `std::size_t`.
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return _length.has_value();
@@ -55,10 +55,6 @@ namespace webpp::http {
         }
 
       private:
-        /**
-         * @brief Parse the raw view into a numeric size_t value
-         * Parses the string in O(N) time complexity where N is the number of digits.
-         */
         constexpr void parse() noexcept {
             if (view().empty()) {
                 _length = integer_casting_errors::invalid_character;
