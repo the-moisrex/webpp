@@ -6,6 +6,7 @@
 #include "../../strings/charset.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
+#include "../codec/tokens.hpp"
 #include "../verbs.hpp"
 #include "./header_concepts.hpp"
 
@@ -14,11 +15,15 @@
 
 namespace webpp::http {
 
-    constexpr void parse_allow_value(stl::string_view const value, stl::uint64_t& methods, bool& has_unknown) noexcept {
-        methods     = 0;
-        has_unknown = false;
+    // Highest bits used as flags to save space
+    constexpr stl::uint64_t allow_unknown_flag = 1ULL << (sizeof(stl::uint64_t) * CHAR_BIT - 1);
+    constexpr stl::uint64_t allow_valid_flag   = allow_unknown_flag >> 1U;
+    constexpr stl::uint64_t allow_methods_mask = ~(allow_valid_flag | allow_unknown_flag);
 
-        if (value.empty()) {
+    constexpr void parse_allow_value(stl::string_view const value, stl::uint64_t& data) noexcept {
+        data = allow_valid_flag; // Assume valid by default
+
+        if (value.empty()) [[unlikely]] {
             return;
         }
 
@@ -31,13 +36,21 @@ namespace webpp::http {
                 continue;
             }
 
+            // A valid HTTP method must be a valid HTTP token
+            for (char const cur : method_str) {
+                if (!is_http_token(cur)) {
+                    data &= ~allow_valid_flag; // Mark as invalid
+                    break;
+                }
+            }
+
             auto const method = string_to_verb(method_str);
             if (method != verb::unknown) {
                 // Set the bit corresponding to the underlying verb integer value
-                assert(+method < (sizeof(stl::uint64_t) * CHAR_BIT));
-                methods |= (1ULL << +method);
+                assert(+method < 62);
+                data |= (1ULL << +method);
             } else {
-                has_unknown = true;
+                data |= allow_unknown_flag;
             }
         }
     }
@@ -53,18 +66,16 @@ namespace webpp::http {
         static constexpr stl::string_view header_name = "allow";
 
       private:
-        stl::uint64_t _methods     = 0;
-        bool          _has_unknown = false;
+        stl::uint64_t _data = allow_valid_flag;
 
       public:
         constexpr explicit basic_allow(stl::string_view const str) noexcept : header_field_base<basic_allow>{str} {
-            parse_allow_value(view(), _methods, _has_unknown);
+            parse_allow_value(view(), _data);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            // An empty Allow header is technically valid, and it strictly informs
-            // the recipient of supported methods (which can be none or fully unknown).
-            return true;
+            // Evaluates to false if the string contained any invalid HTTP tokens
+            return (_data & allow_valid_flag) != 0;
         }
 
         /**
@@ -74,7 +85,7 @@ namespace webpp::http {
             if (method == verb::unknown) [[unlikely]] {
                 return false;
             }
-            return (_methods & (1ULL << stl::to_underlying(method))) != 0;
+            return (_data & (1ULL << stl::to_underlying(method))) != 0;
         }
 
         /**
@@ -86,7 +97,7 @@ namespace webpp::http {
             }
 
             // If we don't have any unknown methods parsed, this unknown queried string isn't there
-            if (!_has_unknown) {
+            if (!has_unknown_methods()) {
                 return false;
             }
 
@@ -104,17 +115,16 @@ namespace webpp::http {
          * Retrieve the raw bitmask of the known allowed methods.
          */
         [[nodiscard]] constexpr stl::uint64_t methods_mask() const noexcept {
-            return _methods;
+            return _data & allow_methods_mask;
         }
 
         /**
          * Check whether any non-standard/unknown method is included.
          */
         [[nodiscard]] constexpr bool has_unknown_methods() const noexcept {
-            return _has_unknown;
+            return (_data & allow_unknown_flag) != 0;
         }
     };
-
 
 } // namespace webpp::http
 
