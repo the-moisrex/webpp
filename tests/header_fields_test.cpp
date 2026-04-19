@@ -1,6 +1,7 @@
 // Created by moisrex on 10/9/20.
 #include "../webpp/http/headers/accept.hpp"
 #include "../webpp/http/headers/accept_encoding.hpp"
+#include "../webpp/http/headers/allow.hpp"
 #include "../webpp/http/headers/content_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "./common/test.hpp"
@@ -543,4 +544,118 @@ TEST_F(ContentEncodingTest, MaxSupportedExceeded) {
     // Ensure truncated ones are not reported
     EXPECT_FALSE(ce.contains("br"));
     EXPECT_FALSE(ce.contains("compress"));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+
+
+TEST(AllowHeaderTest, HandlesEmptyString) {
+    basic_allow allow_header{""};
+
+    EXPECT_TRUE(allow_header.is_valid());
+    EXPECT_FALSE(allow_header.has_unknown_methods());
+    EXPECT_EQ(allow_header.methods_mask(), 0ULL);
+    EXPECT_FALSE(allow_header.contains(verb::get));
+    EXPECT_FALSE(allow_header.contains("GET"));
+}
+
+TEST(AllowHeaderTest, ParsesSingleKnownMethod) {
+    basic_allow allow_header{"GET"};
+
+    EXPECT_TRUE(allow_header.is_valid());
+    EXPECT_FALSE(allow_header.has_unknown_methods());
+
+    EXPECT_TRUE(allow_header.contains(verb::get));
+    EXPECT_TRUE(allow_header.contains("GET"));
+
+    // Should not contain other methods
+    EXPECT_FALSE(allow_header.contains(verb::post));
+    EXPECT_FALSE(allow_header.contains("POST"));
+}
+
+TEST(AllowHeaderTest, ParsesMultipleKnownMethods) {
+    basic_allow allow_header{"GET, POST, HEAD"};
+
+    EXPECT_TRUE(allow_header.is_valid());
+    EXPECT_FALSE(allow_header.has_unknown_methods());
+
+    EXPECT_TRUE(allow_header.contains(verb::get));
+    EXPECT_TRUE(allow_header.contains(verb::post));
+    EXPECT_TRUE(allow_header.contains(verb::head));
+
+    EXPECT_FALSE(allow_header.contains(verb::put));
+    EXPECT_FALSE(allow_header.contains(verb::del));
+}
+
+TEST(AllowHeaderTest, HandlesIrregularWhitespace) {
+    // Tests $O(n)$ tokenizer robustness against spaces
+    basic_allow allow_header{"   GET  ,POST,   OPTIONS   "};
+
+    EXPECT_TRUE(allow_header.is_valid());
+    EXPECT_FALSE(allow_header.has_unknown_methods());
+
+    EXPECT_TRUE(allow_header.contains(verb::get));
+    EXPECT_TRUE(allow_header.contains(verb::post));
+    EXPECT_TRUE(allow_header.contains(verb::options));
+}
+
+TEST(AllowHeaderTest, HandlesUnknownCustomMethods) {
+    basic_allow allow_header{"GET, PROPFIND, CUSTOM_METHOD, POST"};
+
+    EXPECT_TRUE(allow_header.is_valid());
+
+    // WebDAV's PROPFIND might be known depending on the verbs.hpp completeness,
+    // but CUSTOM_METHOD is definitely unknown.
+    EXPECT_TRUE(allow_header.has_unknown_methods());
+
+    // Standard methods should still work via bitmask $O(1)$ lookup
+    EXPECT_TRUE(allow_header.contains(verb::get));
+    EXPECT_TRUE(allow_header.contains(verb::post));
+
+    // Fallback string matching should catch the custom method
+    EXPECT_TRUE(allow_header.contains("CUSTOM_METHOD"));
+
+    // Non-existent custom methods should fail
+    EXPECT_FALSE(allow_header.contains("NON_EXISTENT"));
+}
+
+TEST(AllowHeaderTest, CaseSensitivityBehavior) {
+    // According to standard HTTP specs and the string_to_verb implementation,
+    // method parsing is strictly uppercase.
+    basic_allow allow_header{"get, POST, put"};
+
+    EXPECT_TRUE(allow_header.has_unknown_methods()); // "get" and "put" are treated as unknown
+
+    // "POST" is correctly recognized as a known enum verb
+    EXPECT_TRUE(allow_header.contains(verb::post));
+    EXPECT_TRUE(allow_header.contains("POST"));
+
+    // "get" is not mapped to verb::get enum
+    EXPECT_FALSE(allow_header.contains(verb::get));
+
+    // But it is present exactly as typed in the string fallback
+    EXPECT_TRUE(allow_header.contains("get"));
+    EXPECT_FALSE(allow_header.contains("GET")); // Fallback is exact match, so uppercase GET fails
+}
+
+TEST(AllowHeaderTest, RejectsUnknownVerbEnum) {
+    basic_allow allow_header{"GET, POST"};
+
+    // Querying for verb::unknown should always return false gracefully
+    EXPECT_FALSE(allow_header.contains(verb::unknown));
+}
+
+TEST(AllowHeaderTest, MalformedEdgeCases) {
+    // Consecutive commas, trailing commas, leading commas
+    basic_allow allow_header{",,,GET,, ,,POST,"};
+
+    EXPECT_TRUE(allow_header.is_valid());
+
+    // Empty tokens should be skipped, leaving no "unknown" methods if none exist
+    EXPECT_FALSE(allow_header.has_unknown_methods());
+
+    EXPECT_TRUE(allow_header.contains(verb::get));
+    EXPECT_TRUE(allow_header.contains(verb::post));
+    EXPECT_FALSE(allow_header.contains(verb::put));
 }

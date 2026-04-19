@@ -3,6 +3,9 @@
 
 #include "../std/string_view.hpp"
 
+#include <type_traits>
+#include <utility>
+
 namespace webpp::http {
 
     /**
@@ -120,6 +123,10 @@ namespace webpp::http {
         link,
         unlink
     };
+
+    [[nodiscard]] constexpr stl::underlying_type_t<verb> operator+(verb const method) noexcept {
+        return stl::to_underlying(method);
+    }
 
     /**
      * Converts a string to the request method verb.
