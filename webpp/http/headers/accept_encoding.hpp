@@ -50,6 +50,132 @@ namespace webpp::http {
         return {};
     }
 
+    template <typename EncodingEnum, ascii::char_case Case = ascii::char_case::unknown>
+    [[nodiscard]] constexpr EncodingEnum to_known_encoding(std::string_view str) noexcept {
+        constexpr auto the_case = ascii::char_case_to_side(Case, ascii::char_case::lowered);
+        if (str.empty()) [[unlikely]] {
+            return EncodingEnum::unknown;
+        }
+
+        switch (str[0]) {
+            [[unlikely]] case 'G':
+            [[likely]] case 'g':
+                if (ascii::iequals<the_case>(str, "gzip")) {
+                    return EncodingEnum::gzip;
+                }
+                break;
+            [[unlikely]] case 'B':
+            [[likely]] case 'b':
+                if (ascii::iequals<the_case>(str, "br")) {
+                    return EncodingEnum::br;
+                }
+                break;
+            [[unlikely]] case 'D':
+            [[likely]] case 'd':
+                if (ascii::iequals<the_case>(str, "deflate")) {
+                    return EncodingEnum::deflate;
+                }
+                break;
+            [[unlikely]] case 'C':
+            [[unlikely]] case 'c': // unlikely because it's a deprecated algorithm
+                if (ascii::iequals<the_case>(str, "compress")) {
+                    return EncodingEnum::compress;
+                }
+                break;
+            [[unlikely]] case 'x':
+            [[unlikely]] case 'X': // browsers rarely use x- prefix
+                if (ascii::iequals<the_case>(str, "x-gzip")) {
+                    return EncodingEnum::gzip;
+                }
+                if (ascii::iequals<the_case>(str, "x-compress")) {
+                    return EncodingEnum::compress;
+                }
+                break;
+            case '*': return EncodingEnum::all;
+            default: break;
+        }
+        return EncodingEnum::unknown;
+    }
+
+    template <typename CompressionAlgo, typename EncodingEnum, std::size_t MaxSupported, typename CountType>
+    constexpr void parse_accept_encoding_value(
+      stl::string_view const                     value,
+      stl::array<CompressionAlgo, MaxSupported>& allowed_encodings,
+      CountType&                                 count) noexcept {
+        count = 0;
+        if (value.find_first_of('\"') != stl::string_view::npos) {
+            return;
+        }
+
+        string_tokenizer<stl::string_view> tokenizer(value);
+        while (count < MaxSupported && tokenizer.next(charset{','})) {
+            auto entry = tokenizer.token();
+            http::trim_lws(entry);
+            std::size_t const semicolon_pos = entry.find(';');
+            if (semicolon_pos == stl::string_view::npos) {
+                if (entry.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
+                    count = 0;
+                    return;
+                }
+                allowed_encodings[count++] =
+                  CompressionAlgo{.encoding = to_known_encoding<EncodingEnum>(entry), .quality = 1.0F, .name = entry};
+                continue;
+            }
+            auto encoding = entry.substr(0, semicolon_pos);
+            http::trim_lws(encoding);
+            if (encoding.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
+                count = 0;
+                return;
+            }
+            auto params = entry.substr(semicolon_pos + 1);
+            http::trim_lws(params);
+            std::size_t const equals_pos = params.find('=');
+            if (equals_pos == stl::string_view::npos) {
+                count = 0;
+                return;
+            }
+            auto param_name = params.substr(0, equals_pos);
+            http::trim_lws(param_name);
+            if (!ascii::iequals_sl(param_name, 'q')) {
+                count = 0;
+                return;
+            }
+            auto qvalue = params.substr(equals_pos + 1);
+            http::trim_lws(qvalue);
+            if (qvalue.empty()) {
+                count = 0;
+                return;
+            }
+            float qval = parse_qvalue(qvalue);
+            if (qval < 0.0F) {
+                count = 0;
+                return;
+            }
+            auto known                 = to_known_encoding<EncodingEnum>(encoding);
+            allowed_encodings[count++] = CompressionAlgo{.encoding = known, .quality = qval, .name = encoding};
+        }
+
+        if (count == 0) {
+            allowed_encodings[count++] =
+              CompressionAlgo{.encoding = EncodingEnum::all, .quality = 1.0F, .name = to_string(EncodingEnum::all)};
+            return;
+        }
+
+        bool has_identity = false;
+        for (std::size_t i = 0; i < count; ++i) {
+            if (allowed_encodings[i].encoding == EncodingEnum::identity) {
+                has_identity = true;
+                break;
+            }
+        }
+        if (!has_identity && count < MaxSupported) {
+            allowed_encodings[count++] =
+              CompressionAlgo{.encoding = EncodingEnum::identity,
+                              .quality  = 1.0F,
+                              .name     = to_string(EncodingEnum::identity)};
+        }
+    }
+
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
      * MDN Docs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
@@ -108,146 +234,10 @@ namespace webpp::http {
          */
         explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
           : header_field_base<basic_accept_encoding>(src) {
-            parse();
-        }
-
-
-      private:
-        constexpr void parse() noexcept {
-            _count = 0; // no valid, so far
-            if (this->view().find_first_of('\"') != stl::string_view::npos) {
-                return;
-            }
-
-            string_tokenizer<stl::string_view> tokenizer(this->view());
-            while (_count < MaxSupported && tokenizer.next(charset{','})) {
-                auto entry = tokenizer.token();
-                http::trim_lws(entry);
-                std::size_t const semicolon_pos = entry.find(';');
-                if (semicolon_pos == stl::string_view::npos) {
-                    if (entry.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
-                        _count = 0; // not valid
-                        return;
-                    }
-                    _allowed_encodings[_count++] =
-                      compression_algo{.encoding = to_known_encoding(entry), .quality = 1.0F, .name = entry};
-                    continue;
-                }
-                auto encoding = entry.substr(0, semicolon_pos);
-                http::trim_lws(encoding);
-                if (encoding.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
-                    _count = 0; // not valid
-                    return;
-                }
-                auto params = entry.substr(semicolon_pos + 1);
-                http::trim_lws(params);
-                std::size_t const equals_pos = params.find('=');
-                if (equals_pos == stl::string_view::npos) {
-                    _count = 0; // not valid
-                    return;
-                }
-                auto param_name = params.substr(0, equals_pos);
-                http::trim_lws(param_name);
-                if (!ascii::iequals_sl(param_name, 'q')) { // size is checked inside iequals
-                    _count = 0;                            // not valid
-                    return;
-                }
-                auto qvalue = params.substr(equals_pos + 1);
-                http::trim_lws(qvalue);
-                if (qvalue.empty()) {
-                    _count = 0; // not valid
-                    return;
-                }
-                float qval = parse_qvalue(qvalue);
-                if (qval < 0.0F) {
-                    _count = 0; // not valid
-                    return;
-                }
-                if (qval >= 0.0F) {
-                    auto known = to_known_encoding(encoding);
-                    _allowed_encodings[_count++] =
-                      compression_algo{.encoding = known, .quality = qval, .name = encoding};
-                }
-            }
-
-            // RFC 7231 5.3.4: if no encodings are listed, treat as "*" (all) with quality 1.0.
-            if (_count == 0) {
-                _allowed_encodings[_count++] =
-                  compression_algo{.encoding = EncodingEnum::all,
-                                   .quality  = 1.0F,
-                                   .name     = to_string(EncodingEnum::all)};
-                return;
-            }
-
-            // Ensure identity is always present (browsers must support it).
-            bool has_identity = false;
-            for (std::size_t i = 0; i < _count; ++i) {
-                if (_allowed_encodings[i].encoding == EncodingEnum::identity) {
-                    has_identity = true;
-                    break;
-                }
-            }
-            if (!has_identity && _count < MaxSupported) {
-                _allowed_encodings[_count++] =
-                  compression_algo{.encoding = EncodingEnum::identity,
-                                   .quality  = 1.0F,
-                                   .name     = to_string(EncodingEnum::identity)};
-            }
-
-            // RFC says gzip == x-gzip, compress == x-compress. We treat them as the same enum value,
-            // so no extra mirroring is needed.
-        }
-
-
-        /**
-         * Converts a string to the known EncodingEnum.
-         * Case‑insensitive matching is used.
-         */
-        template <ascii::char_case Case = ascii::char_case::unknown>
-        [[nodiscard]] static constexpr EncodingEnum to_known_encoding(std::string_view str) noexcept {
-            constexpr auto the_case = ascii::char_case_to_side(Case, ascii::char_case::lowered);
-            if (str.empty()) [[unlikely]] {
-                return EncodingEnum::unknown;
-            }
-
-            switch (str[0]) {
-                [[unlikely]] case 'G':
-                [[likely]] case 'g':
-                    if (ascii::iequals<the_case>(str, "gzip")) {
-                        return EncodingEnum::gzip;
-                    }
-                    break;
-                [[unlikely]] case 'B':
-                [[likely]] case 'b':
-                    if (ascii::iequals<the_case>(str, "br")) {
-                        return EncodingEnum::br;
-                    }
-                    break;
-                [[unlikely]] case 'D':
-                [[likely]] case 'd':
-                    if (ascii::iequals<the_case>(str, "deflate")) {
-                        return EncodingEnum::deflate;
-                    }
-                    break;
-                [[unlikely]] case 'C':
-                [[unlikely]] case 'c': // unlikely because it's a deprecated algorithm
-                    if (ascii::iequals<the_case>(str, "compress")) {
-                        return EncodingEnum::compress;
-                    }
-                    break;
-                [[unlikely]] case 'x':
-                [[unlikely]] case 'X': // browsers rarely use x- prefix
-                    if (ascii::iequals<the_case>(str, "x-gzip")) {
-                        return EncodingEnum::gzip;
-                    }
-                    if (ascii::iequals<the_case>(str, "x-compress")) {
-                        return EncodingEnum::compress;
-                    }
-                    break;
-                case '*': return EncodingEnum::all;
-                default: break;
-            }
-            return EncodingEnum::unknown;
+            parse_accept_encoding_value<compression_algo, EncodingEnum, MaxSupported>(
+              this->view(),
+              _allowed_encodings,
+              _count);
         }
 
       public:

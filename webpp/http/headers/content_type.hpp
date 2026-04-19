@@ -10,6 +10,78 @@
 
 namespace webpp::http {
 
+    constexpr void assign_content_type_parameter(stl::string_view& boundary,
+                                                 stl::string_view& charset,
+                                                 stl::string_view  key,
+                                                 stl::string_view  value) noexcept {
+        if (ascii::iequals_sl(key, "boundary")) {
+            boundary = value;
+        } else if (ascii::iequals_sl(key, "charset")) {
+            charset = value;
+        }
+    }
+
+    constexpr void parse_content_type_value(stl::string_view const value,
+                                            stl::string_view&      media_type,
+                                            stl::string_view&      boundary,
+                                            stl::string_view&      charset) noexcept {
+        media_type = {};
+        boundary   = {};
+        charset    = {};
+        if (value.empty()) {
+            return;
+        }
+
+        string_tokenizer<stl::string_view> tok{value};
+
+        // 1. Extract the main media type (everything before the first ';')
+        if (tok.next(webpp::charset<char, 1>{';'}, media_type)) {
+            media_type = ascii::trim_copy(media_type);
+
+            // 2. Process parameters (e.g., charset=utf-8; boundary="---123")
+            while (!tok.at_end()) {
+                // Skip over semicolons and spaces between parameters
+                tok.skip(webpp::charset<char, 2>{';', ' '});
+                if (tok.at_end()) {
+                    break;
+                }
+
+                stl::string_view key;
+                // Read parameter name up to '=' or ';'
+                if (tok.next(webpp::charset<char, 2>{'=', ';'}, key)) {
+                    key = ascii::trim_copy(key);
+
+                    if (tok.expect(webpp::charset<char, 1>{'='})) {
+                        tok.skip(webpp::charset{' ', '\t'}); // skip optional spaces after '='
+                        if (tok.at_end()) {
+                            break;
+                        }
+
+                        stl::string_view value_part;
+                        auto const*      value_start = tok.token_end();
+
+                        if (*value_start == '"') {
+                            auto const parsed_quote = parse_quoted(value_start, value.end(), '"');
+                            assign_content_type_parameter(boundary, charset, key, parsed_quote.value);
+                            tok.reset(parsed_quote.next, value.end());
+                        } else if (tok.next(webpp::charset<char, 1>{';'}, value_part)) {
+                            assign_content_type_parameter(boundary, charset, key, ascii::trim_copy(value_part));
+                        } else {
+                            value_part = stl::string_view{value_start, value.end()};
+                            assign_content_type_parameter(boundary, charset, key, ascii::trim_copy(value_part));
+                            break;
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
+        } else {
+            // No parameters found, the entire string is the media type
+            media_type = ascii::trim_copy(value);
+        }
+    }
+
     struct basic_content_type : header_field_base<basic_content_type> {
         static constexpr stl::string_view header_name = "content-type";
 
@@ -20,7 +92,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_content_type(std::string_view const str) noexcept : header_field_base{str} {
-            parse();
+            parse_content_type_value(view(), _media_type, _boundary, _charset);
         }
 
         // A Content-Type header is only valid if it contains at least a valid media type.
@@ -43,77 +115,6 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr stl::string_view charset() const noexcept {
             return _charset;
-        }
-
-      private:
-        constexpr void parse() noexcept {
-            using webpp::charset;
-            if (view().empty()) {
-                return;
-            }
-
-            string_tokenizer<stl::string_view> tok{view()};
-
-            // 1. Extract the main media type (everything before the first ';')
-            if (tok.next(charset<char, 1>{';'}, _media_type)) {
-                _media_type = ascii::trim_copy(_media_type);
-
-                // 2. Process parameters (e.g., charset=utf-8; boundary="---123")
-                while (!tok.at_end()) {
-                    // Skip over semicolons and spaces between parameters
-                    tok.skip(charset<char, 2>{';', ' '});
-                    if (tok.at_end()) {
-                        break;
-                    }
-
-                    stl::string_view key;
-                    // Read parameter name up to '=' or ';'
-                    if (tok.next(charset<char, 2>{'=', ';'}, key)) {
-                        key = ascii::trim_copy(key);
-
-                        if (tok.expect(charset<char, 1>{'='})) {
-                            tok.skip(charset{' ', '\t'}); // skip optional spaces after '='
-                            if (tok.at_end()) {
-                                break;
-                            }
-
-                            stl::string_view value;
-
-                            // CAPTURE START POSITION HERE
-                            auto const* value_start = tok.token_end();
-
-                            if (*value_start == '"') {
-                                // Delegate to parse_quoted when encountering double quotes
-                                auto const parsed_quote = parse_quoted(value_start, view().end(), '"');
-                                assign_parameter(key, parsed_quote.value);
-                                // Advance our tokenizer past the extracted quote
-                                tok.reset(parsed_quote.next, view().end());
-                            } else if (tok.next(charset<char, 1>{';'}, value)) {
-                                assign_parameter(key, ascii::trim_copy(value));
-                            } else {
-                                // Last parameter in the string
-                                // USE CAPTURED POSITION INSTEAD OF tok.token_begin()
-                                value = stl::string_view{value_start, view().end()};
-                                assign_parameter(key, ascii::trim_copy(value));
-                                break;
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            } else {
-                // No parameters found, the entire string is the media type
-                _media_type = ascii::trim_copy(view());
-            }
-        }
-
-        constexpr void assign_parameter(stl::string_view key, stl::string_view value) noexcept {
-            if (ascii::iequals_sl(key, "boundary")) {
-                _boundary = value;
-            } else if (ascii::iequals_sl(key, "charset")) {
-                _charset = value;
-            }
         }
     };
 

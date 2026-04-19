@@ -10,6 +10,20 @@
 
 namespace webpp::http {
 
+    constexpr void parse_content_length_value(stl::string_view const            value,
+                                              integer_cast_result<stl::size_t>& result) noexcept {
+        if (value.empty()) {
+            result = integer_casting_errors::invalid_character;
+            return;
+        }
+
+        // The HTTP spec allows optional whitespace padding (OWS) around header values
+        auto const trimmed_view = ascii::trim_copy(value);
+
+        // to_size_t returns an integer_cast_result which holds either the valid size or the error state
+        result = to_size_t(trimmed_view);
+    }
+
     /**
      * @brief Content-Length Header Field
      *
@@ -32,7 +46,7 @@ namespace webpp::http {
          */
         constexpr explicit basic_content_length(stl::string_view const str) noexcept
           : header_field_base<basic_content_length>{str} {
-            parse();
+            parse_content_length_value(view(), _length);
         }
 
         /**
@@ -52,20 +66,6 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr stl::size_t value() const noexcept {
             return _length.value_or(0);
-        }
-
-      private:
-        constexpr void parse() noexcept {
-            if (view().empty()) {
-                _length = integer_casting_errors::invalid_character;
-                return;
-            }
-
-            // The HTTP spec allows optional whitespace padding (OWS) around header values
-            auto const trimmed_view = ascii::trim_copy(view());
-
-            // to_size_t returns an integer_cast_result which holds either the valid size or the error state
-            _length = to_size_t(trimmed_view);
         }
     };
 
