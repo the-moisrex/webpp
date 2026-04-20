@@ -1,9 +1,11 @@
 // Created by moisrex on 10/9/20.
+
 #include "../webpp/http/headers/accept.hpp"
 #include "../webpp/http/headers/accept_encoding.hpp"
 #include "../webpp/http/headers/allow.hpp"
 #include "../webpp/http/headers/content_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
+#include "../webpp/http/headers/keep_alive.hpp"
 #include "./common/test.hpp"
 
 
@@ -658,4 +660,107 @@ TEST(AllowHeaderTest, MalformedEdgeCases) {
     EXPECT_TRUE(allow_header.contains(verb::get));
     EXPECT_TRUE(allow_header.contains(verb::post));
     EXPECT_FALSE(allow_header.contains(verb::put));
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+
+
+
+TEST(KeepAliveTest, ParsesStandardValues) {
+    basic_keep_alive header{"timeout=5, max=1000"};
+
+    EXPECT_TRUE(header.is_valid());
+
+    ASSERT_TRUE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 5u);
+
+    ASSERT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 1000u);
+}
+
+TEST(KeepAliveTest, HandlesWhitespaceAndCaseInsensitivity) {
+    basic_keep_alive header{"  TimeOut = 15 , MAX = 500  "};
+
+    EXPECT_TRUE(header.is_valid());
+
+    ASSERT_TRUE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 15u);
+
+    ASSERT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 500u);
+}
+
+TEST(KeepAliveTest, HandlesOnlyTimeout) {
+    basic_keep_alive header{"timeout=30"};
+
+    EXPECT_TRUE(header.is_valid());
+
+    ASSERT_TRUE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 30u);
+
+    EXPECT_FALSE(header.has_max());
+    EXPECT_EQ(header.max(), 0u); // Default/fallback value
+}
+
+TEST(KeepAliveTest, HandlesOnlyMax) {
+    basic_keep_alive header{"max=99"};
+
+    EXPECT_TRUE(header.is_valid());
+
+    EXPECT_FALSE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 0u);
+
+    ASSERT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 99u);
+}
+
+TEST(KeepAliveTest, InvalidCharactersInOneValueDoesNotInvalidateEntireHeader) {
+    basic_keep_alive header{"timeout=abc, max=100"};
+
+    // Header is still valid because `max` could be parsed
+    EXPECT_TRUE(header.is_valid());
+
+    EXPECT_FALSE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 0u);
+
+    ASSERT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 100u);
+}
+
+TEST(KeepAliveTest, HandlesEmptyString) {
+    basic_keep_alive header{""};
+
+    EXPECT_FALSE(header.is_valid());
+    EXPECT_FALSE(header.has_timeout());
+    EXPECT_FALSE(header.has_max());
+}
+
+TEST(KeepAliveTest, HandlesMalformedFormatNoEqualSign) {
+    basic_keep_alive header{"timeout5, max"};
+
+    EXPECT_FALSE(header.is_valid());
+    EXPECT_FALSE(header.has_timeout());
+    EXPECT_FALSE(header.has_max());
+}
+
+TEST(KeepAliveTest, HandlesMultipleDelimitersAndGarbageProperties) {
+    basic_keep_alive header{"garbage=value,,,timeout=5, ,,max=20, foo=bar"};
+
+    EXPECT_TRUE(header.is_valid());
+
+    ASSERT_TRUE(header.has_timeout());
+    EXPECT_EQ(header.timeout(), 5u);
+
+    ASSERT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 20u);
+}
+
+TEST(KeepAliveTest, RejectsNegativeValuesForSizeT) {
+    basic_keep_alive header{"timeout=-5, max=100"};
+
+    // -5 contains a non-numeric character '-' before reaching `to_size_t` internal parsing bounds
+    // unless the base casting accounts for explicit positive requirement for uints.
+    EXPECT_FALSE(header.has_timeout());
+    EXPECT_TRUE(header.has_max());
+    EXPECT_EQ(header.max(), 100u);
 }
