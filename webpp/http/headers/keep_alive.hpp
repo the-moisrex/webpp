@@ -12,7 +12,7 @@
 #include "./header_concepts.hpp"
 
 namespace webpp::http {
-    constexpr void parse_keep_alive_value(
+    constexpr void parse_keep_alive(
       stl::string_view const            value,
       integer_cast_result<stl::size_t>& timeout,
       integer_cast_result<stl::size_t>& max) noexcept {
@@ -62,7 +62,7 @@ namespace webpp::http {
       public:
         constexpr explicit basic_keep_alive(stl::string_view const str) noexcept
           : header_field_base<basic_keep_alive>{str} {
-            parse_keep_alive_value(view(), _timeout, _max);
+            parse_keep_alive(view(), _timeout, _max);
         }
 
         /**

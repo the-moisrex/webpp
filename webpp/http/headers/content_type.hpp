@@ -10,10 +10,11 @@
 
 namespace webpp::http {
 
-    constexpr void assign_content_type_parameter(stl::string_view& boundary,
-                                                 stl::string_view& charset,
-                                                 stl::string_view  key,
-                                                 stl::string_view  value) noexcept {
+    constexpr void assign_content_type_parameter(
+      stl::string_view& boundary,
+      stl::string_view& charset,
+      stl::string_view  key,
+      stl::string_view  value) noexcept {
         if (ascii::iequals_sl(key, "boundary")) {
             boundary = value;
         } else if (ascii::iequals_sl(key, "charset")) {
@@ -21,10 +22,11 @@ namespace webpp::http {
         }
     }
 
-    constexpr void parse_content_type_value(stl::string_view const value,
-                                            stl::string_view&      media_type,
-                                            stl::string_view&      boundary,
-                                            stl::string_view&      charset) noexcept {
+    constexpr void parse_content_type(
+      stl::string_view const value,
+      stl::string_view&      media_type,
+      stl::string_view&      boundary,
+      stl::string_view&      charset) noexcept {
         media_type = {};
         boundary   = {};
         charset    = {};
@@ -92,7 +94,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_content_type(std::string_view const str) noexcept : header_field_base{str} {
-            parse_content_type_value(view(), _media_type, _boundary, _charset);
+            parse_content_type(view(), _media_type, _boundary, _charset);
         }
 
         // A Content-Type header is only valid if it contains at least a valid media type.

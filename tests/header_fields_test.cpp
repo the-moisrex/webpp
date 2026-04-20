@@ -3,6 +3,7 @@
 #include "../webpp/http/headers/accept.hpp"
 #include "../webpp/http/headers/accept_encoding.hpp"
 #include "../webpp/http/headers/allow.hpp"
+#include "../webpp/http/headers/cache_control.hpp"
 #include "../webpp/http/headers/content_encoding.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "../webpp/http/headers/keep_alive.hpp"
@@ -763,4 +764,96 @@ TEST(KeepAliveTest, RejectsNegativeValuesForSizeT) {
     EXPECT_FALSE(header.has_timeout());
     EXPECT_TRUE(header.has_max());
     EXPECT_EQ(header.max(), 100u);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+TEST(CacheControlTest, EmptyStringIsInvalid) {
+    basic_cache_control cc{""};
+    EXPECT_FALSE(cc.is_valid());
+}
+
+TEST(CacheControlTest, ParsesSingleBooleanDirective) {
+    basic_cache_control cc{"no-cache"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.no_cache());
+    EXPECT_FALSE(cc.no_store());
+    EXPECT_FALSE(cc.is_public());
+}
+
+TEST(CacheControlTest, ParsesMultipleBooleanDirectives) {
+    basic_cache_control cc{"no-store, no-transform, private"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.no_store());
+    EXPECT_TRUE(cc.no_transform());
+    EXPECT_TRUE(cc.is_private());
+
+    // Ensure others are false
+    EXPECT_FALSE(cc.no_cache());
+    EXPECT_FALSE(cc.is_public());
+}
+
+TEST(CacheControlTest, ParsesValueDirectives) {
+    basic_cache_control cc{"max-age=3600"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.has_max_age());
+    EXPECT_EQ(cc.max_age(), 3600);
+}
+
+TEST(CacheControlTest, ParsesQuotedValueDirectives) {
+    basic_cache_control cc{"s-maxage=\"7200\""};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_EQ(cc.s_maxage(), 7200);
+}
+
+TEST(CacheControlTest, HandlesCaseInsensitivity) {
+    basic_cache_control cc{"No-CaChE, MAX-age=86400, PuBlIc"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.no_cache());
+    EXPECT_TRUE(cc.is_public());
+    EXPECT_TRUE(cc.has_max_age());
+    EXPECT_EQ(cc.max_age(), 86'400);
+}
+
+TEST(CacheControlTest, ParsesMixedDirectivesWithSpacing) {
+    basic_cache_control cc{"public,   max-age=600 ,  s-maxage=1200, must-revalidate"};
+    ASSERT_TRUE(cc.is_valid());
+
+    EXPECT_TRUE(cc.is_public());
+    EXPECT_TRUE(cc.must_revalidate());
+
+    EXPECT_EQ(cc.max_age(), 600);
+    EXPECT_EQ(cc.s_maxage(), 1200);
+
+    EXPECT_FALSE(cc.is_private());
+    EXPECT_FALSE(cc.no_cache());
+}
+
+TEST(CacheControlTest, HandlesMalformedNumericValues) {
+    basic_cache_control cc{"max-age=invalid_number"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_FALSE(cc.has_max_age()); // Should fail casting safely
+    EXPECT_EQ(cc.max_age(), -1);    // Default fallback
+}
+
+TEST(CacheControlTest, IgnoresUnknownDirectives) {
+    basic_cache_control cc{"public, unknown-directive=123, max-age=50"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.is_public());
+    EXPECT_EQ(cc.max_age(), 50);
+}
+
+TEST(CacheControlTest, HandlesStaleExtensions) {
+    basic_cache_control cc{"stale-while-revalidate=86400, stale-if-error=172800"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_EQ(cc.stale_while_revalidate(), 86'400);
+    EXPECT_EQ(cc.stale_if_error(), 172'800);
+}
+
+TEST(CacheControlTest, ImmutableFlagTest) {
+    basic_cache_control cc{"public, max-age=31536000, immutable"};
+    ASSERT_TRUE(cc.is_valid());
+    EXPECT_TRUE(cc.is_public());
+    EXPECT_EQ(cc.max_age(), 31'536'000);
+    EXPECT_TRUE(cc.immutable());
 }

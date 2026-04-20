@@ -98,7 +98,7 @@ namespace webpp::http {
     }
 
     template <typename CompressionAlgo, typename EncodingEnum, std::size_t MaxSupported, typename CountType>
-    constexpr void parse_accept_encoding_value(
+    constexpr void parse_accept_encoding(
       stl::string_view const                     value,
       stl::array<CompressionAlgo, MaxSupported>& allowed_encodings,
       CountType&                                 count) noexcept {
@@ -234,7 +234,7 @@ namespace webpp::http {
          */
         explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
           : header_field_base<basic_accept_encoding>(src) {
-            parse_accept_encoding_value<compression_algo, EncodingEnum, MaxSupported>(
+            parse_accept_encoding<compression_algo, EncodingEnum, MaxSupported>(
               this->view(),
               _allowed_encodings,
               _count);

@@ -125,10 +125,9 @@ namespace webpp::http {
     }
 
     template <std::size_t MaxSupported = max_supported_accept_values, stl::integral C = stl::size_t>
-    constexpr void parse_accept_value(
-      stl::string_view const                        value,
-      stl::array<accept_media_range, MaxSupported>& media_ranges,
-      C&                                            count) noexcept {
+    constexpr void parse_accept(stl::string_view const                        value,
+                                stl::array<accept_media_range, MaxSupported>& media_ranges,
+                                C&                                            count) noexcept {
         count = 0;
 
         string_tokenizer<stl::string_view> tok{value};
@@ -266,7 +265,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_accept(stl::string_view const str) noexcept : header_field_base<basic_accept>{str} {
-            parse_accept_value(this->view(), _media_ranges, _count);
+            parse_accept(this->view(), _media_ranges, _count);
         }
 
         // An empty Accept header is valid and implies no explicit restriction.

@@ -19,7 +19,7 @@
 namespace webpp::http {
 
     template <stl::size_t MaxSupported = max_supported_content_encoding_values, stl::integral C = stl::size_t>
-    constexpr void parse_content_encoding_value(
+    constexpr void parse_content_encoding(
       stl::string_view const                      value,
       stl::array<stl::string_view, MaxSupported>& encodings,
       C&                                          count) noexcept {
@@ -70,7 +70,7 @@ namespace webpp::http {
 
         constexpr explicit basic_content_encoding(stl::string_view const str) noexcept
           : header_field_base<basic_content_encoding>{str} {
-            parse_content_encoding_value<MaxSupported>(this->view(), _encodings, _count);
+            parse_content_encoding<MaxSupported>(this->view(), _encodings, _count);
         }
 
         [[nodiscard]] constexpr stl::span<encoding_type const> encodings() const noexcept {

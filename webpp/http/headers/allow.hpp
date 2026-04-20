@@ -20,7 +20,7 @@ namespace webpp::http {
     constexpr stl::uint64_t allow_valid_flag   = allow_unknown_flag >> 1U;
     constexpr stl::uint64_t allow_methods_mask = ~(allow_valid_flag | allow_unknown_flag);
 
-    constexpr void parse_allow_value(stl::string_view const value, stl::uint64_t& data) noexcept {
+    constexpr void parse_allow(stl::string_view const value, stl::uint64_t& data) noexcept {
         data = allow_valid_flag; // Assume valid by default
 
         if (value.empty()) [[unlikely]] {
@@ -70,7 +70,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_allow(stl::string_view const str) noexcept : header_field_base<basic_allow>{str} {
-            parse_allow_value(view(), _data);
+            parse_allow(view(), _data);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {

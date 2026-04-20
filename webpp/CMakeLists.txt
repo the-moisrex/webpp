@@ -268,7 +268,9 @@ set(ALL_SOURCES_SHORT
         http/headers/accept.hpp
         http/headers/accept_encoding.hpp
         http/headers/allow.hpp
+        http/headers/cache_control.hpp
         http/headers/content_encoding.hpp
+        http/headers/content_length.hpp
         http/headers/content_type.hpp
         http/headers/header_concepts.hpp
         http/headers/keep_alive.hpp

@@ -10,8 +10,8 @@
 
 namespace webpp::http {
 
-    constexpr void parse_content_length_value(stl::string_view const            value,
-                                              integer_cast_result<stl::size_t>& result) noexcept {
+    constexpr void parse_content_length(stl::string_view const            value,
+                                        integer_cast_result<stl::size_t>& result) noexcept {
         if (value.empty()) {
             result = integer_casting_errors::invalid_character;
             return;
@@ -46,7 +46,7 @@ namespace webpp::http {
          */
         constexpr explicit basic_content_length(stl::string_view const str) noexcept
           : header_field_base<basic_content_length>{str} {
-            parse_content_length_value(view(), _length);
+            parse_content_length(view(), _length);
         }
 
         /**
