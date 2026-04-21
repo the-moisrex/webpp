@@ -40,7 +40,8 @@ namespace webpp::http {
         if (!range.params.empty()) {
             append("; ");
             append(range.params);
-        } else if (range.weight != 1.0F) {
+        }
+        if (range.weight != 1.0F && range.params.find("q=") == stl::string_view::npos) {
             append("; q=");
             auto const qvalue_length = render_qvalue(ptr, max_length, range.weight);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(qvalue_length));
@@ -178,7 +179,6 @@ namespace webpp::http {
             }
 
             if (count < media_ranges.size()) {
-                assert(count < media_ranges.size());
                 media_ranges.at(count++) = range;
             }
         }
