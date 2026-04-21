@@ -4,6 +4,7 @@
 #define WEBPP_HTTP_HEADERS_KEEP_ALIVE_HPP
 
 #include "../../convert/casts.hpp"
+#include "../../std/iterator.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
@@ -20,12 +21,12 @@ namespace webpp::http {
         auto* ptr = out;
         auto append_text = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
-            ptr += length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
         auto append_number = [&](stl::size_t const value) constexpr {
             auto const length = render_decimal(ptr, max_length, value);
-            ptr += length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
 

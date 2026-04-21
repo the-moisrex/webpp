@@ -6,6 +6,7 @@
 #include "../../http/codec/common.hpp"
 #include "../../http/protocol/http_limits.hpp"
 #include "../../std/cstdint.hpp"
+#include "../../std/iterator.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
@@ -35,7 +36,7 @@ namespace webpp::http {
         auto* ptr = out;
         auto append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
-            ptr += length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
 
@@ -46,7 +47,7 @@ namespace webpp::http {
         } else if (range.weight != 1.0F) {
             append("; q=");
             auto const qvalue_length = render_qvalue(ptr, max_length, range.weight);
-            ptr += qvalue_length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(qvalue_length));
             max_length -= qvalue_length;
         }
 
@@ -317,20 +318,17 @@ namespace webpp::http {
          * Return `false` from the callback to stop parsing early.
          */
         template <typename Callback>
-        constexpr void for_each(Callback&& callback) const noexcept {
+        constexpr void for_each(Callback const& callback) const noexcept {
             if (!is_valid()) [[unlikely]] {
                 return;
             }
-
-            auto&& callback_ref = callback;
             for (auto const& range : media_ranges()) {
-                // Reuse the same callback object across iterations, even for rvalues.
-                if constexpr (stl::is_same_v<decltype(callback_ref(range)), bool>) {
-                    if (!callback_ref(range)) {
+                if constexpr (stl::is_same_v<decltype(callback(range)), bool>) {
+                    if (!callback(range)) {
                         break;
                     }
                 } else {
-                    callback_ref(range);
+                    callback(range);
                 }
             }
         }
@@ -353,11 +351,11 @@ namespace webpp::http {
         for (auto const& range : header.media_ranges()) {
             if (ptr != out) {
                 auto const separator_length = render_header_text(ptr, max_length, ", ");
-                ptr += separator_length;
+                stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
                 max_length -= separator_length;
             }
             auto const range_length = render_accept_media_range(ptr, max_length, range);
-            ptr += range_length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(range_length));
             max_length -= range_length;
         }
 

@@ -3,6 +3,7 @@
 #ifndef WEBPP_HEADERS_ALLOW_HPP
 #define WEBPP_HEADERS_ALLOW_HPP
 
+#include "../../std/iterator.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
@@ -24,7 +25,7 @@ namespace webpp::http {
         auto* ptr = out;
         auto append = [&](stl::string_view const part) constexpr {
             auto const length = render_header_text(ptr, max_length, part);
-            ptr += length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
 

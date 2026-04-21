@@ -18,7 +18,7 @@ using namespace std::string_view_literals;
 namespace {
 
     template <typename HeaderType>
-    std::string render_to_string(HeaderType const& header, std::size_t const max_length = 256) {
+    static std::string render_to_string(HeaderType const& header, std::size_t const max_length = 256) {
         std::string output(max_length, '\0');
         auto const   size = render(output.data(), max_length, header);
         output.resize(size);
@@ -50,6 +50,37 @@ TEST(Headers, ContentTypeRender) {
 TEST(Headers, KeepAliveRender) {
     basic_keep_alive const header{"timeout=5, max=1000"};
     EXPECT_EQ(render_to_string(header), "timeout=5, max=1000");
+}
+
+TEST(Headers, AcceptRender) {
+    basic_accept const header{"text/html; level=1; q=0.7, application/json"};
+    EXPECT_EQ(render_to_string(header), "text/html; level=1; q=0.7, application/json");
+}
+
+TEST(Headers, AcceptEncodingRender) {
+    basic_accept_encoding const header{"gzip; q=0.5, br"};
+    EXPECT_EQ(render_to_string(header), "gzip; q=0.5, br, identity");
+}
+
+TEST(Headers, AllowRender) {
+    basic_allow const header{" GET ,POST,   PATCH "};
+    EXPECT_EQ(render_to_string(header), "GET, POST, PATCH");
+}
+
+TEST(Headers, ContentEncodingRender) {
+    basic_content_encoding const header{"gzip,  br ,deflate"};
+    EXPECT_EQ(render_to_string(header), "gzip, br, deflate");
+}
+
+TEST(Headers, CacheControlRender) {
+    basic_cache_control const header{"public, max-age=600, immutable"};
+    EXPECT_EQ(render_to_string(header), "public, immutable, max-age=600");
+}
+
+TEST(Headers, InvalidHeadersRenderEmptyString) {
+    EXPECT_TRUE(render_to_string(basic_allow{"GET X"}).empty());
+    EXPECT_TRUE(render_to_string(basic_content_encoding{"gzip;q=1.0"}).empty());
+    EXPECT_TRUE(render_to_string(basic_cache_control{""}).empty());
 }
 
 TEST(Headers, AcceptEncoding) {
@@ -96,7 +127,7 @@ TEST(Headers, AcceptEncodingExceedsLimit) {
 class ContentTypeTest : public ::testing::Test {
   protected:
     // Helper to create and verify in one go
-    basic_content_type parse(std::string_view input) {
+    static basic_content_type parse(std::string_view input) {
         return basic_content_type{input};
     }
 };
@@ -104,95 +135,95 @@ class ContentTypeTest : public ::testing::Test {
 // ============ Basic Parsing ============
 
 TEST_F(ContentTypeTest, EmptyString) {
-    basic_content_type ct{""};
-    EXPECT_TRUE(ct.media_type_string().empty());
-    EXPECT_TRUE(ct.boundary().empty());
-    EXPECT_TRUE(ct.charset().empty());
+    basic_content_type content_type{""};
+    EXPECT_TRUE(content_type.media_type_string().empty());
+    EXPECT_TRUE(content_type.boundary().empty());
+    EXPECT_TRUE(content_type.charset().empty());
 }
 
 TEST_F(ContentTypeTest, SimpleMediaTypeNoParams) {
-    auto ct = parse("text/html");
-    EXPECT_EQ(ct.media_type_string(), "text/html");
-    EXPECT_TRUE(ct.boundary().empty());
-    EXPECT_TRUE(ct.charset().empty());
-    EXPECT_FALSE(ct.is_multipart());
+    auto const content_type = parse("text/html");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
+    EXPECT_TRUE(content_type.boundary().empty());
+    EXPECT_TRUE(content_type.charset().empty());
+    EXPECT_FALSE(content_type.is_multipart());
 }
 
 TEST_F(ContentTypeTest, MediaTypeWithLeadingTrailingWhitespace) {
-    auto ct = parse("  application/json  ");
-    EXPECT_EQ(ct.media_type_string(), "application/json");
+    auto const content_type = parse("  application/json  ");
+    EXPECT_EQ(content_type.media_type_string(), "application/json");
 }
 
 TEST_F(ContentTypeTest, MediaTypeWithInternalWhitespacePreserved) {
     // RFC allows whitespace around '/', but we don't modify it
-    auto ct = parse("text / html");
-    EXPECT_EQ(ct.media_type_string(), "text / html");
+    auto const content_type = parse("text / html");
+    EXPECT_EQ(content_type.media_type_string(), "text / html");
 }
 
 // ============ Parameter Parsing ============
 
 TEST_F(ContentTypeTest, SingleParameterCharset) {
-    auto ct = parse("text/html; charset=utf-8");
-    EXPECT_EQ(ct.media_type_string(), "text/html");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("text/html; charset=utf-8");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 TEST_F(ContentTypeTest, SingleParameterBoundary) {
-    auto ct = parse("multipart/form-data; boundary=---123");
-    EXPECT_EQ(ct.media_type_string(), "multipart/form-data");
-    EXPECT_EQ(ct.boundary(), "---123");
-    EXPECT_TRUE(ct.is_multipart());
+    auto const content_type = parse("multipart/form-data; boundary=---123");
+    EXPECT_EQ(content_type.media_type_string(), "multipart/form-data");
+    EXPECT_EQ(content_type.boundary(), "---123");
+    EXPECT_TRUE(content_type.is_multipart());
 }
 
 TEST_F(ContentTypeTest, MultipleParameters) {
-    auto ct = parse("multipart/form-data; boundary=abc; charset=utf-8");
-    EXPECT_EQ(ct.media_type_string(), "multipart/form-data");
-    EXPECT_EQ(ct.boundary(), "abc");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("multipart/form-data; boundary=abc; charset=utf-8");
+    EXPECT_EQ(content_type.media_type_string(), "multipart/form-data");
+    EXPECT_EQ(content_type.boundary(), "abc");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 TEST_F(ContentTypeTest, ParametersWithSpacesAroundEquals) {
-    auto ct = parse("text/html; charset = utf-8 ; boundary = foo");
-    EXPECT_EQ(ct.media_type_string(), "text/html");
-    EXPECT_EQ(ct.charset(), "utf-8");
-    EXPECT_EQ(ct.boundary(), "foo");
+    auto const content_type = parse("text/html; charset = utf-8 ; boundary = foo");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
+    EXPECT_EQ(content_type.charset(), "utf-8");
+    EXPECT_EQ(content_type.boundary(), "foo");
 }
 
 TEST_F(ContentTypeTest, QuotedParameterValue) {
-    auto ct = parse(R"(multipart/form-data; boundary="---123 abc")");
-    EXPECT_EQ(ct.boundary(), "---123 abc");
+    auto const content_type = parse(R"(multipart/form-data; boundary="---123 abc")");
+    EXPECT_EQ(content_type.boundary(), "---123 abc");
 }
 
 TEST_F(ContentTypeTest, QuotedParameterWithSpacesOutside) {
-    auto ct = parse(R"(multipart/form-data; boundary= "foo bar" )");
-    EXPECT_EQ(ct.boundary(), "foo bar");
+    auto const content_type = parse(R"(multipart/form-data; boundary= "foo bar" )");
+    EXPECT_EQ(content_type.boundary(), "foo bar");
 }
 
 // ============ MISTAKE #1: Case Sensitivity ============
 
 TEST_F(ContentTypeTest, DISABLED_ParameterNamesCaseInsensitiveUppercase) {
     // This should pass after fixing the case-sensitivity bug
-    auto ct = parse("text/html; CHARSET=utf-8");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("text/html; CHARSET=utf-8");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 TEST_F(ContentTypeTest, DISABLED_ParameterNamesCaseInsensitiveMixed) {
-    auto ct = parse("multipart/form-data; BoUnDaRy=---xyz");
-    EXPECT_EQ(ct.boundary(), "---xyz");
+    auto const content_type = parse("multipart/form-data; BoUnDaRy=---xyz");
+    EXPECT_EQ(content_type.boundary(), "---xyz");
 }
 
 TEST_F(ContentTypeTest, DISABLED_ParameterNamesCaseInsensitiveLowercase) {
     // This already works by coincidence
-    auto ct = parse("text/html; charset=utf-8");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("text/html; charset=utf-8");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 // ============ MISTAKE #3: Parameters Without Values (Flags) ============
 
 TEST_F(ContentTypeTest, DISABLED_ParameterWithoutEqualsSign) {
     // This should be captured somehow after fixing
-    auto ct = parse("text/html; secure; charset=utf-8");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("text/html; secure; charset=utf-8");
+    EXPECT_EQ(content_type.charset(), "utf-8");
     // The 'secure' flag is currently ignored - test would need a way to check it
 }
 
@@ -200,45 +231,45 @@ TEST_F(ContentTypeTest, DISABLED_ParameterWithoutEqualsSign) {
 
 TEST_F(ContentTypeTest, QuotedStringWithEscapedQuote) {
     // Current implementation fails - it strips outer quotes but leaves \"
-    auto ct = parse(R"(multipart/form-data; boundary="foo\"bar")");
+    auto const content_type = parse(R"(multipart/form-data; boundary="foo\"bar")");
     // After stripping quotes, we get: foo\"bar
     // A proper implementation would unescape to: foo"bar
-    EXPECT_EQ(ct.boundary(), "foo\\\"bar"); // This is what we currently get (wrong)
-    // EXPECT_EQ(ct.boundary(), "foo\"bar");  // This is what we SHOULD get
+    EXPECT_EQ(content_type.boundary(), "foo\\\"bar"); // This is what we currently get (wrong)
+    // EXPECT_EQ(content_type.boundary(), "foo\"bar");  // This is what we SHOULD get
 }
 
 // ============ Edge Cases ============
 
 TEST_F(ContentTypeTest, EmptyParameterValue) {
-    auto ct = parse("text/html; charset=");
-    EXPECT_EQ(ct.charset(), "");
+    auto const content_type = parse("text/html; charset=");
+    EXPECT_EQ(content_type.charset(), "");
 }
 
 TEST_F(ContentTypeTest, TrailingSemicolon) {
-    auto ct = parse("text/html;");
-    EXPECT_EQ(ct.media_type_string(), "text/html");
+    auto const content_type = parse("text/html;");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
 }
 
 TEST_F(ContentTypeTest, OnlySemicolons) {
-    auto ct = parse("text/html;;;;");
-    EXPECT_EQ(ct.media_type_string(), "text/html");
+    auto const content_type = parse("text/html;;;;");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
 }
 
 TEST_F(ContentTypeTest, MalformedButRecoverable) {
-    auto ct = parse("text/html; charset=utf-8; ; ; boundary=foo");
-    EXPECT_EQ(ct.charset(), "utf-8");
-    EXPECT_EQ(ct.boundary(), "foo");
+    auto const content_type = parse("text/html; charset=utf-8; ; ; boundary=foo");
+    EXPECT_EQ(content_type.charset(), "utf-8");
+    EXPECT_EQ(content_type.boundary(), "foo");
 }
 
 TEST_F(ContentTypeTest, ParameterWithSemicolonInQuotedValue) {
-    auto ct = parse(R"(multipart/form-data; boundary="---;123")");
-    EXPECT_EQ(ct.boundary(), "---;123");
+    auto const content_type = parse(R"(multipart/form-data; boundary="---;123")");
+    EXPECT_EQ(content_type.boundary(), "---;123");
 }
 
 TEST_F(ContentTypeTest, MultipleParametersSameKey) {
     // Last one wins (implementation defined)
-    auto ct = parse("text/html; charset=utf-8; charset=iso-8859-1");
-    EXPECT_EQ(ct.charset(), "iso-8859-1");
+    auto const content_type = parse("text/html; charset=utf-8; charset=iso-8859-1");
+    EXPECT_EQ(content_type.charset(), "iso-8859-1");
 }
 
 TEST_F(ContentTypeTest, IsMultipartPositive) {
@@ -258,8 +289,8 @@ TEST_F(ContentTypeTest, IsMultipartNegative) {
 
 TEST_F(ContentTypeTest, LongBoundaryValue) {
     std::string long_boundary(1000, 'x');
-    auto        ct = parse("multipart/form-data; boundary=" + long_boundary);
-    EXPECT_EQ(ct.boundary().size(), 1000);
+    auto const content_type = parse("multipart/form-data; boundary=" + long_boundary);
+    EXPECT_EQ(content_type.boundary().size(), 1000);
 }
 
 TEST_F(ContentTypeTest, ManyParameters) {
@@ -267,36 +298,36 @@ TEST_F(ContentTypeTest, ManyParameters) {
     for (int i = 0; i < 100; ++i) {
         input += "; param" + std::to_string(i) + "=value" + std::to_string(i);
     }
-    auto ct = parse(input);
-    EXPECT_EQ(ct.media_type_string(), "text/html");
+    auto const content_type = parse(input);
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
     // charset and boundary not set
-    EXPECT_TRUE(ct.charset().empty());
-    EXPECT_TRUE(ct.boundary().empty());
+    EXPECT_TRUE(content_type.charset().empty());
+    EXPECT_TRUE(content_type.boundary().empty());
 }
 
 // ============ Constexpr Verification ============
 
 TEST_F(ContentTypeTest, CompileTimeEvaluation) {
-    constexpr basic_content_type ct{"text/html; charset=utf-8"};
-    constexpr auto               media = ct.media_type_string();
-    constexpr auto               cs    = ct.charset();
+    constexpr basic_content_type content_type{"text/html; charset=utf-8"};
+    constexpr auto               media_type = content_type.media_type_string();
+    constexpr auto               charset_value = content_type.charset();
 
-    EXPECT_EQ(media, "text/html");
-    EXPECT_EQ(cs, "utf-8");
-    static_assert(media == "text/html");
-    static_assert(cs == "utf-8");
+    EXPECT_EQ(media_type, "text/html");
+    EXPECT_EQ(charset_value, "utf-8");
+    static_assert(media_type == "text/html");
+    static_assert(charset_value == "utf-8");
 }
 
 // ============ Whitespace Edge Cases ============
 
 TEST_F(ContentTypeTest, TabCharactersAsWhitespace) {
-    auto ct = parse("text/html;\tcharset\t=\tutf-8");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    auto const content_type = parse("text/html;\tcharset\t=\tutf-8");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 TEST_F(ContentTypeTest, MixedSpaceAndTab) {
-    auto ct = parse("text/html; \t boundary \t = \t \"foo\" \t ");
-    EXPECT_EQ(ct.boundary(), "foo");
+    auto const content_type = parse("text/html; \t boundary \t = \t \"foo\" \t ");
+    EXPECT_EQ(content_type.boundary(), "foo");
 }
 
 // ============ Comments Not Supported ============
@@ -304,28 +335,28 @@ TEST_F(ContentTypeTest, MixedSpaceAndTab) {
 TEST_F(ContentTypeTest, CommentsInParameterValueNotStripped) {
     // RFC allows comments in parameter values, but we don't handle them
     // This test documents current behavior
-    auto ct = parse(R"(text/html; charset=utf-8 (comment))");
+    auto const content_type = parse(R"(text/html; charset=utf-8 (comment))");
     // Currently treats the comment as part of the value
-    EXPECT_NE(ct.charset(), "utf-8");
+    EXPECT_NE(content_type.charset(), "utf-8");
 }
 
 // ============ RFC 2231 Not Supported ============
 
 TEST_F(ContentTypeTest, ExtendedParameterSyntaxIgnored) {
     // RFC 5987/2231 extended syntax (charset'lang'value)
-    auto ct = parse("text/html; charset*=utf-8''en%20US");
+    auto const content_type = parse("text/html; charset*=utf-8''en%20US");
     // We don't parse this - charset remains empty
-    EXPECT_TRUE(ct.charset().empty());
+    EXPECT_TRUE(content_type.charset().empty());
 }
 
 // ============ MIME Type With Parameters In Media Type ============
 
 TEST_F(ContentTypeTest, ParametersInMediaTypeStringNotSupported) {
     // This is invalid per RFC, but happens in the wild
-    auto ct = parse("text/html;charset=utf-8");
+    auto const content_type = parse("text/html;charset=utf-8");
     // Our parser handles it correctly because ; separates media type
-    EXPECT_EQ(ct.media_type_string(), "text/html");
-    EXPECT_EQ(ct.charset(), "utf-8");
+    EXPECT_EQ(content_type.media_type_string(), "text/html");
+    EXPECT_EQ(content_type.charset(), "utf-8");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,7 +366,7 @@ TEST_F(ContentTypeTest, ParametersInMediaTypeStringNotSupported) {
 class AcceptHeaderTest : public ::testing::Test {
   protected:
     // Helper to collect parsed ranges into a vector for easy assertion
-    std::vector<accept_media_range> parse_to_vector(std::string_view header_value) {
+    static std::vector<accept_media_range> parse_to_vector(std::string_view header_value) {
         basic_accept                    accept_header{header_value};
         std::vector<accept_media_range> ranges;
 
@@ -383,8 +414,8 @@ TEST_F(AcceptHeaderTest, MultipleMediaRangesDefaultWeights) {
     EXPECT_EQ(ranges[1].media_type, "application/xhtml+xml");
     EXPECT_EQ(ranges[2].media_type, "application/xml");
 
-    for (auto const& r : ranges) {
-        EXPECT_FLOAT_EQ(r.weight, 1.0F);
+    for (auto const& range : ranges) {
+        EXPECT_FLOAT_EQ(range.weight, 1.0F);
     }
 }
 
@@ -483,94 +514,89 @@ TEST_F(AcceptHeaderTest, ExceedsLimitKeepsOnlySupportedValues) {
 
 
 
-class ContentEncodingTest : public ::testing::Test {
-  protected:
-    void SetUp() override {}
-
-    void TearDown() override {}
-};
+class ContentEncodingTest : public ::testing::Test {};
 
 // Test to verify it fully complies with the conceptual rules of HeaderField
 TEST_F(ContentEncodingTest, CompliesWithHeaderFieldConcept) {
     // Asserting concept statically
     static_assert(HeaderField<basic_content_encoding<10>>, "Must comply with HeaderField concept");
 
-    basic_content_encoding<> ce("gzip");
-    EXPECT_TRUE(ce.is_valid());
-    EXPECT_TRUE(static_cast<bool>(ce));
+    basic_content_encoding<> content_encoding("gzip");
+    EXPECT_TRUE(content_encoding.is_valid());
+    EXPECT_TRUE(static_cast<bool>(content_encoding));
 }
 
 TEST_F(ContentEncodingTest, EmptyHeader) {
-    basic_content_encoding<> ce("");
-    EXPECT_TRUE(ce.is_valid());
-    EXPECT_EQ(ce.encodings().size(), 0);
+    basic_content_encoding<> content_encoding("");
+    EXPECT_TRUE(content_encoding.is_valid());
+    EXPECT_EQ(content_encoding.encodings().size(), 0);
 }
 
 TEST_F(ContentEncodingTest, SingleEncoding) {
-    basic_content_encoding<> ce("gzip");
-    EXPECT_TRUE(ce.is_valid());
-    ASSERT_EQ(ce.encodings().size(), 1);
-    EXPECT_EQ(ce.encodings()[0], "gzip");
-    EXPECT_TRUE(ce.contains("gzip"));
-    EXPECT_TRUE(ce.contains("GZIP")); // Case insensitive match
-    EXPECT_FALSE(ce.contains("br"));
+    basic_content_encoding<> content_encoding("gzip");
+    EXPECT_TRUE(content_encoding.is_valid());
+    ASSERT_EQ(content_encoding.encodings().size(), 1);
+    EXPECT_EQ(content_encoding.encodings()[0], "gzip");
+    EXPECT_TRUE(content_encoding.contains("gzip"));
+    EXPECT_TRUE(content_encoding.contains("GZIP")); // Case insensitive match
+    EXPECT_FALSE(content_encoding.contains("br"));
 }
 
 TEST_F(ContentEncodingTest, MultipleEncodings) {
-    basic_content_encoding<> ce("deflate, gzip");
-    EXPECT_TRUE(ce.is_valid());
-    ASSERT_EQ(ce.encodings().size(), 2);
-    EXPECT_EQ(ce.encodings()[0], "deflate");
-    EXPECT_EQ(ce.encodings()[1], "gzip");
-    EXPECT_TRUE(ce.contains("deflate"));
-    EXPECT_TRUE(ce.contains("gzip"));
+    basic_content_encoding<> content_encoding("deflate, gzip");
+    EXPECT_TRUE(content_encoding.is_valid());
+    ASSERT_EQ(content_encoding.encodings().size(), 2);
+    EXPECT_EQ(content_encoding.encodings()[0], "deflate");
+    EXPECT_EQ(content_encoding.encodings()[1], "gzip");
+    EXPECT_TRUE(content_encoding.contains("deflate"));
+    EXPECT_TRUE(content_encoding.contains("gzip"));
 }
 
 TEST_F(ContentEncodingTest, MultipleEncodingsWithTrailingSpacesAndCommas) {
-    basic_content_encoding<> ce("  br  ,  gzip , ");
-    EXPECT_TRUE(ce.is_valid());
-    ASSERT_EQ(ce.encodings().size(), 2);
-    EXPECT_EQ(ce.encodings()[0], "br");
-    EXPECT_EQ(ce.encodings()[1], "gzip");
+    basic_content_encoding<> content_encoding("  br  ,  gzip , ");
+    EXPECT_TRUE(content_encoding.is_valid());
+    ASSERT_EQ(content_encoding.encodings().size(), 2);
+    EXPECT_EQ(content_encoding.encodings()[0], "br");
+    EXPECT_EQ(content_encoding.encodings()[1], "gzip");
 }
 
 TEST_F(ContentEncodingTest, MalformedInvalidCharacters) {
     // Content-Encoding doesn't use standard attributes separated by semi-colon
-    basic_content_encoding<> ce1("gzip;q=1.0");
-    EXPECT_FALSE(ce1.is_valid());
-    EXPECT_FALSE(static_cast<bool>(ce1));
+    basic_content_encoding<> invalid_with_params("gzip;q=1.0");
+    EXPECT_FALSE(invalid_with_params.is_valid());
+    EXPECT_FALSE(static_cast<bool>(invalid_with_params));
 
     // Wildcards are not valid in Content-Encoding (only in Accept-Encoding)
-    basic_content_encoding<> ce2("*");
-    EXPECT_FALSE(ce2.is_valid());
+    basic_content_encoding<> invalid_wildcard("*");
+    EXPECT_FALSE(invalid_wildcard.is_valid());
 
     // Quotes are invalid
-    basic_content_encoding<> ce3("\"gzip\"");
-    EXPECT_FALSE(ce3.is_valid());
+    basic_content_encoding<> invalid_quoted("\"gzip\"");
+    EXPECT_FALSE(invalid_quoted.is_valid());
 }
 
 TEST_F(ContentEncodingTest, MalformedInternalSpaces) {
     // Internal spaces inside a token are considered invalid syntax
-    basic_content_encoding<> ce("gz ip");
-    EXPECT_FALSE(ce.is_valid());
+    basic_content_encoding<> content_encoding("gz ip");
+    EXPECT_FALSE(content_encoding.is_valid());
 
     // Multiple values where one is malformed
-    basic_content_encoding<> ce_multiple("br, def late, gzip");
-    EXPECT_FALSE(ce_multiple.is_valid());
+    basic_content_encoding<> invalid_multiple("br, def late, gzip");
+    EXPECT_FALSE(invalid_multiple.is_valid());
 }
 
 TEST_F(ContentEncodingTest, MaxSupportedExceeded) {
     // Set a very small MaxSupported size for testing
-    basic_content_encoding<2> ce("gzip, deflate, br, compress");
+    basic_content_encoding<2> content_encoding("gzip, deflate, br, compress");
 
-    EXPECT_TRUE(ce.is_valid()); // Should still be valid, just truncated
-    ASSERT_EQ(ce.encodings().size(), 2);
-    EXPECT_EQ(ce.encodings()[0], "gzip");
-    EXPECT_EQ(ce.encodings()[1], "deflate");
+    EXPECT_TRUE(content_encoding.is_valid()); // Should still be valid, just truncated
+    ASSERT_EQ(content_encoding.encodings().size(), 2);
+    EXPECT_EQ(content_encoding.encodings()[0], "gzip");
+    EXPECT_EQ(content_encoding.encodings()[1], "deflate");
 
     // Ensure truncated ones are not reported
-    EXPECT_FALSE(ce.contains("br"));
-    EXPECT_FALSE(ce.contains("compress"));
+    EXPECT_FALSE(content_encoding.contains("br"));
+    EXPECT_FALSE(content_encoding.contains("compress"));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -697,10 +723,10 @@ TEST(KeepAliveTest, ParsesStandardValues) {
     EXPECT_TRUE(header.is_valid());
 
     ASSERT_TRUE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 5u);
+    EXPECT_EQ(header.timeout(), 5U);
 
     ASSERT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 1000u);
+    EXPECT_EQ(header.max(), 1000U);
 }
 
 TEST(KeepAliveTest, HandlesWhitespaceAndCaseInsensitivity) {
@@ -709,10 +735,10 @@ TEST(KeepAliveTest, HandlesWhitespaceAndCaseInsensitivity) {
     EXPECT_TRUE(header.is_valid());
 
     ASSERT_TRUE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 15u);
+    EXPECT_EQ(header.timeout(), 15U);
 
     ASSERT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 500u);
+    EXPECT_EQ(header.max(), 500U);
 }
 
 TEST(KeepAliveTest, HandlesOnlyTimeout) {
@@ -721,10 +747,10 @@ TEST(KeepAliveTest, HandlesOnlyTimeout) {
     EXPECT_TRUE(header.is_valid());
 
     ASSERT_TRUE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 30u);
+    EXPECT_EQ(header.timeout(), 30U);
 
     EXPECT_FALSE(header.has_max());
-    EXPECT_EQ(header.max(), 0u); // Default/fallback value
+    EXPECT_EQ(header.max(), 0U); // Default/fallback value
 }
 
 TEST(KeepAliveTest, HandlesOnlyMax) {
@@ -733,10 +759,10 @@ TEST(KeepAliveTest, HandlesOnlyMax) {
     EXPECT_TRUE(header.is_valid());
 
     EXPECT_FALSE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 0u);
+    EXPECT_EQ(header.timeout(), 0U);
 
     ASSERT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 99u);
+    EXPECT_EQ(header.max(), 99U);
 }
 
 TEST(KeepAliveTest, InvalidCharactersInOneValueDoesNotInvalidateEntireHeader) {
@@ -746,10 +772,10 @@ TEST(KeepAliveTest, InvalidCharactersInOneValueDoesNotInvalidateEntireHeader) {
     EXPECT_TRUE(header.is_valid());
 
     EXPECT_FALSE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 0u);
+    EXPECT_EQ(header.timeout(), 0U);
 
     ASSERT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 100u);
+    EXPECT_EQ(header.max(), 100U);
 }
 
 TEST(KeepAliveTest, HandlesEmptyString) {
@@ -774,10 +800,10 @@ TEST(KeepAliveTest, HandlesMultipleDelimitersAndGarbageProperties) {
     EXPECT_TRUE(header.is_valid());
 
     ASSERT_TRUE(header.has_timeout());
-    EXPECT_EQ(header.timeout(), 5u);
+    EXPECT_EQ(header.timeout(), 5U);
 
     ASSERT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 20u);
+    EXPECT_EQ(header.max(), 20U);
 }
 
 TEST(KeepAliveTest, RejectsNegativeValuesForSizeT) {
@@ -787,97 +813,97 @@ TEST(KeepAliveTest, RejectsNegativeValuesForSizeT) {
     // unless the base casting accounts for explicit positive requirement for uints.
     EXPECT_FALSE(header.has_timeout());
     EXPECT_TRUE(header.has_max());
-    EXPECT_EQ(header.max(), 100u);
+    EXPECT_EQ(header.max(), 100U);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
 TEST(CacheControlTest, EmptyStringIsInvalid) {
-    basic_cache_control cc{""};
-    EXPECT_FALSE(cc.is_valid());
+    basic_cache_control cache_control{""};
+    EXPECT_FALSE(cache_control.is_valid());
 }
 
 TEST(CacheControlTest, ParsesSingleBooleanDirective) {
-    basic_cache_control cc{"no-cache"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.no_cache());
-    EXPECT_FALSE(cc.no_store());
-    EXPECT_FALSE(cc.is_public());
+    basic_cache_control cache_control{"no-cache"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.no_cache());
+    EXPECT_FALSE(cache_control.no_store());
+    EXPECT_FALSE(cache_control.is_public());
 }
 
 TEST(CacheControlTest, ParsesMultipleBooleanDirectives) {
-    basic_cache_control cc{"no-store, no-transform, private"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.no_store());
-    EXPECT_TRUE(cc.no_transform());
-    EXPECT_TRUE(cc.is_private());
+    basic_cache_control cache_control{"no-store, no-transform, private"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.no_store());
+    EXPECT_TRUE(cache_control.no_transform());
+    EXPECT_TRUE(cache_control.is_private());
 
     // Ensure others are false
-    EXPECT_FALSE(cc.no_cache());
-    EXPECT_FALSE(cc.is_public());
+    EXPECT_FALSE(cache_control.no_cache());
+    EXPECT_FALSE(cache_control.is_public());
 }
 
 TEST(CacheControlTest, ParsesValueDirectives) {
-    basic_cache_control cc{"max-age=3600"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.has_max_age());
-    EXPECT_EQ(cc.max_age(), 3600);
+    basic_cache_control cache_control{"max-age=3600"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.has_max_age());
+    EXPECT_EQ(cache_control.max_age(), 3600);
 }
 
 TEST(CacheControlTest, ParsesQuotedValueDirectives) {
-    basic_cache_control cc{"s-maxage=\"7200\""};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_EQ(cc.s_maxage(), 7200);
+    basic_cache_control cache_control{"s-maxage=\"7200\""};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_EQ(cache_control.s_maxage(), 7200);
 }
 
 TEST(CacheControlTest, HandlesCaseInsensitivity) {
-    basic_cache_control cc{"No-CaChE, MAX-age=86400, PuBlIc"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.no_cache());
-    EXPECT_TRUE(cc.is_public());
-    EXPECT_TRUE(cc.has_max_age());
-    EXPECT_EQ(cc.max_age(), 86'400);
+    basic_cache_control cache_control{"No-CaChE, MAX-age=86400, PuBlIc"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.no_cache());
+    EXPECT_TRUE(cache_control.is_public());
+    EXPECT_TRUE(cache_control.has_max_age());
+    EXPECT_EQ(cache_control.max_age(), 86'400);
 }
 
 TEST(CacheControlTest, ParsesMixedDirectivesWithSpacing) {
-    basic_cache_control cc{"public,   max-age=600 ,  s-maxage=1200, must-revalidate"};
-    ASSERT_TRUE(cc.is_valid());
+    basic_cache_control cache_control{"public,   max-age=600 ,  s-maxage=1200, must-revalidate"};
+    ASSERT_TRUE(cache_control.is_valid());
 
-    EXPECT_TRUE(cc.is_public());
-    EXPECT_TRUE(cc.must_revalidate());
+    EXPECT_TRUE(cache_control.is_public());
+    EXPECT_TRUE(cache_control.must_revalidate());
 
-    EXPECT_EQ(cc.max_age(), 600);
-    EXPECT_EQ(cc.s_maxage(), 1200);
+    EXPECT_EQ(cache_control.max_age(), 600);
+    EXPECT_EQ(cache_control.s_maxage(), 1200);
 
-    EXPECT_FALSE(cc.is_private());
-    EXPECT_FALSE(cc.no_cache());
+    EXPECT_FALSE(cache_control.is_private());
+    EXPECT_FALSE(cache_control.no_cache());
 }
 
 TEST(CacheControlTest, HandlesMalformedNumericValues) {
-    basic_cache_control cc{"max-age=invalid_number"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_FALSE(cc.has_max_age()); // Should fail casting safely
-    EXPECT_EQ(cc.max_age(), -1);    // Default fallback
+    basic_cache_control cache_control{"max-age=invalid_number"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_FALSE(cache_control.has_max_age()); // Should fail casting safely
+    EXPECT_EQ(cache_control.max_age(), -1);    // Default fallback
 }
 
 TEST(CacheControlTest, IgnoresUnknownDirectives) {
-    basic_cache_control cc{"public, unknown-directive=123, max-age=50"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.is_public());
-    EXPECT_EQ(cc.max_age(), 50);
+    basic_cache_control cache_control{"public, unknown-directive=123, max-age=50"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.is_public());
+    EXPECT_EQ(cache_control.max_age(), 50);
 }
 
 TEST(CacheControlTest, HandlesStaleExtensions) {
-    basic_cache_control cc{"stale-while-revalidate=86400, stale-if-error=172800"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_EQ(cc.stale_while_revalidate(), 86'400);
-    EXPECT_EQ(cc.stale_if_error(), 172'800);
+    basic_cache_control cache_control{"stale-while-revalidate=86400, stale-if-error=172800"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_EQ(cache_control.stale_while_revalidate(), 86'400);
+    EXPECT_EQ(cache_control.stale_if_error(), 172'800);
 }
 
 TEST(CacheControlTest, ImmutableFlagTest) {
-    basic_cache_control cc{"public, max-age=31536000, immutable"};
-    ASSERT_TRUE(cc.is_valid());
-    EXPECT_TRUE(cc.is_public());
-    EXPECT_EQ(cc.max_age(), 31'536'000);
-    EXPECT_TRUE(cc.immutable());
+    basic_cache_control cache_control{"public, max-age=31536000, immutable"};
+    ASSERT_TRUE(cache_control.is_valid());
+    EXPECT_TRUE(cache_control.is_public());
+    EXPECT_EQ(cache_control.max_age(), 31'536'000);
+    EXPECT_TRUE(cache_control.immutable());
 }

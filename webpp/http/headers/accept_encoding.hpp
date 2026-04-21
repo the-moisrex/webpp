@@ -5,6 +5,7 @@
 
 #include "../../http/codec/common.hpp"
 #include "../../std/cstdint.hpp"
+#include "../../std/iterator.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -28,7 +29,7 @@ namespace webpp::http {
         auto* ptr = out;
         auto append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
-            ptr += length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
 
@@ -37,7 +38,7 @@ namespace webpp::http {
         if (quality != 1.0F) {
             append("; q=");
             auto const qvalue_length = render_qvalue(ptr, max_length, quality);
-            ptr += qvalue_length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(qvalue_length));
             max_length -= qvalue_length;
         }
 
@@ -172,7 +173,7 @@ namespace webpp::http {
                 count = 0;
                 return;
             }
-            float qval = parse_qvalue(qvalue);
+            float const qval = parse_qvalue(qvalue);
             if (qval < 0.0F) {
                 count = 0;
                 return;
@@ -371,11 +372,11 @@ namespace webpp::http {
         for (auto const& algo : header.allowed_encodings()) {
             if (ptr != out) {
                 auto const separator_length = render_header_text(ptr, max_length, ", ");
-                ptr += separator_length;
+                stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
                 max_length -= separator_length;
             }
             auto const entry_length = render_accept_encoding_entry(ptr, max_length, algo.encoding, algo.quality, algo.name);
-            ptr += entry_length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(entry_length));
             max_length -= entry_length;
         }
 

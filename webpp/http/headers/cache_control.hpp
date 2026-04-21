@@ -4,6 +4,7 @@
 #define WEBPP_CACHE_CONTROL_HPP
 
 #include "../../convert/casts.hpp"
+#include "../../std/iterator.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -27,9 +28,9 @@ namespace webpp::http {
       IntegerType const      value) noexcept {
         auto* ptr = out;
         auto const directive_length = render_header_text(ptr, max_length, directive);
-        ptr += directive_length;
+        stl::advance(ptr, static_cast<stl::ptrdiff_t>(directive_length));
         max_length -= directive_length;
-        ptr += render_decimal(ptr, max_length, value);
+        stl::advance(ptr, static_cast<stl::ptrdiff_t>(render_decimal(ptr, max_length, value)));
         return static_cast<stl::size_t>(ptr - out);
     }
 
@@ -42,16 +43,16 @@ namespace webpp::http {
     template <typename Renderer>
     constexpr void append_cache_control_directive(
       char*&       ptr,
-      char* const  out,
+      char const*  out,
       stl::size_t& max_length,
-      Renderer&&   renderer) noexcept {
+      Renderer const& renderer) noexcept {
         if (ptr != out) {
             auto const separator_length = render_header_text(ptr, max_length, ", ");
-            ptr += separator_length;
+            stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
             max_length -= separator_length;
         }
         auto const directive_length = renderer(ptr, max_length);
-        ptr += directive_length;
+        stl::advance(ptr, static_cast<stl::ptrdiff_t>(directive_length));
         max_length -= directive_length;
     }
 
