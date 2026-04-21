@@ -4,8 +4,6 @@
 #define WEBPP_HTTP_HEADERS_KEEP_ALIVE_HPP
 
 #include "../../convert/casts.hpp"
-#include "../../std/iterator.hpp"
-#include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -14,12 +12,12 @@
 
 namespace webpp::http {
     constexpr stl::size_t render_keep_alive(
-      char*                    out,
-      stl::size_t              max_length,
+      char*                                   out,
+      stl::size_t                             max_length,
       integer_cast_result<stl::size_t> const& timeout,
       integer_cast_result<stl::size_t> const& max) noexcept {
-        auto* ptr = out;
-        auto append_text = [&](stl::string_view const value) constexpr {
+        auto* ptr         = out;
+        auto  append_text = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;

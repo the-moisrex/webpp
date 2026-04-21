@@ -1,8 +1,6 @@
 #ifndef WEBPP_CONTENT_TYPE_HPP
 #define WEBPP_CONTENT_TYPE_HPP
 
-#include "../../std/string_view.hpp"
-#include "../../std/iterator.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -17,8 +15,8 @@ namespace webpp::http {
       stl::string_view const media_type,
       stl::string_view const boundary = {},
       stl::string_view const charset  = {}) noexcept {
-        auto* ptr = out;
-        auto append = [&](stl::string_view const value) constexpr {
+        auto* ptr    = out;
+        auto  append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;

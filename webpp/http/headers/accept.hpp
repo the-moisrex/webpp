@@ -6,8 +6,6 @@
 #include "../../http/codec/common.hpp"
 #include "../../http/protocol/http_limits.hpp"
 #include "../../std/cstdint.hpp"
-#include "../../std/iterator.hpp"
-#include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -29,12 +27,10 @@ namespace webpp::http {
         float            weight = 1.0F; // q-value (0.0 to 1.0)
     };
 
-    constexpr stl::size_t render_accept_media_range(
-      char*                     out,
-      stl::size_t               max_length,
-      accept_media_range const& range) noexcept {
-        auto* ptr = out;
-        auto append = [&](stl::string_view const value) constexpr {
+    constexpr stl::size_t
+    render_accept_media_range(char* out, stl::size_t max_length, accept_media_range const& range) noexcept {
+        auto* ptr    = out;
+        auto  append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
@@ -339,10 +335,8 @@ namespace webpp::http {
     };
 
     template <stl::size_t MaxSupportedValues>
-    constexpr stl::size_t render(
-      char*                                      out,
-      stl::size_t                                max_length,
-      basic_accept<MaxSupportedValues> const& header) noexcept {
+    constexpr stl::size_t
+    render(char* out, stl::size_t max_length, basic_accept<MaxSupportedValues> const& header) noexcept {
         if (!header.is_valid()) {
             return 0;
         }

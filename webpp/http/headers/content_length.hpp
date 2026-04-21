@@ -4,16 +4,13 @@
 #define WEBPP_CONTENT_LENGTH_HPP
 
 #include "../../convert/casts.hpp"
-#include "../../std/string_view.hpp"
 #include "../../strings/trim.hpp"
 #include "./header_concepts.hpp"
 
 namespace webpp::http {
 
-    constexpr stl::size_t render_content_length(
-      char*                  out,
-      stl::size_t const      max_length,
-      stl::size_t const value) noexcept {
+    constexpr stl::size_t
+    render_content_length(char* out, stl::size_t const max_length, stl::size_t const value) noexcept {
         return render_decimal(out, max_length, value);
     }
 

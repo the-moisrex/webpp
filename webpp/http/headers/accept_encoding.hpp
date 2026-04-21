@@ -5,12 +5,8 @@
 
 #include "../../http/codec/common.hpp"
 #include "../../std/cstdint.hpp"
-#include "../../std/iterator.hpp"
-#include "../../std/string_view.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
-#include "../../strings/to_case.hpp"
-#include "../../strings/validators.hpp"
 #include "../protocol/http_limits.hpp"
 #include "./header_concepts.hpp"
 
@@ -26,8 +22,8 @@ namespace webpp::http {
       EncodingEnum const     encoding,
       float const            quality,
       stl::string_view const name) noexcept {
-        auto* ptr = out;
-        auto append = [&](stl::string_view const value) constexpr {
+        auto* ptr    = out;
+        auto  append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
@@ -141,8 +137,7 @@ namespace webpp::http {
             std::size_t const semicolon_pos = entry.find(';');
             if (semicolon_pos == stl::string_view::npos) {
                 if (entry.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
-                    count = 0;
-                    return;
+                    continue;
                 }
                 allowed_encodings[count++] =
                   CompressionAlgo{.encoding = to_known_encoding<EncodingEnum>(entry), .quality = 1.0F, .name = entry};
@@ -151,32 +146,27 @@ namespace webpp::http {
             auto encoding = entry.substr(0, semicolon_pos);
             http::trim_lws(encoding);
             if (encoding.find_first_of(http::http_lws.string_view()) != stl::string_view::npos) {
-                count = 0;
-                return;
+                continue;
             }
             auto params = entry.substr(semicolon_pos + 1);
             http::trim_lws(params);
             std::size_t const equals_pos = params.find('=');
             if (equals_pos == stl::string_view::npos) {
-                count = 0;
-                return;
+                continue;
             }
             auto param_name = params.substr(0, equals_pos);
             http::trim_lws(param_name);
             if (!ascii::iequals_sl(param_name, 'q')) {
-                count = 0;
-                return;
+                continue;
             }
             auto qvalue = params.substr(equals_pos + 1);
             http::trim_lws(qvalue);
             if (qvalue.empty()) {
-                count = 0;
-                return;
+                continue;
             }
             float const qval = parse_qvalue(qvalue);
             if (qval < 0.0F) {
-                count = 0;
-                return;
+                continue;
             }
             auto known                 = to_known_encoding<EncodingEnum>(encoding);
             allowed_encodings[count++] = CompressionAlgo{.encoding = known, .quality = qval, .name = encoding};
@@ -184,7 +174,9 @@ namespace webpp::http {
 
         if (count == 0) {
             allowed_encodings[count++] =
-              CompressionAlgo{.encoding = EncodingEnum::all, .quality = 1.0F, .name = to_string(EncodingEnum::all)};
+              CompressionAlgo{.encoding = EncodingEnum::identity,
+                              .quality  = 1.0F,
+                              .name     = to_string(EncodingEnum::identity)};
             return;
         }
 
@@ -262,10 +254,7 @@ namespace webpp::http {
         explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
           : header_field_base<basic_accept_encoding>(src),
             _value(src) {
-            parse_accept_encoding<compression_algo, EncodingEnum, MaxSupported>(
-              src,
-              _allowed_encodings,
-              _count);
+            parse_accept_encoding<compression_algo, EncodingEnum, MaxSupported>(src, _allowed_encodings, _count);
         }
 
       public:
@@ -282,7 +271,19 @@ namespace webpp::http {
          */
         template <ascii::char_case Case = ascii::char_case::unknown>
         [[nodiscard]] constexpr bool is_allowed(std::convertible_to<std::string_view> auto&&... str) const noexcept {
-            return get<Case>(std::forward<decltype(str)>(str)...) != nullptr;
+            if (auto const* algo = get<Case>(std::forward<decltype(str)>(str)...)) {
+                return algo->quality > 0.0F;
+            }
+            if (auto const* star = get(EncodingEnum::all)) {
+                return star->quality > 0.0F;
+            }
+            // If they passed "identity" and it wasn't explicitly forbidden, it's allowed.
+            bool const is_id =
+              ((ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(
+                  "identity",
+                  std::forward<decltype(str)>(str)) ||
+                ...));
+            return is_id;
         }
 
         /**
@@ -347,7 +348,7 @@ namespace webpp::http {
       private:
         using count_type = stl::make_unsigned_t<istl::integer_max_t<MaxSupported, stl::size_t>>;
 
-        stl::string_view _value;
+        stl::string_view                           _value;
         stl::array<compression_algo, MaxSupported> _allowed_encodings{};
 
         // count == 0 is considered invalid
@@ -360,10 +361,9 @@ namespace webpp::http {
     };
 
     template <typename EncodingEnum, std::size_t MaxSupported>
-    constexpr stl::size_t render(
-      char*                                                   out,
-      stl::size_t                                             max_length,
-      basic_accept_encoding<EncodingEnum, MaxSupported> const& header) noexcept {
+    constexpr stl::size_t render(char*                                                    out,
+                                 stl::size_t                                              max_length,
+                                 basic_accept_encoding<EncodingEnum, MaxSupported> const& header) noexcept {
         if (!header.is_valid()) {
             return 0;
         }
@@ -375,7 +375,8 @@ namespace webpp::http {
                 stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
                 max_length -= separator_length;
             }
-            auto const entry_length = render_accept_encoding_entry(ptr, max_length, algo.encoding, algo.quality, algo.name);
+            auto const entry_length =
+              render_accept_encoding_entry(ptr, max_length, algo.encoding, algo.quality, algo.name);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(entry_length));
             max_length -= entry_length;
         }

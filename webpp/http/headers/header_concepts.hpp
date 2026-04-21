@@ -3,7 +3,6 @@
 #ifndef WEBPP_HEADER_CONCEPTS_HPP
 #define WEBPP_HEADER_CONCEPTS_HPP
 
-#include "../../std/algorithm.hpp"
 #include "../../utils/hash.hpp"
 
 #include <concepts>
@@ -68,10 +67,8 @@ namespace webpp::http {
         return ci_hash(header_name(header));
     }
 
-    constexpr stl::size_t render_header_text(
-      char*                  out,
-      stl::size_t const      max_length,
-      std::string_view const value) noexcept {
+    constexpr stl::size_t
+    render_header_text(char* out, stl::size_t const max_length, std::string_view const value) noexcept {
         auto const length = stl::min(max_length, value.size());
         stl::copy_n(value.data(), length, out);
         return length;
@@ -82,8 +79,8 @@ namespace webpp::http {
         char  buffer[stl::numeric_limits<IntegerType>::digits10 + 2];
         char* ptr = buffer;
         do {
-            *ptr++ = static_cast<char>('0' + (value % 10U));
-            value /= 10U;
+            *ptr++  = static_cast<char>('0' + (value % 10U));
+            value  /= 10U;
         } while (value != 0U);
 
         stl::reverse(buffer, ptr);
@@ -93,24 +90,24 @@ namespace webpp::http {
     template <stl::signed_integral IntegerType>
     constexpr stl::size_t render_decimal(char* out, stl::size_t const max_length, IntegerType value) noexcept {
         char  buffer[stl::numeric_limits<IntegerType>::digits10 + 3];
-        char* ptr = buffer;
+        char* ptr           = buffer;
         using unsigned_type = stl::make_unsigned_t<IntegerType>;
 
         if (value < 0) {
-            *ptr++ = '-';
+            *ptr++         = '-';
             auto magnitude = static_cast<unsigned_type>(-(value + 1)) + 1U;
 
             char* digits_ptr = ptr;
             do {
-                *digits_ptr++ = static_cast<char>('0' + (magnitude % 10U));
-                magnitude /= 10U;
+                *digits_ptr++  = static_cast<char>('0' + (magnitude % 10U));
+                magnitude     /= 10U;
             } while (magnitude != 0U);
             stl::reverse(ptr, digits_ptr);
             ptr = digits_ptr;
         } else {
             auto magnitude = static_cast<unsigned_type>(value);
             do {
-                *ptr++ = static_cast<char>('0' + (magnitude % 10U));
+                *ptr++     = static_cast<char>('0' + (magnitude % 10U));
                 magnitude /= 10U;
             } while (magnitude != 0U);
             stl::reverse(buffer, ptr);
