@@ -22,17 +22,18 @@ namespace webpp::http {
     constexpr stl::uint64_t allow_methods_mask = ~(allow_valid_flag | allow_unknown_flag);
 
     constexpr stl::size_t render_allow(char* out, stl::size_t max_length, stl::string_view const value) noexcept {
-        auto* ptr = out;
-        auto append = [&](stl::string_view const part) constexpr {
+        auto* ptr    = out;
+        auto  append = [&](stl::string_view const part) constexpr {
             auto const length = render_header_text(ptr, max_length, part);
+            assert(length <= max_length);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
         };
 
         string_tokenizer<stl::string_view> tok{value};
-        while (tok.next(charset<char, 1>{','})) {
+        while (tok.next(charset{','})) {
             auto const method = ascii::trim_copy(tok.token());
-            if (method.empty()) {
+            if (method.empty()) [[unlikely]] {
                 continue;
             }
 
@@ -55,7 +56,7 @@ namespace webpp::http {
         string_tokenizer<stl::string_view> tok{value};
 
         // Methods are separated by commas
-        while (tok.next(charset<char, 1>{','})) {
+        while (tok.next(charset{','})) {
             auto method_str = ascii::trim_copy(tok.token());
             if (method_str.empty()) {
                 continue;
@@ -63,9 +64,9 @@ namespace webpp::http {
 
             // A valid HTTP method must be a valid HTTP token
             for (char const cur : method_str) {
-                if (!is_http_token(cur)) {
+                if (!is_http_token(cur)) [[unlikely]] {
                     data &= ~allow_valid_flag; // Mark as invalid
-                    break;
+                    return;                    // Stop parsing if header format is compromised
                 }
             }
 
@@ -74,7 +75,7 @@ namespace webpp::http {
                 // Set the bit corresponding to the underlying verb integer value
                 assert(+method < 62);
                 data |= (1ULL << +method);
-            } else {
+            } else [[unlikely]] {
                 data |= allow_unknown_flag;
             }
         }
@@ -113,7 +114,7 @@ namespace webpp::http {
             if (method == verb::unknown) [[unlikely]] {
                 return false;
             }
-            return (_data & (1ULL << stl::to_underlying(method))) != 0;
+            return (_data & (1ULL << +method)) != 0;
         }
 
         /**
