@@ -66,11 +66,14 @@ namespace webpp::http {
         static constexpr stl::string_view header_name = "allow";
 
       private:
-        stl::uint64_t _data = allow_valid_flag;
+        stl::uint64_t    _data = allow_valid_flag;
+        stl::string_view _value;
 
       public:
-        constexpr explicit basic_allow(stl::string_view const str) noexcept : header_field_base<basic_allow>{str} {
-            parse_allow(view(), _data);
+        constexpr explicit basic_allow(stl::string_view const str) noexcept
+          : header_field_base<basic_allow>{str},
+            _value(str) {
+            parse_allow(str, _data);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
@@ -102,7 +105,7 @@ namespace webpp::http {
             }
 
             // Fallback: tokenize and check for the custom method match on the fly
-            string_tokenizer<stl::string_view> tok{view()};
+            string_tokenizer<stl::string_view> tok{_value};
             while (tok.next(charset{','})) {
                 if (ascii::trim_copy(tok.token()) == method_str) {
                     return true;

@@ -254,14 +254,6 @@ TEST_F(ContentTypeTest, CompileTimeEvaluation) {
     static_assert(cs == "utf-8");
 }
 
-// ============ View/Original String ============
-
-TEST_F(ContentTypeTest, ViewReturnsOriginalString) {
-    std::string_view original = "application/json; charset=utf-8";
-    auto             ct       = parse(original);
-    EXPECT_EQ(ct.view(), original);
-}
-
 // ============ Whitespace Edge Cases ============
 
 TEST_F(ContentTypeTest, TabCharactersAsWhitespace) {
@@ -472,7 +464,6 @@ TEST_F(ContentEncodingTest, CompliesWithHeaderFieldConcept) {
 
     basic_content_encoding<> ce("gzip");
     EXPECT_TRUE(ce.is_valid());
-    EXPECT_EQ(ce.view(), "gzip");
     EXPECT_TRUE(static_cast<bool>(ce));
 }
 

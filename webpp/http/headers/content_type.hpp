@@ -94,7 +94,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_content_type(std::string_view const str) noexcept : header_field_base{str} {
-            parse_content_type(view(), _media_type, _boundary, _charset);
+            parse_content_type(str, _media_type, _boundary, _charset);
         }
 
         // A Content-Type header is only valid if it contains at least a valid media type.

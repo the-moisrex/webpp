@@ -62,7 +62,7 @@ namespace webpp::http {
       public:
         constexpr explicit basic_keep_alive(stl::string_view const str) noexcept
           : header_field_base<basic_keep_alive>{str} {
-            parse_keep_alive(view(), _timeout, _max);
+            parse_keep_alive(str, _timeout, _max);
         }
 
         /**

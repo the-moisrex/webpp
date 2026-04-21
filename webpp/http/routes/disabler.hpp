@@ -12,9 +12,7 @@ namespace webpp::http {
     template <typename T>
     concept BooleanLike = requires(T val) {
         val = true;
-        {
-            !val
-        } noexcept -> stl::same_as<bool>;
+        { !val } noexcept -> stl::same_as<bool>;
     };
 
     /**
@@ -62,8 +60,8 @@ namespace webpp::http {
             return (is_enabled_value = inp_is_enabled);
         }
 
-        template <Traits TraitsType>
-        constexpr bool operator()(basic_context<TraitsType>&) const noexcept {
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr bool operator()(basic_context<CharT, AllocT>&) const noexcept {
             return is_enabled();
         }
 

@@ -46,7 +46,7 @@ namespace webpp::http {
          */
         constexpr explicit basic_content_length(stl::string_view const str) noexcept
           : header_field_base<basic_content_length>{str} {
-            parse_content_length(view(), _length);
+            parse_content_length(str, _length);
         }
 
         /**

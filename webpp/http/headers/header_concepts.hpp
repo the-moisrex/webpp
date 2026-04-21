@@ -57,9 +57,6 @@ namespace webpp::http {
         // Check validity of the parsed value
         header.is_valid();
         static_cast<bool>(header);
-
-        // Necessary for proxying requests, serialization, or unhandled edge cases.
-        { header.view() } -> std::convertible_to<std::string_view>;
     };
 
     /// If the header field don't have a header id, we can generate one
@@ -69,19 +66,12 @@ namespace webpp::http {
         return ci_hash(header_name(header));
     }
 
-    template <HeaderField T>
-    [[nodiscard]] constexpr bool has_value(T const& header) noexcept {
-        return !header.view().empty();
-    }
-
     /**
      * This CRTP will be used to add common features to header fields.
      */
     template <typename H>
     struct [[nodiscard]] header_field_base {
       private:
-        std::string_view raw;
-
         // We're in C++20 land, no `this auto` here
         [[nodiscard]] constexpr H const& self() const noexcept {
             return static_cast<H const&>(*this);
@@ -99,11 +89,7 @@ namespace webpp::http {
         constexpr header_field_base& operator=(header_field_base&&) noexcept = default;
         constexpr ~header_field_base() noexcept                              = default;
 
-        constexpr explicit header_field_base(std::string_view const str) noexcept : raw{str} {}
-
-        [[nodiscard]] constexpr std::string_view view() const noexcept {
-            return raw;
-        }
+        constexpr explicit header_field_base(std::string_view const) noexcept {}
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return self().is_valid();

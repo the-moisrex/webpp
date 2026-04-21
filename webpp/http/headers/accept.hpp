@@ -265,7 +265,7 @@ namespace webpp::http {
 
       public:
         constexpr explicit basic_accept(stl::string_view const str) noexcept : header_field_base<basic_accept>{str} {
-            parse_accept(this->view(), _media_ranges, _count);
+            parse_accept(str, _media_ranges, _count);
         }
 
         // An empty Accept header is valid and implies no explicit restriction.

@@ -70,7 +70,7 @@ namespace webpp::http {
 
         constexpr explicit basic_content_encoding(stl::string_view const str) noexcept
           : header_field_base<basic_content_encoding>{str} {
-            parse_content_encoding<MaxSupported>(this->view(), _encodings, _count);
+            parse_content_encoding<MaxSupported>(str, _encodings, _count);
         }
 
         [[nodiscard]] constexpr stl::span<encoding_type const> encodings() const noexcept {

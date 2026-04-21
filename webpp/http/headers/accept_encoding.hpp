@@ -235,7 +235,7 @@ namespace webpp::http {
         explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
           : header_field_base<basic_accept_encoding>(src) {
             parse_accept_encoding<compression_algo, EncodingEnum, MaxSupported>(
-              this->view(),
+              src,
               _allowed_encodings,
               _count);
         }

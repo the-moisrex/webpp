@@ -47,7 +47,7 @@ namespace webpp::http {
       public:
         constexpr explicit basic_cache_control(stl::string_view const str) noexcept
           : header_field_base<basic_cache_control>{str} {
-            parse_cache_control(this->view(), *this);
+            parse_cache_control(str, *this);
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
