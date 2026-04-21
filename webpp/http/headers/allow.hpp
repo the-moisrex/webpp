@@ -20,6 +20,30 @@ namespace webpp::http {
     constexpr stl::uint64_t allow_valid_flag   = allow_unknown_flag >> 1U;
     constexpr stl::uint64_t allow_methods_mask = ~(allow_valid_flag | allow_unknown_flag);
 
+    constexpr stl::size_t render_allow(char* out, stl::size_t max_length, stl::string_view const value) noexcept {
+        auto* ptr = out;
+        auto append = [&](stl::string_view const part) constexpr {
+            auto const length = render_header_text(ptr, max_length, part);
+            ptr += length;
+            max_length -= length;
+        };
+
+        string_tokenizer<stl::string_view> tok{value};
+        while (tok.next(charset<char, 1>{','})) {
+            auto const method = ascii::trim_copy(tok.token());
+            if (method.empty()) {
+                continue;
+            }
+
+            if (ptr != out) {
+                append(", ");
+            }
+            append(method);
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
+
     constexpr void parse_allow(stl::string_view const value, stl::uint64_t& data) noexcept {
         data = allow_valid_flag; // Assume valid by default
 
@@ -127,7 +151,19 @@ namespace webpp::http {
         [[nodiscard]] constexpr bool has_unknown_methods() const noexcept {
             return (_data & allow_unknown_flag) != 0;
         }
+
+        [[nodiscard]] constexpr stl::string_view value_string() const noexcept {
+            return _value;
+        }
     };
+
+    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_allow const& header) noexcept {
+        if (!header.is_valid()) {
+            return 0;
+        }
+
+        return render_allow(out, max_length, header.value_string());
+    }
 
 } // namespace webpp::http
 

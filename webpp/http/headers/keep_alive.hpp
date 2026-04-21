@@ -12,6 +12,38 @@
 #include "./header_concepts.hpp"
 
 namespace webpp::http {
+    constexpr stl::size_t render_keep_alive(
+      char*                    out,
+      stl::size_t              max_length,
+      integer_cast_result<stl::size_t> const& timeout,
+      integer_cast_result<stl::size_t> const& max) noexcept {
+        auto* ptr = out;
+        auto append_text = [&](stl::string_view const value) constexpr {
+            auto const length = render_header_text(ptr, max_length, value);
+            ptr += length;
+            max_length -= length;
+        };
+        auto append_number = [&](stl::size_t const value) constexpr {
+            auto const length = render_decimal(ptr, max_length, value);
+            ptr += length;
+            max_length -= length;
+        };
+
+        if (timeout.has_value()) {
+            append_text("timeout=");
+            append_number(timeout.value());
+        }
+        if (max.has_value()) {
+            if (ptr != out) {
+                append_text(", ");
+            }
+            append_text("max=");
+            append_number(max.value());
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
+
     constexpr void parse_keep_alive(
       stl::string_view const            value,
       integer_cast_result<stl::size_t>& timeout,
@@ -87,7 +119,19 @@ namespace webpp::http {
         [[nodiscard]] constexpr stl::size_t max() const noexcept {
             return _max.value_or(0);
         }
+
+        [[nodiscard]] constexpr integer_cast_result<stl::size_t> const& timeout_result() const noexcept {
+            return _timeout;
+        }
+
+        [[nodiscard]] constexpr integer_cast_result<stl::size_t> const& max_result() const noexcept {
+            return _max;
+        }
     };
+
+    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_keep_alive const& header) noexcept {
+        return render_keep_alive(out, max_length, header.timeout_result(), header.max_result());
+    }
 
 } // namespace webpp::http
 

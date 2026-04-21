@@ -5,6 +5,7 @@
 #include "../webpp/http/headers/allow.hpp"
 #include "../webpp/http/headers/cache_control.hpp"
 #include "../webpp/http/headers/content_encoding.hpp"
+#include "../webpp/http/headers/content_length.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "../webpp/http/headers/keep_alive.hpp"
 #include "./common/test.hpp"
@@ -14,9 +15,41 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std::string_view_literals;
 
+namespace {
+
+    template <typename HeaderType>
+    std::string render_to_string(HeaderType const& header, std::size_t const max_length = 256) {
+        std::string output(max_length, '\0');
+        auto const   size = render(output.data(), max_length, header);
+        output.resize(size);
+        return output;
+    }
+
+} // namespace
+
 TEST(Headers, ConceptTest) {
     EXPECT_TRUE(HeaderField<basic_accept_encoding<>>);
     EXPECT_TRUE(HeaderField<basic_content_type>);
+}
+
+TEST(Headers, ContentLengthRender) {
+    basic_content_length const header{"12345"};
+    EXPECT_EQ(render_to_string(header), "12345");
+
+    std::array<char, 3> truncated{};
+    EXPECT_EQ(render(truncated.data(), truncated.size(), header), 3U);
+    auto const truncated_view = std::string_view{truncated.data(), truncated.size()};
+    EXPECT_EQ(truncated_view, "123");
+}
+
+TEST(Headers, ContentTypeRender) {
+    basic_content_type const header{"text/html; charset=utf-8"};
+    EXPECT_EQ(render_to_string(header), "text/html; charset=utf-8");
+}
+
+TEST(Headers, KeepAliveRender) {
+    basic_keep_alive const header{"timeout=5, max=1000"};
+    EXPECT_EQ(render_to_string(header), "timeout=5, max=1000");
 }
 
 TEST(Headers, AcceptEncoding) {

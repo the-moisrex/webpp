@@ -28,6 +28,31 @@ namespace webpp::http {
         float            weight = 1.0F; // q-value (0.0 to 1.0)
     };
 
+    constexpr stl::size_t render_accept_media_range(
+      char*                     out,
+      stl::size_t               max_length,
+      accept_media_range const& range) noexcept {
+        auto* ptr = out;
+        auto append = [&](stl::string_view const value) constexpr {
+            auto const length = render_header_text(ptr, max_length, value);
+            ptr += length;
+            max_length -= length;
+        };
+
+        append(range.media_type);
+        if (!range.params.empty()) {
+            append("; ");
+            append(range.params);
+        } else if (range.weight != 1.0F) {
+            append("; q=");
+            auto const qvalue_length = render_qvalue(ptr, max_length, range.weight);
+            ptr += qvalue_length;
+            max_length -= qvalue_length;
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
+
     [[nodiscard]] constexpr bool is_wildcard(accept_media_range const range) noexcept {
         return range.media_type == "*/*";
     }
@@ -314,6 +339,30 @@ namespace webpp::http {
         storage_type _media_ranges{};
         count_type   _count = 0;
     };
+
+    template <stl::size_t MaxSupportedValues>
+    constexpr stl::size_t render(
+      char*                                      out,
+      stl::size_t                                max_length,
+      basic_accept<MaxSupportedValues> const& header) noexcept {
+        if (!header.is_valid()) {
+            return 0;
+        }
+
+        auto* ptr = out;
+        for (auto const& range : header.media_ranges()) {
+            if (ptr != out) {
+                auto const separator_length = render_header_text(ptr, max_length, ", ");
+                ptr += separator_length;
+                max_length -= separator_length;
+            }
+            auto const range_length = render_accept_media_range(ptr, max_length, range);
+            ptr += range_length;
+            max_length -= range_length;
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
 
 } // namespace webpp::http
 

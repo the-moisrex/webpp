@@ -10,6 +10,32 @@
 
 namespace webpp::http {
 
+    constexpr stl::size_t render_content_type(
+      char*                  out,
+      stl::size_t            max_length,
+      stl::string_view const media_type,
+      stl::string_view const boundary = {},
+      stl::string_view const charset  = {}) noexcept {
+        auto* ptr = out;
+        auto append = [&](stl::string_view const value) constexpr {
+            auto const length = render_header_text(ptr, max_length, value);
+            ptr += length;
+            max_length -= length;
+        };
+
+        append(media_type);
+        if (!boundary.empty()) {
+            append("; boundary=");
+            append(boundary);
+        }
+        if (!charset.empty()) {
+            append("; charset=");
+            append(charset);
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
+
     constexpr void assign_content_type_parameter(
       stl::string_view& boundary,
       stl::string_view& charset,
@@ -119,6 +145,14 @@ namespace webpp::http {
             return _charset;
         }
     };
+
+    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_content_type const& header) noexcept {
+        if (!header.is_valid()) {
+            return 0;
+        }
+
+        return render_content_type(out, max_length, header.media_type_string(), header.boundary(), header.charset());
+    }
 
 } // namespace webpp::http
 

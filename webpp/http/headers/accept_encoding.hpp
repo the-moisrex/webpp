@@ -18,6 +18,32 @@
 
 namespace webpp::http {
 
+    template <typename EncodingEnum>
+    constexpr stl::size_t render_accept_encoding_entry(
+      char*                  out,
+      stl::size_t            max_length,
+      EncodingEnum const     encoding,
+      float const            quality,
+      stl::string_view const name) noexcept {
+        auto* ptr = out;
+        auto append = [&](stl::string_view const value) constexpr {
+            auto const length = render_header_text(ptr, max_length, value);
+            ptr += length;
+            max_length -= length;
+        };
+
+        auto const encoding_name = name.empty() ? to_string(encoding) : name;
+        append(encoding_name);
+        if (quality != 1.0F) {
+            append("; q=");
+            auto const qvalue_length = render_qvalue(ptr, max_length, quality);
+            ptr += qvalue_length;
+            max_length -= qvalue_length;
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
+
 
     /**
      * Known encoding types for the Accept-Encoding header.
@@ -233,7 +259,8 @@ namespace webpp::http {
          * Constructor from the raw header value.
          */
         explicit constexpr basic_accept_encoding(stl::string_view const src) noexcept
-          : header_field_base<basic_accept_encoding>(src) {
+          : header_field_base<basic_accept_encoding>(src),
+            _value(src) {
             parse_accept_encoding<compression_algo, EncodingEnum, MaxSupported>(
               src,
               _allowed_encodings,
@@ -319,11 +346,41 @@ namespace webpp::http {
       private:
         using count_type = stl::make_unsigned_t<istl::integer_max_t<MaxSupported, stl::size_t>>;
 
+        stl::string_view _value;
         stl::array<compression_algo, MaxSupported> _allowed_encodings{};
 
         // count == 0 is considered invalid
         count_type _count = 0;
+
+      public:
+        [[nodiscard]] constexpr stl::string_view value_string() const noexcept {
+            return _value;
+        }
     };
+
+    template <typename EncodingEnum, std::size_t MaxSupported>
+    constexpr stl::size_t render(
+      char*                                                   out,
+      stl::size_t                                             max_length,
+      basic_accept_encoding<EncodingEnum, MaxSupported> const& header) noexcept {
+        if (!header.is_valid()) {
+            return 0;
+        }
+
+        auto* ptr = out;
+        for (auto const& algo : header.allowed_encodings()) {
+            if (ptr != out) {
+                auto const separator_length = render_header_text(ptr, max_length, ", ");
+                ptr += separator_length;
+                max_length -= separator_length;
+            }
+            auto const entry_length = render_accept_encoding_entry(ptr, max_length, algo.encoding, algo.quality, algo.name);
+            ptr += entry_length;
+            max_length -= entry_length;
+        }
+
+        return static_cast<stl::size_t>(ptr - out);
+    }
 
 
 } // namespace webpp::http

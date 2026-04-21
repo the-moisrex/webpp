@@ -10,6 +10,13 @@
 
 namespace webpp::http {
 
+    constexpr stl::size_t render_content_length(
+      char*                  out,
+      stl::size_t const      max_length,
+      stl::size_t const value) noexcept {
+        return render_decimal(out, max_length, value);
+    }
+
     constexpr void parse_content_length(stl::string_view const            value,
                                         integer_cast_result<stl::size_t>& result) noexcept {
         if (value.empty()) {
@@ -68,6 +75,13 @@ namespace webpp::http {
             return _length.value_or(0);
         }
     };
+
+    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_content_length const& header) noexcept {
+        if (!header.is_valid()) {
+            return 0;
+        }
+        return render_content_length(out, max_length, header.value());
+    }
 
 } // namespace webpp::http
 
