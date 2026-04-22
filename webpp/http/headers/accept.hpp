@@ -332,7 +332,7 @@ namespace webpp::http {
 
     template <stl::size_t MaxSupportedValues>
     static constexpr void
-    render(char* out, stl::size_t max_length, basic_accept<MaxSupportedValues> const& header) noexcept {
+    render(char*& out, stl::size_t max_length, basic_accept<MaxSupportedValues> const& header) noexcept {
         if (!header.is_valid()) [[unlikely]] {
             return;
         }

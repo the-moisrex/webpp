@@ -7,6 +7,7 @@
 #include "concepts.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <iterator>
 #include <ranges>
 
@@ -153,11 +154,13 @@ namespace webpp::istl {
 
     template <Appendable T, stl::size_t N>
     static constexpr stl::size_t iter_append(T& out, char const (&src)[N]) noexcept(NothrowAppendable<T>) {
-        auto const end = stl::next(src, N);
+        // Ignore the null terminator if present
+        auto const len = (N > 0 && src[N - 1] == '\0') ? N - 1 : N;
+        auto const end = stl::next(src, static_cast<stl::ptrdiff_t>(len));
         for (auto* ptr = src; ptr != end; ++ptr) {
             iter_append(out, *ptr);
         }
-        return N;
+        return len;
     }
 
     template <Appendable T, typename CharT>
