@@ -10,7 +10,6 @@ TEST(Casts, ToInt) {
     EXPECT_EQ(to_uint("10"), 10U);
     EXPECT_EQ(to_int("+10"), 10);
     EXPECT_EQ(to_int("-10"), -10);
-    EXPECT_EQ(to_uint32("-10"), std::numeric_limits<uint32_t>::max() - 10 + 1);
     EXPECT_EQ((to<int>("-10")), -10);
     EXPECT_EQ((to<unsigned long long>("+1025153153")), 1'025'153'153U);
 
@@ -40,4 +39,16 @@ TEST(Casts, ToInt) {
     if (auto const value = to<std::uint32_t>("invalid"); !value) {
         EXPECT_EQ(value.error(), integer_casting_errors::invalid_character);
     }
+}
+
+TEST(Casts, ToIntOverflow) {
+    using enum integer_casting_errors;
+
+    EXPECT_EQ(to_uint32("-10"), negative_unsigned);
+    EXPECT_EQ(to_uint8("+258"), overflow);
+    EXPECT_EQ(to_uint8("+256"), overflow);
+    EXPECT_EQ(to_uint8("252"), overflow);
+    EXPECT_EQ(to_uint8("251"), overflow);
+    EXPECT_EQ(to_uint8("250"), 250);
+    EXPECT_EQ(to_uint8("-50"), negative_unsigned);
 }

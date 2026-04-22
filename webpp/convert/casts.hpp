@@ -6,7 +6,9 @@
 
 #include <cassert>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp {
@@ -16,8 +18,10 @@ namespace webpp {
 
         invalid_character = 1, // includes an invalid character
         invalid_base      = 2, // not a valid character in the specified base
+        overflow          = 3, // integer overflow detected
+        negative_unsigned = 4, // negative value found
 
-        error_count = 3,       // not an error, represents the number of errors in this enum
+        error_count = 5,       // not an error, represents the number of errors in this enum
     };
 
     [[nodiscard]] static constexpr stl::string_view to_string(integer_casting_errors const err) noexcept {
@@ -26,6 +30,8 @@ namespace webpp {
             case no_error: return {"No Error."};
             case invalid_character: return {"Invalid character found"};
             case invalid_base: return {"The specified string contains characters that are not in the valid base"};
+            case overflow: return {"Integer overflow: value exceeds type limits"};
+            case negative_unsigned: return {"Trying to parse a negative value to an unsigned integer type."};
             default: return {"Unknown error"};
         }
         return {}; // to get rid of warnings; it's 2023 for God’s sake!
@@ -33,13 +39,16 @@ namespace webpp {
 
     /**
      * Casting result for safety reasons mostly.
-     * This is pretty much `std::expected<T, integer_casting_errors>`
+     * This is pretty much `stl::expected<T, integer_casting_errors>`
+     *
+     * todo: for signed integers, make negative values the errors
+     * todo: for (u)int8 and probably (u)int16, don't use the values technique, we have storage to spare
      */
-    template <std::integral T>
+    template <stl::integral T>
     struct [[nodiscard]] integer_cast_result {
-        // todo: for std::uint8_t and friends, return the error as well
+        // todo: for stl::uint8_t and friends, return the error as well
         static constexpr T error_start =
-          (std::numeric_limits<T>::max() - stl::to_underlying(integer_casting_errors::error_count));
+          (stl::numeric_limits<T>::max() - stl::to_underlying(integer_casting_errors::error_count));
 
       private:
         T result;
@@ -73,8 +82,8 @@ namespace webpp {
         [[nodiscard]] constexpr T value_safe() const noexcept(false) {
             if (!has_value()) [[unlikely]] {
                 auto const err = to_string(error());
-                throw std::invalid_argument{
-                  std::string{err.data(), err.size()}
+                throw stl::invalid_argument{
+                  stl::string{err.data(), err.size()}
                 };
             }
             return result;
@@ -90,15 +99,17 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            return result < error_start;
+            return result <= error_start;
+        }
+
+        [[nodiscard]] constexpr bool operator==(integer_casting_errors const err) const noexcept {
+            return error() == err;
         }
     };
 
     /**
      * In this algorithm we're using begin, end, ... because in some string types (like utf-8), the chars
      * are not exactly stored the way we want them to be for that.
-     *
-     * todo: check overflows as well
      */
     template <typename T, T base = 10, typename CharT>
     static constexpr integer_cast_result<T> to(stl::basic_string_view<CharT> const str) noexcept {
@@ -112,10 +123,15 @@ namespace webpp {
             return ret;
         }
 
-        auto pos = str.begin();
+        auto        pos         = str.begin();
+        bool const  is_negative = (*pos == '-');
+        constexpr T max_number =
+          stl::numeric_limits<T>::max() - stl::to_underlying(integer_casting_errors::error_count);
+
         if (*pos == '-' || *pos == '+') {
             ++pos; // first character can be - or +
         }
+
         for (; pos != str.end(); ++pos) {
             auto cur_ch = *pos;
             if constexpr (base <= 10) {
@@ -135,10 +151,30 @@ namespace webpp {
                     return invalid_base;
                 }
             }
+
+            // Check for integer overflow
+            if (ret > (max_number - static_cast<T>(cur_ch)) / base) [[unlikely]] {
+                // Handle the edge case where the minimum negative value has an absolute value 1 higher than the max
+                if constexpr (stl::is_signed_v<T>) {
+                    if (is_negative && ret == max_number / base && static_cast<T>(cur_ch) == (max_number % base) + 1) {
+                        return stl::numeric_limits<T>::min();
+                    }
+                }
+                return overflow;
+            }
+
             ret *= base;
             ret += static_cast<T>(cur_ch);
         }
-        ret *= static_cast<T>(str.front() == '-' ? -1 : 1);
+
+        // We check for this here at the end to make sure if there is a bad character, the bad character error is being
+        // returned and not negative unsigned error.
+        if constexpr (stl::is_unsigned_v<T>) {
+            if (is_negative) [[unlikely]] {
+                return negative_unsigned;
+            }
+        }
+        ret *= static_cast<T>(is_negative ? -1 : 1);
         return ret;
     }
 
@@ -148,15 +184,15 @@ namespace webpp {
     }
 
     // NOLINTNEXTLINE(*-macro-usage)
-#define WEBPP_TO_FUNCTION(name, type)                                                       \
-    template <type base = 10, typename CharT>                                               \
-    static constexpr auto to_##name(stl::basic_string_view<CharT> const str) noexcept {     \
-        return to<type, base>(str);                                                         \
-    }                                                                                       \
-                                                                                            \
-    template <type base = 10, typename CharT>                                               \
-    static constexpr auto try_to_##name(stl::basic_string_view<CharT> const str) noexcept { \
-        return to<type, base>(str);                                                         \
+#define WEBPP_TO_FUNCTION(name, type)                                                   \
+    template <type base = 10, typename CharT>                                           \
+    static constexpr auto to_##name(stl::basic_string_view<CharT> const str) noexcept { \
+        return to<type, base>(str);                                                     \
+    }                                                                                   \
+                                                                                        \
+    template <type base = 10>                                                           \
+    static constexpr auto to_##name(stl::string_view const str) noexcept {              \
+        return to<type, base, char>(str);                                               \
     }
 
     WEBPP_TO_FUNCTION(int, int)
