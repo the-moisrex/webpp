@@ -9,6 +9,7 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../protocol/http_limits.hpp"
 #include "./header_concepts.hpp"
+#include "./parsers.hpp"
 
 #include <array>
 #include <cstdint>

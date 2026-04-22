@@ -10,6 +10,7 @@
 #include "../codec/tokens.hpp"
 #include "../verbs.hpp"
 #include "./header_concepts.hpp"
+#include "./parsers.hpp"
 
 #include <climits>
 #include <cstdint>

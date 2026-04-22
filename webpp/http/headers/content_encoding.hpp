@@ -12,6 +12,7 @@
 #include "../codec/common.hpp"
 #include "../protocol/http_limits.hpp"
 #include "./header_concepts.hpp"
+#include "./parsers.hpp"
 
 #include <array>
 #include <limits>
@@ -20,11 +21,11 @@
 namespace webpp::http {
 
     constexpr stl::size_t render_content_encoding(
-      char*                                  out,
-      stl::size_t                            max_length,
+      char*                                   out,
+      stl::size_t                             max_length,
       stl::span<stl::string_view const> const encodings) noexcept {
-        auto* ptr = out;
-        auto append = [&](stl::string_view const value) constexpr {
+        auto* ptr    = out;
+        auto  append = [&](stl::string_view const value) constexpr {
             auto const length = render_header_text(ptr, max_length, value);
             stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
             max_length -= length;
@@ -124,10 +125,8 @@ namespace webpp::http {
     };
 
     template <stl::size_t MaxSupported>
-    constexpr stl::size_t render(
-      char*                                        out,
-      stl::size_t const                            max_length,
-      basic_content_encoding<MaxSupported> const& header) noexcept {
+    constexpr stl::size_t
+    render(char* out, stl::size_t const max_length, basic_content_encoding<MaxSupported> const& header) noexcept {
         if (!header.is_valid()) {
             return 0;
         }

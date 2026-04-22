@@ -11,6 +11,7 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
 #include "./header_concepts.hpp"
+#include "./parsers.hpp"
 
 #include <array>
 #include <limits>

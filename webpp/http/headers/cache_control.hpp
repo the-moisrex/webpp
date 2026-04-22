@@ -10,13 +10,12 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
 #include "./header_concepts.hpp"
+#include "./parsers.hpp"
 
 namespace webpp::http {
 
-    constexpr stl::size_t render_cache_control_directive(
-      char*                  out,
-      stl::size_t const      max_length,
-      stl::string_view const directive) noexcept {
+    constexpr stl::size_t
+    render_cache_control_directive(char* out, stl::size_t const max_length, stl::string_view const directive) noexcept {
         return render_header_text(out, max_length, directive);
     }
 
@@ -26,7 +25,7 @@ namespace webpp::http {
       stl::size_t            max_length,
       stl::string_view const directive,
       IntegerType const      value) noexcept {
-        auto* ptr = out;
+        auto*      ptr              = out;
         auto const directive_length = render_header_text(ptr, max_length, directive);
         stl::advance(ptr, static_cast<stl::ptrdiff_t>(directive_length));
         max_length -= directive_length;
@@ -42,9 +41,9 @@ namespace webpp::http {
 
     template <typename Renderer>
     constexpr void append_cache_control_directive(
-      char*&       ptr,
-      char const*  out,
-      stl::size_t& max_length,
+      char*&          ptr,
+      char const*     out,
+      stl::size_t&    max_length,
       Renderer const& renderer) noexcept {
         if (ptr != out) {
             auto const separator_length = render_header_text(ptr, max_length, ", ");
