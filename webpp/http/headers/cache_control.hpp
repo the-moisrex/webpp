@@ -14,46 +14,8 @@
 
 namespace webpp::http {
 
-    constexpr stl::size_t
-    render_cache_control_directive(char* out, stl::size_t const max_length, stl::string_view const directive) noexcept {
-        return render_header_text(out, max_length, directive);
-    }
-
-    template <stl::integral IntegerType>
-    constexpr stl::size_t render_cache_control_directive(
-      char*                  out,
-      stl::size_t            max_length,
-      stl::string_view const directive,
-      IntegerType const      value) noexcept {
-        auto*      ptr              = out;
-        auto const directive_length = render_header_text(ptr, max_length, directive);
-        stl::advance(ptr, static_cast<stl::ptrdiff_t>(directive_length));
-        max_length -= directive_length;
-        stl::advance(ptr, static_cast<stl::ptrdiff_t>(render_decimal(ptr, max_length, value)));
-        return static_cast<stl::size_t>(ptr - out);
-    }
-
     // Forward declaration
     struct basic_cache_control;
-
-    // Free function for parsing
-    constexpr void parse_cache_control(stl::string_view str, basic_cache_control& ctrl) noexcept;
-
-    template <typename Renderer>
-    constexpr void append_cache_control_directive(
-      char*&          ptr,
-      char const*     out,
-      stl::size_t&    max_length,
-      Renderer const& renderer) noexcept {
-        if (ptr != out) {
-            auto const separator_length = render_header_text(ptr, max_length, ", ");
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
-            max_length -= separator_length;
-        }
-        auto const directive_length = renderer(ptr, max_length);
-        stl::advance(ptr, static_cast<stl::ptrdiff_t>(directive_length));
-        max_length -= directive_length;
-    }
 
     /**
      * @brief Cache-Control Header Field
@@ -224,79 +186,71 @@ namespace webpp::http {
         }
     }
 
-    constexpr stl::size_t render(char* out, stl::size_t max_length, basic_cache_control const& header) noexcept {
+    constexpr void render(char*& out, stl::size_t max_length, basic_cache_control const& header) noexcept {
         if (!header.is_valid()) {
-            return 0;
+            return;
         }
 
-        auto* ptr = out;
+        auto* const beg        = out;
+        auto const  append_sep = [&]() {
+            if (out != beg) {
+                max_length -= istl::iter_append(out, ',', ' ');
+            }
+        };
 
         if (header.no_cache()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "no-cache");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "no-cache");
         }
         if (header.no_store()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "no-store");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "no-store");
         }
         if (header.no_transform()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "no-transform");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "no-transform");
         }
         if (header.must_revalidate()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "must-revalidate");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "must-revalidate");
         }
         if (header.proxy_revalidate()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "proxy-revalidate");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "proxy-revalidate");
         }
         if (header.is_public()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "public");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "public");
         }
         if (header.is_private()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "private");
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "private");
         }
         if (header.immutable()) {
-            append_cache_control_directive(ptr, out, max_length, [](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "immutable");
-            });
-        }
-        if (header.has_max_age()) {
-            append_cache_control_directive(ptr, out, max_length, [&header](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "max-age=", header.max_age());
-            });
-        }
-        if (header.has_s_maxage()) {
-            append_cache_control_directive(ptr, out, max_length, [&header](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "s-maxage=", header.s_maxage());
-            });
-        }
-        if (header.has_stale_while_revalidate()) {
-            append_cache_control_directive(ptr, out, max_length, [&header](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(
-                  cur,
-                  len,
-                  "stale-while-revalidate=",
-                  header.stale_while_revalidate());
-            });
-        }
-        if (header.has_stale_if_error()) {
-            append_cache_control_directive(ptr, out, max_length, [&header](char* cur, stl::size_t len) constexpr {
-                return render_cache_control_directive(cur, len, "stale-if-error=", header.stale_if_error());
-            });
+            append_sep();
+            max_length -= istl::iter_append(out, "immutable");
         }
 
-        return static_cast<stl::size_t>(ptr - out);
+        if (header.has_max_age()) {
+            append_sep();
+            max_length -= istl::iter_append(out, "max-age=");
+            max_length -= render_decimal(out, max_length, header.max_age());
+        }
+        if (header.has_s_maxage()) {
+            append_sep();
+            max_length -= istl::iter_append(out, "s-maxage=");
+            max_length -= render_decimal(out, max_length, header.s_maxage());
+        }
+        if (header.has_stale_while_revalidate()) {
+            append_sep();
+            max_length -= istl::iter_append(out, "stale-while-revalidate=");
+            max_length -= render_decimal(out, max_length, header.stale_while_revalidate());
+        }
+        if (header.has_stale_if_error()) {
+            append_sep();
+            max_length -= istl::iter_append(out, "stale-if-error=");
+            max_length -= render_decimal(out, max_length, header.stale_if_error());
+        }
     }
 
 

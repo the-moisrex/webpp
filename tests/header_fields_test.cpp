@@ -20,7 +20,10 @@ namespace {
     template <typename HeaderType>
     static std::string render_to_string(HeaderType const& header, std::size_t const max_length = 256) {
         std::string output(max_length, '\0');
-        auto const   size = render(output.data(), max_length, header);
+        auto*       ptr = output.data();
+        auto* const beg = ptr;
+        render(ptr, max_length, header);
+        auto const size = static_cast<stl::size_t>(ptr - beg);
         output.resize(size);
         return output;
     }
@@ -37,9 +40,10 @@ TEST(Headers, ContentLengthRender) {
     EXPECT_EQ(render_to_string(header), "12345");
 
     std::array<char, 3> truncated{};
-    EXPECT_EQ(render(truncated.data(), truncated.size(), header), 3U);
-    auto const truncated_view = std::string_view{truncated.data(), truncated.size()};
-    EXPECT_EQ(truncated_view, "123");
+    auto*               ptr = truncated.data();
+    render(ptr, truncated.size(), header);
+    auto const truncated_view = std::string_view{truncated.data(), ptr};
+    EXPECT_TRUE(truncated_view.empty());
 }
 
 TEST(Headers, ContentTypeRender) {
@@ -289,7 +293,7 @@ TEST_F(ContentTypeTest, IsMultipartNegative) {
 
 TEST_F(ContentTypeTest, LongBoundaryValue) {
     std::string long_boundary(1000, 'x');
-    auto const content_type = parse("multipart/form-data; boundary=" + long_boundary);
+    auto const  content_type = parse("multipart/form-data; boundary=" + long_boundary);
     EXPECT_EQ(content_type.boundary().size(), 1000);
 }
 
@@ -309,7 +313,7 @@ TEST_F(ContentTypeTest, ManyParameters) {
 
 TEST_F(ContentTypeTest, CompileTimeEvaluation) {
     constexpr basic_content_type content_type{"text/html; charset=utf-8"};
-    constexpr auto               media_type = content_type.media_type_string();
+    constexpr auto               media_type    = content_type.media_type_string();
     constexpr auto               charset_value = content_type.charset();
 
     EXPECT_EQ(media_type, "text/html");

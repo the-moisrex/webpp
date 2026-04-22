@@ -10,23 +10,13 @@
 
 namespace webpp::http {
 
-    constexpr stl::size_t
-    render_content_length(char* out, stl::size_t const max_length, stl::size_t const value) noexcept {
-        return render_decimal(out, max_length, value);
-    }
-
-    constexpr void parse_content_length(stl::string_view const            value,
-                                        integer_cast_result<stl::size_t>& result) noexcept {
-        if (value.empty()) {
+    constexpr void parse_content_length(stl::string_view value, integer_cast_result<stl::size_t>& result) noexcept {
+        if (value.empty()) [[unlikely]] {
             result = integer_casting_errors::invalid_character;
             return;
         }
-
-        // The HTTP spec allows optional whitespace padding (OWS) around header values
-        auto const trimmed_view = ascii::trim_copy(value);
-
-        // to_size_t returns an integer_cast_result which holds either the valid size or the error state
-        result = to_size_t(trimmed_view);
+        ascii::trim(value);
+        result = to_size_t(value);
     }
 
     /**
@@ -74,11 +64,8 @@ namespace webpp::http {
         }
     };
 
-    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_content_length const& header) noexcept {
-        if (!header.is_valid()) {
-            return 0;
-        }
-        return render_content_length(out, max_length, header.value());
+    static constexpr void render(char*& out, stl::size_t max_length, basic_content_length const& header) noexcept {
+        render_decimal(out, max_length, header.value());
     }
 
 } // namespace webpp::http

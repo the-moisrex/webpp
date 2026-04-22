@@ -5,6 +5,7 @@
 
 #include "../../http/codec/common.hpp"
 #include "../../std/cstdint.hpp"
+#include "../../std/iterator.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../protocol/http_limits.hpp"
@@ -15,32 +16,6 @@
 #include <cstdint>
 
 namespace webpp::http {
-
-    template <typename EncodingEnum>
-    constexpr stl::size_t render_accept_encoding_entry(
-      char*                  out,
-      stl::size_t            max_length,
-      EncodingEnum const     encoding,
-      float const            quality,
-      stl::string_view const name) noexcept {
-        auto* ptr    = out;
-        auto  append = [&](stl::string_view const value) constexpr {
-            auto const length = render_header_text(ptr, max_length, value);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
-            max_length -= length;
-        };
-
-        auto const encoding_name = name.empty() ? to_string(encoding) : name;
-        append(encoding_name);
-        if (quality != 1.0F) {
-            append("; q=");
-            auto const qvalue_length = render_qvalue(ptr, max_length, quality);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(qvalue_length));
-            max_length -= qvalue_length;
-        }
-
-        return static_cast<stl::size_t>(ptr - out);
-    }
 
 
     /**
@@ -361,28 +336,44 @@ namespace webpp::http {
         }
     };
 
+    namespace details {
+
+        template <typename EncodingEnum>
+        static constexpr void render_accept_encoding_entry(
+          char*&                 out,
+          stl::size_t&           max_length,
+          EncodingEnum const     encoding,
+          float const            quality,
+          stl::string_view const name) noexcept {
+            using istl::iter_append;
+
+            auto const encoding_name  = name.empty() ? to_string(encoding) : name;
+            max_length               -= iter_append(out, encoding_name);
+            if (quality == 1.0F) {
+                return;
+            }
+            max_length -= iter_append(out, ';', ' ', 'q', '=');
+            max_length -= render_qvalue(out, max_length, quality);
+        }
+    } // namespace details
+
     template <typename EncodingEnum, std::size_t MaxSupported>
-    constexpr stl::size_t render(char*                                                    out,
+    static constexpr void render(char*&                                                   out,
                                  stl::size_t                                              max_length,
                                  basic_accept_encoding<EncodingEnum, MaxSupported> const& header) noexcept {
         if (!header.is_valid()) {
-            return 0;
+            return;
         }
 
-        auto* ptr = out;
+        // todo: handle max_length properly
+
+        auto* const beg = out;
         for (auto const& algo : header.allowed_encodings()) {
-            if (ptr != out) {
-                auto const separator_length = render_header_text(ptr, max_length, ", ");
-                stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
-                max_length -= separator_length;
+            if (out != beg) {
+                max_length -= istl::iter_append(out, ',', ' ');
             }
-            auto const entry_length =
-              render_accept_encoding_entry(ptr, max_length, algo.encoding, algo.quality, algo.name);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(entry_length));
-            max_length -= entry_length;
+            details::render_accept_encoding_entry(out, max_length, algo.encoding, algo.quality, algo.name);
         }
-
-        return static_cast<stl::size_t>(ptr - out);
     }
 
 

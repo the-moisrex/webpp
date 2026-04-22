@@ -20,27 +20,6 @@
 
 namespace webpp::http {
 
-    constexpr stl::size_t render_content_encoding(
-      char*                                   out,
-      stl::size_t                             max_length,
-      stl::span<stl::string_view const> const encodings) noexcept {
-        auto* ptr    = out;
-        auto  append = [&](stl::string_view const value) constexpr {
-            auto const length = render_header_text(ptr, max_length, value);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
-            max_length -= length;
-        };
-
-        for (auto const encoding : encodings) {
-            if (ptr != out) {
-                append(", ");
-            }
-            append(encoding);
-        }
-
-        return static_cast<stl::size_t>(ptr - out);
-    }
-
     template <stl::size_t MaxSupported = max_supported_content_encoding_values, stl::integral C = stl::size_t>
     constexpr void parse_content_encoding(
       stl::string_view const                      value,
@@ -125,13 +104,13 @@ namespace webpp::http {
     };
 
     template <stl::size_t MaxSupported>
-    constexpr stl::size_t
-    render(char* out, stl::size_t const max_length, basic_content_encoding<MaxSupported> const& header) noexcept {
+    static constexpr void
+    render(char*& out, stl::size_t const max_length, basic_content_encoding<MaxSupported> const& header) noexcept {
         if (!header.is_valid()) {
-            return 0;
+            return;
         }
 
-        return render_content_encoding(out, max_length, header.encodings());
+        render_comma_separated(out, max_length, header.encodings());
     }
 
 } // namespace webpp::http

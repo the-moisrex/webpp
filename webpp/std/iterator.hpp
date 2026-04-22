@@ -47,23 +47,15 @@ namespace webpp::istl {
     /// This is equivalent to std::ranges::input_range
     template <typename T>
     concept Iterable = requires(T iter) {
-        {
-            stl::begin(iter)
-        } -> stl::input_iterator;
-        {
-            stl::end(iter)
-        } -> stl::input_iterator;
+        { stl::begin(iter) } -> stl::input_iterator;
+        { stl::end(iter) } -> stl::input_iterator;
     };
 
     /// This is equivalent to std::ranges::input_range but also requires that the begin and end functions are noexcept
     template <typename T>
     concept NothrowIterable = requires(T iter) {
-        {
-            stl::begin(iter)
-        } noexcept -> stl::input_iterator;
-        {
-            stl::end(iter)
-        } noexcept -> stl::input_iterator;
+        { stl::begin(iter) } noexcept -> stl::input_iterator;
+        { stl::end(iter) } noexcept -> stl::input_iterator;
     };
 
     template <typename T>
@@ -144,7 +136,7 @@ namespace webpp::istl {
      * @param value the values that you want to append
      */
     template <Appendable T, typename... ValueType>
-    static constexpr void iter_append(T& out, ValueType... value) noexcept(NothrowAppendable<T>) {
+    static constexpr stl::size_t iter_append(T& out, ValueType... value) noexcept(NothrowAppendable<T>) {
         using char_type = appendable_value_type_t<T>;
         if constexpr (AppendableString<T, char_type>) {
             if constexpr (stl::is_pointer_v<T>) {
@@ -156,6 +148,25 @@ namespace webpp::istl {
             // pointer or an iterator
             ((*(out++) = static_cast<char_type>(value)), ...);
         }
+        return sizeof...(value);
+    }
+
+    template <Appendable T, stl::size_t N>
+    static constexpr stl::size_t iter_append(T& out, char const (&src)[N]) noexcept(NothrowAppendable<T>) {
+        auto const end = stl::next(src, N);
+        for (auto* ptr = src; ptr != end; ++ptr) {
+            iter_append(out, *ptr);
+        }
+        return N;
+    }
+
+    template <Appendable T, typename CharT>
+    static constexpr stl::size_t iter_append(T& out, stl::basic_string_view<CharT> const src)
+      noexcept(NothrowAppendable<T>) {
+        for (auto const cur : src) {
+            iter_append(out, cur);
+        }
+        return src.size();
     }
 
     template <Appendable T, typename Iter>

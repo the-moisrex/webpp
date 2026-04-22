@@ -28,30 +28,6 @@ namespace webpp::http {
         float            weight = 1.0F; // q-value (0.0 to 1.0)
     };
 
-    constexpr stl::size_t
-    render_accept_media_range(char* out, stl::size_t max_length, accept_media_range const& range) noexcept {
-        auto* ptr    = out;
-        auto  append = [&](stl::string_view const value) constexpr {
-            auto const length = render_header_text(ptr, max_length, value);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
-            max_length -= length;
-        };
-
-        append(range.media_type);
-        if (!range.params.empty()) {
-            append("; ");
-            append(range.params);
-        }
-        if (range.weight != 1.0F && range.params.find("q=") == stl::string_view::npos) {
-            append("; q=");
-            auto const qvalue_length = render_qvalue(ptr, max_length, range.weight);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(qvalue_length));
-            max_length -= qvalue_length;
-        }
-
-        return static_cast<stl::size_t>(ptr - out);
-    }
-
     [[nodiscard]] constexpr bool is_wildcard(accept_media_range const range) noexcept {
         return range.media_type == "*/*";
     }
@@ -335,26 +311,39 @@ namespace webpp::http {
         count_type   _count = 0;
     };
 
-    template <stl::size_t MaxSupportedValues>
-    constexpr stl::size_t
-    render(char* out, stl::size_t max_length, basic_accept<MaxSupportedValues> const& header) noexcept {
-        if (!header.is_valid()) {
-            return 0;
-        }
+    namespace details {
 
-        auto* ptr = out;
-        for (auto const& range : header.media_ranges()) {
-            if (ptr != out) {
-                auto const separator_length = render_header_text(ptr, max_length, ", ");
-                stl::advance(ptr, static_cast<stl::ptrdiff_t>(separator_length));
-                max_length -= separator_length;
+        static constexpr void
+        render_accept_media_range(char*& out, stl::size_t& max_length, accept_media_range const& range) noexcept {
+            using istl::iter_append;
+
+            max_length -= iter_append(out, range.media_type);
+            if (!range.params.empty()) {
+                max_length -= iter_append(out, ';', ' ');
+                max_length -= iter_append(out, range.params);
             }
-            auto const range_length = render_accept_media_range(ptr, max_length, range);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(range_length));
-            max_length -= range_length;
+            if (range.weight != 1.0F && range.params.find("q=") == stl::string_view::npos) {
+                max_length -= iter_append(out, ';', ' ', 'q', '=');
+                max_length -= render_qvalue(out, max_length, range.weight);
+            }
         }
 
-        return static_cast<stl::size_t>(ptr - out);
+    } // namespace details
+
+    template <stl::size_t MaxSupportedValues>
+    static constexpr void
+    render(char* out, stl::size_t max_length, basic_accept<MaxSupportedValues> const& header) noexcept {
+        if (!header.is_valid()) [[unlikely]] {
+            return;
+        }
+
+        auto* const beg = out;
+        for (auto const& range : header.media_ranges()) {
+            if (beg != out) {
+                max_length -= istl::iter_append(out, ',', ' ');
+            }
+            details::render_accept_media_range(out, max_length, range);
+        }
     }
 
 } // namespace webpp::http

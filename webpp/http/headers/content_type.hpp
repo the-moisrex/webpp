@@ -1,6 +1,7 @@
 #ifndef WEBPP_CONTENT_TYPE_HPP
 #define WEBPP_CONTENT_TYPE_HPP
 
+#include "../../std/iterator.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/iequals.hpp"
 #include "../../strings/string_tokenizer.hpp"
@@ -10,49 +11,56 @@
 
 namespace webpp::http {
 
-    constexpr stl::size_t render_content_type(
-      char*                  out,
-      stl::size_t            max_length,
+    [[nodiscard]] static constexpr stl::size_t length_of_content_type(
       stl::string_view const media_type,
-      stl::string_view const boundary = {},
-      stl::string_view const charset  = {}) noexcept {
-        auto* ptr    = out;
-        auto  append = [&](stl::string_view const value) constexpr {
-            auto const length = render_header_text(ptr, max_length, value);
-            stl::advance(ptr, static_cast<stl::ptrdiff_t>(length));
-            max_length -= length;
-        };
-
-        append(media_type);
-        if (!boundary.empty()) {
-            append("; boundary=");
-            append(boundary);
-        }
-        if (!charset.empty()) {
-            append("; charset=");
-            append(charset);
-        }
-
-        return static_cast<stl::size_t>(ptr - out);
+      stl::string_view const boundary,
+      stl::string_view const charset) noexcept {
+        stl::size_t length  = media_type.size() + boundary.size() + charset.size();
+        length             += boundary.empty() ? 0 : stl::string_view{"; boundary="}.size();
+        length             += charset.empty() ? 0 : stl::string_view{"; charset="}.size();
+        return length;
     }
 
-    constexpr void assign_content_type_parameter(
-      stl::string_view& boundary,
-      stl::string_view& charset,
-      stl::string_view  key,
-      stl::string_view  value) noexcept {
-        if (ascii::iequals_sl(key, "boundary")) {
-            boundary = value;
-        } else if (ascii::iequals_sl(key, "charset")) {
-            charset = value;
-        }
-    }
+    namespace details {
+        static constexpr void render_content_type(
+          char*&                 out,
+          stl::string_view const media_type,
+          stl::string_view const boundary = {},
+          stl::string_view const charset  = {}) noexcept {
+            using istl::iter_append;
 
-    constexpr void parse_content_type(
+
+            iter_append(out, media_type);
+            if (!boundary.empty()) {
+                iter_append(out, "; boundary=");
+                iter_append(out, boundary);
+            }
+            if (!charset.empty()) {
+                iter_append(out, "; charset=");
+                iter_append(out, charset);
+            }
+        }
+
+        static constexpr void assign_content_type_parameter(
+          stl::string_view& boundary,
+          stl::string_view& charset,
+          stl::string_view  key,
+          stl::string_view  value) noexcept {
+            if (ascii::iequals_sl(key, "boundary")) {
+                boundary = value;
+            } else if (ascii::iequals_sl(key, "charset")) {
+                charset = value;
+            }
+        }
+    } // namespace details
+
+    static constexpr void parse_content_type(
       stl::string_view const value,
       stl::string_view&      media_type,
       stl::string_view&      boundary,
       stl::string_view&      charset) noexcept {
+        using details::assign_content_type_parameter;
+
         media_type = {};
         boundary   = {};
         charset    = {};
@@ -63,23 +71,23 @@ namespace webpp::http {
         string_tokenizer<stl::string_view> tok{value};
 
         // 1. Extract the main media type (everything before the first ';')
-        if (tok.next(webpp::charset<char, 1>{';'}, media_type)) {
+        if (tok.next(webpp::charset{';'}, media_type)) {
             media_type = ascii::trim_copy(media_type);
 
             // 2. Process parameters (e.g., charset=utf-8; boundary="---123")
             while (!tok.at_end()) {
                 // Skip over semicolons and spaces between parameters
-                tok.skip(webpp::charset<char, 2>{';', ' '});
+                tok.skip(webpp::charset{';', ' '});
                 if (tok.at_end()) {
                     break;
                 }
 
                 stl::string_view key;
                 // Read parameter name up to '=' or ';'
-                if (tok.next(webpp::charset<char, 2>{'=', ';'}, key)) {
+                if (tok.next(webpp::charset{'=', ';'}, key)) {
                     key = ascii::trim_copy(key);
 
-                    if (tok.expect(webpp::charset<char, 1>{'='})) {
+                    if (tok.expect(webpp::charset{'='})) {
                         tok.skip(webpp::charset{' ', '\t'}); // skip optional spaces after '='
                         if (tok.at_end()) {
                             break;
@@ -92,7 +100,7 @@ namespace webpp::http {
                             auto const parsed_quote = parse_quoted(value_start, value.end(), '"');
                             assign_content_type_parameter(boundary, charset, key, parsed_quote.value);
                             tok.reset(parsed_quote.next, value.end());
-                        } else if (tok.next(webpp::charset<char, 1>{';'}, value_part)) {
+                        } else if (tok.next(webpp::charset{';'}, value_part)) {
                             assign_content_type_parameter(boundary, charset, key, ascii::trim_copy(value_part));
                         } else {
                             value_part = stl::string_view{value_start, value.end()};
@@ -144,14 +152,22 @@ namespace webpp::http {
         [[nodiscard]] constexpr stl::string_view charset() const noexcept {
             return _charset;
         }
-    };
 
-    constexpr stl::size_t render(char* out, stl::size_t const max_length, basic_content_type const& header) noexcept {
-        if (!header.is_valid()) {
-            return 0;
+        [[nodiscard]] constexpr stl::size_t length() const noexcept {
+            return length_of_content_type(_media_type, _boundary, _charset);
         }
 
-        return render_content_type(out, max_length, header.media_type_string(), header.boundary(), header.charset());
+        [[nodiscard]] constexpr stl::size_t max_length() const noexcept {
+            return length();
+        }
+    };
+
+    constexpr void render(char*& out, stl::size_t const max_length, basic_content_type const& header) noexcept {
+        if (!header.is_valid() || header.max_length() > max_length) [[unlikely]] {
+            return;
+        }
+
+        details::render_content_type(out, header.media_type_string(), header.boundary(), header.charset());
     }
 
 } // namespace webpp::http
