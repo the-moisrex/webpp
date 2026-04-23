@@ -100,6 +100,7 @@ namespace webpp::istl {
     concept AppendableString =
       !stl::is_const_v<stl::remove_pointer_t<stl::remove_cvref_t<T>>> && !stl::is_const_v<ValueType> &&
       requires(stl::remove_pointer_t<stl::remove_cvref_t<T>>& out, ValueType val) {
+          // we don't use `+=` directly here because it may include other iterators and other things as well
           out.operator+=(val);
           requires !requires {
               *out; // you can't dereference a string, but you can deref an iterator.
@@ -176,10 +177,7 @@ namespace webpp::istl {
     static constexpr void iter_append_range(T& out, Iter beg, Iter const end) noexcept(NothrowAppendable<T>) {
         using char_type = stl::iter_value_t<Iter>;
         if constexpr (stl::output_iterator<T, char_type>) {
-            auto const len = end - beg;
-            assert(len >= 0);
-            stl::copy(beg, end, out);
-            stl::advance(out, len);
+            out = stl::copy(beg, end, out);
         } else {
             for (; beg != end; ++beg) {
                 iter_append(out, *beg);
@@ -193,8 +191,11 @@ namespace webpp::istl {
     template <AppendableStorage IterOrStorage>
     [[nodiscard]] constexpr decltype(auto) appendable_iter_of(IterOrStorage& obj) noexcept {
         if constexpr (Appendable<IterOrStorage>) {
-            // It's either an iterator itself, or it's appendable itself
-            return stl::addressof(obj);
+            if constexpr (AppendableString<IterOrStorage> && !stl::is_pointer_v<IterOrStorage>) {
+                return stl::addressof(obj);
+            } else {
+                return obj;
+            }
         } else {
             // It's iterable
             return stl::begin(obj);
@@ -235,7 +236,7 @@ namespace webpp::istl {
         requires(stl::random_access_iterator<LenOrIter> || stl::integral<LenOrIter>)
     [[nodiscard]] constexpr auto appendable_next(T& obj, LenOrIter const len) noexcept {
         if constexpr (AppendableString<T>) {
-            return stl::next(obj.begin(), len);
+            return stl::next(appendable_begin(obj), len);
         } else if constexpr (stl::random_access_iterator<LenOrIter>) {
             return len; // it's an iterator
         } else {
