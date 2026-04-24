@@ -58,12 +58,11 @@ namespace webpp {
      * Cache Strategy: The type of cache; e.g. LRU, Expired LRU, ...
      * Storage Gate:   How the cache data is stored (and where); e.g. Memory, File, ...
      */
-    template <Traits TraitsType, CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
-    struct cache : public CS::template strategy<TraitsType, KeyT, ValT, SG> {
-        using traits_type         = TraitsType;
+    template <CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
+    struct cache : public CS::template strategy<KeyT, ValT, SG> {
         using key_type            = KeyT;
         using value_type          = ValT;
-        using strategy_type       = typename CS::template strategy<TraitsType, KeyT, ValT, SG>;
+        using strategy_type       = typename CS::template strategy<KeyT, ValT, SG>;
         using optional_value_type = stl::optional<value_type>;
         using cache_result_type   = cache_result<cache>;
 
@@ -71,7 +70,7 @@ namespace webpp {
         static constexpr bool supports_direct_pointer = details::CacheStrategyPointerSupport<strategy_type>;
 
         // ctor
-        using CS::template strategy<TraitsType, KeyT, ValT, SG>::strategy;
+        using CS::template strategy<KeyT, ValT, SG>::strategy;
 
         template <CacheKey K>
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key

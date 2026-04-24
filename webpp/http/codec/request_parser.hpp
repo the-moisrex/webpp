@@ -20,11 +20,10 @@ namespace webpp::http {
      *
      * @tparam TraitsType
      */
-    template <Traits TraitsType>
+    template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct http_request_parser {
-        using traits_type      = TraitsType;
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using string_view_type = stl::basic_string_view<CharT>;
         using status_code_type = uint_fast16_t;
 
         // todo: add utilities so the user is able to change these limits
@@ -100,8 +99,7 @@ namespace webpp::http {
         // parse the header fully
         void parse_header(string_view_type str) noexcept {
             auto finish_line = str.end();
-            for (auto it = str.begin(); it != finish_line; ++it) {
-            }
+            for (auto it = str.begin(); it != finish_line; ++it) {}
         }
     };
 

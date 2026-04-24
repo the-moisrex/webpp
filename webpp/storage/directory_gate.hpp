@@ -132,19 +132,16 @@ namespace webpp {
             }
         };
 
-        template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
-        struct storage_gate : enable_traits<TraitsType> {
-            using traits_type      = TraitsType;
-            using etraits_type     = enable_traits<TraitsType>;
+        template <CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
+        struct storage_gate {
             using path_type        = stl::filesystem::path;
             using key_type         = KeyT;
             using value_type       = ValueT;
             using options_type     = OptsT;
-            using string_type      = traits::string<traits_type>;
+            using string_type      = stl::basic_string<char_type, stl::char_traits<char_type>, allocator_type>;
             using iterator         = file_iterator<storage_gate>;
             using const_iterator   = iterator;
-            using char_type        = typename string_type::value_type;
-            using string_view_type = traits::string_view<traits_type>;
+            using string_view_type = stl::basic_string_view<char_type>;
             using bundle_type      = cache_tuple<key_type, value_type, options_type>;
 
           private:

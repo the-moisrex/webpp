@@ -17,6 +17,8 @@ namespace webpp::http {
     concept Context = requires(stl::remove_cvref_t<T> ctx) {
         requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
         requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
+        requires HTTPResponse<typename stl::remove_cvref_t<T>::char_type>;
+        requires HTTPResponse<typename stl::remove_cvref_t<T>::allocator_type>;
         { ctx.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
     };
 

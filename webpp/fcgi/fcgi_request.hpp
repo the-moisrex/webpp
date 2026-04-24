@@ -8,13 +8,13 @@
 namespace webpp::fastcgi {
 
 
-    template <Traits TraitsType, typename CommonHTTPRequest>
+    template <typename CommonHTTPRequest, istl::CharType CharT, Allocator AllocT>
     struct fcgi_request : public CommonHTTPRequest {
         using common_http_request = CommonHTTPRequest;
-        using traits_type         = TraitsType;
-        using string_type         = traits::string<traits_type>;
+        using string_type         = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
 
-        istl::map<traits_type, string_type, string_type> data;
+        // todo: use allocator
+        stl::map<string_type, string_type> data;
     };
 
 

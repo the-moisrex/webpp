@@ -14,12 +14,11 @@ namespace webpp {
      * The file gate doesn't support a parent because why should it?
      */
     struct file_gate {
-        template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
+        template <CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
         struct storage_gate {
             using key_type     = KeyT;
             using value_type   = ValueT;
             using options_type = OptsT;
-            using traits_type  = TraitsType;
             using path_type    = stl::filesystem::path;
             using bundle_type  = cache_tuple<key_type, value_type, options_type>;
 

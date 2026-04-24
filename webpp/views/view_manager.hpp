@@ -13,7 +13,6 @@
 #include "../traits/traits.hpp"
 #include "data_view_caster.hpp"
 #include "file_view.hpp"
-#include "json_view.hpp"
 #include "mustache_view.hpp"
 
 #include <filesystem>
@@ -40,7 +39,6 @@ namespace webpp::views {
         using ifstream_type    = stl::basic_ifstream<char_type>;
 
         using mustache_view_type = mustache_view<traits_type>;
-        using json_view_type     = json_view<traits_type>;
         using allocator_type     = typename string_type::allocator_type;
         using file_view_type     = file_view<char_type, allocator_type>;
 

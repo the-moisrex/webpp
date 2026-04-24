@@ -8,7 +8,6 @@ set(ALL_SOURCES_SHORT
         views/data_view_caster.hpp
         views/file_view.hpp
         views/html.hpp
-        views/json_view.hpp
         views/mustache_view.hpp
         views/view_concepts.hpp
         views/view_manager.hpp
@@ -92,12 +91,10 @@ set(ALL_SOURCES_SHORT
         std/functional.hpp
         std/iterator.hpp
         std/iterator_impl.hpp
-        std/map.hpp
         std/memory.hpp
         std/memory_resource.hpp
         std/optional.hpp
         std/ranges.hpp
-        std/set.hpp
         std/span.hpp
         std/std.hpp
         std/string.hpp
@@ -109,8 +106,6 @@ set(ALL_SOURCES_SHORT
         std/tuple.hpp
         std/type_traits.hpp
         std/types.hpp
-        std/unordered_map.hpp
-        std/unordered_set.hpp
         std/utility.hpp
 
         io/buffer.hpp

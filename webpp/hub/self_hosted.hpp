@@ -13,12 +13,10 @@
 
 namespace webpp {
 
-    template <Application App, Traits TraitsType = default_traits>
-    struct host : public common_http_protocol<TraitsType, App> {
-        using traits_type = TraitsType;
-
+    template <Application App>
+    struct host : public common_http_protocol<App> {
       private:
-        using super = common_http_protocol<traits_type, App>;
+        using super = common_http_protocol<App>;
 
       public:
         using app_wrapper_type = typename super::app_wrapper_type;
@@ -41,9 +39,6 @@ namespace webpp {
             this->server();
         }
     };
-
-    //    template <Traits TraitsType, Application App>
-    //    using server =
 
 } // namespace webpp
 

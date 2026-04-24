@@ -1,7 +1,6 @@
 #ifndef WEBPP_STORAGE_MEMORY_GATE_HPP
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
-#include "../std/map.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "null_gate.hpp"
@@ -13,11 +12,10 @@ namespace webpp {
     struct memory_gate {
         using parent_gate_type = ParentGate;
 
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT>
+        template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, Allocator AllocT>
         struct storage_gate {
-            using traits_type      = TraitsType;
             using value_pack_type  = stl::pair<OptsT, ValueT>;
-            using map_type         = istl::map<traits_type, KeyT, value_pack_type>;
+            using map_type         = istl::map<KeyT, value_pack_type>;
             using mapped_type      = typename map_type::mapped_type;
             using key_type         = typename map_type::key_type;
             using value_type       = typename map_type::mapped_type::second_type;
@@ -28,12 +26,7 @@ namespace webpp {
             using options_ptr_type = stl::add_pointer_t<options_type>;
             using bundle_ptr_type  = cache_tuple<key_ptr_type, value_ptr_type, options_ptr_type>;
 
-            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-            template <EnabledTraits ET>
-                requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
-            explicit constexpr storage_gate(ET&& et) : map{get_alloc_for<map_type>(et)} {}
-
-            // NOLINTEND(bugprone-forwarding-reference-overload)
+            explicit constexpr storage_gate(allocator_type inp_alloc = alloc) : map{inp_alloc} {}
 
             template <typename K>
             constexpr stl::optional<bundle_type> get(K&& key) {

@@ -25,8 +25,8 @@ namespace webpp::http {
             return req.method() == method_str;
         }
 
-        template <Traits TraitsType>
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType> const& ctx) const noexcept {
+        template <typename CharT, typename AllocT>
+        [[nodiscard]] constexpr bool operator()(basic_context<CharT, AllocT> const& ctx) const noexcept {
             return operator()(ctx.request);
         }
 

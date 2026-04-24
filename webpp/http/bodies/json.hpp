@@ -8,7 +8,7 @@
 #include "../http_concepts.hpp"
 #include "../response_body.hpp"
 #include "../routes/router_concepts.hpp"
-#include "string.hpp"
+#include "./string.hpp"
 
 namespace webpp::http {
 
@@ -18,12 +18,13 @@ namespace webpp::http {
         /**
          * todo: remove this when you don't need to see the implementation
          */
-        template <Traits TraitsType, Context ContextType>
+        template <Context ContextType>
         struct json_context_extension : ContextType {
             using context_type       = ContextType;
-            using traits_type        = TraitsType;
             using json_response_type = typename context_type::response_type;
-            using json_document_type = json::document<traits_type>;
+            using char_type          = typename context_type::char_type;
+            using allocator_type     = typename context_type::allocator_type;
+            using json_document_type = json::document<char_type, allocator_type>;
 
             using context_type::context_type; // inherit the constructors
 

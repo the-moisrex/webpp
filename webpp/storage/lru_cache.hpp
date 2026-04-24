@@ -11,14 +11,12 @@ namespace webpp {
      * LRU Cache (Least Recently Used Cache)
      */
     struct lru_strategy {
-        template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
+        template <CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
-            using traits_type = TraitsType;
-            using key_type    = KeyT;
-            using value_type  = ValueT;
-            using storage_gate_type =
-              typename SG::template storage_gate<traits_type, key_type, value_type, stl::size_t>;
-            using bundle_type = typename storage_gate_type::bundle_type;
+            using key_type          = KeyT;
+            using value_type        = ValueT;
+            using storage_gate_type = typename SG::template storage_gate<key_type, value_type, stl::size_t>;
+            using bundle_type       = typename storage_gate_type::bundle_type;
 
 
             static constexpr stl::size_t default_max_size = 1024U;
@@ -101,11 +99,10 @@ namespace webpp {
         };
     };
 
-    template <Traits      TraitsType   = default_traits,
-              CacheKey    KeyT         = traits::string<TraitsType>,
-              CacheValue  ValT         = traits::string<TraitsType>,
+    template <CacheKey    KeyT         = stl::basic_string<char, stl::char_traits<char>, default_allocator_t<char>>,
+              CacheValue  ValT         = stl::basic_string<char, stl::char_traits<char>, default_allocator_t<char>>,
               StorageGate StorageGateT = memory_gate<directory_gate>>
-    using lru_cache = cache<TraitsType, KeyT, ValT, lru_strategy, StorageGateT>;
+    using lru_cache = cache<KeyT, ValT, lru_strategy, StorageGateT>;
 
 } // namespace webpp
 
