@@ -4,9 +4,9 @@
 #ifndef WEBPP_DYNAMIC_SCOPING_HPP
 #define WEBPP_DYNAMIC_SCOPING_HPP
 
-#include <atomic>
 #include <cassert>
 #include <concepts>
+#include <utility>
 
 namespace webpp {
 

@@ -46,7 +46,7 @@ namespace webpp::http {
      *
      * http_lexer class needs will be a traits-free class.
      */
-    template <istl::StringView StrViewT, Allocator AllocT>
+    template <istl::StringView StrViewT, Allocator AllocT = default_allocator_t<typename StrViewT::value_type>>
     struct http_lexer {
         using string_view_type = StrViewT;
         using char_type        = istl::char_type_of_t<string_view_type>;

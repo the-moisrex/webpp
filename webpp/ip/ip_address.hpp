@@ -43,6 +43,10 @@ namespace webpp {
         // invalid ipv4
         constexpr ip_address() noexcept : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
 
+        explicit constexpr ip_address(stl::string_view const ip_addr) noexcept {
+            parse(ip_addr);
+        }
+
         template <typename CharT>
         explicit constexpr ip_address(stl::basic_string_view<CharT> const ip_addr) noexcept {
             parse(ip_addr);
@@ -149,6 +153,10 @@ namespace webpp {
             return is_v6() && as_v6() == ip_addr;
         }
 
+        [[nodiscard]] constexpr bool operator==(stl::string_view const ip_str) const noexcept {
+            return this->template operator== <char>(ip_str);
+        }
+
         template <typename CharT>
         [[nodiscard]] constexpr bool operator==(stl::basic_string_view<CharT> const ip_str) const noexcept {
             // this implementation works too, but it's not "noexcept":
@@ -196,6 +204,10 @@ namespace webpp {
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(
           stl::basic_string_view<CharT> const ip_addr) const noexcept {
             return *this <=> ip_address{ip_addr};
+        }
+
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(stl::string_view const ip_addr) const noexcept {
+            return this->operator<=> <char>(ip_addr);
         }
 
         // Run the specified function/lambda with the right pick
