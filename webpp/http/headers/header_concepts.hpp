@@ -8,7 +8,6 @@
 
 #include <concepts>
 #include <cstdint>
-#include <limits>
 
 namespace webpp::http {
 
@@ -94,6 +93,14 @@ namespace webpp::http {
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return self().is_valid();
+        }
+
+        [[nodiscard]] consteval stl::string_view name() const noexcept {
+            return header_name(*this);
+        }
+
+        [[nodiscard]] consteval stl::string_view id() const noexcept {
+            return header_id(*this);
         }
     };
 

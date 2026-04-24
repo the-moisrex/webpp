@@ -31,6 +31,7 @@ namespace webpp::http {
         return static_cast<stl::size_t>(length);
     }
 
+    // Refactored render_qvalue
     static constexpr stl::size_t render_qvalue(char*& out, stl::size_t const max_length, float value) noexcept {
         // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
         value = stl::clamp(0.0F, value, 1.0F);
@@ -38,20 +39,23 @@ namespace webpp::http {
         constexpr auto base10 = 10;
         constexpr auto scaler = 1000.F;
 
-        auto const scaled = static_cast<int>(value * scaler);
-        char const d1     = static_cast<char>('0' + (scaled / 100));
-        char const d2     = static_cast<char>('0' + ((scaled / 10) % base10));
-        char const d3     = static_cast<char>('0' + (scaled % base10));
+        auto const length = [](stl::string_view const str) consteval {
+            return str.size();
+        };
 
-        stl::size_t desired_len;
-        if (d3 != '0') {
-            desired_len = 5; // 0.xyz
-        } else if (d2 != '0') {
-            desired_len = 4; // 0.xy
-        } else if (d1 != '0') {
-            desired_len = 3; // 0.x
-        } else {
-            desired_len = 1; // 0
+        auto const scaled = static_cast<int>(value * scaler);
+        char const digit1 = static_cast<char>('0' + (scaled / 100));
+        char const digit2 = static_cast<char>('0' + ((scaled / 10) % base10));
+        char const digit3 = static_cast<char>('0' + (scaled % base10));
+
+
+        stl::size_t desired_len = length("0");
+        if (digit3 != '0') {
+            desired_len = length("0.000");
+        } else if (digit2 != '0') {
+            desired_len = length("0.00");
+        } else if (digit1 != '0') {
+            desired_len = length("0.0");
         }
 
         auto const len_to_write = stl::min(max_length, desired_len);
@@ -59,11 +63,11 @@ namespace webpp::http {
         // Write the characters directly to the output buffer without an intermediate copy.
         // This structure efficiently handles truncation if max_length is small.
         switch (len_to_write) {
-            case 5: out[4] = d3; [[fallthrough]];
-            case 4: out[3] = d2; [[fallthrough]];
-            case 3: out[2] = d1; [[fallthrough]];
-            case 2: out[1] = '.'; [[fallthrough]];
-            case 1: out[0] = '0';
+            case length("0.000"): out[4] = digit3; [[fallthrough]];
+            case length("0.00"): out[3] = digit2; [[fallthrough]];
+            case length("0.0"): out[2] = digit1; [[fallthrough]];
+            case length("0."): out[1] = '.'; [[fallthrough]];
+            case length("0"): out[0] = '0';
             default: break;
         }
         stl::advance(out, len_to_write);

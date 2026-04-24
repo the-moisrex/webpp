@@ -122,8 +122,8 @@ namespace webpp::http {
         /**
          * Call the routes with the specified request and context.
          */
-        template <Traits TraitsType>
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
+        template <istl::CharType CharT, Allocator AllocT>
+        constexpr void operator()(basic_context<CharT, AllocT>& ctx) {
             routes(ctx);
         }
 
