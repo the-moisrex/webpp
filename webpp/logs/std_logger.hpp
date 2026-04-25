@@ -32,8 +32,8 @@ namespace webpp {
         using logger_ref  = logger_type;  // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*; // there's a syntax difference, so we can't copy
 
-        static constexpr bool is_debug              = IsDebug;
-        static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
+        static constexpr bool             is_debug              = IsDebug;
+        static constexpr stl::string_view default_category_name = is_debug ? "Debug" : "Default";
 
         static constexpr auto logging_type_to_string(details::logging_type const ltype) noexcept {
             switch (ltype) {
@@ -70,15 +70,36 @@ namespace webpp {
 
 #define WEBPP_LOGGER_SHORTCUT(logging_name)                                                                           \
                                                                                                                       \
+    template <istl::StringViewifiable StrT>                                                                           \
+        requires(!istl::StringView<stl::remove_cvref_t<StrT>>)                                                        \
+    void logging_name(StrT&& details) const noexcept {                                                                \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<StrT>(details)));                                   \
+    }                                                                                                                 \
+                                                                                                                      \
     template <typename CharT>                                                                                         \
     void logging_name(stl::basic_string_view<CharT> const details) const noexcept {                                   \
         log(details::logging_type::logging_name, default_category_name, details);                                     \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+        requires(!istl::StringView<stl::remove_cvref_t<CatStrT>> || !istl::StringView<stl::remove_cvref_t<DetStrT>>)  \
+    void logging_name(CatStrT&& category, DetStrT&& details) const noexcept {                                         \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<CatStrT>(category)),                                \
+                     istl::view_of<stl::string_view>(stl::forward<DetStrT>(details)));                                \
     }                                                                                                                 \
                                                                                                                       \
     template <typename CharT>                                                                                         \
     void logging_name(stl::basic_string_view<CharT> const category, stl::basic_string_view<CharT> const details)      \
       const noexcept {                                                                                                \
         log(details::logging_type::logging_name, category, details);                                                  \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+        requires(!istl::StringView<stl::remove_cvref_t<CatStrT>> || !istl::StringView<stl::remove_cvref_t<DetStrT>>)  \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {              \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<CatStrT>(category)),                                \
+                     istl::view_of<stl::string_view>(stl::forward<DetStrT>(details)),                                 \
+                     ec);                                                                                             \
     }                                                                                                                 \
                                                                                                                       \
     template <typename CharT>                                                                                         \
@@ -95,6 +116,14 @@ namespace webpp {
         }                                                                                                             \
     }                                                                                                                 \
                                                                                                                       \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                       \
+        requires(!istl::StringView<stl::remove_cvref_t<CatStrT>> || !istl::StringView<stl::remove_cvref_t<DetStrT>>)  \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {               \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<CatStrT>(category)),                                \
+                     istl::view_of<stl::string_view>(stl::forward<DetStrT>(details)),                                 \
+                     ex);                                                                                             \
+    }                                                                                                                 \
+                                                                                                                      \
     template <typename CharT>                                                                                         \
     void logging_name(stl::basic_string_view<CharT> const category,                                                   \
                       stl::basic_string_view<CharT> const details,                                                    \
@@ -109,9 +138,21 @@ namespace webpp {
         }                                                                                                             \
     }                                                                                                                 \
                                                                                                                       \
+    template <istl::StringViewifiable StrT>                                                                           \
+        requires(!istl::StringView<stl::remove_cvref_t<StrT>>)                                                        \
+    void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                                     \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<StrT>(details)), ec);                               \
+    }                                                                                                                 \
+                                                                                                                      \
     template <typename CharT>                                                                                         \
     void logging_name(stl::basic_string_view<CharT> const details, stl::error_code const& ec) const noexcept {        \
         logging_name(default_category_name, details, ec);                                                             \
+    }                                                                                                                 \
+                                                                                                                      \
+    template <istl::StringViewifiable StrT>                                                                           \
+        requires(!istl::StringView<stl::remove_cvref_t<StrT>>)                                                        \
+    void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                                      \
+        logging_name(istl::view_of<stl::string_view>(stl::forward<StrT>(details)), ex);                               \
     }                                                                                                                 \
                                                                                                                       \
     template <typename CharT>                                                                                         \
