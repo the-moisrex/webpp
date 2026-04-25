@@ -7,6 +7,7 @@
 #include "../std/string_view.hpp"
 #include "../strings/size.hpp"
 
+#include <array>
 #include <climits>
 #include <cstdint>
 

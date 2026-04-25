@@ -6,7 +6,6 @@
 #if __has_include(<spdlog/spdlog.h>)
 #    define WEBPP_SPDLOG 1
 #    include "../std/string_view.hpp"
-#    include "../traits/traits.hpp"
 
 #    include <memory>
 #    include <spdlog/spdlog.h>
@@ -31,10 +30,11 @@ namespace webpp {
       public:
         spdlog_logger() : spdlogger{spdlog::default_logger()} {}
 
-        spdlog_logger(stl::shared_ptr<spdlog::logger> logger) noexcept : spdlogger{stl::move(logger)} {}
+        explicit spdlog_logger(stl::shared_ptr<spdlog::logger> inp_logger) noexcept
+          : spdlogger{stl::move(inp_logger)} {}
 
         template <istl::StringViewifiable LogT>
-        spdlog_logger(LogT&& logger_name)
+        explicit spdlog_logger(LogT&& logger_name)
           : spdlogger{spdlog::get(istl::view(stl::forward<LogT>(logger_name)).c_str())} {}
 
         spdlog_logger(spdlog_logger const&)                = default;

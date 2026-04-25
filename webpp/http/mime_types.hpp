@@ -17,13 +17,26 @@ namespace webpp::http {
 
         static constexpr stl::array<mapping, 20> mappings{
           {
-           {"css", "text/css"},        {"gif", "image/gif"},         {"htm", "text/html"},
-           {"html", "text/html"},      {"jpg", "image/jpeg"},        {"png", "image/png"},
-           {"js", "text/javascript"},  {"wasm", "application/wasm"}, {"oga", "audio/ogg"},
-           {"ogg", "audio/ogg"},       {"ogv", "video/ogg"},         {"swf", "application/x-shockwave-flash"},
-           {"mp4", "video/mp4"},       {"mv4", "video/mp4"},         {"mp3", "audio/mp3"},
-           {"svg", "image/svg+xml"},   {"webm", "video/webm"},       {"xml", "application/xml"},
-           {"pdf", "application/pdf"}, {"txt", "text/plain"},
+           {.extension = "css", .mime_type = "text/css"},
+           {.extension = "gif", .mime_type = "image/gif"},
+           {.extension = "htm", .mime_type = "text/html"},
+           {.extension = "html", .mime_type = "text/html"},
+           {.extension = "jpg", .mime_type = "image/jpeg"},
+           {.extension = "png", .mime_type = "image/png"},
+           {.extension = "js", .mime_type = "text/javascript"},
+           {.extension = "wasm", .mime_type = "application/wasm"},
+           {.extension = "oga", .mime_type = "audio/ogg"},
+           {.extension = "ogg", .mime_type = "audio/ogg"},
+           {.extension = "ogv", .mime_type = "video/ogg"},
+           {.extension = "swf", .mime_type = "application/x-shockwave-flash"},
+           {.extension = "mp4", .mime_type = "video/mp4"},
+           {.extension = "mv4", .mime_type = "video/mp4"},
+           {.extension = "mp3", .mime_type = "audio/mp3"},
+           {.extension = "svg", .mime_type = "image/svg+xml"},
+           {.extension = "webm", .mime_type = "video/webm"},
+           {.extension = "xml", .mime_type = "application/xml"},
+           {.extension = "pdf", .mime_type = "application/pdf"},
+           {.extension = "txt", .mime_type = "text/plain"},
            }
         };
     } // namespace details

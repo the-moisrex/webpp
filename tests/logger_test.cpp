@@ -31,24 +31,24 @@ TEST(LoggerTests, STDLoggerTeat) {
 
     using ol = std_logger<output_getter>;
 
-    ol logger;
+    ol cur_logger;
 
-    logger.error("one");
-    logger.warning("one");
-    logger.info("wow", "one");
-    logger.error(if_debug, "debugging");
+    cur_logger.error("one");
+    cur_logger.warning("one");
+    cur_logger.info("wow", "one");
+    cur_logger.error(if_debug, "debugging");
 
     std::fclose(output);
 }
 
 TEST(LoggerTest, DynamicLogger) {
-    dynamic_logger logger;
+    dynamic_logger cur_logger;
 
-    logger.template emplace_logger<stdout_logger>();
-    logger.disable();
+    cur_logger.template emplace_logger<stdout_logger>();
+    cur_logger.disable();
 
-    logger.error("one");
-    logger.warning("one");
-    logger.info("wow", "one");
-    logger.error(if_debug, "debugging");
+    cur_logger.error("one");
+    cur_logger.warning("one");
+    cur_logger.info("wow", "one");
+    cur_logger.error(if_debug, "debugging");
 }

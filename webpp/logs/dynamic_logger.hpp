@@ -3,6 +3,7 @@
 #ifndef WEBPP_DYNAMIC_LOGGER_HPP
 #define WEBPP_DYNAMIC_LOGGER_HPP
 
+#include "../memory/allocators.hpp"
 #include "../std/memory.hpp"
 #include "../std/string_view.hpp"
 #include "log_concepts.hpp"
@@ -16,11 +17,11 @@ namespace webpp {
     } // namespace details
 
     template <typename>
-    struct basic_dynamic_logger;
+    struct [[nodiscard]] basic_dynamic_logger;
 
     /// dynamic interface
     template <>
-    struct basic_dynamic_logger<details::dynamic_logger_interface> {
+    struct [[nodiscard]] basic_dynamic_logger<details::dynamic_logger_interface> {
         using string_view_type = stl::string_view;
 
         basic_dynamic_logger() noexcept                                       = default;
@@ -48,7 +49,8 @@ namespace webpp {
 
     /// implementation of each logger
     template <Logger LoggerType>
-    struct basic_dynamic_logger<LoggerType> final : basic_dynamic_logger<details::dynamic_logger_interface> {
+    struct [[nodiscard]] basic_dynamic_logger<LoggerType> final
+      : basic_dynamic_logger<details::dynamic_logger_interface> {
         using logger_type      = LoggerType;
         using logger_interface = basic_dynamic_logger<details::dynamic_logger_interface>;
         using string_view_type = typename logger_interface::string_view_type;
@@ -59,9 +61,9 @@ namespace webpp {
         basic_dynamic_logger& operator=(basic_dynamic_logger&&) noexcept = default;
         ~basic_dynamic_logger() override                                 = default;
 
-        explicit basic_dynamic_logger(logger_type&& logger) noexcept : actual_logger{stl::move(logger)} {}
+        explicit basic_dynamic_logger(logger_type&& inp_logger) noexcept : actual_logger{stl::move(inp_logger)} {}
 
-        explicit basic_dynamic_logger(logger_type const& logger) noexcept : actual_logger{logger} {}
+        explicit basic_dynamic_logger(logger_type const& inp_logger) noexcept : actual_logger{inp_logger} {}
 
         template <typename... Args>
             requires(stl::is_constructible_v<logger_type, Args...>)
@@ -105,7 +107,7 @@ namespace webpp {
      * references.
      */
     template <>
-    struct basic_dynamic_logger<void> final {
+    struct [[nodiscard]] basic_dynamic_logger<void> final {
         using logger_type = basic_dynamic_logger;
         using logger_ref  = basic_dynamic_logger;
         using logger_ptr  = basic_dynamic_logger*;
@@ -124,87 +126,89 @@ namespace webpp {
 
         /// construct the specified logger with the specified allocator and pass in the arguments
         template <Logger    LoggerType,
-                  Allocator AllocT = stl::allocator<basic_dynamic_logger<LoggerType>>,
+                  Allocator AllocT = default_allocator_t<basic_dynamic_logger<LoggerType>>,
                   typename... Args>
         explicit constexpr basic_dynamic_logger(
           [[maybe_unused]] stl::type_identity<LoggerType> inp_type,
-          AllocT const&                                   alloc = {},
+          AllocT const&                                   inp_alloc = alloc,
           Args&&... args)
             requires(stl::is_constructible_v<LoggerType, Args...>)
-          : m_logger_ptr{stl::allocate_shared<basic_dynamic_logger<LoggerType>>(alloc, stl::forward<Args>(args)...)} {}
+          : m_logger_ptr{
+              stl::allocate_shared<basic_dynamic_logger<LoggerType>>(inp_alloc, stl::forward<Args>(args)...)} {}
 
         /// default logger
-        template <Allocator AllocT = stl::allocator<basic_dynamic_logger<default_static_logger>>, typename... Args>
-        explicit(false) constexpr basic_dynamic_logger(AllocT const& alloc = {}, Args&&... args)
-          : m_logger_ptr{
-              stl::allocate_shared<basic_dynamic_logger<default_static_logger>>(alloc, stl::forward<Args>(args)...)} {}
+        template <Allocator AllocT = default_allocator_t<basic_dynamic_logger<default_static_logger>>, typename... Args>
+        explicit(false) constexpr basic_dynamic_logger(AllocT const& inp_alloc = alloc, Args&&... args)
+          : m_logger_ptr{stl::allocate_shared<basic_dynamic_logger<default_static_logger>>(
+              inp_alloc,
+              stl::forward<Args>(args)...)} {}
 
         /// change the logger, use the specified allocator
-        template <Logger LoggerType, typename Allocator = stl::allocator<basic_dynamic_logger<LoggerType>>>
-        void set_logger(LoggerType&& logger, Allocator const& alloc = {}) {
+        template <Logger LoggerType, typename Allocator = default_allocator_t<basic_dynamic_logger<LoggerType>>>
+        void set_logger(LoggerType&& inp_logger, Allocator const& inp_alloc = alloc) {
             using new_logger_type = basic_dynamic_logger<LoggerType>;
-            m_logger_ptr          = stl::allocate_shared<new_logger_type>(alloc, stl::forward<LoggerType>(logger));
+            m_logger_ptr = stl::allocate_shared<new_logger_type>(inp_alloc, stl::forward<LoggerType>(inp_logger));
         }
 
         /// construct a new logger with the specified arguments in-place using the specified allocator
         template <Logger LoggerType,
-                  typename Allocator = stl::allocator<basic_dynamic_logger<LoggerType>>,
+                  typename Allocator = default_allocator_t<basic_dynamic_logger<LoggerType>>,
                   typename... Args>
             requires(stl::is_constructible_v<LoggerType, Args...>)
-        void emplace_logger(Allocator const& alloc = {}, Args&&... args) {
+        void emplace_logger(Allocator const& inp_alloc = alloc, Args&&... args) {
             using new_logger_type = basic_dynamic_logger<LoggerType>;
-            m_logger_ptr          = stl::allocate_shared<new_logger_type>(alloc, stl::forward<Args>(args)...);
+            m_logger_ptr          = stl::allocate_shared<new_logger_type>(inp_alloc, stl::forward<Args>(args)...);
         }
 
         /// Disable the logging by setting the logger to use the void logger
-        template <typename Allocator = stl::allocator<basic_dynamic_logger<void_logger>>>
-        void disable(Allocator const& alloc = {}) {
-            emplace_logger<void_logger>(alloc);
+        template <typename Allocator = default_allocator_t<basic_dynamic_logger<void_logger>>>
+        void disable(Allocator const& inp_alloc = alloc) {
+            emplace_logger<void_logger>(inp_alloc);
         }
 
         // NOLINTNEXTLINE(*-macro-usage)
-#define WEBPP_DEFINE_METHOD(method_name)                                                                          \
-                                                                                                                  \
-    template <istl::StringViewifiable DetStrT>                                                                    \
-    void method_name(DetStrT&& details) const noexcept {                                                          \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));     \
-    }                                                                                                             \
-                                                                                                                  \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
-    void method_name(CatStrT&& category, DetStrT&& details) const noexcept {                                      \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));     \
-    }                                                                                                             \
-                                                                                                                  \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
-    void method_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ecode) const noexcept {        \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),      \
-                                  ecode);                                                                         \
-    }                                                                                                             \
-                                                                                                                  \
-    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                                   \
-    void method_name(CatStrT&& category, DetStrT&& details, stl::exception const& exp) const noexcept {           \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),     \
-                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),      \
-                                  exp);                                                                           \
-    }                                                                                                             \
-                                                                                                                  \
-    template <istl::StringViewifiable StrT>                                                                       \
-    void method_name(StrT&& details, stl::error_code const& ecode) const noexcept {                               \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), ecode); \
-    }                                                                                                             \
-                                                                                                                  \
-    template <istl::StringViewifiable StrT>                                                                       \
-    void method_name(StrT&& details, stl::exception const& exp) const noexcept {                                  \
-        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), exp);   \
-    }                                                                                                             \
-                                                                                                                  \
-    template <typename... OptsT>                                                                                  \
-    void method_name(if_debug_tag, OptsT&&... opts) const noexcept {                                              \
-        if constexpr (is_debug) {                                                                                 \
-            m_logger_ptr->method_name(stl::forward<OptsT>(opts)...);                                              \
-        }                                                                                                         \
+#define WEBPP_DEFINE_METHOD(method_name)                                                                   \
+                                                                                                           \
+    template <istl::StringViewifiable DetStrT>                                                             \
+    void method_name(DetStrT&& details) const noexcept {                                                   \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));        \
+    }                                                                                                      \
+                                                                                                           \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                            \
+    void method_name(CatStrT&& category, DetStrT&& details) const noexcept {                               \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),        \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)));        \
+    }                                                                                                      \
+                                                                                                           \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                            \
+    void method_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ecode) const noexcept { \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),        \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),         \
+                                  ecode);                                                                  \
+    }                                                                                                      \
+                                                                                                           \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                            \
+    void method_name(CatStrT&& category, DetStrT&& details, stl::exception const& exp) const noexcept {    \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<CatStrT>(category)),        \
+                                  istl::view_of<string_view_type>(stl::forward<DetStrT>(details)),         \
+                                  exp);                                                                    \
+    }                                                                                                      \
+                                                                                                           \
+    template <istl::StringViewifiable StrT>                                                                \
+    void method_name(StrT&& details, stl::error_code const& ecode) const noexcept {                        \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), ecode);    \
+    }                                                                                                      \
+                                                                                                           \
+    template <istl::StringViewifiable StrT>                                                                \
+    void method_name(StrT&& details, stl::exception const& exp) const noexcept {                           \
+        m_logger_ptr->method_name(istl::view_of<string_view_type>(stl::forward<StrT>(details)), exp);      \
+    }                                                                                                      \
+                                                                                                           \
+    template <typename... OptsT>                                                                           \
+    void method_name(if_debug_tag, OptsT&&... opts) const noexcept {                                       \
+        if constexpr (is_debug) {                                                                          \
+            m_logger_ptr->method_name(stl::forward<OptsT>(opts)...);                                       \
+        }                                                                                                  \
     }
 
 

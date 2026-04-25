@@ -41,7 +41,7 @@ namespace webpp {
         }
 
         // invalid ipv4
-        constexpr ip_address() noexcept : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
+        constexpr ip_address() noexcept : ip_address{invalid()} {}
 
         explicit constexpr ip_address(stl::string_view const ip_addr) noexcept {
             parse(ip_addr);
@@ -323,7 +323,7 @@ namespace webpp {
             });
         }
 
-        constexpr void to_string(istl::String auto& out) const {
+        constexpr decltype(auto) to_string(istl::String auto& out) const {
             return pick([&](auto&& ip_addr) constexpr {
                 return ip_addr.to_string(out);
             });
@@ -336,7 +336,7 @@ namespace webpp {
             });
         }
 
-        constexpr void status_to(istl::String auto& out) const {
+        constexpr decltype(auto) status_to(istl::String auto& out) const {
             return pick([&](auto&& ip_addr) constexpr {
                 return ip_addr.status_to(out);
             });

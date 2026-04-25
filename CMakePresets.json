@@ -24,6 +24,7 @@
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "WEBPP_DEV": "ON",
+                "CMAKE_COLOR_DIAGNOSTICS": "ON",
                 "CMAKE_CXX_STANDARD": "23"
             }
         },
@@ -47,6 +48,7 @@
             "description": "Development using GCC",
             "binaryDir": "${sourceDir}/build-dev-gcc",
             "cacheVariables": {
+                "CMAKE_COLOR_DIAGNOSTICS": "ON",
                 "WEBPP_DEV": "ON"
             }
         },
@@ -92,6 +94,7 @@
             "description": "Development using clang",
             "binaryDir": "${sourceDir}/build-dev-clang",
             "cacheVariables": {
+                "CMAKE_COLOR_DIAGNOSTICS": "ON",
                 "WEBPP_DEV": "ON"
             }
         },
