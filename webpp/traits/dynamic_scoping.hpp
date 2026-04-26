@@ -11,15 +11,15 @@
 namespace webpp {
 
     /**
-     * Dynamic Scopes are types that each instances of them will still point to the same global instance, and
-     * also the global instance can be changed locally.
-     * They're a glorified pointer that sit in the global scope.
-     * It means each instance of the type T is a pointer to itself, kinda.
+     * A binder provides the storage and swap mechanism for an ambient context pointer.
      *
-     * It's designed for the purpose of having the caller of user function X to set some things, and X to use those
-     * things without X needing to change its function signature.
+     * Dynamic Scopes (or Locally Bound Globals) act as implicit parameters. They allow
+     * a caller to temporarily override a global or thread-local instance of T, which
+     * nested functions can then access without modifying their signatures.
      *
-     * We used to call this "Locally Bound Globals (LBG)"
+     * Contracts:
+     * - Must provide a static `instance()` returning a reference to the active pointer.
+     * - Must provide an `exchange()` method to atomically or safely swap the pointer.
      */
     template <typename T>
     concept binder_instance = requires(T obj) {
@@ -31,12 +31,14 @@ namespace webpp {
         requires requires(typename T::pointer ptr) {
             { obj.operator->() } noexcept -> std::same_as<typename T::pointer>;
             { obj.ptr() } noexcept -> std::same_as<typename T::pointer>;
-            { obj.exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
+            { T::exchange(ptr) } noexcept -> std::same_as<typename T::pointer>;
         };
     };
 
     /**
-     * T should now use `binding self` instead of `this` pointer to access global bounded version.
+     * Defines a type that has explicitly opted into being dynamically scoped.
+     * Types satisfying this concept typically inherit from their binding (e.g., `global_binding<T>`),
+     * and should use `binding self; self->...` instead of `this->...` to access the currently bound instance.
      */
     template <typename T>
     concept dynamically_scoped = requires {
@@ -45,15 +47,18 @@ namespace webpp {
     };
 
     /**
-     * Global Binding: the guy responsible to hold on to the pointer of T for everyone.
-     * This will give you interesting ways to access the global T pointer if T inherited from it.
+     * Global Binding: Manages a single, non-thread-local active pointer for type T.
+     *
+     * Inheriting from this allows convenient access to the globally active instance:
      * @code
      *   global_binding<T>::instance(); // get the pointer
      *   global_binding<T> self;
-     *   // Access member functions and fields of global T using `self->function_or_field`
+     *   self->do_something();          // operates on the globally bound instance
      * @endcode
+     *
+     * Note: Use the `ID` template parameter to maintain multiple distinct global pointers for the same type.
      */
-    template <typename T>
+    template <typename T, auto ID = 0>
     struct [[nodiscard]] global_binding {
         using type          = T;
         using pointer       = T*;
@@ -76,16 +81,24 @@ namespace webpp {
         }
 
         [[nodiscard]] static pointer& instance() noexcept {
+            // Framework assumption: Even though only a pointer is allocated here,
+            // T is currently constrained to be nothrow default constructible.
             static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
             static pointer inst = nullptr;
             return inst;
         }
     };
 
+    // todo: we can have a `global_multi_binding` which would allow to have multiple instances for the same access point.
+
     /**
-     * Thread-Local version of the Global Binding
+     * Thread-Local Binding: Manages a per-thread active pointer for type T.
+     *
+     * This will be ensuring concurrent requests on different threads do not overwrite each other's context.
+     *
+     * Note: Accessing `self->` before a scope is bound will trigger an assertion.
      */
-    template <typename T>
+    template <typename T, auto ID = 0>
     struct [[nodiscard]] thread_binding {
         using type          = T;
         using pointer       = T*;
@@ -160,11 +173,10 @@ namespace webpp {
     // };
 
     /**
-     * Create a new Locally-Bound-Global scope.
+     * RAII guard to create a new Locally-Bound-Global scope.
      *
-     * This for example can help us have a "server-scope" to put global objects into, and also have a "request-scope"
-     * what we can put the same object into them, but when accessed during a request processing, it'll give you the
-     * request-scope version, and when it's accessed any other place, it'll give you the server-scoped one.
+     * Overrides the current binding for T with the provided instance, and restores
+     * the previous binding upon destruction. This forms a LIFO stack of contexts.
      *
      * @code
      *   {
@@ -174,13 +186,9 @@ namespace webpp {
      *   }
      * @endcode
      *
-     * It is designed so it can be used as a stack of some sort. When we enter a new scope, we do this:
-     *   1. Pop the current lbg object from the global instance
-     *   2. Save it so we can restore it in the destructor
-     *   3. Set the new one
-     *
-     * And when we go out of scope, we do this:
-     *   1. Set the old instance back into the global instance.
+     * @warning Because restoration happens in the destructor, instances of `dynamic_scope`
+     * MUST be strictly scoped on the stack. Interleaving lifetimes or passing these across
+     * asynchronous boundaries without careful LIFO guarantees will corrupt the binding state.
      */
     template <dynamically_scoped T>
     struct [[nodiscard]] dynamic_scope {
