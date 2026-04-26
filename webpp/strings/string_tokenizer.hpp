@@ -10,7 +10,7 @@
 
 namespace webpp {
 
-    enum struct string_tokenizer_options : stl::uint8_t {
+    enum struct [[nodiscard]] string_tokenizer_options : stl::uint8_t {
         // Specifies the delimiters should be returned as tokens
         return_delims = 1U << 0U,
 
@@ -88,7 +88,7 @@ namespace webpp {
      */
     template <typename StringViewType = stl::string_view,
               typename ConstIterType  = typename StringViewType::const_iterator>
-    class string_tokenizer {
+    class [[nodiscard]] string_tokenizer {
         // these are the options that are used internally
         enum hidden_options : stl::uint8_t {
             // Enabled = Expect anything until you find the delimiter
@@ -137,6 +137,7 @@ namespace webpp {
         constexpr bool expect(AllowedCharsT const& allowed_chars) noexcept {
             bool found   = false;
             _token_begin = _token_end;
+            _is_delim    = true;
             if (_token_end != _end && allowed_chars.contains(*_token_end)) {
                 found = true;
                 ++_token_end;
@@ -204,6 +205,7 @@ namespace webpp {
                 ++_token_end;
             }
             _token_begin = _token_end;
+            _is_delim    = true;
         }
 
         constexpr void skip(CharSet auto&& chars) noexcept {
@@ -211,6 +213,7 @@ namespace webpp {
                 ++_token_end;
             }
             _token_begin = _token_end;
+            _is_delim    = true;
         }
 
         /**
@@ -351,6 +354,7 @@ namespace webpp {
 
         constexpr void skip_token() noexcept {
             _token_begin = _token_end;
+            _is_delim    = true;
         }
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
@@ -464,12 +468,17 @@ namespace webpp {
                 } else if (inp_char == state->quote_char) {
                     state->in_quote = false;
                 }
-            } else {
-                if (delims.contains(inp_char)) {
-                    return !hit;
-                }
-                state->in_quote = quotes.contains(state->quote_char = inp_char);
+                return true;
             }
+            if (delims.contains(inp_char)) {
+                return !hit;
+            }
+            state->quote_char = inp_char;
+            if (quotes.contains(inp_char)) {
+                state->in_quote = true;
+                return true;
+            }
+
             return hit;
         }
 

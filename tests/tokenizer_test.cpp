@@ -2,6 +2,8 @@
 #include "../webpp/strings/string_tokenizer.hpp"
 #include "common/test.hpp"
 
+#include <map>
+
 using namespace webpp;
 
 TEST(StringTokenizerTest, Init) {
@@ -67,9 +69,9 @@ TEST(StringTokenizerTest, SimpleUsage) {
     string_view const str{"one two; foo=baz1; bar='baz2'"};
     string_tokenizer  tok{str};
 
-    string                        one, two;
-    map<string_view, string_view> vals;
-    errors                        err = errors::ok;
+    string                             one, two;
+    stl::map<string_view, string_view> vals;
+    errors                             err = errors::ok;
 
     tok.expect(ALPHA<>, one, err, errors::no_one);
     tok.skip_spaces();
@@ -92,7 +94,7 @@ TEST(StringTokenizerTest, SimpleUsage) {
     EXPECT_EQ(two, "two");
     ASSERT_EQ(vals.size(), 2);
     EXPECT_EQ(vals["foo"], "baz1");
-    EXPECT_EQ(vals["bar"], "baz2");
+    EXPECT_EQ(vals["bar"], "'baz2'");
 }
 
 // enum struct toker_errors {

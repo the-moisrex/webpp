@@ -147,3 +147,7 @@ fabric.properties
 
 # Fuzz tests create this kinda stuff:
 crash-*
+
+# failed patches:
+*.rej
+*.orig
