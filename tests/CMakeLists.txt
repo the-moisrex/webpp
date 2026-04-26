@@ -32,6 +32,9 @@ function(setup_test name)
             PRIVATE gtest_main    # GTest::Main
             # PRIVATE test-commons
     )
+    if (NOT HAS_CPP_LIB_FORMAT)
+        target_link_libraries(${LIB_NAME} PUBLIC fmt::fmt)
+    endif ()
     add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
     setup_executable(${name})

@@ -4,7 +4,6 @@
 #include "command_options.hpp"
 
 #include <vector>
-#include <webpp/logs/dynamic_logger.hpp>
 #include <webpp/std/string_view.hpp>
 
 namespace webpp::sdk {
@@ -47,8 +46,7 @@ namespace webpp::sdk {
      * to run your commands
      */
     struct command_manager {
-        command_manager(std::shared_ptr<output_port> inp_output = std::make_shared<stdout_output_port>(),
-                        dynamic_logger               logger     = {});
+        command_manager(std::shared_ptr<output_port> inp_output = std::make_shared<stdout_output_port>());
         command_manager(command_manager&&) noexcept            = default;
         command_manager(command_manager const&)                = delete;
         command_manager& operator=(command_manager&&) noexcept = default;
@@ -63,7 +61,6 @@ namespace webpp::sdk {
 
       private:
         std::shared_ptr<output_port> output;
-        dynamic_logger               logger;
     };
 
 } // namespace webpp::sdk

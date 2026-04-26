@@ -1,8 +1,6 @@
 #ifndef WEBPP_STORAGE_MEMORY_GATE_HPP
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
-#include "../traits/default_traits.hpp"
-#include "../traits/enable_traits.hpp"
 #include "null_gate.hpp"
 
 namespace webpp {
@@ -15,7 +13,7 @@ namespace webpp {
         template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, Allocator AllocT>
         struct storage_gate {
             using value_pack_type  = stl::pair<OptsT, ValueT>;
-            using map_type         = istl::map<KeyT, value_pack_type>;
+            using map_type         = stl::map<KeyT, value_pack_type>; // todo
             using mapped_type      = typename map_type::mapped_type;
             using key_type         = typename map_type::key_type;
             using value_type       = typename map_type::mapped_type::second_type;

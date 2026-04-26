@@ -3,7 +3,6 @@
 #ifndef WEBPP_COMMAND_OPTIONS_HPP
 #define WEBPP_COMMAND_OPTIONS_HPP
 
-#include <webpp/logs/dynamic_logger.hpp>
 #include <webpp/std/memory.hpp>
 #include <webpp/std/span.hpp>
 #include <webpp/strings/string_tokenizer.hpp>
@@ -50,8 +49,7 @@ namespace webpp::sdk {
         using tokenizer_type = string_tokenizer<>;
 
         explicit command_options(stl::string_view const       command,
-                                 stl::shared_ptr<output_port> inp_out    = stl::make_shared<stdout_output_port>(),
-                                 dynamic_logger               inp_logger = {})
+                                 stl::shared_ptr<output_port> inp_out = stl::make_shared<stdout_output_port>())
           : m_tokenizer{command},
             m_output{stl::move(inp_out)},
             m_logger{stl::move(inp_logger)} {}
@@ -74,15 +72,11 @@ namespace webpp::sdk {
             return *m_output;
         }
 
-        [[nodiscard]] dynamic_logger logger() const noexcept {
-            return m_logger;
-        }
 
       private:
         global_options               m_options;
         tokenizer_type               m_tokenizer;
         stl::shared_ptr<output_port> m_output;
-        webpp::dynamic_logger        m_logger;
     };
 
 } // namespace webpp::sdk

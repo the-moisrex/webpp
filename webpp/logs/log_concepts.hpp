@@ -3,53 +3,58 @@
 #ifndef WEBPP_LOG_CONCEPTS_HPP
 #define WEBPP_LOG_CONCEPTS_HPP
 
-#include "../std/concepts.hpp"
-#include "../std/type_traits.hpp"
+#include "../common/meta.hpp"
+#include "../std/std.hpp"
 
-#include <system_error>
+#include <concepts>
+#include <cstdint>
+#include <string_view>
+#include <type_traits>
 
 namespace webpp {
+
+    enum struct [[nodiscard]] log_level : stl::uint8_t {
+        trace    = 0,
+        debug    = 1,
+        info     = 2,
+        warn     = 3,
+        warning  = 3,
+        err      = 4,
+        error    = 4,
+        critical = 5,
+        off      = 6
+    };
+
+    [[nodiscard]] static constexpr stl::string_view to_string(log_level const level) noexcept {
+        using enum log_level;
+        switch (level) {
+            case trace: return {"trace"};
+            case debug: return {"debug"};
+            case info: return {"info"};
+            case warn: return {"warn"};
+            case err: return {"err"};
+            case critical: return {"critical"};
+            case off: return {"off"};
+            default: break;
+        }
+        return {"unknown"};
+    }
 
     /**
      * A simple helper to do the logging only if it's being run on debug build
      */
-    inline constexpr struct if_debug_tag {
+    static constexpr struct [[nodiscard]] if_debug_tag {
+        consteval bool operator()() const noexcept {
+            return is_debug_build;
+        }
     } if_debug;
 
-    namespace details {
-
-        template <typename T>
-        concept SimpleLogger = stl::movable<T> && requires(T logger, stl::error_code ec, stl::exception ex) {
-            typename T::logger_ref;
-            typename T::logger_ptr;
-            typename T::logger_type;
-
-
-#define WEBPP_LOGGER_CONCEPT(logger_name)                \
-    logger.logger_name("msg");                           \
-    logger.logger_name("category", "msg");               \
-    logger.logger_name("category", "msg", ec);           \
-    logger.logger_name("category", "msg", ex);           \
-    logger.logger_name("msg", ec);                       \
-    logger.logger_name("msg", ex);                       \
-    logger.logger_name(if_debug, "msg");                 \
-    logger.logger_name(if_debug, "category", "msg");     \
-    logger.logger_name(if_debug, "category", "msg", ec); \
-    logger.logger_name(if_debug, "category", "msg", ex); \
-    logger.logger_name(if_debug, "msg", ec);             \
-    logger.logger_name(if_debug, "msg", ex)
-
-            WEBPP_LOGGER_CONCEPT(info);
-            WEBPP_LOGGER_CONCEPT(warning);
-            WEBPP_LOGGER_CONCEPT(error);
-            WEBPP_LOGGER_CONCEPT(critical);
-
-#undef WEBPP_LOGGER_CONCEPT
-        };
-    } // namespace details
-
     template <typename T>
-    concept Logger = details::SimpleLogger<stl::remove_cvref_t<T>>;
+    concept Logger = stl::movable<stl::remove_cvref_t<T>> && requires(stl::remove_cvref_t<T> logger, log_level level) {
+        // logger.log(level, "msg");
+        logger.log(level, "category", "msg");
+        // logger.log(level, if_debug, "category", "msg");
+    };
 
 
 } // namespace webpp

@@ -9,6 +9,7 @@
 #ifdef __cpp_lib_format
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
+#    define WEBPP_FMT_STD_LIB             1
 
 namespace webpp::fmt {
     using namespace ::std; // to mame std::format available

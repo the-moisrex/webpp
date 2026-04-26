@@ -279,7 +279,6 @@ set(ALL_SOURCES_SHORT
         http/cookies/response_cookie.hpp
         http/cookies/response_cookie_jar.hpp
 
-        logs/dynamic_logger.hpp
         logs/log_concepts.hpp
         logs/logger.hpp
         logs/spdlog_logger.hpp

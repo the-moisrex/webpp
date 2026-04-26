@@ -8,15 +8,12 @@
 
 using std::string;
 using std::string_view;
-using webpp::dynamic_logger;
 using webpp::sdk::command_manager;
 using webpp::sdk::command_status;
 
 inline constexpr auto log_cat = "cmd";
 
-command_manager::command_manager(std::shared_ptr<output_port> inp_output, dynamic_logger inp_logger)
-  : output{std::move(inp_output)},
-    logger{std::move(inp_logger)} {}
+command_manager::command_manager(std::shared_ptr<output_port> inp_output) : output{std::move(inp_output)} {}
 
 string_view webpp::sdk::to_string(command_status status) noexcept {
     using enum command_status;
@@ -38,7 +35,7 @@ command_status command_manager::run_command(string_view cmd_str) {
     using enum command_status;
     using std::array;
 
-    command_options cmd{cmd_str, output, logger};
+    command_options cmd{cmd_str, output};
 
     // extract the command from the arguments
     if (cmd.tokenizer().next(WHITESPACES)) {
@@ -49,13 +46,13 @@ command_status command_manager::run_command(string_view cmd_str) {
         if (root_cmd_str == "help" || root_cmd_str == "--help") {
             return help_cmd(std::move(cmd));
         }
-        this->logger.error(
+        logger.error(
           log_cat,
           format("The string '{}' in the specified command '{}' is not a valid root command.", root_cmd_str, cmd_str));
         return invalid_command;
     }
 
-    this->logger.warning(log_cat, "You've tried to run an empty command that does nothing.");
+    logger.warning(log_cat, "You've tried to run an empty command that does nothing.");
     return empty_command;
 }
 
@@ -80,7 +77,7 @@ command_status command_manager::run_command(int argc, char const** argv) {
 
         return run_command(string_view{command.data(), command.size()});
     } catch (...) {
-        this->logger.error(log_cat, "Unknown Error while handling the command line arguments.");
+        logger.error(log_cat, "Unknown Error while handling the command line arguments.");
         return unknown_error;
     }
 }

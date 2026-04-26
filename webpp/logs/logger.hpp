@@ -2,7 +2,8 @@
 #define WEBPP_LOGGER_DEFAULT_HPP
 
 #include "../traits/dynamic_scoping.hpp"
-#include "std_logger.hpp"
+#include "./log_concepts.hpp"
+#include "./std_logger.hpp"
 
 namespace webpp {
 
@@ -23,29 +24,68 @@ namespace webpp {
     /**
      * Logger Tag.
      * This logger points to the default logger type.
-     * This is act as a Locally Bound Global, even though it's not exactly implement it.
+     * This is a Locally Bound Global.
      */
-    static constexpr struct [[nodiscard]] logger_tag {
+    template <Logger L = default_logger<void>, auto ID = 0>
+    struct [[nodiscard]] basic_logger : global_binding<L, ID> {
         // The reason why we're not making the logger type itself a Locally Bound Global, is because the default logger
         // type is not yet known, so we make it in a way that the first use of `logger.X` will determine the logger's
         // global type and cannot be changed after that.
+        using logger_type = L;
+
+      private:
+        static constexpr global_binding<logger_type> self{};
+
+      public:
+        template <typename... Args>
+        void log(log_level const            level,
+                 stl::predicate auto const& pred,
+                 stl::string_view const     category,
+                 stl::string_view const     details) const {
+            if (pred()) {
+                self->log(level, category, details);
+            }
+        }
+
+        template <typename... Args>
+        void log(log_level const level, stl::predicate auto const& pred, stl::string_view const details) const {
+            if (pred()) {
+                self->log(level, stl::string_view{"Default"}, details);
+            }
+        }
+
+        template <typename... Args>
+        void log(log_level const level, stl::string_view const details) const {
+            self->log(level, stl::string_view{"Default"}, details);
+        }
+
+        template <typename... Args>
+        void log(log_level const level, stl::string_view const category, stl::string_view const details) const {
+            self->log(level, category, details);
+        }
+
+        // todo: add std::exception and std::error_code
 
         // NOLINTNEXTLINE(*-macro-usage)
-#define WEBPP_LOGGER_SHORTCUT(NAME)                                        \
-    template <typename Arg1, typename... Args>                             \
-    void NAME(Arg1&& arg1, Args&&... args) const noexcept {                \
-        static constexpr global_binding<default_logger<Arg1>> self;        \
-        self->info(stl::forward<Arg1>(arg1), stl::forward<Args>(args)...); \
+#define WEBPP_LOGGER_SHORTCUT(NAME)                        \
+    template <typename... Args>                            \
+    void NAME(Args&&... args) const {                      \
+        log(log_level::NAME, stl::forward<Args>(args)...); \
     }
 
+        WEBPP_LOGGER_SHORTCUT(trace)
+        WEBPP_LOGGER_SHORTCUT(debug)
         WEBPP_LOGGER_SHORTCUT(info)
+        WEBPP_LOGGER_SHORTCUT(warn)
         WEBPP_LOGGER_SHORTCUT(warning)
+        WEBPP_LOGGER_SHORTCUT(err)
         WEBPP_LOGGER_SHORTCUT(error)
         WEBPP_LOGGER_SHORTCUT(critical)
-        WEBPP_LOGGER_SHORTCUT(unknown)
 
 #undef WEBPP_LOGGER_SHORTCUT
-    } logger;
+    };
+
+    static constexpr basic_logger<> logger;
 
 
 } // namespace webpp
