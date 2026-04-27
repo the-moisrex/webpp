@@ -1,7 +1,9 @@
 #ifndef WEBPP_STORAGE_MEMORY_GATE_HPP
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
-#include "null_gate.hpp"
+#include "./null_gate.hpp"
+
+#include <map>
 
 namespace webpp {
 
@@ -13,7 +15,7 @@ namespace webpp {
         template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, Allocator AllocT>
         struct storage_gate {
             using value_pack_type  = stl::pair<OptsT, ValueT>;
-            using map_type         = stl::map<KeyT, value_pack_type>; // todo
+            using map_type         = stl::map<KeyT, value_pack_type, stl::less<KeyT>, AllocT>; // todo
             using mapped_type      = typename map_type::mapped_type;
             using key_type         = typename map_type::key_type;
             using value_type       = typename map_type::mapped_type::second_type;
@@ -23,13 +25,14 @@ namespace webpp {
             using value_ptr_type   = stl::add_pointer_t<value_type>;
             using options_ptr_type = stl::add_pointer_t<options_type>;
             using bundle_ptr_type  = cache_tuple<key_ptr_type, value_ptr_type, options_ptr_type>;
+            using allocator_type   = AllocT;
 
             explicit constexpr storage_gate(allocator_type inp_alloc = alloc) : map{inp_alloc} {}
 
             template <typename K>
             constexpr stl::optional<bundle_type> get(K&& key) {
                 if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
-                    return bundle_type{.key     = stl::move(it->first),
+                    return bundle_type{.key     = it->first,
                                        .value   = stl::move(it->second.second),
                                        .options = stl::move(it->second.first)};
                 }
@@ -65,9 +68,9 @@ namespace webpp {
 
             template <typename Pred>
             constexpr void erase_if(Pred&& predicate) {
-                stl::erase_if(map, [predicate](auto&& item) {
-                    auto [key, value_pack] = item;
-                    auto [opts, value]     = value_pack;
+                stl::erase_if(map, [&predicate](auto const& item) {
+                    auto const& [key, value_pack] = item;
+                    auto const& [opts, value]     = value_pack;
                     return predicate(bundle_type{key, value, opts});
                 });
             }
@@ -77,7 +80,7 @@ namespace webpp {
             }
 
             constexpr auto end() const {
-                return map.begin();
+                return map.end();
             }
 
             constexpr auto begin() {
@@ -85,7 +88,7 @@ namespace webpp {
             }
 
             constexpr auto end() {
-                return map.begin();
+                return map.end();
             }
 
 

@@ -1,17 +1,16 @@
 #ifndef WEBPP_STORAGE_FILE_GATE_HPP
 #define WEBPP_STORAGE_FILE_GATE_HPP
 
-#include "../traits/default_traits.hpp"
-#include "cache_concepts.hpp"
+#include "./cache_concepts.hpp"
 
 #include <filesystem>
+#include <fstream>
+#include <system_error>
 
 namespace webpp {
 
     /**
      * File Gate stores the cached data in a file
-     *
-     * The file gate doesn't support a parent because why should it?
      */
     struct file_gate {
         template <CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
@@ -23,33 +22,120 @@ namespace webpp {
             using bundle_type  = cache_tuple<key_type, value_type, options_type>;
 
           private:
-            path_type cache_file;
+            path_type cache_dir;
+
+            path_type get_path(key_type const& key) const {
+                // Using a hash of the string representation to ensure filesystem-safe filenames
+                auto const str_key  = lexical::cast<stl::string>(key);
+                auto const hash_val = stl::hash<stl::string>{}(str_key);
+                return cache_dir / stl::to_string(hash_val);
+            }
 
           public:
-            explicit storage_gate(path_type output_file) : cache_file{stl::move(output_file)} {}
+            explicit storage_gate(path_type output_dir) : cache_dir{stl::move(output_dir)} {
+                stl::error_code err;
+                stl::filesystem::create_directories(cache_dir, err);
+            }
 
-            template <typename V>
-            stl::optional<bundle_type> get(V&& value) {
-                return stl::nullopt;
+            template <typename K>
+            stl::optional<bundle_type> get(K&& key) {
+                auto const filepath = get_path(key);
+
+                // Open at the end to get file size for efficient allocation
+                stl::ifstream file(filepath, stl::ios::binary | stl::ios::ate);
+                if (!file) {
+                    return stl::nullopt;
+                }
+
+                auto const file_size = file.tellg();
+                if (file_size <= 0) {
+                    return stl::nullopt;
+                }
+                file.seekg(0, stl::ios::beg);
+
+                stl::string key_str;
+                stl::string opt_str;
+                stl::string val_str;
+
+                // Format: [key string] \n [opts string] \n [value string]
+                stl::getline(file, key_str);
+                stl::getline(file, opt_str);
+
+                if (file.fail()) {
+                    return stl::nullopt;
+                }
+                auto const header_size    = file.tellg();
+                auto const remaining_size = file_size - header_size;
+
+                if (remaining_size > 0) {
+                    val_str.resize(static_cast<stl::size_t>(remaining_size));
+                    file.read(val_str.data(), remaining_size);
+                }
+
+                return bundle_type{.key     = stl::forward<K>(key),
+                                   .value   = lexical::cast<value_type>(val_str),
+                                   .options = lexical::cast<options_type>(opt_str)};
             }
 
             template <typename K, typename V>
             void set(K&& key, V&& value, options_type opts = {}) {
-                // todo
+                auto const    filepath = get_path(stl::forward<K>(key));
+                stl::ofstream file(filepath, stl::ios::binary | stl::ios::trunc);
+                if (file) {
+                    file << lexical::cast<stl::string>(stl::forward<K>(key)) << '\n'
+                         << lexical::cast<stl::string>(opts) << '\n'
+                         << lexical::cast<stl::string>(stl::forward<V>(value));
+                }
             }
 
             void set_options(key_type const& key, options_type opts) {
-                // todo
+                if (auto bundle_opt = get(key)) {
+                    set(key, bundle_opt->value, stl::move(opts));
+                }
             }
 
             template <typename K>
             void erase(K&& input) {
-                // todo
+                stl::error_code err;
+                stl::filesystem::remove(get_path(stl::forward<K>(input)), err);
             }
 
             template <typename Pred>
             void erase_if(Pred&& predicate) {
-                // todo
+                stl::error_code err;
+                for (auto const& entry : stl::filesystem::directory_iterator(cache_dir, err)) {
+                    if (!entry.is_regular_file(err)) {
+                        continue;
+                    }
+
+                    stl::ifstream file(entry.path(), stl::ios::binary | stl::ios::ate);
+                    if (!file) {
+                        continue;
+                    }
+
+                    auto const file_size = file.tellg();
+                    file.seekg(0, stl::ios::beg);
+
+                    stl::string key_str, opt_str, val_str;
+                    stl::getline(file, key_str);
+                    stl::getline(file, opt_str);
+
+                    auto const remaining_size = file_size - file.tellg();
+                    if (remaining_size > 0) {
+                        val_str.resize(static_cast<stl::size_t>(remaining_size));
+                        file.read(val_str.data(), remaining_size);
+                    }
+
+                    file.close(); // Close file before potentially removing it
+
+                    bundle_type bundle{.key     = lexical::cast<key_type>(key_str),
+                                       .value   = lexical::cast<value_type>(val_str),
+                                       .options = lexical::cast<options_type>(opt_str)};
+
+                    if (predicate(bundle)) {
+                        stl::filesystem::remove(entry.path(), err);
+                    }
+                }
             }
         };
     };

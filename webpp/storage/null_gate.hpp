@@ -2,7 +2,6 @@
 #define WEBPP_STORAGE_NULL_GATE_HPP
 
 #include "../std/optional.hpp"
-#include "../traits/traits.hpp"
 
 namespace webpp {
 

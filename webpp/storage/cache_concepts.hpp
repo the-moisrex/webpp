@@ -2,9 +2,9 @@
 #define WEBPP_STORAGE_CACHE_CONCEPTS_HPP
 
 #include "../convert/lexical_cast.hpp"
-#include "../std/type_traits.hpp"
-#include "../traits/default_traits.hpp"
-#include "null_gate.hpp"
+#include "./null_gate.hpp"
+
+#include <type_traits>
 
 namespace webpp {
 
@@ -49,8 +49,6 @@ namespace webpp {
             requires CacheKey<typename S::key_type>;
             requires CacheValue<typename S::value_type>;
             requires CacheOptions<typename S::options_type>;
-            typename S::traits_type;
-            requires Traits<typename S::traits_type>;
 
             requires requires(typename S::key_type     key,
                               typename S::value_type   value,
@@ -59,9 +57,7 @@ namespace webpp {
                 gate.erase(key);
                 gate.set(key, value, opts);
                 gate.set_options(key, opts);
-                {
-                    gate.get(key)
-                } -> stl::same_as<stl::optional<typename S::bundle_type>>;
+                { gate.get(key) } -> stl::same_as<stl::optional<typename S::bundle_type>>;
 
                 // I added the erase_if here and not in the "cache" because
                 // it might be faster (I think)
@@ -87,9 +83,7 @@ namespace webpp {
                               typename T::key_type     key,
                               typename T::value_type   value,
                               typename T::options_type opts) {
-                {
-                    gate.get_ptr(key)
-                } -> stl::same_as<stl::optional<typename T::bundle_ptr_type>>;
+                { gate.get_ptr(key) } -> stl::same_as<stl::optional<typename T::bundle_ptr_type>>;
             };
         };
 
@@ -100,13 +94,10 @@ namespace webpp {
             typename T::value_type;
             requires CacheKey<typename T::key_type>;
             requires CacheValue<typename T::value_type>;
-            typename T::traits_type;
             typename T::storage_gate_type;
-            requires requires(T st, typename T::key_type key, typename T::value_type value) {
-                st.set(key, value);
-                {
-                    st.get(key)
-                } -> stl::same_as<stl::optional<typename T::value_type>>;
+            requires requires(T obj, typename T::key_type key, typename T::value_type value) {
+                obj.set(key, value);
+                { obj.get(key) } -> stl::same_as<stl::optional<typename T::value_type>>;
             };
         };
 
@@ -114,22 +105,22 @@ namespace webpp {
         template <typename T>
         concept CacheStrategyPointerSupport = requires {
             requires StorageGatePointerSupport<typename T::storage_gate_type>;
-            requires requires(T st, typename T::key_type key) { st.get_ptr(key); };
+            requires requires(T obj, typename T::key_type key) { obj.get_ptr(key); };
         };
 
     } // namespace details
 
     template <typename T>
     concept StorageGate = requires {
-        typename T::template storage_gate<default_traits, int, int, int>;
-        requires details::StorageGateType<typename T::template storage_gate<default_traits, int, int, int>>;
+        typename T::template storage_gate<int, int, int>;
+        requires details::StorageGateType<typename T::template storage_gate<int, int, int>>;
     };
 
 
     template <typename T>
     concept CacheStrategy = requires {
-        typename T::template strategy<default_traits, int, int, null_gate>;
-        requires details::CacheStrategy<typename T::template strategy<default_traits, int, int, null_gate>>;
+        typename T::template strategy<int, int, null_gate>;
+        requires details::CacheStrategy<typename T::template strategy<int, int, null_gate>>;
     };
 
     template <typename KeyT, typename ValueT, typename OptionsT>

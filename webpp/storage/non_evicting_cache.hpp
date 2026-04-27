@@ -15,7 +15,6 @@ namespace webpp {
         using key_type          = KeyT;
         using value_type        = ValueT;
         using storage_gate_type = typename SG::template storage_gate<key_type, value_type>;
-        using traits_type       = typename storage_gate_type::traits_type;
 
 
       private:

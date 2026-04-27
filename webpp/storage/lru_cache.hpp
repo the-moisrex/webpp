@@ -10,7 +10,7 @@ namespace webpp {
     /**
      * LRU Cache (Least Recently Used Cache)
      */
-    struct lru_strategy {
+    struct [[nodiscard]] lru_strategy {
         template <CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
             using key_type          = KeyT;

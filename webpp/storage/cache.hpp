@@ -2,12 +2,12 @@
 #define WEBPP_CACHE_CACHE_HPP
 
 #include "../std/iterator.hpp"
-#include "cache_concepts.hpp"
+#include "./cache_concepts.hpp"
 
 namespace webpp {
 
     template <typename CacheType>
-    struct cache_result : private CacheType::optional_value_type {
+    struct [[nodiscard]] cache_result : private CacheType::optional_value_type {
         using cache_type          = CacheType;
         using optional_value_type = typename CacheType::optional_value_type;
         using key_type            = typename cache_type::key_type;
@@ -59,7 +59,7 @@ namespace webpp {
      * Storage Gate:   How the cache data is stored (and where); e.g. Memory, File, ...
      */
     template <CacheKey KeyT, CacheValue ValT, CacheStrategy CS, StorageGate SG>
-    struct cache : public CS::template strategy<KeyT, ValT, SG> {
+    struct [[nodiscard]] cache : public CS::template strategy<KeyT, ValT, SG> {
         using key_type            = KeyT;
         using value_type          = ValT;
         using strategy_type       = typename CS::template strategy<KeyT, ValT, SG>;

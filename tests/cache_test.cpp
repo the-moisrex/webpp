@@ -56,8 +56,7 @@ TEST(Cache, LRUCacheTest) {
 }
 
 TEST(Cache, CacheResultTest) {
-    enable_owner_traits<default_traits>         trs;
-    lru_cache<default_traits, stl::string, int> cache(trs);
+    lru_cache<stl::string, int> cache;
     cache["one"] = 1;
     cache["two"] = 2;
 
@@ -67,11 +66,10 @@ TEST(Cache, CacheResultTest) {
 }
 
 TEST(Cache, DirectoryGateTest) {
-    enable_owner_traits<default_traits> trs;
-    auto                                dir  = stl::filesystem::temp_directory_path();
-    dir                                     /= "webpp-directory-gate-test";
+    auto dir  = stl::filesystem::temp_directory_path();
+    dir      /= "webpp-directory-gate-test";
     stl::filesystem::create_directory(dir);
-    lru_cache<default_traits, std::string, std::string, directory_gate> c(trs, 1024, dir, "one");
+    lru_cache<std::string, std::string, directory_gate> c(1024, dir, "one");
     c.set("one", "value");
     EXPECT_EQ("value", c.get("one", "default"));
     c.set("one", "new value");
@@ -79,7 +77,7 @@ TEST(Cache, DirectoryGateTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", "default"));
 
-    lru_cache<default_traits, int, std::string, directory_gate> cache2{trs, 3, dir, "two"};
+    lru_cache<int, std::string, directory_gate> cache2{trs, 3, dir, "two"};
     cache2.set(1, "hello");
     cache2.set(1, "hello 2");
     EXPECT_EQ("hello 2", cache2.get(1).value());
@@ -108,8 +106,7 @@ TEST(Cache, DirectoryGateTest) {
 }
 
 TEST(Cache, ReferenceTest) {
-    enable_owner_traits<default_traits> trs;
-    lru_cache<>                         cache(trs);
+    lru_cache<> cache;
     cache.set("one", "value");
     EXPECT_EQ("value", *cache.get_ptr("one"));
     cache.set("one", "new value");
@@ -117,6 +114,96 @@ TEST(Cache, ReferenceTest) {
     auto& val_ref = *cache.get_ptr("one");
     val_ref       = "new new value";
     EXPECT_EQ("new new value", cache.get("one").value());
+}
+
+
+
+
+namespace fs = std::filesystem;
+
+// Mocking required web++ concepts/types for the test to compile
+namespace webpp {
+    struct dummy_options {};
+
+    template <typename K, typename V, typename O>
+    struct cache_tuple {
+        K key;
+        V value;
+        O options;
+    };
+
+    namespace lexical {
+        template <typename T, typename U>
+        T cast(U const& u) {
+            return T(u);
+        }
+    } // namespace lexical
+} // namespace webpp
+
+class FileGateTest : public ::testing::Test {
+  protected:
+    fs::path temp_dir;
+
+    void SetUp() override {
+        temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+        fs::create_directories(temp_dir);
+    }
+
+    void TearDown() override {
+        fs::remove_all(temp_dir);
+    }
+};
+
+// Using a concrete instantiation for testing
+using TestGate = webpp::file_gate::storage_gate<std::string, std::string, webpp::dummy_options>;
+
+TEST_F(FileGateTest, SetAndGetSuccessfully) {
+    TestGate gate(temp_dir);
+
+    gate.set("my_key", "my_value");
+    auto result = gate.get("my_key");
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->key, "my_key");
+    EXPECT_EQ(result->value, "my_value");
+}
+
+TEST_F(FileGateTest, GetNonExistentKeyReturnsNullopt) {
+    TestGate gate(temp_dir);
+    auto     result = gate.get("does_not_exist");
+    EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(FileGateTest, EraseRemovesKey) {
+    TestGate gate(temp_dir);
+    gate.set("delete_me", "data");
+    EXPECT_TRUE(gate.get("delete_me").has_value());
+
+    gate.erase("delete_me");
+    EXPECT_FALSE(gate.get("delete_me").has_value());
+}
+
+TEST_F(FileGateTest, EraseIfRemovesMatchingKeys) {
+    TestGate gate(temp_dir);
+    gate.set("keep_me", "data1");
+    gate.set("drop_me", "data2");
+
+    gate.erase_if([](auto const& bundle) {
+        return bundle.key == "drop_me";
+    });
+
+    EXPECT_TRUE(gate.get("keep_me").has_value());
+    EXPECT_FALSE(gate.get("drop_me").has_value());
+}
+
+TEST_F(FileGateTest, HandlesEmptyFileGracefully) {
+    TestGate gate(temp_dir);
+    // Simulate corrupted empty file
+    auto hash = std::hash<std::string>{}("corrupt_key");
+    std::ofstream(temp_dir / std::to_string(hash));
+
+    auto result = gate.get("corrupt_key");
+    EXPECT_FALSE(result.has_value()); // Should fail cleanly, not crash
 }
 
 // NOLINTEND(*-magic-numbers)

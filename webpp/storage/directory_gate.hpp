@@ -3,9 +3,10 @@
 
 #include "../convert/lexical_cast.hpp"
 #include "../crypto/base64.hpp"
+#include "../logs/logger.hpp"
 #include "../memory/object.hpp"
 #include "../storage/file.hpp"
-#include "cache_concepts.hpp"
+#include "./cache_concepts.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -79,7 +80,7 @@ namespace webpp {
             }
 
           public:
-            explicit file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{&the_gate} {}
+            explicit file_iterator(storage_gate_type& the_gate) : gate{&the_gate} {}
 
             file_iterator(stl::filesystem::path const& dir, storage_gate_type& the_gate)
               : dir_iter{dir, ec},
@@ -131,14 +132,18 @@ namespace webpp {
             }
         };
 
-        template <CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
+        template <CacheFileKey     KeyT,
+                  CacheFileValue   ValueT,
+                  CacheFileOptions OptsT,
+                  istl::CharType   CharT,
+                  Allocator        AllocT>
         struct storage_gate {
             using path_type        = stl::filesystem::path;
             using key_type         = KeyT;
             using value_type       = ValueT;
             using options_type     = OptsT;
-            using char_type        = typename key_type::value_type;
-            using allocator_type   = allocator_type_of<OptsT>;
+            using char_type        = CharT;
+            using allocator_type   = AllocT;
             using string_type      = stl::basic_string<char_type, stl::char_traits<char_type>, allocator_type>;
             using iterator         = file_iterator<storage_gate>;
             using const_iterator   = iterator;

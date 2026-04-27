@@ -45,9 +45,8 @@ namespace webpp {
                 in.seekg(0L);
                 in.read(out.data(), size);
                 return true;
-            } else {
-                return false;
             }
+            return false;
         }
 
         /**
