@@ -10,13 +10,13 @@
 #include "../storage/lru_cache.hpp"
 #include "../storage/memory_gate.hpp"
 #include "../storage/null_gate.hpp"
-#include "../traits/traits.hpp"
 #include "data_view_caster.hpp"
 #include "file_view.hpp"
 #include "mustache_view.hpp"
 
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <system_error>
 #include <type_traits>
 #include <variant>
@@ -27,19 +27,18 @@ namespace webpp::views {
     /**
      * View Manager
      */
-    template <Traits TraitsType>
-    struct view_manager : enable_traits<TraitsType> {
-        using etraits          = enable_traits<TraitsType>;
-        using traits_type      = TraitsType;
-        using string_type      = traits::string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
+    template <istl::CharType CharT, Allocator AllocT>
+    struct view_manager {
+        using char_type        = CharT;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>;
+        using string_view_type = stl::basic_string_view<CharT>;
         using path_type        = stl::filesystem::path;
-        using view_roots_type  = stl::vector<path_type, traits::allocator_type_of<traits_type, path_type>>;
-        using char_type        = traits::char_type<traits_type>;
-        using ifstream_type    = stl::basic_ifstream<char_type>;
+        using view_roots_type =
+          stl::vector<path_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<path_type>>;
+        using ifstream_type = stl::basic_ifstream<char_type>;
 
-        using mustache_view_type = mustache_view<traits_type>;
-        using allocator_type     = typename string_type::allocator_type;
+        using mustache_view_type = mustache_view<CharT, AllocT>;
+        using allocator_type     = AllocT;
         using file_view_type     = file_view<char_type, allocator_type>;
 
         static constexpr stl::size_t default_cache_limit = 100u;
@@ -53,7 +52,7 @@ namespace webpp::views {
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         using file_data_type     = typename file_view_type::data_type;
-        using cache_type         = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
+        using cache_type         = lru_cache<path_type, view_types, memory_gate<null_gate>, CharT, AllocT>;
 
         static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
 
@@ -65,13 +64,8 @@ namespace webpp::views {
         // the root directories where we can find the views
         view_roots_type view_roots; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
-        template <typename ET>
-            requires(EnabledTraits<stl::remove_cvref_t<ET>> && !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
-        explicit constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
-          ET&&        et,
-          stl::size_t cache_limit = default_cache_limit) noexcept
-          : etraits{et},
-            cached_views{et, cache_limit},
+        explicit constexpr view_manager(stl::size_t cache_limit = default_cache_limit) noexcept
+          : cached_views{cache_limit},
             view_roots{get_alloc_for<view_roots_type>(*this)} {}
 
 
@@ -94,16 +88,16 @@ namespace webpp::views {
         [[nodiscard]] stl::optional<path_type> find_file(stl::string_view request) const noexcept {
             namespace fs = stl::filesystem;
 
-            stl::error_code ec;
+            stl::error_code err;
 
             // an absolute path should
             if (request.starts_with('/')) {
                 path_type const file{request};
-                if (!fs::is_regular_file(file, ec)) {
-                    if (ec) {
-                        this->logger.error(logging_category,
-                                           fmt::format("Cannot check file details for {}", file.string()),
-                                           ec);
+                if (!fs::is_regular_file(file, err)) {
+                    if (err) {
+                        logger.error(logging_category,
+                                     fmt::format("Cannot check file details for {}", file.string()),
+                                     err);
                     }
                     return stl::nullopt;
                 }
@@ -118,11 +112,11 @@ namespace webpp::views {
 
             // traverse the root directories
             for (path_type dir : view_roots) {
-                fs::file_status status = fs::status(dir, ec);
-                if (ec && !fs::status_known(status)) {
-                    this->logger.error(logging_category,
-                                       fmt::format("Cannot check directory status of {}", dir.string()),
-                                       ec);
+                fs::file_status status = fs::status(dir, err);
+                if (err && !fs::status_known(status)) {
+                    logger.error(logging_category,
+                                 fmt::format("Cannot check directory status of {}", dir.string()),
+                                 err);
                     continue;
                 }
 
@@ -132,18 +126,18 @@ namespace webpp::views {
                 }
 
                 if (recursive_search) {
-                    fs::recursive_directory_iterator const iter(dir, ec);
-                    if (ec) {
-                        this->logger.error(logging_category, fmt::format("Cannot read dir {}", dir.string()), ec);
+                    fs::recursive_directory_iterator const iter(dir, err);
+                    if (err) {
+                        logger.error(logging_category, fmt::format("Cannot read dir {}", dir.string()), err);
                         continue;
                     }
                     fs::recursive_directory_iterator       it     = fs::begin(iter);
                     fs::recursive_directory_iterator const it_end = fs::end(iter);
-                    for (; it != it_end; it.increment(ec)) {
-                        if (ec) {
-                            this->logger.error(logging_category,
-                                               fmt::format("Cannot traverse directory {}", dir.string()),
-                                               ec);
+                    for (; it != it_end; it.increment(err)) {
+                        if (err) {
+                            logger.error(logging_category,
+                                         fmt::format("Cannot traverse directory {}", dir.string()),
+                                         err);
                             continue;
                         }
                         path_type const file      = *it;
@@ -164,24 +158,24 @@ namespace webpp::views {
                         // did not find it
                         continue;
                     found_it:
-                        status = fs::status(file, ec);
+                        status = fs::status(file, err);
                         if (fs::is_regular_file(status)) {
                             return file;
-                        } else if (ec && !fs::status_known(status)) {
-                            this->logger.error(logging_category,
-                                               fmt::format("Cannot check file type of {}", dir.string()),
-                                               ec);
+                        }
+                        if (err && !fs::status_known(status)) {
+                            logger.error(logging_category,
+                                         fmt::format("Cannot check file type of {}", dir.string()),
+                                         err);
                         }
                     }
                 } else { // non-recursive normal path appending
                     dir.append(request.begin(), request.end());
-                    status = fs::status(dir, ec);
+                    status = fs::status(dir, err);
                     if (fs::exists(status)) {
                         return dir;
-                    } else if (ec && !fs::status_known(status)) {
-                        this->logger.error(logging_category,
-                                           fmt::format("Cannot check file type of {}", dir.string()),
-                                           ec);
+                    }
+                    if (err && !fs::status_known(status)) {
+                        logger.error(logging_category, fmt::format("Cannot check file type of {}", dir.string()), err);
                         // no need to "continue"
                     }
 
@@ -191,14 +185,14 @@ namespace webpp::views {
                         auto file = dir;
                         file.concat(ext.begin(), ext.end()); // append the extension
 
-                        status = fs::status(file, ec);
+                        status = fs::status(file, err);
                         if (fs::exists(status)) {
                             return file;
                         }
-                        if (ec && !fs::status_known(status)) {
-                            this->logger.error(logging_category,
-                                               fmt::format("Cannot check file type of {}", dir.string()),
-                                               ec);
+                        if (err && !fs::status_known(status)) {
+                            logger.error(logging_category,
+                                         fmt::format("Cannot check file type of {}", dir.string()),
+                                         err);
                         }
                     }
                 }
@@ -207,14 +201,17 @@ namespace webpp::views {
             return stl::nullopt;
         }
 
+        [[nodiscard]] auto const& get_allocator() const noexcept {
+            return view_roots.get_allocator();
+        }
+
         /**
          * Read the file content
          */
         bool read_file(stl::filesystem::path const& filepath, istl::String auto& out) const {
             bool const res = file::get_to(filepath, out);
             if (!res) {
-                this->logger.error("Response/File",
-                                   fmt::format("Cannot load the specified file: {}", filepath.string()));
+                logger.error("Response/File", fmt::format("Cannot load the specified file: {}", filepath.string()));
                 // return empty string
             }
             return res;
@@ -232,7 +229,7 @@ namespace webpp::views {
             auto* cached    = get_view<view_type>(file);
             auto& view      = stl::get<view_type>(*cached);
             if (!view.has_scheme()) {
-                auto file_content = object::make_object<string_type>(*this);
+                string_type file_content{get_allocator()};
                 if (!read_file(file, file_content)) {
                     return; // We weren't able to read the file.
                 }
@@ -244,11 +241,11 @@ namespace webpp::views {
             view.render(out, stl::forward<DataType>(data)...);
         }
 
-        template <typename ViewType, typename CharT, typename OutT, typename... DataType>
+        template <typename ViewType, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, stl::basic_string_view<CharT> file_request, DataType&&... data) {
             auto const file = find_file(file_request);
             if (!file) {
-                this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
+                logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
                 return;
             }
             view_to<ViewType>(out, file.value(), stl::forward<DataType>(data)...);
@@ -261,7 +258,7 @@ namespace webpp::views {
          */
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) {
-            auto out = object::make_object<string_type>(*this);
+            string_type out{get_allocator()};
             view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
         }
@@ -295,14 +292,14 @@ namespace webpp::views {
         /**
          * Render a view
          */
-        template <typename CharT, typename DT>
+        template <typename DT>
             requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
-        [[nodiscard]] auto view(stl::basic_string_view<CharT> const file_request, DT&& data) {
-            auto const file = find_file(file_request);
-            auto       out  = object::make_object<string_type>(*this);
+        [[nodiscard]] auto view(string_view_type const file_request, DT&& data) {
+            auto const  file = find_file(file_request);
+            string_type out{get_allocator()};
             if (!file) {
-                this->logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
+                logger.error(logging_category, fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
             auto const ext = file->extension().string();

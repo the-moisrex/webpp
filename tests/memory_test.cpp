@@ -48,27 +48,6 @@ TYPED_TEST(MemoryTest, Concepts) {
     static_assert(!istl::explicitly_default_constructible<inc_dync_type>, "It should be constructible only implicitly");
 }
 
-// TYPED_TEST(MemoryTest, LocalAllocTest) {
-//     using traits_type = TypeParam;
-//     enable_owner_traits<traits_type> etraits;
-//     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
-//     auto str    = object::make_local_like<stl::string>(etraits, "hello world");
-//     using str_t = stl::remove_cvref_t<decltype(str)>;
-//     static_assert(stl::same_as<typename str_t::type, traits::local_string<traits_type>>);
-//     EXPECT_EQ(str, "hello world");
-//
-//     auto str2 = object::make_local_like<stl::string>(etraits, "hello world");
-//     ASSERT_EQ(str2, "hello world");
-//
-//     // nested allocator-rebinding: both string and vector should use the specified allocator
-//     [[maybe_unused]] auto str_vec    = object::make_local_like<stl::vector<stl::string>>(etraits);
-//     using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::type;
-//     using vec_str_t = typename vec_t::value_type;
-//     static_assert(stl::same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
-//     static_assert(stl::same_as<vec_t, stl::pmr::vector<stl::pmr::string>>, "Allocator-rebinding don't
-//     work");
-// }
-
 
 /// todo: if we move this into TYPED_TEST, clang will be confused with a weird error
 struct incomplete_type;
