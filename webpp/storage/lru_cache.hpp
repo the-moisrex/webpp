@@ -11,7 +11,7 @@ namespace webpp {
      * LRU Cache (Least Recently Used Cache)
      */
     struct [[nodiscard]] lru_strategy {
-        template <CacheKey KeyT, CacheValue ValueT, StorageGate SG, istl::CharType CharT, Allocator AllocT>
+        template <CacheKey KeyT, CacheValue ValueT, StorageGate SG, istl::CharType CharT = char, Allocator AllocT = default_allocator_t<char>>
         struct strategy {
             using key_type   = KeyT;
             using value_type = ValueT;

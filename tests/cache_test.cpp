@@ -68,7 +68,7 @@ TEST(Cache, DirectoryGateTest) {
     c.set("one", "old value");
     EXPECT_EQ("old value", c.get("one", "default"));
 
-    lru_cache<int, std::string, directory_gate> cache2{trs, 3, dir, "two"};
+    lru_cache<int, std::string, directory_gate> cache2{3, dir, "two"};
     cache2.set(1, "hello");
     cache2.set(1, "hello 2");
     EXPECT_EQ("hello 2", cache2.get(1).value());
@@ -112,43 +112,16 @@ TEST(Cache, ReferenceTest) {
 
 namespace fs = std::filesystem;
 
-// Mocking required web++ concepts/types for the test to compile
 namespace webpp {
     struct dummy_options {};
-
-    template <typename K, typename V, typename O>
-    struct cache_tuple {
-        K key;
-        V value;
-        O options;
-    };
-
-    namespace lexical {
-        template <typename T, typename U>
-        T cast(U const& u) {
-            return T(u);
-        }
-    } // namespace lexical
 } // namespace webpp
 
-class FileGateTest : public ::testing::Test {
-  protected:
-    fs::path temp_dir;
-
-    void SetUp() override {
-        temp_dir = fs::temp_directory_path() / "webpp_test_cache";
-        fs::create_directories(temp_dir);
-    }
-
-    void TearDown() override {
-        fs::remove_all(temp_dir);
-    }
-};
-
 // Using a concrete instantiation for testing
-using TestGate = webpp::file_gate::storage_gate<std::string, std::string, webpp::dummy_options>;
+using TestGate = webpp::file_gate::storage_gate<std::string, std::string, webpp::dummy_options, char, std::allocator<char>>;
 
-TEST_F(FileGateTest, SetAndGetSuccessfully) {
+TEST(FileGateTest, SetAndGetSuccessfully) {
+    fs::path temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+    fs::create_directories(temp_dir);
     TestGate gate(temp_dir);
 
     gate.set("my_key", "my_value");
@@ -157,24 +130,33 @@ TEST_F(FileGateTest, SetAndGetSuccessfully) {
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->key, "my_key");
     EXPECT_EQ(result->value, "my_value");
+    fs::remove_all(temp_dir);
 }
 
-TEST_F(FileGateTest, GetNonExistentKeyReturnsNullopt) {
+TEST(FileGateTest, GetNonExistentKeyReturnsNullopt) {
+    fs::path temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+    fs::create_directories(temp_dir);
     TestGate gate(temp_dir);
     auto     result = gate.get("does_not_exist");
     EXPECT_FALSE(result.has_value());
+    fs::remove_all(temp_dir);
 }
 
-TEST_F(FileGateTest, EraseRemovesKey) {
+TEST(FileGateTest, EraseRemovesKey) {
+    fs::path temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+    fs::create_directories(temp_dir);
     TestGate gate(temp_dir);
     gate.set("delete_me", "data");
     EXPECT_TRUE(gate.get("delete_me").has_value());
 
     gate.erase("delete_me");
     EXPECT_FALSE(gate.get("delete_me").has_value());
+    fs::remove_all(temp_dir);
 }
 
-TEST_F(FileGateTest, EraseIfRemovesMatchingKeys) {
+TEST(FileGateTest, EraseIfRemovesMatchingKeys) {
+    fs::path temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+    fs::create_directories(temp_dir);
     TestGate gate(temp_dir);
     gate.set("keep_me", "data1");
     gate.set("drop_me", "data2");
@@ -185,9 +167,12 @@ TEST_F(FileGateTest, EraseIfRemovesMatchingKeys) {
 
     EXPECT_TRUE(gate.get("keep_me").has_value());
     EXPECT_FALSE(gate.get("drop_me").has_value());
+    fs::remove_all(temp_dir);
 }
 
-TEST_F(FileGateTest, HandlesEmptyFileGracefully) {
+TEST(FileGateTest, HandlesEmptyFileGracefully) {
+    fs::path temp_dir = fs::temp_directory_path() / "webpp_test_cache";
+    fs::create_directories(temp_dir);
     TestGate gate(temp_dir);
     // Simulate corrupted empty file
     auto hash = std::hash<std::string>{}("corrupt_key");
@@ -195,6 +180,7 @@ TEST_F(FileGateTest, HandlesEmptyFileGracefully) {
 
     auto result = gate.get("corrupt_key");
     EXPECT_FALSE(result.has_value()); // Should fail cleanly, not crash
+    fs::remove_all(temp_dir);
 }
 
 // NOLINTEND(*-magic-numbers)
