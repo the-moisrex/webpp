@@ -15,20 +15,11 @@ static_assert(StorageGate<directory_gate>);
 static_assert(StorageGate<file_gate>);
 static_assert(StorageGate<memory_gate<null_gate>>);
 static_assert(!Allocator<int>);
-using replacer = details::allocator_replacer<std::allocator>::template replacer<int>;
-static_assert(!replacer::value);
-static_assert(stl::is_same_v<int, typename replacer::type>);
-
-// static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>, int>);
-// static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, double>, double>);
-// static_assert(stl::is_same_v<traits::generalify_allocators<std_traits, std::string_view>,
-// std::string_view>);
 
 // NOLINTBEGIN(*-magic-numbers)
 
 TEST(Cache, LRUCacheTest) {
-    enable_owner_traits<default_traits> trs;
-    lru_cache<>                         cache(trs);
+    lru_cache<> cache;
     cache.set("one", "value");
     EXPECT_EQ("value", cache.get("one", ""));
     cache.set("one", "new value");
@@ -36,7 +27,7 @@ TEST(Cache, LRUCacheTest) {
     cache.set("one", "old value");
     EXPECT_EQ("old value", cache.get("one", ""));
 
-    lru_cache<default_traits, int> cache2{trs, 3};
+    lru_cache<int> cache2{trs, 3};
     cache2.set(1, "hello");
     cache2.set(1, "hello 2");
     EXPECT_EQ("hello 2", cache2.get(1).value());

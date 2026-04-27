@@ -13,7 +13,11 @@ namespace webpp {
      * File Gate stores the cached data in a file
      */
     struct file_gate {
-        template <CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
+        template <CacheFileKey     KeyT,
+                  CacheFileValue   ValueT,
+                  CacheFileOptions OptsT,
+                  istl::CharType   CharT,
+                  Allocator        AllocT>
         struct storage_gate {
             using key_type     = KeyT;
             using value_type   = ValueT;

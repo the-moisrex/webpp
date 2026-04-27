@@ -9,10 +9,10 @@ namespace webpp {
 
     // we're using typename instead of StorageGate to fix an IDE error while the compiler is happy
     template </* StorageGate */ typename ParentGate = null_gate>
-    struct memory_gate {
+    struct [[nodiscard]] memory_gate {
         using parent_gate_type = ParentGate;
 
-        template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, Allocator AllocT>
+        template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, istl::CharType CharT, Allocator AllocT>
         struct storage_gate {
             using value_pack_type  = stl::pair<OptsT, ValueT>;
             using map_type         = stl::map<KeyT, value_pack_type, stl::less<KeyT>, AllocT>; // todo

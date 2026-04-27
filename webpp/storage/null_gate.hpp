@@ -6,11 +6,13 @@
 namespace webpp {
 
     struct null_gate {
-        template <typename KeyT, typename ValueT, typename OptsT>
-        struct storage_gate {
-            using key_type     = KeyT;
-            using value_type   = ValueT;
-            using options_type = OptsT;
+        template <typename KeyT, typename ValueT, typename OptsT, typename CharT, typename AllocT>
+        struct [[nodiscard]] storage_gate {
+            using key_type       = KeyT;
+            using value_type     = ValueT;
+            using options_type   = OptsT;
+            using char_type      = CharT;
+            using allocator_type = AllocT;
 
             // we should be using cache_tuple, but we don't want to create a circular dependency by importing
             // cache_concepts.hpp file here.

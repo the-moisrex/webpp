@@ -112,8 +112,8 @@ namespace webpp {
 
     template <typename T>
     concept StorageGate = requires {
-        typename T::template storage_gate<int, int, int>;
-        requires details::StorageGateType<typename T::template storage_gate<int, int, int>>;
+        typename T::template storage_gate<int, int, int, char, std::allocator<char>>;
+        requires details::StorageGateType<typename T::template storage_gate<int, int, int, char, std::allocator<char>>>;
     };
 
 

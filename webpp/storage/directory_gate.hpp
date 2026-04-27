@@ -20,11 +20,11 @@ namespace webpp {
      * This class will help the cache to store data in a directory;
      * Each file is a cache of its own.
      */
-    struct directory_gate {
+    struct [[nodiscard]] directory_gate {
         static constexpr stl::string_view DIR_GATE_CAT           = "DirGate";
         static constexpr stl::string_view directory_gate_version = "1.0.0";
 
-        struct gate_options {
+        struct [[nodiscard]] gate_options {
             stl::string extension      = ".cache";
             bool        encode_options = true; // todo: see if you need to remove this
             bool        hash_keys      = true;
@@ -32,10 +32,10 @@ namespace webpp {
         };
 
         template <typename StorageGateType>
-        struct file_iterator;
+        struct [[nodiscard]] file_iterator;
 
         template <typename StorageGateType>
-        struct file_iterator {
+        struct [[nodiscard]] file_iterator {
             using dir_iter_type     = stl::filesystem::directory_iterator;
             using storage_gate_type = StorageGateType;
             using data_key_type     = typename storage_gate_type::key_type;
@@ -137,7 +137,7 @@ namespace webpp {
                   CacheFileOptions OptsT,
                   istl::CharType   CharT,
                   Allocator        AllocT>
-        struct storage_gate {
+        struct [[nodiscard]] storage_gate {
             using path_type        = stl::filesystem::path;
             using key_type         = KeyT;
             using value_type       = ValueT;
