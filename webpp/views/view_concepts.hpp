@@ -3,12 +3,9 @@
 #ifndef WEBPP_VIEW_CONCEPTS_HPP
 #define WEBPP_VIEW_CONCEPTS_HPP
 
-#include "../convert/lexical_cast.hpp"
 #include "../std/collection.hpp"
 #include "../std/string.hpp"
-#include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
-#include "../std/tuple.hpp"
 
 namespace webpp::views {
 
@@ -31,15 +28,11 @@ namespace webpp::views {
      */
     template <typename T>
     concept ViewManager = requires(T man) {
-        typename T::traits_type;
         typename T::string_type;
         typename T::string_view_type;
 
-        requires Traits<typename T::traits_type>;
         requires requires(typename T::string_view_type str) {
-            {
-                man.view(str)
-            } -> istl::String;
+            { man.view(str) } -> istl::String;
         };
     };
 
@@ -52,8 +45,6 @@ namespace webpp::views {
         typename T::data_type;
         typename T::string_type;
         typename T::string_view_type;
-        typename T::traits_type;
-        requires Traits<typename T::traits_type>;
 
         requires stl::movable<T>;
         requires stl::copyable<T>;
@@ -63,9 +54,7 @@ namespace webpp::views {
         requires requires(typename T::string_type& out, typename T::string_view_type sv, typename T::data_type dt) {
             view.scheme(sv); // reparse, and change the scheme
             view.render(out, dt);
-            {
-                view.has_scheme()
-            } -> stl::same_as<bool>;
+            { view.has_scheme() } -> stl::same_as<bool>;
         };
     };
 

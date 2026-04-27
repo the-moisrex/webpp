@@ -52,7 +52,7 @@ namespace webpp::views {
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         using file_data_type     = typename file_view_type::data_type;
-        using cache_type         = lru_cache<path_type, view_types, memory_gate<null_gate>, CharT, AllocT>;
+        using cache_type         = lru_cache<path_type, view_types, memory_gate<null_gate>>;
 
         static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
 
@@ -64,9 +64,10 @@ namespace webpp::views {
         // the root directories where we can find the views
         view_roots_type view_roots; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
-        explicit constexpr view_manager(stl::size_t cache_limit = default_cache_limit) noexcept
+        explicit constexpr view_manager(stl::size_t    cache_limit = default_cache_limit,
+                                        allocator_type inp_alloc   = alloc) noexcept
           : cached_views{cache_limit},
-            view_roots{get_alloc_for<view_roots_type>(*this)} {}
+            view_roots{inp_alloc} {}
 
 
       private:
@@ -201,7 +202,7 @@ namespace webpp::views {
             return stl::nullopt;
         }
 
-        [[nodiscard]] auto const& get_allocator() const noexcept {
+        [[nodiscard]] decltype(auto) get_allocator() const noexcept {
             return view_roots.get_allocator();
         }
 
@@ -219,7 +220,7 @@ namespace webpp::views {
 
         template <typename VT>
         [[nodiscard]] auto* get_view(path_type const& file) {
-            static view_types default_view{stl::in_place_type<VT>, *this};
+            static view_types default_view{stl::in_place_type<VT>, get_allocator()};
             return cached_views.emplace_get_ptr(file, default_view);
         }
 
@@ -279,7 +280,7 @@ namespace webpp::views {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr string_type file(StrT&& file_request) {
-            string_type out{get_alloc_for<string_type>(*this)};
+            string_type out{get_allocator()};
             view_to<file_view_type>(out, stl::forward<StrT>(file_request));
             return out;
         }
