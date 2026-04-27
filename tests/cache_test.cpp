@@ -27,7 +27,7 @@ TEST(Cache, LRUCacheTest) {
     cache.set("one", "old value");
     EXPECT_EQ("old value", cache.get("one", ""));
 
-    lru_cache<int> cache2{trs, 3};
+    lru_cache<int> cache2{3};
     cache2.set(1, "hello");
     cache2.set(1, "hello 2");
     EXPECT_EQ("hello 2", cache2.get(1).value());

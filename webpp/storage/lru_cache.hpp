@@ -11,12 +11,13 @@ namespace webpp {
      * LRU Cache (Least Recently Used Cache)
      */
     struct [[nodiscard]] lru_strategy {
-        template <CacheKey KeyT, CacheValue ValueT, StorageGate SG>
+        template <CacheKey KeyT, CacheValue ValueT, StorageGate SG, istl::CharType CharT, Allocator AllocT>
         struct strategy {
-            using key_type          = KeyT;
-            using value_type        = ValueT;
-            using storage_gate_type = typename SG::template storage_gate<key_type, value_type, stl::size_t>;
-            using bundle_type       = typename storage_gate_type::bundle_type;
+            using key_type   = KeyT;
+            using value_type = ValueT;
+            using storage_gate_type =
+              typename SG::template storage_gate<key_type, value_type, stl::size_t, CharT, AllocT>;
+            using bundle_type = typename storage_gate_type::bundle_type;
 
 
             static constexpr stl::size_t default_max_size = 1024U;
@@ -45,18 +46,10 @@ namespace webpp {
             }
 
           public:
-            template <EnabledTraits ET, typename... Args>
-                requires(EnabledTraits<ET> && !stl::same_as<stl::remove_cvref_t<ET>, strategy>)
-            explicit constexpr strategy(ET&&              etraits,
-                                        stl::size_t const max_size_value = default_max_size,
-                                        Args&&... args) noexcept
+            template <typename... Args>
+            explicit constexpr strategy(stl::size_t const max_size_value = default_max_size, Args&&... args) noexcept
               : max_size{max_size_value},
-                gate{stl::forward<ET>(etraits), stl::forward<Args>(args)...} {}
-
-            explicit constexpr strategy(storage_gate_type&& input_gate,
-                                        stl::size_t const   max_size_value = default_max_size) noexcept
-              : max_size{max_size_value},
-                gate{stl::move(input_gate)} {}
+                gate{stl::forward<Args>(args)...} {}
 
             template <typename K, typename V>
                 requires(stl::convertible_to<K, key_type> && // it's a key

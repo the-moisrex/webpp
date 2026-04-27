@@ -1,6 +1,7 @@
 #ifndef WEBPP_STORAGE_MEMORY_GATE_HPP
 #define WEBPP_STORAGE_MEMORY_GATE_HPP
 
+#include "./cache_concepts.hpp"
 #include "./null_gate.hpp"
 
 #include <map>
@@ -13,9 +14,11 @@ namespace webpp {
         using parent_gate_type = ParentGate;
 
         template <CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT, istl::CharType CharT, Allocator AllocT>
-        struct storage_gate {
+        struct [[nodiscard]] storage_gate {
             using value_pack_type  = stl::pair<OptsT, ValueT>;
-            using map_type         = stl::map<KeyT, value_pack_type, stl::less<KeyT>, AllocT>; // todo
+            using map_value_type   = std::pair<KeyT const, value_pack_type>;
+            using map_alloc        = typename std::allocator_traits<AllocT>::template rebind_alloc<map_value_type>;
+            using map_type         = std::map<KeyT, value_pack_type, std::less<KeyT>, map_alloc>;
             using mapped_type      = typename map_type::mapped_type;
             using key_type         = typename map_type::key_type;
             using value_type       = typename map_type::mapped_type::second_type;
@@ -25,7 +28,7 @@ namespace webpp {
             using value_ptr_type   = stl::add_pointer_t<value_type>;
             using options_ptr_type = stl::add_pointer_t<options_type>;
             using bundle_ptr_type  = cache_tuple<key_ptr_type, value_ptr_type, options_ptr_type>;
-            using allocator_type   = AllocT;
+            using allocator_type   = map_alloc;
 
             explicit constexpr storage_gate(allocator_type inp_alloc = alloc) : map{inp_alloc} {}
 
