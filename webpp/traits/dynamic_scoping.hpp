@@ -193,11 +193,16 @@ namespace webpp {
     template <dynamically_scoped T>
     struct [[nodiscard]] dynamic_scope {
         using binding = typename T::binding;
-        using pointer = T*;
+        using pointer = typename binding::pointer;
+        using type    = typename binding::type;
 
         explicit constexpr dynamic_scope(pointer inp_ptr) noexcept : prev{binding::exchange(inp_ptr)} {}
 
-        explicit constexpr dynamic_scope(T& ref) noexcept : dynamic_scope{std::addressof(ref)} {}
+        explicit constexpr dynamic_scope(type& ref) noexcept : dynamic_scope{std::addressof(ref)} {}
+
+        explicit constexpr dynamic_scope(T const&, pointer inp_ptr) noexcept : dynamic_scope{inp_ptr} {}
+
+        explicit constexpr dynamic_scope(T const&, type& ref) noexcept : dynamic_scope{ref} {}
 
         dynamic_scope(dynamic_scope const& obj)                = delete;
         dynamic_scope(dynamic_scope&& obj) noexcept            = default;
@@ -212,11 +217,11 @@ namespace webpp {
         pointer prev = nullptr;
     };
 
-    template <typename T>
-    dynamic_scope(T*) -> dynamic_scope<std::remove_const_t<T>>;
+    template <typename T, typename... Args>
+    dynamic_scope(T*, Args&&...) -> dynamic_scope<std::remove_const_t<T>>;
 
-    template <typename T>
-    dynamic_scope(T&) -> dynamic_scope<std::remove_const_t<T>>;
+    template <typename T, typename... Args>
+    dynamic_scope(T&, Args&&...) -> dynamic_scope<std::remove_const_t<T>>;
 
 } // namespace webpp
 

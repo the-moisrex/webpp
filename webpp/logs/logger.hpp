@@ -111,8 +111,6 @@ namespace webpp {
             }
         }
 
-        // todo: add std::exception and std::error_code
-
         // NOLINTNEXTLINE(*-macro-usage)
 #define WEBPP_LOGGER_SHORTCUT(NAME)                        \
     template <typename... Args>                            \

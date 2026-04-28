@@ -30,6 +30,8 @@ TEST(LoggerTests, STDLoggerTeat) {
     output = std::tmpfile();
 
     basic_logger<std_logger<output_getter>> cur_logger;
+    std_logger<output_getter>               ccl;
+    dynamic_scope                           scope{cur_logger, ccl};
 
     cur_logger.error("one");
     cur_logger.warn("one");
