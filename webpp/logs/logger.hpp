@@ -1,9 +1,13 @@
 #ifndef WEBPP_LOGGER_DEFAULT_HPP
 #define WEBPP_LOGGER_DEFAULT_HPP
 
+#include "../std/tag_invoke.hpp"
 #include "../traits/dynamic_scoping.hpp"
 #include "./log_concepts.hpp"
 #include "./std_logger.hpp"
+
+#include <exception>
+#include <system_error>
 
 namespace webpp {
 
@@ -22,6 +26,38 @@ namespace webpp {
     using default_static_logger = stderr_logger;
 
     /**
+     * Loggable CPO
+     */
+    static constexpr struct [[nodiscard]] loggable_tag {
+        template <typename T>
+            requires stl::tag_invocable<loggable_tag, T>
+        constexpr decltype(auto) operator()(T const& obj) const noexcept(stl::nothrow_tag_invocable<loggable_tag, T>) {
+            return stl::tag_invoke(*this, obj);
+        }
+
+    } loggable;
+
+    // std::error_code
+    [[nodiscard]] constexpr auto tag_invoke(loggable_tag, stl::error_code const err) {
+        return err.message();
+    }
+
+    // exception
+    [[nodiscard]] constexpr auto tag_invoke(loggable_tag, stl::exception const& err) {
+        return err.what();
+    }
+
+    // to_string(obj)
+    template <typename T>
+        requires requires(T obj) { to_string(obj); }
+    [[nodiscard]] constexpr auto tag_invoke(loggable_tag, T const& err) {
+        return to_string(err);
+    }
+
+    template <typename T>
+    concept Loggable = stl::tag_invocable<loggable_tag, T>;
+
+    /**
      * Logger Tag.
      * This logger points to the default logger type.
      * This is a Locally Bound Global.
@@ -37,7 +73,6 @@ namespace webpp {
         static constexpr global_binding<logger_type> self{};
 
       public:
-        template <typename... Args>
         void log(log_level const            level,
                  stl::predicate auto const& pred,
                  stl::string_view const     category,
@@ -47,21 +82,33 @@ namespace webpp {
             }
         }
 
-        template <typename... Args>
         void log(log_level const level, stl::predicate auto const& pred, stl::string_view const details) const {
             if (pred()) {
                 self->log(level, stl::string_view{"Default"}, details);
             }
         }
 
-        template <typename... Args>
         void log(log_level const level, stl::string_view const details) const {
             self->log(level, stl::string_view{"Default"}, details);
         }
 
-        template <typename... Args>
         void log(log_level const level, stl::string_view const category, stl::string_view const details) const {
             self->log(level, category, details);
+        }
+
+        template <typename Arg>
+        void log(log_level const        level,
+                 stl::string_view const category,
+                 stl::string_view const details,
+                 Arg const&             arg) const {
+            if constexpr (requires(logger_type logger) { logger.log(level, category, details, arg); }) {
+                return self->log(level, category, details, arg);
+            } else if constexpr (Loggable<Arg>) {
+                auto str = loggable(arg);
+                return self->log(level, category, details, str);
+            } else {
+                static_assert_false(Arg, "We don't know how to log this type.");
+            }
         }
 
         // todo: add std::exception and std::error_code
