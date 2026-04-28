@@ -4,7 +4,6 @@
 #include "../convert/lexical_cast.hpp"
 #include "../crypto/base64.hpp"
 #include "../logs/logger.hpp"
-#include "../memory/object.hpp"
 #include "../storage/file.hpp"
 #include "./cache_concepts.hpp"
 
@@ -167,7 +166,7 @@ namespace webpp {
             string_type serialize_opts(options_type const& opts) {
                 auto opts_str = lexical::cast<string_type>(opts, get_allocator());
                 if (gate_opts.encode_options) {
-                    base64::encode(opts_str, opts_str);
+                    base64::encode(stl::string_view{opts_str}, opts_str);
                 }
                 return opts_str;
             }
@@ -300,7 +299,7 @@ namespace webpp {
                 }
             }
 
-            storage_gate(path_type cache_dir) : dir{stl::move(cache_dir)} {
+            explicit storage_gate(path_type cache_dir) : dir{stl::move(cache_dir)} {
                 if (dir.empty()) {
                     set_temp_dir();
                 }
@@ -352,7 +351,7 @@ namespace webpp {
             }
 
             stl::optional<bundle_type> get_file(path_type const& filepath) {
-                auto result{get_allocator()};
+                string_type result{get_allocator()};
                 if (file::read_to(filepath, result)) {
                     return deserialize_file(result);
                 }

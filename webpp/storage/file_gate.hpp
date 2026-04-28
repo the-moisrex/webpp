@@ -28,11 +28,30 @@ namespace webpp {
           private:
             path_type cache_dir;
 
+            static constexpr bool empty_default_options =
+              stl::is_empty_v<options_type> && stl::default_initializable<options_type>;
+
             path_type get_path(key_type const& key) const {
                 // Using a hash of the string representation to ensure filesystem-safe filenames
                 auto const str_key  = lexical::cast<stl::string>(key);
                 auto const hash_val = stl::hash<stl::string>{}(str_key);
                 return cache_dir / stl::to_string(hash_val);
+            }
+
+            stl::string serialize_options([[maybe_unused]] options_type const& opts) const {
+                if constexpr (empty_default_options) {
+                    return {};
+                } else {
+                    return lexical::cast<stl::string>(opts);
+                }
+            }
+
+            options_type deserialize_options([[maybe_unused]] stl::string const& opts) const {
+                if constexpr (empty_default_options) {
+                    return {};
+                } else {
+                    return lexical::cast<options_type>(opts);
+                }
             }
 
           public:
@@ -78,7 +97,7 @@ namespace webpp {
 
                 return bundle_type{.key     = stl::forward<K>(key),
                                    .value   = lexical::cast<value_type>(val_str),
-                                   .options = lexical::cast<options_type>(opt_str)};
+                                   .options = deserialize_options(opt_str)};
             }
 
             template <typename K, typename V>
@@ -87,7 +106,7 @@ namespace webpp {
                 stl::ofstream file(filepath, stl::ios::binary | stl::ios::trunc);
                 if (file) {
                     file << lexical::cast<stl::string>(stl::forward<K>(key)) << '\n'
-                         << lexical::cast<stl::string>(opts) << '\n'
+                         << serialize_options(opts) << '\n'
                          << lexical::cast<stl::string>(stl::forward<V>(value));
                 }
             }
@@ -134,7 +153,7 @@ namespace webpp {
 
                     bundle_type bundle{.key     = lexical::cast<key_type>(key_str),
                                        .value   = lexical::cast<value_type>(val_str),
-                                       .options = lexical::cast<options_type>(opt_str)};
+                                       .options = deserialize_options(opt_str)};
 
                     if (predicate(bundle)) {
                         stl::filesystem::remove(entry.path(), err);
