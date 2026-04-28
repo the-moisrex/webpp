@@ -3,13 +3,13 @@
 #ifndef WEBPP_SPDLOG_LOGGER_HPP
 #define WEBPP_SPDLOG_LOGGER_HPP
 
-#include <spdlog/common.h>
-#include <utility>
 #if __has_include(<spdlog/spdlog.h>)
 #    define WEBPP_SPDLOG 1
-#    include "../std/string_view.hpp"
 
+#    include <cassert>
 #    include <memory>
+#    include <string_view>
+#    include <utility>
 #    include <version>
 
 #    if defined(__cpp_lib_format) && !defined(SPDLOG_FMT_EXTERNAL) && !defined(SPDLOG_USE_STD_FORMAT)
@@ -18,7 +18,7 @@
 
 #    include "./log_concepts.hpp"
 
-#    include <cassert>
+#    include <spdlog/common.h>
 #    include <spdlog/spdlog.h>
 #endif
 
