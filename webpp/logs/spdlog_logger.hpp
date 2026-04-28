@@ -6,7 +6,6 @@
 #if __has_include(<spdlog/spdlog.h>)
 #    define WEBPP_SPDLOG 1
 
-#    include <cassert>
 #    include <memory>
 #    include <string_view>
 #    include <utility>
@@ -28,7 +27,10 @@ namespace webpp {
 
     [[nodiscard]] static constexpr spdlog::level::level_enum to_spdlog_log_level(log_level const level) noexcept {
         using spdlog::level::level_enum;
-        assert(stl::to_underlying(log_level::off) == stl::to_underlying(level_enum::off));
+        // if these asserts fail, we have changed the implementation of log_level, which now we have to change
+        // implementaiton here as well
+        static_assert(stl::to_underlying(log_level::off) == stl::to_underlying(level_enum::off));
+        static_assert(stl::to_underlying(log_level::trace) == stl::to_underlying(level_enum::trace));
         return static_cast<level_enum>(level);
         // switch (level) {
         //     case log_level::trace: return level_enum::trace;
