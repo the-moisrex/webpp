@@ -8,6 +8,12 @@
 #    include "../std/string_view.hpp"
 
 #    include <memory>
+#    include <version>
+
+#    if defined(__cpp_lib_format) && !defined(SPDLOG_FMT_EXTERNAL) && !defined(SPDLOG_USE_STD_FORMAT)
+#        define SPDLOG_USE_STD_FORMAT 1
+#    endif
+
 #    include <spdlog/spdlog.h>
 #endif
 

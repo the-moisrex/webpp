@@ -36,7 +36,7 @@ namespace webpp {
         static void log(log_level const        level,
                         stl::string_view const category,
                         stl::string_view const details,
-                        stl::string_view       more_details) noexcept {
+                        stl::string_view const more_details) noexcept {
 #ifdef __cpp_lib_print
             std::print(stream_getter(), "[{}, {}]: {}. {}\n", to_string(level), category, details, more_details);
 #elif defined(WEBPP_FMT_LIB)
