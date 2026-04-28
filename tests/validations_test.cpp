@@ -2,7 +2,9 @@
 #include "../webpp/strings/charset.hpp"
 #include "../webpp/traits/std_traits.hpp"
 #include "../webpp/validators/validators.hpp"
-#include "common/test.hpp"
+#include "./common/test.hpp"
+
+#include <map>
 
 
 using namespace webpp::ascii::is;

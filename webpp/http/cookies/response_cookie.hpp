@@ -15,6 +15,7 @@
 #include "cookie.hpp"
 
 #include <iomanip>
+#include <unordered_map>
 
 namespace webpp::http {
 
