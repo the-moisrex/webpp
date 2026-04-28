@@ -171,12 +171,12 @@ namespace webpp::views {
               public:
                 template <typename StrT, typename T>
                     requires(istl::StringifiableOf<string_type, StrT>)
-                constexpr variable(allocator_type const& inp_alloc, StrT&& input_key, T&& input_value)
+                constexpr variable(StrT&& input_key, T&& input_value, allocator_type const& inp_alloc = alloc)
                   : variant_type{convert(stl::forward<T>(input_value), inp_alloc)},
                     key_value{istl::stringify_of<string_type>(stl::forward<StrT>(input_key), inp_alloc)} {}
 
                 template <typename StrT, typename T>
-                constexpr variable(allocator_type const& inp_alloc, stl::pair<StrT, T> input)
+                explicit constexpr variable(stl::pair<StrT, T> input, allocator_type const& inp_alloc = alloc)
                   : variant_type{convert(stl::move(input.second), inp_alloc)},
                     key_value{istl::stringify_of<string_type>(stl::move(input.first), inp_alloc)} {}
 

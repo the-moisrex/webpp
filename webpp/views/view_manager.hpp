@@ -257,37 +257,35 @@ namespace webpp::views {
         /**
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) {
+        [[nodiscard]] constexpr auto mustache(string_view_type const file_request, mustache_data_type const& data) {
             string_type out{get_allocator()};
-            view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
+            view_to<mustache_view_type>(out, file_request, data);
             return out;
         }
 
-        template <istl::StringViewifiable StrT, typename... StrT2, typename... DataType>
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request, stl::pair<StrT2, DataType>... data) {
-            return mustache<StrT>(stl::forward<StrT>(file_request),
-                                  view::data_view_caster<mustache_data_type>(*this, stl::move(data)...));
+        template <typename... StrT2, typename... DataType>
+        [[nodiscard]] constexpr auto mustache(string_view_type const file_request, stl::pair<StrT2, DataType>... data) {
+            return mustache<string_view_type>(file_request,
+                                              view::data_view_caster<mustache_data_type>(*this, stl::move(data)...));
         }
 
-        template <istl::StringViewifiable StrT, typename... DataType>
+        template <typename... DataType>
             requires(
               !(sizeof...(DataType) == 1 && (stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...)))
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request, DataType&&... data) {
-            return mustache<StrT>(stl::forward<StrT>(file_request),
-                                  view::data_view_caster<mustache_data_type>(*this, stl::forward<DataType>(data)...));
+        [[nodiscard]] constexpr auto mustache(string_view_type const file_request, DataType&&... data) {
+            return mustache<string_view_type>(
+              file_request,
+              view::data_view_caster<mustache_data_type>(*this, stl::forward<DataType>(data)...));
         }
 
-        template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr string_type file(StrT&& file_request) {
+        [[nodiscard]] constexpr string_type file(string_view_type const file_request) {
             string_type out{get_allocator()};
-            view_to<file_view_type>(out, stl::forward<StrT>(file_request));
+            view_to<file_view_type>(out, file_request);
             return out;
         }
 
-        template <istl::StringViewifiable StrT = string_view_type>
-        [[nodiscard]] auto view(StrT&& file_request) {
-            return view(stl::forward<StrT>(file_request), istl::nothing_type{});
+        [[nodiscard]] auto view(string_view_type const file_request) {
+            return view(file_request, istl::nothing_type{});
         }
 
         /**
