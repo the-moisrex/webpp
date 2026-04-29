@@ -28,16 +28,26 @@ namespace webpp {
     template <typename From>
     implicitly_explicit_convert(From&&) -> implicitly_explicit_convert<From&&>;
 
-    /*
-     * Use this operator for example on string_view to like `string = +strv_obj` to automatically use the explicit
-     * constructor of the string.
-     */
-    template <typename T>
-        requires(!requires(T&& obj) { +std::forward<T>(obj); }) &&
-                (stl::is_class_v<stl::remove_cvref_t<T>> || stl::is_union_v<stl::remove_cvref_t<T>>)
-    constexpr auto operator+(T&& obj) noexcept {
-        return implicitly_explicit_convert<T&&>{std::forward<T>(obj)};
-    }
+    // template <typename T>
+    // concept has_proxy_operators = requires(T obj) {
+    //     enable_proxy_operators(obj);
+    //     // requires enable_proxy_operators(obj);
+    // };
+
+    // /*
+    //  * Use this operator for example on string_view to like `string = +strv_obj` to automatically use the explicit
+    //  * constructor of the string.
+    //  */
+    // template <typename T>
+    //     requires has_proxy_operators<T>
+    // constexpr auto operator+(T&& obj) noexcept {
+    //     using type = stl::remove_cvref_t<T>;
+    //     if constexpr (stl::is_enum_v<type>) {
+    //         return stl::to_underlying(obj);
+    //     } else {
+    //         return implicitly_explicit_convert<T&&>{std::forward<T>(obj)};
+    //     }
+    // }
 
 } // namespace webpp
 
