@@ -3,6 +3,7 @@
 #include "../webpp/crypto/base64.hpp"
 #include "../webpp/crypto/base64_url.hpp"
 #include "../webpp/crypto/gzip.hpp"
+#include "../webpp/std/utility.hpp"
 #include "common/test.hpp"
 
 
@@ -18,8 +19,8 @@ TEST(Crypto, GZip) {
 TEST(Crypto, Base64) {
     std::string orig = "encode me up";
     std::string enc, dec;
-    base64::encode(orig, enc);
-    EXPECT_TRUE(base64::decode(enc, dec));
+    base64::encode(+orig, enc);
+    EXPECT_TRUE(base64::decode(+enc, dec));
     EXPECT_EQ(orig, dec);
 }
 
@@ -27,8 +28,8 @@ TEST(Crypto, Base64URL) {
     // well, actually this is not the best test!
     std::string orig = "https://tools.ietf.org/html/rfc4648#section-5";
     std::string enc, dec;
-    base64::url_encode(orig, enc);
-    EXPECT_TRUE(base64::url_decode(enc, dec));
+    base64::url_encode(+orig, enc);
+    EXPECT_TRUE(base64::url_decode(+enc, dec));
     EXPECT_EQ(orig, dec);
 }
 
@@ -36,8 +37,8 @@ TEST(Crypto, Base64URLConst) {
     // well, actually this is not the best test!
     std::string const orig = "https://tools.ietf.org/html/rfc4648#section-5";
     std::string       enc, dec;
-    base64::url_encode(orig, enc);
-    EXPECT_TRUE(base64::url_decode(enc, dec));
+    base64::url_encode(+orig, enc);
+    EXPECT_TRUE(base64::url_decode(+enc, dec));
     EXPECT_EQ(orig, dec);
 }
 

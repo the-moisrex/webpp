@@ -13,8 +13,7 @@ namespace webpp::base64 {
     /**
      * Encodes the input binary data in base64.
      */
-    template <typename CharT>
-    void encode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+    void encode(stl::string_view const input, istl::String auto& output) {
         output.resize(modp_b64::encode_len(input.size())); // makes room for null byte
 
         // modp_b64::encode_len() returns at least 1, so output[0] is safe to use.
@@ -28,8 +27,7 @@ namespace webpp::base64 {
      * The output string is only modified if successful.
      * The decoding can be done in-place.
      */
-    template <typename CharT>
-    [[nodiscard]] bool decode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+    [[nodiscard]] bool decode(stl::string_view const input, istl::String auto& output) {
         using str_t = stl::remove_pointer_t<stl::remove_cvref_t<decltype(output)>>;
         str_t temp(output.get_allocator());
         temp.resize(modp_b64::decode_len(input.size()));

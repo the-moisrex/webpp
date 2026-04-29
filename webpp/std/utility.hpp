@@ -37,7 +37,6 @@ namespace webpp {
         return implicitly_explicit_convert<T&&>{std::forward<T>(obj)};
     }
 
-
 } // namespace webpp
 
 namespace webpp::istl {

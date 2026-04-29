@@ -10,12 +10,12 @@
 namespace webpp::base64 {
 
 
-    enum struct url_encode_policy {
+    enum struct [[nodiscard]] url_encode_policy : stl::uint8_t {
         include_padding, // include the trailing padding in the output, when necessary.
         omit_padding     // remove the trailing padding from the output.
     };
 
-    enum struct url_decode_policy {
+    enum struct [[nodiscard]] url_decode_policy : stl::uint8_t {
         require_padding, // require inputs contain trailing padding if non-aligned.
         ignore_padding,  // accept inputs regardless of whether they have the correct padding.
         disallow_padding // reject inputs if they contain any trailing padding.
@@ -36,8 +36,8 @@ namespace webpp::base64 {
      * The |policy| defines whether padding should be included or omitted from the
      * encoded |*output|. |input| and |*output| may reference the same storage.
      */
-    template <url_encode_policy Policy = url_encode_policy::include_padding, typename CharT = char>
-    static void url_encode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+    template <url_encode_policy Policy = url_encode_policy::include_padding>
+    static void url_encode(stl::string_view const input, istl::String auto& output) {
         base64::encode(input, output);
 
         stl::replace(output.begin(), output.end(), '+', '-');
@@ -61,8 +61,8 @@ namespace webpp::base64 {
      * The |policy| defines whether padding will be required, ignored or disallowed
      * altogether. |input| and |*output| may reference the same storage.
      */
-    template <url_decode_policy Policy = url_decode_policy::require_padding, typename CharT = char>
-    [[nodiscard]] bool url_decode(stl::basic_string_view<CharT> const input, istl::String auto& output) {
+    template <url_decode_policy Policy = url_decode_policy::require_padding>
+    [[nodiscard]] bool url_decode(stl::string_view const input, istl::String auto& output) {
         using str_t = stl::remove_cvref_t<decltype(output)>;
         using str_v = stl::remove_cvref_t<decltype(input)>;
 

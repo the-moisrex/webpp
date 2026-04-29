@@ -431,7 +431,7 @@ namespace webpp {
          */
         template <typename T>
         bool set_option(int const level, int const optname, T const& val) noexcept {
-            return set_option(level, optname, static_cast<void*>(&val), sizeof(T));
+            return set_option(level, optname, static_cast<void const*>(&val), sizeof(T));
         }
 
         bool set_non_blocking(bool on = true) noexcept {
