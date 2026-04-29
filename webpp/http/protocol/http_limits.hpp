@@ -23,6 +23,12 @@ namespace webpp::http {
 
     /// Maximum number of Content-Encoding values
     static constexpr std::size_t max_supported_content_encoding_values = 10U;
+
+    /// Max header name length
+    /// In practice, a header name longer than 50-100 characters is almost certainly a custom header, a tracking token
+    /// mistakenly put in the name field, or a malicious payload attempting a buffer overflow.
+    static constexpr std::size_t max_header_name_length = 50U;
+
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_PROTOCOL_LIMITS_HPP

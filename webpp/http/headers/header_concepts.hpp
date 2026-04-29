@@ -13,6 +13,8 @@ namespace webpp::http {
 
     using header_id_type = stl::uint32_t;
 
+    static constexpr header_id_type invalid_header_id = 0;
+
     /// Get the header name
     template <typename H>
         requires requires { H::header_name; }
@@ -64,6 +66,10 @@ namespace webpp::http {
         requires(details::has_header_name<H> && !requires { H::header_id; })
     [[nodiscard]] consteval header_id_type header_id(H const& header) noexcept {
         return ci_hash(header_name(header));
+    }
+
+    [[nodiscard]] static constexpr header_id_type header_id(stl::string_view const name) noexcept {
+        return ci_hash(name);
     }
 
     /**

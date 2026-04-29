@@ -187,7 +187,7 @@ namespace webpp::http {
         constexpr ~basic_request() = default;
 
         [[nodiscard]] constexpr string_view_type target() const noexcept {
-            return +requested_target;
+            return string_view_type{requested_target};
         }
 
         constexpr basic_request& target(string_type inp_target) {
@@ -200,9 +200,9 @@ namespace webpp::http {
             return *this;
         }
 
-        [[nodiscard]] constexpr stl::string_view method_string() const noexcept {
+        [[nodiscard]] constexpr string_view_type method_string() const noexcept {
             if (requested_method != verb::unknown) [[unlikely]] {
-                return +requested_method_str;
+                return string_view_type{requested_method_str};
             }
             return to_string(requested_method);
         }
@@ -235,7 +235,7 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr scheme_type scheme() const noexcept {
-            return +requested_scheme;
+            return scheme_type{requested_scheme};
         }
     };
 

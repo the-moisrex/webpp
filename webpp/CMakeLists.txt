@@ -219,6 +219,7 @@ set(ALL_SOURCES_SHORT
         http/bodies/string.hpp
 
         cgi/cgi.hpp
+        cgi/cgi_headers.hpp
         cgi/cgi_request.hpp
         cgi/cgi_request_body_communicator.hpp
 
