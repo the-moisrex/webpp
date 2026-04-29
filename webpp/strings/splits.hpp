@@ -10,6 +10,7 @@
 #include "strings_concepts.hpp"
 
 #include <cassert>
+#include <vector>
 
 namespace webpp::strings {
 
@@ -76,8 +77,8 @@ namespace webpp::strings {
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
                     finish_pos = stl::min(spltr->string_size(), spltr->find(delim, finish_pos));
                 } else if constexpr (istl::StringViewifiable<DT>) {
-                    finish_pos = stl::min(spltr->string_size(),
-                                          spltr->find(istl::view_of<string_view_type>(delim), finish_pos));
+                    finish_pos =
+                      stl::min(spltr->string_size(), spltr->find(istl::view_of<string_view_type>(delim), finish_pos));
                     // todo: add array support
                     // todo: add functor support
                 } else {
@@ -164,8 +165,7 @@ namespace webpp::strings {
             requires(!istl::StringLike<StrV>)
         constexpr explicit splitter(StrV str_val, InpDelimT&&... delims_input) noexcept
           : beg{istl::view(stl::forward<StrV>(str_val)).data()},
-            endp{istl::view(stl::forward<StrV>(str_val)).data() +
-                 istl::view(stl::forward<StrV>(str_val)).size()},
+            endp{istl::view(stl::forward<StrV>(str_val)).data() + istl::view(stl::forward<StrV>(str_val)).size()},
             delims{stl::forward<InpDelimT>(delims_input)...} {}
 
         template <Delimiter... InpDelimT>

@@ -5,9 +5,6 @@
 #include "../webpp/memory/available_memory.hpp"
 #include "../webpp/std/memory_resource.hpp"
 #include "../webpp/std/string.hpp"
-#include "../webpp/traits/enable_traits.hpp"
-#include "../webpp/traits/std_pmr_traits.hpp"
-#include "../webpp/traits/std_traits.hpp"
 #include "common/test.hpp"
 
 #include <vector>
@@ -16,20 +13,15 @@ using namespace webpp;
 
 #ifdef __cpp_lib_polymorphic_allocator
 
-using Types = testing::Types<std_pmr_traits, std_traits>;
 
-template <class T>
-struct MemoryTest : testing::Test {};
 
-TYPED_TEST_SUITE(MemoryTest, Types);
-
-TYPED_TEST(MemoryTest, AvailableMemory) {
+TEST(MemoryTest, AvailableMemory) {
     EXPECT_TRUE(available_memory() > 0);
 }
 
-TYPED_TEST(MemoryTest, Concepts) {
+TEST(MemoryTest, Concepts) {
     class incomplete_class;
-    using alloc_type = traits::allocator_type_of<TypeParam, int>;
+    using alloc_type = stl::allocator<int>;
     using dync_type  = istl::dynamic<int, alloc_type>;
     static_assert(stl::is_copy_assignable_v<dync_type>, "It should be copyable");
     static_assert(stl::is_copy_constructible_v<dync_type>, "It should be copyable");
@@ -38,7 +30,7 @@ TYPED_TEST(MemoryTest, Concepts) {
     static_assert(istl::implicitly_default_constructible<dync_type>, "It should be constructible");
     static_assert(!istl::explicitly_default_constructible<dync_type>, "It should be constructible only implicitly");
 
-    using inc_alloc_type = traits::allocator_type_of<TypeParam, incomplete_class>;
+    using inc_alloc_type = stl::allocator<incomplete_class>;
     using inc_dync_type  = istl::dynamic<incomplete_class, inc_alloc_type>;
     static_assert(stl::is_copy_assignable_v<inc_dync_type>, "It should be copyable");
     static_assert(stl::is_copy_constructible_v<inc_dync_type>, "It should be copyable");
@@ -49,7 +41,7 @@ TYPED_TEST(MemoryTest, Concepts) {
 }
 
 
-/// todo: if we move this into TYPED_TEST, clang will be confused with a weird error
+/// todo: if we move this into TEST, clang will be confused with a weird error
 struct incomplete_type;
 
 struct complete_type {
@@ -61,7 +53,7 @@ struct incomplete_type {
     int val = 23;
 };
 
-TYPED_TEST(MemoryTest, DynamicType) {
+TEST(MemoryTest, DynamicType) {
     using istl::dynamic;
 
     EXPECT_TRUE((stl::uses_allocator_v<dynamic<int, stl::allocator<stl::byte>>, stl::allocator<stl::byte>>) );
@@ -111,18 +103,18 @@ TYPED_TEST(MemoryTest, DynamicType) {
     EXPECT_EQ(*d2, "hello world 2");
 
 
-    stl::allocator<incomplete_type> alloc;
-    dynamic<incomplete_type>        normal{alloc};
+    stl::allocator<incomplete_type> cur_alloc;
+    dynamic<incomplete_type>        normal{cur_alloc};
     EXPECT_EQ(normal->val, 23);
 
-    complete_type daddy{.baby = dynamic<incomplete_type>{alloc}};
+    complete_type daddy{.baby = dynamic<incomplete_type>{cur_alloc}};
     EXPECT_EQ(daddy.baby->val, 23);
     daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
     EXPECT_EQ(daddy.val, 23);
     EXPECT_EQ(daddy.baby->val, 24);
 }
 
-TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
+TEST(MemoryTest, DynamicTypeBasicTest) {
     using istl::dynamic;
     dynamic one{1};
     dynamic two{2};
@@ -146,7 +138,7 @@ TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
 
 #endif
 
-TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
+TEST(MemoryTest, PolymorphicTestForDynamicType) {
     using webpp::istl::dynamic;
 
     struct mother {
