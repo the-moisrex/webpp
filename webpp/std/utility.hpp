@@ -18,8 +18,8 @@ namespace webpp {
         From _ref;
 
         template <typename To>
+            requires(!stl::is_reference_v<To> && stl::constructible_from<To, From>)
         [[nodiscard]] explicit(false) constexpr operator To() const {
-            static_assert(!std::is_reference_v<To>, "Must not be a reference.");
             // The paranthesis here are the magic part
             return To(static_cast<From&&>(_ref));
         }
@@ -33,6 +33,8 @@ namespace webpp {
      * constructor of the string.
      */
     template <typename T>
+        requires(!requires(T&& obj) { +std::forward<T>(obj); }) &&
+                (stl::is_class_v<stl::remove_cvref_t<T>> || stl::is_union_v<stl::remove_cvref_t<T>>)
     constexpr auto operator+(T&& obj) noexcept {
         return implicitly_explicit_convert<T&&>{std::forward<T>(obj)};
     }
