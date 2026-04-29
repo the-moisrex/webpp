@@ -361,6 +361,15 @@ namespace testing {
         return {is_ok, file, line, expr, "", !is_ok ? serialize(value) : "", "", macro_name};
     }
 
+    inline assert_result make_explicit_assertion(
+      bool const             success,
+      std::string_view const file,
+      int const              line,
+      std::string_view const macro_name) {
+        registry::instance().asserted(success);
+        return {success, file, line, "", "", success ? "" : "Explicit failure", "", macro_name};
+    }
+
     template <typename A, typename B>
     inline assert_result make_float_assertion(
       A const&               lhs,
@@ -383,7 +392,7 @@ namespace testing {
             is_ok = left == right;
         } else {
             auto const diff      = std::fabs(left - right);
-            auto const scale     = (std::max)(float_type{1}, (std::max)(std::fabs(left), std::fabs(right)));
+            auto const scale     = (std::max) (float_type{1}, (std::max) (std::fabs(left), std::fabs(right)));
             auto const tolerance = std::numeric_limits<float_type>::epsilon() * scale * float_type{4};
             is_ok                = diff <= tolerance;
         }
@@ -391,24 +400,23 @@ namespace testing {
         registry::instance().asserted(is_ok);
         std::string extra;
         if (!is_ok) {
-            auto const diff      = std::fabs(left - right);
-            auto const scale     = (std::max)(float_type{1}, (std::max)(std::fabs(left), std::fabs(right)));
-            auto const tolerance = std::numeric_limits<float_type>::epsilon() * scale * float_type{4};
+            auto const         diff      = std::fabs(left - right);
+            auto const         scale     = (std::max) (float_type{1}, (std::max) (std::fabs(left), std::fabs(right)));
+            auto const         tolerance = std::numeric_limits<float_type>::epsilon() * scale * float_type{4};
             std::ostringstream ss;
             ss << "diff=" << diff << ", tolerance=" << tolerance;
             extra = ss.str();
         }
 
-        return {
-          is_ok,
-          file,
-          line,
-          exprA,
-          exprB,
-          !is_ok ? serialize(lhs) : "",
-          !is_ok ? serialize(rhs) : "",
-          macro_name,
-          std::move(extra)};
+        return {is_ok,
+                file,
+                line,
+                exprA,
+                exprB,
+                !is_ok ? serialize(lhs) : "",
+                !is_ok ? serialize(rhs) : "",
+                macro_name,
+                std::move(extra)};
     }
 
 #define EXPECT_EQ(a, b) \
@@ -419,16 +427,33 @@ namespace testing {
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_NE", ::testing::cmp_not_equal{}))
 #define ASSERT_NE(a, b) \
     (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_NE", ::testing::cmp_not_equal{}))
-#define EXPECT_STREQ(a, b) \
-    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_STREQ", ::testing::cmp_cstr_equal{}))
-#define ASSERT_STREQ(a, b) \
-    (::testing::make_binary_assertion((a), (b), __FILE__, __LINE__, #a, #b, "ASSERT_STREQ", ::testing::cmp_cstr_equal{}))
-#define EXPECT_FLOAT_EQ(a, b) \
-    (::testing::make_float_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_FLOAT_EQ"))
+#define EXPECT_STREQ(a, b)             \
+    (::testing::make_binary_assertion( \
+      (a),                             \
+      (b),                             \
+      __FILE__,                        \
+      __LINE__,                        \
+      #a,                              \
+      #b,                              \
+      "EXPECT_STREQ",                  \
+      ::testing::cmp_cstr_equal{}))
+#define ASSERT_STREQ(a, b)             \
+    (::testing::make_binary_assertion( \
+      (a),                             \
+      (b),                             \
+      __FILE__,                        \
+      __LINE__,                        \
+      #a,                              \
+      #b,                              \
+      "ASSERT_STREQ",                  \
+      ::testing::cmp_cstr_equal{}))
+#define EXPECT_FLOAT_EQ(a, b) (::testing::make_float_assertion((a), (b), __FILE__, __LINE__, #a, #b, "EXPECT_FLOAT_EQ"))
 #define EXPECT_TRUE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), true, __FILE__, __LINE__, #x, "EXPECT_TRUE"))
 #define ASSERT_TRUE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), true, __FILE__, __LINE__, #x, "ASSERT_TRUE"))
+#define FAIL()    (::testing::make_explicit_assertion(false, __FILE__, __LINE__, "FAIL"))
+#define SUCCEED() (::testing::make_explicit_assertion(true, __FILE__, __LINE__, "SUCCEED"))
 
 #define EXPECT_FALSE(x) \
     (::testing::make_unary_assertion(static_cast<bool>(x), false, __FILE__, __LINE__, #x, "EXPECT_FALSE"))

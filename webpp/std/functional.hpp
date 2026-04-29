@@ -265,7 +265,7 @@ namespace webpp::istl {
 
     // Move-only polymorphic function wrapper.
     template <typename Signature, Allocator Alloc = stl::allocator<stl::byte>>
-    struct function : public details::base<function<Signature, Alloc>, Signature> {
+    struct [[nodiscard]] function : public details::base<function<Signature, Alloc>, Signature> {
         using value_type     = stl::byte; // Doesn't really matter
         using alloc_traits   = typename stl::allocator_traits<Alloc>::template rebind_traits<value_type>;
         using allocator_type = typename alloc_traits::allocator_type;
