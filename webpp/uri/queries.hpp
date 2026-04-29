@@ -69,6 +69,9 @@ namespace webpp::uri {
 
         using string_view_type::string_view_type; // inherit constructors
 
+        explicit constexpr basic_queries(stl::basic_string_view<CharT> const str) noexcept
+          : stl::basic_string_view<CharT>{str} {}
+
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         [[nodiscard]] constexpr bool contains_key(string_view_type key) const noexcept {
