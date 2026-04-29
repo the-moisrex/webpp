@@ -18,6 +18,9 @@ namespace webpp::uri {
 
         using stl::basic_string_view<CharT>::basic_string_view; // ctor
 
+        constexpr explicit basic_domain(stl::basic_string_view<CharT> str) noexcept
+          : stl::basic_string_view<CharT>{str} {}
+
         /// Top-Level-Domain
         [[nodiscard]] constexpr string_view_type tld() const noexcept {
             // Domain Separators can be Unicode Code Points as well, but if the transition was not successful, then

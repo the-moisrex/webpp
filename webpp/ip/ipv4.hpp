@@ -332,8 +332,18 @@ namespace webpp {
             return basic_ipv4{ip_addr}.data <=> data;
         }
 
+        constexpr stl::strong_ordering operator<=>(stl::string_view const ip_addr) const noexcept {
+            // only compare the octets not the prefix
+            return basic_ipv4{ip_addr}.data <=> data;
+        }
+
         template <typename CharT>
         [[nodiscard]] constexpr bool operator==(stl::basic_string_view<CharT> const ip_addr) const noexcept {
+            // only compare the octets not the prefix
+            return basic_ipv4{ip_addr}.data == data;
+        }
+
+        [[nodiscard]] constexpr bool operator==(stl::string_view const ip_addr) const noexcept {
             // only compare the octets not the prefix
             return basic_ipv4{ip_addr}.data == data;
         }
