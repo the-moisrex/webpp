@@ -5,6 +5,7 @@
 #include "../http/headers/header_concepts.hpp"
 #include "../http/protocol/http_limits.hpp"
 #include "../std/string_view.hpp"
+#include "../strings/charset.hpp"
 
 #include <array>
 
@@ -13,19 +14,21 @@ namespace webpp::http {
     namespace details {
         /**
          * Calculate header id but for CGI-style of headers
+         * CGI destroys the distinction between _ and -. Under CGI it is impossible to know whether the original header
+         * was x_test or x-test.
          */
         [[nodiscard]] static constexpr header_id_type cgi_header_id(stl::string_view const name) noexcept {
             stl::size_t                              index = 0;
             stl::array<char, max_header_name_length> buffer; // NOLINT(*-init)
-            if (name.size() >= max_header_name_length) [[unlikely]] {
+            if (name.empty() || name.size() >= max_header_name_length) [[unlikely]] {
                 return invalid_header_id;
             }
             for (char cur : name) {
                 if (cur == '_') {
                     cur = '-';
                 } else if (cur >= 'A' && cur <= 'Z') {
-                    cur -= 'A' - 'a';
-                } else if (cur < 'a' || cur > 'z') [[unlikely]] {
+                    cur -= 'A' - 'a'; // tolower
+                } else if (!LOWER_ALPHA_DIGIT<char>.contains(cur)) [[unlikely]] {
                     return invalid_header_id;
                 }
                 buffer.at(index) = cur;
@@ -37,7 +40,8 @@ namespace webpp::http {
     } // namespace details
 
     /**
-     * Satisfies std::forward_iterator
+     * Satisfies stl::forward_iterator
+     * todo: it is possible to make it a bidirectional iterator
      */
     struct [[nodiscard]] cgi_headers_iterator {
         using iterator_category = stl::forward_iterator_tag;
@@ -48,21 +52,17 @@ namespace webpp::http {
 
       private:
         char**     envp = nullptr;
-        value_type current_header;
+        value_type current_header{invalid_header_id, {}};
 
         void advance_to_next_valid() {
-            static constexpr std::string_view HTTP_prefix = "HTTP_";
+            static constexpr stl::string_view HTTP_prefix = "HTTP_";
 
             for (; envp != nullptr && *envp != nullptr; ++envp) { // NOLINT(*-pointer-arithmetic)
-                std::string_view hdr{*envp};
-                auto const       equal_sign = hdr.find('=');
-
-                if (equal_sign == std::string_view::npos) [[unlikely]] {
-                    continue;
-                }
-
-                auto const name  = hdr.substr(0, equal_sign);
-                auto const value = hdr.substr(equal_sign + 1);
+                stl::string_view hdr{*envp};
+                auto const       equal_sign      = hdr.find('=');
+                bool const       not_found_equal = equal_sign == stl::string_view::npos;
+                auto const       name            = not_found_equal ? hdr : hdr.substr(0, equal_sign);
+                auto const       value           = not_found_equal ? stl::string_view{} : hdr.substr(equal_sign + 1);
 
                 if (name.starts_with(HTTP_prefix)) {
                     auto const parsed_name = name.substr(HTTP_prefix.size());
@@ -83,7 +83,8 @@ namespace webpp::http {
                 }
             }
             // Reached the end of the environment variables
-            envp = nullptr;
+            envp           = nullptr;
+            current_header = {invalid_header_id, {}};
         }
 
       public:
