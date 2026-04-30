@@ -6,6 +6,7 @@
 #include "../http/protocol/http_limits.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "../utils/environ.hpp"
 
 #include <array>
 
@@ -54,7 +55,7 @@ namespace webpp::http {
         char**     envp = nullptr;
         value_type current_header{invalid_header_id, {}};
 
-        void advance_to_next_valid() {
+        void advance_to_next_valid() noexcept {
             static constexpr stl::string_view HTTP_prefix = "HTTP_";
 
             for (; envp != nullptr && *envp != nullptr; ++envp) { // NOLINT(*-pointer-arithmetic)
@@ -131,15 +132,34 @@ namespace webpp::http {
         }
     };
 
-    // struct [[nodiscard]] cgi_headers {
-    //     [[nodiscard]] stl::string_view get(stl::string_view const name) const noexcept {}
+    /**
+     * Implements Headers concepts for CGI protocol which is a provider type of class that gives access to headers.
+     */
+    struct [[nodiscard]] cgi_headers {
+        [[nodiscard]] stl::string_view get(header_id_type const h_id) const noexcept {
+            for (auto const [cid, value] : *this) {
+                if (cid == h_id) {
+                    return value;
+                }
+            }
+            return {};
+        }
 
-    //     [[nodiscard]] stl::string_view get(header_id_type h_id) const noexcept {}
+        [[nodiscard]] stl::string_view get(stl::string_view const name) const noexcept {
+            return get(header_id(name));
+        }
 
-    //     [[nodiscard]] auto begin() const noexcept {}
+        // NOLINTBEGIN(*-static)
+        cgi_headers_iterator begin() const noexcept {
+            return cgi_headers_iterator{get_environ()};
+        }
 
-    //     [[nodiscard]] auto end() const noexcept {}
-    // };
+        cgi_headers_iterator end() const noexcept {
+            return {};
+        }
+
+        // NOLINTEND(*-static)
+    };
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_CGI_HEADERS_HPP

@@ -1,9 +1,16 @@
 #include "../webpp/cgi/cgi_headers.hpp"
 
+#include "../webpp/http/http_concepts.hpp"
 #include "./common/test.hpp"
 
+using namespace webpp;
 using namespace webpp::http;
 using namespace webpp::http::details;
+
+TEST(CGIHeadersTest, Concepts) {
+    EXPECT_TRUE(stl::forward_iterator<cgi_headers_iterator>);
+    EXPECT_TRUE(Headers<cgi_headers>);
+}
 
 // -----------------------------------------------------------------------------
 // details::cgi_header_id Tests
