@@ -7,6 +7,7 @@
 #include "../std/optional.hpp"
 #include "../std/string_view.hpp"
 #include "./body_concepts.hpp"
+#include "./headers/header_concepts.hpp"
 
 #include <concepts>
 #include <type_traits>
@@ -16,6 +17,28 @@ namespace webpp::http {
 
 
     ////////////////////////////// Headers //////////////////////////////
+
+    /**
+     * The implementation of this concept will provide minimal features that are required to retrieve and saearch
+     * throught the headers provided by each protocol.
+     *
+     * The implementors should not parse the values in any way.
+     */
+    template <typename T>
+    concept HeadersProvider = requires(T provider, stl::string_view key, header_id_type hid) {
+        // search and get a header field's value
+        { provider.get(key) } noexcept -> stl::same_as<stl::string_view>;
+        { provider.get(hid) } noexcept -> stl::same_as<stl::string_view>;
+
+        // iterate over the headers
+        { provider.begin() } noexcept -> stl::forward_iterator;
+        { provider.end() } noexcept -> stl::forward_iterator;
+
+        requires requires(decltype(provider.begin()) iter) {
+            // should return pair<header-id, value>
+            { *iter } noexcept -> stl::convertible_to<stl::pair<header_id_type, stl::string_view>>;
+        };
+    };
 
     /**
      * This concept is what the underlying Protocols expect to see in a response's header from apps.

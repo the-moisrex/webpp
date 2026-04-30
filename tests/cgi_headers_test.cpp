@@ -9,7 +9,7 @@ using namespace webpp::http::details;
 
 TEST(CGIHeadersTest, Concepts) {
     EXPECT_TRUE(stl::forward_iterator<cgi_headers_iterator>);
-    EXPECT_TRUE(Headers<cgi_headers>);
+    EXPECT_TRUE(HeadersProvider<cgi_headers>);
 }
 
 // -----------------------------------------------------------------------------

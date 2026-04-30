@@ -4,11 +4,11 @@
 // #include "../http/headers.hpp"
 #include "../http/headers/header_concepts.hpp"
 #include "../http/protocol/http_limits.hpp"
-#include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
 #include "../utils/environ.hpp"
 
 #include <array>
+#include <string_view>
 
 namespace webpp::http {
 
@@ -133,7 +133,8 @@ namespace webpp::http {
     };
 
     /**
-     * Implements Headers concepts for CGI protocol which is a provider type of class that gives access to headers.
+     * Implements HeadersProvider concepts for CGI protocol which is a provider type of
+     * class that gives access to headers.
      */
     struct [[nodiscard]] cgi_headers {
         [[nodiscard]] stl::string_view get(header_id_type const h_id) const noexcept {

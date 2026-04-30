@@ -3,11 +3,9 @@
 #ifndef WEBPP_HTTP_HEADERS_COMMON_HPP
 #define WEBPP_HTTP_HEADERS_COMMON_HPP
 
-#include "../convert/lexical_cast.hpp"
-#include "../std/tuple.hpp"
 #include "./http_concepts.hpp"
 
-#include <algorithm>
+#include <tuple>
 
 namespace webpp::http {
 
@@ -22,22 +20,31 @@ namespace webpp::http {
      * @endcode
      */
     template <typename HeadersContainerType>
-    struct header_field_reference {
+    struct [[nodiscard]] header_field_reference {
         using container_type = HeadersContainerType;
-        using field_type     = typename container_type::field_type;
-        using name_type      = typename field_type::name_type;
-        using value_type     = typename field_type::value_type;
 
       private:
-        container_type* container;
-        name_type       m_name;
-        value_type      m_value;
+        static constexpr bool is_const = stl::is_const_v<HeadersContainerType>;
+        using provider_ptr             = stl::conditional_t<is_const, istl::nothing_type, HeadersContainerType*>;
+
+        header_id_type                     hid;
+        stl::string_view                   m_value;
+        [[no_unique_address]] provider_ptr provider;
 
       public:
-        constexpr header_field_reference(container_type& inp_container, name_type inp_name, value_type inp_val)
-          : container{&inp_container},
-            m_name{stl::move(inp_name)},
-            m_value{stl::move(inp_val)} {}
+        constexpr header_field_reference(
+          container_type&        inp_provider,
+          header_id_type const   inp_id,
+          stl::string_view const inp_val) noexcept
+            requires(!is_const)
+          : hid{inp_id},
+            m_value{inp_val},
+            provider{&inp_provider} {}
+
+        constexpr header_field_reference(header_id_type const inp_id, stl::string_view const inp_val) noexcept
+            requires(is_const)
+          : hid{inp_id},
+            m_value{inp_val} {}
 
         constexpr header_field_reference(header_field_reference const&)                = default;
         constexpr header_field_reference(header_field_reference&&) noexcept            = default;
@@ -45,22 +52,27 @@ namespace webpp::http {
         constexpr header_field_reference& operator=(header_field_reference&&) noexcept = default;
         constexpr ~header_field_reference()                                            = default;
 
-        [[nodiscard]] explicit constexpr operator value_type() const noexcept {
-            return value;
+        [[nodiscard]] explicit constexpr operator header_id_type() const noexcept {
+            return hid;
         }
 
-        [[nodiscard]] constexpr name_type name() const noexcept {
-            return m_name;
+        [[nodiscard]] explicit constexpr operator stl::string_view() const noexcept {
+            return m_value;
         }
 
-        [[nodiscard]] constexpr value_type value() const noexcept {
+        [[nodiscard]] constexpr header_id_type id() const noexcept {
+            return hid;
+        }
+
+        [[nodiscard]] constexpr stl::string_view value() const noexcept {
             return m_value;
         }
 
         template <typename T>
+            requires(!is_const)
         constexpr header_field_reference& operator=(T&& new_value) {
             m_value = stl::forward<T>(new_value);
-            container->set(m_name, m_value);
+            provider->set(hid, m_value);
             return *this;
         }
 
@@ -77,7 +89,7 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr bool operator==(header_field_reference const& field) const noexcept {
-            return container == field.container && m_name == field.m_name && m_value == field.m_value;
+            return provider == field.provider && hid == field.hid && m_value == field.m_value;
         }
 
         [[nodiscard]] constexpr bool operator!=(header_field_reference const& field) const noexcept {
@@ -85,68 +97,24 @@ namespace webpp::http {
         }
     };
 
-    template <typename Container>
-    struct headers_container : public Container {
-        using container_type = Container;
-
-        using field_type           = typename container_type::field_type;
-        using name_type            = typename field_type::name_type;
-        using value_type           = typename field_type::value_type;
-        using reference_type       = header_field_reference<headers_container>;
-        using const_reference_type = header_field_reference<headers_container const>;
-        using char_type            = typename value_type::value_type;
-        using string_view_type     = stl::basic_string_view<char_type>;
-
-        using Container::Container;
-
-        template <HTTPHeadersHolder H>
-        explicit constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
-          : Container{holder.headers} {}
-
-        constexpr headers_container(headers_container const&)                = default;
-        constexpr headers_container(headers_container&&) noexcept            = default;
-        constexpr headers_container& operator=(headers_container&&) noexcept = default;
-        constexpr headers_container& operator=(headers_container const&)     = default;
-        constexpr ~headers_container()                                       = default;
-
-        /**
-         * Get an iterator pointing to the field value that holds the specified header name
-         */
-        [[nodiscard]] constexpr auto iter(name_type name) const noexcept {
-            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
-                return field.is_name(name);
-            });
-        }
+    /**
+     * Headers API
+     */
+    template <HeadersProvider H>
+    struct [[nodiscard]] basic_headers : H {
+        using H::H;
 
         /**
          * Get the field value that holds the specified header name
          */
-        [[nodiscard]] constexpr stl::optional<field_type> field(name_type name) const noexcept {
-            auto const res = iter(name);
-            return res == this->end() ? stl::nullopt : *res;
-        }
-
-        /**
-         * Get the value of a header
-         * Returns an empty string if there are no header with that name
-         */
-        [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
-            auto const res = iter(name);
-            return res == this->end() ? value_type{} : res->value;
-        }
-
-        /**
-         * Get the value of a header
-         * Returns an empty string view if there are no header with that name
-         */
-        [[nodiscard]] constexpr string_view_type view(name_type name) const noexcept {
-            auto const res = iter(name);
-            return res == this->end() ? string_view_type{} : string_view_type{res->value.data(), res->value.size()};
+        [[nodiscard]] constexpr stl::optional<stl::string_view> field(stl::string_view name) const noexcept {
+            auto const value = this->get(name);
+            return value.empty() ? stl::nullopt : value;
         }
 
         /**
          * Get multiple header values as a tuple
-         * returns stl::tuple<value_type, value_type, ...> if you give multiple names
+         * returns stl::tuple<stl::string_view, stl::string_view, ...> if you give multiple names
          */
         template <typename... NameType>
             requires(sizeof...(NameType) > 1)
@@ -154,72 +122,62 @@ namespace webpp::http {
             return stl::make_tuple(get(name)...);
         }
 
-        [[nodiscard]] constexpr const_reference_type operator[](name_type name) const noexcept {
-            return const_reference_type{*this, name, get(name)};
+        [[nodiscard]] constexpr header_field_reference<basic_headers const> operator[](
+          header_id_type const hid) const noexcept {
+            return {*this, hid, this->get(hid)};
         }
 
-        [[nodiscard]] constexpr reference_type operator[](name_type name) noexcept {
-            return reference_type{*this, name, get(name)};
+        [[nodiscard]] constexpr header_field_reference<basic_headers> operator[](header_id_type const hid) noexcept {
+            return {*this, hid, get(hid)};
+        }
+
+        [[nodiscard]] constexpr header_field_reference<basic_headers> operator[](stl::string_view const name) noexcept {
+            return operator[](header_id(name));
+        }
+
+        [[nodiscard]] constexpr header_field_reference<basic_headers const> operator[](
+          stl::string_view const name) const noexcept {
+            return operator[](header_id(name));
         }
 
 // This is a C++23 feature
-#if __cpp_multidimensional_subscript
+#ifdef __cpp_multidimensional_subscript
         /**
          * Get multiple header values as a tuple
          * This is the same as ".get(...)" member function
-         * returns stl::tuple<value_type, value_type, ...> if you give multiple names
+         * returns stl::tuple<stl::string_view, stl::string_view, ...> if you give multiple names
          */
         template <typename... NameType>
             requires(sizeof...(NameType) > 1)
-        [[nodiscard]] constexpr auto operator[](NameType&&... name) const noexcept {
+        [[nodiscard]] constexpr auto operator[](NameType const&... name) const noexcept {
             return stl::make_tuple(get(name)...);
         }
 #endif
 
 
-        /**
-         * Check if the specified names are in headers
-         * returns stl::tuple<bool, bool, ...> if you give multiple names
-         * or
-         * returns bool if you give one name
-         */
         template <typename... NameType>
-        [[nodiscard]] constexpr auto has(NameType&&... name) const noexcept {
-            if constexpr (sizeof...(NameType) == 1) {
-                return stl::find(this->begin(), this->end(), name...) != this->end();
-            } else if constexpr (sizeof...(NameType) > 1) {
-                return stl::make_tuple((stl::find(this->begin(), this->end(), name) != this->end())...);
-            } else {
-                return true;
-            }
+            requires(sizeof...(NameType) > 1)
+        [[nodiscard]] constexpr auto has(NameType const&... name) const noexcept {
+            return ((!this->get(name).empty()) && ...);
         }
 
-        constexpr void set(name_type name, value_type new_value) {
-            this->emplace(stl::move(name), stl::move(new_value));
+        /**
+         * Check if the specified name is in headers
+         */
+        [[nodiscard]] constexpr bool has(stl::string_view name) const noexcept {
+            return !this->get(name).empty();
         }
 
-        template <typename VT>
-        constexpr void set(name_type name, VT&& new_value) {
-            set(stl::move(name), lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
-        }
-
-        template <typename NT>
-        constexpr void set(NT&& name, value_type new_value) {
-            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()), stl::move(new_value));
-        }
-
-        template <typename NT, typename VT>
-        constexpr void set(NT&& name, VT&& new_value) {
-            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
-                lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
+        [[nodiscard]] constexpr bool has(header_id_type hid) const noexcept {
+            return !this->get(hid).empty();
         }
 
         /**
          * Check if the header is empty or not
          */
         [[nodiscard]] constexpr bool empty() const noexcept {
-            if constexpr (requires { container_type::empty(); }) {
-                return container_type::empty();
+            if constexpr (requires { H::empty(); }) {
+                return H::empty();
             } else {
                 return this->begin() == this->end();
             }
