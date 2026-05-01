@@ -3,11 +3,12 @@
 #ifndef WEBPP_HEADER_CONCEPTS_HPP
 #define WEBPP_HEADER_CONCEPTS_HPP
 
-#include "../../std/string_view.hpp"
+#include "../../std/std.hpp"
 #include "../../utils/hash.hpp"
 
 #include <concepts>
 #include <cstdint>
+#include <string_view>
 
 namespace webpp::http {
 
@@ -43,6 +44,17 @@ namespace webpp::http {
         };
     } // namespace details
 
+    /// If the header field don't have a header id, we can generate one
+    template <typename H>
+        requires(details::has_header_name<H> && !requires { H::header_id; })
+    [[nodiscard]] consteval header_id_type header_id(H const& header) noexcept {
+        return ci_hash(header_name(header));
+    }
+
+    [[nodiscard]] static constexpr header_id_type header_id(stl::string_view const name) noexcept {
+        return ci_hash(name);
+    }
+
     /**
      * A header type is a type that is responsible for one single header field.
      * For example the class that parses `Content-Type`'s value should comply with this concept.
@@ -59,18 +71,12 @@ namespace webpp::http {
         // Check validity of the parsed value
         header.is_valid();
         static_cast<bool>(header);
+
+        // Response headers fields must be serializable.
+        requires requires(char*& out, stl::size_t max_length) {
+            { render(out, max_length, header) } noexcept -> stl::same_as<void>;
+        };
     };
-
-    /// If the header field don't have a header id, we can generate one
-    template <typename H>
-        requires(details::has_header_name<H> && !requires { H::header_id; })
-    [[nodiscard]] consteval header_id_type header_id(H const& header) noexcept {
-        return ci_hash(header_name(header));
-    }
-
-    [[nodiscard]] static constexpr header_id_type header_id(stl::string_view const name) noexcept {
-        return ci_hash(name);
-    }
 
     /**
      * This CRTP will be used to add common features to header fields.

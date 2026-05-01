@@ -33,6 +33,13 @@ namespace {
 TEST(Headers, ConceptTest) {
     EXPECT_TRUE(HeaderField<basic_accept_encoding<>>);
     EXPECT_TRUE(HeaderField<basic_content_type>);
+    EXPECT_TRUE(HeaderField<basic_content_type>);
+    EXPECT_TRUE(HeaderField<basic_accept_encoding<>>);
+    EXPECT_TRUE(HeaderField<basic_cache_control>);
+    EXPECT_TRUE(HeaderField<basic_content_length>);
+    EXPECT_TRUE(HeaderField<basic_allow>);
+    EXPECT_TRUE(HeaderField<basic_accept<>>);
+    EXPECT_TRUE(HeaderField<basic_keep_alive>);
 }
 
 TEST(Headers, ContentLengthRender) {
