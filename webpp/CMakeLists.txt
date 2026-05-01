@@ -271,6 +271,7 @@ set(ALL_SOURCES_SHORT
         http/headers/content_type.hpp
         http/headers/header_concepts.hpp
         http/headers/keep_alive.hpp
+        http/headers/location.hpp
         http/headers/parsers.hpp
 
         http/cookies/cookie.hpp

@@ -65,7 +65,7 @@ namespace webpp::http {
         requires details::has_header_name<H>;
         requires details::has_header_id<H>;
 
-        // Constructor
+        // Constructor/parser
         H{stl::string_view{""}};
 
         // Check validity of the parsed value
@@ -108,11 +108,11 @@ namespace webpp::http {
         }
 
         [[nodiscard]] consteval stl::string_view name() const noexcept {
-            return header_name(*this);
+            return header_name(static_cast<H const&>(*this));
         }
 
         [[nodiscard]] consteval stl::string_view id() const noexcept {
-            return header_id(*this);
+            return header_id(static_cast<H const&>(*this));
         }
     };
 

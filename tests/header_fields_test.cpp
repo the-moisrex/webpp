@@ -8,6 +8,7 @@
 #include "../webpp/http/headers/content_length.hpp"
 #include "../webpp/http/headers/content_type.hpp"
 #include "../webpp/http/headers/keep_alive.hpp"
+#include "../webpp/http/headers/location.hpp"
 #include "./common/test.hpp"
 
 
@@ -917,4 +918,83 @@ TEST(CacheControlTest, ImmutableFlagTest) {
     EXPECT_TRUE(cache_control.is_public());
     EXPECT_EQ(cache_control.max_age(), 31'536'000);
     EXPECT_TRUE(cache_control.immutable());
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+TEST(LocationHeaderTest, ValidAbsoluteURI) {
+    basic_location loc{"https://example.com/redirect-path"};
+
+    EXPECT_TRUE(loc.is_valid());
+    EXPECT_EQ(loc.uri(), "https://example.com/redirect-path");
+    EXPECT_EQ(loc.name(), "location");
+    EXPECT_TRUE(static_cast<bool>(loc));
+}
+
+TEST(LocationHeaderTest, ValidRelativeURI) {
+    basic_location loc{"/assets/styles.css"};
+
+    EXPECT_TRUE(loc.is_valid());
+    EXPECT_EQ(loc.uri(), "/assets/styles.css");
+}
+
+TEST(LocationHeaderTest, TrimsWhitespace) {
+    basic_location loc{"   http://test.com/   "};
+
+    EXPECT_TRUE(loc.is_valid());
+    EXPECT_EQ(loc.uri(), "http://test.com/");
+}
+
+TEST(LocationHeaderTest, InvalidEmptyURI) {
+    basic_location loc{""};
+
+    EXPECT_FALSE(loc.is_valid());
+    EXPECT_TRUE(loc.uri().empty());
+}
+
+TEST(LocationHeaderTest, InvalidWhitespaceOnlyURI) {
+    basic_location loc{"     \t   "};
+
+    EXPECT_FALSE(loc.is_valid());
+    EXPECT_TRUE(loc.uri().empty());
+}
+
+TEST(LocationHeaderTest, RenderValidHeader) {
+    basic_location loc{"/new-page"};
+    ASSERT_TRUE(loc.is_valid());
+
+    std::array<char, 32> buffer{};
+    char*                ptr = buffer.data();
+
+    render(ptr, buffer.size(), loc);
+
+    std::string_view rendered(buffer.data(), static_cast<std::size_t>(ptr - buffer.data()));
+    EXPECT_EQ(rendered, "/new-page");
+}
+
+TEST(LocationHeaderTest, RenderFailsOnInsufficientBuffer) {
+    basic_location loc{"http://example.com/very/long/path"};
+    ASSERT_TRUE(loc.is_valid());
+
+    std::array<char, 10> buffer{}; // Buffer too small
+    char*                ptr = buffer.data();
+
+    render(ptr, buffer.size(), loc);
+
+    // Pointer should not move if there wasn't enough space
+    EXPECT_EQ(ptr, buffer.data());
+}
+
+TEST(LocationHeaderTest, RenderFailsOnInvalidHeader) {
+    basic_location loc{"   "};
+    ASSERT_FALSE(loc.is_valid());
+
+    std::array<char, 32> buffer{};
+    char*                ptr = buffer.data();
+
+    render(ptr, buffer.size(), loc);
+
+    // Pointer should not move since header is invalid
+    EXPECT_EQ(ptr, buffer.data());
 }

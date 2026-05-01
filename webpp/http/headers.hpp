@@ -150,6 +150,7 @@ namespace webpp::http {
         template <typename... NameType>
             requires(sizeof...(NameType) > 1)
         [[nodiscard]] constexpr auto operator[](NameType const&... name) const noexcept {
+            // todo: optimize this to use for loop, this is multiple searches (it's protocol-dependent)
             return stl::make_tuple(get(name)...);
         }
 #endif
