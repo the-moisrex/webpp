@@ -3,11 +3,11 @@
 #ifndef WEBPP_HTTP_HEADERS_KEEP_ALIVE_HPP
 #define WEBPP_HTTP_HEADERS_KEEP_ALIVE_HPP
 
-#include "../../convert/casts.hpp"
-#include "../../strings/charset.hpp"
-#include "../../strings/iequals.hpp"
-#include "../../strings/string_tokenizer.hpp"
-#include "../../strings/trim.hpp"
+#include "../convert/casts.hpp"
+#include "../strings/charset.hpp"
+#include "../strings/iequals.hpp"
+#include "../strings/string_tokenizer.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 

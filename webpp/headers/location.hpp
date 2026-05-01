@@ -3,8 +3,8 @@
 #ifndef WEBPP_HTTP_HEADERS_LOCATION_HPP
 #define WEBPP_HTTP_HEADERS_LOCATION_HPP
 
-#include "../../std/iterator.hpp"
-#include "../../strings/trim.hpp"
+#include "../std/iterator.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 
 #include <string_view>
@@ -53,7 +53,7 @@ namespace webpp::http {
         /**
          * @brief Get the parsed URI reference
          */
-        [[nodiscard]] constexpr stl::string_view uri() const noexcept {
+        [[nodiscard]] constexpr stl::string_view view() const noexcept {
             return _uri;
         }
 
@@ -70,7 +70,7 @@ namespace webpp::http {
             return;
         }
 
-        istl::iter_append(out, header.uri());
+        istl::iter_append(out, header.view());
     }
 
 } // namespace webpp::http

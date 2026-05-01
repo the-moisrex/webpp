@@ -1,11 +1,11 @@
 #ifndef WEBPP_CONTENT_TYPE_HPP
 #define WEBPP_CONTENT_TYPE_HPP
 
-#include "../../std/iterator.hpp"
-#include "../../strings/charset.hpp"
-#include "../../strings/iequals.hpp"
-#include "../../strings/string_tokenizer.hpp"
-#include "../../strings/trim.hpp"
+#include "../std/iterator.hpp"
+#include "../strings/charset.hpp"
+#include "../strings/iequals.hpp"
+#include "../strings/string_tokenizer.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 

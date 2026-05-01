@@ -2,8 +2,8 @@
 #define WEBPP_HTTP_CGI_HEADERS_HPP
 
 // #include "../http/headers.hpp"
-#include "../http/headers/header_concepts.hpp"
-#include "../http/protocol/http_limits.hpp"
+#include "../headers/header_concepts.hpp"
+#include "../protocol/http_limits.hpp"
 #include "../strings/charset.hpp"
 #include "../utils/environ.hpp"
 

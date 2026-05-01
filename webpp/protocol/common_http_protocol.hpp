@@ -3,8 +3,8 @@
 #ifndef WEBPP_COMMON_HTTP_PROTOCOL_HPP
 #define WEBPP_COMMON_HTTP_PROTOCOL_HPP
 
-#include "../app_wrapper.hpp"
-#include "../http_concepts.hpp"
+#include "../http/app_wrapper.hpp"
+#include "../http/http_concepts.hpp"
 
 namespace webpp::http {
 

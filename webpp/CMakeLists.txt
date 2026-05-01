@@ -234,7 +234,20 @@ set(ALL_SOURCES_SHORT
         fcgi/fcgi_protocols.hpp
         fcgi/fcgi_request.hpp
 
-        http/protocol/common_http_protocol.hpp
+        headers/accept.hpp
+        headers/accept_encoding.hpp
+        headers/allow.hpp
+        headers/cache_control.hpp
+        headers/content_encoding.hpp
+        headers/content_length.hpp
+        headers/content_type.hpp
+        headers/header_concepts.hpp
+        headers/keep_alive.hpp
+        headers/location.hpp
+        headers/parsers.hpp
+
+        protocol/common_http_protocol.hpp
+        protocol/http_limits.hpp
 
         http/app_wrapper.hpp
         http/body.hpp
@@ -261,18 +274,6 @@ set(ALL_SOURCES_SHORT
         http/codec/http_lexer.hpp
         http/codec/request_parser.hpp
         http/codec/tokens.hpp
-
-        http/headers/accept.hpp
-        http/headers/accept_encoding.hpp
-        http/headers/allow.hpp
-        http/headers/cache_control.hpp
-        http/headers/content_encoding.hpp
-        http/headers/content_length.hpp
-        http/headers/content_type.hpp
-        http/headers/header_concepts.hpp
-        http/headers/keep_alive.hpp
-        http/headers/location.hpp
-        http/headers/parsers.hpp
 
         http/cookies/cookie.hpp
         http/cookies/cookie_jar.hpp

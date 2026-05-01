@@ -3,12 +3,12 @@
 #ifndef WEBPP_HEADERS_ALLOW_HPP
 #define WEBPP_HEADERS_ALLOW_HPP
 
-#include "../../std/iterator.hpp"
-#include "../../strings/charset.hpp"
-#include "../../strings/string_tokenizer.hpp"
-#include "../../strings/trim.hpp"
-#include "../codec/tokens.hpp"
-#include "../verbs.hpp"
+#include "../http/codec/tokens.hpp"
+#include "../http/verbs.hpp"
+#include "../std/iterator.hpp"
+#include "../strings/charset.hpp"
+#include "../strings/string_tokenizer.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 

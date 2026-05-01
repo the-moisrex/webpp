@@ -3,13 +3,13 @@
 #ifndef WEBPP_HEADERS_ACCEPT_HPP
 #define WEBPP_HEADERS_ACCEPT_HPP
 
-#include "../../http/codec/common.hpp"
-#include "../../http/protocol/http_limits.hpp"
-#include "../../std/cstdint.hpp"
-#include "../../strings/charset.hpp"
-#include "../../strings/iequals.hpp"
-#include "../../strings/string_tokenizer.hpp"
-#include "../../strings/trim.hpp"
+#include "../http/codec/common.hpp"
+#include "../protocol/http_limits.hpp"
+#include "../std/cstdint.hpp"
+#include "../strings/charset.hpp"
+#include "../strings/iequals.hpp"
+#include "../strings/string_tokenizer.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 

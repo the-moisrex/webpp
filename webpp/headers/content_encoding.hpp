@@ -3,20 +3,20 @@
 #ifndef WEBPP_CONTENT_ENCODING_HPP
 #define WEBPP_CONTENT_ENCODING_HPP
 
-#include "../../std/cstdint.hpp"
-#include "../../std/iterator.hpp"
-#include "../../std/string_view.hpp"
-#include "../../strings/iequals.hpp"
-#include "../../strings/string_tokenizer.hpp"
-#include "../../strings/trim.hpp"
-#include "../codec/common.hpp"
+#include "../http/codec/common.hpp"
 #include "../protocol/http_limits.hpp"
+#include "../std/cstdint.hpp"
+#include "../std/iterator.hpp"
+#include "../strings/iequals.hpp"
+#include "../strings/string_tokenizer.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 
 #include <array>
 #include <limits>
 #include <span>
+#include <string_view>
 
 namespace webpp::http {
 

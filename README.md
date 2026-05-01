@@ -54,7 +54,7 @@ Look at the [Core Readme file](./webpp/README.md) for the core concepts of the p
 | [Caching](./webpp/storage)                      | Some caching exists but not enough                        | 60%       |
 | [Strings](./webpp/strings)                      | String utilities                                          | 80%       |
 | [Unicode String](./webpp/unicode)               | Needed Unicode string utilities (ustring, iterators, ...) | 40%       |
-| [HTTP Headers](./webpp/http/headers)            | HTTP Header Value Parsers/... for each HTTP header        | 10%       |
+| [HTTP Headers](./webpp/headers)                 | HTTP Header Value Parsers/... for each HTTP header        | 10%       |
 | [HTTP Cookies](./webpp/http/cookies)            | Cookies APIs                                              | 90%       |
 | [IP Address Utilities](./webpp/ip)              | IP Address Utilities (Parsers, APIs, ...)                 | ✅         |
 | [Logging](./webpp/logs)                         | Logging **Concepts** + multiple implementations exists    | ✅         |

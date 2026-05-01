@@ -1,6 +1,6 @@
 
-#ifndef WEBPP_HTTP_PROTOCOL_LIMITS_HPP
-#define WEBPP_HTTP_PROTOCOL_LIMITS_HPP
+#ifndef WEBPP_PROTOCOL_LIMITS_HPP
+#define WEBPP_PROTOCOL_LIMITS_HPP
 
 #include <cstdint>
 
@@ -31,4 +31,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_HTTP_PROTOCOL_LIMITS_HPP
+#endif // WEBPP_PROTOCOL_LIMITS_HPP

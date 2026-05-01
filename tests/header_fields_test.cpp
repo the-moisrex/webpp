@@ -1,14 +1,14 @@
 // Created by moisrex on 10/9/20.
 
-#include "../webpp/http/headers/accept.hpp"
-#include "../webpp/http/headers/accept_encoding.hpp"
-#include "../webpp/http/headers/allow.hpp"
-#include "../webpp/http/headers/cache_control.hpp"
-#include "../webpp/http/headers/content_encoding.hpp"
-#include "../webpp/http/headers/content_length.hpp"
-#include "../webpp/http/headers/content_type.hpp"
-#include "../webpp/http/headers/keep_alive.hpp"
-#include "../webpp/http/headers/location.hpp"
+#include "../webpp/headers/accept.hpp"
+#include "../webpp/headers/accept_encoding.hpp"
+#include "../webpp/headers/allow.hpp"
+#include "../webpp/headers/cache_control.hpp"
+#include "../webpp/headers/content_encoding.hpp"
+#include "../webpp/headers/content_length.hpp"
+#include "../webpp/headers/content_type.hpp"
+#include "../webpp/headers/keep_alive.hpp"
+#include "../webpp/headers/location.hpp"
 #include "./common/test.hpp"
 
 
@@ -927,7 +927,7 @@ TEST(LocationHeaderTest, ValidAbsoluteURI) {
     basic_location loc{"https://example.com/redirect-path"};
 
     EXPECT_TRUE(loc.is_valid());
-    EXPECT_EQ(loc.uri(), "https://example.com/redirect-path");
+    EXPECT_EQ(loc.view(), "https://example.com/redirect-path");
     EXPECT_EQ(loc.name(), "location");
     EXPECT_TRUE(static_cast<bool>(loc));
 }
@@ -936,28 +936,28 @@ TEST(LocationHeaderTest, ValidRelativeURI) {
     basic_location loc{"/assets/styles.css"};
 
     EXPECT_TRUE(loc.is_valid());
-    EXPECT_EQ(loc.uri(), "/assets/styles.css");
+    EXPECT_EQ(loc.view(), "/assets/styles.css");
 }
 
 TEST(LocationHeaderTest, TrimsWhitespace) {
     basic_location loc{"   http://test.com/   "};
 
     EXPECT_TRUE(loc.is_valid());
-    EXPECT_EQ(loc.uri(), "http://test.com/");
+    EXPECT_EQ(loc.view(), "http://test.com/");
 }
 
 TEST(LocationHeaderTest, InvalidEmptyURI) {
     basic_location loc{""};
 
     EXPECT_FALSE(loc.is_valid());
-    EXPECT_TRUE(loc.uri().empty());
+    EXPECT_TRUE(loc.view().empty());
 }
 
 TEST(LocationHeaderTest, InvalidWhitespaceOnlyURI) {
     basic_location loc{"     \t   "};
 
     EXPECT_FALSE(loc.is_valid());
-    EXPECT_TRUE(loc.uri().empty());
+    EXPECT_TRUE(loc.view().empty());
 }
 
 TEST(LocationHeaderTest, RenderValidHeader) {

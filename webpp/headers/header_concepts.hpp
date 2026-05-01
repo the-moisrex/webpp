@@ -3,8 +3,8 @@
 #ifndef WEBPP_HEADER_CONCEPTS_HPP
 #define WEBPP_HEADER_CONCEPTS_HPP
 
-#include "../../std/std.hpp"
-#include "../../utils/hash.hpp"
+#include "../std/std.hpp"
+#include "../utils/hash.hpp"
 
 #include <concepts>
 #include <cstdint>

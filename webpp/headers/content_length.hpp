@@ -3,8 +3,8 @@
 #ifndef WEBPP_CONTENT_LENGTH_HPP
 #define WEBPP_CONTENT_LENGTH_HPP
 
-#include "../../convert/casts.hpp"
-#include "../../strings/trim.hpp"
+#include "../convert/casts.hpp"
+#include "../strings/trim.hpp"
 #include "./header_concepts.hpp"
 #include "./parsers.hpp"
 
