@@ -271,8 +271,7 @@ set(ALL_SOURCES_SHORT
         application/application_concepts.hpp
 
         http/codec/common.hpp
-        http/codec/http_lexer.hpp
-        http/codec/request_parser.hpp
+        http/codec/http_parser.hpp
         http/codec/tokens.hpp
 
         http/cookies/cookie.hpp
