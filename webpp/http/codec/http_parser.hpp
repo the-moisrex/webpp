@@ -28,6 +28,7 @@ namespace webpp::http {
         switch (state) {
             case unparsed: return {"Not Parsed"};
             case ok: return {"Ok"};
+            case ok_request_line: return {"Request Line OK"};
             case need_more_data: return {"Need more input"};
             case invalid_method: return {"Invalid method"};
             case invalid_target: return {"Invalid Target"};
@@ -53,45 +54,47 @@ namespace webpp::http {
 
     /**
      * Parses the HTTP request line per RFC 9112.
+     * Updates `begin` to point immediately after the CRLF on success.
+     *
+     * todo: check maximum length (max_request_line_length)
      */
-    static constexpr void parse_request_line(std::string_view const line, parsed_request_line& req) noexcept {
+    static constexpr void parse_request_line(char const*& begin, char const* end, parsed_request_line& req) noexcept {
         using enum http_parsing_state;
-
-        stl::size_t pos  = 0;
-        auto const  size = line.size();
+        // NOLINTBEGIN(*-pointer-arithmetic)
+        char const* pos = begin;
 
         // 1. Parse Method
-        while (pos < size && line[pos] != ' ') {
-            if (!is_http_token(line[pos])) [[unlikely]] {
+        char const* method_start = pos;
+        for (; pos != end && *pos != ' '; ++pos) {
+            if (!is_http_token(*pos)) [[unlikely]] {
                 req.state = invalid_method;
                 return;
             }
-            ++pos;
         }
 
-        if (pos == size) [[unlikely]] {
+        if (pos == end) [[unlikely]] {
             req.state = need_more_data;
             return;
         }
-        if (pos == 0) [[unlikely]] {
+        if (pos == method_start) [[unlikely]] {
             req.state = invalid_method;
             return;
         }
 
-        req.method = line.substr(0, pos);
+        req.method = std::string_view(method_start, static_cast<std::size_t>(pos - method_start));
         ++pos; // Skip SP
 
         // 2. Parse Target (URL) - Basic validation only
-        stl::size_t const target_start = pos;
-        while (pos < size && line[pos] != ' ') {
-            if (!is_valid_target_char(line[pos])) {
+        char const* target_start = pos;
+        while (pos != end && *pos != ' ') {
+            if (!is_valid_target_char(*pos)) {
                 req.state = invalid_target;
                 return;
             }
             ++pos;
         }
 
-        if (pos == size) [[unlikely]] {
+        if (pos == end) [[unlikely]] {
             req.state = need_more_data;
             return;
         }
@@ -100,21 +103,21 @@ namespace webpp::http {
             return;
         }
 
-        req.target = line.substr(target_start, pos - target_start);
+        req.target = std::string_view(target_start, static_cast<std::size_t>(pos - target_start));
         ++pos; // Skip SP
 
         // 3. Parse HTTP Version
-        stl::size_t const version_start = pos;
-        while (pos < size && line[pos] != '\r') {
+        char const* version_start = pos;
+        while (pos != end && *pos != '\r') {
             ++pos;
         }
 
-        if (pos == size) [[unlikely]] {
+        if (pos == end) [[unlikely]] {
             req.state = need_more_data;
             return;
         }
 
-        req.version = line.substr(version_start, pos - version_start);
+        req.version = std::string_view(version_start, static_cast<std::size_t>(pos - version_start));
 
         // Minimal standard validation for the version prefix
         if (!req.version.starts_with("HTTP/")) [[unlikely]] {
@@ -123,17 +126,21 @@ namespace webpp::http {
         }
 
         // 4. Validate CRLF
-        if (pos + 1 >= size) [[unlikely]] {
+        if (pos + 1 >= end) [[unlikely]] {
             req.state = need_more_data;
             return;
         }
 
-        if (line[pos + 1] != '\n') [[unlikely]] {
+        if (*(pos + 1) != '\n') [[unlikely]] {
             req.state = invalid_crlf;
             return;
         }
 
         req.state = ok_request_line;
+
+        // Transactional advance: only update the input pointer on complete success
+        begin = pos + 2;
+        // NOLINTEND(*-pointer-arithmetic)
     }
 
 } // namespace webpp::http

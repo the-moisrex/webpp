@@ -76,24 +76,24 @@ namespace webpp::http {
          * The string you get usually from SERVER_PROTOCOL env can be parsed with this method.
          * Examples of input: “HTTP/1.0”, “HTTP/1.1”, or “HTTP/2.0”
          */
-        template <typename CharT>
-        [[nodiscard]] static constexpr version from_server_protocol(stl::basic_string_view<CharT> str) noexcept {
-            constexpr auto http_string = "HTTP"; // todo: make static when C++23 support is good
+        [[nodiscard]] static constexpr version from_server_protocol(stl::string_view str) noexcept {
+            constexpr stl::string_view http_string{"HTTP", 4};
+            constexpr stl::string_view https_string{"S/", 2};
             if (!str.starts_with(http_string)) {
                 return unknown();
             }
-            str.remove_prefix(ascii::size(http_string));
-            if (str.starts_with("/")) {
+            str.remove_prefix(http_string.size());
+            if (str.starts_with('/')) {
                 return version{str.substr(1)};
             }
-            if (str.starts_with("S/")) {
-                return version{str.substr(2)};
+            if (str.starts_with(https_string)) {
+                return version{str.substr(https_string.size())};
             }
             return unknown();
         }
 
         template <typename CharT>
-        [[nodiscard]] static constexpr version from_string(stl::basic_string_view<CharT> const str) noexcept {
+        [[nodiscard]] static constexpr version from_string(stl::string_view const str) noexcept {
             return version{str};
         }
 
