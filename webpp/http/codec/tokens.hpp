@@ -28,12 +28,16 @@ namespace webpp::http {
      *                        ; any VCHAR, except delimiters
      **/
     static constexpr charmap_full token_charmap{
-      ALPHA<>,
-      DIGIT<>,
+      ALPHA_DIGIT<>,
       charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}
     };
 
-    static constexpr bool is_http_token(char const item) noexcept {
+    /**
+     * Verifies that the given val is a valid HTTP token
+     * per the rules defined in RFC 7230
+     * See https://tools.ietf.org/html/rfc7230#section-3.2.6
+     */
+    [[nodiscard]] static constexpr bool is_http_token(char const item) noexcept {
         return token_charmap.contains(item);
     }
 
