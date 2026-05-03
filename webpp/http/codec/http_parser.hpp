@@ -17,7 +17,7 @@ namespace webpp::http {
 
         ok,              // Ok for now
         ok_request_line, // OK: request line is now fully parsed
-        ok_headers,      // OK: we finished with headers (reached \r\n\r\n)
+        ok_headers_end,  // OK: we finished with headers (reached \r\n\r\n)
 
         need_more_data,  // We can't parse with this amount of input
         invalid_method,  // GET/POST/HEAD/... are valid
@@ -31,13 +31,13 @@ namespace webpp::http {
         possible_line_folding,
     };
 
-    [[nodiscard]] static constexpr std::string_view to_string(http_parsing_state state) noexcept {
+    [[nodiscard]] static constexpr std::string_view to_string(http_parsing_state const state) noexcept {
         using enum http_parsing_state;
         switch (state) {
             case unparsed: return {"Not Parsed"};
             case ok: return {"Ok"};
             case ok_request_line: return {"Request line OK"};
-            case ok_headers: return {"Headers are OK"};
+            case ok_headers_end: return {"Headers are OK"};
             case need_more_data: return {"Need more input"};
             case invalid_method: return {"Invalid method"};
             case invalid_target: return {"Invalid target"};
@@ -250,11 +250,13 @@ namespace webpp::http {
             if (*buf++ != '\n') [[unlikely]] {
                 return invalid_crlf;
             }
-            return ok_headers;
+            // Reached the last header
+            return ok_headers_end;
         }
         if (*buf == '\n') [[unlikely]] {
             ++buf;
-            return ok_headers;
+            // We'll assume it's the last header nontheless
+            return ok_headers_end;
         }
         if (*buf != ' ' && *buf != '\t') [[unlikely]] {
             // A lot of older HTTP parsers still parse line folding for historical reasons. We choose not to.
@@ -274,8 +276,13 @@ namespace webpp::http {
         if (name.empty()) [[unlikely]] {
             return empty_header_name;
         }
+
+        // ltrim LWS:
         ++buf;
-        for (;; ++buf) {
+        if (*buf == ' ' || *buf == '\t') [[likely]] {
+            ++buf;
+        }
+        for (;; ++buf) [[unlikely]] {
             if (buf == buf_end) [[unlikely]] {
                 buf = buf_start;
                 return need_more_data;
@@ -284,6 +291,7 @@ namespace webpp::http {
                 break;
             }
         }
+
         if (auto const res = token_to_eol(buf, buf_end, value); res != ok) [[unlikely]] {
             return res;
         }
