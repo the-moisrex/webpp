@@ -1,11 +1,13 @@
 #ifndef WEBPP_HTTP_PARSER_HPP
 #define WEBPP_HTTP_PARSER_HPP
 
+#include "./common.hpp"
 #include "./tokens.hpp"
 
 #include <cstdint>
 #include <string_view>
 
+// NOLINTBEGIN(*-pointer-arithmetic)
 namespace webpp::http {
 
 
@@ -15,12 +17,18 @@ namespace webpp::http {
 
         ok,              // Ok for now
         ok_request_line, // OK: request line is now fully parsed
+        ok_headers,      // OK: we finished with headers (reached \r\n\r\n)
 
         need_more_data,  // We can't parse with this amount of input
         invalid_method,  // GET/POST/HEAD/... are valid
         invalid_target,
         invalid_version, // HTTP version is not valid
-        invalid_crlf     // \r\n is not currect
+        invalid_crlf,    // \r\n is not currect
+
+        too_many_headers,
+        empty_header_name,
+        invalid_char, // invalid character found
+        possible_line_folding,
     };
 
     [[nodiscard]] static constexpr std::string_view to_string(http_parsing_state state) noexcept {
@@ -28,12 +36,17 @@ namespace webpp::http {
         switch (state) {
             case unparsed: return {"Not Parsed"};
             case ok: return {"Ok"};
-            case ok_request_line: return {"Request Line OK"};
+            case ok_request_line: return {"Request line OK"};
+            case ok_headers: return {"Headers are OK"};
             case need_more_data: return {"Need more input"};
             case invalid_method: return {"Invalid method"};
-            case invalid_target: return {"Invalid Target"};
-            case invalid_version: return {"Invalid HTTP Version"};
+            case invalid_target: return {"Invalid target"};
+            case invalid_version: return {"Invalid HTTP version"};
             case invalid_crlf: return {"Invalid CRLF"};
+            case too_many_headers: return {"Too many headers provided"};
+            case empty_header_name: return {"Empty header name"};
+            case invalid_char: return {"Invalid character found"};
+            case possible_line_folding: return {"Possible deprecated line folding found in headers"};
             default: break;
         }
         return {"Unknown State"};
@@ -58,13 +71,12 @@ namespace webpp::http {
      *
      * todo: check maximum length (max_request_line_length)
      */
-    static constexpr void parse_request_line(char const*& begin, char const* end, parsed_request_line& req) noexcept {
+    static constexpr void parse_request_line(char const *&begin, char const *end, parsed_request_line &req) noexcept {
         using enum http_parsing_state;
-        // NOLINTBEGIN(*-pointer-arithmetic)
-        char const* pos = begin;
+        char const *pos = begin;
 
         // 1. Parse Method
-        char const* method_start = pos;
+        char const *method_start = pos;
         for (; pos != end && *pos != ' '; ++pos) {
             if (!is_http_token(*pos)) [[unlikely]] {
                 req.state = invalid_method;
@@ -85,7 +97,7 @@ namespace webpp::http {
         ++pos; // Skip SP
 
         // 2. Parse Target (URL) - Basic validation only
-        char const* target_start = pos;
+        char const *target_start = pos;
         while (pos != end && *pos != ' ') {
             if (!is_valid_target_char(*pos)) {
                 req.state = invalid_target;
@@ -107,7 +119,7 @@ namespace webpp::http {
         ++pos; // Skip SP
 
         // 3. Parse HTTP Version
-        char const* version_start = pos;
+        char const *version_start = pos;
         while (pos != end && *pos != '\r') {
             ++pos;
         }
@@ -140,10 +152,150 @@ namespace webpp::http {
 
         // Transactional advance: only update the input pointer on complete success
         begin = pos + 2;
-        // NOLINTEND(*-pointer-arithmetic)
     }
+
+    /**
+     * Parses an HTTP token until it hits `next_char`.
+     */
+    [[nodiscard]] static constexpr http_parsing_state
+    parse_token(char const *&buf, char const *buf_end, stl::string_view &token, char next_char) noexcept {
+        using enum http_parsing_state;
+
+        char const *const buf_start = buf;
+
+        // Scans forward to find the first character that is NOT a valid HTTP token.
+        buf = token_charmap.find_first_not_in(buf, buf_end);
+
+        // If we hit the end of the buffer before finding the delimiter,
+        // or if the first non-token character is not the expected delimiter, fail.
+        if (buf == buf_end || *buf != next_char) [[unlikely]] {
+            return buf == buf_end ? need_more_data : invalid_char;
+        }
+
+        token = {buf_start, static_cast<std::size_t>(buf - buf_start)};
+
+        return ok;
+    }
+
+    /**
+     * @brief Consumes a token up to the End-Of-Line (EOL: \n or \r\n).
+     *
+     * Validates that the token only contains printable characters and the horizontal tab (HT).
+     * Any other control character, or an incomplete/missing EOL, results in an error.
+     *
+     * @param buf Start iterator/pointer of the buffer.
+     * @param buf_end End iterator/pointer of the buffer.
+     * @param out_token Output parameter for the extracted string_view.
+     */
+    [[nodiscard]] static constexpr http_parsing_state
+    token_to_eol(char const *&buf, char const *const buf_end, std::string_view &out_token) noexcept {
+        using enum http_parsing_state;
+        auto const *token_start = buf;
+
+        // We skip printable ASCII (>= 0x20), extended chars (>= 0x80), and HT (0x09).
+        // We stop at control characters (< 0x20) and DEL (0x7F).
+        while (buf != buf_end) {
+            auto const uc = static_cast<unsigned char>(*buf);
+            if ((uc < 0x20 && uc != 0x09) || uc == 0x7F) {
+                break;
+            }
+            ++buf;
+        }
+
+        if (buf == buf_end) [[unlikely]] {
+            return invalid_crlf; // Unexpected EOF
+        }
+
+        // Handle \r\n (CRLF)
+        if (*buf == '\r') {
+            auto const *next = buf;
+            ++next;
+            if (next != buf_end && *next == '\n') {
+                out_token = {&(*token_start), static_cast<std::size_t>(buf - token_start)};
+                ++next;
+                buf = next;
+                return ok; // Return pointer after \n
+            }
+        }
+        // Handle \n (LF)
+        else if (*buf == '\n')
+        {
+            out_token = {&(*token_start), static_cast<std::size_t>(buf - token_start)};
+            ++buf;
+            return ok; // Return pointer after \n
+        }
+
+        // Encountered an invalid control character before EOL
+        [[unlikely]] { return invalid_char; }
+    }
+
+    /**
+     * Parse one single header line
+     * @returns `ok` if parsed fine, `ok_headers` of reached the end, other errors otherwise.
+     */
+    [[nodiscard]] static constexpr http_parsing_state
+    parse_header(char const *&buf, char const *buf_end, stl::string_view &name, stl::string_view &value) noexcept {
+        using enum http_parsing_state;
+        auto const *buf_start = buf;
+
+        if (buf == buf_end) [[unlikely]] {
+            return need_more_data;
+        }
+        if (*buf == '\r') {
+            ++buf;
+            if (buf == buf_end) [[unlikely]] {
+                buf = buf_start;
+                return need_more_data;
+            }
+            if (*buf++ != '\n') [[unlikely]] {
+                return invalid_crlf;
+            }
+            return ok_headers;
+        }
+        if (*buf == '\n') [[unlikely]] {
+            ++buf;
+            return ok_headers;
+        }
+        if (*buf != ' ' && *buf != '\t') [[unlikely]] {
+            // A lot of older HTTP parsers still parse line folding for historical reasons. We choose not to.
+            name = {}; // clear the name
+            return possible_line_folding;
+        }
+
+        // Parsing header name, but we do not discard SP before colon. It introduces inconsistency between parsers,
+        // and thus allowing header smuggling.
+        // http://www.mozilla.org/security/announce/2006/mfsa2006-33.html
+        if (auto const res = parse_token(buf, buf_end, name, ':'); res != ok) [[unlikely]] {
+            if (res == need_more_data) {
+                buf = buf_start;
+            }
+            return res;
+        }
+        if (name.empty()) [[unlikely]] {
+            return empty_header_name;
+        }
+        ++buf;
+        for (;; ++buf) {
+            if (buf == buf_end) [[unlikely]] {
+                buf = buf_start;
+                return need_more_data;
+            }
+            if (*buf != ' ' && *buf != '\t') {
+                break;
+            }
+        }
+        if (auto const res = token_to_eol(buf, buf_end, value); res != ok) [[unlikely]] {
+            return res;
+        }
+
+        // Remove trailing SPs and HTABs
+        rtrim_lws(value);
+        return ok;
+    }
+
 
 } // namespace webpp::http
 
+// NOLINTEND(*-pointer-arithmetic)
 
 #endif // WEBPP_HTTP_PARSER_HPP

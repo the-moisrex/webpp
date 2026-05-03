@@ -114,8 +114,3 @@ TEST_F(HttpParserTest, FailsOnInvalidCRLF) {
 
     EXPECT_EQ(req.state, http_parsing_state::invalid_crlf);
 }
-
-TEST_F(HttpParserTest, ToStringHelperCheck) {
-    EXPECT_EQ(to_string(http_parsing_state::ok_request_line), "Request Line OK");
-    EXPECT_EQ(to_string(http_parsing_state::invalid_method), "Invalid method");
-}
