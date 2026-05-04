@@ -11,7 +11,7 @@
 namespace webpp::http {
 
 
-    // State machine enum for parsing the request line
+    /// State machine enum for parsing the request line
     enum struct http_parsing_state : std::uint8_t {
         unparsed,        // parsing has not yet begun
 
@@ -27,8 +27,8 @@ namespace webpp::http {
 
         too_many_headers,
         empty_header_name,
-        invalid_char, // invalid character found
-        possible_line_folding,
+        invalid_char,          // invalid character found
+        possible_line_folding, // Line folding is deprecated feature of HTTP
     };
 
     [[nodiscard]] static constexpr std::string_view to_string(http_parsing_state const state) noexcept {
@@ -178,7 +178,7 @@ namespace webpp::http {
     }
 
     /**
-     * @brief Consumes a token up to the End-Of-Line (EOL: \n or \r\n).
+     * Consumes a token up to the End-Of-Line (EOL: \n or \r\n).
      *
      * Validates that the token only contains printable characters and the horizontal tab (HT).
      * Any other control character, or an incomplete/missing EOL, results in an error.
@@ -300,6 +300,37 @@ namespace webpp::http {
         rtrim_lws(value);
         return ok;
     }
+
+    /**
+     * Parses all headers until the end of the headers section is reached (\r\n\r\n).
+     * Attention: this does not parse the request line
+     */
+    template <typename HeaderCallback>
+    [[nodiscard]] static constexpr http_parsing_state
+    parse_headers(char const *&buf, char const *buf_end, HeaderCallback const &callback)
+      noexcept(noexcept(callback(std::string_view{}, std::string_view{}))) {
+        using enum http_parsing_state;
+
+        while (buf != buf_end) {
+            std::string_view name;
+            std::string_view value;
+
+            // Use the existing single-header parser
+            http_parsing_state const res = parse_header(buf, buf_end, name, value);
+
+            if (res == ok) [[likely]] {
+                // Header parsed successfully, pass it to the callback
+                callback(name, value);
+            } else {
+                // Returns ok_headers_end if we hit the \r\n\r\n boundary,
+                // or an error/need_more_data state otherwise.
+                return res;
+            }
+        }
+
+        return need_more_data;
+    }
+
 
 
 } // namespace webpp::http
