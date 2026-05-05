@@ -199,10 +199,10 @@ namespace webpp::http {
                 write_response_body(res.body);
                 return EXIT_SUCCESS;
             } catch (stl::exception const& ex) {
-                this->logger.error("CGI", "Fatal exception is thrown.", ex);
+                logger.error("CGI", "Fatal exception is thrown.", ex);
                 return EXIT_FAILURE;
             } catch (...) {
-                this->logger.error("CGI", "Fatal and unknown exception is thrown.");
+                logger.error("CGI", "Fatal and unknown exception is thrown.");
                 return EXIT_FAILURE;
             }
         }

@@ -2,6 +2,7 @@
 #define WEBPP_MIDDLEWARE_CONCEPTS_HPP
 
 #include "../http/http_concepts.hpp"
+#include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
 
@@ -41,9 +42,26 @@ namespace webpp {
     template <typename T>
     concept Middleware = OnionMiddleware<T> || TwoWayMiddleware<T>;
 
-
     // todo: RouterLevelMiddleware
     // todo: ProtocolLevelMiddleware
+
+
+    static constexpr struct [[nodiscard]] basic_middlewares {
+        constexpr void next() const {
+            // todo
+        }
+    } middlewares;
+
+    template <typename T>
+    struct [[nodiscard]] base_middleware {
+        using signature = void (*)();
+
+        constexpr void exchange(signature old) noexcept {}
+
+      private:
+        signature _prev;
+        signature _next;
+    };
 
 } // namespace webpp
 

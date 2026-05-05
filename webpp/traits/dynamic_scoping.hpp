@@ -81,9 +81,6 @@ namespace webpp {
         }
 
         [[nodiscard]] static pointer& instance() noexcept {
-            // Framework assumption: Even though only a pointer is allocated here,
-            // T is currently constrained to be nothrow default constructible.
-            static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
             static pointer inst = nullptr;
             return inst;
         }
@@ -121,7 +118,6 @@ namespace webpp {
         }
 
         [[nodiscard]] static pointer& instance() noexcept {
-            static_assert(std::is_nothrow_default_constructible_v<T>, "Must be default constructible at compile time.");
             thread_local pointer inst = nullptr;
             return inst;
         }
