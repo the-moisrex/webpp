@@ -5,6 +5,7 @@
 #include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
+#include <typeindex>
 
 namespace webpp {
 
@@ -59,8 +60,7 @@ namespace webpp {
         constexpr void exchange(signature old) noexcept {}
 
       private:
-        signature _prev;
-        signature _next;
+        std::type_index index;
     };
 
 } // namespace webpp
