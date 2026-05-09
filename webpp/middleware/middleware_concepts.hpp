@@ -5,7 +5,6 @@
 #include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
-#include <typeindex>
 
 namespace webpp {
 
@@ -47,20 +46,77 @@ namespace webpp {
     // todo: ProtocolLevelMiddleware
 
 
-    static constexpr struct [[nodiscard]] basic_middlewares {
-        constexpr void next() const {
-            // todo
+    struct [[nodiscard]] close_tag {};
+
+    struct [[nodiscard]] middleware_tag {};
+
+    template <typename Tag, typename T>
+    concept EventOf = stl::invocable<T, Tag>;
+
+    struct [[nodiscard]] middleware_node {
+        constexpr middleware_node() noexcept                             = default;
+        constexpr middleware_node(middleware_node const&)                = default;
+        constexpr middleware_node(middleware_node&&) noexcept            = default;
+        constexpr middleware_node& operator=(middleware_node const&)     = default;
+        constexpr middleware_node& operator=(middleware_node&&) noexcept = default;
+        virtual ~middleware_node()                                       = default;
+
+        virtual void operator()(close_tag) = 0;
+        virtual void operator()()          = 0;
+    };
+
+    static constexpr struct [[nodiscard]] basic_middlewares final {
+      private:
+        middleware_node* root = nullptr;
+
+      public:
+        consteval basic_middlewares() noexcept = default;
+
+        void trigger(close_tag) {
+            if (root == nullptr) {
+                return;
+            }
+            root->operator()(close_tag{});
         }
+
+        void trigger() {
+            if (root == nullptr) {
+                return;
+            }
+            root->operator()();
+        }
+
     } middlewares;
 
     template <typename T>
-    struct [[nodiscard]] base_middleware {
-        using signature = void (*)();
-
-        constexpr void exchange(signature old) noexcept {}
+    struct [[nodiscard]] middleware_base : middleware_node {
+        template <typename Tag>
+        using next_type = stl::conditional_t<EventOf<Tag, T>, middleware_node*, istl::nothing_type>;
 
       private:
-        std::type_index index;
+        [[no_unique_address]] next_type<close_tag> _child_close;
+
+      public:
+        template <typename Tag = middleware_tag>
+        void trigger(Tag = {}) {
+            if constexpr (EventOf<Tag, T>) {
+                static_cast<T*>(this)->operator()(Tag{});
+            }
+        }
+
+        void next(close_tag) const {
+            if constexpr (EventOf<close_tag, T>) {
+                _child_close->operator()(close_tag{});
+            }
+        }
+
+        void operator()(close_tag) final {
+            trigger(close_tag{});
+        }
+
+        void operator()() final {
+            trigger();
+        }
     };
 
 } // namespace webpp
