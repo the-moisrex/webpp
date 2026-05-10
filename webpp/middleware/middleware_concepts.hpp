@@ -2,6 +2,7 @@
 #define WEBPP_MIDDLEWARE_CONCEPTS_HPP
 
 #include "../http/http_concepts.hpp"
+#include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
 
@@ -76,9 +77,25 @@ namespace webpp {
         }
     };
 
+    template <typename T>
+    struct [[nodiscard]] base_node_type {
+        using pointer = T*;
+
+        [[nodiscard]] constexpr pointer next_node() const noexcept {
+            return _next;
+        }
+
+        constexpr void next_node(pointer ptr) noexcept {
+            _next = ptr;
+        }
+
+      private:
+        pointer _next = nullptr;
+    };
+
     /// on connection close event
     struct [[nodiscard]] close_tag {
-        struct [[nodiscard]] node_type {
+        struct [[nodiscard]] node_type : base_node_type<node_type> {
             node_type() noexcept                       = default;
             node_type(node_type const&)                = default;
             node_type(node_type&&) noexcept            = default;
@@ -91,7 +108,7 @@ namespace webpp {
 
     /// middleware event
     struct [[nodiscard]] middleware_tag {
-        struct [[nodiscard]] node_type {
+        struct [[nodiscard]] node_type : base_node_type<node_type> {
             node_type() noexcept                       = default;
             node_type(node_type const&)                = default;
             node_type(node_type&&) noexcept            = default;
@@ -110,7 +127,7 @@ namespace webpp {
         struct node_child {};
 
         template <typename MiddlewareType, typename EventType>
-            requires EventOf<EventType, MiddlewareType>
+            requires(EventOf<EventType, MiddlewareType> || stl::same_as<MiddlewareType, middleware_node>)
         struct node_child<MiddlewareType, EventType> {
           protected:
             middleware_node* child = nullptr;
@@ -130,45 +147,57 @@ namespace webpp {
             [[nodiscard]] constexpr ChildType* get_child() const noexcept {
                 return static_cast<node_child<MiddlewareType, ChildType> const*>(this)->child;
             }
+
+            template <typename ChildType>
+            constexpr void register_child(ChildType* new_child) noexcept {
+                // only register it if we support it
+                if constexpr (requires { static_cast<node_child<MiddlewareType, ChildType>*>(this); }) {
+                    auto& head = static_cast<node_child<MiddlewareType, ChildType>*>(this)->child;
+                    if (head == nullptr) {
+                        head = new_child;
+                    } else {
+                        // Traverse the specific event's intrusive linked list
+                        // Upcast middleware_node to the specific ChildType::node_type
+                        auto* current = static_cast<typename ChildType::node_type*>(head);
+                        while (current->next_node != nullptr) {
+                            current = current->next_node;
+                        }
+                        current->next_node = static_cast<typename ChildType::node_type*>(new_child);
+                    }
+                }
+            }
+
+            template <typename MW>
+            constexpr void register_middleware(MW* mw_ptr) noexcept {
+                middleware_node* node = mw_ptr->get_node();
+                (register_child<EventTypes>(node), ...);
+            }
         };
     } // namespace details
-
-    /**
-     * Middleware dynamically scoped global customization point.
-     * This is where the middleware's root's pointer is being stored.
-     */
-    static constexpr struct [[nodiscard]] basic_middlewares final {
-      private:
-        middleware_node* root = nullptr;
-
-      public:
-        consteval basic_middlewares() noexcept = default;
-
-        template <typename Tag>
-        void trigger([[maybe_unused]] Tag) {
-            if (root == nullptr) {
-                return;
-            }
-            root->operator()(Tag{});
-        }
-
-    } middlewares;
 
     /**
      * This is the CRTP base class that turns classes into middlewares.
      */
     template <typename T>
     struct [[nodiscard]] middleware_base : middleware_node {
+        /// Root node requires to have all of the children but other nodes are only required to have children that the
+        /// node itself supports
+        static constexpr bool is_root_node = stl::same_as<T, middleware_node>;
+
       private:
         [[no_unique_address]] details::node_children<T> children;
 
       public:
-        /// trigger the event
-        template <typename Tag = middleware_tag>
+        /// Trigger the event
+        template <EventTag Tag = middleware_tag>
         void trigger(Tag = {}) const {
             if constexpr (EventOf<Tag, T>) {
                 static_cast<T*>(this)->operator()(Tag{});
             }
+        }
+
+        [[nodiscard]] constexpr middleware_node* get_node() noexcept {
+            return static_cast<middleware_node*>(this);
         }
 
         /// Call the next middleware
@@ -180,7 +209,37 @@ namespace webpp {
                 return child->operator()(Tag{});
             }
         }
+
+        /// Register a middleware in the tree
+        /// Each middleware instance can have multiple events and will be pointed to multiple times.
+        template <typename MW>
+        void register_middleware(MW* inp_middleware) noexcept {
+            children.template register_middleware<MW>(inp_middleware);
+        }
     };
+
+    /// Special case where all children nodes are present and set to nullptr by default
+    using middleware_root = middleware_base<middleware_node>;
+
+    /**
+     * Middleware dynamically scoped global customization point.
+     * This is where the middleware's root's pointer is being stored.
+     */
+    inline constexpr struct [[nodiscard]] basic_middlewares final : global_binding<middleware_node> {
+        /// Get the root node
+        [[nodiscard]] constexpr pointer root() const noexcept {
+            return ptr();
+        }
+
+        template <typename Tag>
+        void trigger([[maybe_unused]] Tag) {
+            if (root() == nullptr) {
+                return;
+            }
+            root()->operator()(Tag{});
+        }
+
+    } middlewares;
 
 } // namespace webpp
 
