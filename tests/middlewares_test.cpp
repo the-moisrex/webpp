@@ -3,7 +3,7 @@
 
 using namespace webpp;
 
-struct one_middleware final : middleware_base<one_middleware> {
+struct one_middleware final : middleware_base<one_middleware, middleware_tag> {
     bool triggered = false;
 
     void operator()(middleware_tag) {

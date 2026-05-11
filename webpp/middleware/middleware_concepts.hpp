@@ -72,13 +72,27 @@ namespace webpp {
         constexpr basic_middleware_node(basic_middleware_node&&) noexcept            = default;
         constexpr basic_middleware_node& operator=(basic_middleware_node const&)     = default;
         constexpr basic_middleware_node& operator=(basic_middleware_node&&) noexcept = default;
-        constexpr ~basic_middleware_node() noexcept                                  = default;
+        constexpr ~basic_middleware_node() noexcept override                         = default;
 
         using Tags::node_type::operator()...;
+
         // template <typename... T>
         // constexpr decltype(auto) operator()(T&&... args) {
         //     return this->operator()(stl::forward<T>(args)...);
         // }
+
+
+        constexpr void set_child(basic_middleware_node* node) noexcept {
+            child = node;
+        }
+
+        [[nodiscard]] constexpr basic_middleware_node* get_child() noexcept {
+            return child;
+        }
+
+      private:
+        // intrusive linked list
+        basic_middleware_node* child = nullptr;
     };
 
     /// on connection close event
@@ -135,11 +149,11 @@ namespace webpp {
                     } else {
                         // Traverse the specific event's intrusive linked list
                         // Upcast middleware_node to the specific ChildType::node_type
-                        auto* current = static_cast<typename Tag::node_type*>(head);
-                        while (current->next_node != nullptr) {
-                            current = current->next_node;
+                        auto* current = head->get_child();
+                        while (current != nullptr) {
+                            current = current->get_child();
                         }
-                        current->next_node = static_cast<typename Tag::node_type*>(new_child);
+                        current->set_child(new_child);
                     }
                 }
             }
@@ -147,7 +161,7 @@ namespace webpp {
             template <typename MW>
             constexpr void register_middleware(MW* mw_ptr) noexcept {
                 auto* node = mw_ptr->get_node();
-                (add_child<Tags>(node), ...);
+                add_child(node);
             }
         };
 
@@ -182,14 +196,11 @@ namespace webpp {
     /**
      * This is the CRTP base class that turns classes into middlewares.
      */
-    template <typename T>
-    struct [[nodiscard]] middleware_base : details::trimmed_middleware_node<T> {
-        using middleware_node_type = details::trimmed_middleware_node<T>;
+    template <typename T, EventTag... Tags>
+    struct [[nodiscard]] middleware_base : basic_middleware_node<Tags...> {
+        // using middleware_node_type = details::trimmed_middleware_node<T>;
+        using middleware_node_type = basic_middleware_node<Tags...>;
 
-      private:
-        middleware_node_type* child = nullptr;
-
-      public:
         /// Trigger the event
         template <EventTag Tag = middleware_tag>
         constexpr void trigger(Tag = {}) const {
@@ -206,6 +217,7 @@ namespace webpp {
         template <EventTag Tag>
         decltype(auto) constexpr next(Tag) const {
             if constexpr (EventOf<Tag, T>) {
+                auto* child = this->get_child();
                 assert(child != nullptr);
                 return child->operator()(Tag{});
             }
