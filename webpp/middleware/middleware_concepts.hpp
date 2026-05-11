@@ -149,11 +149,14 @@ namespace webpp {
                     } else {
                         // Traverse the specific event's intrusive linked list
                         // Upcast middleware_node to the specific ChildType::node_type
-                        auto* current = head->get_child();
-                        while (current != nullptr) {
-                            current = current->get_child();
+                        auto* current = head;
+                        for (;;) {
+                            auto* next = current->get_child();
+                            if (next == nullptr) {
+                                current->set_child(new_child);
+                                break;
+                            }
                         }
-                        current->set_child(new_child);
                     }
                 }
             }
@@ -252,7 +255,19 @@ namespace webpp {
         /// Each middleware instance can have multiple events and will be pointed to multiple times.
         template <typename MW>
         constexpr void register_middleware(MW* inp_middleware) noexcept {
-            children.template register_middleware<MW>(inp_middleware);
+            children.register_middleware(inp_middleware);
+        }
+
+        template <typename MW>
+        constexpr basic_middlewares_root& operator+=(MW* inp_middleware) noexcept {
+            children.register_middleware(inp_middleware);
+            return *this;
+        }
+
+        template <typename MW>
+        constexpr basic_middlewares_root& operator+=(MW& inp_middleware) noexcept {
+            children.register_middleware(&inp_middleware);
+            return *this;
         }
     };
 
