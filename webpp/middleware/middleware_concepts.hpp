@@ -65,7 +65,7 @@ namespace webpp {
         // them private, thus the compiler can be sure that it can't be converted to all those base classes, thus it can
         // optimize it.
 
-        // static_assert(sizeof...(Tags) > 0, "At least one single tag is needed.");
+        static_assert(sizeof...(Tags) > 0, "At least one single tag is needed.");
 
         constexpr basic_middleware_node() noexcept                                   = default;
         constexpr basic_middleware_node(basic_middleware_node const&)                = default;
@@ -80,8 +80,16 @@ namespace webpp {
             child = node;
         }
 
-        [[nodiscard]] constexpr basic_middleware_node* get_child() noexcept {
+        [[nodiscard]] constexpr basic_middleware_node* get_child() const noexcept {
             return child;
+        }
+
+        template <EventTag Tag>
+        constexpr void next(Tag tag) const {
+            if (child == nullptr) {
+                return;
+            }
+            return child->trigger(tag);
         }
 
       private:
@@ -105,7 +113,11 @@ namespace webpp {
         struct [[nodiscard]] impl_type : Base {
           private:
             void trigger(close_tag const tag) final {
+                // call the user's function
                 static_cast<T*>(this)->operator()(tag);
+
+                // call the next event no matter what
+                static_cast<Base*>(this)->next(tag);
             }
         };
     } on_close;
@@ -126,7 +138,10 @@ namespace webpp {
         struct [[nodiscard]] impl_type : Base {
           private:
             void trigger(middleware_tag const tag) final {
+                // call the user's function
                 static_cast<T*>(this)->operator()(tag);
+                // in middleware we don't call next, the user gets to choose if they need to call the next middleware or
+                // not.
             }
         };
     } on_middleware;
@@ -215,6 +230,10 @@ namespace webpp {
         ///    T = for CRTP usage
         /// Reuslts: Impl3<Impl2<Impl1<Base>>>
         /// Or more accurately: Impl3<T, Impl2<T, Impl1<T, Base>>>
+        ///
+        /// The reason why we're linearifying the virtual function implementations is due to performance.
+        /// The non-linear inheritance will create the "diamond problem" which potentially a tiny bit slower to fix
+        /// using "virtual inheritance".
         template <typename Base, typename T, template <typename, typename> typename... Impls>
         struct linearify {};
 
@@ -244,16 +263,6 @@ namespace webpp {
 
         [[nodiscard]] constexpr middleware_node_type* get_node() noexcept {
             return static_cast<middleware_node_type*>(this);
-        }
-
-        /// Call the next middleware
-        template <EventTag Tag>
-        decltype(auto) constexpr next(Tag) const {
-            if constexpr (EventOf<Tag, T>) {
-                if (auto* child = this->get_child(); child != nullptr) [[likely]] {
-                    return child->trigger(Tag{});
-                }
-            }
         }
     };
 
