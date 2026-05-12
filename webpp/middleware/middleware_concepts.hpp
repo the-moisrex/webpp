@@ -58,7 +58,7 @@ namespace webpp {
      * Middleware Node is one node in the Intrusive Linked List part of the middleware tree.
      */
     template <EventTag... Tags>
-    struct [[nodiscard]] basic_middleware_node : private Tags::node_type... {
+    struct [[nodiscard]] basic_middleware_node : private virtual Tags::node_type... {
         // the nodes are being inheritted privately in order to allow compilers to optimize more aggresively to make
         // sure multiple inheritance can be optimized to the same level that a flat design can be optimized. Virtual
         // functions are costly, and having them come from multiple inherited base types is even more costly; so we make
@@ -74,13 +74,7 @@ namespace webpp {
         constexpr basic_middleware_node& operator=(basic_middleware_node&&) noexcept = default;
         constexpr ~basic_middleware_node() noexcept override                         = default;
 
-        using Tags::node_type::operator()...;
-
-        // template <typename... T>
-        // constexpr decltype(auto) operator()(T&&... args) {
-        //     return this->operator()(stl::forward<T>(args)...);
-        // }
-
+        using Tags::node_type::trigger...;
 
         constexpr void set_child(basic_middleware_node* node) noexcept {
             child = node;
@@ -104,7 +98,15 @@ namespace webpp {
             node_type& operator=(node_type const&)     = default;
             node_type& operator=(node_type&&) noexcept = default;
             virtual ~node_type()                       = default;
-            virtual void operator()(close_tag)         = 0;
+            virtual void trigger(close_tag)            = 0;
+        };
+
+        template <typename T>
+        struct [[nodiscard]] impl_type : virtual node_type {
+          private:
+            void trigger(close_tag const tag) final {
+                static_cast<T*>(this)->operator()(tag);
+            }
         };
     } on_close;
 
@@ -117,7 +119,15 @@ namespace webpp {
             node_type& operator=(node_type const&)     = default;
             node_type& operator=(node_type&&) noexcept = default;
             virtual ~node_type()                       = default;
-            virtual void operator()(middleware_tag)    = 0;
+            virtual void trigger(middleware_tag)       = 0;
+        };
+
+        template <typename T>
+        struct [[nodiscard]] impl_type : virtual node_type {
+          private:
+            void trigger(middleware_tag const tag) final {
+                static_cast<T*>(this)->operator()(tag);
+            }
         };
     } on_middleware;
 
@@ -149,13 +159,13 @@ namespace webpp {
                     } else {
                         // Traverse the specific event's intrusive linked list
                         // Upcast middleware_node to the specific ChildType::node_type
-                        auto* current = head;
-                        for (;;) {
+                        for (auto* current = head;;) {
                             auto* next = current->get_child();
                             if (next == nullptr) {
                                 current->set_child(new_child);
                                 break;
                             }
+                            current = next;
                         }
                     }
                 }
@@ -194,23 +204,23 @@ namespace webpp {
         template <typename T, typename Pool = complete_middleware_node>
         using trimmed_middleware_node = typename middleware_node_picker<T, Pool>::type;
 
+        template <typename T, EventTag Tag>
+        struct [[nodiscard]] impl_trigger {
+            void trigger(Tag tag = {}) {
+                static_cast<T*>(this)->operator()(tag);
+            }
+        };
     } // namespace details
 
     /**
      * This is the CRTP base class that turns classes into middlewares.
      */
     template <typename T, EventTag... Tags>
-    struct [[nodiscard]] middleware_base : basic_middleware_node<Tags...> {
+    struct [[nodiscard]] middleware_base
+      : private basic_middleware_node<Tags...>,
+        public Tags::template impl_type<T>... {
         // using middleware_node_type = details::trimmed_middleware_node<T>;
         using middleware_node_type = basic_middleware_node<Tags...>;
-
-        /// Trigger the event
-        template <EventTag Tag = middleware_tag>
-        constexpr void trigger(Tag = {}) const {
-            if constexpr (EventOf<Tag, T>) {
-                static_cast<T*>(this)->operator()(Tag{});
-            }
-        }
 
         [[nodiscard]] constexpr middleware_node_type* get_node() noexcept {
             return static_cast<middleware_node_type*>(this);
@@ -220,9 +230,9 @@ namespace webpp {
         template <EventTag Tag>
         decltype(auto) constexpr next(Tag) const {
             if constexpr (EventOf<Tag, T>) {
-                auto* child = this->get_child();
-                assert(child != nullptr);
-                return child->operator()(Tag{});
+                if (auto* child = this->get_child(); child != nullptr) [[likely]] {
+                    return child->trigger(Tag{});
+                }
             }
         }
     };
@@ -248,7 +258,9 @@ namespace webpp {
         template <EventTag Tag = middleware_tag>
         constexpr void operator()(Tag tag = {}) const {
             // todo: this only runs one event
-            get_child<Tag>()->operator()(tag);
+            if (auto* child = get_child<Tag>(); child != nullptr) [[likely]] {
+                child->trigger(tag);
+            }
         }
 
         /// Register a middleware in the tree
@@ -284,11 +296,11 @@ namespace webpp {
         }
 
         template <typename Tag>
-        constexpr void trigger([[maybe_unused]] Tag) {
+        constexpr void operator()([[maybe_unused]] Tag) {
             if (root() == nullptr) {
                 return;
             }
-            root()->operator()(Tag{});
+            root()->trigger(Tag{});
         }
 
     } middlewares;
