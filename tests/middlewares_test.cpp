@@ -3,16 +3,17 @@
 
 using namespace webpp;
 
-struct one_middleware final : middleware_base<one_middleware, middleware_tag> {
+struct middlware_one final : middleware_base<middlware_one> {
     bool triggered = false;
 
-    void operator()(middleware_tag) {
+    void operator()() {
         triggered = true;
         // don't call next
     }
 };
 
-struct two_middleware final : middleware_base<two_middleware, close_tag> {
+// Actually, this is a hook, not a middleware
+struct hook_two final : event_base<hook_two, close_tag> {
     bool triggered = false;
 
     void operator()(close_tag) {
@@ -20,18 +21,18 @@ struct two_middleware final : middleware_base<two_middleware, close_tag> {
     }
 };
 
-struct three_middleware final : middleware_base<three_middleware, middleware_tag> {
+struct middleware_three final : middleware_base<middleware_three> {
     bool triggered = false;
 
-    void operator()(middleware_tag) {
+    void operator()() {
         triggered = true;
-        next(on_middleware);
+        next();
     }
 };
 
 TEST(MWTest, Basic) {
     middlewares_root root;
-    one_middleware   one;
+    middlware_one    one;
     root += one;
     root(on_middleware);
     EXPECT_TRUE(one.triggered);
@@ -39,8 +40,8 @@ TEST(MWTest, Basic) {
 
 TEST(MWTest, Duplicates) {
     middlewares_root root;
-    two_middleware   one;
-    two_middleware   two;
+    hook_two         one;
+    hook_two         two;
     root += one;
     root += two;
     root(on_close);
@@ -50,8 +51,8 @@ TEST(MWTest, Duplicates) {
 
 TEST(MWTest, Duplicates2) {
     middlewares_root root;
-    three_middleware one;
-    three_middleware two;
+    middleware_three one;
+    middleware_three two;
     root += one;
     root += two;
     root(on_middleware);
@@ -61,8 +62,8 @@ TEST(MWTest, Duplicates2) {
 
 TEST(MWTest, DuplicatesEvent) {
     middlewares_root root;
-    one_middleware   one;
-    one_middleware   two;
+    middlware_one    one;
+    middlware_one    two;
     root += one;
     root += two;
     root(on_middleware);
