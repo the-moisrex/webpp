@@ -58,7 +58,7 @@ namespace webpp {
      * Middleware Node is one node in the Intrusive Linked List part of the middleware tree.
      */
     template <EventTag... Tags>
-    struct [[nodiscard]] basic_middleware_node : private virtual Tags::node_type... {
+    struct [[nodiscard]] basic_middleware_node : private Tags::node_type... {
         // the nodes are being inheritted privately in order to allow compilers to optimize more aggresively to make
         // sure multiple inheritance can be optimized to the same level that a flat design can be optimized. Virtual
         // functions are costly, and having them come from multiple inherited base types is even more costly; so we make
@@ -101,8 +101,8 @@ namespace webpp {
             virtual void trigger(close_tag)            = 0;
         };
 
-        template <typename T>
-        struct [[nodiscard]] impl_type : virtual node_type {
+        template <typename T, typename Base>
+        struct [[nodiscard]] impl_type : Base {
           private:
             void trigger(close_tag const tag) final {
                 static_cast<T*>(this)->operator()(tag);
@@ -122,8 +122,8 @@ namespace webpp {
             virtual void trigger(middleware_tag)       = 0;
         };
 
-        template <typename T>
-        struct [[nodiscard]] impl_type : virtual node_type {
+        template <typename T, typename Base>
+        struct [[nodiscard]] impl_type : Base {
           private:
             void trigger(middleware_tag const tag) final {
                 static_cast<T*>(this)->operator()(tag);
@@ -210,15 +210,35 @@ namespace webpp {
                 static_cast<T*>(this)->operator()(tag);
             }
         };
+
+        /// Base = base class
+        ///    T = for CRTP usage
+        /// Reuslts: Impl3<Impl2<Impl1<Base>>>
+        /// Or more accurately: Impl3<T, Impl2<T, Impl1<T, Base>>>
+        template <typename Base, typename T, template <typename, typename> typename... Impls>
+        struct linearify {};
+
+        template <typename Base,
+                  typename T,
+                  template <typename, typename> typename Impl1,
+                  template <typename, typename> typename... Impls>
+        struct linearify<Base, T, Impl1, Impls...> : linearify<Impl1<T, Base>, T, Impls...> {};
+
+        template <typename Base, typename T>
+        struct linearify<Base, T> {
+            using type = Base;
+        };
+
+        template <typename Base, typename T, template <typename, typename> typename... Impls>
+        using linearify_type = typename linearify<Base, T, Impls...>::type;
     } // namespace details
 
     /**
      * This is the CRTP base class that turns classes into middlewares.
      */
     template <typename T, EventTag... Tags>
-    struct [[nodiscard]] middleware_base
-      : private basic_middleware_node<Tags...>,
-        public Tags::template impl_type<T>... {
+    struct [[nodiscard]]
+    middleware_base : public details::linearify_type<basic_middleware_node<Tags...>, T, Tags::template impl_type...> {
         // using middleware_node_type = details::trimmed_middleware_node<T>;
         using middleware_node_type = basic_middleware_node<Tags...>;
 
@@ -295,13 +315,13 @@ namespace webpp {
             return ptr();
         }
 
-        template <typename Tag>
-        constexpr void operator()([[maybe_unused]] Tag) {
-            if (root() == nullptr) {
-                return;
-            }
-            root()->trigger(Tag{});
-        }
+        // template <typename Tag>
+        // constexpr void operator()([[maybe_unused]] Tag) {
+        //     if (root() == nullptr) {
+        //         return;
+        //     }
+        //     root()->trigger(Tag{});
+        // }
 
     } middlewares;
 
