@@ -3,7 +3,7 @@
 
 using namespace webpp;
 
-struct middlware_one final : middleware_base<middlware_one> {
+struct middleware_one final : middleware_base<middleware_one> {
     bool triggered = false;
 
     void operator()() {
@@ -30,9 +30,23 @@ struct middleware_three final : middleware_base<middleware_three> {
     }
 };
 
+struct middleware_four final : event_base<middleware_four, close_tag, middleware_tag> {
+    bool mw_triggered    = false;
+    bool close_triggered = false;
+
+    void operator()() {
+        mw_triggered = true;
+        next(on_middleware);
+    }
+
+    void operator()(close_tag) {
+        close_triggered = true;
+    }
+};
+
 TEST(MWTest, Basic) {
     middlewares_root root;
-    middlware_one    one;
+    middleware_one   one;
     root += one;
     root(on_middleware);
     EXPECT_TRUE(one.triggered);
@@ -62,11 +76,37 @@ TEST(MWTest, Duplicates2) {
 
 TEST(MWTest, DuplicatesEvent) {
     middlewares_root root;
-    middlware_one    one;
-    middlware_one    two;
+    middleware_one   one;
+    middleware_one   two;
     root += one;
     root += two;
     root(on_middleware);
     EXPECT_TRUE(one.triggered);
     EXPECT_FALSE(two.triggered);
+}
+
+TEST(MWTest, Multi) {
+    middlewares_root root;
+    middleware_one   one;
+    hook_two         two;
+    root += one;
+    root += two;
+    root(on_middleware);
+    EXPECT_TRUE(one.triggered);
+    EXPECT_FALSE(two.triggered);
+    root(on_close);
+    EXPECT_TRUE(one.triggered);
+    EXPECT_TRUE(two.triggered);
+}
+
+TEST(MWTest, MultiType) {
+    middlewares_root root;
+    middleware_four  one;
+    root += one;
+    root(on_middleware);
+    EXPECT_TRUE(one.mw_triggered);
+    EXPECT_FALSE(one.close_triggered);
+    root(on_close);
+    EXPECT_TRUE(one.mw_triggered);
+    EXPECT_TRUE(one.close_triggered);
 }

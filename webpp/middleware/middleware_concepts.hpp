@@ -207,7 +207,7 @@ namespace webpp {
             template <typename Tag>
             constexpr void add_child(basic_event_node<Tag>* new_child) noexcept {
                 // only register it if we support it
-                if constexpr (requires { static_cast<root_child<Tag>*>(this); }) {
+                if constexpr (std::is_base_of_v<root_child<Tag>, root_children>) {
                     auto& head = static_cast<root_child<Tag>*>(this)->child;
                     if (head == nullptr) {
                         head = new_child;
