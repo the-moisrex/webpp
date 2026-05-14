@@ -1,11 +1,11 @@
 #ifndef WEBPP_MIDDLEWARE_CONCEPTS_HPP
 #define WEBPP_MIDDLEWARE_CONCEPTS_HPP
 
-#include "../http/http_concepts.hpp"
+#include "../common/meta.hpp"
+#include "../std/type_traits.hpp"
 #include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
-#include <type_traits>
 
 namespace webpp {
 
