@@ -74,7 +74,7 @@ namespace webpp {
      * Middleware Node is one node in the Intrusive Linked List part of the middleware tree.
      */
     template <EventTag... Tags>
-    struct [[nodiscard]] basic_event_node : private Tags::node_type... {
+    struct [[nodiscard]] basic_event_node : private Tags::node_type... { // NOLINT(*-multiple-inheritance)
         // the nodes are being inheritted privately in order to allow compilers to optimize more aggresively to make
         // sure multiple inheritance can be optimized to the same level that a flat design can be optimized. Virtual
         // functions are costly, and having them come from multiple inherited base types is even more costly; so we make
@@ -182,6 +182,7 @@ namespace webpp {
     template <EventTag Tag, typename T, typename Base>
     struct [[nodiscard]] generic_hook_trigger : Base {
       protected:
+        // NOLINTNEXTLINE(*-crtp-constructor-accessibility)
         constexpr generic_hook_trigger() noexcept = default;
         friend T;
 
@@ -210,7 +211,9 @@ namespace webpp {
         generic_node_type& operator=(generic_node_type const&)     = default;
         generic_node_type& operator=(generic_node_type&&) noexcept = default;
         virtual ~generic_node_type()                               = default;
-        virtual void trigger(Tag)                                  = 0;
+
+        // NOLINTNEXTLINE(*-template-virtual-member-function)
+        virtual void trigger(Tag) = 0;
 
         constexpr void set_child(generic_node_type* node) noexcept {
             child = node;
@@ -240,6 +243,7 @@ namespace webpp {
         template <typename T, typename Base>
         struct [[nodiscard]] impl_type : Base {
           protected:
+            // NOLINTNEXTLINE(*-crtp-constructor-accessibility)
             constexpr impl_type() noexcept = default;
             friend T;
 
