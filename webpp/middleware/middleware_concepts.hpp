@@ -12,9 +12,9 @@ namespace webpp {
 
     template <typename T>
     concept MiddlewareReturnType =
-      stl::same_as<T, bool> // Conditional termination
-      || stl::is_void_v<T>  // No return
-      || http::HTTPResponse<T>;
+      stl::same_as<stl::remove_cvref_t<T>, bool> // Conditional termination
+      || stl::is_void_v<stl::remove_cvref_t<T>>  // No return
+      || http::HTTPResponse<stl::remove_cvref_t<T>>;
 
     /**
      * Onion Architecture.
@@ -30,12 +30,12 @@ namespace webpp {
      * Has a `.post` and a `.pre` member function.
      */
     template <typename T>
-    concept TwoWayMiddleware = requires(T obj) {
+    concept TwoWayMiddleware = requires(T& obj) {
         { obj.pre() } -> MiddlewareReturnType;
         { obj.post() } -> MiddlewareReturnType;
-    } || requires(T obj) {
+    } || requires(T& obj) {
         { obj.pre() } -> MiddlewareReturnType;  // only pre
-    } || requires(T obj) {
+    } || requires(T& obj) {
         { obj.post() } -> MiddlewareReturnType; // only post
     };
 
@@ -53,7 +53,13 @@ namespace webpp {
      * Middlewares are events that they get to decide if the next middleware should be called or not.
      */
     template <typename T>
-    concept EventTag = requires { typename T::node_type; };
+    concept EventTag = requires {
+        typename T::node_type;
+        requires requires(typename T::node_type& node) {
+            node.get_child();
+            node.set_child(&node);
+        };
+    };
 
     // todo: RouterLevelMiddleware
     // todo: ProtocolLevelMiddleware
@@ -243,11 +249,18 @@ namespace webpp {
                     // in onion middleware we don't call next, the user gets to choose if they need to call the next
                     // middleware or not.
                 } else if constexpr (TwoWayMiddleware<T>) {
-                    if constexpr (requires(T obj) { obj.pre(); }) {
-                        static_cast<T*>(this)->pre();
+                    if constexpr (requires(T& obj) { obj.pre(); }) {
+                        using pre_ret = decltype(stl::declval<T&>().pre());
+                        if constexpr (stl::same_as<stl::remove_cvref_t<pre_ret>, bool>) {
+                            if (!static_cast<T*>(this)->pre()) {
+                                return; // short-circuit
+                            }
+                        } else {
+                            static_cast<T*>(this)->pre();
+                        }
                     }
                     static_cast<Base*>(this)->next(tag);
-                    if constexpr (requires(T obj) { obj.post(); }) {
+                    if constexpr (requires(T& obj) { obj.post(); }) {
                         static_cast<T*>(this)->post();
                     }
                 } else {
