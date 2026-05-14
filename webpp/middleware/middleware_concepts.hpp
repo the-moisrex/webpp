@@ -5,16 +5,12 @@
 #include "../traits/dynamic_scoping.hpp"
 
 #include <concepts>
+#include <type_traits>
 
 namespace webpp {
 
     struct [[nodiscard]] middleware_tag;
 
-    template <typename T>
-    concept MiddlewareReturnType =
-      stl::same_as<stl::remove_cvref_t<T>, bool> // Conditional termination
-      || stl::is_void_v<stl::remove_cvref_t<T>>  // No return
-      || http::HTTPResponse<stl::remove_cvref_t<T>>;
 
     /**
      * Onion Architecture.
@@ -31,18 +27,19 @@ namespace webpp {
      */
     template <typename T>
     concept TwoWayMiddleware = requires(T& obj) {
-        { obj.pre() } -> MiddlewareReturnType;
-        { obj.post() } -> MiddlewareReturnType;
+        obj.pre();
+        obj.post();
     } || requires(T& obj) {
-        { obj.pre() } -> MiddlewareReturnType;  // only pre
+        obj.pre();  // only pre
     } || requires(T& obj) {
-        { obj.post() } -> MiddlewareReturnType; // only post
+        obj.post(); // only post
     };
 
 
 
     template <typename T>
     concept Middleware = OnionMiddleware<T> || TwoWayMiddleware<T>;
+
 
     /**
      * An event is a general concept containing two things:
@@ -240,6 +237,38 @@ namespace webpp {
     static constexpr struct [[nodiscard]] middleware_tag {
         using node_type = generic_node_type<middleware_tag>;
 
+        template <typename T, typename CtxT>
+            requires(stl::invocable<T, CtxT&>)
+        static constexpr void call_middleware(T& inp_mw, CtxT& ctx) noexcept(stl::is_nothrow_invocable_v<T, CtxT&>) {
+            inp_mw(ctx);
+        }
+
+        template <typename T, typename CtxT>
+            requires(stl::invocable<T>)
+        static constexpr void call_middleware(T& inp_mw, [[maybe_unused]] CtxT& ctx)
+          noexcept(stl::is_nothrow_invocable_v<T>) {
+            inp_mw();
+        }
+
+        template <typename T, typename CtxT>
+            requires(stl::invocable<T, middleware_tag>)
+        static constexpr void call_middleware(T& inp_mw, [[maybe_unused]] CtxT& ctx)
+          noexcept(stl::is_nothrow_invocable_v<T, middleware_tag>) {
+            inp_mw(middleware_tag{});
+        }
+
+        template <typename T>
+            requires(stl::invocable<T, middleware_tag>)
+        static constexpr void call_middleware(T& inp_mw) noexcept(stl::is_nothrow_invocable_v<T, middleware_tag>) {
+            inp_mw(middleware_tag{});
+        }
+
+        template <typename T>
+            requires(stl::invocable<T>)
+        static constexpr void call_middleware(T& inp_mw) noexcept(stl::is_nothrow_invocable_v<T>) {
+            inp_mw();
+        }
+
         template <typename T, typename Base>
         struct [[nodiscard]] impl_type : Base {
           protected:
@@ -253,13 +282,7 @@ namespace webpp {
             void trigger(middleware_tag const tag) final {
                 // call the user's function
                 if constexpr (OnionMiddleware<T>) {
-                    if constexpr (stl::invocable<T, middleware_tag>) {
-                        static_cast<T*>(this)->operator()(tag);
-                    } else if constexpr (stl::invocable<T>) {
-                        static_cast<T*>(this)->operator()();
-                    } else {
-                        static_assert_false(T, "This can't happen.");
-                    }
+                    call_middleware(static_cast<T&>(*this));
                     // in onion middleware we don't call next, the user gets to choose if they need to call the next
                     // middleware or not.
                 } else if constexpr (TwoWayMiddleware<T>) {
@@ -313,7 +336,7 @@ namespace webpp {
     } // namespace details
 
     /**
-     * This is the CRTP base class that turns classes into middlewares.
+     * This is the CRTP base class that turns classes into events (middleware/hook).
      */
     template <typename T, EventTag... Tags>
     struct [[nodiscard]]
@@ -343,9 +366,9 @@ namespace webpp {
     struct [[nodiscard]]
     basic_events_root<basic_event_node<Tags...>> : event<basic_events_root<basic_event_node<Tags...>>, Tags...> {
         /// Trigger the events in order
-        template <EventTag Tag = middleware_tag>
+        template <EventTag Tag>
         constexpr void operator()(Tag tag = {}) const {
-            if (auto* child = this->template get_child<Tag>(); child != nullptr) [[likely]] {
+            if (auto* child = this->get_child(tag); child != nullptr) [[likely]] {
                 child->trigger(tag);
             }
         }
@@ -354,8 +377,8 @@ namespace webpp {
     using events_root = basic_events_root<>;
 
     /**
-     * Middleware dynamically scoped global customization point.
-     * This is where the middleware's root's pointer is being stored.
+     * Events dynamically scoped global customization point.
+     * This is where we can point to different event roots and switch between them.
      */
     inline constexpr struct [[nodiscard]] basic_events final : global_binding<events_root> {
         /// Get the root node
@@ -364,14 +387,14 @@ namespace webpp {
         }
 
         template <typename Tag>
-        constexpr void operator()([[maybe_unused]] Tag) {
+        constexpr void operator()([[maybe_unused]] Tag) const {
             if (root() == nullptr) [[unlikely]] {
                 return;
             }
             root()->operator()(Tag{});
         }
 
-    } middlewares;
+    } events;
 
 } // namespace webpp
 
