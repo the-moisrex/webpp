@@ -181,6 +181,11 @@ namespace webpp {
 
     template <EventTag Tag, typename T, typename Base>
     struct [[nodiscard]] generic_hook_trigger : Base {
+      protected:
+        constexpr generic_hook_trigger() noexcept = default;
+        friend T;
+
+      public:
         using Base::trigger;
 
         void trigger(Tag const tag) final {
@@ -234,6 +239,11 @@ namespace webpp {
 
         template <typename T, typename Base>
         struct [[nodiscard]] impl_type : Base {
+          protected:
+            constexpr impl_type() noexcept = default;
+            friend T;
+
+          public:
             using Base::trigger;
 
             void trigger(middleware_tag const tag) final {
@@ -304,8 +314,12 @@ namespace webpp {
     template <typename T, EventTag... Tags>
     struct [[nodiscard]]
     event : public details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...> {
-        using impl_chain_type = details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...>;
-        using node_type       = basic_event_node<Tags...>;
+      private:
+        constexpr event() noexcept = default;
+        friend T;
+
+      public:
+        using node_type = basic_event_node<Tags...>;
     };
 
     template <typename T>
