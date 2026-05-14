@@ -290,13 +290,13 @@ namespace webpp {
      */
     template <typename T, EventTag... Tags>
     struct [[nodiscard]]
-    event_base : public details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...> {
+    event : public details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...> {
         using impl_chain_type = details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...>;
         using node_type       = basic_event_node<Tags...>;
     };
 
     template <typename T>
-    using middleware_base = event_base<T, middleware_tag>;
+    using middleware = event<T, middleware_tag>;
 
     /// Middleware Node is the node part of the tree. This makes the middleware an intrusive linked list.
     /// If you need to add support to more events, add those events here.
@@ -310,7 +310,7 @@ namespace webpp {
     /// This is the root of a tree, it by itself is not a node of the tree.
     template <EventTag... Tags>
     struct [[nodiscard]]
-    basic_events_root<basic_event_node<Tags...>> : event_base<basic_events_root<basic_event_node<Tags...>>, Tags...> {
+    basic_events_root<basic_event_node<Tags...>> : event<basic_events_root<basic_event_node<Tags...>>, Tags...> {
         /// Trigger the events in order
         template <EventTag Tag = middleware_tag>
         constexpr void operator()(Tag tag = {}) const {
@@ -326,19 +326,19 @@ namespace webpp {
      * Middleware dynamically scoped global customization point.
      * This is where the middleware's root's pointer is being stored.
      */
-    inline constexpr struct [[nodiscard]] basic_middlewares final : global_binding<complete_middleware_node> {
+    inline constexpr struct [[nodiscard]] basic_events final : global_binding<events_root> {
         /// Get the root node
         [[nodiscard]] constexpr pointer root() const noexcept {
             return ptr();
         }
 
-        // template <typename Tag>
-        // constexpr void operator()([[maybe_unused]] Tag) {
-        //     if (root() == nullptr) {
-        //         return;
-        //     }
-        //     root()->trigger(Tag{});
-        // }
+        template <typename Tag>
+        constexpr void operator()([[maybe_unused]] Tag) {
+            if (root() == nullptr) [[unlikely]] {
+                return;
+            }
+            root()->operator()(Tag{});
+        }
 
     } middlewares;
 

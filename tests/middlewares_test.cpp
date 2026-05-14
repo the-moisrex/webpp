@@ -3,7 +3,7 @@
 
 using namespace webpp;
 
-struct middleware_one final : middleware_base<middleware_one> {
+struct middleware_one final : middleware<middleware_one> {
     bool triggered = false;
 
     void operator()() {
@@ -13,7 +13,7 @@ struct middleware_one final : middleware_base<middleware_one> {
 };
 
 // Actually, this is a hook, not a middleware
-struct hook_two final : event_base<hook_two, close_tag> {
+struct hook_two final : event<hook_two, close_tag> {
     bool triggered = false;
 
     void operator()(close_tag) {
@@ -21,7 +21,7 @@ struct hook_two final : event_base<hook_two, close_tag> {
     }
 };
 
-struct middleware_three final : middleware_base<middleware_three> {
+struct middleware_three final : middleware<middleware_three> {
     bool triggered = false;
 
     void operator()() {
@@ -30,7 +30,7 @@ struct middleware_three final : middleware_base<middleware_three> {
     }
 };
 
-struct middleware_four final : event_base<middleware_four, close_tag, middleware_tag> {
+struct middleware_four final : event<middleware_four, close_tag, middleware_tag> {
     bool mw_triggered    = false;
     bool close_triggered = false;
 

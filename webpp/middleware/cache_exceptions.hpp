@@ -9,7 +9,7 @@
 namespace webpp {
 
     template <typename T>
-    struct [[nodiscard]] basic_catch_exceptions final : middleware_base<basic_catch_exceptions<T>> {
+    struct [[nodiscard]] basic_catch_exceptions final : middleware<basic_catch_exceptions<T>> {
         static constexpr stl::string_view middleware_name = "catch-exceptions";
         static_assert(stl::is_nothrow_invocable_v<T, stl::exception const&>,
                       "Must be able to handle exceptions and itself should not throw.");
