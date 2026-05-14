@@ -45,17 +45,17 @@ struct middleware_four final : event_base<middleware_four, close_tag, middleware
 };
 
 TEST(MWTest, Basic) {
-    middlewares_root root;
-    middleware_one   one;
+    events_root    root;
+    middleware_one one;
     root += one;
     root(on_middleware);
     EXPECT_TRUE(one.triggered);
 }
 
 TEST(MWTest, Duplicates) {
-    middlewares_root root;
-    hook_two         one;
-    hook_two         two;
+    events_root root;
+    hook_two    one;
+    hook_two    two;
     root += one;
     root += two;
     root(on_close);
@@ -64,7 +64,7 @@ TEST(MWTest, Duplicates) {
 }
 
 TEST(MWTest, Duplicates2) {
-    middlewares_root root;
+    events_root      root;
     middleware_three one;
     middleware_three two;
     root += one;
@@ -75,9 +75,9 @@ TEST(MWTest, Duplicates2) {
 }
 
 TEST(MWTest, DuplicatesEvent) {
-    middlewares_root root;
-    middleware_one   one;
-    middleware_one   two;
+    events_root    root;
+    middleware_one one;
+    middleware_one two;
     root += one;
     root += two;
     root(on_middleware);
@@ -86,9 +86,9 @@ TEST(MWTest, DuplicatesEvent) {
 }
 
 TEST(MWTest, Multi) {
-    middlewares_root root;
-    middleware_one   one;
-    hook_two         two;
+    events_root    root;
+    middleware_one one;
+    hook_two       two;
     root += one;
     root += two;
     root(on_middleware);
@@ -100,8 +100,8 @@ TEST(MWTest, Multi) {
 }
 
 TEST(MWTest, MultiType) {
-    middlewares_root root;
-    middleware_four  one;
+    events_root     root;
+    middleware_four one;
     root += one;
     root(on_middleware);
     EXPECT_TRUE(one.mw_triggered);

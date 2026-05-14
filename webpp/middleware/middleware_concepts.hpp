@@ -86,16 +86,75 @@ namespace webpp {
 
         using Tags::node_type::trigger...;
 
-        constexpr void set_child(basic_event_node* node) noexcept {
-            child = node;
+        template <typename Tag = typename istl::first_type_t<Tags...>>
+        [[nodiscard]] constexpr typename Tag::node_type const* get_node([[maybe_unused]] Tag = {}) const noexcept {
+            return static_cast<typename Tag::node_type const*>(this);
         }
 
-        [[nodiscard]] constexpr basic_event_node* get_child() const noexcept {
-            return child;
+        template <typename Tag = typename istl::first_type_t<Tags...>>
+        [[nodiscard]] constexpr typename Tag::node_type* get_node([[maybe_unused]] Tag = {}) noexcept {
+            return static_cast<typename Tag::node_type*>(this);
+        }
+
+        template <typename Tag>
+        constexpr void set_child(typename Tag::node_type* node) noexcept {
+            get_node<Tag>()->set_child(node);
+        }
+
+        template <typename Tag = typename istl::first_type_t<Tags...>>
+        [[nodiscard]] constexpr typename Tag::node_type* get_child([[maybe_unused]] Tag = {}) const noexcept {
+            return get_node<Tag>()->get_child();
+        }
+
+        template <typename Tag>
+        constexpr void add_child(typename Tag::node_type* new_child) noexcept {
+            // only register it if we support it
+            auto* head = get_child<Tag>();
+            if (head == nullptr) {
+                this->template set_child<Tag>(new_child);
+            } else {
+                // Traverse the specific event's intrusive linked list
+                // Upcast middleware_node to the specific ChildType::node_type
+                for (auto* current = head;;) {
+                    auto* next = current->get_child();
+                    if (next == nullptr) {
+                        current->set_child(new_child);
+                        break;
+                    }
+                    current = next;
+                }
+            }
+        }
+
+        /// Register a middleware in the tree
+        /// Each middleware instance can have multiple events and will be pointed to multiple times.
+        template <typename MW>
+        constexpr void register_middleware(MW* inp_middleware) noexcept {
+            // we can use C++23's `template for` here.
+            auto const register_tag = [this, inp_middleware]<typename Tag>(Tag) constexpr noexcept {
+                if constexpr (stl::is_base_of_v<typename Tag::node_type, MW>) {
+                    this->template add_child<Tag>(inp_middleware->template get_node<Tag>());
+                }
+            };
+            (register_tag(Tags{}), ...);
+            // (add_child(inp_middleware->template get_child<Tags>()), ...);
+        }
+
+        template <typename MW>
+        constexpr basic_event_node& operator+=(MW* inp_middleware) noexcept {
+            register_middleware(inp_middleware);
+            return *this;
+        }
+
+        template <typename MW>
+        constexpr basic_event_node& operator+=(MW& inp_middleware) noexcept {
+            register_middleware(&inp_middleware);
+            return *this;
         }
 
         template <EventTag Tag>
         constexpr void next(Tag tag) const {
+            auto* child = get_child(tag);
             if (child == nullptr) {
                 return;
             }
@@ -106,20 +165,18 @@ namespace webpp {
         constexpr void next() const
             requires(sizeof...(Tags) == 1)
         {
+            auto* const child = get_child();
             if (child == nullptr) {
                 return;
             }
             (child->trigger(Tags{}), ...);
         }
-
-      private:
-        // intrusive linked list
-        basic_event_node* child = nullptr;
     };
 
     template <EventTag Tag, typename T, typename Base>
     struct [[nodiscard]] generic_hook_trigger : Base {
-      private:
+        using Base::trigger;
+
         void trigger(Tag const tag) final {
             // call the user's function
             static_cast<T*>(this)->operator()(tag);
@@ -130,19 +187,32 @@ namespace webpp {
     };
 
     template <typename Tag>
-    struct [[nodiscard]] generic_trigger_type {
-        generic_trigger_type() noexcept                                  = default;
-        generic_trigger_type(generic_trigger_type const&)                = default;
-        generic_trigger_type(generic_trigger_type&&) noexcept            = default;
-        generic_trigger_type& operator=(generic_trigger_type const&)     = default;
-        generic_trigger_type& operator=(generic_trigger_type&&) noexcept = default;
-        virtual ~generic_trigger_type()                                  = default;
-        virtual void trigger(Tag)                                        = 0;
+    struct [[nodiscard]] generic_node_type {
+      private:
+        // intrusive linked list
+        generic_node_type* child = nullptr;
+
+      public:
+        generic_node_type() noexcept                               = default;
+        generic_node_type(generic_node_type const&)                = default;
+        generic_node_type(generic_node_type&&) noexcept            = default;
+        generic_node_type& operator=(generic_node_type const&)     = default;
+        generic_node_type& operator=(generic_node_type&&) noexcept = default;
+        virtual ~generic_node_type()                               = default;
+        virtual void trigger(Tag)                                  = 0;
+
+        constexpr void set_child(generic_node_type* node) noexcept {
+            child = node;
+        }
+
+        [[nodiscard]] constexpr generic_node_type* get_child() const noexcept {
+            return child;
+        }
     };
 
     template <int ID>
     struct [[nodiscard]] generic_hook {
-        using node_type = generic_trigger_type<generic_hook>;
+        using node_type = generic_node_type<generic_hook>;
 
         template <typename T, typename Base>
         using impl_type = generic_hook_trigger<generic_hook, T, Base>;
@@ -154,11 +224,12 @@ namespace webpp {
 
     /// middleware event
     static constexpr struct [[nodiscard]] middleware_tag {
-        using node_type = generic_trigger_type<middleware_tag>;
+        using node_type = generic_node_type<middleware_tag>;
 
         template <typename T, typename Base>
         struct [[nodiscard]] impl_type : Base {
-          private:
+            using Base::trigger;
+
             void trigger(middleware_tag const tag) final {
                 // call the user's function
                 if constexpr (OnionMiddleware<T>) {
@@ -186,52 +257,7 @@ namespace webpp {
         };
     } on_middleware;
 
-    /// Middleware Node is the node part of the tree. This makes the middleware an intrusive linked list.
-    /// If you need to add support to more events, add those events here.
-    using complete_middleware_node = basic_event_node<middleware_tag, close_tag>;
-
     namespace details {
-
-        template <typename Tag>
-        struct root_child {
-            basic_event_node<Tag>* child = nullptr;
-        };
-
-        template <typename... Tags>
-        struct [[nodiscard]] root_children : root_child<Tags>... {
-            template <typename Tag>
-            [[nodiscard]] constexpr basic_event_node<Tag>* get_child() const noexcept {
-                return static_cast<root_child<Tag> const*>(this)->child;
-            }
-
-            template <typename Tag>
-            constexpr void add_child(basic_event_node<Tag>* new_child) noexcept {
-                // only register it if we support it
-                if constexpr (std::is_base_of_v<root_child<Tag>, root_children>) {
-                    auto& head = static_cast<root_child<Tag>*>(this)->child;
-                    if (head == nullptr) {
-                        head = new_child;
-                    } else {
-                        // Traverse the specific event's intrusive linked list
-                        // Upcast middleware_node to the specific ChildType::node_type
-                        for (auto* current = head;;) {
-                            auto* next = current->get_child();
-                            if (next == nullptr) {
-                                current->set_child(new_child);
-                                break;
-                            }
-                            current = next;
-                        }
-                    }
-                }
-            }
-
-            template <typename MW>
-            constexpr void register_middleware(MW* mw_ptr) noexcept {
-                auto* node = mw_ptr->get_node();
-                add_child(node);
-            }
-        };
 
         /// Base = base class
         ///    T = for CRTP usage
@@ -265,62 +291,36 @@ namespace webpp {
     template <typename T, EventTag... Tags>
     struct [[nodiscard]]
     event_base : public details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...> {
-        using node_type = basic_event_node<Tags...>;
-
-        [[nodiscard]] constexpr node_type* get_node() noexcept {
-            return static_cast<node_type*>(this);
-        }
+        using impl_chain_type = details::linearify_type<basic_event_node<Tags...>, T, Tags::template impl_type...>;
+        using node_type       = basic_event_node<Tags...>;
     };
 
     template <typename T>
     using middleware_base = event_base<T, middleware_tag>;
 
+    /// Middleware Node is the node part of the tree. This makes the middleware an intrusive linked list.
+    /// If you need to add support to more events, add those events here.
+    using complete_middleware_node = basic_event_node<middleware_tag, close_tag>;
+
     template <typename NodeType = complete_middleware_node>
-    struct [[nodiscard]] basic_middlewares_root {};
+    struct [[nodiscard]] basic_events_root {};
 
     /// Special case where all children nodes are present and set to nullptr by default.
     /// Root node requires to have all of the children but other nodes are only required to have only one child.
     /// This is the root of a tree, it by itself is not a node of the tree.
     template <EventTag... Tags>
-    struct [[nodiscard]] basic_middlewares_root<basic_event_node<Tags...>> {
-      private:
-        details::root_children<Tags...> children;
-
-      public:
-        template <EventTag Tag>
-        [[nodiscard]] constexpr basic_event_node<Tag>* get_child() const noexcept {
-            return children.template get_child<Tag>();
-        }
-
+    struct [[nodiscard]]
+    basic_events_root<basic_event_node<Tags...>> : event_base<basic_events_root<basic_event_node<Tags...>>, Tags...> {
         /// Trigger the events in order
         template <EventTag Tag = middleware_tag>
         constexpr void operator()(Tag tag = {}) const {
-            if (auto* child = get_child<Tag>(); child != nullptr) [[likely]] {
+            if (auto* child = this->template get_child<Tag>(); child != nullptr) [[likely]] {
                 child->trigger(tag);
             }
         }
-
-        /// Register a middleware in the tree
-        /// Each middleware instance can have multiple events and will be pointed to multiple times.
-        template <typename MW>
-        constexpr void register_middleware(MW* inp_middleware) noexcept {
-            children.register_middleware(inp_middleware);
-        }
-
-        template <typename MW>
-        constexpr basic_middlewares_root& operator+=(MW* inp_middleware) noexcept {
-            children.register_middleware(inp_middleware);
-            return *this;
-        }
-
-        template <typename MW>
-        constexpr basic_middlewares_root& operator+=(MW& inp_middleware) noexcept {
-            children.register_middleware(&inp_middleware);
-            return *this;
-        }
     };
 
-    using middlewares_root = basic_middlewares_root<>;
+    using events_root = basic_events_root<>;
 
     /**
      * Middleware dynamically scoped global customization point.
