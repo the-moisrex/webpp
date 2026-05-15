@@ -15,9 +15,10 @@ namespace webpp::uri {
     static constexpr void render_fragment(
       stl::basic_string_view<CharT> const                        storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool const                                                 add_separators = false) {
+      bool const                                                 add_separators = false,
+      bool const                                                 is_non_null    = false) {
         // https://url.spec.whatwg.org/#url-serializing
-        if (storage.empty()) {
+        if (storage.empty() && !is_non_null) {
             return;
         }
         if (add_separators) {

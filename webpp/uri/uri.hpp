@@ -83,7 +83,7 @@ namespace webpp::uri {
 
         render_path(uri::path(components), out);
         render_queries(uri::queries(components), out, status, true);
-        render_fragment(uri::fragment(components), out, true);
+        render_fragment(uri::fragment(components), out, true, has_flags(status, uri_status::has_non_null_fragment));
     }
 
     template <URIContext CtxT, typename AllocT>
@@ -327,6 +327,7 @@ namespace webpp::uri {
 
         constexpr void clear_fragment() noexcept(is_nothrow) {
             uri::clear_fragment(components);
+            unset_flag(m_status, uri_status::has_non_null_fragment);
         }
 
         constexpr void clear_authority() noexcept(is_nothrow) {

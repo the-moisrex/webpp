@@ -261,12 +261,13 @@ namespace webpp::uri {
         found_tabs_or_newlines          = error_bit | 28U, // only thrown on read-only APIs
 
         // Other flags (or states):
-        special_scheme       = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
-        file_scheme          = flags_bit >> 0U | flags_bit >> 1U, // file is also special
-        has_non_null_port    = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
-        has_non_empty_host   = flags_bit >> 3U, // the URI has a non-empty host
-        opaque_path          = flags_bit >> 4U,
-        has_non_null_queries = flags_bit >> 5U,
+        special_scheme        = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
+        file_scheme           = flags_bit >> 0U | flags_bit >> 1U, // file is also special
+        has_non_null_port     = flags_bit >> 2U, // the URI has a non-null port (default ports are also null)
+        has_non_empty_host    = flags_bit >> 3U, // the URI has a non-empty host
+        opaque_path           = flags_bit >> 4U,
+        has_non_null_queries  = flags_bit >> 5U,
+        has_non_null_fragment = flags_bit >> 6U,
     };
 
     [[nodiscard]] static constexpr stl::underlying_type_t<uri_status> operator+(uri_status const status) noexcept {
@@ -482,6 +483,7 @@ namespace webpp::uri {
             case has_non_empty_host: return {"The URI has a non-empty host."};
             case opaque_path: return {"The URI has opaque path."};
             case has_non_null_queries: return {"The URI has non-null (but possibly empty) queries."};
+            case has_non_null_fragment: return {"The URI has non-null (but possibly empty) fragment."};
 
             default: return {"Clean up the URI status first to get individual errors and warnings."};
         }

@@ -25,6 +25,8 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::next_percent_encode;
 
+        set_flag(ctx.status, has_non_null_fragment);
+
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
             return;
