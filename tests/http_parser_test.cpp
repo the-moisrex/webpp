@@ -139,10 +139,10 @@ TEST_F(HttpParserTest, FailsOnInvalidCRLF) {
 }
 
 TEST_F(HttpParserHeaderTest, EndOfHeadersCRLFReturnsOkHeadersEndAndAdvances) {
-    stl::string const       input = "\r\n";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "\r\n";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 
@@ -151,10 +151,10 @@ TEST_F(HttpParserHeaderTest, EndOfHeadersCRLFReturnsOkHeadersEndAndAdvances) {
 }
 
 TEST_F(HttpParserHeaderTest, EndOfHeadersLFReturnsOkHeadersEndAndAdvances) {
-    stl::string const       input = "\n";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "\n";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 
@@ -163,10 +163,10 @@ TEST_F(HttpParserHeaderTest, EndOfHeadersLFReturnsOkHeadersEndAndAdvances) {
 }
 
 TEST_F(HttpParserHeaderTest, SingleCRReturnsNeedMoreDataAndDoesNotAdvance) {
-    stl::string const       input = "\r";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "\r";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 
@@ -175,10 +175,10 @@ TEST_F(HttpParserHeaderTest, SingleCRReturnsNeedMoreDataAndDoesNotAdvance) {
 }
 
 TEST_F(HttpParserHeaderTest, CRNotFollowedByLFReturnsInvalidCRLFAndConsumesInput) {
-    stl::string const       input = "\rX";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "\rX";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 
@@ -187,10 +187,10 @@ TEST_F(HttpParserHeaderTest, CRNotFollowedByLFReturnsInvalidCRLFAndConsumesInput
 }
 
 TEST_F(HttpParserHeaderTest, IsFlaggedAsPossibleLineFoldingCurrentBehavior) {
-    stl::string const       input = "Host: example.com\r\n";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "Host: example.com\r\n";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 
@@ -201,10 +201,10 @@ TEST_F(HttpParserHeaderTest, IsFlaggedAsPossibleLineFoldingCurrentBehavior) {
 }
 
 TEST_F(HttpParserHeaderTest, LeadingWhitespaceLineReturnsInvalidChar) {
-    stl::string const       input = "  Folded: yes\r\n";
-    stl::size_t             advanced{};
-    webpp::stl::string_view name;
-    webpp::stl::string_view value;
+    stl::string const input = "  Folded: yes\r\n";
+    stl::size_t       advanced{};
+    stl::string_view  name;
+    stl::string_view  value;
 
     auto const state = RunParseHeader(input, advanced, name, value);
 

@@ -52,6 +52,11 @@ namespace webpp::http {
         return {"Unknown State"};
     }
 
+    [[nodiscard]] static constexpr bool is_ok(http_parsing_state const state) noexcept {
+        using enum http_parsing_state;
+        return state == ok || state == ok_request_line || ok == ok_headers_end;
+    }
+
     struct parsed_request_line {
         http_parsing_state state{http_parsing_state::need_more_data};
         std::string_view   method;
