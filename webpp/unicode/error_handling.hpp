@@ -63,13 +63,13 @@ namespace webpp::unicode::checked {
         } else if constexpr (ErrPolicy == return_null_char) {
             return U'\0';
         } else if constexpr (ErrPolicy == return_recoverable) {
-            static constexpr stl::uint32_t negated                  = 0b1U << 31U;
-            static constexpr stl::uint32_t mask                     = 0b111U << 29U;
-            static constexpr stl::uint32_t utf8_identifier          = negated | (3U << 29U);
-            static constexpr stl::uint32_t utf16_identifier         = negated | (2U << 29U);
-            static constexpr stl::uint32_t utf32_identifier         = negated | (1U << 29U);
+            constexpr stl::uint32_t negated                  = 0b1U << 31U;
+            constexpr stl::uint32_t mask                     = 0b111U << 29U;
+            constexpr stl::uint32_t utf8_identifier          = negated | (3U << 29U);
+            constexpr stl::uint32_t utf16_identifier         = negated | (2U << 29U);
+            constexpr stl::uint32_t utf32_identifier         = negated | (1U << 29U);
             // this identifier is for numbers that are bigger than we can handle
-            static constexpr stl::uint32_t utf32_reverse_identifier = negated | (0U << 29U);
+            constexpr stl::uint32_t utf32_reverse_identifier = negated | (0U << 29U);
 
             auto icp = static_cast<std::uint32_t>(code_point);
             if constexpr (UTF8<CharT>) {
@@ -101,12 +101,12 @@ namespace webpp::unicode::checked {
      */
     template <UTF CharT>
     [[nodiscard]] static constexpr auto recover_error(char32_t const code_point) noexcept {
-        static constexpr stl::uint32_t negated                  = 0b1U << 31U;
-        static constexpr stl::uint32_t mask                     = 0b111U << 29U;
-        static constexpr stl::uint32_t utf8_identifier          = negated | (3U << 29U);
-        static constexpr stl::uint32_t utf16_identifier         = negated | (2U << 29U);
-        static constexpr stl::uint32_t utf32_identifier         = negated | (1U << 29U);
-        static constexpr stl::uint32_t utf32_reverse_identifier = negated | (0U << 29U);
+        constexpr stl::uint32_t negated                  = 0b1U << 31U;
+        constexpr stl::uint32_t mask                     = 0b111U << 29U;
+        constexpr stl::uint32_t utf8_identifier          = negated | (3U << 29U);
+        constexpr stl::uint32_t utf16_identifier         = negated | (2U << 29U);
+        constexpr stl::uint32_t utf32_identifier         = negated | (1U << 29U);
+        constexpr stl::uint32_t utf32_reverse_identifier = negated | (0U << 29U);
 
         assert(static_cast<stl::int32_t>(code_point) < 0);
         auto       ucp       = static_cast<stl::uint32_t>(code_point);
@@ -167,7 +167,7 @@ namespace webpp::unicode::checked {
         using istl::iter_append;
         using char_type = istl::appendable_value_type_t<Ptr>;
 
-        static constexpr stl::uint32_t mask = 0b111U << 29U;
+        constexpr stl::uint32_t mask = 0b111U << 29U;
         if ((static_cast<std::uint32_t>(code_point) & mask) != 0U) [[unlikely]] {
             // Append the error code points
             stl::size_t count = 0U;

@@ -12,6 +12,13 @@ function(setup_fuzz name)
             -fsanitize=fuzzer,address
             -coverage
     )
+
+    # Disable main function in custom tests
+    target_compile_definitions(${name} PRIVATE WEBPP_NO_DEFAULT_MAIN)
+
+    # std::expected
+    target_compile_features(${name} PUBLIC cxx_std_23)
+
     # link_fuzztest(${name})
     add_test(
             NAME ${name}

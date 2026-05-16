@@ -156,7 +156,7 @@ namespace webpp::uri {
                   if constexpr (!stl::same_as<T, stl::monostate>) {
                       return host.size();
                   } else {
-                      return 0;
+                      return 0UL;
                   }
               },
               *this);

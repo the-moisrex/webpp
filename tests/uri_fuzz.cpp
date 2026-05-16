@@ -16,14 +16,14 @@ void uri_fuzz(stl::string_view data) {
     url.queries(data);
     url.fragment(data);
     auto const res1         = url.as_string();
-    auto const scheme_res   = url.scheme().as_string();
-    auto const username_res = url.username().as_string();
-    auto const password_res = url.password().as_string();
-    auto const hostname_res = url.hostname().as_string();
-    auto const port_res     = url.port().as_string();
-    auto const path_res     = url.path().as_string();
-    auto const queries_res  = url.queries().as_string();
-    auto const fragment_res = url.fragment().as_string();
+    auto const scheme_res   = url.scheme();
+    auto const username_res = url.username();
+    auto const password_res = url.password();
+    auto const hostname_res = url.hostname();
+    auto const port_res     = url.port_view();
+    auto const path_res     = url.path();
+    auto const queries_res  = url.queries();
+    auto const fragment_res = url.fragment();
 
     if (url.has_value()) {
         auto const url_size =

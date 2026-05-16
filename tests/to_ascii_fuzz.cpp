@@ -2,44 +2,48 @@
 #include "../webpp/unicode/to_ascii.hpp"
 #include "./common/fuzz_common.hpp"
 
-void to_ascii_fuzz(std::string_view data) {
-    using std::string;
-    using std::u16string;
-    using std::u32string;
-    using std::u8string;
-    using webpp::unicode::idna::idna_options;
-    using webpp::unicode::idna::to_ascii;
+namespace {
 
-    auto run = [&]<idna_options Options>() {
-        auto const res   = to_ascii<string, Options>(data);
-        auto const res8  = to_ascii<u8string, Options>(data);
-        auto const res16 = to_ascii<u16string, Options>(data);
-        auto const res32 = to_ascii<u32string, Options>(data);
+    void to_ascii_fuzz(std::string_view data) {
+        using std::string;
+        using std::u16string;
+        using std::u32string;
+        using std::u8string;
+        using webpp::unicode::idna::idna_options;
+        using webpp::unicode::idna::to_ascii;
 
-        if (res.has_value()) {
-            ASSERT_EQ(res->size(), res8->size());
-        }
+        auto run = [&]<idna_options Options>() {
+            auto const res   = to_ascii<string, Options>(data);
+            auto const res8  = to_ascii<u8string, Options>(data);
+            auto const res16 = to_ascii<u16string, Options>(data);
+            auto const res32 = to_ascii<u32string, Options>(data);
 
-        // todo: add to_unicode to the tests as well after implementing it
-    };
+            if (res.has_value()) {
+                ASSERT_EQ(res->size(), res8->size());
+            }
 
-    run.operator()<idna_options{}>();
-    run.operator()<idna_options{.VerifyDnsLength = true}>();
-    run.operator()<idna_options{.CheckHyphens = true}>();
-    run.operator()<idna_options{.UseSTD3ASCIIRules = true}>();
-    run.operator()<idna_options{.CheckInvalidPunycode = true}>();
-    // run.operator()<idna_options{.CheckNFC = false}>();
-    run.operator()<idna_options{.CheckDotInclusions = true}>();
-    run.operator()<idna_options{.CheckMappingRequired = true}>();
-    run.operator()<idna_options{.CheckHyphens          = true,
-                                .CheckBidi             = true,
-                                .CheckJoiners          = true,
-                                .UseSTD3ASCIIRules     = true,
-                                .VerifyDnsLength       = true,
-                                .CheckInvalidPunycode = true,
-                                .CheckNFC              = false, // todo: enable it after implementation of isNFC
-                                .CheckDotInclusions    = true,
-                                .CheckMappingRequired  = true}>();
-}
+            // todo: add to_unicode to the tests as well after implementing it
+        };
+
+        run.operator()<idna_options{}>();
+        run.operator()<idna_options{.VerifyDnsLength = true}>();
+        run.operator()<idna_options{.CheckHyphens = true}>();
+        run.operator()<idna_options{.UseSTD3ASCIIRules = true}>();
+        run.operator()<idna_options{.CheckInvalidPunycode = true}>();
+        run.operator()<idna_options{.CheckNFC = false}>();
+        run.operator()<idna_options{.CheckDotInclusions = true}>();
+        run.operator()<idna_options{.CheckMappingRequired = true}>();
+        run.operator()<idna_options{.CheckHyphens         = true,
+                                    .UseSTD3ASCIIRules    = true,
+                                    .VerifyDnsLength      = true,
+                                    .CheckBidi            = true,
+                                    .CheckJoiners         = true,
+                                    .CheckInvalidPunycode = true,
+                                    .CheckNFC             = true,
+                                    .CheckDotInclusions   = true,
+                                    .CheckMappingRequired = true}>();
+    }
+
+} // namespace
 
 register_fuzz(to_ascii_fuzz);

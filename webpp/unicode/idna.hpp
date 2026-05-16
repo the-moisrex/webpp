@@ -121,10 +121,11 @@ namespace webpp::unicode::idna {
     };
 
     [[nodiscard]] static constexpr idna_options idna_flags(stl::uint16_t const flags) noexcept {
-        static constexpr auto to_bool = [](std::uint16_t const value) constexpr noexcept -> bool {
+        constexpr auto to_bool = [](std::uint16_t const value) constexpr noexcept -> bool {
             return static_cast<bool>(value & 0b1U);
         };
         return idna_options{
+          // NOLINTBEGIN(*-magic-numbers)
           .CheckHyphens      = to_bool(flags >> 11U),
           .UseSTD3ASCIIRules = to_bool(flags >> 10U),
           .VerifyDnsLength   = to_bool(flags >> 9U),
@@ -139,14 +140,16 @@ namespace webpp::unicode::idna {
           .CheckMappingRequired           = to_bool(flags >> 2U),
           .CheckCombiningMarkAtLabelStart = to_bool(flags >> 1U),
           .CheckDecodeAndValidateLabels   = to_bool(flags >> 0U),
+          // NOLINTEND(*-magic-numbers)
         };
     }
 
     [[nodiscard]] static constexpr stl::uint16_t idna_flags(idna_options const options) noexcept {
-        static constexpr auto to_option = [](bool const value) constexpr noexcept -> std::uint32_t {
+        constexpr auto to_option = [](bool const value) constexpr noexcept -> std::uint32_t {
             return value ? 0b1U : 0b0U;
         };
         return static_cast<stl::uint16_t>(
+          // NOLINTBEGIN(*-magic-numbers)
           to_option(options.CheckHyphens) << 11U |                  //
           to_option(options.UseSTD3ASCIIRules) << 10U |             //
           to_option(options.VerifyDnsLength) << 9U |                //
@@ -161,6 +164,7 @@ namespace webpp::unicode::idna {
           to_option(options.CheckMappingRequired) << 2U |           //
           to_option(options.CheckCombiningMarkAtLabelStart) << 1U | //
           to_option(options.CheckDecodeAndValidateLabels) << 0U);
+        // NOLINTEND(*-magic-numbers)
     }
 
     /// https://www.unicode.org/reports/tr46/#Validity_Criteria
