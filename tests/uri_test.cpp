@@ -5,7 +5,8 @@
 #include "../webpp/ip/ipv4.hpp"
 #include "../webpp/uri/parser/iiequals.hpp"
 #include "../webpp/uri/path_traverser.hpp"
-#include "common/test.hpp"
+#include "./common/test.hpp"
+#include "./uri_fuzz.hpp"
 
 #include <ranges>
 
@@ -67,6 +68,14 @@ struct URITests : testing::Test {
         out_ctx.status = ctx.status;
         out_ctx.out    = stl::move(ctx.out);
         return out_ctx;
+    }
+
+    template <typename SpecifiedTypeParam>
+    [[nodiscard]] constexpr SpecifiedTypeParam fuzz(stl::string_view const str) {
+        auto ctx = get_context<SpecifiedTypeParam, stl::string_view>(str);
+        uri::parse_uri(ctx);
+        tests::uri_fuzz(str);
+        return ctx;
     }
 };
 
@@ -1925,4 +1934,15 @@ TYPED_TEST(URITests, TestsForTheDistinctPercentEncodeSets2) {
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(wss://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~@host/)URL")
       << details;
+}
+
+TYPED_TEST(URITests, FuzzTest1) {
+    auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
+}
+
+TYPED_TEST(URITests, FuzzTest2) {
+    auto const ctx = this->template fuzz<TypeParam>(
+      R"URL(:3333333333333333333\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\3773333333333333333333333333333333333333333333333333333333333333\012)URL");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
 }
