@@ -10,6 +10,8 @@ namespace webpp::tests {
         auto* const               begin = data.data();
         auto*                     pos   = data.data();
         char const*               end   = data.data() + data.size();
+
+        // TEST 1: Parse request line
         parse_request_line(pos, end, req);
         if (is_ok(req.state)) {
             EXPECT_FALSE(req.method.empty());
@@ -21,7 +23,10 @@ namespace webpp::tests {
         pos = begin;
         stl::string_view name;
         stl::string_view value;
-        auto const       state = http::parse_header(pos, end, name, value);
+
+
+        // TEST 2: Parse header line
+        auto const state = http::parse_header(pos, end, name, value);
         if (is_ok(state)) {
             EXPECT_FALSE(name.empty());
             EXPECT_FALSE(value.empty());

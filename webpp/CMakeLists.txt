@@ -260,7 +260,6 @@ set(ALL_SOURCES_SHORT
         http/mime_types.hpp
         http/request.hpp
         http/request_body.hpp
-        http/request_headers.hpp
         http/response.hpp
         http/response_body.hpp
         http/response_headers.hpp

@@ -4,7 +4,6 @@
 #define WEBPP_CGI_REQUEST_HPP
 
 #include "../http/http_version.hpp"
-#include "../http/request_headers.hpp"
 
 #include <string_view>
 

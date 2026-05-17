@@ -93,30 +93,6 @@ namespace webpp::http {
     concept HTTPResponseHeaderFieldsProvider = HTTPRequestHeaderFieldsProvider<T>;
 
 
-    /**
-     * The class that implements this concept is a http request header fields provider which just provides
-     * and owns the http fields. The big thing about this is that it owns what it sells.
-     */
-    template <typename T>
-    concept HTTPRequestHeaderFieldsOwner =
-      HTTPRequestHeaderFieldsProvider<T> && requires(T obj, typename T::name_type name, typename T::value_type value) {
-          obj.emplace(name, value);
-
-          // an example is implemented in "header_fields_provider" in request_headers.hpp file
-          obj.as_view();
-      };
-
-    template <typename T>
-    concept HTTPResponseHeaderFieldsOwner =
-      HTTPResponseHeaderFieldsProvider<T> && requires(T obj, typename T::name_type name, typename T::value_type value) {
-          obj.emplace(name, value);
-
-          // an example is implemented in "header_fields_provider" in request_headers.hpp file
-          obj.as_view();
-      };
-
-
-
     template <typename T>
     concept HTTPHeaderFieldsProvider = requires(T provider) {
         provider.begin();
