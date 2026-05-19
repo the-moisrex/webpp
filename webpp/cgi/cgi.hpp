@@ -2,11 +2,12 @@
 #define WEBPP_PROTOCOLS_CGI_HPP
 
 #include "../convert/casts.hpp"
-#include "../http/protocol/common_http_protocol.hpp"
 #include "../http/request.hpp"
 #include "../http/request_body.hpp"
 #include "../http/response.hpp"
+#include "../protocol/common_http_protocol.hpp"
 #include "../std/string_view.hpp"
+#include "./cgi_headers.hpp"
 #include "./cgi_request.hpp"
 #include "./cgi_request_body_communicator.hpp"
 
@@ -25,12 +26,10 @@ namespace webpp::http {
         using common_protocol_type      = common_http_protocol<App>;
         using app_wrapper_type          = typename common_protocol_type::app_wrapper_type;
         using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;
-
-        using fields_provider      = header_fields_provider<header_field_of<CharT, AllocT>>;
-        using request_headers_type = request_headers<fields_provider>;
-        using request_body_type    = request_body<request_body_communicator>;
-        using request_type         = simple_request<cgi_request, request_headers_type, request_body_type>;
-        using response_type        = simple_response<CharT, AllocT>;
+        using fields_provider           = header_fields_provider<header_field_of<CharT, AllocT>>;
+        using request_body_type         = request_body<request_body_communicator>;
+        using request_type              = simple_request<cgi_request, cgi_headers, request_body_type>;
+        using response_type             = simple_response<CharT, AllocT>;
 
 
         static_assert(HTTPRequest<request_type>,

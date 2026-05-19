@@ -21,7 +21,7 @@ namespace webpp::io {
      * before any other system calls, to get the cause of an error as an integer val defined
      * by the constants ENOENT, EINTR, EBUSY, etc.
      */
-    struct io_result {
+    struct [[nodiscard]] io_result {
         // Creates an empty result
         constexpr io_result() noexcept = default;
 

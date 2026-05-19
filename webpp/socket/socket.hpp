@@ -434,36 +434,36 @@ namespace webpp {
             return set_option(level, optname, static_cast<void const*>(&val), sizeof(T));
         }
 
-        bool set_non_blocking(bool on = true) noexcept {
+        bool set_non_blocking(bool enabled = true) noexcept {
 #ifdef MSVC_COMPILER
             unsigned long mode = on ? 1 : 0;
             return check_ret_bool(::ioctlsocket(fd, FIONBIO, &mode));
 #else
-            return set_flag(O_NONBLOCK, on);
+            return set_flag(O_NONBLOCK, enabled);
 #endif
         }
 #ifndef MSVC_COMPILER
 
         int get_flags() const noexcept {
-            int const flags = ::fcntl(fd, F_GETFL, 0); // NOLINT(cppcoreguidelines-pro-type-vararg)
+            int const flags = ::fcntl(fd, F_GETFL, 0); // NOLINT(*-vararg)
             last_errno      = (flags == -1) ? errno : 0;
             return flags;
         }
 
         bool set_flags(int const flags) noexcept {
-            if (::fcntl(fd, F_SETFL, flags) == -1) { // NOLINT(cppcoreguidelines-pro-type-vararg)
+            if (::fcntl(fd, F_SETFL, flags) == -1) { // NOLINT(*-vararg)
                 last_errno = errno;
                 return false;
             }
             return true;
         }
 
-        bool set_flag(int const flag, bool const on = true) noexcept {
+        bool set_flag(int const flag, bool const enabled = true) noexcept {
             int const flags = get_flags();
             if (flags == -1) {
                 return false;
             }
-            return set_flags(on ? (flags | flag) : (flags & ~flag));
+            return set_flags(enabled ? (flags | flag) : (flags & ~flag));
         }
 
         [[nodiscard]] bool is_non_blocking() const noexcept {

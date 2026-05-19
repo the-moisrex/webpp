@@ -300,9 +300,7 @@ namespace webpp::async {
         template <typename T>
         concept BasicTask =
           stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> && requires(T task1, T task2) {
-              {
-                  connect(task1, task2)
-              }; // todo: inspect the returned type
+              { connect(task1, task2) }; // todo: inspect the returned type
           };
     } // namespace details
 
@@ -315,17 +313,11 @@ namespace webpp::async {
       stl::movable<T> &&
       requires(T iter) {
           // almost weakly incrementable
-          {
-              ++iter
-          } noexcept -> stl::same_as<T&>;
+          { ++iter } noexcept -> stl::same_as<T&>;
           // almost indirectly readable
-          {
-              *iter
-          } noexcept;
+          { *iter } noexcept;
           // is_done
-          {
-              static_cast<bool>(iter)
-          } noexcept;
+          { static_cast<bool>(iter) } noexcept;
       }
     // #ifdef __cpp_lib_ranges
     //                           && std::ranges::view<T>
@@ -337,19 +329,13 @@ namespace webpp::async {
 
     template <typename T>
     concept IterableTask = details::BasicTask<T> && requires(T task) {
-        {
-            stl::begin(task)
-        } noexcept -> TaskYielder;
-        {
-            stl::end(task)
-        } noexcept -> TaskYielder;
+        { stl::begin(task) } noexcept -> TaskYielder;
+        { stl::end(task) } noexcept -> TaskYielder;
     };
 
     template <typename T>
     concept RootTask = details::BasicTask<T> && requires(T task) {
-        {
-            advance(task)
-        } -> stl::same_as<bool>;
+        { advance(task) } -> stl::same_as<bool>;
     };
 
     template <typename T>
@@ -392,9 +378,7 @@ namespace webpp::async {
     template <typename T>
     concept ExecutionContext = Task<T> && requires(T async) {
         // This is what gets stored in the "enabled_traits" objects.
-        {
-            async.scheduler()
-        } -> Scheduler;
+        { async.scheduler() } -> Scheduler;
     };
 
 

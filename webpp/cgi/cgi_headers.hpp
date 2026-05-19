@@ -8,6 +8,7 @@
 #include "../utils/environ.hpp"
 
 #include <array>
+#include <cstddef>
 #include <string_view>
 
 namespace webpp::http {
@@ -36,7 +37,9 @@ namespace webpp::http {
                 ++index;
             }
             buffer.at(index) = '\0';
-            return header_id(stl::string_view{buffer.data(), buffer.data() + index});
+            auto const* beg  = buffer.data();
+            auto const* end  = stl::next(beg, static_cast<stl::ptrdiff_t>(index));
+            return header_id(stl::string_view{beg, end});
         }
     } // namespace details
 
@@ -44,7 +47,7 @@ namespace webpp::http {
      * Satisfies stl::forward_iterator
      * todo: it is possible to make it a bidirectional iterator
      */
-    struct [[nodiscard]] cgi_headers_iterator {
+    struct [[nodiscard]] cgi_headers_iterator final {
         using iterator_category = stl::forward_iterator_tag;
         using value_type        = stl::pair<header_id_type, stl::string_view>;
         using difference_type   = stl::ptrdiff_t;
@@ -136,7 +139,7 @@ namespace webpp::http {
      * Implements HeadersProvider concepts for CGI protocol which is a provider type of
      * class that gives access to headers.
      */
-    struct [[nodiscard]] cgi_headers {
+    struct [[nodiscard]] cgi_headers final {
         [[nodiscard]] stl::string_view get(header_id_type const h_id) const noexcept {
             for (auto const [cid, value] : *this) {
                 if (cid == h_id) {
