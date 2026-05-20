@@ -7,6 +7,7 @@
 
 #include <cerrno>
 #include <cstring> // strerror
+#include <system_error>
 
 namespace webpp::io {
 
@@ -34,12 +35,11 @@ namespace webpp::io {
         // NOLINTNEXTLINE(*-explicit-*)
         explicit(false) constexpr io_result(int const n) noexcept : val{n == -1 ? -errno : n} {}
 
-        static constexpr io_result invalid(int const inp_val = errno) noexcept {
+        static io_result invalid(int const inp_val = errno) noexcept {
             return io_result{-inp_val};
         }
 
-        // Set the error val
-        constexpr void error(int const inp_val = errno) noexcept {
+        void set_error(int const inp_val = errno) noexcept {
             val = -inp_val;
         }
 
@@ -69,6 +69,21 @@ namespace webpp::io {
             return -val;
         }
 
+        // Returns an stl::error_code representation of the error
+        [[nodiscard]] stl::error_code error_code(
+          stl::error_category const& cat = stl::generic_category()) const noexcept {
+            if (is_ok()) {
+                return {};
+            }
+            // Since we store POSIX errno values, generic_category is the correct category
+            return stl::error_code(error(), cat);
+        }
+
+        // Implicit conversion to stl::error_code for seamless compatibility
+        [[nodiscard]] operator stl::error_code() const noexcept { // NOLINT(*-explicit-*)
+            return error_code();
+        }
+
         template <typename StrT = stl::string, typename... Args>
             requires(!istl::cvref_as<Args, StrT> && ...)
         [[nodiscard]] constexpr StrT to_string(Args&&... args) const {
@@ -79,7 +94,26 @@ namespace webpp::io {
 
         template <typename StrT>
         constexpr void to_string(StrT& out) const {
+            if (!is_error()) {
+                return;
+            }
+            char buf[256]; // NOLINT
+            buf[0] = '\0';
+
+#ifdef _WIN32
+            strerror_s(buf, sizeof(buf), this->error());
+            out += buf;
+#elif defined(_GNU_SOURCE) && defined(__GLIBC__)
+            // GNU-specific strerror_r returns a char* which might not be `buf`
+            out += strerror_r(this->error(), buf, sizeof(buf));
+#elif (_POSIX_C_SOURCE >= 200'112L) || defined(__APPLE__) || defined(__FreeBSD__)
+            // XSI-compliant POSIX strerror_r returns an int
+            strerror_r(this->error(), buf, sizeof(buf));
+            out += buf;
+#else
+            // Fallback (not thread-safe)
             out += stl::strerror(this->error());
+#endif
         }
 
       private:
