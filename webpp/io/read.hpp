@@ -18,7 +18,7 @@ namespace webpp::io {
     }
 
     struct async_read_some {
-        void set_value(IOScheduler auto io, file_handle file_descriptor, buffer_span buf) noexcept {
+        void set_value(IOScheduler auto io, io_handle file_descriptor, buffer_span buf) noexcept {
             // request a read, and set a callback
             if (auto const val = syscall(syscall_read{}, io, file_descriptor, buf, *this); val != 0) {
                 set_error(io, val);
@@ -65,7 +65,7 @@ namespace webpp::io {
         };
     };
 
-    inline constexpr void async_file_stats(IOScheduler auto io, file_handle file_descriptor) noexcept {
+    inline constexpr void async_file_stats(IOScheduler auto io, io_handle file_descriptor) noexcept {
         auto const stats = io.request_file_stats(file_descriptor);
         if (stats != 0) {
             set_error(io, stats);
@@ -73,7 +73,7 @@ namespace webpp::io {
         set_value(io, stats);
     }
 
-    constexpr auto read(file_handle file_descriptor) noexcept {
+    constexpr auto read(io_handle file_descriptor) noexcept {
         // todo: how to pass the buffer?
         return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();
@@ -82,7 +82,7 @@ namespace webpp::io {
     }
 
     /// read the file/... check by chunk
-    constexpr auto read_chunked(file_handle file_descriptor) noexcept {
+    constexpr auto read_chunked(io_handle file_descriptor) noexcept {
         // todo: how to pass the buffer?
         return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();

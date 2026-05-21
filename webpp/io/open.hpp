@@ -3,24 +3,24 @@
 #ifndef WEBPP_IO_OPEN_HPP
 #define WEBPP_IO_OPEN_HPP
 
-#include "../std/expected.hpp"
-#include "../std/filesystem.hpp"
-#include "../std/string_view.hpp"
-#include "./file_handle.hpp"
-#include "./file_options.hpp"
-#include "./io_concepts.hpp"
-#include "./syscalls.hpp"
+#if 0
+#    include "../std/expected.hpp"
+#    include "../std/filesystem.hpp"
+#    include "../std/string_view.hpp"
+#    include "./file_handle.hpp"
+#    include "./file_options.hpp"
+#    include "./io_concepts.hpp"
 
-#ifdef MSVC_COMPILER
-#    include <fcntl.h>
-#    include <io.h> // _sopen_s
-#    include <share.h>
-#    include <sys/stat.h>
-#    include <sys/types.h>
-#    include <wchar.h> // _wsopen_s
-#else
-#    include <fcntl.h>
-#endif
+#    ifdef MSVC_COMPILER
+#        include <fcntl.h>
+#        include <io.h> // _sopen_s
+#        include <share.h>
+#        include <sys/stat.h>
+#        include <sys/types.h>
+#        include <wchar.h> // _wsopen_s
+#    else
+#        include <fcntl.h>
+#    endif
 
 namespace webpp::io {
 
@@ -37,7 +37,7 @@ namespace webpp::io {
             return syscall(io, syscall_open{}, file_path, options, permissions);
         } else {
             // fallback implementation
-#ifdef MSVC_COMPILER
+#    ifdef MSVC_COMPILER
             int        fd{-1};
             auto const shflag = _SH_DENYNO;
             auto const pmode  = options.is_readonly() ? _S_IREAD : _S_IREAD | _S_IWRITE;
@@ -48,11 +48,11 @@ namespace webpp::io {
             }
             // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/sopen-s-wsopen-s?view=msvc-170#return-value
             return file_handle::check(fd);
-#else
+#    else
             return file_handle::check(::open(file_path.data(), // NOLINT(*-pro-type-vararg)
                                              options.native_flags(),
                                              static_cast<mode_t>(stl::to_underlying(permissions))));
-#endif
+#    endif
         }
     }
 
@@ -67,5 +67,6 @@ namespace webpp::io {
     }
 
 } // namespace webpp::io
+#endif // 0
 
 #endif // WEBPP_IO_OPEN_HPP

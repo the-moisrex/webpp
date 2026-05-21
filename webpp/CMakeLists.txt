@@ -19,7 +19,6 @@ set(ALL_SOURCES_SHORT
         libs/cryptopp.hpp
         libs/eve.hpp
         libs/fmt.hpp
-        libs/ioring.hpp
         libs/modp_b64/modp_b64.hpp
         libs/modp_b64/modp_b64_data.hpp
         libs/sqlite.hpp
@@ -109,15 +108,17 @@ set(ALL_SOURCES_SHORT
         std/utility.hpp
 
         io/buffer.hpp
-        io/file_handle.hpp
         io/file_options.hpp
         io/io_concepts.hpp
+        io/io_handle.hpp
         io/io_result.hpp
         io/io_task.hpp
+        io/io_traits.hpp
         io/io_uring/io_uring.hpp
+        io/io_uring/io_uring_buffers.hpp
+        io/io_uring/io_uring_impl.hpp
         io/open.hpp
         io/read.hpp
-        io/syscalls.hpp
 
         async/async.hpp
         async/run_loop.hpp
@@ -353,14 +354,14 @@ endif ()
 
 
 # liburing
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    if (USE_OS_LIBURING)
-        target_link_libraries(${LIB_NAME} PUBLIC uring)
-        target_compile_definitions(${LIB_NAME} PUBLIC USE_OS_LIBURING=1)
-    elseif (WEBPP_USE_LIBURING)
-        target_link_libraries(${LIB_NAME} PUBLIC liburing::uring)
-    endif ()
-endif ()
+# if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+#     if (USE_OS_LIBURING)
+#         target_link_libraries(${LIB_NAME} PUBLIC uring)
+#         target_compile_definitions(${LIB_NAME} PUBLIC USE_OS_LIBURING=1)
+#     elseif (WEBPP_USE_LIBURING)
+#         target_link_libraries(${LIB_NAME} PUBLIC liburing::uring)
+#     endif ()
+# endif ()
 
 if (USE_EVE)
     target_link_libraries(${LIB_NAME}

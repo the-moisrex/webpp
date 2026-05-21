@@ -27,33 +27,33 @@ namespace webpp::io {
      * Even though Windows' handle type is HANDLE, we use integer here because in the rest of the library,
      * we plan to use the CRT's (C runtime)'s compatibility APIs instead of dealing with Win32 APIs directly.
      */
-    struct file_handle {
+    struct [[nodiscard]] io_handle {
         using handle_type = int;
 
-        explicit constexpr file_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
+        explicit constexpr io_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
 
-        [[nodiscard]] static constexpr file_handle invalid(handle_type const error_number = errno) noexcept {
-            return file_handle{error_number};
+        [[nodiscard]] static constexpr io_handle invalid(handle_type const error_number = errno) noexcept {
+            return io_handle{error_number};
         }
 
-        [[nodiscard]] static file_handle invalid(stl::error_code const err) noexcept {
-            return file_handle{err.value()};
+        [[nodiscard]] static io_handle invalid(stl::error_code const err) noexcept {
+            return io_handle{err.value()};
         }
 
-        [[nodiscard]] static file_handle check(handle_type const inp_handle) noexcept {
-            return inp_handle >= 0 ? file_handle{inp_handle} : invalid(errno);
+        [[nodiscard]] static io_handle check(handle_type const inp_handle) noexcept {
+            return inp_handle >= 0 ? io_handle{inp_handle} : invalid(errno);
         }
 
-        explicit file_handle(stl::error_code const err) noexcept : handle{err.value()} {}
+        explicit io_handle(stl::error_code const err) noexcept : handle{err.value()} {}
 
-        constexpr file_handle() noexcept                              = default;
-        constexpr file_handle(file_handle const&) noexcept            = default;
-        constexpr file_handle(file_handle&&) noexcept                 = default;
-        constexpr file_handle& operator=(file_handle const&) noexcept = default;
-        constexpr file_handle& operator=(file_handle&&) noexcept      = default;
-        constexpr ~file_handle() noexcept                             = default;
+        constexpr io_handle() noexcept                            = default;
+        constexpr io_handle(io_handle const&) noexcept            = default;
+        constexpr io_handle(io_handle&&) noexcept                 = default;
+        constexpr io_handle& operator=(io_handle const&) noexcept = default;
+        constexpr io_handle& operator=(io_handle&&) noexcept      = default;
+        constexpr ~io_handle() noexcept                           = default;
 
-        constexpr file_handle& operator=(handle_type const inp_handle) noexcept {
+        constexpr io_handle& operator=(handle_type const inp_handle) noexcept {
             handle = inp_handle;
             return *this;
         }
@@ -62,11 +62,11 @@ namespace webpp::io {
             return handle == inp_handle;
         }
 
-        [[nodiscard]] constexpr bool operator==(file_handle const other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(io_handle const other) const noexcept {
             return handle == other.handle;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(file_handle const other) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(io_handle const other) const noexcept {
             return handle <=> other.handle;
         }
 
@@ -124,7 +124,7 @@ namespace webpp::io {
     struct synced_file_handle {
         constexpr synced_file_handle() noexcept = default;
 
-        explicit constexpr synced_file_handle(file_handle const inp_fh) noexcept : fh{inp_fh} {}
+        explicit constexpr synced_file_handle(io_handle const inp_fh) noexcept : fh{inp_fh} {}
 
         constexpr synced_file_handle(synced_file_handle&&) noexcept            = default;
         synced_file_handle(synced_file_handle const&)                          = delete;
@@ -133,7 +133,7 @@ namespace webpp::io {
         constexpr ~synced_file_handle()                                        = default;
 
       private:
-        file_handle fh;
+        io_handle fh;
     };
 
     // todo: multi-file-descriptor version of synced_file_handle (basic_synced_file_handle<Size>??)

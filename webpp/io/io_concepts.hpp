@@ -1,7 +1,7 @@
 #ifndef WEBPP_IO_IO_CONCEPTS_HPP
 #define WEBPP_IO_IO_CONCEPTS_HPP
 
-#include "./file_handle.hpp"
+#include "./io_handle.hpp"
 #include "./io_result.hpp"
 
 #include <concepts>
@@ -90,7 +90,7 @@ namespace webpp::io {
     template <typename Backend>
     concept ReadableBackend =
       IOBackend<Backend> &&
-      requires(Backend& io, file_handle fd, stl::span<char> buf, stl::uint64_t offset, void* user_data) {
+      requires(Backend& io, io_handle fd, stl::span<char> buf, stl::uint64_t offset, void* user_data) {
           { prep_read(io, fd, buf, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
           { prep_read_at(io, fd, buf, offset, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
       };
@@ -98,7 +98,7 @@ namespace webpp::io {
     template <typename Backend>
     concept WritableBackend =
       IOBackend<Backend> &&
-      requires(Backend& io, file_handle fd, stl::span<char const> buf, stl::uint64_t offset, void* user_data) {
+      requires(Backend& io, io_handle fd, stl::span<char const> buf, stl::uint64_t offset, void* user_data) {
           { prep_write(io, fd, buf, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
           {
               prep_write_at(io, fd, buf, offset, user_data)
@@ -106,21 +106,21 @@ namespace webpp::io {
       };
 
     template <typename Backend>
-    concept AcceptableBackend = IOBackend<Backend> && requires(Backend& io, file_handle fd, void* user_data) {
+    concept AcceptableBackend = IOBackend<Backend> && requires(Backend& io, io_handle fd, void* user_data) {
         { prep_accept(io, fd, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
     };
 
     template <typename Backend>
     concept ConnectableBackend =
       IOBackend<Backend> &&
-      requires(Backend& io, file_handle fd, void const* addr, stl::size_t addr_len, void* user_data) {
+      requires(Backend& io, io_handle fd, void const* addr, stl::size_t addr_len, void* user_data) {
           {
               prep_connect(io, fd, addr, addr_len, user_data)
           } noexcept -> std::same_as<typename Backend::operation_handle>;
       };
 
     template <typename Backend>
-    concept ClosableBackend = IOBackend<Backend> && requires(Backend& io, file_handle fd, void* user_data) {
+    concept ClosableBackend = IOBackend<Backend> && requires(Backend& io, io_handle fd, void* user_data) {
         { prep_close(io, fd, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
     };
 
@@ -145,7 +145,7 @@ namespace webpp::io {
     concept VectoredBackend =
       IOBackend<Backend> &&
       requires(Backend&                         io,
-               file_handle                      fd,
+               io_handle                        fd,
                stl::span<stl::span<char>>       read_bufs,
                stl::span<stl::span<char const>> write_bufs,
                stl::uint64_t                    offset,
@@ -166,7 +166,7 @@ namespace webpp::io {
      * without re-submitting. Reduces syscall overhead for high-frequency events.
      */
     template <typename Backend>
-    concept MultishotBackend = IOBackend<Backend> && requires(Backend& io, file_handle fd, void* user_data) {
+    concept MultishotBackend = IOBackend<Backend> && requires(Backend& io, io_handle fd, void* user_data) {
         { prep_multishot_accept(io, fd, user_data) } noexcept -> std::same_as<typename Backend::operation_handle>;
     };
 
