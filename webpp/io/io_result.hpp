@@ -23,6 +23,8 @@ namespace webpp::io {
      * by the constants ENOENT, EINTR, EBUSY, etc.
      */
     struct [[nodiscard]] io_result {
+        struct raw_error_tag {};
+
         // Creates an empty result
         constexpr io_result() noexcept = default;
 
@@ -35,8 +37,10 @@ namespace webpp::io {
         // NOLINTNEXTLINE(*-explicit-*)
         explicit(false) constexpr io_result(int const n) noexcept : val{n == -1 ? -errno : n} {}
 
+        explicit(false) constexpr io_result(int const n, raw_error_tag) noexcept : val{n} {}
+
         static io_result invalid(int const inp_val = errno) noexcept {
-            return io_result{-inp_val};
+            return io_result{inp_val > 0 ? -inp_val : inp_val, raw_error_tag{}};
         }
 
         void set_error(int const inp_val = errno) noexcept {
@@ -76,7 +80,7 @@ namespace webpp::io {
                 return {};
             }
             // Since we store POSIX errno values, generic_category is the correct category
-            return stl::error_code(error(), cat);
+            return {error(), cat};
         }
 
         // Implicit conversion to stl::error_code for seamless compatibility
