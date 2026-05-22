@@ -33,7 +33,7 @@ namespace webpp::io {
         explicit constexpr io_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
 
         [[nodiscard]] static constexpr io_handle invalid(handle_type const error_number = errno) noexcept {
-            return io_handle{error_number};
+            return io_handle{error_number > 0 ? -error_number : error_number};
         }
 
         [[nodiscard]] static io_handle invalid(stl::error_code const err) noexcept {
@@ -107,7 +107,7 @@ namespace webpp::io {
         }
 
       private:
-        handle_type handle{};
+        handle_type handle = -1;
     };
 
     /**

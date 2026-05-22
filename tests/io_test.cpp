@@ -155,7 +155,7 @@ TEST(FileHandleTest, ValidHandle) {
 TEST(FileHandleTest, InvalidHandle) {
     io_handle fh = io_handle::invalid(EBADF);
     EXPECT_FALSE(fh.is_valid());
-    EXPECT_EQ(fh.native_handle(), EBADF);
+    EXPECT_EQ(fh.native_handle(), -EBADF);
 }
 
 TEST(FileHandleTest, CheckValidHandle) {
