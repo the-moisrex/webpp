@@ -68,11 +68,11 @@ namespace webpp::io::inline iouring_impl {
     };
 
     struct io_uring_cqe {
-        __u64 user_data;
-        __s32 res;
-        __u32 flags;
+        uint64_t user_data;
+        int32_t  res;
+        uint32_t flags;
 
-        // __u64 big_cqe[];
+        // uint64_t big_cqe[];
     };
 
     struct io_uring_cq {
@@ -101,109 +101,109 @@ namespace webpp::io::inline iouring_impl {
 
         unsigned features;
         int      enter_ring_fd;
-        __u8     int_flags;
-        __u8     pad[3];
+        uint8_t  int_flags;
+        uint8_t  pad[3];
         unsigned pad2;
     };
 
     struct io_uring_zcrx_rq {
-        __u32   *khead;
-        __u32   *ktail;
-        __u32    rq_tail;
-        unsigned ring_entries;
+        uint32_t *khead;
+        uint32_t *ktail;
+        uint32_t  rq_tail;
+        unsigned  ring_entries;
 
         struct io_uring_zcrx_rqe *rqes;
         void                     *ring_ptr;
     };
 
     struct io_uring_sqe_command_fields {
-        __u32 cmd_op;
-        __u32 __pad1;
+        uint32_t cmd_op;
+        uint32_t __pad1;
     };
 
     struct io_uring_sqe_socket_option_fields {
-        __u32 level;
-        __u32 optname;
+        uint32_t level;
+        uint32_t optname;
     };
 
     struct io_uring_sqe_address_fields {
-        __u16 addr_len;
-        __u16 __pad3[1];
+        uint16_t addr_len;
+        uint16_t __pad3[1];
     };
 
     struct io_uring_sqe_third_address_fields {
-        __u64 addr3;
-        __u64 __pad2[1];
+        uint64_t addr3;
+        uint64_t __pad2[1];
     };
 
     struct io_uring_sqe_attribute_fields {
-        __u64 attr_ptr;
-        __u64 attr_type_mask;
+        uint64_t attr_ptr;
+        uint64_t attr_type_mask;
     };
 
     struct io_uring_sqe {
-        __u8  opcode;
-        __u8  flags;
-        __u16 ioprio;
-        __s32 fd;
+        uint8_t  opcode;
+        uint8_t  flags;
+        uint16_t ioprio;
+        int32_t  fd;
 
         union {
-            __u64 off;
-            __u64 addr2;
+            uint64_t off;
+            uint64_t addr2;
 
             io_uring_sqe_command_fields command;
         };
 
         union {
-            __u64 addr;
-            __u64 splice_off_in;
+            uint64_t addr;
+            uint64_t splice_off_in;
 
             io_uring_sqe_socket_option_fields socket_option;
         };
 
-        __u32 len;
+        uint32_t len;
 
         union {
             __kernel_rwf_t rw_flags;
-            __u32          fsync_flags;
-            __u16          poll_events;
-            __u32          poll32_events;
-            __u32          sync_range_flags;
-            __u32          msg_flags;
-            __u32          timeout_flags;
-            __u32          accept_flags;
-            __u32          cancel_flags;
-            __u32          open_flags;
-            __u32          statx_flags;
-            __u32          fadvise_advice;
-            __u32          splice_flags;
-            __u32          rename_flags;
-            __u32          unlink_flags;
-            __u32          hardlink_flags;
-            __u32          xattr_flags;
-            __u32          msg_ring_flags;
-            __u32          uring_cmd_flags;
-            __u32          waitid_flags;
-            __u32          futex_flags;
-            __u32          install_fd_flags;
-            __u32          nop_flags;
-            __u32          pipe_flags;
+            uint32_t       fsync_flags;
+            uint16_t       poll_events;
+            uint32_t       poll32_events;
+            uint32_t       sync_range_flags;
+            uint32_t       msg_flags;
+            uint32_t       timeout_flags;
+            uint32_t       accept_flags;
+            uint32_t       cancel_flags;
+            uint32_t       open_flags;
+            uint32_t       statx_flags;
+            uint32_t       fadvise_advice;
+            uint32_t       splice_flags;
+            uint32_t       rename_flags;
+            uint32_t       unlink_flags;
+            uint32_t       hardlink_flags;
+            uint32_t       xattr_flags;
+            uint32_t       msg_ring_flags;
+            uint32_t       uring_cmd_flags;
+            uint32_t       waitid_flags;
+            uint32_t       futex_flags;
+            uint32_t       install_fd_flags;
+            uint32_t       nop_flags;
+            uint32_t       pipe_flags;
         };
 
-        __u64 user_data;
+        uint64_t user_data;
 
         union __attribute__((packed)) {
-            __u16 buf_index;
-            __u16 buf_group;
+            uint16_t buf_index;
+            uint16_t buf_group;
         };
 
-        __u16 personality;
+        uint16_t personality;
 
         union {
-            __s32 splice_fd_in;
-            __u32 file_index;
-            __u32 zcrx_ifq_idx;
-            __u32 optlen;
+            int32_t  splice_fd_in;
+            uint32_t file_index;
+            uint32_t zcrx_ifq_idx;
+            uint32_t optlen;
 
             io_uring_sqe_address_fields address;
         };
@@ -213,41 +213,41 @@ namespace webpp::io::inline iouring_impl {
 
             io_uring_sqe_attribute_fields attribute;
 
-            __u64 optval;
-            // __u8  cmd[0];
+            uint64_t optval;
+            // uint8_t  cmd[0];
         };
     };
 
     struct io_uring_reg_wait {
         struct __kernel_timespec ts;
-        __u32                    min_wait_usec;
-        __u32                    flags;
-        __u64                    sigmask;
-        __u32                    sigmask_sz;
-        __u32                    pad[3];
-        __u64                    pad2[2];
+        uint32_t                 min_wait_usec;
+        uint32_t                 flags;
+        uint64_t                 sigmask;
+        uint32_t                 sigmask_sz;
+        uint32_t                 pad[3];
+        uint64_t                 pad2[2];
     };
 
     struct io_uring_rsrc_update {
-        __u32 offset;
-        __u32 resv;
-        __u64 data __attribute__((aligned(8)));
+        uint32_t offset;
+        uint32_t resv;
+        uint64_t data __attribute__((aligned(8)));
     };
 
     struct io_uring_rsrc_update2 {
-        __u32 offset;
-        __u32 resv;
-        __u64 data __attribute__((aligned(8)));
-        __u64 tags __attribute__((aligned(8)));
-        __u32 nr;
-        __u32 resv2;
+        uint32_t offset;
+        uint32_t resv;
+        uint64_t data __attribute__((aligned(8)));
+        uint64_t tags __attribute__((aligned(8)));
+        uint32_t nr;
+        uint32_t resv2;
     };
 
     struct io_uring_getevents_arg {
-        __u64 sigmask;
-        __u32 sigmask_sz;
-        __u32 min_wait_usec;
-        __u64 ts;
+        uint64_t sigmask;
+        uint32_t sigmask_sz;
+        uint32_t min_wait_usec;
+        uint64_t ts;
     };
 
     enum io_uring_sqe_flags_bit {
@@ -387,70 +387,70 @@ namespace webpp::io::inline iouring_impl {
     };
 
     struct io_sqring_offsets {
-        __u32 head;
-        __u32 tail;
-        __u32 ring_mask;
-        __u32 ring_entries;
-        __u32 flags;
-        __u32 dropped;
-        __u32 array;
-        __u32 resv1;
-        __u64 user_addr;
+        uint32_t head;
+        uint32_t tail;
+        uint32_t ring_mask;
+        uint32_t ring_entries;
+        uint32_t flags;
+        uint32_t dropped;
+        uint32_t array;
+        uint32_t resv1;
+        uint64_t user_addr;
     };
 
     struct io_cqring_offsets {
-        __u32 head;
-        __u32 tail;
-        __u32 ring_mask;
-        __u32 ring_entries;
-        __u32 overflow;
-        __u32 cqes;
-        __u32 flags;
-        __u32 resv1;
-        __u64 user_addr;
+        uint32_t head;
+        uint32_t tail;
+        uint32_t ring_mask;
+        uint32_t ring_entries;
+        uint32_t overflow;
+        uint32_t cqes;
+        uint32_t flags;
+        uint32_t resv1;
+        uint64_t user_addr;
     };
 
     struct io_uring_params {
-        __u32                    sq_entries     = 0;
-        __u32                    cq_entries     = 0;
-        __u32                    flags          = 0;
-        __u32                    sq_thread_cpu  = 0;
-        __u32                    sq_thread_idle = 0;
-        __u32                    features       = 0;
-        __u32                    wq_fd          = 0;
-        __u32                    resv[3]{};
+        uint32_t                 sq_entries     = 0;
+        uint32_t                 cq_entries     = 0;
+        uint32_t                 flags          = 0;
+        uint32_t                 sq_thread_cpu  = 0;
+        uint32_t                 sq_thread_idle = 0;
+        uint32_t                 features       = 0;
+        uint32_t                 wq_fd          = 0;
+        uint32_t                 resv[3]{};
         struct io_sqring_offsets sq_off{};
         struct io_cqring_offsets cq_off{};
     };
 
     struct io_uring_probe_op {
-        __u8  op;
-        __u8  resv;
-        __u16 flags;
-        __u32 resv2;
+        uint8_t  op;
+        uint8_t  resv;
+        uint16_t flags;
+        uint32_t resv2;
     };
 
     struct io_uring_buf_reg {
-        __u64 ring_addr    = 0;
-        __u32 ring_entries = 0;
-        __u16 bgid         = 0;
-        __u16 flags        = 0;
-        __u32 min_left     = 0;
-        __u32 resv[5]{};
+        uint64_t ring_addr    = 0;
+        uint32_t ring_entries = 0;
+        uint16_t bgid         = 0;
+        uint16_t flags        = 0;
+        uint32_t min_left     = 0;
+        uint32_t resv[5]{};
     };
 
     struct io_uring_buf {
-        __u64 addr;
-        __u32 len;
-        __u16 bid;
-        __u16 resv;
+        uint64_t addr;
+        uint32_t len;
+        uint16_t bid;
+        uint16_t resv;
     };
 
     struct io_uring_buf_ring_tail_fields {
-        __u64 resv1;
-        __u32 resv2;
-        __u16 resv3;
-        __u16 tail;
+        uint64_t resv1;
+        uint32_t resv2;
+        uint16_t resv3;
+        uint16_t tail;
     };
 
     struct io_uring_buf_ring {
@@ -460,10 +460,10 @@ namespace webpp::io::inline iouring_impl {
     };
 
     struct io_uring_probe {
-        __u8  last_op;
-        __u8  ops_len;
-        __u16 resv;
-        __u32 resv2[3];
+        uint8_t  last_op;
+        uint8_t  ops_len;
+        uint16_t resv;
+        uint32_t resv2[3];
     };
 
     struct io_uring_cqe_iter {
@@ -482,38 +482,38 @@ namespace webpp::io::inline iouring_impl {
     static constexpr auto IOSQE_ASYNC                     = 1U << IOSQE_ASYNC_BIT;
     static constexpr auto IOSQE_BUFFER_SELECT             = 1U << IOSQE_BUFFER_SELECT_BIT;
     static constexpr auto IOSQE_CQE_SKIP_SUCCESS          = 1U << IOSQE_CQE_SKIP_SUCCESS_BIT;
-    static constexpr auto IORING_SETUP_IOPOLL             = 1U << 0;
-    static constexpr auto IORING_SETUP_SQPOLL             = 1U << 1;
-    static constexpr auto IORING_SETUP_SQ_AFF             = 1U << 2;
-    static constexpr auto IORING_SETUP_CQSIZE             = 1U << 3;
-    static constexpr auto IORING_SETUP_CLAMP              = 1U << 4;
-    static constexpr auto IORING_SETUP_ATTACH_WQ          = 1U << 5;
-    static constexpr auto IORING_SETUP_R_DISABLED         = 1U << 6;
-    static constexpr auto IORING_SETUP_SUBMIT_ALL         = 1U << 7;
-    static constexpr auto IORING_SETUP_COOP_TASKRUN       = 1U << 8;
-    static constexpr auto IORING_SETUP_TASKRUN_FLAG       = 1U << 9;
-    static constexpr auto IORING_SETUP_SQE128             = 1U << 10;
-    static constexpr auto IORING_SETUP_CQE32              = 1U << 11;
-    static constexpr auto IORING_SETUP_SINGLE_ISSUER      = 1U << 12;
-    static constexpr auto IORING_SETUP_DEFER_TASKRUN      = 1U << 13;
-    static constexpr auto IORING_SETUP_NO_MMAP            = 1U << 14;
-    static constexpr auto IORING_SETUP_REGISTERED_FD_ONLY = 1U << 15;
-    static constexpr auto IORING_SETUP_NO_SQARRAY         = 1U << 16;
-    static constexpr auto IORING_SETUP_HYBRID_IOPOLL      = 1U << 17;
-    static constexpr auto IORING_SETUP_CQE_MIXED          = 1U << 18;
-    static constexpr auto IORING_SETUP_SQE_MIXED          = 1U << 19;
-    static constexpr auto IORING_SETUP_SQ_REWIND          = 1U << 20;
-    static constexpr auto IORING_SQ_NEED_WAKEUP           = 1U << 0;
-    static constexpr auto IORING_SQ_CQ_OVERFLOW           = 1U << 1;
-    static constexpr auto IORING_SQ_TASKRUN               = 1U << 2;
-    static constexpr auto IORING_ENTER_GETEVENTS          = 1U << 0;
-    static constexpr auto IORING_ENTER_SQ_WAKEUP          = 1U << 1;
-    static constexpr auto IORING_ENTER_SQ_WAIT            = 1U << 2;
-    static constexpr auto IORING_ENTER_EXT_ARG            = 1U << 3;
-    static constexpr auto IORING_ENTER_REGISTERED_RING    = 1U << 4;
-    static constexpr auto IORING_ENTER_ABS_TIMER          = 1U << 5;
-    static constexpr auto IORING_ENTER_EXT_ARG_REG        = 1U << 6;
-    static constexpr auto IORING_ENTER_NO_IOWAIT          = 1U << 7;
+    static constexpr auto IORING_SETUP_IOPOLL             = 1U << 0U;
+    static constexpr auto IORING_SETUP_SQPOLL             = 1U << 1U;
+    static constexpr auto IORING_SETUP_SQ_AFF             = 1U << 2U;
+    static constexpr auto IORING_SETUP_CQSIZE             = 1U << 3U;
+    static constexpr auto IORING_SETUP_CLAMP              = 1U << 4U;
+    static constexpr auto IORING_SETUP_ATTACH_WQ          = 1U << 5U;
+    static constexpr auto IORING_SETUP_R_DISABLED         = 1U << 6U;
+    static constexpr auto IORING_SETUP_SUBMIT_ALL         = 1U << 7U;
+    static constexpr auto IORING_SETUP_COOP_TASKRUN       = 1U << 8U;
+    static constexpr auto IORING_SETUP_TASKRUN_FLAG       = 1U << 9U;
+    static constexpr auto IORING_SETUP_SQE128             = 1U << 10U;
+    static constexpr auto IORING_SETUP_CQE32              = 1U << 11U;
+    static constexpr auto IORING_SETUP_SINGLE_ISSUER      = 1U << 12U;
+    static constexpr auto IORING_SETUP_DEFER_TASKRUN      = 1U << 13U;
+    static constexpr auto IORING_SETUP_NO_MMAP            = 1U << 14U;
+    static constexpr auto IORING_SETUP_REGISTERED_FD_ONLY = 1U << 15U;
+    static constexpr auto IORING_SETUP_NO_SQARRAY         = 1U << 16U;
+    static constexpr auto IORING_SETUP_HYBRID_IOPOLL      = 1U << 17U;
+    static constexpr auto IORING_SETUP_CQE_MIXED          = 1U << 18U;
+    static constexpr auto IORING_SETUP_SQE_MIXED          = 1U << 19U;
+    static constexpr auto IORING_SETUP_SQ_REWIND          = 1U << 20U;
+    static constexpr auto IORING_SQ_NEED_WAKEUP           = 1U << 0U;
+    static constexpr auto IORING_SQ_CQ_OVERFLOW           = 1U << 1U;
+    static constexpr auto IORING_SQ_TASKRUN               = 1U << 2U;
+    static constexpr auto IORING_ENTER_GETEVENTS          = 1U << 0U;
+    static constexpr auto IORING_ENTER_SQ_WAKEUP          = 1U << 1U;
+    static constexpr auto IORING_ENTER_SQ_WAIT            = 1U << 2U;
+    static constexpr auto IORING_ENTER_EXT_ARG            = 1U << 3U;
+    static constexpr auto IORING_ENTER_REGISTERED_RING    = 1U << 4U;
+    static constexpr auto IORING_ENTER_ABS_TIMER          = 1U << 5U;
+    static constexpr auto IORING_ENTER_EXT_ARG_REG        = 1U << 6U;
+    static constexpr auto IORING_ENTER_NO_IOWAIT          = 1U << 7U;
     static constexpr auto IORING_OFF_SQ_RING              = 0ULL;
     static constexpr auto IORING_OFF_CQ_RING              = 0x800'0000ULL;
     static constexpr auto IORING_OFF_SQES                 = 0x1000'0000ULL;
@@ -521,33 +521,33 @@ namespace webpp::io::inline iouring_impl {
     static constexpr auto IORING_OFF_PBUF_SHIFT           = 16;
     static constexpr auto IORING_OFF_MMAP_MASK            = 0xf800'0000ULL;
     static constexpr auto INT_FLAGS_MASK                  = IORING_ENTER_REGISTERED_RING | IORING_ENTER_NO_IOWAIT;
-    static constexpr auto IORING_FEAT_SINGLE_MMAP         = 1U << 0;
-    static constexpr auto IORING_FEAT_NODROP              = 1U << 1;
-    static constexpr auto IORING_FEAT_SUBMIT_STABLE       = 1U << 2;
-    static constexpr auto IORING_FEAT_RW_CUR_POS          = 1U << 3;
-    static constexpr auto IORING_FEAT_CUR_PERSONALITY     = 1U << 4;
-    static constexpr auto IORING_FEAT_FAST_POLL           = 1U << 5;
-    static constexpr auto IORING_FEAT_POLL_32BITS         = 1U << 6;
-    static constexpr auto IORING_FEAT_SQPOLL_NONFIXED     = 1U << 7;
-    static constexpr auto IORING_FEAT_EXT_ARG             = 1U << 8;
-    static constexpr auto IORING_FEAT_NATIVE_WORKERS      = 1U << 9;
-    static constexpr auto IORING_FEAT_RSRC_TAGS           = 1U << 10;
-    static constexpr auto IORING_FEAT_CQE_SKIP            = 1U << 11;
-    static constexpr auto IORING_FEAT_LINKED_FILE         = 1U << 12;
-    static constexpr auto IORING_FEAT_REG_REG_RING        = 1U << 13;
-    static constexpr auto IORING_FEAT_RECVSEND_BUNDLE     = 1U << 14;
-    static constexpr auto IORING_FEAT_MIN_TIMEOUT         = 1U << 15;
-    static constexpr auto IORING_FEAT_RW_ATTR             = 1U << 16;
-    static constexpr auto IORING_FEAT_NO_IOWAIT           = 1U << 17;
-    static constexpr auto IORING_CQE_F_BUFFER             = 1U << 0;
-    static constexpr auto IORING_CQE_F_MORE               = 1U << 1;
-    static constexpr auto IORING_CQE_F_SOCK_NONEMPTY      = 1U << 2;
-    static constexpr auto IORING_CQE_F_NOTIF              = 1U << 3;
-    static constexpr auto IORING_CQE_F_BUF_MORE           = 1U << 4;
-    static constexpr auto IORING_CQE_F_SKIP               = 1U << 5;
-    static constexpr auto IORING_CQE_F_32                 = 1U << 15;
+    static constexpr auto IORING_FEAT_SINGLE_MMAP         = 1U << 0U;
+    static constexpr auto IORING_FEAT_NODROP              = 1U << 1U;
+    static constexpr auto IORING_FEAT_SUBMIT_STABLE       = 1U << 2U;
+    static constexpr auto IORING_FEAT_RW_CUR_POS          = 1U << 3U;
+    static constexpr auto IORING_FEAT_CUR_PERSONALITY     = 1U << 4U;
+    static constexpr auto IORING_FEAT_FAST_POLL           = 1U << 5U;
+    static constexpr auto IORING_FEAT_POLL_32BITS         = 1U << 6U;
+    static constexpr auto IORING_FEAT_SQPOLL_NONFIXED     = 1U << 7U;
+    static constexpr auto IORING_FEAT_EXT_ARG             = 1U << 8U;
+    static constexpr auto IORING_FEAT_NATIVE_WORKERS      = 1U << 9U;
+    static constexpr auto IORING_FEAT_RSRC_TAGS           = 1U << 10U;
+    static constexpr auto IORING_FEAT_CQE_SKIP            = 1U << 11U;
+    static constexpr auto IORING_FEAT_LINKED_FILE         = 1U << 12U;
+    static constexpr auto IORING_FEAT_REG_REG_RING        = 1U << 13U;
+    static constexpr auto IORING_FEAT_RECVSEND_BUNDLE     = 1U << 14U;
+    static constexpr auto IORING_FEAT_MIN_TIMEOUT         = 1U << 15U;
+    static constexpr auto IORING_FEAT_RW_ATTR             = 1U << 16U;
+    static constexpr auto IORING_FEAT_NO_IOWAIT           = 1U << 17U;
+    static constexpr auto IORING_CQE_F_BUFFER             = 1U << 0U;
+    static constexpr auto IORING_CQE_F_MORE               = 1U << 1U;
+    static constexpr auto IORING_CQE_F_SOCK_NONEMPTY      = 1U << 2U;
+    static constexpr auto IORING_CQE_F_NOTIF              = 1U << 3U;
+    static constexpr auto IORING_CQE_F_BUF_MORE           = 1U << 4U;
+    static constexpr auto IORING_CQE_F_SKIP               = 1U << 5U;
+    static constexpr auto IORING_CQE_F_32                 = 1U << 15U;
     static constexpr auto IORING_CQE_BUFFER_SHIFT         = 16;
-    static constexpr auto LIBURING_UDATA_TIMEOUT          = static_cast<__u64>(-1);
+    static constexpr auto LIBURING_UDATA_TIMEOUT          = static_cast<uint64_t>(-1);
     static constexpr auto KERN_MAX_ENTRIES                = 32'768;
     static constexpr auto KERN_MAX_CQ_ENTRIES             = 2 * KERN_MAX_ENTRIES;
 
@@ -564,9 +564,14 @@ namespace webpp::io::inline iouring_impl {
         INT_FLAG_CQ_ENTER     = 4,
     };
 
-    inline void
-    io_uring_prep_rw(int op, struct io_uring_sqe *sqe, int fd, void const *addr, uint32_t len, __u64 offset) noexcept {
-        sqe->opcode = static_cast<__u8>(op);
+    inline void io_uring_prep_rw(
+      int                  op,
+      struct io_uring_sqe *sqe,
+      int                  fd,
+      void const          *addr,
+      uint32_t             len,
+      uint64_t             offset) noexcept {
+        sqe->opcode = static_cast<uint8_t>(op);
         sqe->fd     = fd;
         sqe->off    = offset;
         sqe->addr   = reinterpret_cast<uint64_t>(addr);
@@ -581,8 +586,8 @@ namespace webpp::io::inline iouring_impl {
       int64_t              off_out,
       uint32_t             nbytes,
       uint32_t             splice_flags) noexcept {
-        io_uring_prep_rw(IORING_OP_SPLICE, sqe, fd_out, nullptr, nbytes, static_cast<__u64>(off_out));
-        sqe->splice_off_in = static_cast<__u64>(off_in);
+        io_uring_prep_rw(IORING_OP_SPLICE, sqe, fd_out, nullptr, nbytes, static_cast<uint64_t>(off_out));
+        sqe->splice_off_in = static_cast<uint64_t>(off_in);
         sqe->splice_fd_in  = fd_in;
         sqe->splice_flags  = splice_flags;
     }
@@ -604,7 +609,7 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset) noexcept {
+      uint64_t             offset) noexcept {
         io_uring_prep_rw(IORING_OP_READV, sqe, fd, iovecs, nr_vecs, offset);
     }
 
@@ -613,7 +618,7 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset,
+      uint64_t             offset,
       int                  flags) noexcept {
         io_uring_prep_readv(sqe, fd, iovecs, nr_vecs, offset);
         sqe->rw_flags = static_cast<__kernel_rwf_t>(flags);
@@ -624,10 +629,10 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       void                *buf,
       uint32_t             nbytes,
-      __u64                offset,
+      uint64_t             offset,
       int                  buf_index) noexcept {
         io_uring_prep_rw(IORING_OP_READ_FIXED, sqe, fd, buf, nbytes, offset);
-        sqe->buf_index = static_cast<__u16>(buf_index);
+        sqe->buf_index = static_cast<uint16_t>(buf_index);
     }
 
     inline void io_uring_prep_readv_fixed(
@@ -635,12 +640,12 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset,
+      uint64_t             offset,
       int                  flags,
       int                  buf_index) noexcept {
         io_uring_prep_readv2(sqe, fd, iovecs, nr_vecs, offset, flags);
         sqe->opcode    = IORING_OP_READV_FIXED;
-        sqe->buf_index = static_cast<__u16>(buf_index);
+        sqe->buf_index = static_cast<uint16_t>(buf_index);
     }
 
     inline void io_uring_prep_writev(
@@ -648,7 +653,7 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset) noexcept {
+      uint64_t             offset) noexcept {
         io_uring_prep_rw(IORING_OP_WRITEV, sqe, fd, iovecs, nr_vecs, offset);
     }
 
@@ -657,7 +662,7 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset,
+      uint64_t             offset,
       int                  flags) noexcept {
         io_uring_prep_writev(sqe, fd, iovecs, nr_vecs, offset);
         sqe->rw_flags = static_cast<__kernel_rwf_t>(flags);
@@ -668,10 +673,10 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       void const          *buf,
       uint32_t             nbytes,
-      __u64                offset,
+      uint64_t             offset,
       int                  buf_index) noexcept {
         io_uring_prep_rw(IORING_OP_WRITE_FIXED, sqe, fd, buf, nbytes, offset);
-        sqe->buf_index = static_cast<__u16>(buf_index);
+        sqe->buf_index = static_cast<uint16_t>(buf_index);
     }
 
     inline void io_uring_prep_writev_fixed(
@@ -679,12 +684,12 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       const struct iovec  *iovecs,
       uint32_t             nr_vecs,
-      __u64                offset,
+      uint64_t             offset,
       int                  flags,
       int                  buf_index) noexcept {
         io_uring_prep_writev2(sqe, fd, iovecs, nr_vecs, offset, flags);
         sqe->opcode    = IORING_OP_WRITEV_FIXED;
-        sqe->buf_index = static_cast<__u16>(buf_index);
+        sqe->buf_index = static_cast<uint16_t>(buf_index);
     }
 
     inline void io_uring_prep_recvmsg(struct io_uring_sqe *sqe, int fd, struct msghdr *msg, uint32_t flags) noexcept {
@@ -718,15 +723,15 @@ namespace webpp::io::inline iouring_impl {
         sqe->len = (1U << 0);
     }
 
-    inline void io_uring_prep_poll_remove(struct io_uring_sqe *sqe, __u64 user_data) noexcept {
+    inline void io_uring_prep_poll_remove(struct io_uring_sqe *sqe, uint64_t user_data) noexcept {
         io_uring_prep_rw(IORING_OP_POLL_REMOVE, sqe, -1, nullptr, 0, 0);
         sqe->addr = user_data;
     }
 
     inline void io_uring_prep_poll_update(
       struct io_uring_sqe *sqe,
-      __u64                old_user_data,
-      __u64                new_user_data,
+      uint64_t             old_user_data,
+      uint64_t             new_user_data,
       uint32_t             poll_mask,
       uint32_t             flags) noexcept {
         io_uring_prep_rw(IORING_OP_POLL_REMOVE, sqe, -1, nullptr, flags, new_user_data);
@@ -756,7 +761,7 @@ namespace webpp::io::inline iouring_impl {
         sqe->timeout_flags = flags;
     }
 
-    inline void io_uring_prep_timeout_remove(struct io_uring_sqe *sqe, __u64 user_data, uint32_t flags) noexcept {
+    inline void io_uring_prep_timeout_remove(struct io_uring_sqe *sqe, uint64_t user_data, uint32_t flags) noexcept {
         io_uring_prep_rw(IORING_OP_TIMEOUT_REMOVE, sqe, -1, nullptr, 0, 0);
         sqe->addr          = user_data;
         sqe->timeout_flags = flags;
@@ -765,15 +770,15 @@ namespace webpp::io::inline iouring_impl {
     inline void io_uring_prep_timeout_update(
       struct io_uring_sqe            *sqe,
       const struct __kernel_timespec *ts,
-      __u64                           user_data,
+      uint64_t                        user_data,
       uint32_t                        flags) noexcept {
         io_uring_prep_rw(IORING_OP_TIMEOUT_REMOVE, sqe, -1, nullptr, 0, reinterpret_cast<uintptr_t>(ts));
         sqe->addr          = user_data;
         sqe->timeout_flags = flags | (1U << 1);
     }
 
-    inline __u64 uring_ptr_to_u64(void const *ptr) noexcept {
-        return static_cast<__u64>(reinterpret_cast<uintptr_t>(ptr));
+    inline uint64_t uring_ptr_to_u64(void const *ptr) noexcept {
+        return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr));
     }
 
     inline void io_uring_prep_accept(
@@ -783,10 +788,10 @@ namespace webpp::io::inline iouring_impl {
       socklen_t           *addrlen,
       int                  flags) noexcept {
         io_uring_prep_rw(IORING_OP_ACCEPT, sqe, fd, addr, 0, uring_ptr_to_u64(addrlen));
-        sqe->accept_flags = static_cast<__u32>(flags);
+        sqe->accept_flags = static_cast<uint32_t>(flags);
     }
 
-    inline void internal__io_uring_set_target_fixed_file(struct io_uring_sqe *sqe, uint32_t file_index) noexcept {
+    inline void internal_io_uring_set_target_fixed_file(struct io_uring_sqe *sqe, uint32_t file_index) noexcept {
         sqe->file_index = file_index + 1;
     }
 
@@ -801,7 +806,7 @@ namespace webpp::io::inline iouring_impl {
         if (file_index == (~0U)) {
             file_index--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     inline void io_uring_prep_multishot_accept(
@@ -821,22 +826,22 @@ namespace webpp::io::inline iouring_impl {
       socklen_t           *addrlen,
       int                  flags) noexcept {
         io_uring_prep_multishot_accept(sqe, fd, addr, addrlen, flags);
-        internal__io_uring_set_target_fixed_file(sqe, (~0U) - 1);
+        internal_io_uring_set_target_fixed_file(sqe, (~0U) - 1);
     }
 
-    inline void io_uring_prep_cancel64(struct io_uring_sqe *sqe, __u64 user_data, int flags) noexcept {
+    inline void io_uring_prep_cancel64(struct io_uring_sqe *sqe, uint64_t user_data, int flags) noexcept {
         io_uring_prep_rw(IORING_OP_ASYNC_CANCEL, sqe, -1, nullptr, 0, 0);
         sqe->addr         = user_data;
-        sqe->cancel_flags = static_cast<__u32>(flags);
+        sqe->cancel_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_cancel(struct io_uring_sqe *sqe, void const *user_data, int flags) noexcept {
-        io_uring_prep_cancel64(sqe, static_cast<__u64>(reinterpret_cast<uintptr_t>(user_data)), flags);
+        io_uring_prep_cancel64(sqe, static_cast<uint64_t>(reinterpret_cast<uintptr_t>(user_data)), flags);
     }
 
     inline void io_uring_prep_cancel_fd(struct io_uring_sqe *sqe, int fd, uint32_t flags) noexcept {
         io_uring_prep_rw(IORING_OP_ASYNC_CANCEL, sqe, fd, nullptr, 0, 0);
-        sqe->cancel_flags = static_cast<__u32>(flags) | (1U << 1);
+        sqe->cancel_flags = static_cast<uint32_t>(flags) | (1U << 1);
     }
 
     inline void
@@ -870,18 +875,19 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void io_uring_prep_files_update(struct io_uring_sqe *sqe, int *fds, uint32_t nr_fds, int offset) noexcept {
-        io_uring_prep_rw(IORING_OP_FILES_UPDATE, sqe, -1, fds, nr_fds, static_cast<__u64>(offset));
+        io_uring_prep_rw(IORING_OP_FILES_UPDATE, sqe, -1, fds, nr_fds, static_cast<uint64_t>(offset));
     }
 
-    inline void io_uring_prep_fallocate(struct io_uring_sqe *sqe, int fd, int mode, __u64 offset, __u64 len) noexcept {
-        io_uring_prep_rw(IORING_OP_FALLOCATE, sqe, fd, 0, static_cast<uint32_t>(mode), static_cast<__u64>(offset));
-        sqe->addr = static_cast<__u64>(len);
+    inline void
+    io_uring_prep_fallocate(struct io_uring_sqe *sqe, int fd, int mode, uint64_t offset, uint64_t len) noexcept {
+        io_uring_prep_rw(IORING_OP_FALLOCATE, sqe, fd, 0, static_cast<uint32_t>(mode), static_cast<uint64_t>(offset));
+        sqe->addr = static_cast<uint64_t>(len);
     }
 
     inline void
     io_uring_prep_openat(struct io_uring_sqe *sqe, int dfd, char const *path, int flags, mode_t mode) noexcept {
         io_uring_prep_rw(IORING_OP_OPENAT, sqe, dfd, path, mode, 0);
-        sqe->open_flags = static_cast<__u32>(flags);
+        sqe->open_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_openat_direct(
@@ -895,7 +901,7 @@ namespace webpp::io::inline iouring_impl {
         if (file_index == (~0U)) {
             file_index--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     inline void io_uring_prep_open(struct io_uring_sqe *sqe, char const *path, int flags, mode_t mode) noexcept {
@@ -917,11 +923,11 @@ namespace webpp::io::inline iouring_impl {
 
     inline void io_uring_prep_close_direct(struct io_uring_sqe *sqe, uint32_t file_index) noexcept {
         io_uring_prep_close(sqe, 0);
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     inline void
-    io_uring_prep_read(struct io_uring_sqe *sqe, int fd, void *buf, uint32_t nbytes, __u64 offset) noexcept {
+    io_uring_prep_read(struct io_uring_sqe *sqe, int fd, void *buf, uint32_t nbytes, uint64_t offset) noexcept {
         io_uring_prep_rw(IORING_OP_READ, sqe, fd, buf, nbytes, offset);
     }
 
@@ -929,15 +935,15 @@ namespace webpp::io::inline iouring_impl {
       struct io_uring_sqe *sqe,
       int                  fd,
       uint32_t             nbytes,
-      __u64                offset,
+      uint64_t             offset,
       int                  buf_group) noexcept {
         io_uring_prep_rw(IORING_OP_READ_MULTISHOT, sqe, fd, nullptr, nbytes, offset);
-        sqe->buf_group = static_cast<__u16>(buf_group);
+        sqe->buf_group = static_cast<uint16_t>(buf_group);
         sqe->flags     = (1U << IOSQE_BUFFER_SELECT_BIT);
     }
 
     inline void
-    io_uring_prep_write(struct io_uring_sqe *sqe, int fd, void const *buf, uint32_t nbytes, __u64 offset) noexcept {
+    io_uring_prep_write(struct io_uring_sqe *sqe, int fd, void const *buf, uint32_t nbytes, uint64_t offset) noexcept {
         io_uring_prep_rw(IORING_OP_WRITE, sqe, fd, buf, nbytes, offset);
     }
 
@@ -949,35 +955,36 @@ namespace webpp::io::inline iouring_impl {
       uint32_t             mask,
       struct statx        *statxbuf) noexcept {
         io_uring_prep_rw(IORING_OP_STATX, sqe, dfd, path, mask, uring_ptr_to_u64(statxbuf));
-        sqe->statx_flags = static_cast<__u32>(flags);
-    }
-
-    inline void io_uring_prep_fadvise(struct io_uring_sqe *sqe, int fd, __u64 offset, __u32 len, int advice) noexcept {
-        io_uring_prep_rw(IORING_OP_FADVISE, sqe, fd, nullptr, static_cast<__u32>(len), offset);
-        sqe->fadvise_advice = static_cast<__u32>(advice);
-    }
-
-    inline void io_uring_prep_madvise(struct io_uring_sqe *sqe, void *addr, __u32 length, int advice) noexcept {
-        io_uring_prep_rw(IORING_OP_MADVISE, sqe, -1, addr, static_cast<__u32>(length), 0);
-        sqe->fadvise_advice = static_cast<__u32>(advice);
+        sqe->statx_flags = static_cast<uint32_t>(flags);
     }
 
     inline void
-    io_uring_prep_fadvise64(struct io_uring_sqe *sqe, int fd, __u64 offset, off_t len, int advice) noexcept {
+    io_uring_prep_fadvise(struct io_uring_sqe *sqe, int fd, uint64_t offset, uint32_t len, int advice) noexcept {
+        io_uring_prep_rw(IORING_OP_FADVISE, sqe, fd, nullptr, static_cast<uint32_t>(len), offset);
+        sqe->fadvise_advice = static_cast<uint32_t>(advice);
+    }
+
+    inline void io_uring_prep_madvise(struct io_uring_sqe *sqe, void *addr, uint32_t length, int advice) noexcept {
+        io_uring_prep_rw(IORING_OP_MADVISE, sqe, -1, addr, static_cast<uint32_t>(length), 0);
+        sqe->fadvise_advice = static_cast<uint32_t>(advice);
+    }
+
+    inline void
+    io_uring_prep_fadvise64(struct io_uring_sqe *sqe, int fd, uint64_t offset, off_t len, int advice) noexcept {
         io_uring_prep_rw(IORING_OP_FADVISE, sqe, fd, nullptr, 0, offset);
-        sqe->addr           = static_cast<__u64>(len);
-        sqe->fadvise_advice = static_cast<__u32>(advice);
+        sqe->addr           = static_cast<uint64_t>(len);
+        sqe->fadvise_advice = static_cast<uint32_t>(advice);
     }
 
     inline void io_uring_prep_madvise64(struct io_uring_sqe *sqe, void *addr, off_t length, int advice) noexcept {
-        io_uring_prep_rw(IORING_OP_MADVISE, sqe, -1, addr, 0, static_cast<__u64>(length));
-        sqe->fadvise_advice = static_cast<__u32>(advice);
+        io_uring_prep_rw(IORING_OP_MADVISE, sqe, -1, addr, 0, static_cast<uint64_t>(length));
+        sqe->fadvise_advice = static_cast<uint32_t>(advice);
     }
 
     inline void
     io_uring_prep_send(struct io_uring_sqe *sqe, int sockfd, void const *buf, size_t len, int flags) noexcept {
-        io_uring_prep_rw(IORING_OP_SEND, sqe, sockfd, buf, static_cast<__u32>(len), 0);
-        sqe->msg_flags = static_cast<__u32>(flags);
+        io_uring_prep_rw(IORING_OP_SEND, sqe, sockfd, buf, static_cast<uint32_t>(len), 0);
+        sqe->msg_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_send_bundle(struct io_uring_sqe *sqe, int sockfd, size_t len, int flags) noexcept {
@@ -985,8 +992,10 @@ namespace webpp::io::inline iouring_impl {
         sqe->ioprio |= (1U << 4);
     }
 
-    inline void
-    io_uring_prep_send_set_addr(struct io_uring_sqe *sqe, const struct sockaddr *dest_addr, __u16 addr_len) noexcept {
+    inline void io_uring_prep_send_set_addr(
+      struct io_uring_sqe   *sqe,
+      const struct sockaddr *dest_addr,
+      uint16_t               addr_len) noexcept {
         sqe->addr2            = reinterpret_cast<uint64_t>(dest_addr);
         sqe->address.addr_len = addr_len;
     }
@@ -1000,7 +1009,7 @@ namespace webpp::io::inline iouring_impl {
       const struct sockaddr *addr,
       socklen_t              addrlen) noexcept {
         io_uring_prep_send(sqe, sockfd, buf, len, flags);
-        io_uring_prep_send_set_addr(sqe, addr, static_cast<__u16>(addrlen));
+        io_uring_prep_send_set_addr(sqe, addr, static_cast<uint16_t>(addrlen));
     }
 
     inline void io_uring_prep_send_zc(
@@ -1010,9 +1019,9 @@ namespace webpp::io::inline iouring_impl {
       size_t               len,
       int                  flags,
       uint32_t             zc_flags) noexcept {
-        io_uring_prep_rw(IORING_OP_SEND_ZC, sqe, sockfd, buf, static_cast<__u32>(len), 0);
-        sqe->msg_flags = static_cast<__u32>(flags);
-        sqe->ioprio    = static_cast<__u16>(zc_flags);
+        io_uring_prep_rw(IORING_OP_SEND_ZC, sqe, sockfd, buf, static_cast<uint32_t>(len), 0);
+        sqe->msg_flags = static_cast<uint32_t>(flags);
+        sqe->ioprio    = static_cast<uint16_t>(zc_flags);
     }
 
     inline void io_uring_prep_send_zc_fixed(
@@ -1025,7 +1034,7 @@ namespace webpp::io::inline iouring_impl {
       uint32_t             buf_index) noexcept {
         io_uring_prep_send_zc(sqe, sockfd, buf, len, flags, zc_flags);
         sqe->ioprio    |= (1U << 2);
-        sqe->buf_index  = static_cast<__u16>(buf_index);
+        sqe->buf_index  = static_cast<uint16_t>(buf_index);
     }
 
     inline void
@@ -1042,12 +1051,12 @@ namespace webpp::io::inline iouring_impl {
       uint32_t             buf_index) noexcept {
         io_uring_prep_sendmsg_zc(sqe, fd, msg, flags);
         sqe->ioprio    |= (1U << 2);
-        sqe->buf_index  = static_cast<__u16>(buf_index);
+        sqe->buf_index  = static_cast<uint16_t>(buf_index);
     }
 
     inline void io_uring_prep_recv(struct io_uring_sqe *sqe, int sockfd, void *buf, size_t len, int flags) noexcept {
-        io_uring_prep_rw(IORING_OP_RECV, sqe, sockfd, buf, static_cast<__u32>(len), 0);
-        sqe->msg_flags = static_cast<__u32>(flags);
+        io_uring_prep_rw(IORING_OP_RECV, sqe, sockfd, buf, static_cast<uint32_t>(len), 0);
+        sqe->msg_flags = static_cast<uint32_t>(flags);
     }
 
     inline void
@@ -1077,32 +1086,38 @@ namespace webpp::io::inline iouring_impl {
         if (file_index == (~0U)) {
             file_index--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     inline void
     io_uring_prep_epoll_ctl(struct io_uring_sqe *sqe, int epfd, int fd, int op, const struct epoll_event *ev) noexcept {
-        io_uring_prep_rw(IORING_OP_EPOLL_CTL, sqe, epfd, ev, static_cast<__u32>(op), static_cast<__u32>(fd));
+        io_uring_prep_rw(IORING_OP_EPOLL_CTL, sqe, epfd, ev, static_cast<uint32_t>(op), static_cast<uint32_t>(fd));
     }
 
     inline void
     io_uring_prep_provide_buffers(struct io_uring_sqe *sqe, void *addr, int len, int nr, int bgid, int bid) noexcept {
-        io_uring_prep_rw(IORING_OP_PROVIDE_BUFFERS, sqe, nr, addr, static_cast<__u32>(len), static_cast<__u64>(bid));
-        sqe->buf_group = static_cast<__u16>(bgid);
+        io_uring_prep_rw(
+          IORING_OP_PROVIDE_BUFFERS,
+          sqe,
+          nr,
+          addr,
+          static_cast<uint32_t>(len),
+          static_cast<uint64_t>(bid));
+        sqe->buf_group = static_cast<uint16_t>(bgid);
     }
 
     inline void io_uring_prep_remove_buffers(struct io_uring_sqe *sqe, int nr, int bgid) noexcept {
         io_uring_prep_rw(IORING_OP_REMOVE_BUFFERS, sqe, nr, nullptr, 0, 0);
-        sqe->buf_group = static_cast<__u16>(bgid);
+        sqe->buf_group = static_cast<uint16_t>(bgid);
     }
 
     inline void io_uring_prep_shutdown(struct io_uring_sqe *sqe, int fd, int how) noexcept {
-        io_uring_prep_rw(IORING_OP_SHUTDOWN, sqe, fd, nullptr, static_cast<__u32>(how), 0);
+        io_uring_prep_rw(IORING_OP_SHUTDOWN, sqe, fd, nullptr, static_cast<uint32_t>(how), 0);
     }
 
     inline void io_uring_prep_unlinkat(struct io_uring_sqe *sqe, int dfd, char const *path, int flags) noexcept {
         io_uring_prep_rw(IORING_OP_UNLINKAT, sqe, dfd, path, 0, 0);
-        sqe->unlink_flags = static_cast<__u32>(flags);
+        sqe->unlink_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_unlink(struct io_uring_sqe *sqe, char const *path, int flags) noexcept {
@@ -1121,9 +1136,9 @@ namespace webpp::io::inline iouring_impl {
           sqe,
           olddfd,
           oldpath,
-          static_cast<__u32>(newdfd),
+          static_cast<uint32_t>(newdfd),
           static_cast<uint64_t>(reinterpret_cast<uintptr_t>(newpath)));
-        sqe->rename_flags = static_cast<__u32>(flags);
+        sqe->rename_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_rename(struct io_uring_sqe *sqe, char const *oldpath, char const *newpath) noexcept {
@@ -1131,9 +1146,9 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void
-    io_uring_prep_sync_file_range(struct io_uring_sqe *sqe, int fd, uint32_t len, __u64 offset, int flags) noexcept {
+    io_uring_prep_sync_file_range(struct io_uring_sqe *sqe, int fd, uint32_t len, uint64_t offset, int flags) noexcept {
         io_uring_prep_rw(IORING_OP_SYNC_FILE_RANGE, sqe, fd, nullptr, len, offset);
-        sqe->sync_range_flags = static_cast<__u32>(flags);
+        sqe->sync_range_flags = static_cast<uint32_t>(flags);
     }
 
     inline void io_uring_prep_mkdirat(struct io_uring_sqe *sqe, int dfd, char const *path, mode_t mode) noexcept {
@@ -1171,9 +1186,9 @@ namespace webpp::io::inline iouring_impl {
           sqe,
           olddfd,
           oldpath,
-          static_cast<__u32>(newdfd),
+          static_cast<uint32_t>(newdfd),
           static_cast<uint64_t>(reinterpret_cast<uintptr_t>(newpath)));
-        sqe->hardlink_flags = static_cast<__u32>(flags);
+        sqe->hardlink_flags = static_cast<uint32_t>(flags);
     }
 
     inline void
@@ -1185,7 +1200,7 @@ namespace webpp::io::inline iouring_impl {
       struct io_uring_sqe *sqe,
       int                  fd,
       uint32_t             len,
-      __u64                data,
+      uint64_t             data,
       uint32_t             flags,
       uint32_t             cqe_flags) noexcept {
         io_uring_prep_rw(IORING_OP_MSG_RING, sqe, fd, nullptr, len, data);
@@ -1194,7 +1209,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void
-    io_uring_prep_msg_ring(struct io_uring_sqe *sqe, int fd, uint32_t len, __u64 data, uint32_t flags) noexcept {
+    io_uring_prep_msg_ring(struct io_uring_sqe *sqe, int fd, uint32_t len, uint64_t data, uint32_t flags) noexcept {
         io_uring_prep_rw(IORING_OP_MSG_RING, sqe, fd, nullptr, len, data);
         sqe->msg_ring_flags = flags;
     }
@@ -1204,7 +1219,7 @@ namespace webpp::io::inline iouring_impl {
       int                  fd,
       int                  source_fd,
       int                  target_fd,
-      __u64                data,
+      uint64_t             data,
       uint32_t             flags) noexcept {
         io_uring_prep_rw(
           IORING_OP_MSG_RING,
@@ -1213,11 +1228,11 @@ namespace webpp::io::inline iouring_impl {
           reinterpret_cast<void *>(static_cast<uintptr_t>(IORING_MSG_SEND_FD)),
           0,
           data);
-        sqe->third_address.addr3 = static_cast<__u64>(source_fd);
+        sqe->third_address.addr3 = static_cast<uint64_t>(source_fd);
         if (static_cast<uint32_t>(target_fd) == (~0U)) {
             target_fd--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, static_cast<uint32_t>(target_fd));
+        internal_io_uring_set_target_fixed_file(sqe, static_cast<uint32_t>(target_fd));
         sqe->msg_ring_flags = flags;
     }
 
@@ -1225,7 +1240,7 @@ namespace webpp::io::inline iouring_impl {
       struct io_uring_sqe *sqe,
       int                  fd,
       int                  source_fd,
-      __u64                data,
+      uint64_t             data,
       uint32_t             flags) noexcept {
         io_uring_prep_msg_ring_fd(sqe, fd, source_fd, static_cast<int>(~0U), data, flags);
     }
@@ -1236,8 +1251,14 @@ namespace webpp::io::inline iouring_impl {
       char                *value,
       char const          *path,
       uint32_t             len) noexcept {
-        io_uring_prep_rw(IORING_OP_GETXATTR, sqe, 0, name, len, static_cast<__u64>(reinterpret_cast<uintptr_t>(value)));
-        sqe->third_address.addr3 = static_cast<__u64>(reinterpret_cast<uintptr_t>(path));
+        io_uring_prep_rw(
+          IORING_OP_GETXATTR,
+          sqe,
+          0,
+          name,
+          len,
+          static_cast<uint64_t>(reinterpret_cast<uintptr_t>(value)));
+        sqe->third_address.addr3 = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(path));
         sqe->xattr_flags         = 0;
     }
 
@@ -1248,9 +1269,15 @@ namespace webpp::io::inline iouring_impl {
       char const          *path,
       int                  flags,
       uint32_t             len) noexcept {
-        io_uring_prep_rw(IORING_OP_SETXATTR, sqe, 0, name, len, static_cast<__u64>(reinterpret_cast<uintptr_t>(value)));
-        sqe->third_address.addr3 = static_cast<__u64>(reinterpret_cast<uintptr_t>(path));
-        sqe->xattr_flags         = static_cast<__u32>(flags);
+        io_uring_prep_rw(
+          IORING_OP_SETXATTR,
+          sqe,
+          0,
+          name,
+          len,
+          static_cast<uint64_t>(reinterpret_cast<uintptr_t>(value)));
+        sqe->third_address.addr3 = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(path));
+        sqe->xattr_flags         = static_cast<uint32_t>(flags);
     }
 
     inline void
@@ -1261,7 +1288,7 @@ namespace webpp::io::inline iouring_impl {
           fd,
           name,
           len,
-          static_cast<__u64>(reinterpret_cast<uintptr_t>(value)));
+          static_cast<uint64_t>(reinterpret_cast<uintptr_t>(value)));
         sqe->xattr_flags = 0;
     }
 
@@ -1278,8 +1305,8 @@ namespace webpp::io::inline iouring_impl {
           fd,
           name,
           len,
-          static_cast<__u64>(reinterpret_cast<uintptr_t>(value)));
-        sqe->xattr_flags = static_cast<__u32>(flags);
+          static_cast<uint64_t>(reinterpret_cast<uintptr_t>(value)));
+        sqe->xattr_flags = static_cast<uint32_t>(flags);
     }
 
     inline void
@@ -1290,7 +1317,7 @@ namespace webpp::io::inline iouring_impl {
           domain,
           nullptr,
           static_cast<uint32_t>(protocol),
-          static_cast<__u64>(type));
+          static_cast<uint64_t>(type));
         sqe->rw_flags = static_cast<__kernel_rwf_t>(flags);
     }
 
@@ -1307,12 +1334,12 @@ namespace webpp::io::inline iouring_impl {
           domain,
           nullptr,
           static_cast<uint32_t>(protocol),
-          static_cast<__u64>(type));
+          static_cast<uint64_t>(type));
         sqe->rw_flags = static_cast<__kernel_rwf_t>(flags);
         if (file_index == (~0U)) {
             file_index--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     inline void io_uring_prep_socket_direct_alloc(
@@ -1327,13 +1354,13 @@ namespace webpp::io::inline iouring_impl {
           domain,
           nullptr,
           static_cast<uint32_t>(protocol),
-          static_cast<__u64>(type));
+          static_cast<uint64_t>(type));
         sqe->rw_flags = static_cast<__kernel_rwf_t>(flags);
-        internal__io_uring_set_target_fixed_file(sqe, (~0U) - 1);
+        internal_io_uring_set_target_fixed_file(sqe, (~0U) - 1);
     }
 
-    inline void __io_uring_prep_uring_cmd(struct io_uring_sqe *sqe, int op, __u32 cmd_op, int fd) noexcept {
-        sqe->opcode         = static_cast<__u8>(op);
+    inline void __io_uring_prep_uring_cmd(struct io_uring_sqe *sqe, int op, uint32_t cmd_op, int fd) noexcept {
+        sqe->opcode         = static_cast<uint8_t>(op);
         sqe->fd             = fd;
         sqe->command.cmd_op = cmd_op;
         sqe->command.__pad1 = 0;
@@ -1342,11 +1369,11 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void io_uring_prep_uring_cmd(struct io_uring_sqe *sqe, int cmd_op, int fd) noexcept {
-        __io_uring_prep_uring_cmd(sqe, IORING_OP_URING_CMD, static_cast<__u32>(cmd_op), fd);
+        __io_uring_prep_uring_cmd(sqe, IORING_OP_URING_CMD, static_cast<uint32_t>(cmd_op), fd);
     }
 
     inline void io_uring_prep_uring_cmd128(struct io_uring_sqe *sqe, int cmd_op, int fd) noexcept {
-        __io_uring_prep_uring_cmd(sqe, IORING_OP_URING_CMD128, static_cast<__u32>(cmd_op), fd);
+        __io_uring_prep_uring_cmd(sqe, IORING_OP_URING_CMD128, static_cast<uint32_t>(cmd_op), fd);
     }
 
     inline void io_uring_prep_cmd_sock(
@@ -1359,9 +1386,9 @@ namespace webpp::io::inline iouring_impl {
       int                  optlen) noexcept {
         io_uring_prep_uring_cmd(sqe, cmd_op, fd);
         sqe->optval                = reinterpret_cast<uint64_t>(optval);
-        sqe->socket_option.optname = static_cast<__u32>(optname);
-        sqe->optlen                = static_cast<__u32>(optlen);
-        sqe->socket_option.level   = static_cast<__u32>(level);
+        sqe->socket_option.optname = static_cast<uint32_t>(optname);
+        sqe->optlen                = static_cast<uint32_t>(optlen);
+        sqe->socket_option.level   = static_cast<uint32_t>(level);
     }
 
     inline void io_uring_prep_cmd_getsockname(
@@ -1373,7 +1400,7 @@ namespace webpp::io::inline iouring_impl {
         io_uring_prep_uring_cmd(sqe, SOCKET_URING_OP_GETSOCKNAME, fd);
         sqe->addr                = reinterpret_cast<uintptr_t>(sockaddr);
         sqe->third_address.addr3 = reinterpret_cast<uint64_t>(sockaddr_len);
-        sqe->optlen              = static_cast<__u32>(peer);
+        sqe->optlen              = static_cast<uint32_t>(peer);
     }
 
     inline void io_uring_prep_waitid(
@@ -1385,7 +1412,7 @@ namespace webpp::io::inline iouring_impl {
       uint32_t             flags) noexcept {
         io_uring_prep_rw(IORING_OP_WAITID, sqe, static_cast<int>(id), nullptr, static_cast<uint32_t>(idtype), 0);
         sqe->waitid_flags = flags;
-        sqe->file_index   = static_cast<__u32>(options);
+        sqe->file_index   = static_cast<uint32_t>(options);
         sqe->addr2        = reinterpret_cast<uint64_t>(infop);
     }
 
@@ -1429,7 +1456,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void io_uring_prep_ftruncate(struct io_uring_sqe *sqe, int fd, loff_t len) noexcept {
-        io_uring_prep_rw(IORING_OP_FTRUNCATE, sqe, fd, 0, 0, static_cast<__u64>(len));
+        io_uring_prep_rw(IORING_OP_FTRUNCATE, sqe, fd, 0, 0, static_cast<uint64_t>(len));
     }
 
     inline void io_uring_prep_cmd_discard(struct io_uring_sqe *sqe, int fd, uint64_t offset, uint64_t nbytes) noexcept {
@@ -1443,7 +1470,7 @@ namespace webpp::io::inline iouring_impl {
 
     inline void io_uring_prep_pipe(struct io_uring_sqe *sqe, int *fds, int pipe_flags) {
         io_uring_prep_rw(IORING_OP_PIPE, sqe, 0, fds, 0, 0);
-        sqe->pipe_flags = static_cast<__u32>(pipe_flags);
+        sqe->pipe_flags = static_cast<uint32_t>(pipe_flags);
     }
 
     inline void io_uring_prep_pipe_direct(struct io_uring_sqe *sqe, int *fds, int pipe_flags, uint32_t file_index) {
@@ -1451,7 +1478,7 @@ namespace webpp::io::inline iouring_impl {
         if (file_index == (~0U)) {
             file_index--;
         }
-        internal__io_uring_set_target_fixed_file(sqe, file_index);
+        internal_io_uring_set_target_fixed_file(sqe, file_index);
     }
 
     template <typename T>
@@ -1478,7 +1505,7 @@ namespace webpp::io::inline iouring_impl {
         std::atomic_thread_fence(std::memory_order_seq_cst);
     }
 
-    static unsigned internal__io_uring_flush_sq(struct io_uring *ring) {
+    static unsigned internal_io_uring_flush_sq(struct io_uring *ring) {
         struct io_uring_sq *sq   = &ring->sq;
         unsigned            tail = sq->sqe_tail;
 
@@ -1539,7 +1566,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline bool cq_ring_needs_enter(struct io_uring *ring) {
-        return (ring->int_flags & INT_FLAG_CQ_ENTER) || cq_ring_needs_flush(ring);
+        return ((ring->int_flags & INT_FLAG_CQ_ENTER) != 0) || cq_ring_needs_flush(ring);
     }
 
     static inline unsigned io_uring_cqe_nr(const struct io_uring_cqe *cqe) noexcept {
@@ -1549,7 +1576,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline void io_uring_cq_advance(struct io_uring *ring, uint32_t nr) noexcept {
-        if (nr) {
+        if (nr != 0U) {
             struct io_uring_cq *cq = &ring->cq;
             io_uring_smp_store_release(cq->khead, *cq->khead + nr);
         }
@@ -1568,11 +1595,11 @@ namespace webpp::io::inline iouring_impl {
             }
         }
         io_uring_cq_advance(ring, io_uring_cqe_nr(cqe));
-        return !*err;
+        return *err == 0;
     }
 
     inline uint32_t io_uring_cqe_shift_from_flags(uint32_t flags) noexcept {
-        return !!(flags & (1U << 11));
+        return static_cast<uint32_t>(!((flags & (1U << 11U)) == 0U));
     }
 
     inline uint32_t io_uring_cqe_shift(const struct io_uring *ring) noexcept {
@@ -1580,7 +1607,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     inline int
-    internal__io_uring_peek_cqe(struct io_uring *ring, struct io_uring_cqe **cqe_ptr, unsigned *nr_available) noexcept {
+    internal_io_uring_peek_cqe(struct io_uring *ring, struct io_uring_cqe **cqe_ptr, unsigned *nr_available) noexcept {
         struct io_uring_cqe *cqe;
         int                  err = 0;
         unsigned             available;
@@ -1611,7 +1638,7 @@ namespace webpp::io::inline iouring_impl {
         return err;
     }
 
-    static inline int internal__sys_io_uring_enter2(
+    static inline int internal_sys_io_uring_enter2(
       uint32_t fd,
       uint32_t to_submit,
       uint32_t min_complete,
@@ -1628,11 +1655,11 @@ namespace webpp::io::inline iouring_impl {
         int                  err    = 0;
 
         for (;;) {
-            bool     need_enter = false;
-            unsigned flags      = static_cast<unsigned>(ring_enter_flags(ring));
-            unsigned nr_available;
+            bool     need_enter   = false;
+            auto     flags        = static_cast<unsigned>(ring_enter_flags(ring));
+            unsigned nr_available = 0;
 
-            auto ret = internal__io_uring_peek_cqe(ring, &cqe, &nr_available);
+            auto ret = internal_io_uring_peek_cqe(ring, &cqe, &nr_available);
             if (ret != 0) [[unlikely]] {
                 if (err == 0) {
                     err = ret;
@@ -1658,16 +1685,16 @@ namespace webpp::io::inline iouring_impl {
             if (!need_enter) {
                 break;
             }
-            if (looped && data->has_ts) {
+            if (looped && (data->has_ts != 0)) {
                 auto *const arg = static_cast<io_uring_getevents_arg *>(data->arg);
 
-                if (cqe == nullptr && arg->ts && !err) {
+                if (cqe == nullptr && (arg->ts != 0U) && (err == 0)) {
                     err = -ETIME;
                 }
                 break;
             }
 
-            ret = internal__sys_io_uring_enter2(
+            ret = internal_sys_io_uring_enter2(
               static_cast<uint32_t>(ring->enter_ring_fd),
               data->submit,
               data->wait_nr,
@@ -1682,7 +1709,7 @@ namespace webpp::io::inline iouring_impl {
             }
 
             data->submit -= static_cast<unsigned>(ret);
-            if (cqe) {
+            if (cqe != nullptr) {
                 break;
             }
             if (!looped) {
@@ -1695,7 +1722,7 @@ namespace webpp::io::inline iouring_impl {
         return err;
     }
 
-    static inline int internal__io_uring_get_cqe(
+    static inline int internal_io_uring_get_cqe(
       struct io_uring      *ring,
       struct io_uring_cqe **cqe_ptr,
       unsigned              submit,
@@ -1713,28 +1740,28 @@ namespace webpp::io::inline iouring_impl {
         return _io_uring_get_cqe(ring, cqe_ptr, &data);
     }
 
-    inline uint32_t io_uring_sqe_shift_from_flags(uint32_t flags) noexcept {
-        return !!(flags & (1U << 10));
+    static inline uint32_t io_uring_sqe_shift_from_flags(uint32_t flags) noexcept {
+        return static_cast<uint32_t>(!((flags & (1U << 10U)) == 0U));
     }
 
-    inline uint32_t io_uring_sqe_shift(const struct io_uring *ring) noexcept {
+    static inline uint32_t io_uring_sqe_shift(const struct io_uring *ring) noexcept {
         return io_uring_sqe_shift_from_flags(ring->flags);
     }
 
-    int io_uring_submit_and_wait_reg(
+    static inline int io_uring_submit_and_wait_reg(
       struct io_uring      *ring,
       struct io_uring_cqe **cqe_ptr,
       uint32_t              wait_nr,
       int                   reg_index) noexcept {
         uint64_t        offset = static_cast<uint64_t>(reg_index) * sizeof(struct io_uring_reg_wait);
         struct get_data data   = {
-            .submit    = internal__io_uring_flush_sq(ring),
+            .submit    = internal_io_uring_flush_sq(ring),
             .wait_nr   = wait_nr,
-            .get_flags = (1U << 3) | (1U << 6),
+            .get_flags = (1U << 3U) | (1U << 6U),
             .sz        = sizeof(struct io_uring_reg_wait),
             .has_ts    = true,
             .arg       = reinterpret_cast<void *>(static_cast<uintptr_t>(offset))};
-        if (!(ring->features & (1U << 8))) {
+        if ((ring->features & (1U << 8U)) == 0U) {
             return -22;
         }
         return _io_uring_get_cqe(ring, cqe_ptr, &data);
@@ -1775,17 +1802,13 @@ namespace webpp::io::inline iouring_impl {
         return _io_uring_get_sqe(ring);
     }
 
-    static inline int internal__sys_io_uring_enter(
-      uint32_t  fd,
-      uint32_t  to_submit,
-      uint32_t  min_complete,
-      uint32_t  flags,
-      sigset_t *sig) {
-        return internal__sys_io_uring_enter2(fd, to_submit, min_complete, flags, sig, _NSIG / 8);
+    static inline int
+    internal_sys_io_uring_enter(uint32_t fd, uint32_t to_submit, uint32_t min_complete, uint32_t flags, sigset_t *sig) {
+        return internal_sys_io_uring_enter2(fd, to_submit, min_complete, flags, sig, _NSIG / 8);
     }
 
     static inline int
-    internal__io_uring_submit(struct io_uring *ring, unsigned submitted, unsigned wait_nr, bool getevents) {
+    internal_io_uring_submit(struct io_uring *ring, unsigned submitted, unsigned wait_nr, bool getevents) {
         bool cq_needs_enter = getevents || wait_nr || cq_ring_needs_enter(ring);
         auto flags          = static_cast<unsigned>(ring_enter_flags(ring));
 
@@ -1796,7 +1819,7 @@ namespace webpp::io::inline iouring_impl {
                 flags |= IORING_ENTER_GETEVENTS;
             }
 
-            return internal__sys_io_uring_enter(
+            return internal_sys_io_uring_enter(
               static_cast<uint32_t>(ring->enter_ring_fd),
               submitted,
               wait_nr,
@@ -1806,32 +1829,32 @@ namespace webpp::io::inline iouring_impl {
         return static_cast<int>(submitted);
     }
 
-    static inline int internal__io_uring_submit_and_wait(struct io_uring *ring, unsigned wait_nr) {
-        return internal__io_uring_submit(ring, internal__io_uring_flush_sq(ring), wait_nr, false);
+    static inline int internal_io_uring_submit_and_wait(struct io_uring *ring, unsigned wait_nr) {
+        return internal_io_uring_submit(ring, internal_io_uring_flush_sq(ring), wait_nr, false);
     }
 
     static inline int io_uring_submit(io_uring *ring) {
-        return internal__io_uring_submit_and_wait(ring, 0);
+        return internal_io_uring_submit_and_wait(ring, 0);
     }
 
-    static inline int internal__io_uring_submit_timeout(io_uring *ring, unsigned wait_nr, __kernel_timespec *ts) {
+    static inline int internal_io_uring_submit_timeout(io_uring *ring, unsigned wait_nr, __kernel_timespec *ts) {
         auto *sqe = io_uring_get_sqe(ring);
-        if (!sqe) {
+        if (sqe == nullptr) {
             auto const ret = io_uring_submit(ring);
             if (ret < 0) {
                 return ret;
             }
             sqe = io_uring_get_sqe(ring);
-            if (!sqe) {
+            if (sqe == nullptr) [[unlikely]] {
                 return -EAGAIN;
             }
         }
         io_uring_prep_timeout(sqe, ts, wait_nr, 0);
         sqe->user_data = LIBURING_UDATA_TIMEOUT;
-        return static_cast<int>(internal__io_uring_flush_sq(ring));
+        return static_cast<int>(internal_io_uring_flush_sq(ring));
     }
 
-    static inline int internal__io_uring_submit_and_wait_timeout(
+    static inline int internal_io_uring_submit_and_wait_timeout(
       io_uring          *ring,
       io_uring_cqe     **cqe_ptr,
       uint32_t           wait_nr,
@@ -1840,14 +1863,14 @@ namespace webpp::io::inline iouring_impl {
       sigset_t          *sigmask) {
         unsigned to_submit = 0;
         if (ts != nullptr) {
-            if (ring->features & (1U << 8)) {
+            if ((ring->features & (1U << 8U)) != 0U) {
                 struct io_uring_getevents_arg arg = {
                   .sigmask       = reinterpret_cast<uint64_t>(sigmask),
                   .sigmask_sz    = (64 + 1) / 8,
                   .min_wait_usec = min_wait,
                   .ts            = reinterpret_cast<uint64_t>(ts)};
                 struct get_data data = {
-                  .submit    = internal__io_uring_flush_sq(ring),
+                  .submit    = internal_io_uring_flush_sq(ring),
                   .wait_nr   = wait_nr,
                   .get_flags = (1U << 3),
                   .sz        = sizeof(arg),
@@ -1855,14 +1878,14 @@ namespace webpp::io::inline iouring_impl {
                   .arg       = &arg};
                 return _io_uring_get_cqe(ring, cqe_ptr, &data);
             }
-            to_submit = static_cast<unsigned>(internal__io_uring_submit_timeout(ring, wait_nr, ts));
+            to_submit = static_cast<unsigned>(internal_io_uring_submit_timeout(ring, wait_nr, ts));
             if (to_submit < 0) {
                 return static_cast<int>(to_submit);
             }
         } else {
-            to_submit = internal__io_uring_flush_sq(ring);
+            to_submit = internal_io_uring_flush_sq(ring);
         }
-        return internal__io_uring_get_cqe(ring, cqe_ptr, to_submit, wait_nr, sigmask);
+        return internal_io_uring_get_cqe(ring, cqe_ptr, to_submit, wait_nr, sigmask);
     }
 
     static inline int io_uring_submit_and_wait_min_timeout(
@@ -1875,7 +1898,7 @@ namespace webpp::io::inline iouring_impl {
         if (!(ring->features & (1U << 15))) {
             return -22;
         }
-        return internal__io_uring_submit_and_wait_timeout(ring, cqe_ptr, wait_nr, ts, min_wait, sigmask);
+        return internal_io_uring_submit_and_wait_timeout(ring, cqe_ptr, wait_nr, ts, min_wait, sigmask);
     }
 
     static inline int io_uring_submit_and_wait_timeout(
@@ -1884,14 +1907,14 @@ namespace webpp::io::inline iouring_impl {
       uint32_t                  wait_nr,
       struct __kernel_timespec *ts,
       sigset_t                 *sigmask) noexcept {
-        return internal__io_uring_submit_and_wait_timeout(ring, cqe_ptr, wait_nr, ts, 0, sigmask);
+        return internal_io_uring_submit_and_wait_timeout(ring, cqe_ptr, wait_nr, ts, 0, sigmask);
     }
 
     static inline int io_uring_submit_and_wait(struct io_uring *ring, uint32_t wait_nr) noexcept {
-        return internal__io_uring_submit_and_wait(ring, wait_nr);
+        return internal_io_uring_submit_and_wait(ring, wait_nr);
     }
 
-    static inline int internal__fls(int x) {
+    static inline int internal_fls(int x) {
         if (!x) {
             return 0;
         }
@@ -1899,7 +1922,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static unsigned roundup_pow2(unsigned depth) {
-        return 1U << static_cast<uint32_t>(internal__fls(static_cast<int>(depth - 1)));
+        return 1U << static_cast<uint32_t>(internal_fls(static_cast<int>(depth - 1)));
     }
 
     static inline int get_sq_cq_entries(unsigned entries, io_uring_params *p, unsigned *sq, unsigned *cq) {
@@ -1945,16 +1968,17 @@ namespace webpp::io::inline iouring_impl {
         return (ret < 0) ? -errno : ret;
     }
 
-    void io_uring_unmap_rings(struct io_uring_sq *sq, struct io_uring_cq *cq) {
-        if (sq->ring_sz) {
+    static inline void io_uring_unmap_rings(struct io_uring_sq *sq, struct io_uring_cq *cq) {
+        if (sq->ring_sz != 0U) {
             __sys_munmap(sq->ring_ptr, sq->ring_sz);
         }
-        if (cq->ring_ptr && cq->ring_sz && cq->ring_ptr != sq->ring_ptr) {
+        if ((cq->ring_ptr != nullptr) && (cq->ring_sz != 0U) && cq->ring_ptr != sq->ring_ptr) {
             __sys_munmap(cq->ring_ptr, cq->ring_sz);
         }
     }
 
-    void io_uring_setup_ring_pointers(io_uring_params *p, struct io_uring_sq *sq, struct io_uring_cq *cq) {
+    static inline void
+    io_uring_setup_ring_pointers(io_uring_params *p, struct io_uring_sq *sq, struct io_uring_cq *cq) {
         sq->khead         = reinterpret_cast<unsigned *>(static_cast<char *>(sq->ring_ptr) + p->sq_off.head);
         sq->ktail         = reinterpret_cast<unsigned *>(static_cast<char *>(sq->ring_ptr) + p->sq_off.tail);
         sq->kring_mask    = reinterpret_cast<unsigned *>(static_cast<char *>(sq->ring_ptr) + p->sq_off.ring_mask);
@@ -1981,12 +2005,12 @@ namespace webpp::io::inline iouring_impl {
         cq->ring_entries = *cq->kring_entries;
     }
 
-    static size_t params_sqes_size(io_uring_params const *p, unsigned sqes) {
+    static inline size_t params_sqes_size(io_uring_params const *p, unsigned sqes) {
         sqes <<= io_uring_sqe_shift_from_flags(p->flags);
         return sqes * sizeof(struct io_uring_sqe);
     }
 
-    static size_t params_cq_size(io_uring_params const *p, unsigned cqes) {
+    static inline size_t params_cq_size(io_uring_params const *p, unsigned cqes) {
         cqes <<= io_uring_cqe_shift_from_flags(p->flags);
         return cqes * sizeof(struct io_uring_cqe);
     }
@@ -2003,7 +2027,7 @@ namespace webpp::io::inline iouring_impl {
         return reinterpret_cast<uintptr_t>(ptr) >= static_cast<uintptr_t>(-4095L);
     }
 
-    static inline int internal__sys_madvise(void *addr, size_t length, int advice) noexcept {
+    static inline int internal_sys_madvise(void *addr, size_t length, int advice) noexcept {
         auto const ret = madvise(addr, length, advice);
         return (ret < 0) ? -errno : ret;
     }
@@ -2017,17 +2041,17 @@ namespace webpp::io::inline iouring_impl {
         return page_size;
     }
 
-    static inline int internal__sys_io_uring_setup(uint32_t entries, io_uring_params *p) {
+    static inline int internal_sys_io_uring_setup(uint32_t entries, io_uring_params *p) {
         auto const ret = static_cast<int>(syscall(__NR_io_uring_setup, entries, p));
         return (ret < 0) ? -errno : ret;
     }
 
-    static inline int internal__sys_close(int fd) {
+    static inline int internal_sys_close(int fd) {
         auto const ret = close(fd);
         return (ret < 0) ? -errno : ret;
     }
 
-    static inline int internal__sys_io_uring_register(uint32_t fd, uint32_t opcode, void const *arg, uint32_t nr_args) {
+    static inline int internal_sys_io_uring_register(uint32_t fd, uint32_t opcode, void const *arg, uint32_t nr_args) {
         auto const ret = static_cast<int>(syscall(__NR_io_uring_register, fd, opcode, arg, nr_args));
         return (ret < 0) ? -errno : ret;
     }
@@ -2044,11 +2068,11 @@ namespace webpp::io::inline iouring_impl {
             fd = ring->ring_fd;
         }
 
-        return internal__sys_io_uring_register(static_cast<uint32_t>(fd), opcode, arg, nr_args);
+        return internal_sys_io_uring_register(static_cast<uint32_t>(fd), opcode, arg, nr_args);
     }
 
     static inline int io_uring_unregister_ring_fd(struct io_uring *ring) {
-        struct io_uring_rsrc_update up = {.offset = static_cast<__u32>(ring->enter_ring_fd), .resv = 0, .data = 0};
+        struct io_uring_rsrc_update up = {.offset = static_cast<uint32_t>(ring->enter_ring_fd), .resv = 0, .data = 0};
         int                         ret;
 
         if (!(ring->int_flags & INT_FLAG_REG_RING)) {
@@ -2129,28 +2153,26 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline int io_uring_ring_dontfork(struct io_uring *ring) {
-        size_t len;
-        int    ret;
-
-        if (!ring->sq.ring_ptr || !ring->sq.sqes || !ring->cq.ring_ptr) {
+        if ((ring->sq.ring_ptr == nullptr) || (ring->sq.sqes == nullptr) || (ring->cq.ring_ptr == nullptr)) [[unlikely]]
+        {
             return -EINVAL;
         }
 
-        len = io_uring_sqes_size(ring);
-        ret = internal__sys_madvise(ring->sq.sqes, len, MADV_DONTFORK);
+        auto len = io_uring_sqes_size(ring);
+        auto ret = internal_sys_madvise(ring->sq.sqes, len, MADV_DONTFORK);
         if (ret < 0) {
             return ret;
         }
 
         len = ring->sq.ring_sz;
-        ret = internal__sys_madvise(ring->sq.ring_ptr, len, MADV_DONTFORK);
-        if (ret < 0) {
+        ret = internal_sys_madvise(ring->sq.ring_ptr, len, MADV_DONTFORK);
+        if (ret < 0) [[unlikely]] {
             return ret;
         }
 
         if (ring->cq.ring_ptr != ring->sq.ring_ptr) {
             len = ring->cq.ring_sz;
-            ret = internal__sys_madvise(ring->cq.ring_ptr, len, MADV_DONTFORK);
+            ret = internal_sys_madvise(ring->cq.ring_ptr, len, MADV_DONTFORK);
             if (ret < 0) {
                 return ret;
             }
@@ -2261,11 +2283,15 @@ namespace webpp::io::inline iouring_impl {
         return static_cast<int>(mem_used);
     }
 
-    static inline int
-    __io_uring_queue_init_params(unsigned entries, io_uring *ring, io_uring_params *p, void *buf, size_t buf_size) {
-        int       fd, ret = 0;
+    static inline int internal_io_uring_queue_init_params(
+      unsigned         entries,
+      io_uring        *ring,
+      io_uring_params *p,
+      void            *buf,
+      size_t           buf_size) {
+        int       fd  = 0;
+        int       ret = 0;
         unsigned *sq_array;
-        unsigned  sq_entries, index;
 
         memset(ring, 0, sizeof(*ring));
 
@@ -2287,7 +2313,7 @@ namespace webpp::io::inline iouring_impl {
             }
         }
 
-        fd = internal__sys_io_uring_setup(entries, p);
+        fd = internal_sys_io_uring_setup(entries, p);
         if (fd < 0) {
             if ((p->flags & IORING_SETUP_NO_MMAP) && !(ring->int_flags & INT_FLAG_APP_MEM)) {
                 __sys_munmap(ring->sq.sqes, ring->sq.sqes_sz);
@@ -2299,21 +2325,17 @@ namespace webpp::io::inline iouring_impl {
         if (!(p->flags & IORING_SETUP_NO_MMAP)) {
             ret = io_uring_queue_mmap(fd, p, ring);
             if (ret) {
-                internal__sys_close(fd);
+                internal_sys_close(fd);
                 return ret;
             }
         } else {
             io_uring_setup_ring_pointers(p, &ring->sq, &ring->cq);
         }
 
-        /*
-         * Directly map SQ slots to SQEs
-         */
-        sq_entries = ring->sq.ring_entries;
-
-        if (!(p->flags & IORING_SETUP_NO_SQARRAY)) {
+        unsigned const sq_entries = ring->sq.ring_entries;
+        if ((p->flags & IORING_SETUP_NO_SQARRAY) == 0U) {
             sq_array = ring->sq.array;
-            for (index = 0; index < sq_entries; index++) {
+            for (unsigned index = 0; index < sq_entries; index++) {
                 sq_array[index] = index;
             }
         }
@@ -2344,10 +2366,9 @@ namespace webpp::io::inline iouring_impl {
       void            *buf,
       size_t           buf_size) {
         unsigned flags = p->flags;
-        int      ret;
 
-        p->flags |= IORING_SETUP_NO_SQARRAY;
-        ret       = __io_uring_queue_init_params(entries, ring, p, buf, buf_size);
+        p->flags      |= IORING_SETUP_NO_SQARRAY;
+        int const ret  = internal_io_uring_queue_init_params(entries, ring, p, buf, buf_size);
 
         /* don't fallback if explicitly asked for NOSQARRAY */
         if (ret != -EINVAL || (flags & IORING_SETUP_NO_SQARRAY)) {
@@ -2355,7 +2376,7 @@ namespace webpp::io::inline iouring_impl {
         }
 
         p->flags = flags;
-        return __io_uring_queue_init_params(entries, ring, p, buf, buf_size);
+        return internal_io_uring_queue_init_params(entries, ring, p, buf, buf_size);
     }
 
     /*
@@ -2378,9 +2399,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline int io_uring_queue_init_params(unsigned entries, struct io_uring *ring, io_uring_params *p) {
-        int ret;
-
-        ret = io_uring_queue_init_try_nosqarr(entries, ring, p, nullptr, 0);
+        auto const ret = io_uring_queue_init_try_nosqarr(entries, ring, p, nullptr, 0);
         return ret >= 0 ? 0 : ret;
     }
 
@@ -2401,7 +2420,7 @@ namespace webpp::io::inline iouring_impl {
         struct io_uring_sq *sq = &ring->sq;
         struct io_uring_cq *cq = &ring->cq;
 
-        if (!(ring->int_flags & INT_FLAG_APP_MEM)) {
+        if ((ring->int_flags & INT_FLAG_APP_MEM) == 0) {
             __sys_munmap(sq->sqes, sq->sqes_sz);
             io_uring_unmap_rings(sq, cq);
         }
@@ -2410,11 +2429,11 @@ namespace webpp::io::inline iouring_impl {
          * Not strictly required, but frees up the slot we used now rather
          * than at process exit time.
          */
-        if (ring->int_flags & INT_FLAG_REG_RING) {
+        if ((ring->int_flags & INT_FLAG_REG_RING) != 0) {
             io_uring_unregister_ring_fd(ring);
         }
         if (ring->ring_fd != -1) {
-            internal__sys_close(ring->ring_fd);
+            internal_sys_close(ring->ring_fd);
         }
     }
 
@@ -2423,19 +2442,15 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline io_uring_probe *io_uring_get_probe_ring(struct io_uring *ring) {
-        io_uring_probe *probe;
-        size_t          len;
-        int             r;
-
-        len   = sizeof(*probe) + 256 * sizeof(struct io_uring_probe_op);
-        probe = reinterpret_cast<io_uring_probe *>(malloc(len));
-        if (!probe) {
+        size_t const len   = sizeof(io_uring_probe) + 256 * sizeof(struct io_uring_probe_op);
+        auto        *probe = reinterpret_cast<io_uring_probe *>(malloc(len));
+        if (probe == nullptr) [[unlikely]] {
             return nullptr;
         }
         memset(probe, 0, len);
 
-        r = io_uring_register_probe(ring, probe, 256);
-        if (r >= 0) {
+        auto const r = io_uring_register_probe(ring, probe, 256);
+        if (r >= 0) [[likely]] {
             return probe;
         }
 
@@ -2477,11 +2492,10 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline ssize_t io_uring_memory_size_params(unsigned entries, io_uring_params *p) {
-        unsigned sq, cq;
-        long     page_size;
-        ssize_t  ret;
+        unsigned sq = 0;
+        unsigned cq = 0;
 
-        if (!entries) {
+        if (entries == 0U) {
             return -EINVAL;
         }
         if (entries > KERN_MAX_ENTRIES) {
@@ -2491,12 +2505,12 @@ namespace webpp::io::inline iouring_impl {
             entries = KERN_MAX_ENTRIES;
         }
 
-        ret = get_sq_cq_entries(entries, p, &sq, &cq);
-        if (ret) {
+        auto const ret = get_sq_cq_entries(entries, p, &sq, &cq);
+        if (ret != 0) [[unlikely]] {
             return ret;
         }
 
-        page_size = get_page_size();
+        auto const page_size = get_page_size();
         return static_cast<ssize_t>(rings_size(p, sq, cq, page_size));
     }
 
@@ -2509,18 +2523,18 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline ssize_t io_uring_mlock_size_params(unsigned entries, io_uring_params *p) {
-        struct io_uring_params lp;
-        struct io_uring        ring;
-        ssize_t                ret;
+        io_uring_params lp;
+        io_uring        ring{};
+        ssize_t         ret = 0;
 
         memset(&lp, 0, sizeof(lp));
 
         ret = io_uring_queue_init_params(entries, &ring, &lp);
-        if (!ret) {
+        if (ret == 0) {
             io_uring_queue_exit(&ring);
         }
 
-        if (lp.features & IORING_FEAT_NATIVE_WORKERS) {
+        if ((lp.features & IORING_FEAT_NATIVE_WORKERS) != 0U) {
             return 0;
         }
 
@@ -2576,15 +2590,14 @@ namespace webpp::io::inline iouring_impl {
 #else
     static struct io_uring_buf_ring *
     br_setup(struct io_uring *ring, uint32_t nentries, int bgid, uint32_t flags, int *err) {
-        struct io_uring_buf_ring *br;
-        struct io_uring_buf_reg   reg;
-        size_t                    ring_size;
-        int                       lret;
+        struct io_uring_buf_reg reg;
+        size_t                  ring_size;
+        int                     lret;
 
         memset(&reg, 0, sizeof(reg));
         ring_size = nentries * sizeof(struct io_uring_buf);
-        br        = reinterpret_cast<io_uring_buf_ring *>(
-          __sys_mmap(NULL, ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
+        auto *br  = reinterpret_cast<io_uring_buf_ring *>(
+          __sys_mmap(nullptr, ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
         if (IS_ERR(br)) {
             *err = PTR_ERR(br);
             return nullptr;
@@ -2592,11 +2605,11 @@ namespace webpp::io::inline iouring_impl {
 
         reg.ring_addr    = reinterpret_cast<uint64_t>(br);
         reg.ring_entries = nentries;
-        reg.bgid         = static_cast<__u16>(bgid);
+        reg.bgid         = static_cast<uint16_t>(bgid);
 
         *err = 0;
         lret = io_uring_register_buf_ring(ring, &reg, flags);
-        if (lret) {
+        if (lret != 0) {
             __sys_munmap(br, ring_size);
             *err = lret;
             br   = nullptr;
@@ -2612,10 +2625,8 @@ namespace webpp::io::inline iouring_impl {
 
     static inline struct io_uring_buf_ring *
     io_uring_setup_buf_ring(struct io_uring *ring, uint32_t nentries, int bgid, uint32_t flags, int *err) {
-        io_uring_buf_ring *br;
-
-        br = br_setup(ring, nentries, bgid, flags, err);
-        if (br) {
+        auto *const br = br_setup(ring, nentries, bgid, flags, err);
+        if (br != nullptr) [[unlikely]] {
             io_uring_buf_ring_init(br);
         }
 
@@ -2623,17 +2634,15 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline int io_uring_unregister_buf_ring(struct io_uring *ring, int bgid) {
-        io_uring_buf_reg reg = {.bgid = static_cast<__u16>(bgid)};
+        io_uring_buf_reg reg = {.bgid = static_cast<uint16_t>(bgid)};
 
         return do_register(ring, IORING_UNREGISTER_PBUF_RING, &reg, 1);
     }
 
     static inline int
     io_uring_free_buf_ring(struct io_uring *ring, struct io_uring_buf_ring *br, uint32_t nentries, int bgid) {
-        int ret;
-
-        ret = io_uring_unregister_buf_ring(ring, bgid);
-        if (ret) {
+        int const ret = io_uring_unregister_buf_ring(ring, bgid);
+        if (ret != 0) [[unlikely]] {
             return ret;
         }
 
@@ -2645,7 +2654,7 @@ namespace webpp::io::inline iouring_impl {
         sqe->user_data = reinterpret_cast<uint64_t>(data);
     }
 
-    static inline void io_uring_sqe_set_data64(struct io_uring_sqe *sqe, __u64 data) noexcept {
+    static inline void io_uring_sqe_set_data64(struct io_uring_sqe *sqe, uint64_t data) noexcept {
         sqe->user_data = data;
     }
 
@@ -2653,30 +2662,30 @@ namespace webpp::io::inline iouring_impl {
         return reinterpret_cast<void *>(static_cast<uintptr_t>(cqe->user_data));
     }
 
-    static inline __u64 io_uring_cqe_get_data64(const struct io_uring_cqe *cqe) {
+    static inline uint64_t io_uring_cqe_get_data64(const struct io_uring_cqe *cqe) {
         return cqe->user_data;
     }
 
     static inline int
     io_uring_wait_cqe_nr(struct io_uring *ring, struct io_uring_cqe **cqe_ptr, uint32_t wait_nr) noexcept {
-        return internal__io_uring_get_cqe(ring, cqe_ptr, 0, wait_nr, nullptr);
+        return internal_io_uring_get_cqe(ring, cqe_ptr, 0, wait_nr, nullptr);
     }
 
     static inline int io_uring_wait_cqe(struct io_uring *ring, struct io_uring_cqe **cqe_ptr) noexcept {
-        if (!internal__io_uring_peek_cqe(ring, cqe_ptr, nullptr) && *cqe_ptr) {
+        if ((internal_io_uring_peek_cqe(ring, cqe_ptr, nullptr) == 0) && (*cqe_ptr != nullptr)) {
             return 0;
         }
         return io_uring_wait_cqe_nr(ring, cqe_ptr, 1);
     }
 
     static inline void io_uring_cqe_seen(struct io_uring *ring, struct io_uring_cqe *cqe) noexcept {
-        if (cqe) {
+        if (cqe != nullptr) {
             io_uring_cq_advance(ring, io_uring_cqe_nr(cqe));
         }
     }
 
     static inline int io_uring_peek_cqe(struct io_uring *ring, struct io_uring_cqe **cqe_ptr) noexcept {
-        if (!internal__io_uring_peek_cqe(ring, cqe_ptr, nullptr) && *cqe_ptr) {
+        if ((internal_io_uring_peek_cqe(ring, cqe_ptr, nullptr) == 0) && (*cqe_ptr != nullptr)) {
             return 0;
         }
         return io_uring_wait_cqe_nr(ring, cqe_ptr, 0);
@@ -2701,7 +2710,7 @@ namespace webpp::io::inline iouring_impl {
             return false;
         }
         *cqe = &iter->cqes[(iter->head++ & iter->mask) << iter->shift];
-        if ((*cqe)->flags & (1U << 15)) {
+        if ((*cqe)->flags & (1U << 15U)) {
             iter->head++;
         }
         return true;
