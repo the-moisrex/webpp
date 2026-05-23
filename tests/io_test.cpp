@@ -12,6 +12,21 @@
 using namespace webpp;
 using namespace webpp::io;
 
+
+// Verify concept compliance at compile time
+static_assert(OperationHandle<io_uring_operation_handle>);
+static_assert(CompletionToken<io_uring_completion_token>);
+static_assert(IOBackend<io_uring_backend>);
+static_assert(ReadableBackend<io_uring_backend>);
+static_assert(WritableBackend<io_uring_backend>);
+static_assert(AcceptableBackend<io_uring_backend>);
+static_assert(ConnectableBackend<io_uring_backend>);
+static_assert(ClosableBackend<io_uring_backend>);
+static_assert(FullIOBackend<io_uring_backend>);
+
+// static_assert(ChainableBackend<io_uring_backend>);
+
+
 TEST(IO, FileOptionsTest) {
     file_options const options{"r+"};
     EXPECT_EQ(options, "r+");
@@ -218,19 +233,21 @@ TEST(IOUringOperationHandleTest, ValidHandle) {
     EXPECT_TRUE(handle.is_valid());
     EXPECT_FALSE(handle.is_cancelled());
 
+    handle.cancel(); // or handle = {}; to move-assign empty handle
     io_uring_queue_exit(&ring);
 }
 
 TEST(IOUringOperationHandleTest, MoveConstructor) {
     struct io_uring ring;
     io_uring_queue_init(8, &ring, 0);
+    {
+        io_uring_operation_handle handle1{&ring, nullptr};
+        EXPECT_TRUE(handle1.is_valid());
 
-    io_uring_operation_handle handle1{&ring, nullptr};
-    EXPECT_TRUE(handle1.is_valid());
-
-    io_uring_operation_handle handle2{std::move(handle1)};
-    EXPECT_FALSE(handle1.is_valid());
-    EXPECT_TRUE(handle2.is_valid());
+        io_uring_operation_handle handle2{std::move(handle1)};
+        EXPECT_FALSE(handle1.is_valid());
+        EXPECT_TRUE(handle2.is_valid());
+    }
 
     io_uring_queue_exit(&ring);
 }
@@ -239,12 +256,14 @@ TEST(IOUringOperationHandleTest, MoveAssignment) {
     struct io_uring ring;
     io_uring_queue_init(8, &ring, 0);
 
-    io_uring_operation_handle handle1{&ring, nullptr};
-    io_uring_operation_handle handle2;
+    {
+        io_uring_operation_handle handle1{&ring, nullptr};
+        io_uring_operation_handle handle2;
 
-    handle2 = std::move(handle1);
-    EXPECT_FALSE(handle1.is_valid());
-    EXPECT_TRUE(handle2.is_valid());
+        handle2 = std::move(handle1);
+        EXPECT_FALSE(handle1.is_valid());
+        EXPECT_TRUE(handle2.is_valid());
+    }
 
     io_uring_queue_exit(&ring);
 }
@@ -326,9 +345,11 @@ TEST_F(IOUringBackendTest, PrepareReadOperation) {
     std::array<char, 64> buffer{};
     void*                user_data = reinterpret_cast<void*>(0x1111);
 
-    auto handle = prep_read(backend, fd, std::span{buffer}, user_data);
-    EXPECT_TRUE(handle.is_valid());
-    EXPECT_EQ(backend.pending_count(), 1);
+    {
+        auto handle = prep_read(backend, fd, std::span{buffer}, user_data);
+        EXPECT_TRUE(handle.is_valid());
+        EXPECT_EQ(backend.pending_count(), 1);
+    }
 
     close_fd(fd);
 }

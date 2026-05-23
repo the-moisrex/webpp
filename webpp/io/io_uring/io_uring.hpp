@@ -35,6 +35,7 @@ namespace webpp::io {
 
         constexpr io_uring_operation_handle& operator=(io_uring_operation_handle&& other) noexcept {
             if (this != &other) {
+                cancel();
                 ring            = other.ring;
                 user_data       = other.user_data;
                 cancelled       = other.cancelled;
@@ -45,7 +46,9 @@ namespace webpp::io {
             return *this;
         }
 
-        ~io_uring_operation_handle() noexcept = default;
+        ~io_uring_operation_handle() noexcept {
+            cancel();
+        }
 
         void cancel() noexcept {
             if (!is_valid() || cancelled) {
@@ -55,8 +58,7 @@ namespace webpp::io {
             if (sqe != nullptr) {
                 io_uring_prep_cancel(sqe, user_data, 0);
                 io_uring_sqe_set_data(sqe, nullptr);
-                // Submit immediately to ensure cancellation is processed
-                static_cast<void>(io_uring_submit(ring));
+                io_uring_submit(ring);
             }
             cancelled = true;
         }
@@ -95,8 +97,7 @@ namespace webpp::io {
      * io_uring-based async I/O backend.
      * Provides zero-copy, kernel-level async I/O with batching support.
      */
-    class io_uring_backend {
-      public:
+    struct [[nodiscard]] io_uring_backend {
         using operation_handle = io_uring_operation_handle;
         using completion_token = io_uring_completion_token;
 
@@ -139,7 +140,8 @@ namespace webpp::io {
           : ring{other.ring},
             valid{other.valid},
             pending{other.pending} {
-            other.valid   = false;
+            other.valid = false;
+            std::memset(&other.ring, 0, sizeof(other.ring));
             other.pending = 0;
         }
 
@@ -148,9 +150,10 @@ namespace webpp::io {
                 if (valid) {
                     io_uring_queue_exit(&ring);
                 }
-                ring          = other.ring;
-                valid         = other.valid;
-                pending       = other.pending;
+                ring    = other.ring;
+                valid   = other.valid;
+                pending = other.pending;
+                std::memset(&other.ring, 0, sizeof(other.ring));
                 other.valid   = false;
                 other.pending = 0;
             }
@@ -181,15 +184,15 @@ namespace webpp::io {
         }
 
         io_result submit() noexcept {
-            if (!valid || pending == 0) {
-                return io_result{0};
+            if (!valid || pending == 0) [[unlikely]] {
+                return valid ? io_result{0} : io_result::invalid(EINVAL);
             }
             int const ret = io_uring_submit(&ring);
             return io_result{ret};
         }
 
         io_result submit_and_wait(stl::size_t wait_nr) noexcept {
-            if (!valid) {
+            if (!valid) [[unlikely]] {
                 return io_result::invalid(EINVAL);
             }
             int const ret = io_uring_submit_and_wait(&ring, static_cast<unsigned>(wait_nr));
@@ -201,7 +204,7 @@ namespace webpp::io {
         }
 
         completion_token wait_one() noexcept {
-            if (!valid) {
+            if (!valid) [[unlikely]] {
                 return completion_token{io_result::invalid(EINVAL)};
             }
 
@@ -273,7 +276,7 @@ namespace webpp::io {
 
         // Chainable operations support
         void link_next([[maybe_unused]] operation_handle handle) noexcept {
-            if (!valid || ring.sq.sqe_tail == 0) {
+            if (!valid || pending == 0) {
                 return;
             }
             // Set IOSQE_IO_LINK on the last submitted SQE
@@ -282,19 +285,20 @@ namespace webpp::io {
             sqe->flags                    |= IOSQE_IO_LINK;
         }
 
-        void set_flags([[maybe_unused]] operation_handle handle, stl::uint32_t flags) noexcept {
-            if (!valid || ring.sq.sqe_tail == 0) {
+        void set_flags([[maybe_unused]] operation_handle handle, stl::uint8_t flags) noexcept {
+            if (!valid || pending == 0) {
                 return;
             }
-            unsigned const       last_idx = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
-            struct io_uring_sqe* sqe      = &ring.sq.sqes[last_idx];
-            sqe->flags                    = static_cast<stl::uint8_t>(flags);
+            unsigned const       last_idx  = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
+            struct io_uring_sqe* sqe       = &ring.sq.sqes[last_idx];
+            sqe->flags                    |= static_cast<stl::uint8_t>(flags);
         }
 
         // --- ADL-discoverable prep functions ---
 
         friend operation_handle
         prep_read(io_uring_backend& io, io_handle fd, stl::span<char> buf, void* user_data) noexcept {
+            // offset -1 means use current file position
             return prep_read_at(io, fd, buf, static_cast<stl::uint64_t>(-1), user_data);
         }
 
@@ -304,8 +308,11 @@ namespace webpp::io {
           stl::span<char>   buf,
           stl::uint64_t     offset,
           void*             user_data) noexcept {
+            if (buf.size() >= UINT_MAX) [[unlikely]] {
+                return {};
+            }
             struct io_uring_sqe* sqe = io.get_sqe();
-            if (sqe == nullptr) {
+            if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_read(sqe, fd.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
@@ -325,7 +332,7 @@ namespace webpp::io {
           stl::uint64_t         offset,
           void*                 user_data) noexcept {
             struct io_uring_sqe* sqe = io.get_sqe();
-            if (sqe == nullptr) {
+            if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_write(sqe, fd.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
@@ -335,7 +342,7 @@ namespace webpp::io {
 
         friend operation_handle prep_accept(io_uring_backend& io, io_handle fd, void* user_data) noexcept {
             struct io_uring_sqe* sqe = io.get_sqe();
-            if (sqe == nullptr) {
+            if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_accept(sqe, fd.native_handle(), nullptr, nullptr, 0);
@@ -350,7 +357,7 @@ namespace webpp::io {
           stl::size_t       addr_len,
           void*             user_data) noexcept {
             struct io_uring_sqe* sqe = io.get_sqe();
-            if (sqe == nullptr) {
+            if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_connect(
@@ -364,7 +371,7 @@ namespace webpp::io {
 
         friend operation_handle prep_close(io_uring_backend& io, io_handle fd, void* user_data) noexcept {
             struct io_uring_sqe* sqe = io.get_sqe();
-            if (sqe == nullptr) {
+            if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_close(sqe, fd.native_handle());
@@ -372,18 +379,6 @@ namespace webpp::io {
             return {&io.ring, user_data};
         }
     };
-
-    // Verify concept compliance at compile time
-    static_assert(OperationHandle<io_uring_operation_handle>);
-    static_assert(CompletionToken<io_uring_completion_token>);
-    static_assert(IOBackend<io_uring_backend>);
-    static_assert(ReadableBackend<io_uring_backend>);
-    static_assert(WritableBackend<io_uring_backend>);
-    static_assert(AcceptableBackend<io_uring_backend>);
-    static_assert(ConnectableBackend<io_uring_backend>);
-    static_assert(ClosableBackend<io_uring_backend>);
-    static_assert(FullIOBackend<io_uring_backend>);
-    // static_assert(ChainableBackend<io_uring_backend>);
 
 } // namespace webpp::io
 
