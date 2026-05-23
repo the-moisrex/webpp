@@ -39,8 +39,12 @@ namespace webpp::io {
 
         explicit(false) constexpr io_result(int const n, raw_error_tag) noexcept : val{n} {}
 
-        static io_result invalid(int const inp_val = errno) noexcept {
+        static constexpr io_result invalid(int const inp_val) noexcept {
             return io_result{inp_val > 0 ? -inp_val : inp_val, raw_error_tag{}};
+        }
+
+        static io_result invalid() noexcept {
+            return io_result{errno > 0 ? -errno : errno, raw_error_tag{}};
         }
 
         void set_error(int const inp_val = errno) noexcept {

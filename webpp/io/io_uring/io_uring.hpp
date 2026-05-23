@@ -5,6 +5,7 @@
 #include "./io_uring_impl.hpp"
 
 #include <cstdint>
+#include <cstring>
 
 namespace webpp::io {
 
@@ -13,22 +14,26 @@ namespace webpp::io {
      * Tracks cancellation state and provides safe handle semantics.
      */
     struct io_uring_operation_handle {
-        struct io_uring* ring      = nullptr;
+      private:
+        struct io_uring* ring_ptr  = nullptr;
         void*            user_data = nullptr;
         bool             cancelled = false;
 
+      public:
         constexpr io_uring_operation_handle() noexcept = default;
 
-        constexpr io_uring_operation_handle(struct io_uring* r, void* data) noexcept : ring{r}, user_data{data} {}
+        constexpr io_uring_operation_handle(struct io_uring* ring_handle, void* data) noexcept
+          : ring_ptr{ring_handle},
+            user_data{data} {}
 
         io_uring_operation_handle(io_uring_operation_handle const&)            = delete;
         io_uring_operation_handle& operator=(io_uring_operation_handle const&) = delete;
 
         constexpr io_uring_operation_handle(io_uring_operation_handle&& other) noexcept
-          : ring{other.ring},
+          : ring_ptr{other.ring_ptr},
             user_data{other.user_data},
             cancelled{other.cancelled} {
-            other.ring      = nullptr;
+            other.ring_ptr  = nullptr;
             other.user_data = nullptr;
             other.cancelled = false;
         }
@@ -36,10 +41,10 @@ namespace webpp::io {
         constexpr io_uring_operation_handle& operator=(io_uring_operation_handle&& other) noexcept {
             if (this != &other) {
                 cancel();
-                ring            = other.ring;
+                ring_ptr        = other.ring_ptr;
                 user_data       = other.user_data;
                 cancelled       = other.cancelled;
-                other.ring      = nullptr;
+                other.ring_ptr  = nullptr;
                 other.user_data = nullptr;
                 other.cancelled = false;
             }
@@ -51,20 +56,20 @@ namespace webpp::io {
         }
 
         void cancel() noexcept {
-            if (!is_valid() || cancelled) {
+            if (!is_valid() || cancelled) [[unlikely]] {
                 return;
             }
-            struct io_uring_sqe* sqe = io_uring_get_sqe(ring);
+            struct io_uring_sqe* const sqe = io_uring_get_sqe(ring_ptr);
             if (sqe != nullptr) {
                 io_uring_prep_cancel(sqe, user_data, 0);
                 io_uring_sqe_set_data(sqe, nullptr);
-                io_uring_submit(ring);
+                io_uring_submit(ring_ptr);
             }
             cancelled = true;
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return ring != nullptr;
+            return ring_ptr != nullptr;
         }
 
         [[nodiscard]] constexpr bool is_cancelled() const noexcept {
@@ -76,9 +81,18 @@ namespace webpp::io {
      * Completion token containing operation result and metadata.
      */
     struct io_uring_completion_token {
-        io_result   res{};
+      private:
+        io_result   res;
         void*       user_data         = nullptr;
         stl::size_t bytes_transferred = 0;
+
+      public:
+        constexpr io_uring_completion_token() noexcept = default;
+
+        constexpr io_uring_completion_token(io_result r, void* data = nullptr, stl::size_t bytes = 0) noexcept
+          : res(r),
+            user_data(data),
+            bytes_transferred(bytes) {}
 
         [[nodiscard]] constexpr io_result result() const noexcept {
             return res;
@@ -101,14 +115,16 @@ namespace webpp::io {
         using operation_handle = io_uring_operation_handle;
         using completion_token = io_uring_completion_token;
 
+        static constexpr unsigned default_entries = 256;
+
       private:
-        struct io_uring ring{};
-        bool            valid   = false;
-        stl::size_t     pending = 0;
+        io_uring    ring{};
+        io_result   status  = io_result::invalid(EINVAL);
+        stl::size_t pending = 0;
 
         // Get SQE and track pending operations
         [[nodiscard]] struct io_uring_sqe* get_sqe() noexcept {
-            struct io_uring_sqe* sqe = io_uring_get_sqe(&ring);
+            struct io_uring_sqe* const sqe = io_uring_get_sqe(&ring);
             if (sqe != nullptr) {
                 ++pending;
             }
@@ -123,7 +139,7 @@ namespace webpp::io {
         }
 
         // Convert CQE to completion token
-        [[nodiscard]] static completion_token cqe_to_token(struct io_uring_cqe const* cqe) noexcept {
+        [[nodiscard]] static completion_token cqe_to_token(io_uring_cqe const* cqe) noexcept {
             int const res_val = cqe->res;
             return completion_token{io_result{res_val},
                                     io_uring_cqe_get_data(cqe),
@@ -138,45 +154,43 @@ namespace webpp::io {
 
         io_uring_backend(io_uring_backend&& other) noexcept
           : ring{other.ring},
-            valid{other.valid},
+            status{other.status},
             pending{other.pending} {
-            other.valid = false;
+            other.status = io_result::invalid(EINVAL);
             std::memset(&other.ring, 0, sizeof(other.ring));
             other.pending = 0;
         }
 
         io_uring_backend& operator=(io_uring_backend&& other) noexcept {
             if (this != &other) {
-                if (valid) {
+                if (status) {
                     io_uring_queue_exit(&ring);
                 }
                 ring    = other.ring;
-                valid   = other.valid;
+                status  = other.status;
                 pending = other.pending;
                 std::memset(&other.ring, 0, sizeof(other.ring));
-                other.valid   = false;
+                other.status  = io_result::invalid(EINVAL);
                 other.pending = 0;
             }
             return *this;
         }
 
         ~io_uring_backend() noexcept {
-            if (valid) {
+            if (status) {
                 io_uring_queue_exit(&ring);
             }
         }
 
-        [[nodiscard]] static io_uring_backend create(unsigned entries = 256, stl::uint32_t flags = 0) {
+        [[nodiscard]] static io_uring_backend create(unsigned entries = default_entries, stl::uint32_t flags = 0) {
             io_uring_backend backend;
             int const        ret = io_uring_queue_init(entries, &backend.ring, flags);
-            if (ret >= 0) {
-                backend.valid = true;
-            }
+            backend.status       = io_result{ret};
             return backend;
         }
 
         [[nodiscard]] bool is_valid() const noexcept {
-            return valid;
+            return static_cast<bool>(status);
         }
 
         [[nodiscard]] stl::size_t pending_count() const noexcept {
@@ -184,16 +198,16 @@ namespace webpp::io {
         }
 
         io_result submit() noexcept {
-            if (!valid || pending == 0) [[unlikely]] {
-                return valid ? io_result{0} : io_result::invalid(EINVAL);
+            if (!status || pending == 0) [[unlikely]] {
+                return status ? io_result{0} : status;
             }
             int const ret = io_uring_submit(&ring);
             return io_result{ret};
         }
 
         io_result submit_and_wait(stl::size_t wait_nr) noexcept {
-            if (!valid) [[unlikely]] {
-                return io_result::invalid(EINVAL);
+            if (!status) [[unlikely]] {
+                return status;
             }
             int const ret = io_uring_submit_and_wait(&ring, static_cast<unsigned>(wait_nr));
             return io_result{ret};
@@ -204,12 +218,12 @@ namespace webpp::io {
         }
 
         completion_token wait_one() noexcept {
-            if (!valid) [[unlikely]] {
-                return completion_token{io_result::invalid(EINVAL)};
+            if (!status) [[unlikely]] {
+                return completion_token{status};
             }
 
-            struct io_uring_cqe* cqe = nullptr;
-            int const            ret = io_uring_wait_cqe(&ring, &cqe);
+            io_uring_cqe* cqe = nullptr;
+            int const     ret = io_uring_wait_cqe(&ring, &cqe);
 
             if (ret < 0) {
                 return completion_token{io_result{ret}};
@@ -222,14 +236,14 @@ namespace webpp::io {
         }
 
         completion_token poll_one() noexcept {
-            if (!valid) {
-                return completion_token{io_result::invalid(EINVAL)};
+            if (!status) [[unlikely]] {
+                return completion_token{status};
             }
 
-            struct io_uring_cqe* cqe = nullptr;
-            int const            ret = io_uring_peek_cqe(&ring, &cqe);
+            io_uring_cqe* cqe = nullptr;
+            int const     ret = io_uring_peek_cqe(&ring, &cqe);
 
-            if (ret < 0 || cqe == nullptr) {
+            if (ret < 0 || cqe == nullptr) [[unlikely]] {
                 return completion_token{io_result::invalid(EAGAIN)};
             }
 
@@ -240,13 +254,13 @@ namespace webpp::io {
         }
 
         stl::size_t wait_batch(stl::span<completion_token> tokens) noexcept {
-            if (!valid || tokens.empty()) {
+            if (!status || tokens.empty()) [[unlikely]] {
                 return 0;
             }
 
             // Wait for at least one completion
-            struct io_uring_cqe* cqe = nullptr;
-            if (io_uring_wait_cqe(&ring, &cqe) < 0) {
+            io_uring_cqe* cqe = nullptr;
+            if (io_uring_wait_cqe(&ring, &cqe) < 0) [[unlikely]] {
                 return 0;
             }
 
@@ -274,109 +288,110 @@ namespace webpp::io {
             return count;
         }
 
-        // Chainable operations support
+        // NOLINTNEXTLINE(readability-make-member-function-const)
         void link_next([[maybe_unused]] operation_handle handle) noexcept {
-            if (!valid || pending == 0) {
+            if (!status || pending == 0) {
                 return;
             }
-            // Set IOSQE_IO_LINK on the last submitted SQE
-            unsigned const       last_idx  = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
-            struct io_uring_sqe* sqe       = &ring.sq.sqes[last_idx];
-            sqe->flags                    |= IOSQE_IO_LINK;
+            unsigned const last_idx         = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            struct io_uring_sqe* const sqe  = &ring.sq.sqes[last_idx];
+            sqe->flags                     |= IOSQE_IO_LINK;
         }
 
+        // NOLINTNEXTLINE(readability-make-member-function-const)
         void set_flags([[maybe_unused]] operation_handle handle, stl::uint8_t flags) noexcept {
-            if (!valid || pending == 0) {
+            if (!status || pending == 0) {
                 return;
             }
-            unsigned const       last_idx  = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
-            struct io_uring_sqe* sqe       = &ring.sq.sqes[last_idx];
-            sqe->flags                    |= static_cast<stl::uint8_t>(flags);
+            unsigned const last_idx         = (ring.sq.sqe_tail - 1) & ring.sq.ring_mask;
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            struct io_uring_sqe* const sqe  = &ring.sq.sqes[last_idx];
+            sqe->flags                     |= flags;
         }
 
         // --- ADL-discoverable prep functions ---
 
         friend operation_handle
-        prep_read(io_uring_backend& io, io_handle fd, stl::span<char> buf, void* user_data) noexcept {
-            // offset -1 means use current file position
-            return prep_read_at(io, fd, buf, static_cast<stl::uint64_t>(-1), user_data);
+        prep_read(io_uring_backend& backend, io_handle handle, stl::span<char> buf, void* user_data) noexcept {
+            return prep_read_at(backend, handle, buf, static_cast<stl::uint64_t>(-1), user_data);
         }
 
         friend operation_handle prep_read_at(
-          io_uring_backend& io,
-          io_handle         fd,
+          io_uring_backend& backend,
+          io_handle         handle,
           stl::span<char>   buf,
           stl::uint64_t     offset,
           void*             user_data) noexcept {
             if (buf.size() >= UINT_MAX) [[unlikely]] {
                 return {};
             }
-            struct io_uring_sqe* sqe = io.get_sqe();
+            struct io_uring_sqe* const sqe = backend.get_sqe();
             if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
-            io_uring_prep_read(sqe, fd.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
+            io_uring_prep_read(sqe, handle.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
             io_uring_sqe_set_data(sqe, user_data);
-            return {&io.ring, user_data};
+            return {&backend.ring, user_data};
         }
 
         friend operation_handle
-        prep_write(io_uring_backend& io, io_handle fd, stl::span<char const> buf, void* user_data) noexcept {
-            return prep_write_at(io, fd, buf, static_cast<stl::uint64_t>(-1), user_data);
+        prep_write(io_uring_backend& backend, io_handle handle, stl::span<char const> buf, void* user_data) noexcept {
+            return prep_write_at(backend, handle, buf, static_cast<stl::uint64_t>(-1), user_data);
         }
 
         friend operation_handle prep_write_at(
-          io_uring_backend&     io,
-          io_handle             fd,
+          io_uring_backend&     backend,
+          io_handle             handle,
           stl::span<char const> buf,
           stl::uint64_t         offset,
           void*                 user_data) noexcept {
-            struct io_uring_sqe* sqe = io.get_sqe();
+            struct io_uring_sqe* const sqe = backend.get_sqe();
             if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
-            io_uring_prep_write(sqe, fd.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
+            io_uring_prep_write(sqe, handle.native_handle(), buf.data(), static_cast<unsigned>(buf.size()), offset);
             io_uring_sqe_set_data(sqe, user_data);
-            return {&io.ring, user_data};
+            return {&backend.ring, user_data};
         }
 
-        friend operation_handle prep_accept(io_uring_backend& io, io_handle fd, void* user_data) noexcept {
-            struct io_uring_sqe* sqe = io.get_sqe();
+        friend operation_handle prep_accept(io_uring_backend& backend, io_handle handle, void* user_data) noexcept {
+            struct io_uring_sqe* const sqe = backend.get_sqe();
             if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
-            io_uring_prep_accept(sqe, fd.native_handle(), nullptr, nullptr, 0);
+            io_uring_prep_accept(sqe, handle.native_handle(), nullptr, nullptr, 0);
             io_uring_sqe_set_data(sqe, user_data);
-            return {&io.ring, user_data};
+            return {&backend.ring, user_data};
         }
 
         friend operation_handle prep_connect(
-          io_uring_backend& io,
-          io_handle         fd,
+          io_uring_backend& backend,
+          io_handle         handle,
           void const*       addr,
           stl::size_t       addr_len,
           void*             user_data) noexcept {
-            struct io_uring_sqe* sqe = io.get_sqe();
+            struct io_uring_sqe* const sqe = backend.get_sqe();
             if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
             io_uring_prep_connect(
               sqe,
-              fd.native_handle(),
+              handle.native_handle(),
               static_cast<struct sockaddr const*>(addr),
               static_cast<socklen_t>(addr_len));
             io_uring_sqe_set_data(sqe, user_data);
-            return {&io.ring, user_data};
+            return {&backend.ring, user_data};
         }
 
-        friend operation_handle prep_close(io_uring_backend& io, io_handle fd, void* user_data) noexcept {
-            struct io_uring_sqe* sqe = io.get_sqe();
+        friend operation_handle prep_close(io_uring_backend& backend, io_handle handle, void* user_data) noexcept {
+            struct io_uring_sqe* const sqe = backend.get_sqe();
             if (sqe == nullptr) [[unlikely]] {
                 return {};
             }
-            io_uring_prep_close(sqe, fd.native_handle());
+            io_uring_prep_close(sqe, handle.native_handle());
             io_uring_sqe_set_data(sqe, user_data);
-            return {&io.ring, user_data};
+            return {&backend.ring, user_data};
         }
     };
 

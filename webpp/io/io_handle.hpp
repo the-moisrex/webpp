@@ -32,11 +32,15 @@ namespace webpp::io {
 
         explicit constexpr io_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
 
-        [[nodiscard]] static constexpr io_handle invalid(handle_type const error_number = errno) noexcept {
+        [[nodiscard]] static io_handle invalid() noexcept {
+            return io_handle{errno > 0 ? -errno : errno};
+        }
+
+        [[nodiscard]] static constexpr io_handle invalid(handle_type const error_number) noexcept {
             return io_handle{error_number > 0 ? -error_number : error_number};
         }
 
-        [[nodiscard]] static io_handle invalid(stl::error_code const err) noexcept {
+        [[nodiscard]] static constexpr io_handle invalid(stl::error_code const err) noexcept {
             return io_handle{err.value()};
         }
 
