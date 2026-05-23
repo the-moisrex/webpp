@@ -1,11 +1,13 @@
 #ifndef WEBPP_IO_URING_BACKEND_HPP
 #define WEBPP_IO_URING_BACKEND_HPP
 
-#include "../io_concepts.hpp"
+#include "../io_handle.hpp"
+#include "../io_result.hpp"
 #include "./io_uring_impl.hpp"
 
 #include <cstdint>
 #include <cstring>
+#include <span>
 
 namespace webpp::io {
 
@@ -235,7 +237,7 @@ namespace webpp::io {
             io_uring_cqe* cqe = nullptr;
             int const     ret = io_uring_wait_cqe(&ring, &cqe);
 
-            if (ret < 0) {
+            if (ret < 0) [[unlikely]] {
                 return completion_token{io_result{ret}};
             }
 
@@ -268,9 +270,8 @@ namespace webpp::io {
                 return 0;
             }
 
-            // Wait for at least one completion
             io_uring_cqe* cqe = nullptr;
-            if (io_uring_wait_cqe(&ring, &cqe) < 0) [[unlikely]] {
+            if (io_uring_wait_cqe_nr(&ring, &cqe, tokens.size()) < 0) [[unlikely]] {
                 return 0;
             }
 
@@ -279,7 +280,7 @@ namespace webpp::io {
             stl::size_t count = 0;
 
             io_uring_for_each_cqe(&ring, head, cqe) {
-                if (count >= tokens.size()) {
+                if (count >= tokens.size()) [[unlikely]] {
                     break;
                 }
                 tokens[count] = cqe_to_token(cqe);
@@ -324,7 +325,7 @@ namespace webpp::io {
 
         friend operation_handle
         prep_read(io_uring_backend& backend, io_handle handle, stl::span<char> buf, void* user_data) noexcept {
-            return prep_read_at(backend, handle, buf, static_cast<stl::uint64_t>(-1), user_data);
+            return prep_read_at(backend, handle, buf, 0, user_data);
         }
 
         friend operation_handle prep_read_at(
@@ -347,7 +348,7 @@ namespace webpp::io {
 
         friend operation_handle
         prep_write(io_uring_backend& backend, io_handle handle, stl::span<char const> buf, void* user_data) noexcept {
-            return prep_write_at(backend, handle, buf, static_cast<stl::uint64_t>(-1), user_data);
+            return prep_write_at(backend, handle, buf, 0, user_data);
         }
 
         friend operation_handle prep_write_at(

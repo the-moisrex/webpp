@@ -1,7 +1,8 @@
 // Created by moisrex on 6/2/23.
 #include "../webpp/io/file_options.hpp"
+#include "../webpp/io/io_concepts.hpp"
 #include "../webpp/io/io_uring/io_uring.hpp"
-#include "common/test.hpp"
+#include "./common/test.hpp"
 
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -411,7 +412,7 @@ TEST_F(IOUringBackendTest, ReadFromInvalidFd) {
     auto handle = prep_read(backend, invalid_fd, std::span{buffer}, nullptr);
     EXPECT_TRUE(handle.is_valid());
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     auto token = backend.wait_one();
     EXPECT_TRUE(token.result().is_error());
 }
@@ -423,7 +424,7 @@ TEST_F(IOUringBackendTest, WriteToInvalidFd) {
     auto handle = prep_write(backend, invalid_fd, std::span<char const>{buffer}, nullptr);
     EXPECT_TRUE(handle.is_valid());
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     auto token = backend.wait_one();
     EXPECT_TRUE(token.result().is_error());
 }
@@ -446,14 +447,16 @@ TEST_F(IOUringBackendTest, MultipleOperationsBatch) {
 
     EXPECT_EQ(backend.pending_count(), 3);
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
 
-    std::array<io_uring_completion_token, 3> tokens;
-    stl::size_t                              count = backend.wait_batch(std::span{tokens});
+    std::array<io_uring_completion_token, 3> tokens{};
+    stl::size_t                              count = backend.wait_batch(tokens);
     EXPECT_EQ(count, 3);
 
+    int index = 0;
     for (auto const& token : tokens) {
-        EXPECT_TRUE(token.result().is_ok());
+        EXPECT_TRUE(token.result().is_ok()) << "Index: " << index << "\nResult: " << token.result().to_string();
+        ++index;
     }
 
     close_fd(fd);
@@ -511,7 +514,7 @@ TEST_F(IOUringBackendTest, SocketPairCommunication) {
     std::memcpy(write_buffer.data(), message, std::strlen(message));
 
     prep_write(backend, fd1, std::span<char const>{write_buffer}, reinterpret_cast<void*>(1));
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
 
     auto write_token = backend.wait_one();
     EXPECT_TRUE(write_token.result().is_ok());
@@ -519,7 +522,7 @@ TEST_F(IOUringBackendTest, SocketPairCommunication) {
     // Read from fd2
     std::array<char, 32> read_buffer{};
     prep_read(backend, fd2, std::span{read_buffer}, reinterpret_cast<void*>(2));
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
 
     auto read_token = backend.wait_one();
     EXPECT_TRUE(read_token.result().is_ok());
@@ -541,7 +544,7 @@ TEST_F(IOUringBackendTest, PrepareCloseOperation) {
     EXPECT_TRUE(handle.is_valid());
     EXPECT_EQ(backend.pending_count(), 1);
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     auto token = backend.wait_one();
     EXPECT_TRUE(token.result().is_ok());
 }
@@ -564,7 +567,7 @@ TEST_F(IOUringBackendTest, PollOneWithCompletion) {
     std::memcpy(buffer.data(), "poll test", 9);
 
     prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
 
     // Give it a moment to complete
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -613,16 +616,19 @@ TEST_F(IOUringBackendTest, UserDataPreservation) {
 
     std::array<char, 32> buffer{};
     prep_write(backend, fd, std::span<char const>{buffer}, user_data);
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
 
     auto token = backend.wait_one();
     ASSERT_TRUE(token.result().is_ok());
-    EXPECT_EQ(token.data(), user_data);
+    if (token.result()) {
+        EXPECT_EQ(token.data(), user_data);
 
-    auto* retrieved_ctx = static_cast<UserContext*>(token.data());
-    EXPECT_EQ(retrieved_ctx->id, 42);
-    EXPECT_STREQ(retrieved_ctx->name, "test_context");
-
+        if (token.data() != nullptr) {
+            auto* retrieved_ctx = static_cast<UserContext*>(token.data());
+            EXPECT_EQ(retrieved_ctx->id, 42);
+            EXPECT_STREQ(retrieved_ctx->name, "test_context");
+        }
+    }
     close_fd(fd);
 }
 
@@ -638,7 +644,7 @@ TEST_F(IOUringBackendTest, EmptyBufferWrite) {
     auto                  handle = prep_write(backend, fd, empty_buffer, nullptr);
     EXPECT_TRUE(handle.is_valid());
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     auto token = backend.wait_one();
     EXPECT_TRUE(token.result().is_ok());
     EXPECT_EQ(token.size(), 0);
@@ -654,7 +660,7 @@ TEST_F(IOUringBackendTest, LargeBufferOperation) {
     auto              handle = prep_write(backend, fd, std::span<char const>{large_buffer}, nullptr);
     EXPECT_TRUE(handle.is_valid());
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     auto token = backend.wait_one();
     EXPECT_TRUE(token.result().is_ok());
     EXPECT_EQ(token.size(), large_buffer.size());
@@ -681,7 +687,7 @@ TEST_F(IOUringBackendTest, PendingCountTracking) {
     prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
     EXPECT_EQ(backend.pending_count(), 2);
 
-    backend.submit();
+    EXPECT_TRUE(backend.submit());
     backend.wait_one();
     EXPECT_EQ(backend.pending_count(), 1);
 
