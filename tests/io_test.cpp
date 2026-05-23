@@ -302,7 +302,7 @@ TEST(IOUringCompletionTokenTest, WithError) {
 // ============================================================================
 
 TEST_F(IOUringBackendTest, CreateBackend) {
-    EXPECT_TRUE(backend.is_valid());
+    EXPECT_TRUE(backend.is_valid()) << backend.init_status().to_string();
     EXPECT_EQ(backend.pending_count(), 0);
 }
 
@@ -616,7 +616,7 @@ TEST_F(IOUringBackendTest, UserDataPreservation) {
     backend.submit();
 
     auto token = backend.wait_one();
-    EXPECT_TRUE(token.result().is_ok());
+    ASSERT_TRUE(token.result().is_ok());
     EXPECT_EQ(token.data(), user_data);
 
     auto* retrieved_ctx = static_cast<UserContext*>(token.data());

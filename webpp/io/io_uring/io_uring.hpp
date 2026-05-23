@@ -203,6 +203,10 @@ namespace webpp::io {
             return pending;
         }
 
+        io_result init_status() const noexcept {
+            return status;
+        }
+
         io_result submit() noexcept {
             if (!status || pending == 0) [[unlikely]] {
                 return status ? io_result{0} : status;

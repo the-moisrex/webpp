@@ -310,17 +310,19 @@ namespace testing {
     // NOLINTEND(*)
 
 // NOLINTBEGIN(*)
-#define TEST_F(test_suite_name, test_name)                                                                             \
-    struct test_suite_name##test_name : test_suite_name {                                                              \
-        void body();                                                                                                   \
-    };                                                                                                                 \
-    static constinit test_suite_name##test_name test_suite_name##test_name##Instance;                                  \
-    static void                                 test_suite_name##test_name##Func() {                                   \
-        test_suite_name##test_name##Instance.body();                                   \
-    }                                                                                                                  \
-    static const int test_suite_name##test_name##Detail =                                                              \
-      (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name##Func), \
-       0);                                                                                                             \
+#define TEST_F(test_suite_name, test_name)                                                                               \
+    struct test_suite_name##test_name : test_suite_name {                                                                \
+        void body();                                                                                                     \
+    };                                                                                                                   \
+    static constinit test_suite_name##test_name test_suite_name##test_name##Instance;                                    \
+    static void                                 test_suite_name##test_name##Func() {                                     \
+        dynamic_cast<::testing::Test&>(test_suite_name##test_name##Instance).SetUp();    \
+        test_suite_name##test_name##Instance.body();                                     \
+        dynamic_cast<::testing::Test&>(test_suite_name##test_name##Instance).TearDown(); \
+    }                                                                                                                    \
+    static const int test_suite_name##test_name##Detail =                                                                \
+      (::testing::registry::instance().register_test(#test_suite_name, #test_name, &test_suite_name##test_name##Func),   \
+       0);                                                                                                               \
     void test_suite_name##test_name::body()
 
     // NOLINTEND(*)
