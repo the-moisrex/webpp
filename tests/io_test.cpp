@@ -24,9 +24,7 @@ static_assert(AcceptableBackend<io_uring_backend>);
 static_assert(ConnectableBackend<io_uring_backend>);
 static_assert(ClosableBackend<io_uring_backend>);
 static_assert(FullIOBackend<io_uring_backend>);
-
-// static_assert(ChainableBackend<io_uring_backend>);
-
+static_assert(ChainableBackend<io_uring_backend>);
 
 TEST(IO, FileOptionsTest) {
     file_options const options{"r+"};

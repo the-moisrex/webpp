@@ -298,7 +298,7 @@ namespace webpp::io {
         }
 
         // NOLINTNEXTLINE(readability-make-member-function-const)
-        void link_next([[maybe_unused]] operation_handle handle) noexcept {
+        void link_next([[maybe_unused]] operation_handle const& handle) noexcept {
             if (!status || pending == 0) {
                 return;
             }
@@ -309,7 +309,7 @@ namespace webpp::io {
         }
 
         // NOLINTNEXTLINE(readability-make-member-function-const)
-        void set_flags([[maybe_unused]] operation_handle handle, stl::uint8_t flags) noexcept {
+        void set_flags([[maybe_unused]] operation_handle const& handle, stl::uint8_t flags) noexcept {
             if (!status || pending == 0) {
                 return;
             }

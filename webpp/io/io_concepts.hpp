@@ -191,12 +191,15 @@ namespace webpp::io {
      * Operation chaining: link operations so the next starts only after the previous completes.
      * Enables dependency chains (e.g., read header → parse → read body) without
      * round-tripping through userspace. set_flags() controls behavior (e.g., IOSQE_IO_LINK).
+     *
+     * Todo: I'm not satisfied by this API. We need a cleaner one for chainable ops.
      */
     template <typename Backend>
-    concept ChainableBackend = IOBackend<Backend> && requires(Backend& io, typename Backend::operation_handle handle) {
-        { io.link_next(handle) } noexcept -> std::same_as<void>;
-        { io.set_flags(handle, stl::uint32_t{}) } noexcept -> std::same_as<void>;
-    };
+    concept ChainableBackend =
+      IOBackend<Backend> && requires(Backend& io, typename Backend::operation_handle const& handle) {
+          { io.link_next(handle) } noexcept -> std::same_as<void>;
+          { io.set_flags(handle, stl::uint8_t{}) } noexcept -> std::same_as<void>;
+      };
 
     /**
      * Convenience concept: backend supports all fundamental operations
