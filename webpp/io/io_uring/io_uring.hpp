@@ -89,8 +89,11 @@ namespace webpp::io {
       public:
         constexpr io_uring_completion_token() noexcept = default;
 
-        constexpr io_uring_completion_token(io_result r, void* data = nullptr, stl::size_t bytes = 0) noexcept
-          : res(r),
+        explicit constexpr io_uring_completion_token(
+          io_result   inp_res,
+          void*       data  = nullptr,
+          stl::size_t bytes = 0) noexcept
+          : res(inp_res),
             user_data(data),
             bytes_transferred(bytes) {}
 
@@ -124,6 +127,9 @@ namespace webpp::io {
 
         // Get SQE and track pending operations
         [[nodiscard]] struct io_uring_sqe* get_sqe() noexcept {
+            if (!status) [[unlikely]] { // add this guard
+                return nullptr;
+            }
             struct io_uring_sqe* const sqe = io_uring_get_sqe(&ring);
             if (sqe != nullptr) {
                 ++pending;
