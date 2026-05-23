@@ -53,9 +53,7 @@ namespace webpp::io {
             return *this;
         }
 
-        ~io_uring_operation_handle() noexcept {
-            cancel();
-        }
+        ~io_uring_operation_handle() noexcept = default;
 
         void cancel() noexcept {
             if (!is_valid() || cancelled) [[unlikely]] {
@@ -271,7 +269,7 @@ namespace webpp::io {
             }
 
             io_uring_cqe* cqe = nullptr;
-            if (io_uring_wait_cqe_nr(&ring, &cqe, tokens.size()) < 0) [[unlikely]] {
+            if (io_uring_wait_cqe_nr(&ring, &cqe, static_cast<unsigned>(tokens.size())) < 0) [[unlikely]] {
                 return 0;
             }
 
