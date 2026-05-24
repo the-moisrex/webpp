@@ -739,22 +739,22 @@ TEST(IOConceptsTest, FullIOBackendConcept) {
 // Chaining Operations Tests
 // ============================================================================
 
-// TEST_F(IOUringBackendTest, LinkNextOperation) {
-//     io_handle fd = create_temp_file();
-//     ASSERT_TRUE(fd.is_valid());
+TEST_F(IOUringBackendTest, LinkNextOperation) {
+    io_handle fd = create_temp_file();
+    ASSERT_TRUE(fd.is_valid());
 
-//     std::array<char, 32> buffer{};
-//     auto                 handle = prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
-//     backend.link_next(handle);
-//     close_fd(fd);
-// }
+    std::array<char, 32> buffer{};
+    auto                 handle = prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
+    backend.link_next(handle);
+    close_fd(fd);
+}
 
-// TEST_F(IOUringBackendTest, SetFlags) {
-//     io_handle fd = create_temp_file();
-//     ASSERT_TRUE(fd.is_valid());
+TEST_F(IOUringBackendTest, SetFlags) {
+    io_handle fd = create_temp_file();
+    ASSERT_TRUE(fd.is_valid());
 
-//     std::array<char, 32> buffer{};
-//     auto                 handle = prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
-//     backend.set_flags(handle, 0);
-//     close_fd(fd);
-// }
+    std::array<char, 32> buffer{};
+    auto                 handle = prep_write(backend, fd, std::span<char const>{buffer}, nullptr);
+    backend.set_flags(handle, 0);
+    close_fd(fd);
+}

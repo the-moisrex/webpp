@@ -113,7 +113,6 @@ set(ALL_SOURCES_SHORT
         io/io_handle.hpp
         io/io_result.hpp
         io/io_task.hpp
-        io/io_traits.hpp
         io/io_uring/io_uring.hpp
         io/io_uring/io_uring_buffers.hpp
         io/io_uring/io_uring_impl.hpp
@@ -224,11 +223,6 @@ set(ALL_SOURCES_SHORT
         cgi/cgi_headers.hpp
         cgi/cgi_request.hpp
         cgi/cgi_request_body_communicator.hpp
-
-        hub/limits.hpp
-        hub/self_hosted.hpp
-        hub/self_hosted_request.hpp
-        hub/self_hosted_session_manager.hpp
 
         fcgi/fcgi.hpp
         fcgi/fcgi_manager.hpp

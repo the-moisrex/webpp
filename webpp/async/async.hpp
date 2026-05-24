@@ -420,10 +420,10 @@ namespace webpp::async {
      * - [ ] Constexpr way to hash a function object into a known number in the thread pool
      */
     template <typename T>
-    concept ThreadPool = requires(T tp, stl::true_type lambda) {
-        tp.post(lambda);
-        tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
-        tp.dispatch(lambda);
+    concept ThreadPool = requires(T pool, stl::true_type lambda) {
+        pool.post(lambda);
+        pool.defer(lambda); // todo: fix these 3; I don't think they have the correct args
+        pool.dispatch(lambda);
     };
 
     /**

@@ -6,6 +6,7 @@
 #include "./async.hpp"
 #include "./task_chain.hpp"
 
+#include <algorithm>
 #include <vector>
 
 namespace webpp::async {

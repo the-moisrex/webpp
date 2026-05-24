@@ -65,7 +65,7 @@ namespace webpp::io {
 
       private:
         [[no_unique_address]] allocator_type allocator;
-        iovec                                iov{nullptr, 0};
+        iovec                                iov{.iov_base = nullptr, .iov_len = 0};
     };
 
     template <typename Allocator = stl::allocator<buffer<>>>
