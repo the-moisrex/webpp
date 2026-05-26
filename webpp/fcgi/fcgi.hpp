@@ -5,7 +5,6 @@
 #include "../http/request.hpp"
 #include "../std/internet.hpp"
 #include "../std/set.hpp"
-#include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "fcgi_manager.hpp"
 #include "fcgi_request.hpp"

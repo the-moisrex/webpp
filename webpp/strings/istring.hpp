@@ -8,7 +8,6 @@
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
-#include "../traits/default_traits.hpp"
 #include "splits.hpp"
 #include "to_case.hpp"
 #include "trim.hpp"

@@ -3,7 +3,6 @@
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "query_builder.hpp"
 #include "sql_concepts.hpp"
@@ -125,8 +124,7 @@ namespace webpp::sql {
             constexpr bool supports_our_sview =
               supports_string_view<decltype(istl::view_of<string_view_type>(stl::forward<T>(str)))>;
 
-            constexpr bool supports_std_sview =
-              supports_string_view<decltype(istl::view(stl::forward<T>(str)))>;
+            constexpr bool supports_std_sview = supports_string_view<decltype(istl::view(stl::forward<T>(str)))>;
 
             constexpr bool is_our_sview = istl::StringViewifiableOf<string_view_type, type>;
             constexpr bool is_std_sview = istl::StringViewifiable<type>;

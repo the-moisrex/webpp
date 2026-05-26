@@ -1,5 +1,4 @@
 #include "../../webpp/http/routes/valves.hpp"
-#include "../../webpp/traits/default_traits.hpp"
 #include "../../webpp/traits/enable_traits.hpp"
 #include "../benchmark.hpp"
 #include "path.hpp"

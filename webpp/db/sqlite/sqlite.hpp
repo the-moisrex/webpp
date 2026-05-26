@@ -2,7 +2,6 @@
 #define WEBPP_SQL_SQLITE_SQLITE_HPP
 
 #include "../../std/string_view.hpp"
-#include "../../traits/default_traits.hpp"
 #include "../../traits/traits.hpp"
 #include "sqlite_connection.hpp"
 #include "sqlite_grammar.hpp"

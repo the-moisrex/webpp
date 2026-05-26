@@ -36,8 +36,7 @@ auto page_one() {
 
 
 struct web_app {
-    enable_owner_traits<default_traits> et; // holds the allocator, logger, ...
-    dynamic_router router{et};              // Helps with the routing, could be used as an app too
+    dynamic_router router;              // Helps with the routing, could be used as an app too
     
     web_app() {
         // register your routes

@@ -10,9 +10,8 @@ namespace website {
 
     struct app {
       private:
-        enable_owner_traits<default_traits> etraits{};
-        dynamic_router                      router{etraits};
-        views::view_manager<default_traits> resources{etraits};
+        dynamic_router      router;
+        views::view_manager resources;
 
       public:
         app() {
@@ -46,7 +45,7 @@ namespace website {
             using std::chrono::high_resolution_clock;
             using std::chrono::nanoseconds;
 
-            document<default_traits> doc;
+            document doc;
 
             auto const query = ctx.request.uri();
             if (query.empty()) {

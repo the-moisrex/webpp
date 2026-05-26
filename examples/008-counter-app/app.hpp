@@ -3,8 +3,6 @@
 #ifndef WEBPP_EXAMPLE_COUNTER_APP_HPP
 #define WEBPP_EXAMPLE_COUNTER_APP_HPP
 
-#include "configs.hpp"
-
 #include <webpp/http/routes/dynamic_router.hpp>
 #include <webpp/std/utility.hpp>
 
