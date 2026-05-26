@@ -40,7 +40,7 @@ namespace webpp::io {
             return io_handle{error_number > 0 ? -error_number : error_number};
         }
 
-        [[nodiscard]] static constexpr io_handle invalid(stl::error_code const err) noexcept {
+        [[nodiscard]] static io_handle invalid(stl::error_code const err) noexcept {
             return io_handle{err.value()};
         }
 

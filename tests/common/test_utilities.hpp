@@ -694,7 +694,7 @@ namespace testing {
 
         // Safely detect tuple_size existence without instantiating tuple_size_v unguarded
         template <typename T>
-        concept HasTupleSize = requires { typename std::tuple_size<T>::type; };
+        concept HasTupleSize = requires { std::tuple_size<std::remove_cvref_t<T>>::value; };
 
         // optional-like detection
         template <typename T>
