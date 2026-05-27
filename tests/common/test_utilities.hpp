@@ -877,19 +877,20 @@ namespace testing {
         }
 #endif
 
-        else if constexpr (detail::HasTupleSize<U> && requires { std::apply([](auto&&...) {}, std::declval<U>()); })
-        {
-            // 10) tuple-like (only when std::tuple_size<T> exists and apply works)
-            std::ostringstream oss;
-            oss << "(";
-            bool first = true;
-            std::apply(
-              [&](auto const&... elems) {
-                  ((oss << (first ? "" : ", ") << serialize(elems), first = false), ...);
-              },
-              value);
-            oss << ")";
-            return type_prefix + oss.str();
+        else if constexpr (detail::HasTupleSize<U>) {
+            if constexpr (requires { std::apply([](auto&&...) {}, std::declval<U const&>()); }) {
+                // 10) tuple-like (only when std::tuple_size<T> exists and apply works)
+                std::ostringstream oss;
+                oss << "(";
+                bool first = true;
+                std::apply(
+                  [&](auto const&... elems) {
+                      ((oss << (first ? "" : ", ") << serialize(elems), first = false), ...);
+                  },
+                  value);
+                oss << ")";
+                return type_prefix + oss.str();
+            }
         } else if constexpr (detail::Iterable<U> && !detail::StringLike<U>) {
             // 11) iterable containers (but not string-like)
             std::ostringstream oss;
