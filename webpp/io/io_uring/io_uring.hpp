@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <span>
 
 namespace webpp::io {
@@ -332,7 +333,7 @@ namespace webpp::io {
           stl::span<char>   buf,
           stl::uint64_t     offset,
           void*             user_data) noexcept {
-            if (buf.size() >= UINT_MAX) [[unlikely]] {
+            if (buf.size() >= stl::numeric_limits<stl::uint32_t>::max()) [[unlikely]] {
                 return {};
             }
             struct io_uring_sqe* const sqe = backend.get_sqe();

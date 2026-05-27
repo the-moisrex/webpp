@@ -30,6 +30,7 @@
 
 
 #include <atomic>
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -1639,6 +1640,40 @@ namespace webpp::io::inline iouring_impl {
         return err;
     }
 
+
+#ifdef __alpha__
+#    ifndef __NR_io_uring_setup
+#        define __NR_io_uring_setup 535
+#    endif
+#    ifndef __NR_io_uring_enter
+#        define __NR_io_uring_enter 536
+#    endif
+#    ifndef __NR_io_uring_register
+#        define __NR_io_uring_register 537
+#    endif
+#elif defined __mips__
+#    ifndef __NR_io_uring_setup
+#        define __NR_io_uring_setup (__NR_Linux + 425)
+#    endif
+#    ifndef __NR_io_uring_enter
+#        define __NR_io_uring_enter (__NR_Linux + 426)
+#    endif
+#    ifndef __NR_io_uring_register
+#        define __NR_io_uring_register (__NR_Linux + 427)
+#    endif
+#else /* !__alpha__ and !__mips__ */
+#    ifndef __NR_io_uring_setup
+#        define __NR_io_uring_setup 425
+#    endif
+#    ifndef __NR_io_uring_enter
+#        define __NR_io_uring_enter 426
+#    endif
+#    ifndef __NR_io_uring_register
+#        define __NR_io_uring_register 427
+#    endif
+#endif
+
+
     static inline int internal_sys_io_uring_enter2(
       uint32_t fd,
       uint32_t to_submit,
@@ -1756,12 +1791,12 @@ namespace webpp::io::inline iouring_impl {
       int                   reg_index) noexcept {
         uint64_t const  offset = static_cast<uint64_t>(reg_index) * sizeof(struct io_uring_reg_wait);
         struct get_data data   = {
-            .submit    = internal_io_uring_flush_sq(ring),
-            .wait_nr   = wait_nr,
-            .get_flags = (1U << 3U) | (1U << 6U),
-            .sz        = sizeof(struct io_uring_reg_wait),
-            .has_ts    = 1,
-            .arg       = reinterpret_cast<void *>(static_cast<uintptr_t>(offset))};
+          .submit    = internal_io_uring_flush_sq(ring),
+          .wait_nr   = wait_nr,
+          .get_flags = (1U << 3U) | (1U << 6U),
+          .sz        = sizeof(struct io_uring_reg_wait),
+          .has_ts    = 1,
+          .arg       = reinterpret_cast<void *>(static_cast<uintptr_t>(offset))};
         if ((ring->features & (1U << 8U)) == 0U) {
             return -22;
         }
