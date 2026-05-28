@@ -1571,8 +1571,7 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline unsigned io_uring_cqe_nr(const struct io_uring_cqe *cqe) noexcept {
-        auto const shift = static_cast<uint32_t const>(
-          static_cast<unsigned int>(static_cast<unsigned int>(((cqe->flags & IORING_CQE_F_32))) == 0U) == 0U);
+        auto const shift = static_cast<uint32_t>((cqe->flags & IORING_CQE_F_32) != 0U);
 
         return 1U << shift;
     }
@@ -1914,10 +1913,11 @@ namespace webpp::io::inline iouring_impl {
                   .arg       = &arg};
                 return _io_uring_get_cqe(ring, cqe_ptr, &data);
             }
-            to_submit = static_cast<unsigned>(internal_io_uring_submit_timeout(ring, wait_nr, ts));
-            if (to_submit < 0) {
-                return static_cast<int>(to_submit);
+            auto const submit_result = internal_io_uring_submit_timeout(ring, wait_nr, ts);
+            if (submit_result < 0) {
+                return submit_result;
             }
+            to_submit = static_cast<unsigned>(submit_result);
         } else {
             to_submit = internal_io_uring_flush_sq(ring);
         }
@@ -2449,9 +2449,8 @@ namespace webpp::io::inline iouring_impl {
      * contains the necessary information to read/write to the rings.
      */
     static inline int io_uring_queue_init(unsigned entries, struct io_uring *ring, unsigned flags) noexcept {
-        struct io_uring_params p;
+        struct io_uring_params p{};
 
-        memset(&p, 0, sizeof(p));
         p.flags = flags;
 
         return io_uring_queue_init_params(entries, ring, &p);
@@ -2563,11 +2562,9 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline ssize_t io_uring_mlock_size_params(unsigned entries, io_uring_params *p) {
-        io_uring_params lp;
+        io_uring_params lp{};
         io_uring        ring{};
         ssize_t         ret = 0;
-
-        memset(&lp, 0, sizeof(lp));
 
         ret = io_uring_queue_init_params(entries, &ring, &lp);
         if (ret == 0) {
@@ -2582,15 +2579,14 @@ namespace webpp::io::inline iouring_impl {
     }
 
     static inline ssize_t io_uring_mlock_size(unsigned entries, unsigned flags) {
-        struct io_uring_params p;
+        struct io_uring_params p{};
 
-        memset(&p, 0, sizeof(p));
         p.flags = flags;
         return io_uring_mlock_size_params(entries, &p);
     }
 
     static inline int io_uring_register_buf_ring(struct io_uring *ring, struct io_uring_buf_reg *reg, uint32_t flags) {
-        reg->flags |= flags;
+        reg->flags = static_cast<uint16_t>(reg->flags | static_cast<uint16_t>(flags));
         return do_register(ring, IORING_REGISTER_PBUF_RING, reg, 1);
     }
 
@@ -2599,12 +2595,11 @@ namespace webpp::io::inline iouring_impl {
     static struct io_uring_buf_ring *
     br_setup(struct io_uring *ring, uint32_t nentries, int bgid, uint32_t flags, int *err) {
         struct io_uring_buf_ring *br;
-        struct io_uring_buf_reg   reg;
+        struct io_uring_buf_reg   reg{};
         size_t                    ring_size;
         off_t                     off;
         int                       lret;
 
-        memset(&reg, 0, sizeof(reg));
         reg.ring_entries = nentries;
         reg.bgid         = bgid;
         reg.flags        = IOU_PBUF_RING_MMAP;
@@ -2630,11 +2625,10 @@ namespace webpp::io::inline iouring_impl {
 #else
     static struct io_uring_buf_ring *
     br_setup(struct io_uring *ring, uint32_t nentries, int bgid, uint32_t flags, int *err) {
-        struct io_uring_buf_reg reg;
+        struct io_uring_buf_reg reg{};
         size_t                  ring_size = 0;
         int                     lret      = 0;
 
-        memset(&reg, 0, sizeof(reg));
         ring_size = nentries * sizeof(struct io_uring_buf);
         auto *br  = reinterpret_cast<io_uring_buf_ring *>(
           _sys_mmap(nullptr, ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0));
