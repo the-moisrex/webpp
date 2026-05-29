@@ -241,17 +241,17 @@ namespace webpp::http {
     inline constexpr struct deserialize_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invokee(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocableee<deserialize_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         // default implementation for void types
@@ -269,29 +269,29 @@ namespace webpp::http {
 
     /// get the type of the deserialized body
     template <typename T, typename BodyType>
-    using deserialized_body_type = stl::tag_invoke_result_t<deserialize_body_tag, stl::type_identity<T>, BodyType>;
+    using deserialized_body_type = istl::tag_invoke_result_t<deserialize_body_tag, stl::type_identity<T>, BodyType>;
 
     /// Check if the type T Deserializable from BodyType
     template <typename T, typename BodyType>
     concept DeserializableBody =
-      stl::tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType> &&
+      istl::tag_invocable<deserialize_body_tag, stl::type_identity<T>, BodyType> &&
       stl::is_convertible_v<deserialized_body_type<T, BodyType>, T>;
 
     /// Deserialize Request Body
     inline constexpr struct deserialize_request_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         // default implementation for void types
@@ -310,29 +310,29 @@ namespace webpp::http {
     /// get the type of the deserialized request body
     template <typename T, typename BodyType>
     using deserialized_request_body_type =
-      stl::tag_invoke_result_t<deserialize_request_body_tag, stl::type_identity<T>, BodyType>;
+      istl::tag_invoke_result_t<deserialize_request_body_tag, stl::type_identity<T>, BodyType>;
 
     /// Check if the type T Deserializable from BodyType
     template <typename T, typename BodyType>
     concept DeserializableRequestBody =
-      stl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType> &&
+      istl::tag_invocable<deserialize_request_body_tag, stl::type_identity<T>, BodyType> &&
       stl::is_convertible_v<deserialized_request_body_type<T, BodyType>, T>;
 
     /// Deserialize Response Body
     inline constexpr struct deserialize_response_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
+            requires istl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>
         [[nodiscard]] constexpr T operator()(stl::type_identity<T>, BodyType&& body) const
-          noexcept(stl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
-            return stl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
+          noexcept(istl::nothrow_tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType>) {
+            return istl::tag_invoke(*this, stl::type_identity<T>{}, stl::forward<BodyType>(body));
         }
 
         // default implementation for void types
@@ -351,12 +351,12 @@ namespace webpp::http {
     /// get the type of the deserialized response body
     template <typename T, typename BodyType>
     using deserialized_response_body_type =
-      stl::tag_invoke_result_t<deserialize_response_body_tag, stl::type_identity<T>, BodyType>;
+      istl::tag_invoke_result_t<deserialize_response_body_tag, stl::type_identity<T>, BodyType>;
 
     /// Check if the type T Deserializable from BodyType
     template <typename T, typename BodyType>
     concept DeserializableResponseBody =
-      stl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType> &&
+      istl::tag_invocable<deserialize_response_body_tag, stl::type_identity<T>, BodyType> &&
       stl::is_convertible_v<deserialized_response_body_type<T, BodyType>, T>;
 
     ////////////////////////////// Serialize //////////////////////////////
@@ -366,10 +366,10 @@ namespace webpp::http {
     inline constexpr struct serialize_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
+            requires istl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
         constexpr void operator()(T&& val, BodyType& body) const
-          noexcept(stl::nothrow_tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
-            stl::tag_invoke(*this, stl::forward<T>(val), body);
+          noexcept(istl::nothrow_tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
+            istl::tag_invoke(*this, stl::forward<T>(val), body);
         }
 
         // default implementation for nothing type
@@ -382,16 +382,16 @@ namespace webpp::http {
 
     /// Check if the type T Serializable from BodyType
     template <typename T, typename BodyType>
-    concept SerializableBody = stl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
+    concept SerializableBody = istl::tag_invocable<serialize_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
 
     /// Serialize Request Body
     inline constexpr struct serialize_request_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
+            requires istl::tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
         constexpr void operator()(T&& val, BodyType& body) const
-          noexcept(stl::nothrow_tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
-            stl::tag_invoke(*this, stl::forward<T>(val), body);
+          noexcept(istl::nothrow_tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
+            istl::tag_invoke(*this, stl::forward<T>(val), body);
         }
 
         // default implementation for nothing type
@@ -405,16 +405,16 @@ namespace webpp::http {
     /// Check if the type T Serializable from BodyType
     template <typename T, typename BodyType>
     concept SerializableRequestBody =
-      stl::tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
+      istl::tag_invocable<serialize_request_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
 
     /// Serialize Response Body
     inline constexpr struct serialize_response_body_tag {
         // Customization Point
         template <typename T, typename BodyType>
-            requires stl::tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
+            requires istl::tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>
         constexpr void operator()(T&& val, BodyType& body) const
-          noexcept(stl::nothrow_tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
-            stl::tag_invoke(*this, stl::forward<T>(val), body);
+          noexcept(istl::nothrow_tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>) {
+            istl::tag_invoke(*this, stl::forward<T>(val), body);
         }
 
         // default implementation for nothing type
@@ -428,7 +428,7 @@ namespace webpp::http {
     /// Check if the type T Serializable from BodyType
     template <typename T, typename BodyType>
     concept SerializableResponseBody =
-      stl::tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
+      istl::tag_invocable<serialize_response_body_tag, T, stl::add_lvalue_reference_t<BodyType>>;
 
     ////////////////////////////// General (De)Serialize //////////////////////////////
 

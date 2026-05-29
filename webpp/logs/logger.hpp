@@ -30,9 +30,9 @@ namespace webpp {
      */
     static constexpr struct [[nodiscard]] loggable_tag {
         template <typename T>
-            requires stl::tag_invocable<loggable_tag, T>
-        constexpr decltype(auto) operator()(T const& obj) const noexcept(stl::nothrow_tag_invocable<loggable_tag, T>) {
-            return stl::tag_invoke(*this, obj);
+            requires istl::tag_invocable<loggable_tag, T>
+        constexpr decltype(auto) operator()(T const& obj) const noexcept(istl::nothrow_tag_invocable<loggable_tag, T>) {
+            return istl::tag_invoke(*this, obj);
         }
 
     } loggable;
@@ -55,7 +55,7 @@ namespace webpp {
     }
 
     template <typename T>
-    concept Loggable = stl::tag_invocable<loggable_tag, T>;
+    concept Loggable = istl::tag_invocable<loggable_tag, T>;
 
     /**
      * Logger Tag.

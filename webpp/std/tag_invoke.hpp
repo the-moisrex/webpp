@@ -12,7 +12,7 @@
  * `tag_invoke` is a C++ proposal
  *   - Proposal Link: https://wg21.link/P1895
  */
-namespace webpp::stl {
+namespace webpp::istl {
 
     namespace tag_invoke_fn_ns {
         void tag_invoke();
@@ -40,21 +40,19 @@ namespace webpp::stl {
 
     template <typename Tag, typename... Args>
     concept nothrow_tag_invocable = tag_invocable<Tag, Args...> && requires(Tag tag, Args... args) {
-        {
-            tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...)
-        } noexcept;
+        { tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...) } noexcept;
     };
 
     template <typename Tag, typename... Args>
-    using tag_invoke_result = invoke_result<decltype(tag_invoke), Tag, Args...>;
+    using tag_invoke_result = stl::invoke_result<decltype(tag_invoke), Tag, Args...>;
 
     template <typename Tag, typename... Args>
-    using tag_invoke_result_t = invoke_result_t<decltype(tag_invoke), Tag, Args...>;
+    using tag_invoke_result_t = stl::invoke_result_t<decltype(tag_invoke), Tag, Args...>;
 
     template <auto& Tag>
-    using tag_t = decay_t<decltype(Tag)>;
+    using tag_t = stl::decay_t<decltype(Tag)>;
 
 
-} // namespace webpp::stl
+} // namespace webpp::istl
 
 #endif // WEBPP_TAG_INVOKE_HPP

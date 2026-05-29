@@ -159,7 +159,7 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
-namespace webpp::stl {
+namespace std {
 
     // polyfill for C++20 (to_underlying is a C++23 feature)
 #ifndef __cpp_lib_to_underlying
@@ -202,6 +202,6 @@ namespace webpp::stl {
     }
 #endif                      // __cpp_lib_unreachable
 
-} // namespace webpp::stl
+} // namespace std
 
 #endif // WEBPP_UTILITY_HPP

@@ -10,7 +10,7 @@
 // #if !defined(__cpp_lib_chrono) || __cpp_lib_chrono < 201907L
 // #    include <date/date.h>
 // #    include <date/tz.h>
-// namespace webpp::stl::chrono {
+// namespace webpp::chrono {
 //     // using namespace ::std::chrono;
 //     using ::std::chrono::duration;
 //     using ::std::chrono::high_resolution_clock;
@@ -25,18 +25,20 @@
 //     namespace chrono_literals {
 //         using namespace ::date::literals;
 //     }
-// } // namespace webpp::stl::chrono
+// } // namespace webpp::chrono
 // #else
 #include <chrono>
 
-namespace webpp::stl::chrono {
-    using namespace ::std::chrono;
+namespace webpp {
+    namespace chrono = ::std::chrono; // NOLINT(*-unused-*)
 }
 
 // #endif
 
-#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201'907L
+// clang-format off
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L 
 #    define WEBPP_UTC_CLOCK_SUPPORTED
 #endif
+// clang-format on
 
 #endif // WEBPP_STD_CHRONO_HPP

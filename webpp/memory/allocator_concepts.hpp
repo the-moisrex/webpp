@@ -86,18 +86,18 @@ namespace webpp {
      */
     static constexpr struct allocator_from_tag {
         template <typename T>
-        using alloc_type = stl::tag_invoke_result_t<allocator_from_tag, stl::remove_cvref_t<T> const&>;
+        using alloc_type = istl::tag_invoke_result_t<allocator_from_tag, stl::remove_cvref_t<T> const&>;
 
         /// Customization Point
         template <typename T>
-            requires stl::tag_invocable<allocator_from_tag, T>
+            requires istl::tag_invocable<allocator_from_tag, T>
         [[nodiscard]] constexpr Allocator decltype(auto) operator()(T&& resource) const
-          noexcept(stl::nothrow_tag_invocable<allocator_from_tag, T>) {
+          noexcept(istl::nothrow_tag_invocable<allocator_from_tag, T>) {
             if constexpr (stl::is_lvalue_reference_v<T>) {
-                return stl::tag_invoke(*this, stl::forward<T>(resource));
+                return istl::tag_invoke(*this, stl::forward<T>(resource));
             } else {
                 // copy the allocator if the object is passed as a rvalue reference.
-                return istl::deref(stl::tag_invoke(*this, stl::forward<T>(resource)));
+                return istl::deref(istl::tag_invoke(*this, stl::forward<T>(resource)));
             }
         }
 
@@ -134,10 +134,10 @@ namespace webpp {
         template <typename T>
         struct allocator_type_of_impl {
             static_assert(
-              has_allocator<T> || can_get_allocator<T> || stl::tag_invocable<allocator_from_tag, T>,
+              has_allocator<T> || can_get_allocator<T> || istl::tag_invocable<allocator_from_tag, T>,
               "No known way to extract an allocator from this type. "
               "Provide a tag_invoke customization for allocator_from_tag or a get_allocator(obj) function.");
-            using type = stl::tag_invoke_result_t<allocator_from_tag, T>;
+            using type = istl::tag_invoke_result_t<allocator_from_tag, T>;
         };
 
         /// Let's trust the object's type itself for telling us its allocator type
@@ -191,7 +191,7 @@ namespace webpp {
     template <typename T, AllocatorDescriptor Desc>
     struct resource_type_of {
         // for a general allocator descriptor, just return the allocator type
-        using type = stl::tag_invoke_result_t<allocator_from_tag, decltype(Desc::template construct_allocator<T>())>;
+        using type = istl::tag_invoke_result_t<allocator_from_tag, decltype(Desc::template construct_allocator<T>())>;
     };
 
     template <typename T, AllocatorDescriptor Desc>

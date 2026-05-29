@@ -3,8 +3,9 @@
 
 #include <memory> // for allocators
 
-namespace webpp::stl {
-    using namespace ::std;
+
+#if !__cpp_lib_concepts
+namespace std {
 
     namespace details {
         // Let COPYCV(FROM, TO) be an alias for type TO with the addition of FROM's
@@ -271,27 +272,17 @@ namespace webpp::stl {
 
         template <class B>
         concept boolean_testable = boolean_testable_impl<B> && requires(B&& b) {
-            {
-                !forward<B>(b)
-            } -> boolean_testable_impl;
+            { !forward<B>(b) } -> boolean_testable_impl;
         };
 
 
         template <class T, class U>
         concept WeaklyEqualityComparableWith =
           requires(remove_reference_t<T> const& t, remove_reference_t<U> const& u) {
-              {
-                  t == u
-              } -> boolean_testable;
-              {
-                  t != u
-              } -> boolean_testable;
-              {
-                  u == t
-              } -> boolean_testable;
-              {
-                  u != t
-              } -> boolean_testable;
+              { t == u } -> boolean_testable;
+              { t != u } -> boolean_testable;
+              { u == t } -> boolean_testable;
+              { u != t } -> boolean_testable;
           };
 
 
@@ -314,9 +305,7 @@ namespace webpp::stl {
       is_lvalue_reference_v<LHS> &&
       common_reference_with<remove_reference_t<LHS> const&, remove_reference_t<RHS> const&> &&
       requires(LHS lhs, RHS&& rhs) {
-          {
-              lhs = forward<RHS>(rhs)
-          } -> same_as<LHS>;
+          { lhs = forward<RHS>(rhs) } -> same_as<LHS>;
       };
 
 
@@ -413,6 +402,7 @@ namespace webpp::stl {
     concept regular = semiregular<T> && equality_comparable<T>;
 
 
-} // namespace webpp::stl
+} // namespace std
+#endif
 
 #endif // WEBPP_STD_CONCEPTS_WEBPP

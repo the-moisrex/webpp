@@ -13,8 +13,8 @@
 #    include <version>
 #endif
 
-namespace webpp::stl {
-    using namespace ::std; // NOLINT(*-using-namespace)
-} // namespace webpp::stl
+namespace webpp {
+    namespace stl = ::std; // NOLINT(*-unused-*)
+} // namespace webpp
 
 #endif // WEBPP_STD_STD_H

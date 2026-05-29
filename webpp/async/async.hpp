@@ -50,10 +50,10 @@ namespace webpp::async {
         }
 
         template <typename PrevTask, typename NewTask>
-            requires stl::tag_invocable<connect_tag, PrevTask, NewTask>
+            requires istl::tag_invocable<connect_tag, PrevTask, NewTask>
         constexpr decltype(auto) operator()(PrevTask&& prev_task, NewTask&& new_task) const
-          noexcept(stl::nothrow_tag_invocable<connect_tag, PrevTask, NewTask>) {
-            return stl::tag_invoke(*this, stl::forward<PrevTask>(prev_task), stl::forward<NewTask>(new_task));
+          noexcept(istl::nothrow_tag_invocable<connect_tag, PrevTask, NewTask>) {
+            return istl::tag_invoke(*this, stl::forward<PrevTask>(prev_task), stl::forward<NewTask>(new_task));
         }
     } connect;
 
@@ -67,10 +67,10 @@ namespace webpp::async {
     inline constexpr struct advance_tag {
         /// calls tag_invoke(advance, task)
         template <typename T>
-            requires(stl::tag_invocable<advance_tag, T>)
+            requires(istl::tag_invocable<advance_tag, T>)
         [[nodiscard]] constexpr bool operator()(T&& task) const
-          noexcept(noexcept(stl::nothrow_tag_invocable<advance_tag, T>)) {
-            return stl::tag_invoke(*this, stl::forward<T>(task));
+          noexcept(noexcept(istl::nothrow_tag_invocable<advance_tag, T>)) {
+            return istl::tag_invoke(*this, stl::forward<T>(task));
         }
 
         /// calls task.advance()
@@ -116,10 +116,10 @@ namespace webpp::async {
     inline constexpr struct yield_value_tag {
         /// calls tag_invoke(yield_value, task, value)
         template <typename TaskT, typename ValueT>
-            requires(stl::tag_invocable<yield_value_tag, TaskT, ValueT>)
+            requires(istl::tag_invocable<yield_value_tag, TaskT, ValueT>)
         constexpr void operator()(TaskT&& task, ValueT&& value) const
-          noexcept(stl::nothrow_tag_invocable<yield_value_tag, TaskT, ValueT>) {
-            stl::tag_invoke(*this, stl::forward<TaskT>(task), stl::forward<ValueT>(value));
+          noexcept(istl::nothrow_tag_invocable<yield_value_tag, TaskT, ValueT>) {
+            istl::tag_invoke(*this, stl::forward<TaskT>(task), stl::forward<ValueT>(value));
         }
 
         /// calls task.yield_value(value)
@@ -137,10 +137,10 @@ namespace webpp::async {
     inline constexpr struct set_done_tag {
         // Customization Point
         template <typename T>
-            requires stl::tag_invocable<set_done_tag, T>
-        constexpr stl::tag_invoke_result_t<set_done_tag, T> operator()(T&& next) const
-          noexcept(stl::nothrow_tag_invocable<set_done_tag, T>) {
-            return stl::tag_invoke(*this, stl::forward<T>(next));
+            requires istl::tag_invocable<set_done_tag, T>
+        constexpr istl::tag_invoke_result_t<set_done_tag, T> operator()(T&& next) const
+          noexcept(istl::nothrow_tag_invocable<set_done_tag, T>) {
+            return istl::tag_invoke(*this, stl::forward<T>(next));
         }
 
         // default impl
@@ -162,10 +162,10 @@ namespace webpp::async {
     inline constexpr struct set_value_tag {
         // Customization Point
         template <typename T, typename... Args>
-            requires stl::tag_invocable<set_value_tag, T, Args...>
-        constexpr stl::tag_invoke_result_t<set_value_tag, T> operator()(T&& next, Args&&... args) const
-          noexcept(stl::nothrow_tag_invocable<set_value_tag, T, Args...>) {
-            return stl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
+            requires istl::tag_invocable<set_value_tag, T, Args...>
+        constexpr istl::tag_invoke_result_t<set_value_tag, T> operator()(T&& next, Args&&... args) const
+          noexcept(istl::nothrow_tag_invocable<set_value_tag, T, Args...>) {
+            return istl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
         }
 
         // default impl
@@ -216,10 +216,10 @@ namespace webpp::async {
     inline constexpr struct get_value_tag {
         // Customization Point
         template <typename T, typename... Args>
-            requires stl::tag_invocable<get_value_tag, T, Args...>
-        constexpr stl::tag_invoke_result_t<get_value_tag, T> operator()(T&& next, Args&&... args) const
-          noexcept(stl::nothrow_tag_invocable<get_value_tag, T, Args...>) {
-            return stl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
+            requires istl::tag_invocable<get_value_tag, T, Args...>
+        constexpr istl::tag_invoke_result_t<get_value_tag, T> operator()(T&& next, Args&&... args) const
+          noexcept(istl::nothrow_tag_invocable<get_value_tag, T, Args...>) {
+            return istl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
         }
 
         // default impl
@@ -277,10 +277,10 @@ namespace webpp::async {
     inline constexpr struct set_error_tag {
         // Customization Point
         template <typename T, typename... Args>
-            requires stl::tag_invocable<set_error_tag, T, Args...>
+            requires istl::tag_invocable<set_error_tag, T, Args...>
         constexpr void operator()(T&& chain, Args&&... args) const
-          noexcept(stl::nothrow_tag_invocable<set_error_tag, T, Args...>) {
-            return stl::tag_invoke(*this, stl::forward<T>(chain), stl::forward<Args>(args)...);
+          noexcept(istl::nothrow_tag_invocable<set_error_tag, T, Args...>) {
+            return istl::tag_invoke(*this, stl::forward<T>(chain), stl::forward<Args>(args)...);
         }
 
         // default impl

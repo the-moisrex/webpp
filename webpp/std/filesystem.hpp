@@ -7,12 +7,12 @@
 
 #include <filesystem>
 
-namespace webpp::stl::filesystem {
-    using namespace ::std::filesystem; // NOLINT(*-build-using-namespace)
-} // namespace webpp::stl::filesystem
+namespace webpp {
+    namespace filesystem = ::std::filesystem; // NOLINT(*-unused-*)
+} // namespace webpp
 
-namespace webpp::fs {
-    using namespace ::std::filesystem; // NOLINT(*-build-using-namespace)
-} // namespace webpp::fs
+namespace webpp {
+    namespace fs = ::std::filesystem; // NOLINT(*-unused-*)
+} // namespace webpp
 
 #endif // WEBPP_STD_FILESYSTEM_HPP

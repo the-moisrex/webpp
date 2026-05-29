@@ -25,7 +25,7 @@ namespace webpp::fmt {
     using namespace ::fmt;
 }
 
-namespace webpp::stl {
+namespace std {
 
     // from: https://twitter.com/vzverovich/status/1327762206734237698?s=20
     // no need for this after this tweet: https://twitter.com/vzverovich/status/1328345929758375946?s=20
@@ -61,7 +61,7 @@ namespace webpp::stl {
         return fmt::format_to(forward<Args>(args)...);
     }
 
-} // namespace webpp::stl
+} // namespace std
 #else
 #    define webpp_no_fmt
 #    error "We don't have access to <format> nor {fmt} library."

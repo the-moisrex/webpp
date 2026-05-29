@@ -7,8 +7,8 @@
 #    include <memory_resource>
 #    define webpp_has_memory_resource
 #    ifdef __cpp_lib_polymorphic_allocator
-namespace pmr {
-    using namespace ::std::pmr;
+namespace webpp {
+    namespace pmr = ::std::pmr; // NOLINT(*-unused-*)
 }
 #    endif
 #elif __has_include(<boost/container/pmr/memory_resource.hpp>)
@@ -20,8 +20,8 @@ namespace pmr {
 #    define webpp_has_memory_resource
 #    define webpp_using_boost_memory_resource
 
-namespace webpp::stl::pmr {
-    using namespace ::boost::container::pmr;
+namespace webpp {
+    namespace pmr = ::boost::container::pmr;
 }
 #endif
 

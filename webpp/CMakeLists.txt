@@ -243,6 +243,7 @@ set(ALL_SOURCES_SHORT
 
         protocol/common_http_protocol.hpp
         protocol/http_limits.hpp
+        protocol/server_concepts.hpp
 
         http/app_wrapper.hpp
         http/body.hpp

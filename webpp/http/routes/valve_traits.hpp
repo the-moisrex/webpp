@@ -73,10 +73,10 @@ namespace webpp::http {
     inline constexpr struct valvify_tag {
         /// Customization Point
         template <typename T>
-            requires stl::tag_invocable<valvify_tag, T>
-        [[nodiscard]] constexpr stl::tag_invoke_result_t<valvify_tag, T> operator()(T&& next) const
-          noexcept(stl::nothrow_tag_invocable<valvify_tag, T>) {
-            return stl::tag_invoke(*this, stl::forward<T>(next));
+            requires istl::tag_invocable<valvify_tag, T>
+        [[nodiscard]] constexpr istl::tag_invoke_result_t<valvify_tag, T> operator()(T&& next) const
+          noexcept(istl::nothrow_tag_invocable<valvify_tag, T>) {
+            return istl::tag_invoke(*this, stl::forward<T>(next));
         }
 
         /// default impl
@@ -91,10 +91,10 @@ namespace webpp::http {
     /// because it'll be the root of a load of evil things if we don't.
     /// Use Pointers if you need lvalue references, we know how to call pointers.
     template <typename T>
-    using valvified_type = stl::remove_cvref_t<stl::tag_invoke_result_t<valvify_tag, T>>;
+    using valvified_type = stl::remove_cvref_t<istl::tag_invoke_result_t<valvify_tag, T>>;
 
     template <typename T>
-    concept Valvifiable = stl::tag_invocable<valvify_tag, T>;
+    concept Valvifiable = istl::tag_invocable<valvify_tag, T>;
 
     /**
      * The valve traits

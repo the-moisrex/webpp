@@ -10,7 +10,7 @@
 #    include "./concepts.hpp"
 #endif
 
-namespace webpp::stl {
+namespace std {
 
     // fallback implementation of byteswap that works on C++20
 #ifndef __cpp_lib_byteswap
@@ -45,6 +45,6 @@ namespace webpp::stl {
         // #    endif
     }
 #endif
-} // namespace webpp::stl
+} // namespace std
 
 #endif // WEBPP_STD_BIT_HPP
