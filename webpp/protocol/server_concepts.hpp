@@ -16,7 +16,7 @@ namespace webpp {
             listen(server, endpoint);
         };
 
-        // Check if ssl supported
+        // check if TLS/SSL is enabled
         { is_encrypted(server) } noexcept -> stl::same_as<bool>;
 
         // start/stop the server

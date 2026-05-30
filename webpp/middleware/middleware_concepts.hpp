@@ -133,6 +133,10 @@ namespace webpp {
         /// Each middleware instance can have multiple events and will be pointed to multiple times.
         template <typename MW>
         constexpr void register_middleware(MW* inp_middleware) noexcept {
+            if (inp_middleware == nullptr) [[unlikely]] {
+                return;
+            }
+
             // we can use C++23's `template for` here.
             auto const register_tag = [this, inp_middleware]<typename Tag>(Tag) constexpr noexcept {
                 if constexpr (stl::is_base_of_v<typename Tag::node_type, MW>) {
