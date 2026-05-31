@@ -213,11 +213,10 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT = char32_t>
     struct [[nodiscard]] uri_components_view {
-        using string_type  = stl::basic_string_view<CharT>;
-        using seg_type     = string_type;
-        using char_type    = typename string_type::value_type;
-        using size_type    = typename string_type::size_type;
-        using vec_iterator = seg_type*;
+        using string_type = stl::basic_string_view<CharT>;
+        using seg_type    = string_type;
+        using char_type   = typename string_type::value_type;
+        using size_type   = typename string_type::size_type;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
