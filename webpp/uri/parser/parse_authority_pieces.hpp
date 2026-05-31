@@ -142,6 +142,11 @@ namespace webpp::uri::details {
                             continue;
                         }
 
+                        if (has_error(ctx.status)) [[unlikely]] {
+                            // prevent possible segfaults
+                            return;
+                        }
+
                         if (!details::set_parsed_hostname<Options>(ctx, is_special, buffer)) [[unlikely]] {
                             return;
                         }
