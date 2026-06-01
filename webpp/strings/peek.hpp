@@ -50,7 +50,7 @@ namespace webpp::ascii {
         requires(stl::convertible_to<ValT, stl::iter_value_t<Iter>> && ...)
     [[nodiscard]] static constexpr bool inc_if(Iter& pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
-            if (pos != end && ((val == *pos) && ...)) {
+            if (pos != end && ((val == *pos) && ...)) [[likely]] {
                 ++pos;
                 return true;
             }
@@ -58,12 +58,30 @@ namespace webpp::ascii {
         } else {
             auto tmp_pos = pos;
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            if (pos + sizeof...(ValT) <= end && ((val == *tmp_pos++) && ...)) {
+            if (pos + sizeof...(ValT) <= end && ((val == *tmp_pos++) && ...)) [[likely]] {
                 pos = tmp_pos;
                 return true;
             }
             return false;
         }
+    }
+
+    /// inc_if for the next N characters
+    template <typename Iter, typename EIter = Iter, typename... ValT>
+    [[nodiscard]] static constexpr bool inc_if(stl::size_t count, Iter& pos, EIter end, ValT... vals) noexcept {
+        assert(count >= 2); // use the other inc_if's impl for count=1
+
+        auto cur = pos;
+
+        while (count-- != 0) {
+            if (cur == end || !(((*cur == vals) || ...))) [[unlikely]] {
+                return false;
+            }
+            ++cur;
+        }
+
+        pos = cur;
+        return true;
     }
 
     /// Look ahead and see if the next values are the ones that we expect, if it is, move "pos" there,

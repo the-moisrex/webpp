@@ -135,9 +135,18 @@ namespace webpp::uri {
             using enum uri_status;
 
             if (ctx.pos != ctx.end) {
+                auto slash_pos = ctx.pos;
+                if (ascii::inc_if(2U, slash_pos, ctx.end, '/', '\\')) {
+                    if (*ctx.pos == '\\' || *(ctx.pos + 1) == '\\') [[unlikely]] {
+                        set_warning(ctx.status, reverse_solidus_used);
+                    }
+                    ctx.pos = slash_pos;
+                    set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
+                    return;
+                }
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/': set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path); return;
+                    case '/': set(ctx.status, valid_path); return;
                     default: break;
                 }
             }
@@ -414,7 +423,7 @@ namespace webpp::uri {
                 ++ctx.pos;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
-                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
+                if (!ascii::inc_if(2U, ctx.pos, ctx.end, '/', '\\')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
                 details::file_state<Options>(ctx);

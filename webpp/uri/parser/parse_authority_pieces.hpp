@@ -49,6 +49,49 @@ namespace webpp::uri::details {
     }
 
     template <uri_options Options, URIContext CtxT>
+    [[nodiscard]] static constexpr bool recover_credentials(
+      CtxT&                   ctx,
+      typename CtxT::iterator colon_pos,
+      typename CtxT::iterator authority_begin,
+      auto&                   buffer) noexcept(CtxT::is_nothrow) {
+        if constexpr (Options.parse_credentials) {
+            auto scan_pos       = ctx.pos;
+            auto next_colon_pos = colon_pos;
+            auto last_at_pos    = ctx.end;
+            auto last_colon_pos = colon_pos;
+            for (; scan_pos != ctx.end; ++scan_pos) {
+                switch (*scan_pos) {
+                    case '/':
+                    case '\\':
+                    case '?':
+                    case '#': break;
+                    case ':':
+                        if (next_colon_pos == ctx.end) {
+                            next_colon_pos = scan_pos;
+                        }
+                        continue;
+                    case '@':
+                        last_at_pos    = scan_pos;
+                        last_colon_pos = next_colon_pos;
+                        continue;
+                    default: continue;
+                }
+                break;
+            }
+            if (last_at_pos != ctx.end) {
+                colon_pos = last_colon_pos;
+                ctx.pos   = last_at_pos;
+                parse_credentials(ctx, authority_begin, colon_pos);
+                ++ctx.pos;
+                clear_hostname(ctx.out);
+                clear_segment(ctx, buffer);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using details::ascii_bitmap;
@@ -197,22 +240,32 @@ namespace webpp::uri::details {
                         }
                         continue;
                     }
+                    if (recover_credentials<Options>(ctx, colon_pos, authority_begin, buffer)) {
+                        must_contain_credentials = false;
+                        host_begin               = ctx.pos;
+                        continue;
+                    }
                     set(ctx.status, invalid_domain_code_point);
                     return;
                 case '@':
                     if constexpr (Options.parse_credentials) {
-                        details::parse_credentials(ctx, authority_begin, colon_pos);
-                        ++ctx.pos;
-                        clear_hostname(ctx.out);
-                        host_begin = ctx.pos;
-                        clear_segment(ctx, buffer);
-                        must_contain_credentials = false;
+                        if (recover_credentials<Options>(ctx, colon_pos, authority_begin, buffer)) {
+                            must_contain_credentials = false;
+                            host_begin               = ctx.pos;
+                        }
                         continue;
                     } else {
                         set(ctx.status, credentials_not_supported);
                         return;
                     }
-                default: set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point); return;
+                [[unlikely]] default:
+                    if (is_special && recover_credentials<Options>(ctx, colon_pos, authority_begin, buffer)) {
+                        must_contain_credentials = false;
+                        host_begin               = ctx.pos;
+                        continue;
+                    }
+                    set(ctx.status, is_special ? invalid_domain_code_point : invalid_host_code_point);
+                    return;
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
