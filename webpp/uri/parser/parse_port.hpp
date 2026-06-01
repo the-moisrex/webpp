@@ -86,7 +86,7 @@ namespace webpp::uri {
                 set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
             } else {
                 // ignoring the leading zeros
-                while (beg <= ctx.pos - 1 && *beg == '0') [[unlikely]] {
+                while (beg < stl::prev(ctx.pos) && *beg == '0') [[unlikely]] {
                     ++beg;
                 }
                 set_port(ctx.out, create_buffer(ctx, beg, ctx.pos));
