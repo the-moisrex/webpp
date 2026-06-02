@@ -355,7 +355,14 @@ namespace webpp::uri {
         auto const existing_path = path(ctx.out);
         if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
             if constexpr (istl::String<decltype(buffer)>) {
-                buffer.append(existing_path.begin(), existing_path.end());
+                if constexpr (CtxT::is_segregated) {
+                    for (auto const& seg : existing_path) {
+                        buffer.append(seg);
+                        buffer.push_back('/');
+                    }
+                } else {
+                    buffer.append(existing_path.begin(), existing_path.end());
+                }
                 if (!buffer.empty() && buffer.back() != '/') {
                     buffer.push_back('/');
                 }
