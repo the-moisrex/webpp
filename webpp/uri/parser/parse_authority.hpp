@@ -6,6 +6,7 @@
 #include "../uri_status.hpp"
 #include "./parse_authority_pieces.hpp"
 #include "./special_schemes.hpp"
+#include "uri_context.hpp"
 
 /**
  * Attention: User infos in URIs are DEPRECATED, but we SHOULD parse it anyway
@@ -83,7 +84,10 @@ namespace webpp::uri {
             // For owning/non-segregated components this is represented as a single '/'.
             if (is_special_scheme(scheme(ctx.out)) && has_hostname(ctx.out) && !has_path(ctx.out)) {
                 auto buffer = create_buffer(ctx);
-                if constexpr (CtxT::is_modifiable) {
+                if constexpr (CtxT::is_segregated) {
+                    ++ctx.pos;
+                    push_segment(path(ctx.out), stl::move(buffer));
+                } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
                     ++ctx.pos;
                     set_path(ctx.out, stl::move(buffer));

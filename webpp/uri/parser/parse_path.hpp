@@ -260,6 +260,15 @@ namespace webpp::uri {
             return true;
         }
 
+        template <URIContext CtxT>
+        static constexpr void set_or_append_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
+            if constexpr (CtxT::is_segregated) {
+                push_segment(path(ctx.out), stl::move(buffer));
+            } else {
+                set_path(ctx.out, stl::move(buffer));
+            }
+        }
+
     } // namespace details
 
     template <URIContext CtxT>
@@ -295,14 +304,14 @@ namespace webpp::uri {
                     continue;
             }
             end_segment(ctx, buffer);
-            set_path(ctx.out, stl::move(buffer));
+            details::set_or_append_path(ctx, buffer);
             clear_segment(ctx, buffer);
             ++ctx.pos; // it's okay, we're not at the end
             return;
         }
         set(ctx.status, valid);
         end_segment(ctx, buffer);
-        set_path(ctx.out, stl::move(buffer));
+        details::set_or_append_path(ctx, buffer);
     }
 
     template <uri_options Options, URIContext CtxT>
@@ -403,7 +412,9 @@ namespace webpp::uri {
         // If URL is special, host is not null, and path is empty, append the empty string to path.
         if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty()) {
             if constexpr (CtxT::is_segregated) {
-                push_segment(path(ctx.out), buffer);
+                push_segment(path(ctx.out), stl::move(buffer));
+                clear_segment(ctx, buffer);
+                // we make the buffer empty, then later we add the empty buffer as well
             } else if constexpr (CtxT::is_modifiable) {
                 buffer.push_back('/');
             } else {
@@ -412,7 +423,7 @@ namespace webpp::uri {
             }
         }
 
-        set_path(ctx.out, stl::move(buffer));
+        details::set_or_append_path(ctx, buffer);
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {

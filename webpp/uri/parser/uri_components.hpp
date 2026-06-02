@@ -797,6 +797,16 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).password);
     }
 
+    template <URIStructuredComponents CompT>
+    [[nodiscard]] static constexpr auto& path(CompT& comps) noexcept {
+        return comps.path;
+    }
+
+    template <URIStructuredComponents CompT>
+    [[nodiscard]] static constexpr auto const& path(CompT const& comps) noexcept {
+        return comps.path;
+    }
+
     template <typename CompT>
         requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_password(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
