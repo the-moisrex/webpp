@@ -27,7 +27,8 @@ TEST(URIHelperTests, IIEquals) {
     EXPECT_TRUE(uri::iiequals<uri::details::TABS_OR_NEWLINES>("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
 }
 
-using Types = testing::Types<uri::uri_context<uri::uri_components_owning<char>>>;
+using Types = testing::Types<uri::uri_context<uri::uri_components_owning<char>>,
+                             uri::uri_context<uri::uri_components_structured<char>>>;
 
 template <class T>
 struct URITests : testing::Test {

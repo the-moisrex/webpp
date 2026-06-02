@@ -275,6 +275,7 @@ namespace webpp::uri {
         using string_view_type      = stl::basic_string_view<CharT>;
         using char_type             = typename string_type::value_type;
         using size_type             = typename string_type::size_type;
+        using seg_type              = string_view_type;
 
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
         static constexpr bool is_nothrow           = false;
@@ -308,10 +309,12 @@ namespace webpp::uri {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
         using size_type             = typename string_type::size_type;
-        using vec_type              = stl::vector<string_type, AllocT>;
-        using pair_type             = stl::pair<string_type const, string_type>;
+        using vec_type =
+          stl::vector<string_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<string_type>>;
+        using pair_type = stl::pair<string_type const, string_type>;
         using map_type =
           stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
+        using seg_type = string_type;
 
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
         static constexpr bool is_nothrow           = false;
@@ -636,6 +639,11 @@ namespace webpp::uri {
         return comps.authority_end != CompT::omitted;
     }
 
+    template <URIStructuredComponents CompT>
+    [[nodiscard]] static constexpr bool has_path(CompT const& comps) noexcept {
+        return comps.path.empty();
+    }
+
     template <URIRelativeComponents CompT>
     [[nodiscard]] static constexpr bool has_queries(CompT const& comps) noexcept {
         return comps.queries_start != CompT::omitted;
@@ -767,7 +775,8 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comps).scheme);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_scheme(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.scheme = stl::move(value);
     }
@@ -777,7 +786,8 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).username);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_username(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.username = stl::move(value);
     }
@@ -787,7 +797,8 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).password);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_password(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.password = stl::move(value);
     }
@@ -853,7 +864,8 @@ namespace webpp::uri {
         return href_view.substr(start_offset, length);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_hostname(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.hostname = stl::move(value);
     }
@@ -863,7 +875,8 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).port);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_port(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.port = stl::move(value);
     }
