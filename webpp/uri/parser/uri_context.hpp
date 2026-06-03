@@ -185,6 +185,24 @@ namespace webpp::uri {
         return {.beg = beg, .end = end};
     }
 
+    template <URIContext CtxT>
+        requires(URIStructuredComponents<typename CtxT::component_type>)
+    static constexpr segment<typename CtxT::component_type::vec_type::const_iterator> create_buffer(
+      [[maybe_unused]] CtxT&                                  ctx,
+      typename CtxT::component_type::vec_type::const_iterator beg,
+      typename CtxT::component_type::vec_type::const_iterator end) noexcept {
+        return {.beg = beg, .end = end};
+    }
+
+    template <URIContext CtxT>
+        requires(URIStructuredComponents<typename CtxT::component_type>)
+    static constexpr segment<typename CtxT::component_type::map_type::const_iterator> create_buffer(
+      [[maybe_unused]] CtxT&                                  ctx,
+      typename CtxT::component_type::map_type::const_iterator beg,
+      typename CtxT::component_type::map_type::const_iterator end) noexcept {
+        return {.beg = beg, .end = end};
+    }
+
     /// Mark the end of the current segment
     template <URIContext CtxT>
     static constexpr void end_segment([[maybe_unused]] CtxT const&        ctx,

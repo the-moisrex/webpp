@@ -933,6 +933,13 @@ namespace webpp::uri {
         comps.queries = stl::move(value);
     }
 
+    template <URIStructuredComponents CompT, typename Iter>
+        requires std::same_as<typename CompT::map_type::value_type, typename std::iterator_traits<Iter>::value_type>
+    static constexpr void set_queries(CompT& comps, segment<Iter> seg) noexcept(CompT::is_nothrow) {
+        comps.queries.clear();
+        comps.queries.insert(comps.queries.end(), seg.beg, seg.end);
+    }
+
     template <URIComponents CompT>
     [[nodiscard]] static constexpr decltype(auto) path(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).path);
@@ -941,6 +948,13 @@ namespace webpp::uri {
     template <URIOwningComponents CompT>
     static constexpr void set_path(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.path = stl::move(value);
+    }
+
+    template <URIStructuredComponents CompT, typename Iter>
+        requires std::same_as<typename CompT::vec_type::value_type, typename std::iterator_traits<Iter>::value_type>
+    static constexpr void set_path(CompT& comps, segment<Iter> seg) noexcept(CompT::is_nothrow) {
+        comps.path.clear();
+        comps.path.insert(comps.path.end(), seg.beg, seg.end);
     }
 
     template <URIComponents CompT>
