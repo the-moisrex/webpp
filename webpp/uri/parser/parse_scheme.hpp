@@ -43,9 +43,9 @@ namespace webpp::uri {
             }
         }
 
-        template <URIContext CtxT>
-        constexpr auto base_component_buffer(CtxT& ctx, stl::basic_string_view<typename CtxT::char_type> const value)
-          noexcept(CtxT::is_nothrow) {
+        template <URIContext CtxT, typename ValueType>
+        constexpr auto base_component_buffer(CtxT& ctx, ValueType const& value) noexcept(CtxT::is_nothrow) {
+            // ValueType can be one of (vec_type, map_type, seg_type)
             return create_buffer(ctx, value.begin(), value.end());
         }
 
@@ -256,7 +256,6 @@ namespace webpp::uri {
             using enum uri_status;
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 auto const base_scheme = scheme(ctx.base);
-                auto const base_path   = path(ctx.base);
 
                 if (ctx.pos != ctx.end && is_opaque_path(ctx.base)) {
                     if (*ctx.pos == '#') {
@@ -264,7 +263,7 @@ namespace webpp::uri {
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
                         set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
-                        set_path(ctx.out, base_component_buffer(ctx, base_path));
+                        set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
                         set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
                         if (!queries(ctx.out).empty()) {
                             set_flag(ctx.status, has_non_null_queries);

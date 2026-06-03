@@ -346,41 +346,56 @@ namespace webpp::uri {
     using comp_iter = typename stl::basic_string_view<typename CompT::char_type>::iterator;
 
     template <URIComponents CompT>
-        requires requires { typename CompT::allocator_type; }
     static constexpr CompT create(
       stl::type_identity<CompT>,
-      [[maybe_unused]] comp_iter<CompT> beg,
-      [[maybe_unused]] comp_iter<CompT> end,
-      allocator_type_of<CompT>          alloc = {}) noexcept(CompT::is_nothrow) {
-        using seg_type = typename CompT::seg_type;
-        return CompT{
-          .scheme   = seg_type{alloc},
-          .username = seg_type{alloc},
-          .password = seg_type{alloc},
-          .hostname = seg_type{alloc},
-          .port     = seg_type{alloc},
-          .path     = seg_type{alloc},
-          .queries  = seg_type{alloc},
-          .fragment = seg_type{alloc},
-        };
+      [[maybe_unused]] comp_iter<CompT>         beg,
+      [[maybe_unused]] comp_iter<CompT>         end,
+      [[maybe_unused]] allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
+        using seg_type   = typename CompT::seg_type;
+        using alloc_type = allocator_type_of<CompT>;
+        if constexpr (requires { typename CompT::allocator_type; } || stl::constructible_from<seg_type, alloc_type>) {
+            return CompT{
+              .scheme   = seg_type{alloc},
+              .username = seg_type{alloc},
+              .password = seg_type{alloc},
+              .hostname = seg_type{alloc},
+              .port     = seg_type{alloc},
+              .path     = seg_type{alloc},
+              .queries  = seg_type{alloc},
+              .fragment = seg_type{alloc},
+            };
+        } else {
+            return CompT{
+              .scheme   = seg_type{},
+              .username = seg_type{},
+              .password = seg_type{},
+              .hostname = seg_type{},
+              .port     = seg_type{},
+              .path     = seg_type{},
+              .queries  = seg_type{},
+              .fragment = seg_type{},
+            };
+        }
     }
 
-    template <URIComponents CompT>
+    template <URIStructuredComponents CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
       [[maybe_unused]] comp_iter<CompT>         beg,
       [[maybe_unused]] comp_iter<CompT>         end,
       [[maybe_unused]] allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
         using seg_type = typename CompT::seg_type;
+        using vec_type = typename CompT::vec_type;
+        using map_type = typename CompT::map_type;
         return CompT{
-          .scheme   = seg_type{},
-          .username = seg_type{},
-          .password = seg_type{},
-          .hostname = seg_type{},
-          .port     = seg_type{},
-          .path     = seg_type{},
-          .queries  = seg_type{},
-          .fragment = seg_type{},
+          .scheme   = seg_type{alloc},
+          .username = seg_type{alloc},
+          .password = seg_type{alloc},
+          .hostname = seg_type{alloc},
+          .port     = seg_type{alloc},
+          .path     = vec_type{alloc},
+          .queries  = map_type{alloc},
+          .fragment = seg_type{alloc},
         };
     }
 
@@ -1011,8 +1026,15 @@ namespace webpp::uri {
     [[nodiscard]] static constexpr bool is_opaque_path(URIComponents auto const& components) noexcept {
         auto const comp_scheme = scheme(components);
         auto const comp_path   = path(components);
-        return !is_special_scheme(comp_scheme) && !has_hostname(components) &&
-               (comp_path.empty() || comp_path.front() != '/');
+        bool       is_opaque   = !is_special_scheme(comp_scheme) && !has_hostname(components);
+        if constexpr (requires { comp_path.fron() != '/'; }) {
+            // string-based path
+            is_opaque &= (comp_path.empty() || comp_path.front() != '/');
+        } else {
+            // vector-based path
+            is_opaque &= comp_path.empty();
+        }
+        return is_opaque;
     }
 
 

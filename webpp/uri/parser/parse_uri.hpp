@@ -189,7 +189,7 @@ namespace webpp::uri {
         auto origin_context = create<uri_context<CompT>>(base_uri.data(), base_uri.data() + base_uri.size());
         parse_uri<Options>(origin_context);
 
-        return parse_uri<Options>(the_url, stl::move(origin_context.out));
+        return parse_uri<Options, CompT>(the_url, stl::move(origin_context.out));
     }
 
 } // namespace webpp::uri
