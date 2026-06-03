@@ -64,7 +64,8 @@ struct URITests : testing::Test {
     [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(
       stl::string_view const str,
       stl::string_view const base_str) {
-        auto               ctx = uri::parse_uri(str, base_str);
+        using component_type   = typename SpecifiedTypeParam::component_type;
+        auto               ctx = uri::parse_uri<uri::standard_uri_parsing_options, component_type>(str, base_str);
         SpecifiedTypeParam out_ctx{};
         out_ctx.status = ctx.status;
         out_ctx.out    = stl::move(ctx.out);

@@ -150,7 +150,7 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <typename CharT, typename AllocT = stl::allocator<CharT>>
+    template <typename CharT, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_u32 {
         using seg_type              = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
@@ -239,7 +239,7 @@ namespace webpp::uri {
     /**
      * String-Based, owning URI Components
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_owning {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -268,7 +268,7 @@ namespace webpp::uri {
      * Single-Source based URI Components.
      * Let's have one single href, and have components as string views pointing to that source
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_href {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -303,7 +303,7 @@ namespace webpp::uri {
      *   - Queries are mapped (or rather vector of pairs).
      *   - Strings own their data.
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = stl::allocator<CharT>>
+    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_structured {
         using char_type             = CharT;
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
@@ -330,6 +330,13 @@ namespace webpp::uri {
         map_type    queries;
         string_type fragment;
     };
+
+    template <URIComponents CompT, template <typename, typename, typename> typename StrTempl = stl::basic_string>
+    using string_type_of =
+      StrTempl<typename CompT::char_type, stl::char_traits<typename CompT::char_type>, allocator_type_of<CompT>>;
+
+    template <URIComponents CompT, template <typename, typename> typename StrTempl = stl::basic_string_view>
+    using string_view_type_of = StrTempl<typename CompT::char_type, stl::char_traits<typename CompT::char_type>>;
 
     //////////////////////////////////////// ///////////////// ////////////////////////////////////////
     //////////////////////////////////////// Create Components ////////////////////////////////////////
