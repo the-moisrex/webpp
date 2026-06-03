@@ -798,13 +798,8 @@ namespace webpp::uri {
     }
 
     template <URIStructuredComponents CompT>
-    [[nodiscard]] static constexpr auto& path(CompT& comps) noexcept {
-        return comps.path;
-    }
-
-    template <URIStructuredComponents CompT>
-    [[nodiscard]] static constexpr auto const& path(CompT const& comps) noexcept {
-        return comps.path;
+    [[nodiscard]] static constexpr auto& path(CompT&& comps) noexcept {
+        return stl::forward<CompT>(comps).path;
     }
 
     template <typename CompT>
@@ -906,6 +901,11 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).queries);
     }
 
+    template <URIStructuredComponents CompT>
+    [[nodiscard]] static constexpr auto& queries(CompT&& comp) noexcept {
+        return stl::forward<CompT>(comp).queries;
+    }
+
     template <URIOwningComponents CompT>
     static constexpr void set_queries(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.queries = stl::move(value);
@@ -926,7 +926,8 @@ namespace webpp::uri {
         return make_view(stl::forward<CompT>(comp).fragment);
     }
 
-    template <URIOwningComponents CompT>
+    template <typename CompT>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
     static constexpr void set_fragment(CompT& comps, typename CompT::string_type&& value) noexcept(CompT::is_nothrow) {
         comps.fragment = stl::move(value);
     }
