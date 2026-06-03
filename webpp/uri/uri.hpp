@@ -73,7 +73,7 @@ namespace webpp::uri {
         } else if (is_file_scheme(status)) {
             out.push_back('/');
             out.push_back('/');
-        } else if (!is_opaque(status) && uri::path(components).starts_with("//")) {
+        } else if (!is_opaque(status) && starts_with_double_slashes(components)) {
             // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
             // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
             // U+002E (.) to output.
@@ -84,8 +84,8 @@ namespace webpp::uri {
             out.push_back('.');
         }
 
-        render_path(uri::path(components), out);
-        render_queries(uri::queries(components), out, status, true);
+        render_path(components, out);
+        render_queries(components, out, status, true);
         render_fragment(uri::fragment(components), out, true, has_flags(status, uri_status::has_non_null_fragment));
     }
 

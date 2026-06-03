@@ -6,6 +6,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "./parser/parse_path.hpp"
+#include "parser/uri_components.hpp"
 
 namespace webpp::uri {
 
@@ -42,11 +43,49 @@ namespace webpp::uri {
 
     /// Serialize path from string view
     template <typename CharT, typename AllocT>
-    static constexpr void render_path(stl::basic_string_view<CharT> const                        storage,
-                                      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out) {
+    static constexpr void render_path(
+      stl::basic_string_view<CharT> const                        storage,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      [[maybe_unused]] bool                                      is_opaque = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         out += storage;
+    }
+
+    template <URIComponents CompT, typename CharT, typename AllocT>
+    static constexpr void render_path(
+      CompT const&                                               comp,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      bool                                                       is_opaque = false) {
+        if constexpr (URIStructuredComponents<CompT>) {
+            using slug_type = typename CompT::seg_type;
+            render_path(stl::span<slug_type const>{uri::path(comp)}, out, is_opaque);
+        } else {
+            render_path(uri::path(comp), out, is_opaque);
+        }
+    }
+
+    /// Only use this in quick tests, this possibly allocates.
+    template <URIComponents CompT, typename StrT = stl::string>
+    [[nodiscard]] static constexpr decltype(auto) render_path(CompT const& comp, bool is_opaque = false) {
+        if constexpr (URIStructuredComponents<CompT>) {
+            using slug_type = typename stl::remove_cvref_t<CompT>::seg_type;
+            StrT out;
+            render_path(stl::span<slug_type const>{comp.path}, out, is_opaque);
+            return out;
+        } else {
+            return path(comp);
+        }
+    }
+
+    template <URIComponents CompT>
+    [[nodiscard]] static constexpr bool starts_with_double_slashes(CompT const& comp) noexcept {
+        if constexpr (URIStructuredComponents<CompT>) {
+            auto const& path = uri::path(comp);
+            return path.size() >= 2 && path[0].empty() && path[1].empty();
+        } else {
+            return uri::path(comp).starts_with("//");
+        }
     }
 
     /**

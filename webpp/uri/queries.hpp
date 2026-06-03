@@ -46,16 +46,47 @@ namespace webpp::uri {
             return;
         }
         for (auto pos = storage.begin();;) {
-            auto const [name, value]  = *pos;
-            out                      += name;
-            if (!value.empty()) {
-                out += '=';
-                out += value;
+            if constexpr (istl::String<decltype(*pos)>) {
+                out += *pos;
+            } else {
+                auto const [name, value]  = *pos;
+                out                      += name;
+                if (!value.empty()) {
+                    out += '=';
+                    out += value;
+                }
             }
             if (++pos == storage.end()) {
                 break;
             }
             out += '&';
+        }
+    }
+
+    template <URIComponents CompT, typename CharT, typename AllocT>
+    static constexpr void render_queries(
+      CompT const&                                               comp,
+      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
+      uri_status_type const                                      status,
+      bool                                                       add_separators = false) {
+        if constexpr (URIStructuredComponents<CompT>) {
+            using key_type = typename CompT::map_type::value_type;
+            render_queries(stl::span<key_type const>{uri::queries(comp)}, out, status, add_separators);
+        } else {
+            render_queries(uri::queries(comp), out, status, add_separators);
+        }
+    }
+
+    /// Only use this in quick tests, this possibly allocates.
+    template <URIComponents CompT, typename StrT = stl::string>
+    [[nodiscard]] static constexpr decltype(auto) render_queries(CompT const& comp, bool add_separators = false) {
+        if constexpr (URIStructuredComponents<CompT>) {
+            using slug_type = typename stl::remove_cvref_t<CompT>::seg_type;
+            StrT out;
+            render_queries(stl::span<slug_type const>{comp.path}, out, add_separators);
+            return out;
+        } else {
+            return queries(comp);
         }
     }
 
