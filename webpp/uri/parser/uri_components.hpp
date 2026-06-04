@@ -311,7 +311,7 @@ namespace webpp::uri {
         using size_type             = typename string_type::size_type;
         using vec_type =
           stl::vector<string_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<string_type>>;
-        using pair_type = stl::pair<string_type const, string_type>;
+        using pair_type = stl::pair<string_type, string_type>;
         using map_type =
           stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
         using seg_type = string_type;
