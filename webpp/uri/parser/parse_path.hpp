@@ -153,26 +153,6 @@ namespace webpp::uri {
             return state >= 3 ? 0 : state;
         }
 
-        // https://url.spec.whatwg.org/#path-state
-        // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
-        // the empty string to url's path."
-        template <URIContext CtxT, typename BufferT>
-        [[nodiscard]] static constexpr bool should_append_empty_path_segment(
-          CtxT const&    ctx,
-          BufferT const& buffer) noexcept {
-            if constexpr (!CtxT::is_segregated) {
-                return buffer.empty() || buffer.back() != '/';
-            } else {
-                if (ctx.pos == ctx.end) {
-                    return true;
-                }
-                if (*ctx.pos == '/') {
-                    return false;
-                }
-                return !(is_special_scheme(ctx.status) && *ctx.pos == '\\');
-            }
-        }
-
         /// Handle special cases:
         ///   /.
         ///   /..
@@ -211,16 +191,16 @@ namespace webpp::uri {
                     if constexpr (is_continuous_path) {
                         auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
                         buffer.resize(seg_start);
-                        if (should_append_empty_path_segment(ctx, buffer)) {
+
+
+                        // https://url.spec.whatwg.org/#path-state
+                        // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
+                        // the empty string to url's path."
+                        if (buffer.empty() || buffer.back() != '/') {
                             buffer.push_back('/');
                         }
                     } else {
                         clear_segment(ctx, buffer);
-                        if constexpr (CtxT::is_segregated) {
-                            if (should_append_empty_path_segment(ctx, buffer)) {
-                                push_segment(path(ctx.out), create_buffer(ctx));
-                            }
-                        }
                     }
                     break;
 
@@ -243,18 +223,19 @@ namespace webpp::uri {
                             buffer.resize(prev_slash + 1U);
                         }
 
-                        // WHATWG URL Standard quote: "append the empty string to url's path."
-                        if (should_append_empty_path_segment(ctx, buffer)) {
+                        // https://url.spec.whatwg.org/#path-state
+                        // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
+                        // the empty string to url's path."
+                        if (buffer.empty() || buffer.back() != '/') {
                             buffer.push_back('/');
                         }
                     } else {
-                        pop_back_path(ctx);
-                        clear_segment(ctx, buffer);
-                        if constexpr (CtxT::is_segregated) {
-                            if (should_append_empty_path_segment(ctx, buffer)) {
-                                push_segment(path(ctx.out), create_buffer(ctx));
-                            }
+                        auto const& path = uri::path(ctx.out);
+                        // don't turn "/.." into a empty path
+                        if (path.size() != 1 || !path.front().empty()) [[unlikely]] {
+                            pop_back_path(ctx);
                         }
+                        clear_segment(ctx, buffer);
                     }
                     break;
 
