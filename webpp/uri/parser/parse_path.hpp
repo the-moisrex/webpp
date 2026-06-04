@@ -8,6 +8,7 @@
 #include "./special_schemes.hpp"
 #include "./uri_context.hpp"
 #include "./windows_drive_letter.hpp"
+#include "uri_components.hpp"
 
 namespace webpp::uri {
 
@@ -55,20 +56,30 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#shorten-a-urls-path
         template <URIContext CtxT>
         static constexpr void shorten_urls_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            auto const out_path = path(ctx.out);
+            decltype(auto) out_path = path(ctx.out);
 
             // If url's scheme is "file", path size is 1, and path[0] is a normalized Windows
             // drive letter, then return.
             if (is_file_scheme(scheme(ctx.out))) {
-                auto const is_single_normalized_drive_path = [&]() constexpr noexcept {
+                bool is_single_normalized_drive_path = false;
+
+                if constexpr (URIStructuredComponents<typename CtxT::component_type>) {
+                    if (out_path.size() == 1) {
+                        auto const& segment = out_path.front();
+                        if (segment.size() == 2) {
+                            is_single_normalized_drive_path =
+                              details::has_normalized_windows_driver_letter(segment.begin());
+                        }
+                    }
+                } else {
                     if (out_path.size() == 2) {
-                        return details::has_normalized_windows_driver_letter(out_path.begin());
+                        is_single_normalized_drive_path =
+                          details::has_normalized_windows_driver_letter(out_path.begin());
+                    } else if (out_path.size() == 3 && out_path.front() == '/') {
+                        is_single_normalized_drive_path =
+                          details::has_normalized_windows_driver_letter(out_path.begin() + 1);
                     }
-                    if (out_path.size() == 3 && out_path.front() == '/') {
-                        return details::has_normalized_windows_driver_letter(out_path.begin() + 1);
-                    }
-                    return false;
-                }();
+                }
 
                 if (is_single_normalized_drive_path) {
                     return;
