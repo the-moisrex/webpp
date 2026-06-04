@@ -21,11 +21,11 @@ namespace webpp::uri {
             using difference_type = stl::iter_difference_t<iterator>;
 
             // remove the last segment as well
-            if constexpr (URIStructuredComponents<typename CtxT::component_type>) {
+            if constexpr (CtxT::is_segregated) {
                 if (!ctx.out.path.empty()) {
                     ctx.out.path.pop_back();
                 }
-            } else if constexpr (URIModifiableComponents<typename CtxT::component_type>) {
+            } else if constexpr (CtxT::is_modifiable) {
                 auto& out = [&]() -> auto& {
                     if constexpr (URIHrefComponents<typename CtxT::component_type>) {
                         return ctx.out.href;
@@ -160,7 +160,7 @@ namespace webpp::uri {
         [[nodiscard]] static constexpr bool should_append_empty_path_segment(
           CtxT const&    ctx,
           BufferT const& buffer) noexcept {
-            if constexpr (istl::String<BufferT>) {
+            if constexpr (!CtxT::is_segregated) {
                 return buffer.empty() || buffer.back() != '/';
             } else {
                 if (ctx.pos == ctx.end) {
@@ -192,11 +192,11 @@ namespace webpp::uri {
             using stl::begin;
             using stl::end;
 
-            using buffer_type                            = stl::remove_cvref_t<decltype(buffer)>;
-            webpp_static_constexpr bool is_string_buffer = istl::String<buffer_type>;
+            webpp_static_constexpr bool is_string_buffer   = CtxT::is_modifiable;
+            webpp_static_constexpr bool is_continuous_path = !CtxT::is_segregated && is_string_buffer;
 
             auto segment_begin = begin(buffer);
-            if constexpr (is_string_buffer) {
+            if constexpr (is_continuous_path) {
                 // For string buffers, `segment_start` points at the beginning of the current segment.
                 auto const safe_segment_start = stl::min(segment_start, buffer.size());
                 segment_begin                 = begin(buffer) + static_cast<stl::ptrdiff_t>(safe_segment_start);
@@ -208,7 +208,7 @@ namespace webpp::uri {
 
                 // single dot found:
                 case 1: // .
-                    if constexpr (is_string_buffer) {
+                    if constexpr (is_continuous_path) {
                         auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
                         buffer.resize(seg_start);
                         if (should_append_empty_path_segment(ctx, buffer)) {
@@ -226,7 +226,7 @@ namespace webpp::uri {
 
                 // two dots found:
                 case 2: // ..
-                    if constexpr (is_string_buffer) {
+                    if constexpr (is_continuous_path) {
                         // Remove the current ".." segment, then shorten the previous path segment from `buffer`.
                         auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
                         buffer.resize(seg_start);
@@ -329,8 +329,7 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::next_percent_encode;
 
-        webpp_static_constexpr auto encode_set =
-          CtxT::is_modifiable || CtxT::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
+        webpp_static_constexpr auto encode_set = CtxT::is_modifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
 
         // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
         // Characters such as spaces must be percent-encoded, not dropped.
@@ -360,7 +359,7 @@ namespace webpp::uri {
         // That means path state must continue from the existing path list, not start from an empty one.
         auto const existing_path = path(ctx.out);
         if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
-            if constexpr (istl::String<decltype(buffer)>) {
+            if constexpr (CtxT::is_modifiable) {
                 if constexpr (CtxT::is_segregated) {
                     for (auto const& seg : existing_path) {
                         buffer.append(seg);
@@ -394,16 +393,21 @@ namespace webpp::uri {
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, segment_start)) {
                         ++ctx.pos; // ignore character
                         segment_start = buffer.size();
+                        if constexpr (CtxT::is_segregated) {
+                            clear_segment(ctx, buffer);
+                        }
                         continue;
                     }
                     end_segment(ctx, buffer);
+                    ++ctx.pos;
                     if constexpr (CtxT::is_segregated) {
                         push_segment(path(ctx.out), buffer);
+                        segment_start = 0U;
+                        clear_segment(ctx, buffer);
                     } else if constexpr (CtxT::is_modifiable) {
                         buffer.push_back('/');
+                        segment_start = buffer.size();
                     }
-                    ++ctx.pos;
-                    segment_start = buffer.size();
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
@@ -413,7 +417,12 @@ namespace webpp::uri {
                     }
                     continue;
                 [[unlikely]] default:
-                    set_warning(ctx.status, invalid_character);
+                    if constexpr (!CtxT::is_modifiable) {
+                        set(ctx.status, modification_required);
+                        return;
+                    } else {
+                        set_warning(ctx.status, invalid_character);
+                    }
                     break;
             }
             break;
