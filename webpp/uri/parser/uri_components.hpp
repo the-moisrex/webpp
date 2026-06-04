@@ -180,7 +180,7 @@ namespace webpp::uri {
     /**
      * Non-Owning completely
      */
-    template <istl::CharType CharT = char32_t>
+    template <istl::CharType CharT = char>
     struct [[nodiscard]] uri_components_u32_view {
         using seg_type         = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
         using string_view_type = stl::basic_string_view<CharT>;
@@ -211,7 +211,7 @@ namespace webpp::uri {
     /**
      * String View based, but still structured enough
      */
-    template <istl::CharType CharT = char32_t>
+    template <istl::CharType CharT = char>
     struct [[nodiscard]] uri_components_view {
         using string_type = stl::basic_string_view<CharT>;
         using seg_type    = string_type;
@@ -239,7 +239,7 @@ namespace webpp::uri {
     /**
      * String-Based, owning URI Components
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
+    template <istl::CharType CharT = char, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_owning {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -268,7 +268,7 @@ namespace webpp::uri {
      * Single-Source based URI Components.
      * Let's have one single href, and have components as string views pointing to that source
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
+    template <istl::CharType CharT = char, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_href {
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
         using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
@@ -303,7 +303,7 @@ namespace webpp::uri {
      *   - Queries are mapped (or rather vector of pairs).
      *   - Strings own their data.
      */
-    template <istl::CharType CharT = char32_t, typename AllocT = default_allocator_t<CharT>>
+    template <istl::CharType CharT = char, typename AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_structured {
         using char_type             = CharT;
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;

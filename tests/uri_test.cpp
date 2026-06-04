@@ -343,10 +343,8 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_EQ(uri::username(context.out), "username");
     EXPECT_EQ(uri::password(context.out), "password");
     EXPECT_EQ(uri::port(context.out), "1010");
-    if constexpr (!TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
-        EXPECT_EQ(uri::render_queries(context.out), "query1=one");
-    }
+    EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
+    EXPECT_EQ(uri::render_queries(context.out), "query1=one");
     EXPECT_EQ(uri::fragment(context.out), "hash");
     EXPECT_TRUE(uri::has_scheme(context.out));
     EXPECT_TRUE(uri::has_username(context.out));
@@ -366,10 +364,8 @@ TYPED_TEST(URITests, QueriesEnding) {
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_EQ(uri::hostname(context.out), "example.com");
     // EXPECT_EQ(uri::render_queries(context.out), "query1");
-    if constexpr (!TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
-        EXPECT_EQ(uri::render_queries(context.out), "query1=");
-    }
+    EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
+    EXPECT_EQ(uri::render_queries(context.out), "query1=");
 }
 
 TYPED_TEST(URITests, InvalidSchemes) {
