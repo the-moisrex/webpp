@@ -372,9 +372,6 @@ namespace webpp::uri {
                     if (details::handle_dots_in_paths<Options>(ctx, buffer, segment_start)) {
                         ++ctx.pos; // ignore character
                         segment_start = buffer.size();
-                        if constexpr (CtxT::is_segregated) {
-                            clear_segment(ctx, buffer);
-                        }
                         continue;
                     }
                     end_segment(ctx, buffer);
@@ -410,7 +407,11 @@ namespace webpp::uri {
 
         // https://url.spec.whatwg.org/#path-state
         // If URL is special, host is not null, and path is empty, append the empty string to path.
-        if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty()) {
+        bool is_path_empty = buffer.empty();
+        if constexpr (CtxT::is_segregated) {
+            is_path_empty &= path(ctx.out).empty();
+        }
+        if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && is_path_empty) {
             if constexpr (!CtxT::is_segregated) {
                 if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
@@ -418,6 +419,8 @@ namespace webpp::uri {
                     set(ctx.status, modification_required);
                     return;
                 }
+            } else {
+                push_segment(path(ctx.out), buffer); // buffer is empty, so this adds an empty segment
             }
         }
 
