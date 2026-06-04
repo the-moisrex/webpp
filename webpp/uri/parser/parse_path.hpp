@@ -357,24 +357,22 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#file-state
         //
         // That means path state must continue from the existing path list, not start from an empty one.
-        auto const existing_path = path(ctx.out);
-        if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
-            if constexpr (CtxT::is_modifiable) {
-                if constexpr (CtxT::is_segregated) {
-                    for (auto const& seg : existing_path) {
-                        buffer.append(seg);
+        // Only flat-string mode should copy the existing path into the buffer.
+        // In segregated mode, previous segments already live in ctx.out.path.
+        if constexpr (!CtxT::is_segregated) {
+            auto const existing_path = path(ctx.out);
+            if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
+                if constexpr (CtxT::is_modifiable) {
+                    buffer.append(existing_path.begin(), existing_path.end());
+                    assert(!buffer.empty());
+                    if (buffer.back() != '/') {
                         buffer.push_back('/');
                     }
+                    segment_start = buffer.size();
                 } else {
-                    buffer.append(existing_path.begin(), existing_path.end());
+                    set(ctx.status, modification_required);
+                    return;
                 }
-                if (!buffer.empty() && buffer.back() != '/') {
-                    buffer.push_back('/');
-                }
-                segment_start = buffer.size();
-            } else {
-                set(ctx.status, modification_required);
-                return;
             }
         }
 
@@ -402,12 +400,11 @@ namespace webpp::uri {
                     ++ctx.pos;
                     if constexpr (CtxT::is_segregated) {
                         push_segment(path(ctx.out), buffer);
-                        segment_start = 0U;
                         clear_segment(ctx, buffer);
                     } else if constexpr (CtxT::is_modifiable) {
                         buffer.push_back('/');
-                        segment_start = buffer.size();
                     }
+                    segment_start = buffer.size();
                     continue;
                 case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
                 case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
@@ -433,15 +430,13 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#path-state
         // If URL is special, host is not null, and path is empty, append the empty string to path.
         if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && buffer.empty()) {
-            if constexpr (CtxT::is_segregated) {
-                push_segment(path(ctx.out), stl::move(buffer));
-                clear_segment(ctx, buffer);
-                // we make the buffer empty, then later we add the empty buffer as well
-            } else if constexpr (CtxT::is_modifiable) {
-                buffer.push_back('/');
-            } else {
-                set(ctx.status, modification_required);
-                return;
+            if constexpr (!CtxT::is_segregated) {
+                if constexpr (CtxT::is_modifiable) {
+                    buffer.push_back('/');
+                } else {
+                    set(ctx.status, modification_required);
+                    return;
+                }
             }
         }
 
