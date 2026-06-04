@@ -4,6 +4,7 @@
 #define WEBPP_URI_QUERIES_HPP
 
 #include "./parser/parse_queries.hpp"
+#include "parser/uri_context.hpp"
 #include "uri_status.hpp"
 
 namespace webpp::uri {
@@ -80,13 +81,29 @@ namespace webpp::uri {
     /// Only use this in quick tests, this possibly allocates.
     template <URIComponents CompT, typename StrT = stl::string>
     [[nodiscard]] static constexpr decltype(auto) render_queries(CompT const& comp, bool add_separators = false) {
+        using enum uri_status;
         if constexpr (URIStructuredComponents<CompT>) {
-            using slug_type = typename stl::remove_cvref_t<CompT>::seg_type;
             StrT out;
-            render_queries(stl::span<slug_type const>{comp.path}, out, add_separators);
+            // Delegate to the correct function, faking a valid status
+            render_queries(comp, out, +valid | +has_non_null_queries, add_separators);
             return out;
         } else {
             return queries(comp);
+        }
+    }
+
+    /// Only use this in quick tests, this possibly allocates.
+    template <URIContext CtxT, typename StrT = stl::string>
+    [[nodiscard]] static constexpr decltype(auto) render_queries(CtxT const& ctx, bool add_separators = false) {
+        using enum uri_status;
+        if constexpr (CtxT::is_segregated) {
+            using key_type = typename CtxT::component_type::map_type::value_type;
+            StrT out;
+            // Delegate to the correct function, faking a valid status
+            render_queries(stl::span<key_type const>{queries(ctx.out)}, out, ctx.status, add_separators);
+            return out;
+        } else {
+            return queries(ctx.out);
         }
     }
 

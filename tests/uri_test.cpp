@@ -365,7 +365,7 @@ TYPED_TEST(URITests, QueriesEnding) {
     EXPECT_EQ(uri::hostname(context.out), "example.com");
     // EXPECT_EQ(uri::render_queries(context.out), "query1");
     EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
-    EXPECT_EQ(uri::render_queries(context.out), "query1=");
+    EXPECT_EQ(uri::render_queries(context), "query1=");
 }
 
 TYPED_TEST(URITests, InvalidSchemes) {
@@ -705,7 +705,7 @@ TYPED_TEST(URITests, DoubleEqual) {
     } else {
         EXPECT_EQ(uri::render_path(context.out), "/");
         EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
-        EXPECT_EQ(uri::render_queries(context.out), "one==a&page=====one");
+        EXPECT_EQ(uri::render_queries(context), "one==a&page=====one");
         EXPECT_EQ(uri::fragment(context.out), "hash");
     }
 }
@@ -720,7 +720,7 @@ TYPED_TEST(URITests, EmptyQueryName) {
     } else {
         EXPECT_EQ(uri::render_path(context.out), "/");
         EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
-        EXPECT_EQ(uri::render_queries(context.out), "=a&page=====one");
+        EXPECT_EQ(uri::render_queries(context), "=a&page=====one");
         EXPECT_EQ(uri::fragment(context.out), "hash");
     }
 }
