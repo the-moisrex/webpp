@@ -567,14 +567,14 @@ namespace webpp::uri {
         return has(+status, expected_err);
     }
 
-    /// Set Valid or Set Error
+    /// Set Valid or Set Error or Warning or Flags
     static constexpr void set(uri_status_type& status, uri_status const value) noexcept {
         // Things have gone very wrong if we have two validation errors being set.
         // But it's okay if we keep changing the valid status.
         assert((status & error_bit) != error_bit);
-        assert((+value & values_mask) != 0); // use set_flags/warning if it's not a value
-
-        status &= ~values_mask;
+        if ((+value & values_mask) != 0) [[likely]] {
+            status &= ~values_mask;
+        }
         status |= +value;
     }
 

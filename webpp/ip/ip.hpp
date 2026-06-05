@@ -6,6 +6,8 @@
 #include "../std/utility.hpp"
 
 #include <cstdint>
+#include <type_traits>
+#include <utility>
 
 namespace webpp {
 
@@ -108,6 +110,16 @@ namespace webpp {
         // the ip is using colon where it shouldn't
         invalid_colon_usage = +ip_address_status::invalid_colon_usage
     };
+
+    [[nodiscard]] static constexpr stl::underlying_type_t<inet_pton6_status> operator+(
+      inet_pton6_status const status) noexcept {
+        return stl::to_underlying(status);
+    }
+
+    [[nodiscard]] static constexpr stl::underlying_type_t<inet_pton4_status> operator+(
+      inet_pton4_status const status) noexcept {
+        return stl::to_underlying(status);
+    }
 
     [[nodiscard]] static constexpr bool is_valid(inet_pton4_status const status) noexcept {
         using enum inet_pton4_status;

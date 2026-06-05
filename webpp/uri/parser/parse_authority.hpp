@@ -100,32 +100,26 @@ namespace webpp::uri {
             return;
         }
         if (is_special_scheme(ctx.status)) {
-            if (*ctx.pos == '\\') [[unlikely]] {
-                set_warning(ctx.status, reverse_solidus_used);
-            }
-            set(ctx.status, valid_path);
+            set(ctx.status, *ctx.pos == '\\' ? reverse_solidus_used : valid_path);
             return;
         }
         if constexpr (!Options.state_override) {
             switch (*ctx.pos) {
                 case '?':
                     if constexpr (Options.parse_queries) {
-                        set(ctx.status, valid_queries);
                         ++ctx.pos;
                         clear_queries(ctx.out);
                         unset_flag(ctx.status, has_non_null_queries);
-                    } else {
-                        set_warning(ctx.status, invalid_character);
                     }
+                    set(ctx.status, Options.parse_queries ? valid_queries : invalid_character);
                     break;
                 case '#':
                     if constexpr (Options.parse_fragment) {
-                        set(ctx.status, valid_fragment);
                         ++ctx.pos;
                         clear_fragment(ctx.out);
-                    } else {
                         set_warning(ctx.status, invalid_character);
                     }
+                    set(ctx.status, Options.parse_fragment ? valid_fragment : invalid_character);
                     break;
                 default:
                     set(ctx.status, valid_path);

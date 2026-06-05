@@ -308,9 +308,7 @@ namespace webpp::uri::details {
                         break;
                 }
                 break;
-            default:
-                set(ctx.status, static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
-                break;
+            default: set(ctx.status, static_cast<uri_status>(error_bit | +ipv6_parsing_result)); break;
         }
     }
 
