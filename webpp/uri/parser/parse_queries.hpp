@@ -18,7 +18,7 @@ namespace webpp::uri {
 
     /// Parse into string-based queries components
     template <uri_options Options, URIContext CtxT>
-        requires(Options.parse_queries && !URIStructuredComponents<typename CtxT::component_type>)
+        requires(Options.parse_queries && !CtxT::is_segregated)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
 
@@ -35,7 +35,7 @@ namespace webpp::uri {
         }
 
         webpp_static_constexpr auto interesting_characters =
-          Options.parse_fragment && !Options.state_override ? ascii_bitmap('%', '#') : ascii_bitmap('%');
+          Options.parse_fragment && !Options.state_override ? ascii_bitmap('&', '%', '#') : ascii_bitmap('&', '%');
 
         auto const query_percent_encode_set =
           is_special_scheme(ctx.status) ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
@@ -44,6 +44,16 @@ namespace webpp::uri {
         // find the end of the queries
         while (!encode_or_validate(ctx, buffer, query_percent_encode_set, interesting_characters)) {
             switch (*ctx.pos) {
+                case '&':
+                    // remove things like '&&&&&&' in the queries
+                    if (buffer.back() != '&') [[likely]] {
+                        buffer.push_back('&');
+                    } else if constexpr (!CtxT::is_modifiable) {
+                        set(ctx.status, modification_required);
+                        return;
+                    }
+                    ++ctx.pos;
+                    continue;
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
@@ -89,7 +99,7 @@ namespace webpp::uri {
 
     /// Parse into a Structured queries (usually a vector<pair<string, string>>)
     template <uri_options Options, URIContext CtxT>
-        requires(Options.parse_queries && URIStructuredComponents<typename CtxT::component_type>)
+        requires(Options.parse_queries && CtxT::is_segregated)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
 
@@ -180,7 +190,9 @@ namespace webpp::uri {
             break;
         }
         end_segment(ctx, in_value ? value_buffer : key_buffer);
-        push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
+        if (!key_buffer.empty() || !value_buffer.empty()) {
+            push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
+        }
         set_flag(ctx.status, has_non_null_queries);
 
         if (ctx.pos == ctx.end) {
