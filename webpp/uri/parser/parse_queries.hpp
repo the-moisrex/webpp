@@ -56,7 +56,7 @@ namespace webpp::uri {
                     }
                     break;
                 case '%':
-                    if (!next_percent_encode(ctx, buffer)) {
+                    if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
@@ -65,7 +65,7 @@ namespace webpp::uri {
                         }
                     }
                     continue;
-                default:
+                [[unlikely]] default:
                     if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
                         skip_separator(ctx, buffer);
@@ -135,7 +135,7 @@ namespace webpp::uri {
                         stl::unreachable();
                     }
                 case '%':
-                    if (!next_percent_encode(ctx, !in_value ? key_buffer : value_buffer)) {
+                    if (!next_percent_encode(ctx, !in_value ? key_buffer : value_buffer)) [[unlikely]] {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
@@ -155,13 +155,17 @@ namespace webpp::uri {
                     continue;
                 case '&':
                     end_segment(ctx, in_value ? value_buffer : key_buffer);
-                    push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
-                    clear_segment(ctx, key_buffer);
-                    clear_segment(ctx, value_buffer);
+                    // Only push segment if it's not empty (both key and value)
+                    if (!key_buffer.empty() || !value_buffer.empty()) {
+                        push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
+                    } else [[unlikely]] {
+                        clear_segment(ctx, key_buffer);
+                        clear_segment(ctx, value_buffer);
+                    }
                     in_value = false;
                     ++ctx.pos;
                     continue;
-                default: {
+                [[unlikely]] default: {
                     if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
                     } else {
@@ -177,6 +181,7 @@ namespace webpp::uri {
         }
         end_segment(ctx, in_value ? value_buffer : key_buffer);
         push_segment(out, stl::move(key_buffer), stl::move(value_buffer));
+        set_flag(ctx.status, has_non_null_queries);
 
         if (ctx.pos == ctx.end) {
             set(ctx.status, valid);
