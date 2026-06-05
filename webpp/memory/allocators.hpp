@@ -240,23 +240,23 @@ namespace webpp {
     // using replace_allocators =
     //   istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
 
-    /**
-     * Get allocator of T, if it has an allocator, otherwise, revert back to the DefaultAllocatorType
-     */
-    template <typename T, typename DefaultAllocatorType = stl::allocator<typename T::value_type>>
-    struct allocator_type_from {
-        using type = DefaultAllocatorType;
-    };
+    // /**
+    //  * Get allocator of T, if it has an allocator, otherwise, revert back to the DefaultAllocatorType
+    //  */
+    // template <typename T, typename DefaultAllocatorType>
+    // struct allocator_type_from {
+    //     using type = DefaultAllocatorType;
+    // };
 
-    template <typename T, typename DefAllocT>
-        requires requires { typename T::allocator_type; }
-    struct allocator_type_from<T, DefAllocT> {
-        using type = typename T::allocator_type;
-    };
+    // template <typename T, typename DefAllocT>
+    //     requires requires { typename T::allocator_type; }
+    // struct allocator_type_from<T, DefAllocT> {
+    //     using type = typename T::allocator_type;
+    // };
 
-    // todo: use `allocator_from_tag` CPO as the default
-    template <typename T, typename DefaultAllocatorType = stl::allocator<typename T::value_type>>
-    using allocator_type_from_t = typename allocator_type_from<T, DefaultAllocatorType>::type;
+    // // todo: use `allocator_from_tag` CPO as the default
+    // template <typename T, typename DefaultAllocatorType = default_allocator_t<stl::byte>>
+    // using allocator_type_from_t = typename allocator_type_from<T, DefaultAllocatorType>::type;
 
 } // namespace webpp
 

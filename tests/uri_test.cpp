@@ -28,6 +28,10 @@ TEST(URIHelperTests, IIEquals) {
 }
 
 using Types = testing::Types<uri::uri_context<uri::uri_components_owning<char>>,
+                             //  uri::uri_context<uri::uri_components_href<char>>,
+                             //  uri::uri_context<uri::uri_components_u32<char>>,
+                             //  uri::uri_context<uri::uri_components_u32_view<char>>,
+                             //  uri::uri_context<uri::uri_components_view<char>>,
                              uri::uri_context<uri::uri_components_structured<char>>>;
 
 template <class T>

@@ -48,6 +48,17 @@ namespace webpp::uri {
                   (!URIModifiableComponents<typename stl::remove_cvref_t<T>::base_type>);
     };
 
+    template <typename T>
+    concept URIModifiableContext =
+      URIContext<T> && URIModifiableComponents<typename T::component_type> && T::is_modifiable;
+
+    template <typename T>
+    concept URIStructuredContext =
+      URIContext<T> && URIStructuredComponents<typename T::component_type> && T::is_segregated;
+
+    template <typename T>
+    concept URIHrefContext = URIContext<T> && URIHrefComponents<typename T::component_type>;
+
     /**
      * A class used during parsing a URI
      */
@@ -83,7 +94,6 @@ namespace webpp::uri {
         using seg_type       = typename component_type::seg_type;
         using char_type      = typename component_type::char_type;
         using iterator       = char_type const*;
-        using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
         static constexpr bool is_modifiable = component_type::is_modifiable;
@@ -105,19 +115,20 @@ namespace webpp::uri {
             return allocator_from(ctx.base);
         } else {
             static_assert_false(CompType, "No allocator available");
+            // return istl::nothing;
         }
     }
 
     /// Create a URI Context, and initialize it properly
-    template <URIContext CtxT>
+    template <URIModifiableContext CtxT>
     static constexpr CtxT
-    create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::allocator_type alloc = {})
+    create(typename CtxT::iterator beg, typename CtxT::iterator end, allocator_type_of<CtxT> const& inp_alloc = alloc)
       noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, alloc),
+          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
           .status = +uri_status::unparsed,
         };
         return ctx;
@@ -139,18 +150,18 @@ namespace webpp::uri {
     }
 
     /// Create a URI Context, and initialize it properly
-    template <URIContext CtxT>
+    template <URIModifiableContext CtxT>
         requires(!stl::is_void_v<typename CtxT::base_type>)
     static constexpr CtxT create(
-      typename CtxT::iterator       beg,
-      typename CtxT::iterator       end,
-      typename CtxT::base_type&&    base_ctx,
-      typename CtxT::allocator_type alloc = {}) noexcept(CtxT::is_nothrow) {
+      typename CtxT::iterator        beg,
+      typename CtxT::iterator        end,
+      typename CtxT::base_type&&     base_ctx,
+      allocator_type_of<CtxT> const& inp_alloc = alloc) noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, alloc),
+          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
           .base   = stl::move(base_ctx),
           .status = +uri_status::unparsed,
         };
@@ -158,15 +169,13 @@ namespace webpp::uri {
     }
 
     /// Create a new buffer/segment
-    template <URIContext CtxT>
-        requires(CtxT::is_modifiable)
+    template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
         return seg_type{get_allocator(ctx.out)};
     }
 
-    template <URIContext CtxT>
-        requires(CtxT::is_modifiable)
+    template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto
     create_buffer(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
@@ -185,8 +194,7 @@ namespace webpp::uri {
         return {.beg = beg, .end = end};
     }
 
-    template <URIContext CtxT>
-        requires(URIStructuredComponents<typename CtxT::component_type>)
+    template <URIStructuredContext CtxT>
     static constexpr segment<typename CtxT::component_type::vec_type::const_iterator> create_buffer(
       [[maybe_unused]] CtxT&                                  ctx,
       typename CtxT::component_type::vec_type::const_iterator beg,
@@ -194,8 +202,7 @@ namespace webpp::uri {
         return {.beg = beg, .end = end};
     }
 
-    template <URIContext CtxT>
-        requires(URIStructuredComponents<typename CtxT::component_type>)
+    template <URIStructuredContext CtxT>
     static constexpr segment<typename CtxT::component_type::map_type::const_iterator> create_buffer(
       [[maybe_unused]] CtxT&                                  ctx,
       typename CtxT::component_type::map_type::const_iterator beg,

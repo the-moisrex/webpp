@@ -27,7 +27,7 @@ namespace webpp::uri {
                 }
             } else if constexpr (CtxT::is_modifiable) {
                 auto& out = [&]() -> auto& {
-                    if constexpr (URIHrefComponents<typename CtxT::component_type>) {
+                    if constexpr (URIHrefContext<CtxT>) {
                         return ctx.out.href;
                     } else {
                         return ctx.out.path;

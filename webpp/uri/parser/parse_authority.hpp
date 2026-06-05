@@ -135,7 +135,7 @@ namespace webpp::uri {
         } else {
             // Otherwise, if state override is given and url’s host is null, append the empty string to
             // url’s path.
-            if constexpr (URIStructuredComponents<typename CtxT::component_type>) {
+            if constexpr (URIStructuredContext<CtxT>) {
                 if (!has_hostname(ctx.out)) {
                     push_segment(path(ctx.out), create_buffer(ctx));
                 }

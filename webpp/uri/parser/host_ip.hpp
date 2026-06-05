@@ -265,7 +265,7 @@ namespace webpp::uri::details {
                     set(ctx.status, ipv6_unclosed);
                     break;
                 }
-                if constexpr (URIModifiableComponents<typename CtxT::component_type>) {
+                if constexpr (URIModifiableContext<CtxT>) {
                     // re-generate the IPv6 string
                     istl::resize_and_overwrite(
                       buffer,
