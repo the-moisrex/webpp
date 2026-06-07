@@ -1962,6 +1962,36 @@ TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes8) {
     EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/path)URL") << details;
 }
 
+// 808 - Non-special schemes that some implementations might incorrectly treat as special (32)
+TYPED_TEST(URITests, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial32) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "turn:///test",
+    "base": null,
+    "href": "turn:///test",
+    "origin": "null",
+    "protocol": "turn:",
+    "username": "",
+    "password": "",
+    "host": "",
+    "hostname": "",
+    "port": "",
+    "pathname": "/test",
+    "search": "",
+    "hash": ""
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(turn:///test)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "turn") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx.out), "/test") << details;
+    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(turn:///test)URL") << details;
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));

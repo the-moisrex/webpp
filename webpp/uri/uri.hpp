@@ -70,9 +70,6 @@ namespace webpp::uri {
             if (!is_default_port(uri::port(uri::port(components)), uri::scheme(components))) {
                 render_port(uri::port(components), out, true);
             }
-        } else if (is_file_scheme(status)) {
-            out.push_back('/');
-            out.push_back('/');
         } else if (!is_opaque(status) && starts_with_double_slashes(components)) {
             // If url’s host is null, url does not have an opaque path, url’s path’s size is greater
             // than 1, and url’s path[0] is the empty string, then append U+002F (/) followed by
