@@ -1932,6 +1932,36 @@ TYPED_TEST(URITests, TestsForTheDistinctPercentEncodeSets2) {
       << details;
 }
 
+// 828 - Scheme relative path starting with multiple slashes (8)
+TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes8) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "/\\/\\//example.org/../path",
+    "base": "http://example.org/",
+    "href": "http://example.org/path",
+    "protocol": "http:",
+    "username": "",
+    "password": "",
+    "host": "example.org",
+    "hostname": "example.org",
+    "port": "",
+    "pathname": "/path",
+    "search": "",
+    "hash": ""
+})JSON-URL";
+    auto const            ctx =
+      this->template parse_from_string<TypeParam>(R"URL(/\/\//example.org/../path)URL", R"URL(http://example.org/)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "http") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "example.org") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx.out), "/path") << details;
+    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/path)URL") << details;
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));

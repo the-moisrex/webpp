@@ -32,7 +32,7 @@ namespace webpp {
             // ignoring the signal the new way
             // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
             // Set up the signal handler using sigaction()
-            struct sigaction sa;      // NOLINT(cppcoreguidelines-pro-type-member-init)
+            struct sigaction sa;      // NOLINT(*-pro-type-member-init)
             sa.sa_handler = SIG_IGN;  // Set the signal handler to SIG_IGN to ignore the signal
             ::sigemptyset(&sa.sa_mask);
             sa.sa_flags = SA_RESTART; // Set the SA_RESTART flag to automatically restart system calls
