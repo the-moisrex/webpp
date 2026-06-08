@@ -74,7 +74,7 @@ namespace webpp::uri {
     /// Path start state (I like to call it authority end because it's more RFC like to
     /// say that, but WHATWG likes to call it "path start state")
     template <uri_options Options, URIContext CtxT>
-    static constexpr void parse_authority_end(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+    static constexpr void parse_path_start(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
 
         using enum uri_status;

@@ -46,7 +46,7 @@ namespace webpp::uri {
         if (!has_host) [[likely]] {
             clear_hostname(ctx.out);
             set_flag(ctx.status, has_non_null_host);
-            set(ctx.status, valid_authority_end);
+            set(ctx.status, valid_path_start);
             return;
         }
 

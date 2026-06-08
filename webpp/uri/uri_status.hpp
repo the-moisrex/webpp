@@ -201,7 +201,7 @@ namespace webpp::uri {
         valid_authority           = valid_bit | 3U,
         valid_file_host           = valid_bit | 4U,
         valid_port                = valid_bit | 5U,
-        valid_authority_end       = valid_bit | 6U,
+        valid_path_start          = valid_bit | 6U,
         subdomain_too_long        = error_bit | 7U,  // the subdomain is too long
         dot_at_end                = error_bit | 8U,  // the domain ended unexpectedly
         begin_with_hyphen         = error_bit | 9U,  // the domain cannot start with hyphens
@@ -306,7 +306,7 @@ namespace webpp::uri {
                   "(a host optionally with username and password or port)."};
             case valid_file_host: return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
-            case valid_authority_end:
+            case valid_path_start:
                 return {
                   "Valid URI until the authority ends "
                   "(meaning the next part of the URI should be a path, query, "

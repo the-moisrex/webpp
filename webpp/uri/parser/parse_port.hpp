@@ -97,8 +97,7 @@ namespace webpp::uri {
         // If state override is given, then return failure
         // Set state to path start state and decrease pointer by 1.
         // https://url.spec.whatwg.org/#path-start-state
-        set_if<!Options.state_override>(ctx.status, valid_authority_end);
-        set_if<Options.state_override>(ctx.status, valid);
+        set(ctx.status, Options.state_override ? valid : valid_path_start);
     }
 
 } // namespace webpp::uri
