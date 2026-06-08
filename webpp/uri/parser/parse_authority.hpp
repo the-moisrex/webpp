@@ -55,7 +55,7 @@ namespace webpp::uri {
             case '/':
             case '#':
                 if constexpr (Options.empty_host_is_error) {
-                    if (is_special_scheme(ctx.status)) {
+                    if (is_special_scheme(ctx.status)) [[unlikely]] {
                         set(ctx.status, host_missing);
                         return;
                     }
@@ -82,7 +82,7 @@ namespace webpp::uri {
         if (ctx.pos == ctx.end) {
             // Otherwise, if state override is given and url’s host is null, append the empty string to url’s path
             // For owning/non-segregated components this is represented as a single '/'.
-            if (is_special_scheme(scheme(ctx.out)) && has_hostname(ctx.out) && !has_path(ctx.out)) {
+            if (is_special_scheme(scheme(ctx.out)) && has_flags(ctx.status, has_non_null_host) && !has_path(ctx.out)) {
                 auto buffer = create_buffer(ctx);
                 if constexpr (CtxT::is_segregated) {
                     ++ctx.pos;
@@ -130,7 +130,7 @@ namespace webpp::uri {
             // Otherwise, if state override is given and url’s host is null, append the empty string to
             // url’s path.
             if constexpr (URIStructuredContext<CtxT>) {
-                if (!has_hostname(ctx.out)) {
+                if (!has_flags(ctx.status, has_non_null_host)) {
                     push_segment(path(ctx.out), create_buffer(ctx));
                 }
             }

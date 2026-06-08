@@ -26,6 +26,7 @@ namespace webpp::uri::details {
                 }();
                 if (host_is_empty) {
                     clear_hostname(ctx.out);
+                    unset_flag(ctx.status, uri_status::has_non_null_host);
                     clear_segment(ctx, normalized_host);
                     return true;
                 }
@@ -37,13 +38,16 @@ namespace webpp::uri::details {
                     return false;
                 }
                 set_hostname(ctx.out, stl::move(host_out));
+                set_flag(ctx.status, uri_status::has_non_null_host);
             } else {
                 set_hostname(ctx.out, stl::move(normalized_host));
+                set_flag(ctx.status, uri_status::has_non_null_host);
             }
             clear_segment(ctx, normalized_host);
         } else {
             end_segment(ctx, normalized_host);
             set_hostname(ctx.out, normalized_host);
+            set_flag(ctx.status, uri_status::has_non_null_host);
         }
         return true;
     }
@@ -84,6 +88,7 @@ namespace webpp::uri::details {
                 parse_credentials(ctx, authority_begin, colon_pos);
                 ++ctx.pos;
                 clear_hostname(ctx.out);
+                unset_flag(ctx.status, uri_status::has_non_null_host);
                 clear_segment(ctx, buffer);
                 return true;
             }
@@ -269,6 +274,7 @@ namespace webpp::uri::details {
             }
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
+                unset_flag(ctx.status, has_non_null_host);
                 if (Options.empty_host_is_error && (is_special || has_flags(ctx.status, contains_credentials)))
                   [[unlikely]]
                 {
@@ -290,6 +296,7 @@ namespace webpp::uri::details {
             bool const                  should_continue =
               details::parse_host_ipv4<Options>(host_begin, ctx.pos, ipv4_octets_data.data(), ctx);
             if (!should_continue) {
+                set_flag(ctx.status, has_non_null_host);
                 return;
             }
             if constexpr (istl::String<decltype(buffer)>) {
@@ -297,6 +304,7 @@ namespace webpp::uri::details {
                 buffer.clear();
                 pure_ipv4{ipv4_octets_data}.to_string(buffer);
                 set_hostname(ctx.out, stl::move(buffer));
+                set_flag(ctx.status, has_non_null_host);
                 if (skip_last_char) {
                     ++ctx.pos;
                 }

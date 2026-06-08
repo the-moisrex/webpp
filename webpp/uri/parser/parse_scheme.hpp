@@ -99,7 +99,10 @@ namespace webpp::uri {
                 set_path(ctx.out,
                          base_component_buffer(ctx, path(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
                 set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
-                if (!queries(ctx.out).empty()) {
+                if (has_hostname(ctx.base)) {
+                    set_flag(ctx.status, has_non_null_host);
+                }
+                if (has_queries(ctx.out)) {
                     set_flag(ctx.status, has_non_null_queries);
                 }
             }
@@ -175,9 +178,11 @@ namespace webpp::uri {
             details::set_scheme(ctx, details::file_scheme<char_type>);
 
             // Set url’s host to the empty string.
+            // Empty string != null
             clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
 
-            if (ctx.pos == ctx.end) {
+            if (ctx.pos == ctx.end) [[unlikely]] {
                 set(ctx.status, valid);
                 return;
             }
@@ -197,7 +202,10 @@ namespace webpp::uri {
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                     set_path(ctx.out, base_component_buffer(ctx, path(ctx.base))); // list clone
                     set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
-                    if (!queries(ctx.out).empty()) {
+                    if (has_hostname(ctx.base)) {
+                        set_flag(ctx.status, has_non_null_host);
+                    }
+                    if (has_queries(ctx.out)) {
                         set_flag(ctx.status, has_non_null_queries);
                     }
 

@@ -21,10 +21,10 @@ namespace webpp::uri {
      */
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using enum uri_status;
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
-
-        assert(has_flags(ctx.status, uri_status::file_scheme));
+        assert(has_flags(ctx.status, file_scheme));
 
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
@@ -34,11 +34,13 @@ namespace webpp::uri {
                         break;
                     }
                 }
-                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
-                set(ctx.status, uri_status::valid_path);
+                set_warning(ctx.status, windows_drive_letter_as_host);
+                set(ctx.status, valid_path);
                 return;
             }
         }
+
+        auto* host_beg = ctx.pos;
 
         webpp_static_constexpr auto parsing_options = []() consteval {
             uri_options options         = Options;
@@ -49,12 +51,21 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
-        if (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out))) {
+
+        // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
+        assert(ctx.pos == ctx.end || *ctx.pos == '/' || *ctx.pos == '\\' || *ctx.pos == '?' || *ctx.pos == '#');
+
+        // If host is "localhost", then set host to the empty string.
+        // Empty string != null
+        if (ctx.pos == ctx.end || host_beg == ctx.pos ||
+            (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out))))
+        {
             clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
         }
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
+                set_warning(ctx.status, windows_drive_letter_as_host);
             }
         }
     }
@@ -95,6 +106,9 @@ namespace webpp::uri {
     static constexpr void opaque_host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
+        using details::ascii_bitmap;
+        using details::encode_or_validate;
+        using details::next_percent_encode;
 
         // in opaque hosts, IPv6 should work also; in specs, it's being checked in `host parsing` before
         // we get into opaque parsing.
@@ -103,7 +117,48 @@ namespace webpp::uri {
             return;
         }
 
-        // todo
+        ctx.pos = pos;
+
+        // A URL code point is an ASCII alphanumeric, "!", "$", "&", "'", "(", ")", "*", "+", ",", "-", ".",
+        // "/", ":", ";", "=", "?", "@", "_", "~", or a scalar value greater than U+007F.
+        webpp_static_constexpr ascii_bitmap ascii_url_code_points{ALPHA_DIGIT<char>, details::SUB_DELIMS<char>};
+        webpp_static_constexpr ascii_bitmap url_code_points_or_percent{
+          details::NON_ASCII_CODE_UNITS,
+          ascii_bitmap{ascii_url_code_points, '/', ':', '?', '@', '-', '.', '_', '~', '%'}
+        };
+        webpp_static_constexpr ascii_bitmap invalid_url_units = ascii_bitmap{}.except(url_code_points_or_percent);
+        webpp_static_constexpr ascii_bitmap
+          invalid_host_chars{details::FORBIDDEN_HOST_CODE_POINTS, invalid_url_units, ascii_bitmap{'%'}};
+
+        auto buffer = create_buffer(ctx);
+        while (!encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
+            if (details::FORBIDDEN_HOST_CODE_POINTS.contains(*ctx.pos)) [[unlikely]] {
+                set(ctx.status, invalid_host_code_point);
+                return;
+            }
+            if (*ctx.pos == '%') {
+                if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                    set_warning(ctx.status, invalid_character);
+                }
+                continue;
+            }
+            set_warning(ctx.status, invalid_character);
+            if constexpr (CtxT::is_modifiable) {
+                encode_uri_component<uri_encoding_policy::encode_chars>(
+                  *ctx.pos,
+                  buffer,
+                  details::C0_CONTROL_ENCODE_SET);
+                ++ctx.pos;
+            } else if (details::C0_CONTROL_ENCODE_SET.contains(*ctx.pos)) {
+                set(ctx.status, modification_required);
+                return;
+            } else {
+                ++ctx.pos;
+            }
+        }
+        end_segment(ctx, buffer);
+        set_hostname(ctx.out, stl::move(buffer));
+        set_flag(ctx.status, has_non_null_host);
     }
 
     /**
@@ -168,16 +223,20 @@ namespace webpp::uri {
                 break;
             case 0: // possible IPv4
                 if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-                    details::parse_host_ipv4<Options>(pos, end, ctx);
+                    if (details::parse_host_ipv4<Options>(pos, end, ctx)) {
+                        set_flag(ctx.status, has_non_null_host);
+                    }
                     return;
                 }
                 set_hostname(ctx, pos, end);
+                set_flag(ctx.status, has_non_null_host);
                 return;
             case cp_type::no_ip_val:
                 // fast path:
                 // the host is fully in valid ascii characters already, and also we don't need to check for
                 // ipv4 either, it includes invalid ipv4 characters.
                 set_hostname(ctx, pos, end);
+                set_flag(ctx.status, has_non_null_host);
                 return;
             [[unlikely]] case cp_type::forb_val:
                 break; // forbidden code points:
@@ -200,7 +259,9 @@ namespace webpp::uri {
 
         // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
         if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-            details::parse_host_ipv4<Options>(pos, end, ctx);
+            if (details::parse_host_ipv4<Options>(pos, end, ctx)) {
+                set_flag(ctx.status, has_non_null_host);
+            }
             return;
         }
 
@@ -215,6 +276,7 @@ namespace webpp::uri {
                 return;
             }
             set_hostname(ctx.out, out);
+            set_flag(ctx.status, has_non_null_host);
         } else {
             // Only validate, no conversion:
             auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, pos);
@@ -223,6 +285,7 @@ namespace webpp::uri {
                 return;
             }
             set_hostname(ctx.out, sbeg, pos);
+            set_flag(ctx.status, has_non_null_host);
         }
     }
 

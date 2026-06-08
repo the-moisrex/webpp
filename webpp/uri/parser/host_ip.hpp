@@ -283,7 +283,7 @@ namespace webpp::uri::details {
                     set_hostname(ctx.out, buffer);
                 }
                 // set_hostname(ctx.out, ipv6_bytes);
-                set_flag(ctx.status, has_non_empty_host);
+                set_flag(ctx.status, has_non_null_host);
                 ++ctx.pos;
                 if (ctx.pos == ctx.end) {
                     set(ctx.status, valid_path);

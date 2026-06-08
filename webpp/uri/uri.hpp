@@ -22,6 +22,10 @@ namespace webpp::uri {
         return has_flags(status, uri_status::opaque_path);
     }
 
+    [[nodiscard]] static constexpr bool has_non_null_host(uri_status_type const status) noexcept {
+        return has_flags(status, uri_status::has_non_null_host);
+    }
+
     /// Get port as a number, -1 if invalid
     template <typename CharT>
     [[nodiscard]] static constexpr int port(stl::basic_string_view<CharT> const port_view) noexcept {
@@ -55,7 +59,7 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#concept-url-serializer
 
         render_scheme(uri::scheme(components), out, true);
-        if (uri::has_hostname(components)) {
+        if (has_non_null_host(status)) {
             out.push_back('/');
             out.push_back('/');
             if (uri::has_credentials(components)) {
@@ -310,6 +314,7 @@ namespace webpp::uri {
 
         constexpr void clear_hostname() noexcept(is_nothrow) {
             uri::clear_hostname(components);
+            unset_flag(m_status, uri_status::has_non_null_host);
         }
 
         constexpr void clear_port() noexcept(is_nothrow) {
