@@ -96,9 +96,10 @@ namespace webpp::uri {
                 set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
                 set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                 set_port(ctx.out, base_component_buffer(ctx, port(ctx.base)));
-                set_path(ctx.out,
-                         base_component_buffer(ctx, path(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
-                set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                set_path(
+                  ctx.out,
+                  base_component_buffer(ctx, path_view(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
+                set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
                 if (has_hostname(ctx.base)) {
                     set_flag(ctx.status, has_non_null_host);
                 }
@@ -137,31 +138,44 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#file-slash-state
             using enum uri_status;
 
-            if (ctx.pos != ctx.end) {
-                auto slash_pos = ctx.pos;
-                if (ascii::inc_if(2U, slash_pos, ctx.end, '/', '\\')) {
-                    if (*ctx.pos == '\\' || *(ctx.pos + 1) == '\\') [[unlikely]] {
-                        set_warning(ctx.status, reverse_solidus_used);
-                    }
-                    ctx.pos = slash_pos;
+            if (ctx.pos == ctx.end) [[unlikely]] {
+                set(ctx.status, valid);
+                return;
+            }
+
+            // Our file scheme might have a host for some reason!
+            switch (*ctx.pos) {
+                case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
+                case '/':
+                    ++ctx.pos;
                     set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
                     return;
-                }
-                switch (*ctx.pos) {
-                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                    case '/': set(ctx.status, valid_path); return;
-                    default: break;
-                }
+                default: break;
             }
+
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
 
-                    // todo:
-                    // 2. If the code point substring from pointer to the end of input does not
-                    //    start with a Windows drive letter and base's path[0] is a normalized
-                    //    Windows drive letter, then append base's path[0] to url's path.
-                    //    This is a (platform-independent) Windows drive letter quirk.
+                    if constexpr (Options.handle_windows_drive_letters) {
+                        // 2. If the code point substring from pointer to the end of input does not
+                        //    start with a Windows drive letter and base's path[0] is a normalized
+                        //    Windows drive letter, then append base's path[0] to url's path.
+                        //    This is a (platform-independent) Windows drive letter quirk.
+                        if (has_path(ctx.base) && !details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                            auto const first_seg = details::first_path_segment(ctx.base);
+                            if (first_seg.size() >= 2 &&
+                                details::has_normalized_windows_driver_letter(first_seg.begin())) [[unlikely]]
+                            {
+                                if constexpr (CtxT::is_modifiable) {
+                                    push_segment(uri::path(ctx.out), first_seg);
+                                } else {
+                                    set(ctx.status, modification_required);
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             set(ctx.status, valid_path);
@@ -191,7 +205,10 @@ namespace webpp::uri {
                 [[unlikely]] case '\\':
                     set_warning(ctx.status, reverse_solidus_used);
                     [[fallthrough]];
-                case '/': file_slash_state<Options>(ctx); return;
+                case '/':
+                    ++ctx.pos;
+                    file_slash_state<Options>(ctx);
+                    return;
                 default: break;
             }
 
@@ -200,8 +217,8 @@ namespace webpp::uri {
                     // Set url’s host to base’s host, url’s path to a clone of base’s path,
                     // and url’s query to base’s query.
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
-                    set_path(ctx.out, base_component_buffer(ctx, path(ctx.base))); // list clone
-                    set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                    set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base))); // list clone
+                    set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
                     if (has_hostname(ctx.base)) {
                         set_flag(ctx.status, has_non_null_host);
                     }
@@ -271,8 +288,8 @@ namespace webpp::uri {
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
                         set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
-                        set_path(ctx.out, base_component_buffer(ctx, path(ctx.base)));
-                        set_queries(ctx.out, base_component_buffer(ctx, queries(ctx.base)));
+                        set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base)));
+                        set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
                         if (!queries(ctx.out).empty()) {
                             set_flag(ctx.status, has_non_null_queries);
                         }
@@ -430,7 +447,8 @@ namespace webpp::uri {
                 ++ctx.pos;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
-                if (!ascii::inc_if(2U, ctx.pos, ctx.end, '/', '\\')) [[unlikely]] {
+                auto* pos_copy = ctx.pos;
+                if (!ascii::inc_if(2U, pos_copy, ctx.end, '/', '\\')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
                 details::file_state<Options>(ctx);

@@ -74,7 +74,7 @@ namespace webpp::uri {
             using key_type = typename CompT::map_type::value_type;
             render_queries(stl::span<key_type const>{uri::queries(comp)}, out, status, add_separators);
         } else {
-            render_queries(uri::queries(comp), out, status, add_separators);
+            render_queries(uri::queries_view(comp), out, status, add_separators);
         }
     }
 

@@ -5,6 +5,7 @@
 
 #include "./constants.hpp"
 #include "./special_schemes.hpp"
+#include "./uri_context.hpp"
 
 #include <iterator>
 
@@ -139,10 +140,9 @@ namespace webpp::uri::details {
             // If buffer starts with a Windows drive letter, the parser records a warning and
             // normalizes the drive separator to a colon.
             set_warning(ctx.status, windows_drive_letter_used);
-            if (ctx.pos != ctx.end && (*ctx.pos == '/' || *ctx.pos == '\\')) {
-                buffer.push_back('/');
-                ++ctx.pos;
-            }
+            assert(ctx.pos != ctx.end);
+            buffer.push_back('/');
+            ++ctx.pos;
             buffer.push_back(letters[0]);
             buffer.push_back(letters[1]);
             ctx.pos += 2;

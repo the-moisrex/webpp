@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
+#include "../../strings/peek.hpp"
 #include "../uri_status.hpp"
 #include "./idna_to_ascii.hpp"
 #include "./parse_authority_pieces.hpp"
@@ -26,21 +27,28 @@ namespace webpp::uri {
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
         assert(has_flags(ctx.status, file_scheme));
 
+        auto* host_end = ctx.pos;
+        bool  has_host = ascii::inc_until(host_end, ctx.end, '/', '\\', '?', '#');
+
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
-                while (*ctx.pos != '/' && *ctx.pos != '\\') {
-                    // we have to move one back because the "path" needs to start with a "/" or a "\"
-                    if (--ctx.pos == ctx.beg) {
-                        break;
-                    }
-                }
                 set_warning(ctx.status, windows_drive_letter_as_host);
                 set(ctx.status, valid_path);
                 return;
             }
         }
 
-        auto* host_beg = ctx.pos;
+
+        // if buffer is the empty string, then:
+        //   - Set url's host to the empty string.
+        //   - If state override is given, then return.
+        //   - Set state to path start state.
+        if (!has_host) [[likely]] {
+            clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
+            set(ctx.status, valid_authority_end);
+            return;
+        }
 
         webpp_static_constexpr auto parsing_options = []() consteval {
             uri_options options         = Options;
@@ -51,15 +59,17 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
+        if (has_error(ctx.status)) [[unlikely]] {
+            return;
+        }
 
         // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
-        assert(ctx.pos == ctx.end || *ctx.pos == '/' || *ctx.pos == '\\' || *ctx.pos == '?' || *ctx.pos == '#');
+        assert(ctx.pos == ctx.end || *ctx.pos == '/' || *ctx.pos == '\\' || *stl::prev(ctx.pos) == '?' ||
+               *stl::prev(ctx.pos) == '#');
 
         // If host is "localhost", then set host to the empty string.
         // Empty string != null
-        if (ctx.pos == ctx.end || host_beg == ctx.pos ||
-            (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out))))
-        {
+        if (ctx.pos == ctx.end || (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out)))) {
             clear_hostname(ctx.out);
             set_flag(ctx.status, has_non_null_host);
         }

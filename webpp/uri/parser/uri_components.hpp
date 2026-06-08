@@ -921,8 +921,17 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] static constexpr decltype(auto) queries(CompT&& comp) noexcept {
-        return make_view(stl::forward<CompT>(comp).queries);
+    [[nodiscard]] static constexpr auto& queries(CompT&& comp) noexcept {
+        return stl::forward<CompT>(comp).queries;
+    }
+
+    template <URIComponents CompT>
+    [[nodiscard]] static constexpr decltype(auto) queries_view(CompT&& comp) noexcept {
+        if constexpr (URIStructuredComponents<CompT>) {
+            return queries(stl::forward<CompT>(comp));
+        } else {
+            return make_view(queries(stl::forward<CompT>(comp)));
+        }
     }
 
     template <URIStructuredComponents CompT>
@@ -943,8 +952,17 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
-    [[nodiscard]] static constexpr decltype(auto) path(CompT&& comp) noexcept {
-        return make_view(stl::forward<CompT>(comp).path);
+    [[nodiscard]] static constexpr auto& path(CompT&& comp) noexcept {
+        return stl::forward<CompT>(comp).path;
+    }
+
+    template <URIComponents CompT>
+    [[nodiscard]] static constexpr decltype(auto) path_view(CompT&& comp) noexcept {
+        if constexpr (URIStructuredComponents<CompT>) {
+            return path(stl::forward<CompT>(comp));
+        } else {
+            return make_view(path(stl::forward<CompT>(comp)));
+        }
     }
 
     template <URIOwningComponents CompT>

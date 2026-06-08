@@ -61,7 +61,7 @@ namespace webpp::uri {
             using slug_type = typename CompT::seg_type;
             render_path(stl::span<slug_type const>{uri::path(comp)}, out, is_opaque);
         } else {
-            render_path(uri::path(comp), out, is_opaque);
+            render_path(uri::path_view(comp), out, is_opaque);
         }
     }
 
@@ -74,7 +74,7 @@ namespace webpp::uri {
             render_path(stl::span<slug_type const>{comp.path}, out, is_opaque);
             return out;
         } else {
-            return path(comp);
+            return uri::path(comp);
         }
     }
 

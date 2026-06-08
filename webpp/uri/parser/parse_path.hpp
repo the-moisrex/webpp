@@ -14,6 +14,38 @@ namespace webpp::uri {
 
     namespace details {
 
+        /// Extract the first segment of a path from the URI Context
+        /// Constraint: path actually must have a first segment.
+        template <URIComponents CompT>
+        [[nodiscard]] static constexpr decltype(auto) first_path_segment(CompT const& comps) noexcept {
+            decltype(auto) out_path = path(comps);
+
+            if constexpr (URIStructuredComponents<CompT>) {
+                // In segregated mode, the path is stored as a container of segments
+                assert(!out_path.empty());
+                return out_path.front();
+            } else {
+                // In continuous mode, the path is a flat string
+                using char_type     = typename CompT::char_type;
+                using str_view_type = stl::basic_string_view<char_type>;
+                str_view_type path_view{out_path.data(), out_path.size()};
+
+                // Find the start of the first segment (skip leading slashes)
+                auto const start = path_view.find_first_not_of('/');
+                if (start == str_view_type::npos) { // Empty segment
+                    return str_view_type{};
+                }
+
+                // Find the end of the first segment
+                auto const end = path_view.find_first_of('/', start);
+                if (end == str_view_type::npos) {
+                    return path_view.substr(start);
+                }
+
+                return path_view.substr(start, end - start);
+            }
+        }
+
         /// Remove the last segment of a path
         template <URIContext CtxT>
         static constexpr void pop_back_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {

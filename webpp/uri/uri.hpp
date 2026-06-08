@@ -277,11 +277,11 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr string_view_type path_view() const noexcept {
-            return uri::path(components);
+            return uri::path_view(components);
         }
 
         [[nodiscard]] constexpr string_view_type queries_view() const noexcept {
-            return uri::queries(components);
+            return uri::queries_view(components);
         }
 
         [[nodiscard]] constexpr auto path() const noexcept {

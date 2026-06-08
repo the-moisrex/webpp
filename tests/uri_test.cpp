@@ -1992,6 +1992,46 @@ TYPED_TEST(URITests, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTre
     EXPECT_EQ(uri::href(ctx), R"URL(turn:///test)URL") << details;
 }
 
+// 82 - See ../README.md for a description of the format. (82)
+TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat82) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "file://example%/",
+    "base": null,
+    "failure": true
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(file://example%/)URL");
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+}
+
+// 536 - # File URLs and many (back)slashes (3)
+TYPED_TEST(URITests, FileUrlsAndManyBackSlashes3) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "file:\\\\\\\\?fox",
+    "base": null,
+    "href": "file:////?fox",
+    "protocol": "file:",
+    "username": "",
+    "password": "",
+    "host": "",
+    "hostname": "",
+    "port": "",
+    "pathname": "//",
+    "search": "?fox",
+    "hash": ""
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(file:\\\\?fox)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx.out), "//") << details;
+    EXPECT_EQ(uri::render_queries(ctx.out), "fox") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(file:////?fox)URL") << details;
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));
