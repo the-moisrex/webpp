@@ -13,7 +13,7 @@ namespace webpp::uri {
         requires(!Options.parse_queries)
     static constexpr void parse_queries(CtxT& ctx) noexcept {
         using enum uri_status;
-        set(ctx.status, ctx.pos == ctx.end ? valid : invalid_queries_character);
+        set(ctx.status, ctx.pos == ctx.end ? valid : queries_not_supported);
     }
 
     /// Parse into string-based queries components

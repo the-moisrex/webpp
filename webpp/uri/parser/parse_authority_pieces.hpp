@@ -161,9 +161,8 @@ namespace webpp::uri::details {
                     return;
                 case ':':
                     if constexpr (!Options.parse_credentials && !Options.parse_port) {
-                        set_warning(ctx.status, invalid_character);
-                        ++ctx.pos;
-                        continue;
+                        set(ctx.status, port_not_supported);
+                        return;
                     } else if constexpr (!Options.parse_credentials) {
                         set(ctx.status, valid_port);
                     } else if constexpr (!Options.parse_port) {
@@ -219,24 +218,12 @@ namespace webpp::uri::details {
                     [[fallthrough]];
                 case '/': set(ctx.status, valid_path); break;
                 case '?':
-                    if constexpr (Options.parse_queries) {
-                        skip_last_char = true;
-                        set(ctx.status, valid_queries);
-                    } else {
-                        set_warning(ctx.status, invalid_character);
-                        skip_separator(ctx, buffer);
-                        continue;
-                    }
+                    skip_last_char = true;
+                    set(ctx.status, valid_queries);
                     break;
                 case '#':
-                    if constexpr (Options.parse_fragment) {
-                        skip_last_char = true;
-                        set(ctx.status, valid_fragment);
-                    } else {
-                        set_warning(ctx.status, invalid_character);
-                        skip_separator(ctx, buffer);
-                        continue;
-                    }
+                    skip_last_char = true;
+                    set(ctx.status, valid_fragment);
                     break;
                 case '%':
                     if (!is_special) {

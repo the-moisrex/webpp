@@ -248,17 +248,19 @@ namespace webpp::uri {
         invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
-        valid_fragment            = valid_bit | 10U,
-        unexpected_fragment_found = error_bit | 22U,
+        valid_fragment = valid_bit | 10U,
 
         // API errors:
-        setting_hostname_on_opaque_path = error_bit | 23U,
-        scheme_setter_invalid_input     = error_bit | 24U, // This indication of failure is used exclusively by
+        setting_hostname_on_opaque_path = error_bit | 22U,
+        scheme_setter_invalid_input     = error_bit | 23U, // This indication of failure is used exclusively by
                                                            // the Location object’s protocol setter.
-        hostname_type_mismatch          = error_bit | 25U, // The new hostname is not the same as the old one
+        hostname_type_mismatch          = error_bit | 24U, // The new hostname is not the same as the old one
+        port_not_supported              = error_bit | 25U,
         credentials_not_supported       = error_bit | 26U,
-        modification_required           = error_bit | 27U,
-        found_tabs_or_newlines          = error_bit | 28U, // only thrown on read-only APIs
+        queries_not_supported           = error_bit | 27U,
+        fragment_not_supported          = error_bit | 28U,
+        modification_required           = error_bit | 29U,
+        found_tabs_or_newlines          = error_bit | 30U, // only thrown on read-only APIs
 
         // Other flags (or states):
         special_scheme        = flags_bit >> 0U,                   // scheme is http/https/ws/wss/ftp/file
@@ -448,10 +450,6 @@ namespace webpp::uri {
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
-            case unexpected_fragment_found:
-                return {
-                  "You asked us not to parse fragments, but the input contains possible "
-                  "fragments or invalid '#' character."};
 
             // API errors:
             case setting_hostname_on_opaque_path:
@@ -463,7 +461,10 @@ namespace webpp::uri {
                 return {
                   "Hostname type mismatch; the new hostname is not the same type as the old one; for "
                   "example, you can't add a new label to the end of an IP address."};
+            case port_not_supported: return {"Ports are disabled, but found in the URI."};
             case credentials_not_supported: return {"User Info (credentials) are disabled, but found in the URI."};
+            case queries_not_supported: return {"Queries are disabled, but found in the URI."};
+            case fragment_not_supported: return {"Fragments (hashes) are disabled, but found in the URI."};
             case modification_required:
                 return {
                   "The URI requires to be modified, but we have given non-modifiable view-only URI components. Use "

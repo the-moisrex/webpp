@@ -27,7 +27,7 @@ namespace webpp::uri {
         using enum uri_status;
 
         if (ctx.pos == ctx.end) [[unlikely]] {
-            set_if<Options.empty_host_is_error>(ctx.status, host_missing);
+            set(ctx.status, Options.empty_host_is_error ? host_missing : valid);
             return;
         }
 
@@ -82,7 +82,7 @@ namespace webpp::uri {
         if (ctx.pos == ctx.end) {
             // Otherwise, if state override is given and url’s host is null, append the empty string to url’s path
             // For owning/non-segregated components this is represented as a single '/'.
-            if (is_special_scheme(scheme(ctx.out)) && has_flags(ctx.status, has_non_null_host) && !has_path(ctx.out)) {
+            if (is_special_scheme(scheme(ctx.out)) && has_flags(ctx.status, has_non_null_host)) {
                 auto buffer = create_buffer(ctx);
                 if constexpr (CtxT::is_segregated) {
                     ++ctx.pos;
@@ -99,42 +99,62 @@ namespace webpp::uri {
             set(ctx.status, valid);
             return;
         }
-        if (is_special_scheme(ctx.status)) {
-            set(ctx.status, *ctx.pos == '\\' ? reverse_solidus_used : valid_path);
+
+        if (is_special_scheme(ctx.status)) [[likely]] {
+            switch (*ctx.pos) {
+                [[unlikely]] case '\\':
+                    set_warning(ctx.status, reverse_solidus_used);
+                    [[fallthrough]];
+                case '/':
+                    // If c is neither U+002F (/) nor U+005C (\), then decrease pointer by 1.
+                    // Which means we have to ++ctx.pos otherwise.
+                    ++ctx.pos;
+                    break;
+                default: break;
+            }
+            set(ctx.status, valid_path);
             return;
         }
+
         if constexpr (!Options.state_override) {
             switch (*ctx.pos) {
                 case '?':
                     if constexpr (Options.parse_queries) {
                         ++ctx.pos;
                         clear_queries(ctx.out);
-                        unset_flag(ctx.status, has_non_null_queries);
+                        set_flag(ctx.status, has_non_null_queries);
                     }
-                    set(ctx.status, Options.parse_queries ? valid_queries : invalid_character);
+                    set(ctx.status, valid_queries);
                     break;
                 case '#':
                     if constexpr (Options.parse_fragment) {
                         ++ctx.pos;
                         clear_fragment(ctx.out);
-                        set_warning(ctx.status, invalid_character);
+                        set_flag(ctx.status, has_non_null_fragment);
                     }
-                    set(ctx.status, Options.parse_fragment ? valid_fragment : invalid_character);
+                    set(ctx.status, valid_fragment);
                     break;
-                default:
-                    set(ctx.status, valid_path);
-                    clear_path(ctx.out);
-                    break;
+                default: break;
             }
-        } else {
+        } else if (!has_flags(ctx.status, has_non_null_host) && ctx.pos == ctx.end) {
             // Otherwise, if state override is given and url’s host is null, append the empty string to
             // url’s path.
-            if constexpr (URIStructuredContext<CtxT>) {
-                if (!has_flags(ctx.status, has_non_null_host)) {
-                    push_segment(path(ctx.out), create_buffer(ctx));
-                }
+            if constexpr (!CtxT::is_modifiable) {
+                set(ctx.status, modification_required);
+            } else if constexpr (CtxT::is_segregated) {
+                push_segment(path(ctx.out), create_buffer(ctx));
+            } else {
+                path(ctx.out).push_back('/');
             }
+            set(ctx.status, valid);
+            return;
         }
+
+        // if (*ctx.pos == '/') {
+        //     // If c is not U+002F (/), then decrease pointer by 1.
+        //     ++ctx.pos;
+        // }
+        set(ctx.status, valid_path);
     }
 
 } // namespace webpp::uri

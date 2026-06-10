@@ -14,7 +14,7 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
-        set(ctx.status, ctx.pos == ctx.end ? valid : unexpected_fragment_found);
+        set(ctx.status, ctx.pos == ctx.end ? valid : fragment_not_supported);
     }
 
     template <uri_options Options, URIContext CtxT>
