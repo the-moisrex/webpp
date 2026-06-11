@@ -7,8 +7,14 @@
 #include "../std/string_view.hpp"
 #include "./parser/parse_path.hpp"
 #include "parser/uri_components.hpp"
+#include "parser/uri_context.hpp"
 
 namespace webpp::uri {
+
+    /// Check if the path contains an opaque path
+    [[nodiscard]] static constexpr bool is_opaque(uri_status_type const status) noexcept {
+        return has_flags(status, uri_status::opaque_path);
+    }
 
     /**
      * Including normal string and string view types
@@ -27,6 +33,9 @@ namespace webpp::uri {
         if (is_opaque) {
             out += storage.front();
         } else {
+            if (storage.empty()) {
+                return;
+            }
             for (auto seg = storage.begin();;) {
                 out += '/';
                 out += *seg;
@@ -72,6 +81,11 @@ namespace webpp::uri {
         } else {
             return uri::path(comp);
         }
+    }
+
+    template <URIContext CtxT, typename StrT = stl::string>
+    [[nodiscard]] static constexpr decltype(auto) render_path(CtxT const& ctx) {
+        return render_path(ctx.out, is_opaque(ctx.status));
     }
 
     template <URIComponents CompT>

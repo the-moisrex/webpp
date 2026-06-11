@@ -1134,7 +1134,7 @@ TYPED_TEST(URITests, InsaneUrl) {
     EXPECT_EQ(uri::password(ctx.out), "");
     EXPECT_EQ(uri::hostname(ctx.out), "");
     EXPECT_EQ(uri::port(ctx.out), "");
-    EXPECT_EQ(uri::render_path(ctx.out), "@EEEE");
+    EXPECT_EQ(uri::render_path(ctx), "@EEEE");
 }
 
 TYPED_TEST(URITests, EmptyURI) {

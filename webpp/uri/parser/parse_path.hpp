@@ -458,6 +458,7 @@ namespace webpp::uri {
             if constexpr (!CtxT::is_segregated) {
                 if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
+                    details::set_or_append_path(ctx, buffer);
                 } else {
                     set(ctx.status, modification_required);
                     return;
@@ -465,16 +466,17 @@ namespace webpp::uri {
             } else {
                 push_segment(path(ctx.out), buffer); // buffer is empty, so this adds an empty segment
             }
+        } else {
+            details::set_or_append_path(ctx, buffer);
         }
 
-        details::set_or_append_path(ctx, buffer);
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {
             ++ctx.pos;
-        } else {
-            set(ctx.status, valid);
+            return;
         }
+        set(ctx.status, valid);
     }
 
 } // namespace webpp::uri

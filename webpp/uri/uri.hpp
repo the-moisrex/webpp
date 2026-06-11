@@ -17,11 +17,6 @@
 
 namespace webpp::uri {
 
-    /// Check if the path contains an opaque path
-    [[nodiscard]] static constexpr bool is_opaque(uri_status_type const status) noexcept {
-        return has_flags(status, uri_status::opaque_path);
-    }
-
     [[nodiscard]] static constexpr bool has_non_null_host(uri_status_type const status) noexcept {
         return has_flags(status, uri_status::has_non_null_host);
     }

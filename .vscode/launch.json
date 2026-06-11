@@ -37,6 +37,11 @@
                     "description": "Disable URL",
                     "text": "set debuginfod urls",
                     "ignoreFailures": false
+                },
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
                 }
             ]
         },
