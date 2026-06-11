@@ -27,16 +27,12 @@ namespace webpp::uri {
         if (is_opaque) {
             out += storage.front();
         } else {
-            if (storage.empty()) {
-                return;
-            }
-            auto seg = storage.begin();
-            for (;;) {
+            for (auto seg = storage.begin();;) {
+                out += '/';
                 out += *seg;
                 if (++seg == storage.end()) {
                     break;
                 }
-                out += '/';
             }
         }
     }

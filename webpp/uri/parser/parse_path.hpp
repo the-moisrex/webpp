@@ -356,6 +356,17 @@ namespace webpp::uri {
 
         unset_flag(ctx.status, opaque_path);
 
+        if constexpr (!CtxT::is_segregated) {
+            if (ctx.pos != ctx.end && *ctx.pos != '/') {
+                if (ctx.pos != ctx.beg && *stl::prev(ctx.pos) == '/') {
+                    --ctx.pos;
+                } else {
+                    set(ctx.status, modification_required);
+                    return;
+                }
+            }
+        }
+
         auto        buffer        = create_buffer(ctx);
         stl::size_t segment_start = 0U;
 

@@ -64,8 +64,8 @@ namespace webpp::uri {
         }
 
         // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
-        assert(ctx.pos == ctx.end || *ctx.pos == '/' || *ctx.pos == '\\' || *stl::prev(ctx.pos) == '?' ||
-               *stl::prev(ctx.pos) == '#');
+        assert(ctx.pos == ctx.end || *stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\' ||
+               *stl::prev(ctx.pos) == '?' || *stl::prev(ctx.pos) == '#');
 
         // If host is "localhost", then set host to the empty string.
         // Empty string != null

@@ -216,7 +216,10 @@ namespace webpp::uri::details {
                         break;
                     }
                     [[fallthrough]];
-                case '/': set(ctx.status, valid_path); break;
+                case '/':
+                    skip_last_char = true;
+                    set(ctx.status, valid_path);
+                    break;
                 case '?':
                     skip_last_char = true;
                     set(ctx.status, valid_queries);
