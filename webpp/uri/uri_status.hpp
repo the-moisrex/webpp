@@ -26,9 +26,6 @@ namespace webpp::uri {
         /// parse Host Authority, which doesn't have credentials)
         bool parse_credentials = true;
 
-        /// Empty Host is an error (file:// URIs can have empty hosts)
-        bool empty_host_is_error = true;
-
         /// Parse port (file:// scheme doesn't have a port, this is used there)
         bool parse_port = true;
 
@@ -103,7 +100,6 @@ namespace webpp::uri {
 
     static constexpr uri_options strict_uri_parsing_options{
       .parse_credentials                         = true,
-      .empty_host_is_error                       = true,
       .parse_port                                = true,
       .parse_queries                             = true,
       .parse_fragment                            = true,
@@ -122,7 +118,6 @@ namespace webpp::uri {
 
     static constexpr uri_options loose_uri_parsing_options{
       .parse_credentials                         = true,
-      .empty_host_is_error                       = true,
       .parse_port                                = true,
       .parse_queries                             = true,
       .parse_fragment                            = true,

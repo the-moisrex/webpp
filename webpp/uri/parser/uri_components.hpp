@@ -899,6 +899,12 @@ namespace webpp::uri {
         comps.hostname = stl::move(value);
     }
 
+    template <typename CompT, typename Iter>
+        requires(URIOwningComponents<CompT> || URIStructuredComponents<CompT>)
+    static constexpr void set_hostname(CompT& comps, segment<Iter> const seg) noexcept(CompT::is_nothrow) {
+        comps.hostname.assign(seg.beg, seg.end);
+    }
+
     template <URIComponents CompT>
     [[nodiscard]] static constexpr decltype(auto) port(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).port);

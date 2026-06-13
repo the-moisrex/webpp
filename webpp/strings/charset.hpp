@@ -861,6 +861,16 @@ namespace webpp {
         return arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(code_point), last_el))];
     }
 
+    /// Can be used to calculate stop tokens
+    template <stl::integral T = stl::uint32_t>
+    [[nodiscard]] static consteval T or_all(auto arr) noexcept {
+        T res{};
+        for (auto const elm : arr) {
+            res |= elm;
+        }
+        return res;
+    }
+
     /**
      * Usage:
      *   auto mapping = categorize(...);
@@ -870,7 +880,7 @@ namespace webpp {
      *   }
      */
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter end) noexcept {
+    [[nodiscard]] static constexpr T or_all(stl::array<T, N> const& arr, Iter pos, Iter const end) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         using char_type        = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
         constexpr auto last_el = static_cast<char_type>(N - 1U);
@@ -888,7 +898,25 @@ namespace webpp {
     }
 
     template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
-    [[nodiscard]] static constexpr T or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter end, auto&& func) noexcept {
+    [[nodiscard]] static constexpr T
+    or_all(stl::array<T, N> const& arr, T const stop_token, Iter pos, Iter const end) noexcept {
+        static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
+        using char_type        = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
+        constexpr auto last_el = static_cast<char_type>(N - 1U);
+        T              res{};
+        // todo: this can be optimized using SIMD
+        for (; pos != end; ++pos) {
+            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos), last_el))];
+            if ((res & stop_token) == stop_token) {
+                break;
+            }
+        }
+        return res;
+    }
+
+    template <stl::integral T = stl::uint32_t, stl::size_t N, stl::random_access_iterator Iter>
+    [[nodiscard]] static constexpr T
+    or_all_if(stl::array<T, N> const& arr, Iter& pos, Iter const end, auto&& func) noexcept {
         static_assert(N <= 256, "We cast to uint8_t, which means you can't do more than 255");
         using char_type = stl::make_unsigned_t<stl::iter_value_t<Iter>>;
         T res{};

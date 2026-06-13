@@ -21,13 +21,14 @@ namespace webpp::uri {
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // We merged the host parser and authority parser to make it single-pass for most
-        // use cases. https://url.spec.whatwg.org/#authority-state
+        // use cases.
+        // https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state
 
         using enum uri_status;
 
         if (ctx.pos == ctx.end) [[unlikely]] {
-            set(ctx.status, Options.empty_host_is_error ? host_missing : valid);
+            set(ctx.status, host_missing);
             return;
         }
 
@@ -42,7 +43,7 @@ namespace webpp::uri {
         switch (*ctx.pos) {
             case ':':
                 if constexpr (!Options.parse_credentials) {
-                    set_if<Options.empty_host_is_error>(ctx.status, host_missing);
+                    set(ctx.status, host_missing);
                     return;
                 }
                 break;
@@ -54,16 +55,11 @@ namespace webpp::uri {
             case '\\':
             case '/':
             case '#':
-                if constexpr (Options.empty_host_is_error) {
-                    if (is_special_scheme(ctx.status)) [[unlikely]] {
-                        set(ctx.status, host_missing);
-                        return;
-                    }
-                    set(ctx.status, valid);
-                } else {
-                    set(ctx.status, valid);
+                if (is_special_scheme(ctx.status)) [[unlikely]] {
+                    set(ctx.status, host_missing);
                     return;
                 }
+                set(ctx.status, valid);
                 break;
             default: break;
         }

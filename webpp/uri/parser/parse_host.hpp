@@ -3,10 +3,10 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
-#include "../../strings/peek.hpp"
+#include "../../strings/charset.hpp"
 #include "../uri_status.hpp"
+#include "./host_ip.hpp"
 #include "./idna_to_ascii.hpp"
-#include "./parse_authority_pieces.hpp"
 #include "./uri_components.hpp"
 #include "./windows_drive_letter.hpp"
 
@@ -15,69 +15,6 @@ namespace webpp::uri {
     template <typename CharT>
     [[nodiscard]] static constexpr bool is_localhost_string(stl::basic_string_view<CharT> const host) noexcept {
         return iiequals_fl("localhost", host);
-    }
-
-    /**
-     * https://url.spec.whatwg.org/#file-host-state
-     */
-    template <uri_options Options, URIContext CtxT>
-    static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        using enum uri_status;
-        static_assert(Options.allow_file_hosts,
-                      "This function should not be reached if hosts in 'file://' scheme are not allowed.");
-        assert(has_flags(ctx.status, file_scheme));
-
-        auto* host_end = ctx.pos;
-        bool  has_host = ascii::inc_until(host_end, ctx.end, '/', '\\', '?', '#');
-
-        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
-                set_warning(ctx.status, windows_drive_letter_as_host);
-                set(ctx.status, valid_path);
-                return;
-            }
-        }
-
-
-        // if buffer is the empty string, then:
-        //   - Set url's host to the empty string.
-        //   - If state override is given, then return.
-        //   - Set state to path start state.
-        if (!has_host) [[likely]] {
-            clear_hostname(ctx.out);
-            set_flag(ctx.status, has_non_null_host);
-            set(ctx.status, valid_path_start);
-            return;
-        }
-
-        webpp_static_constexpr auto parsing_options = []() consteval {
-            uri_options options         = Options;
-            options.parse_credentials   = false;
-            options.empty_host_is_error = false;
-            options.parse_port          = false;
-            return options;
-        }();
-        details::parse_authority_pieces<parsing_options>(ctx);
-
-        if (has_error(ctx.status)) [[unlikely]] {
-            return;
-        }
-
-        // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
-        assert(ctx.pos == ctx.end || *stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\' ||
-               *stl::prev(ctx.pos) == '?' || *stl::prev(ctx.pos) == '#');
-
-        // If host is "localhost", then set host to the empty string.
-        // Empty string != null
-        if (ctx.pos == ctx.end || (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out)))) {
-            clear_hostname(ctx.out);
-            set_flag(ctx.status, has_non_null_host);
-        }
-        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-                set_warning(ctx.status, windows_drive_letter_as_host);
-            }
-        }
     }
 
     namespace details {
@@ -110,6 +47,20 @@ namespace webpp::uri {
             static_cast<void>(details::parse_host_ipv6(ctx));
             return false;
         }
+
+        template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
+        [[nodiscard]] static constexpr bool verify_possible_ipv4(CtxT& ctx, Iter pos, Iter end) noexcept {
+            using enum uri_status;
+            if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+                stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
+                if (!details::parse_host_ipv4<Options>(pos, end, ipv4_octets_data.data(), ctx)) {
+                    set_flag(ctx.status, has_non_null_host);
+                }
+                return true;
+            }
+            return false;
+        }
+
     } // namespace details
 
     template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
@@ -176,12 +127,11 @@ namespace webpp::uri {
      * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
      * calling this function; we don't provide `isOpaque` that the specs say because of that feature.
      */
-    template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
-    static constexpr void host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
+    template <uri_options Options, URIContext CtxT>
+    static constexpr void host_parser(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
-        using details::is_possible_ends_with_ipv4;
         using id_type  = stl::uint8_t;
         using iterator = typename CtxT::iterator;
 
@@ -189,12 +139,12 @@ namespace webpp::uri {
 
         // If isOpaque is true, then return the result of opaque-host parsing input.
         if (!is_special_scheme(ctx.status)) {
-            opaque_host_parser(ctx, pos, end);
+            opaque_host_parser<Options>(ctx, ctx.pos, ctx.end);
             return;
         }
 
         // Assert: input is not the empty string.
-        assert(pos != end);
+        assert(ctx.pos != ctx.end);
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
 
@@ -212,52 +162,54 @@ namespace webpp::uri {
         };
 
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS, .value = cp_type::forb_val},
-          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = cp_type::forb_val},
-          cat{.set = details::INVALID_IPV4, .value = cp_type::no_ipv4_val},
-          cat{.set = details::INVALID_IPV6, .value = cp_type::no_ipv6_val},
-          cat{.set = UPPER_ALPHA<char8_t>, .value = cp_type::upper_val},
-          cat{.set = u8"xX", .value = cp_type::x_val},
-          cat{.set = u8"nN", .value = cp_type::n_val},
-          cat{.set = u8"-", .value = cp_type::dash_val});
+          cat{.set = details::NON_ASCII_CODE_UNITS, .value = stl::to_underlying(cp_type::forb_val)},
+          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = stl::to_underlying(cp_type::forb_val)},
+          cat{.set = details::INVALID_IPV4, .value = stl::to_underlying(cp_type::no_ipv4_val)},
+          cat{.set = details::INVALID_IPV6, .value = stl::to_underlying(cp_type::no_ipv6_val)},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = stl::to_underlying(cp_type::upper_val)},
+          cat{.set = u8"xX", .value = stl::to_underlying(cp_type::x_val)},
+          cat{.set = u8"nN", .value = stl::to_underlying(cp_type::n_val)},
+          cat{.set = u8"-", .value = stl::to_underlying(cp_type::dash_val)});
 
         // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
-        iterator const sbeg   = pos;
-        auto const     status = or_all<id_type>(interesting_characters, pos, end);
+        iterator const sbeg   = ctx.pos;
+        auto const     status = or_all<id_type>(interesting_characters, ctx.pos, ctx.end);
         switch (status) {
-            case cp_type::upper_val:
+            case stl::to_underlying(cp_type::upper_val):
                 // todo: does a simple to_lower would suffice?
                 break;
             case 0: // possible IPv4
-                if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-                    if (details::parse_host_ipv4<Options>(pos, end, ctx)) {
-                        set_flag(ctx.status, has_non_null_host);
-                    }
+                if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
                     return;
                 }
-                set_hostname(ctx, pos, end);
+                set_hostname(ctx.out, segment{sbeg, ctx.pos});
                 set_flag(ctx.status, has_non_null_host);
                 return;
-            case cp_type::no_ip_val:
+            case stl::to_underlying(cp_type::no_ip_val):
                 // fast path:
                 // the host is fully in valid ascii characters already, and also we don't need to check for
                 // ipv4 either, it includes invalid ipv4 characters.
-                set_hostname(ctx, pos, end);
+                set_hostname(ctx.out, segment{sbeg, ctx.pos});
                 set_flag(ctx.status, has_non_null_host);
                 return;
-            [[unlikely]] case cp_type::forb_val:
+            [[unlikely]] case stl::to_underlying(cp_type::forb_val):
                 break; // forbidden code points:
             [[unlikely]] default:
                 // 'x', 'n' and '-' were found
-                if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 && !details::handle_ipv6(ctx, pos, end)) {
+                ctx.pos = sbeg;
+                if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
+                    !details::handle_ipv6(ctx, ctx.pos, ctx.end))
+                {
                     // either found a valid ipv6, an error occurred, or it's an empty string.
                     return;
                 }
 
-                if ((status | stl::to_underlying(cp_type::xnd_val)) == status && starts_with(pos, end, "xn-")) {
+                if ((status | stl::to_underlying(cp_type::xnd_val)) == status &&
+                    details::starts_with(ctx.pos, ctx.end, stl::string_view{"xn-"}))
+                {
                     // if it starts with `xn-`, then we go the slow path
                     // todo: we already know if newlines and tabs exist or not
                     break;
@@ -268,10 +220,7 @@ namespace webpp::uri {
         // slow path:
 
         // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-        if (is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
-            if (details::parse_host_ipv4<Options>(pos, end, ctx)) {
-                set_flag(ctx.status, has_non_null_host);
-            }
+        if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
             return;
         }
 
@@ -280,61 +229,76 @@ namespace webpp::uri {
             auto out = create_buffer(ctx);
 
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
-            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, pos, end, out);
+            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, out);
             if (!is_valid(to_ascii_res)) [[unlikely]] {
                 set_error(ctx.status, to_ascii_res);
                 return;
             }
-            set_hostname(ctx.out, out);
+            set_hostname(ctx.out, stl::move(out));
             set_flag(ctx.status, has_non_null_host);
         } else {
             // Only validate, no conversion:
-            auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, pos);
+            auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
             if (!is_valid(ascii_status)) [[unlikely]] {
                 set(ctx.status, ascii_status);
                 return;
             }
-            set_hostname(ctx.out, sbeg, pos);
+            set_hostname(ctx.out, segment{sbeg, ctx.pos});
             set_flag(ctx.status, has_non_null_host);
         }
     }
 
+    /**
+     * https://url.spec.whatwg.org/#file-host-state
+     */
     template <uri_options Options, URIContext CtxT>
-    static constexpr void parse_hostname(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        // https://url.spec.whatwg.org/#host-state
-        // https://url.spec.whatwg.org/#hostname-state
+    static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
+        static_assert(Options.allow_file_hosts,
+                      "This function should not be reached if hosts in 'file://' scheme are not allowed.");
+        assert(has_flags(ctx.status, file_scheme));
 
-        // If state override is given and url’s scheme is "file", then decrease pointer by 1 and set state to
-        // file host state.
-        if (Options.state_override && is_file_scheme(ctx.status)) {
-            set(ctx.status, valid_file_host);
+        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
+                set_warning(ctx.status, windows_drive_letter_as_host);
+                set(ctx.status, valid_path);
+                return;
+            }
+        }
+
+
+        host_parser<Options>(ctx);
+
+        if (has_error(ctx.status)) [[unlikely]] {
             return;
         }
 
-        bool inside_brackets = false;
-        for (;; ++ctx.pos) {
-            switch (*ctx.pos) {
-                case ':': {
-                    if (!inside_brackets) {
-                        // todo
-                    }
-                }
-                case '\\':
-                    if (!is_special_scheme(ctx.status)) {
-                        // todo: append to buffer
-                        break;
-                    }
-                    [[fallthrough]];
-                case '/':
-                case '?':
-                case '#':
-                case '?':
-                case '[':
-                case ']': inside_brackets = *ctx.pos == '['; [[fallthrough]];
-                default: break;
+        // if buffer is the empty string, then:
+        //   - Set url's host to the empty string.
+        //   - If state override is given, then return.
+        //   - Set state to path start state.
+        // if (!has_host) [[likely]] {
+        //     clear_hostname(ctx.out);
+        //     set_flag(ctx.status, has_non_null_host);
+        //     set(ctx.status, valid_path_start);
+        //     return;
+        // }
+
+
+        // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
+        // assert(ctx.pos == ctx.end || *stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\' ||
+        //        *stl::prev(ctx.pos) == '?' || *stl::prev(ctx.pos) == '#');
+
+        // If host is "localhost", then set host to the empty string.
+        // Empty string != null
+        if (ctx.pos == ctx.end || (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out)))) {
+            clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
+        }
+        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                set_warning(ctx.status, windows_drive_letter_as_host);
             }
-            // append to the buffer
         }
     }
 

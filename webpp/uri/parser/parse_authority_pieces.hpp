@@ -133,7 +133,7 @@ namespace webpp::uri::details {
                 if (must_contain_credentials) [[unlikely]] {
                     return;
                 }
-                if (Options.empty_host_is_error && !is_special && ctx.pos == authority_begin) [[unlikely]] {
+                if (!is_special && ctx.pos == authority_begin) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -199,13 +199,8 @@ namespace webpp::uri::details {
                         }
 
                         if (pre_port_pos == host_begin) {
-                            if constexpr (Options.empty_host_is_error) {
-                                set(ctx.status, host_missing);
-                                return;
-                            }
-                            if (ctx.pos == ctx.end) {
-                                set(ctx.status, valid_path);
-                            }
+                            set(ctx.status, host_missing);
+                            return;
                         }
                         return;
                     }
@@ -265,9 +260,7 @@ namespace webpp::uri::details {
             if (ctx.pos == host_begin) [[unlikely]] {
                 clear_hostname(ctx.out);
                 unset_flag(ctx.status, has_non_null_host);
-                if (Options.empty_host_is_error && (is_special || has_flags(ctx.status, contains_credentials)))
-                  [[unlikely]]
-                {
+                if ((is_special || has_flags(ctx.status, contains_credentials))) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
