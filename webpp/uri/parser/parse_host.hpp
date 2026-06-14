@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_PARSE_HOST_HPP
 #define WEBPP_URI_PARSE_HOST_HPP
 
+#include "../../ip/ipv4.hpp"
 #include "../../strings/charset.hpp"
 #include "../uri_status.hpp"
 #include "./host_ip.hpp"
@@ -22,7 +23,7 @@ namespace webpp::uri {
     namespace details {
 
         template <typename Iter>
-        [[nodiscard]] static constexpr bool starts_with(Iter& pos, Iter end, auto str) noexcept {
+        [[nodiscard]] static constexpr bool starts_with(Iter pos, Iter end, auto str) noexcept {
             auto       spos = stl::begin(str);
             auto const send = stl::end(str);
             for (; pos != end && spos != send; ++pos, ++spos) {
@@ -36,7 +37,7 @@ namespace webpp::uri {
         /// @returns should continue parsing or not
         /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
         template <typename Iter, URIContext CtxT>
-        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter& pos, Iter end) noexcept(CtxT::is_nothrow) {
+        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
             assert(pos != end);
             if (*pos != '[') [[likely]] {
@@ -46,17 +47,39 @@ namespace webpp::uri {
                 set(ctx.status, ipv6_unclosed);
                 return false;
             }
+            auto const ppos = ctx.pos;
+            auto const pend = ctx.end;
+            ctx.pos         = pos;
+            ctx.end         = end;
             static_cast<void>(details::parse_host_ipv6(ctx));
+            ctx.pos = ppos;
+            ctx.end = pend;
             return false;
         }
 
         template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
-        [[nodiscard]] static constexpr bool verify_possible_ipv4(CtxT& ctx, Iter pos, Iter end) noexcept {
+        [[nodiscard]] static constexpr bool verify_possible_ipv4(CtxT& ctx, Iter pos, Iter end)
+          noexcept(CtxT::is_nothrow) {
             using enum uri_status;
-            if (details::is_possible_ends_with_ipv4<Options>(pos, end, ctx)) {
+            if (pos == end) [[unlikely]] {
+                return false;
+            }
+            assert(end > pos);
+            if (details::is_possible_ends_with_ipv4<Options>(pos, stl::prev(end), ctx)) {
                 stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
                 if (!details::parse_host_ipv4<Options>(pos, end, ipv4_octets_data.data(), ctx)) {
                     set_flag(ctx.status, has_non_null_host);
+                }
+                if constexpr (CtxT::is_modifiable) {
+                    auto buffer = create_buffer(ctx);
+                    pure_ipv4{ipv4_octets_data}.to_string(buffer);
+                    set_hostname(ctx.out, stl::move(buffer));
+                    set_flag(ctx.status, has_non_null_host);
+                } else {
+                    if (!pure_ipv4{ipv4_octets_data}.str_equal(pos, end)) [[unlikely]] {
+                        set(ctx.status, modification_required);
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -211,19 +234,17 @@ namespace webpp::uri {
                     break; // forbidden code points
                 [[unlikely]] default:
                     // 'x', 'n' and '-' were found
-                    ctx.pos = sbeg;
                     if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
-                        !details::handle_ipv6(ctx, ctx.pos, ctx.end))
+                        !details::handle_ipv6(ctx, sbeg, ctx.pos))
                     {
                         // either found a valid ipv6, an error occurred, or it's an empty string.
                         return;
                     }
 
                     if ((status | stl::to_underlying(cp_type::xnd_val)) == status &&
-                        details::starts_with(ctx.pos, ctx.end, stl::string_view{"xn-"}))
+                        details::starts_with(sbeg, ctx.pos, stl::string_view{"xn-"}))
                     {
                         // if it starts with `xn-`, then we go the slow path
-                        // todo: we already know if newlines and tabs exist or not
                         break;
                     }
                     break;

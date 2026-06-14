@@ -386,6 +386,16 @@ namespace webpp {
             });
         }
 
+        template <typename Iter>
+        [[nodiscard]] constexpr bool str_equal(Iter pos, Iter const end) const noexcept {
+            auto const _octets = octets();
+            return inet_ntop4_streq(_octets.data(), pos, end);
+        }
+
+        [[nodiscard]] constexpr bool str_equal(stl::string_view ip_str) const noexcept {
+            return str_equal(ip_str.begin(), ip_str.end());
+        }
+
         // Get the string size
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
             return inet_ntop4_size(octets().data());

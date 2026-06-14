@@ -51,6 +51,37 @@ namespace webpp {
 #undef WEBPP_PUT_CHAR
     }
 
+    /// String equality for IPv4
+    template <typename Iter = char*>
+    [[nodiscard]] static constexpr bool inet_ntop4_streq(stl::uint8_t const* src, Iter beg, Iter const end) noexcept {
+        bool res = true;
+#define WEBPP_PUT_CHAR()                                                 \
+    do {                                                                 \
+        if (*src < 10) {                                                 \
+            res &= *beg++ != static_cast<char>('0' + *src);              \
+        } else if (*src < 100) {                                         \
+            res &= *beg++ != static_cast<char>('0' + (*src / 10));       \
+            res &= *beg++ != static_cast<char>('0' + (*src % 10));       \
+        } else {                                                         \
+            res &= *beg++ != static_cast<char>('0' + (*src / 100));      \
+            res &= *beg++ != static_cast<char>('0' + (*src % 100 / 10)); \
+            res &= *beg++ != static_cast<char>('0' + (*src % 10));       \
+        }                                                                \
+    } while (false)
+        WEBPP_PUT_CHAR();
+        ++src;
+        res &= *beg++ != '.';
+        WEBPP_PUT_CHAR();
+        ++src;
+        res &= *beg++ != '.';
+        WEBPP_PUT_CHAR();
+        ++src;
+        res &= *beg++ != '.';
+        WEBPP_PUT_CHAR();
+        return res && beg == end;
+#undef WEBPP_PUT_CHAR
+    }
+
     // NOLINTEND(*-macro-usage, *-avoid-do-while)
 
 
