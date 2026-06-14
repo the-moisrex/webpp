@@ -10,6 +10,8 @@
 #include "./uri_components.hpp"
 #include "./windows_drive_letter.hpp"
 
+#include <utility>
+
 namespace webpp::uri {
 
     template <typename CharT>
@@ -150,71 +152,83 @@ namespace webpp::uri {
 
 
         enum struct cp_type : id_type {
-            upper_val   = 0b1U,                      // upper case ascii chars
-            no_ipv4_val = 0b10U,                     // invalid IPv4 Characters
-            no_ipv6_val = 0b100U,                    // invalid IPv6 Characters
-            x_val       = 0b1000U,                   // character x
-            n_val       = 0b1'0000U,                 // character n
-            dash_val    = 0b10'0000U,                // character -
-            forb_val    = static_cast<id_type>(~0U), // Forbidden/Unicode
-            xnd_val     = x_val | n_val | dash_val | no_ipv4_val,
-            no_ip_val   = no_ipv4_val | no_ipv6_val,
+            upper_val     = 0b1U,        // upper case ascii chars
+            no_ipv4_val   = 0b10U,       // invalid IPv4 Characters
+            no_ipv6_val   = 0b100U,      // invalid IPv6 Characters
+            x_val         = 0b1000U,     // character x
+            n_val         = 0b1'0000U,   // character n
+            dash_val      = 0b10'0000U,  // character -
+            authority_end = 0b100'0000U, // characters: / \ ? #
+            forb_val =
+              static_cast<id_type>(~0U) & static_cast<id_type>(~static_cast<id_type>(0b100'0000U)), // Forbidden/Unicode
+            xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
+            no_ip_val = no_ipv4_val | no_ipv6_val,
         };
 
+        // todo: this is making compile time worse
+        webpp_static_constexpr auto authority_end_cps      = charset('/', '\\', '#', '?');
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS, .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS, .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set = details::INVALID_IPV4, .value = stl::to_underlying(cp_type::no_ipv4_val)},
-          cat{.set = details::INVALID_IPV6, .value = stl::to_underlying(cp_type::no_ipv6_val)},
+          cat{.set   = details::FORBIDDEN_HOST_CODE_POINTS.except(authority_end_cps),
+              .value = stl::to_underlying(cp_type::forb_val)},
+          cat{.set   = details::INVALID_IPV4.except(authority_end_cps),
+              .value = stl::to_underlying(cp_type::no_ipv4_val)},
+          cat{.set   = details::INVALID_IPV6.except(authority_end_cps),
+              .value = stl::to_underlying(cp_type::no_ipv6_val)},
           cat{.set = UPPER_ALPHA<char8_t>, .value = stl::to_underlying(cp_type::upper_val)},
           cat{.set = u8"xX", .value = stl::to_underlying(cp_type::x_val)},
           cat{.set = u8"nN", .value = stl::to_underlying(cp_type::n_val)},
+          cat{.set = u8"/\\?#", .value = stl::to_underlying(cp_type::authority_end)},
           cat{.set = u8"-", .value = stl::to_underlying(cp_type::dash_val)});
 
         // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
-        iterator const sbeg   = ctx.pos;
-        auto const     status = or_all<id_type>(interesting_characters, ctx.pos, ctx.end);
-        switch (status) {
-            case stl::to_underlying(cp_type::upper_val):
-                // todo: does a simple to_lower would suffice?
-                break;
-            case 0: // possible IPv4
-                if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
-                    return;
-                }
-                set_hostname(ctx.out, segment{sbeg, ctx.pos});
-                set_flag(ctx.status, has_non_null_host);
-                return;
-            case stl::to_underlying(cp_type::no_ip_val):
-                // fast path:
-                // the host is fully in valid ascii characters already, and also we don't need to check for
-                // ipv4 either, it includes invalid ipv4 characters.
-                set_hostname(ctx.out, segment{sbeg, ctx.pos});
-                set_flag(ctx.status, has_non_null_host);
-                return;
-            [[unlikely]] case stl::to_underlying(cp_type::forb_val):
-                break; // forbidden code points:
-            [[unlikely]] default:
-                // 'x', 'n' and '-' were found
-                ctx.pos = sbeg;
-                if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
-                    !details::handle_ipv6(ctx, ctx.pos, ctx.end))
-                {
-                    // either found a valid ipv6, an error occurred, or it's an empty string.
-                    return;
-                }
-
-                if ((status | stl::to_underlying(cp_type::xnd_val)) == status &&
-                    details::starts_with(ctx.pos, ctx.end, stl::string_view{"xn-"}))
-                {
-                    // if it starts with `xn-`, then we go the slow path
-                    // todo: we already know if newlines and tabs exist or not
+        iterator const sbeg = ctx.pos;
+        for (;;) {
+            auto const status =
+              or_all<id_type>(interesting_characters, stl::to_underlying(cp_type::authority_end), ctx.pos, ctx.end);
+            switch (status & ~stl::to_underlying(cp_type::authority_end)) {
+                case stl::to_underlying(cp_type::upper_val):
+                    // todo: does a simple to_lower would suffice?
                     break;
-                }
-                break;
+                case 0: // possible IPv4
+                    if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
+                        return;
+                    }
+                    set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                    set_flag(ctx.status, has_non_null_host);
+                    return;
+                case stl::to_underlying(cp_type::no_ip_val):
+                    // fast path:
+                    // the host is fully in valid ascii characters already, and also we don't need to check for
+                    // ipv4 either, it includes invalid ipv4 characters.
+                    set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                    set_flag(ctx.status, has_non_null_host);
+                    return;
+                [[unlikely]] case stl::to_underlying(cp_type::forb_val):
+                    break; // forbidden code points
+                [[unlikely]] default:
+                    // 'x', 'n' and '-' were found
+                    ctx.pos = sbeg;
+                    if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
+                        !details::handle_ipv6(ctx, ctx.pos, ctx.end))
+                    {
+                        // either found a valid ipv6, an error occurred, or it's an empty string.
+                        return;
+                    }
+
+                    if ((status | stl::to_underlying(cp_type::xnd_val)) == status &&
+                        details::starts_with(ctx.pos, ctx.end, stl::string_view{"xn-"}))
+                    {
+                        // if it starts with `xn-`, then we go the slow path
+                        // todo: we already know if newlines and tabs exist or not
+                        break;
+                    }
+                    break;
+            }
+            break;
         }
 
         // slow path:
@@ -272,6 +286,8 @@ namespace webpp::uri {
         if (has_error(ctx.status)) [[unlikely]] {
             return;
         }
+
+        set(ctx.status, valid_path_start);
 
         // if buffer is the empty string, then:
         //   - Set url's host to the empty string.

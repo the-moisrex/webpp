@@ -7,6 +7,8 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 
+#include <concepts>
+
 #ifdef __cpp_lib_constexpr_bitset
 #    include <bitset>
 #endif
@@ -149,6 +151,16 @@ namespace webpp {
             }
         }
 
+        template <stl::integral T>
+            requires(!stl::same_as<T, value_type>)
+        [[nodiscard]] constexpr bool contains(T const character) const noexcept {
+            if constexpr (!stl::unsigned_integral<T>) {
+                return character > 0 && contains(static_cast<value_type>(character));
+            } else {
+                return contains(static_cast<value_type>(character));
+            }
+        }
+
         [[nodiscard]] constexpr bool unsafe_contains(value_type character) const noexcept {
             return contains(character);
         }
@@ -247,10 +259,11 @@ namespace webpp {
             charset<value_type, array_size - (NN + ...)> chars;
             stl::size_t                                  index = 0;
             for (auto const character : *this) {
-                if ((sets.contains(character) && ...)) {
+                if ((sets.contains(character) || ...)) {
                     continue;
                 }
                 chars[index] = character;
+                // *stl::next(chars.data(), index) = character;
                 ++index;
             }
             return chars;
@@ -477,11 +490,11 @@ namespace webpp {
          */
         [[nodiscard]] consteval charmap<array_size> except(CharSet auto const&... sets) const noexcept {
             charmap<array_size> chars{};
-            for (auto const character : *this) {
-                if ((sets.contains(character) && ...)) {
+            for (stl::size_t character = 0; character != array_size; ++character) {
+                if ((sets.contains(character) || ...)) {
                     continue;
                 }
-                chars.set(character);
+                chars.set(character, this->contains(character));
             }
             return chars;
         }
@@ -495,12 +508,12 @@ namespace webpp {
          * @return
          *     An indication of whether the given character is in the character map is returned.
          */
-        template <typename CharT>
+        template <typename CharT = stl::size_t>
         [[nodiscard]] constexpr bool unsafe_contains(CharT character) const noexcept {
             return this->operator[](static_cast<stl::size_t>(character));
         }
 
-        template <typename CharT>
+        template <typename CharT = stl::size_t>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
             using unsigned_char_type = stl::make_unsigned_t<CharT>;
             auto const uc            = static_cast<unsigned_char_type>(character);
@@ -672,10 +685,10 @@ namespace webpp {
         [[nodiscard]] consteval bitmap<array_size> except(CharSet auto const&... sets) const noexcept {
             bitmap<array_size> chars{};
             for (stl::size_t character = 0ULL; character != array_size; ++character) {
-                if ((sets.contains(character) && ...)) {
+                if ((sets.contains(character) || ...)) {
                     continue;
                 }
-                chars.set(character);
+                chars.set(character, this->contains(character));
             }
             return chars;
         }
@@ -861,16 +874,6 @@ namespace webpp {
         return arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(code_point), last_el))];
     }
 
-    /// Can be used to calculate stop tokens
-    template <stl::integral T = stl::uint32_t>
-    [[nodiscard]] static consteval T or_all(auto arr) noexcept {
-        T res{};
-        for (auto const elm : arr) {
-            res |= elm;
-        }
-        return res;
-    }
-
     /**
      * Usage:
      *   auto mapping = categorize(...);
@@ -906,10 +909,12 @@ namespace webpp {
         T              res{};
         // todo: this can be optimized using SIMD
         for (; pos != end; ++pos) {
-            res |= arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos), last_el))];
-            if ((res & stop_token) == stop_token) {
+            auto const code =
+              arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos), last_el))];
+            if ((code & stop_token) == stop_token) [[unlikely]] {
                 break;
             }
+            res |= code;
         }
         return res;
     }
@@ -935,13 +940,14 @@ namespace webpp {
     }
 
     template <stl::size_t NewLen, istl::CharType CharT, stl::size_t N>
-    [[nodiscard]] static consteval charset<CharT, NewLen> inverse(charset<CharT, N> const& set) noexcept {
-        charset<CharT, NewLen> res{};
-        stl::size_t            index = 0;
+    [[nodiscard]] static consteval charmap<NewLen> inverse(charset<CharT, N> const& set) noexcept {
+        charmap<NewLen> res{};
+        static_assert(NewLen >= N, "This is not a cutting tool");
         for (CharT cur = 0; cur < static_cast<CharT>(N); ++cur) {
-            if (!set.contains(cur)) {
-                res[index++] = cur;
+            if (set.contains(cur)) {
+                continue;
             }
+            res.set(static_cast<stl::size_t>(cur));
         }
         return res;
     }
