@@ -911,10 +911,10 @@ namespace webpp {
         for (; pos != end; ++pos) {
             auto const code =
               arr[static_cast<stl::uint8_t>(stl::min<char_type>(static_cast<char_type>(*pos), last_el))];
+            res |= code;
             if ((code & stop_token) == stop_token) [[unlikely]] {
                 break;
             }
-            res |= code;
         }
         return res;
     }

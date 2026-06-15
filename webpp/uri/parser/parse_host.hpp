@@ -10,6 +10,7 @@
 #include "./idna_to_ascii.hpp"
 #include "./uri_components.hpp"
 #include "./windows_drive_letter.hpp"
+#include "uri_context.hpp"
 
 #include <utility>
 
@@ -181,7 +182,7 @@ namespace webpp::uri {
             x_val         = 0b1000U,     // character x
             n_val         = 0b1'0000U,   // character n
             dash_val      = 0b10'0000U,  // character -
-            authority_end = 0b100'0000U, // characters: / \ ? #
+            special_chars = 0b100'0000U, // characters: / \ ? # %
             forb_val =
               static_cast<id_type>(~0U) & static_cast<id_type>(~static_cast<id_type>(0b100'0000U)), // Forbidden/Unicode
             xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
@@ -189,30 +190,30 @@ namespace webpp::uri {
         };
 
         // todo: this is making compile time worse
-        webpp_static_constexpr auto authority_end_cps      = charset('/', '\\', '#', '?');
+        webpp_static_constexpr auto specials               = charset('/', '\\', '#', '?', '%');
         webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS, .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set   = details::FORBIDDEN_HOST_CODE_POINTS.except(authority_end_cps),
+          cat{.set   = details::FORBIDDEN_HOST_CODE_POINTS.except(specials),
               .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set   = details::INVALID_IPV4.except(authority_end_cps),
-              .value = stl::to_underlying(cp_type::no_ipv4_val)},
-          cat{.set   = details::INVALID_IPV6.except(authority_end_cps),
-              .value = stl::to_underlying(cp_type::no_ipv6_val)},
+          cat{.set = details::INVALID_IPV4.except(specials), .value = stl::to_underlying(cp_type::no_ipv4_val)},
+          cat{.set = details::INVALID_IPV6.except(specials), .value = stl::to_underlying(cp_type::no_ipv6_val)},
           cat{.set = UPPER_ALPHA<char8_t>, .value = stl::to_underlying(cp_type::upper_val)},
           cat{.set = u8"xX", .value = stl::to_underlying(cp_type::x_val)},
           cat{.set = u8"nN", .value = stl::to_underlying(cp_type::n_val)},
-          cat{.set = u8"/\\?#", .value = stl::to_underlying(cp_type::authority_end)},
+          cat{.set = u8"/\\?#%", .value = stl::to_underlying(cp_type::special_chars)},
           cat{.set = u8"-", .value = stl::to_underlying(cp_type::dash_val)});
 
         // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
-        iterator const sbeg = ctx.pos;
+        iterator const sbeg   = ctx.pos;
+        auto           buffer = create_buffer(ctx);
         for (;;) {
-            auto const status =
-              or_all<id_type>(interesting_characters, stl::to_underlying(cp_type::authority_end), ctx.pos, ctx.end);
-            switch (status & ~stl::to_underlying(cp_type::authority_end)) {
+            iterator const lbeg = ctx.pos;
+            auto const     status =
+              or_all<id_type>(interesting_characters, stl::to_underlying(cp_type::special_chars), ctx.pos, ctx.end);
+            switch (status & ~stl::to_underlying(cp_type::special_chars)) {
                 case stl::to_underlying(cp_type::upper_val):
                     // todo: does a simple to_lower would suffice?
                     break;
@@ -233,6 +234,24 @@ namespace webpp::uri {
                 [[unlikely]] case stl::to_underlying(cp_type::forb_val):
                     break; // forbidden code points
                 [[unlikely]] default:
+
+                    // handle percent-encoded hosts
+                    if ((status | stl::to_underlying(cp_type::special_chars)) == status && *ctx.pos == '%') {
+                        if constexpr (!CtxT::is_modifiable) {
+                            set(ctx.status, modification_required);
+                            return;
+                        } else {
+                            buffer.append(lbeg, ctx.pos);
+                            if (!details::next_percent_encode(ctx, buffer)) [[unlikely]] {
+                                // If host is failure, then return failure.
+                                // `file://example.com%/` was found
+                                set(ctx.status, invalid_host_code_point);
+                                return;
+                            }
+                            continue;
+                        }
+                    }
+
                     // 'x', 'n' and '-' were found
                     if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
                         !details::handle_ipv6(ctx, sbeg, ctx.pos))
@@ -261,15 +280,13 @@ namespace webpp::uri {
 
         // Return asciiDomain.
         if constexpr (CtxT::is_modifiable) {
-            auto out = create_buffer(ctx);
-
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
-            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, out);
+            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, buffer);
             if (!is_valid(to_ascii_res)) [[unlikely]] {
                 set_error(ctx.status, to_ascii_res);
                 return;
             }
-            set_hostname(ctx.out, stl::move(out));
+            set_hostname(ctx.out, stl::move(buffer));
             set_flag(ctx.status, has_non_null_host);
         } else {
             // Only validate, no conversion:
