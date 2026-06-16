@@ -9,8 +9,8 @@
 #include "./host_ip.hpp"
 #include "./idna_to_ascii.hpp"
 #include "./uri_components.hpp"
+#include "./uri_context.hpp"
 #include "./windows_drive_letter.hpp"
-#include "uri_context.hpp"
 
 #include <utility>
 
@@ -32,7 +32,7 @@ namespace webpp::uri {
                     return false;
                 }
             }
-            return true;
+            return spos == send;
         }
 
         /// @returns should continue parsing or not
