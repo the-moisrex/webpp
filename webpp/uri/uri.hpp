@@ -80,7 +80,7 @@ namespace webpp::uri {
             out.push_back('.');
         }
 
-        render_path(components, out);
+        render_path(components, out, is_opaque(status));
         render_queries(components, out, status, true);
         render_fragment(uri::fragment(components), out, true, has_flags(status, uri_status::has_non_null_fragment));
     }

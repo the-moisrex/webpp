@@ -218,6 +218,7 @@ namespace webpp::uri {
                     // and url’s query to base’s query.
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                     set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base))); // list clone
+                    set_flag(ctx.status, file_scheme);
                     set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
                     if (has_hostname(ctx.base)) {
                         set_flag(ctx.status, has_non_null_host);
@@ -289,6 +290,7 @@ namespace webpp::uri {
                         // and set state to fragment state.
                         set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
                         set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base)));
+                        set_flag(ctx.status, opaque_path);
                         set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
                         if (!queries(ctx.out).empty()) {
                             set_flag(ctx.status, has_non_null_queries);

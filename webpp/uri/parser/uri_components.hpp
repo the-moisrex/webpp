@@ -1067,12 +1067,12 @@ namespace webpp::uri {
         auto const comp_scheme = scheme(components);
         auto const comp_path   = path(components);
         bool       is_opaque   = !is_special_scheme(comp_scheme) && !has_hostname(components);
-        if constexpr (requires { comp_path.fron() != '/'; }) {
+        if constexpr (requires { comp_path.front() != '/'; }) {
             // string-based path
             is_opaque &= (comp_path.empty() || comp_path.front() != '/');
         } else {
             // vector-based path
-            is_opaque &= comp_path.empty();
+            is_opaque &= !comp_path.empty();
         }
         return is_opaque;
     }

@@ -1895,9 +1895,10 @@ TYPED_TEST(URITests, ResolvingAFragmentAgainstAnySchemeSucceeds5) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "blank") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "blank") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "x:y") << details;
+    EXPECT_TRUE(uri::is_opaque(ctx.status));
     EXPECT_EQ(uri::href(ctx), R"URL(about:blank#x:y)URL") << details;
 }
 
