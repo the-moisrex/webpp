@@ -12,6 +12,20 @@ namespace webpp::uri {
     static constexpr stl::uint16_t max_port_number       = 65'535U;
     static constexpr stl::uint16_t well_known_upper_port = 1024;
 
+    namespace details {
+
+        enum struct port_operation_type : stl::uint8_t {
+            op_invalid = 0, // must be zero
+            op_digit   = 1,
+            op_break   = 2,
+        };
+        static constexpr auto port_table = categorize<256U>(
+          // cat{.set = ALL_ASCII<char>, .value = operation_type::op_invalid},
+          cat{.set = "0123456789", .value = port_operation_type::op_digit},
+          cat{.set = "\\/?#", .value = port_operation_type::op_break});
+
+    } // namespace details
+
     template <uri_options Options, URIContext CtxT>
         requires(!Options.parse_port)
     static constexpr void parse_port(CtxT& ctx) noexcept {
@@ -25,24 +39,15 @@ namespace webpp::uri {
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
         using enum uri_status;
+        using enum details::port_operation_type;
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
-
-        enum struct operation_type : stl::uint8_t {
-            op_invalid = 0,              // must be zero
-            op_digit   = 1,
-            op_break   = 2,
-        };
-        constexpr auto table = categorize<256U>(
-          // cat{.set = ALL_ASCII<char>, .value = operation_type::op_invalid},
-          cat{.set = "0123456789", .value = operation_type::op_digit},
-          cat{.set = "\\/?#", .value = operation_type::op_break});
 
         auto      beg        = ctx.pos;
         port_type port_value = 0;
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             auto const code_unit = *ctx.pos;
-            switch (static_cast<operation_type>(or_one(table, code_unit))) {
-                case operation_type::op_digit:
+            switch (static_cast<details::port_operation_type>(or_one(details::port_table, code_unit))) {
+                case op_digit:
                     port_value *= 10U; // NOLINT(*-magic-numbers)
                     port_value += static_cast<port_type>(code_unit - '0');
                     if (port_value > max_port_number) [[unlikely]] {
@@ -51,14 +56,14 @@ namespace webpp::uri {
                     }
                     continue;
 
-                case operation_type::op_break:
+                case op_break:
                     if (code_unit == '\\' && !is_special_scheme(ctx.status)) [[unlikely]] {
                         set(ctx.status, port_invalid);
                         return;
                     }
                     break;
 
-                [[unlikely]] case operation_type::op_invalid:
+                [[unlikely]] case op_invalid:
                     if constexpr (Options.state_override) {
                         // todo: add an option to make sure this would be an error. WHATWG is written by stupid people
                         // a = new URL("https://example.com:100/");

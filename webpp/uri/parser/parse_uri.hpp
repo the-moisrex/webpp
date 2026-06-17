@@ -67,80 +67,83 @@ namespace webpp::uri {
 
         /// Remove newlines and tabs from input before doing anything else, or at least validate that we don't have any
         /// of them in the input.
-        template <uri_options Options, URIContext CtxT>
-        [[nodiscard]] static constexpr bool preprocess_whitespaces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool preprocess_whitespaces(
+          CtxT&                                       ctx,
+          typename CtxT::component_type::string_type& sanitized) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-basic-url-parser
-            if constexpr (!Options.ignore_tabs_or_newlines) {
-                return true;
-            } else {
-                // left trim C0 Control
-                while (ctx.beg != ctx.end && is_c0_whitespace(*ctx.beg)) [[unlikely]] {
-                    ++ctx.beg;
-                    ctx.pos = ctx.beg;
-                }
-                // right trim C0 Control
-                while (ctx.end != ctx.beg && is_c0_whitespace(*(ctx.end - 1))) [[unlikely]] {
-                    --ctx.end;
-                }
+            // left trim C0 Control
+            while (ctx.beg != ctx.end && is_c0_whitespace(*ctx.beg)) [[unlikely]] {
+                ++ctx.beg;
+                ctx.pos = ctx.beg;
+            }
+            // right trim C0 Control
+            while (ctx.end != ctx.beg && is_c0_whitespace(*(ctx.end - 1))) [[unlikely]] {
+                --ctx.end;
+            }
 
-                // check if we have tabs and newlines in between the URL or not
-                auto* src = ctx.beg;
-                for (; src != ctx.end; ++src) {
-                    if (is_tab_or_newline(*src)) [[unlikely]] {
-                        break;
-                    }
-                }
-
-                if (src == ctx.end) [[likely]] {
-                    return true;
-                }
-
-                // If input contains any ASCII tab or newline, invalid-URL-unit validation error.
-                set_warning(ctx.status, uri_status::invalid_character);
-
-                if constexpr (!CtxT::is_modifiable) {
-                    set(ctx.status, uri_status::found_tabs_or_newlines);
-                    return false;
-                } else {
-                    // Remove all ASCII tab or newline from input.
-                    using string_type  = typename CtxT::component_type::string_type;
-                    using char_type    = typename string_type::value_type;
-                    auto const  length = static_cast<typename string_type::size_type>(stl::distance(ctx.beg, ctx.end));
-                    string_type sanitized{get_allocator(ctx)};
-                    istl::resize_and_overwrite(
-                      sanitized,
-                      length,
-                      [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
-                          char_type* const start = buf;
-                          // raw copy
-                          for (char_type const* pos = ctx.beg; pos != src;) {
-                              *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
-                          }
-
-                          // skip copy: skip new lines and tabs
-                          // don't need to handle C0 Controls here since they're trimmed already
-                          for (char_type const* pos = src; pos != ctx.end; ++pos) {
-                              if (!is_tab_or_newline(*pos)) {
-                                  *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
-                              }
-                          }
-                          return static_cast<stl::size_t>(buf - start);
-                      });
-
-                    ctx.beg = sanitized.data();
-                    ctx.pos = ctx.beg;
-                    ctx.end = ctx.beg + sanitized.size();
-                    continue_parsing_uri<Options>(ctx);
-                    return false;
+            // check if we have tabs and newlines in between the URL or not
+            auto* src = ctx.beg;
+            for (; src != ctx.end; ++src) {
+                if (is_tab_or_newline(*src)) [[unlikely]] {
+                    break;
                 }
             }
+
+            if (src == ctx.end) [[likely]] {
+                return true;
+            }
+
+            // If input contains any ASCII tab or newline, invalid-URL-unit validation error.
+            set_warning(ctx.status, uri_status::invalid_character);
+
+            if constexpr (!CtxT::is_modifiable) {
+                set(ctx.status, uri_status::found_tabs_or_newlines);
+            } else {
+                // Remove all ASCII tab or newline from input.
+                using string_type = typename CtxT::component_type::string_type;
+                using char_type   = typename string_type::value_type;
+                auto const length = static_cast<typename string_type::size_type>(stl::distance(ctx.beg, ctx.end));
+                istl::resize_and_overwrite(
+                  sanitized,
+                  length,
+                  [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
+                      char_type* const start = buf;
+                      // raw copy
+                      for (char_type const* pos = ctx.beg; pos != src;) {
+                          *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
+                      }
+
+                      // skip copy: skip new lines and tabs
+                      // don't need to handle C0 Controls here since they're trimmed already
+                      for (char_type const* pos = src; pos != ctx.end; ++pos) {
+                          if (!is_tab_or_newline(*pos)) {
+                              *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
+                          }
+                      }
+                      return static_cast<stl::size_t>(buf - start);
+                  });
+
+                ctx.beg = sanitized.data();
+                ctx.pos = ctx.beg;
+                ctx.end = ctx.beg + sanitized.size();
+            }
+            return false;
         }
     } // namespace details
 
     template <uri_options Options = {}, URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        if (!details::preprocess_whitespaces<Options>(ctx)) {
-            return;
+        if constexpr (Options.ignore_tabs_or_newlines) {
+            using string_type = typename CtxT::component_type::string_type;
+            string_type sanitized{get_allocator(ctx)};
+            if (!details::preprocess_whitespaces(ctx, sanitized)) {
+                if (has_error(ctx.status)) [[unlikely]] {
+                    return;
+                }
+                details::continue_parsing_uri<Options>(ctx);
+                return;
+            }
         }
         details::continue_parsing_uri<Options>(ctx);
     }

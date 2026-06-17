@@ -210,6 +210,7 @@ namespace webpp::uri::details {
                         // todo: check for non-specials
                         break;
                     }
+                    set_warning(ctx.status, reverse_solidus_used);
                     [[fallthrough]];
                 case '/':
                     skip_last_char = true;

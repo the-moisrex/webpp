@@ -90,15 +90,10 @@ namespace webpp::uri {
         { comps.fragment } -> stl::same_as<typename stl::remove_cvref_t<T>::string_type&>;
     };
 
-    template <typename CompT, auto MemberPtr, typename... Args>
-    [[nodiscard]] consteval bool is_component_assignable() noexcept {
-        return URIOwningComponents<CompT> && (requires(CompT& comps) {
-                   requires stl::is_nothrow_assignable_v<stl::remove_cvref_t<decltype(comps.*MemberPtr)>, Args...>;
-               });
-    }
-
     template <typename CompT>
-    concept PortNumberAssignable = is_component_assignable<CompT, &CompT::port, stl::uint16_t>();
+    concept PortNumberAssignable = requires(CompT& comps) {
+        requires stl::is_nothrow_assignable_v<stl::remove_cvref_t<decltype(comps.port)>, stl::uint16_t>;
+    };
 
 
     template <typename T>
@@ -243,12 +238,15 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_owning {
+      private:
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
-        using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using allocator_type        = typename string_type::allocator_type;
-        using seg_type              = string_type;
-        using char_type             = CharT;
-        using size_type             = typename string_type::size_type;
+
+      public:
+        using string_type    = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
+        using allocator_type = typename string_type::allocator_type;
+        using seg_type       = string_type;
+        using char_type      = CharT;
+        using size_type      = typename string_type::size_type;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
@@ -307,13 +305,20 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_structured {
-        using char_type             = CharT;
+      private:
         using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
-        using string_type           = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
-        using size_type             = typename string_type::size_type;
+
+      public:
+        using char_type   = CharT;
+        using string_type = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
+        using size_type   = typename string_type::size_type;
         using vec_type =
           stl::vector<string_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<string_type>>;
+
+      private:
         using pair_type = stl::pair<string_type, string_type>;
+
+      public:
         using map_type =
           stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
         using seg_type = string_type;

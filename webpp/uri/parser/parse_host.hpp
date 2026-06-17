@@ -87,14 +87,87 @@ namespace webpp::uri {
             return false;
         }
 
+        // A URL code point is an ASCII alphanumeric, "!", "$", "&", "'", "(", ")", "*", "+", ",", "-", ".",
+        // "/", ":", ";", "=", "?", "@", "_", "~", or a scalar value greater than U+007F.
+        static constexpr ascii_bitmap ascii_url_code_points{ALPHA_DIGIT<char>, details::SUB_DELIMS<char>};
+        static constexpr ascii_bitmap url_code_points_or_percent{
+          details::NON_ASCII_CODE_UNITS,
+          ascii_bitmap{ascii_url_code_points, '/', ':', '?', '@', '-', '.', '_', '~', '%'}
+        };
+        static constexpr ascii_bitmap invalid_url_units = ascii_bitmap{}.except(url_code_points_or_percent);
+        static constexpr ascii_bitmap invalid_host_chars{
+          details::FORBIDDEN_HOST_CODE_POINTS,
+          invalid_url_units,
+          ascii_bitmap{'%'}};
+
+
+
+
+        using id_type = stl::uint8_t;
+        enum struct cp_type : id_type {
+            upper_val     = 0b1U,        // upper case ascii chars
+            no_ipv4_val   = 0b10U,       // invalid IPv4 Characters
+            no_ipv6_val   = 0b100U,      // invalid IPv6 Characters
+            x_val         = 0b1000U,     // character x
+            n_val         = 0b1'0000U,   // character n
+            dash_val      = 0b10'0000U,  // character -
+            special_chars = 0b100'0000U, // characters: / \ ? # %
+            forb_val =
+              static_cast<id_type>(~0U) & static_cast<id_type>(~static_cast<id_type>(0b100'0000U)), // Forbidden/Unicode
+            xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
+            no_ip_val = no_ipv4_val | no_ipv6_val,
+        };
+
+        [[nodiscard]] static consteval id_type operator+(cp_type const code_point) noexcept {
+            return static_cast<id_type>(code_point);
+        }
+
+        static constexpr auto specials               = charset('/', '\\', '#', '?', '%');
+        static constexpr auto interesting_characters = categorize<id_type, 256U>(
+          cat{.set = details::NON_ASCII_CODE_UNITS, .value = +cp_type::forb_val},
+          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +cp_type::forb_val},
+          cat{.set = details::INVALID_IPV4.except(specials), .value = +cp_type::no_ipv4_val},
+          cat{.set = details::INVALID_IPV6.except(specials), .value = +cp_type::no_ipv6_val},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = +cp_type::upper_val},
+          cat{.set = u8"xX", .value = +cp_type::x_val},
+          cat{.set = u8"nN", .value = +cp_type::n_val},
+          cat{.set = u8"/\\?#%", .value = +cp_type::special_chars},
+          cat{.set = u8"-", .value = +cp_type::dash_val});
+
+        // The above code slows down compile time; so we use this:
+        // in GDB:
+        //    dump binary memory data.bin &interesting_characters (char*)&interesting_characters +
+        //    sizeof(interesting_characters)
+        // in Shell:
+        //    xxd -i data.bin
+        // static constexpr stl::array<stl::uint8_t, 256U> interesting_characters = {
+        //   0xbf, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0xbf, 0xbf, 0x06, 0x06, 0xbf, 0x06, 0x06, 0x06, 0x06,
+        //   0x06, 0x06, 0x06, 0x06, 0x06, 0x04, 0x04, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x00, 0x00, 0x40,
+        //   0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        //   0x00, 0x00, 0x00, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x40, 0xbf, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+        //   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x11, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x09, 0x01,
+        //   0x01, 0xbf, 0x40, 0xbf, 0xbf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        //   0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0xbf, 0x00,
+        //   0x00, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf, 0xbf,
+        //   0xbf, 0xbf, 0xbf, 0xbf};
+
+
+
     } // namespace details
 
-    template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
+    template <URIContext CtxT, typename Iter = typename CtxT::iterator>
     static constexpr void opaque_host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
         using details::encode_or_validate;
+        using details::invalid_host_chars;
         using details::next_percent_encode;
 
         // in opaque hosts, IPv6 should work also; in specs, it's being checked in `host parsing` before
@@ -105,17 +178,6 @@ namespace webpp::uri {
         }
 
         ctx.pos = pos;
-
-        // A URL code point is an ASCII alphanumeric, "!", "$", "&", "'", "(", ")", "*", "+", ",", "-", ".",
-        // "/", ":", ";", "=", "?", "@", "_", "~", or a scalar value greater than U+007F.
-        webpp_static_constexpr ascii_bitmap ascii_url_code_points{ALPHA_DIGIT<char>, details::SUB_DELIMS<char>};
-        webpp_static_constexpr ascii_bitmap url_code_points_or_percent{
-          details::NON_ASCII_CODE_UNITS,
-          ascii_bitmap{ascii_url_code_points, '/', ':', '?', '@', '-', '.', '_', '~', '%'}
-        };
-        webpp_static_constexpr ascii_bitmap invalid_url_units = ascii_bitmap{}.except(url_code_points_or_percent);
-        webpp_static_constexpr ascii_bitmap
-          invalid_host_chars{details::FORBIDDEN_HOST_CODE_POINTS, invalid_url_units, ascii_bitmap{'%'}};
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
@@ -148,6 +210,8 @@ namespace webpp::uri {
         set_flag(ctx.status, has_non_null_host);
     }
 
+    namespace details {} // namespace details
+
     /**
      * Parse hostname
      * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
@@ -158,14 +222,17 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
-        using id_type  = stl::uint8_t;
+        using details::cp_type;
+        using details::id_type;
+        using details::interesting_characters;
+        using enum details::cp_type;
         using iterator = typename CtxT::iterator;
 
         // note: we don't need to check for IPv6 as the first step, we can check later.
 
         // If isOpaque is true, then return the result of opaque-host parsing input.
         if (!is_special_scheme(ctx.status)) {
-            opaque_host_parser<Options>(ctx, ctx.pos, ctx.end);
+            opaque_host_parser(ctx, ctx.pos, ctx.end);
             return;
         }
 
@@ -174,35 +241,6 @@ namespace webpp::uri {
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
 
-
-        enum struct cp_type : id_type {
-            upper_val     = 0b1U,        // upper case ascii chars
-            no_ipv4_val   = 0b10U,       // invalid IPv4 Characters
-            no_ipv6_val   = 0b100U,      // invalid IPv6 Characters
-            x_val         = 0b1000U,     // character x
-            n_val         = 0b1'0000U,   // character n
-            dash_val      = 0b10'0000U,  // character -
-            special_chars = 0b100'0000U, // characters: / \ ? # %
-            forb_val =
-              static_cast<id_type>(~0U) & static_cast<id_type>(~static_cast<id_type>(0b100'0000U)), // Forbidden/Unicode
-            xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
-            no_ip_val = no_ipv4_val | no_ipv6_val,
-        };
-
-        // todo: this is making compile time worse
-        webpp_static_constexpr auto specials               = charset('/', '\\', '#', '?', '%');
-        webpp_static_constexpr auto interesting_characters = categorize<id_type, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS, .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set   = details::FORBIDDEN_HOST_CODE_POINTS.except(specials),
-              .value = stl::to_underlying(cp_type::forb_val)},
-          cat{.set = details::INVALID_IPV4.except(specials), .value = stl::to_underlying(cp_type::no_ipv4_val)},
-          cat{.set = details::INVALID_IPV6.except(specials), .value = stl::to_underlying(cp_type::no_ipv6_val)},
-          cat{.set = UPPER_ALPHA<char8_t>, .value = stl::to_underlying(cp_type::upper_val)},
-          cat{.set = u8"xX", .value = stl::to_underlying(cp_type::x_val)},
-          cat{.set = u8"nN", .value = stl::to_underlying(cp_type::n_val)},
-          cat{.set = u8"/\\?#%", .value = stl::to_underlying(cp_type::special_chars)},
-          cat{.set = u8"-", .value = stl::to_underlying(cp_type::dash_val)});
-
         // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
@@ -210,12 +248,11 @@ namespace webpp::uri {
         iterator const sbeg   = ctx.pos;
         auto           buffer = create_buffer(ctx);
         for (;;) {
-            iterator const lbeg = ctx.pos;
-            auto           status =
-              or_all<id_type>(interesting_characters, stl::to_underlying(cp_type::special_chars), ctx.pos, ctx.end);
+            iterator const lbeg   = ctx.pos;
+            auto           status = or_all<id_type>(interesting_characters, +special_chars, ctx.pos, ctx.end);
 
 
-            if ((status | stl::to_underlying(cp_type::special_chars)) == status) {
+            if ((status | +special_chars) == status) {
                 switch (*ctx.pos) {
                     case '%':
                         // handle percent-encoded hosts
@@ -238,13 +275,16 @@ namespace webpp::uri {
                     case '#':
                     case '\\':
                     case '/': break;
-                    default: stl::unreachable(); break;
+                    default:
+                        assert(false);
+                        stl::unreachable();
+                        break;
                 }
             }
 
-            status &= ~stl::to_underlying(cp_type::special_chars);
+            status &= static_cast<id_type>(~+special_chars);
             switch (status) {
-                case stl::to_underlying(cp_type::upper_val):
+                case +upper_val:
                     // todo: does a simple to_lower would suffice?
                     break;
                 case 0: // possible IPv4
@@ -254,28 +294,24 @@ namespace webpp::uri {
                     set_hostname(ctx.out, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
                     return;
-                case stl::to_underlying(cp_type::no_ip_val):
+                case +no_ip_val:
                     // fast path:
                     // the host is fully in valid ascii characters already, and also we don't need to check for
                     // ipv4 either, it includes invalid ipv4 characters.
                     set_hostname(ctx.out, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
                     return;
-                [[unlikely]] case stl::to_underlying(cp_type::forb_val):
+                [[unlikely]] case +forb_val:
                     break; // forbidden code points
                 [[unlikely]] default:
 
                     // 'x', 'n' and '-' were found
-                    if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
-                        !details::handle_ipv6(ctx, sbeg, ctx.pos))
-                    {
+                    if ((status & +no_ipv6_val) == 0 && !details::handle_ipv6(ctx, sbeg, ctx.pos)) {
                         // either found a valid ipv6, an error occurred, or it's an empty string.
                         return;
                     }
 
-                    if ((status | stl::to_underlying(cp_type::xnd_val)) == status &&
-                        details::starts_with(sbeg, ctx.pos, stl::string_view{"xn-"}))
-                    {
+                    if ((status | +xnd_val) == status && details::starts_with(sbeg, ctx.pos, stl::string_view{"xn-"})) {
                         // if it starts with `xn-`, then we go the slow path
                         break;
                     }
