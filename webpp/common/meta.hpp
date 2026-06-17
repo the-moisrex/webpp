@@ -110,7 +110,7 @@ namespace webpp {
 #    define WEBPP_HAS_CPP_ATTRIBUTE(name) 0
 #endif
 
-#if defined(__has_attribute)
+#ifdef __has_attribute
 #    define WEBPP_HAS_ATTR(attr) __has_attribute(attr)
 #else
 #    define WEBPP_HAS_ATTR(attr) 0

@@ -333,6 +333,21 @@ namespace webpp::uri {
         details::set_or_append_path(ctx, buffer);
     }
 
+    namespace details {
+
+        template <bool isModifiable>
+        static constexpr auto encode_set = isModifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
+
+        // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
+        // Characters such as spaces must be percent-encoded, not dropped.
+        static constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
+
+        template <bool StateOverride>
+        static constexpr auto path_interesting_chars =
+          !StateOverride ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
+
+    } // namespace details
+
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
@@ -341,14 +356,6 @@ namespace webpp::uri {
         using details::ascii_bitmap;
         using details::encode_or_validate;
         using details::next_percent_encode;
-
-        webpp_static_constexpr auto encode_set = CtxT::is_modifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
-
-        // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
-        // Characters such as spaces must be percent-encoded, not dropped.
-        webpp_static_constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
-        webpp_static_constexpr auto interesting_chars =
-          !Options.state_override ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
 
         // attention:
         // we should not check to see if we're at the end of the string because if the path is empty, and
@@ -401,7 +408,11 @@ namespace webpp::uri {
         }
 
         details::handle_windows_driver_letter<Options>(ctx, buffer);
-        while (!encode_or_validate(ctx, buffer, encode_set, interesting_chars)) {
+        while (!encode_or_validate(ctx,
+                                   buffer,
+                                   details::encode_set<CtxT::is_modifiable>,
+                                   details::path_interesting_chars<Options.state_override>))
+        {
             switch (*ctx.pos) {
                 case '\\':
                     if constexpr (!CtxT::is_modifiable) {

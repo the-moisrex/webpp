@@ -123,7 +123,7 @@ namespace webpp::uri {
         }
 
         static constexpr auto specials               = charset('/', '\\', '#', '?', '%');
-        static constexpr auto interesting_characters = categorize<id_type, 256U>(
+        static constexpr auto host_interesting_chars = categorize<id_type, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS, .value = +cp_type::forb_val},
           cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +cp_type::forb_val},
           cat{.set = details::INVALID_IPV4.except(specials), .value = +cp_type::no_ipv4_val},
@@ -136,11 +136,11 @@ namespace webpp::uri {
 
         // The above code slows down compile time; so we use this:
         // in GDB:
-        //    dump binary memory data.bin &interesting_characters (char*)&interesting_characters +
-        //    sizeof(interesting_characters)
+        //    dump binary memory data.bin &host_interesting_chars (char*)&host_interesting_chars +
+        //    sizeof(host_interesting_chars)
         // in Shell:
         //    xxd -i data.bin
-        // static constexpr stl::array<stl::uint8_t, 256U> interesting_characters = {
+        // static constexpr stl::array<stl::uint8_t, 256U> host_interesting_chars = {
         //   0xbf, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0xbf, 0xbf, 0x06, 0x06, 0xbf, 0x06, 0x06, 0x06, 0x06,
         //   0x06, 0x06, 0x06, 0x06, 0x06, 0x04, 0x04, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xbf, 0x00, 0x00, 0x40,
         //   0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -210,8 +210,6 @@ namespace webpp::uri {
         set_flag(ctx.status, has_non_null_host);
     }
 
-    namespace details {} // namespace details
-
     /**
      * Parse hostname
      * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
@@ -223,8 +221,8 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::cp_type;
+        using details::host_interesting_chars;
         using details::id_type;
-        using details::interesting_characters;
         using enum details::cp_type;
         using iterator = typename CtxT::iterator;
 
@@ -237,7 +235,7 @@ namespace webpp::uri {
         }
 
         // Assert: input is not the empty string.
-        assert(ctx.pos != ctx.end);
+        // assert(ctx.pos != ctx.end);
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
 
@@ -249,7 +247,7 @@ namespace webpp::uri {
         auto           buffer = create_buffer(ctx);
         for (;;) {
             iterator const lbeg   = ctx.pos;
-            auto           status = or_all<id_type>(interesting_characters, +special_chars, ctx.pos, ctx.end);
+            auto           status = or_all<id_type>(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
 
 
             if ((status | +special_chars) == status) {
