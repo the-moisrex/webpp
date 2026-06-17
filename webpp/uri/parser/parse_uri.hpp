@@ -44,7 +44,7 @@ namespace webpp::uri {
 
         template <uri_options Options, URIContext CtxT>
         static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            while (!has_error(ctx.status)) {
+            while (!has_error(ctx.status) || is_valid(ctx.status)) {
                 if (parse_uri_step<Options>(ctx)) {
                     break;
                 }

@@ -360,7 +360,7 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end && *ctx.pos != '/') {
                 if (ctx.pos != ctx.beg && *stl::prev(ctx.pos) == '/') {
                     --ctx.pos;
-                } else {
+                } else if constexpr (!CtxT::is_modifiable) {
                     set(ctx.status, modification_required);
                     return;
                 }

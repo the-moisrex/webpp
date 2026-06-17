@@ -211,9 +211,39 @@ namespace webpp::uri {
         auto           buffer = create_buffer(ctx);
         for (;;) {
             iterator const lbeg = ctx.pos;
-            auto const     status =
+            auto           status =
               or_all<id_type>(interesting_characters, stl::to_underlying(cp_type::special_chars), ctx.pos, ctx.end);
-            switch (status & ~stl::to_underlying(cp_type::special_chars)) {
+
+
+            if ((status | stl::to_underlying(cp_type::special_chars)) == status) {
+                switch (*ctx.pos) {
+                    case '%':
+                        // handle percent-encoded hosts
+                        if constexpr (!CtxT::is_modifiable) {
+                            set(ctx.status, modification_required);
+                            return;
+                        } else {
+                            buffer.append(lbeg, ctx.pos);
+                            if (!details::next_percent_encode(ctx, buffer)) [[unlikely]] {
+                                // If host is failure, then return failure.
+                                // `file://example.com%/` was found
+                                set(ctx.status, invalid_host_code_point);
+                                return;
+                            }
+                            continue;
+                        }
+                        break;
+
+                    case '?':
+                    case '#':
+                    case '\\':
+                    case '/': break;
+                    default: stl::unreachable(); break;
+                }
+            }
+
+            status &= ~stl::to_underlying(cp_type::special_chars);
+            switch (status) {
                 case stl::to_underlying(cp_type::upper_val):
                     // todo: does a simple to_lower would suffice?
                     break;
@@ -234,23 +264,6 @@ namespace webpp::uri {
                 [[unlikely]] case stl::to_underlying(cp_type::forb_val):
                     break; // forbidden code points
                 [[unlikely]] default:
-
-                    // handle percent-encoded hosts
-                    if ((status | stl::to_underlying(cp_type::special_chars)) == status && *ctx.pos == '%') {
-                        if constexpr (!CtxT::is_modifiable) {
-                            set(ctx.status, modification_required);
-                            return;
-                        } else {
-                            buffer.append(lbeg, ctx.pos);
-                            if (!details::next_percent_encode(ctx, buffer)) [[unlikely]] {
-                                // If host is failure, then return failure.
-                                // `file://example.com%/` was found
-                                set(ctx.status, invalid_host_code_point);
-                                return;
-                            }
-                            continue;
-                        }
-                    }
 
                     // 'x', 'n' and '-' were found
                     if ((status & stl::to_underlying(cp_type::no_ipv6_val)) == 0 &&
