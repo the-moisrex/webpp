@@ -42,8 +42,9 @@ namespace webpp::uri {
         using enum details::port_operation_type;
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
-        auto      beg        = ctx.pos;
-        port_type port_value = 0;
+        auto      beg            = ctx.pos;
+        port_type port_value     = 0;
+        bool      skip_character = false;
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             auto const code_unit = *ctx.pos;
             switch (static_cast<details::port_operation_type>(or_one(details::port_table, code_unit))) {
@@ -61,6 +62,7 @@ namespace webpp::uri {
                         set(ctx.status, port_invalid);
                         return;
                     }
+                    skip_character = true;
                     break;
 
                 [[unlikely]] case op_invalid:
@@ -97,6 +99,10 @@ namespace webpp::uri {
                 set_port(ctx.out, create_buffer(ctx, beg, ctx.pos));
             }
             set_flag(ctx.status, has_non_null_port);
+        }
+
+        if (skip_character && ctx.pos != ctx.end) {
+            ++ctx.pos;
         }
 
         // If state override is given, then return failure

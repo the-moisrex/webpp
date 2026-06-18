@@ -291,22 +291,16 @@ namespace webpp::uri::details {
                 }
                 switch (*ctx.pos) {
                     case '/': set(ctx.status, valid_path); break;
-                    case ':':
-                        set(ctx.status, valid_port);
-                        ++ctx.pos;
-                        break;
-                    case '#':
-                        set(ctx.status, valid_fragment);
-                        ++ctx.pos;
-                        break;
+                    case ':': set(ctx.status, valid_port); break;
+                    case '#': set(ctx.status, valid_fragment); break;
                     case '?':
                         set(ctx.status, valid_queries);
-                        ++ctx.pos;
                         break;
                     [[unlikely]] default:
                         set(ctx.status, ipv6_char_after_closing);
-                        break;
+                        return;
                 }
+                ++ctx.pos;
                 break;
             default: set(ctx.status, static_cast<uri_status>(error_bit | +ipv6_parsing_result)); break;
         }
