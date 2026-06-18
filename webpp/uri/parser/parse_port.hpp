@@ -42,9 +42,10 @@ namespace webpp::uri {
         using enum details::port_operation_type;
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
-        auto      beg            = ctx.pos;
-        port_type port_value     = 0;
-        bool      skip_character = false;
+        auto      beg        = ctx.pos;
+        auto      port_end   = ctx.end;  // Tracks the end boundary of the parsed digits
+        port_type port_value = 0;
+
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             auto const code_unit = *ctx.pos;
             switch (static_cast<details::port_operation_type>(or_one(details::port_table, code_unit))) {
@@ -62,7 +63,7 @@ namespace webpp::uri {
                         set(ctx.status, port_invalid);
                         return;
                     }
-                    skip_character = true;
+                    port_end = ctx.pos++; // Save digit end boundary and skip the break character
                     break;
 
                 [[unlikely]] case op_invalid:
@@ -71,6 +72,7 @@ namespace webpp::uri {
                         // a = new URL("https://example.com:100/");
                         // a.port = "200what?";
                         // a.port === '200'
+                        port_end = ctx.pos;
                         break;
                     } else {
                         set(ctx.status, port_invalid);
@@ -81,35 +83,34 @@ namespace webpp::uri {
             break;
         }
 
-        // it's unsigned, we don't need to check for it being lower than 0
-        if (port_value == known_port(scheme(ctx.out)) && port_value != 0) {
-            clear_port(ctx.out);
-            unset_flag(ctx.status, has_non_null_port);
-        } else {
-            assert(port_value <= max_port_number);
-
-            // set the port:
-            if constexpr (PortNumberAssignable<typename CtxT::component_type>) {
-                set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
-            } else {
-                // ignoring the leading zeros
-                while (beg < stl::prev(ctx.pos) && *beg == '0') [[unlikely]] {
-                    ++beg;
-                }
-                set_port(ctx.out, create_buffer(ctx, beg, ctx.pos));
-            }
-            set_flag(ctx.status, has_non_null_port);
-        }
-
-        if (skip_character && ctx.pos != ctx.end) {
-            ++ctx.pos;
-        }
 
         // If state override is given, then return failure
         // Set state to path start state and decrease pointer by 1.
         // https://url.spec.whatwg.org/#path-start-state
         set(ctx.status, Options.state_override ? valid : valid_path_start);
+
+        // it's unsigned, we don't need to check for it being lower than 0
+        if (port_value == known_port(scheme(ctx.out)) && port_value != 0) {
+            clear_port(ctx.out);
+            unset_flag(ctx.status, has_non_null_port);
+            return;
+        }
+
+        assert(port_value <= max_port_number);
+
+        // set the port:
+        if constexpr (PortNumberAssignable<typename CtxT::component_type>) {
+            set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
+        } else {
+            // ignoring the leading zeros
+            while (beg < stl::prev(port_end) && *beg == '0') [[unlikely]] {
+                ++beg;
+            }
+            set_port(ctx.out, create_buffer(ctx, beg, port_end)); // Use port_end here
+        }
+        set_flag(ctx.status, has_non_null_port);
     }
+
 
 } // namespace webpp::uri
 

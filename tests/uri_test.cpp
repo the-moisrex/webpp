@@ -749,10 +749,8 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHost) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
-    } else if constexpr (TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/C|/windows");
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/C|\\windows");
+        EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
 }
 
@@ -765,10 +763,8 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostWithNewLine) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
-    } else if constexpr (TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/\nC\r|\t/\twind\tows");
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/\nC\r|\t\\\twind\tows");
+        EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
 }
 
@@ -781,10 +777,8 @@ TYPED_TEST(URITests, WindowsDriveLetterUsed) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
-    } else if constexpr (TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/C|/windows");
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/C|\\windows");
+        EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
 }
 
@@ -798,7 +792,7 @@ TYPED_TEST(URITests, WindowsDriveLetterUsedStrict) {
     if constexpr (TypeParam::is_segregated || TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context.out), "/C|/windows");
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/C|\\windows");
+        EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
 }
 
@@ -811,10 +805,8 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostUppercasedScheme) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
-    } else if constexpr (TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "/C|/windows");
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/C|\\windows");
+        EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
 }
 

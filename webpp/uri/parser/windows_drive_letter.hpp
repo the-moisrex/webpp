@@ -141,17 +141,22 @@ namespace webpp::uri::details {
             // normalizes the drive separator to a colon.
             set_warning(ctx.status, windows_drive_letter_used);
             assert(ctx.pos != ctx.end);
-            buffer.push_back('/');
-            ++ctx.pos;
+            if constexpr (!CtxT::is_segregated) {
+                buffer.push_back('/');
+            }
             buffer.push_back(letters[0]);
             buffer.push_back(letters[1]);
-            ctx.pos += 2;
             ctx.pos += pos - ctx.pos - 1; // ignore characters
             if (letters[2] == '/') {
-                buffer.push_back('/');
+                if constexpr (CtxT::is_segregated) {
+                    push_segment(uri::path(ctx.out), stl::move(buffer));
+                    buffer.clear();
+                } else {
+                    buffer.push_back('/');
+                }
                 ++ctx.pos;
             }
-            end_segment(ctx, buffer);
+            // end_segment(ctx, buffer);
         }
     }
 
