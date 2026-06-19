@@ -69,14 +69,7 @@ namespace webpp::uri::details {
         return false;
     }
 
-    template <uri_options Options, URIContext CtxT>
-        requires(!Options.handle_windows_drive_letters)
-    static constexpr void handle_windows_driver_letter(CtxT&, auto&) noexcept(CtxT::is_nothrow) {
-        // do nothing
-    }
-
-    template <uri_options Options, URIContext CtxT>
-        requires(Options.handle_windows_drive_letters)
+    template <URIContext CtxT>
     static constexpr void handle_windows_driver_letter(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
         using char_type = typename CtxT::char_type;

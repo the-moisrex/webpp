@@ -407,7 +407,9 @@ namespace webpp::uri {
             }
         }
 
-        details::handle_windows_driver_letter<Options>(ctx, buffer);
+        if constexpr (Options.handle_windows_drive_letters) {
+            details::handle_windows_driver_letter(ctx, buffer);
+        }
         while (!encode_or_validate(ctx,
                                    buffer,
                                    details::encode_set<CtxT::is_modifiable>,

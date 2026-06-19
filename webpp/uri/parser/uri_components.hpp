@@ -5,7 +5,6 @@
 
 #include "../../std/collection.hpp"
 #include "../../std/string_like.hpp"
-#include "../uri_status.hpp"
 #include "./special_schemes.hpp"
 
 #include <cstdint>
@@ -100,12 +99,6 @@ namespace webpp::uri {
     concept URIModifiableComponents =
       URIComponents<T> && requires { requires istl::String<typename stl::remove_cvref_t<T>::string_type>; };
 
-    /**
-     * An output type that is like a vector or a map
-     */
-    template <typename T>
-    concept SegregatedOutput =
-      (istl::LinearContainer<T> && !istl::String<T>) || requires { requires T::is_segregated; };
 
     /// Path can be a vector
     template <typename T>
