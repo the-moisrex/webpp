@@ -327,14 +327,14 @@ namespace webpp::uri {
         set(ctx.status, valid);
 
         auto buffer = create_buffer(ctx);
-        for (; ctx.pos != ctx.end;) {
+        while (ctx.pos != ctx.end) {
             auto const lbeg   = ctx.pos;
             auto       status = or_all<stl::uint8_t>(opaque_interesting_chars, +stop_token, ctx.pos, ctx.end);
 
             // append the path to the buffer, possibly encode them as well
             if ((status & +encoding_required) == +encoding_required) {
                 if constexpr (CtxT::is_modifiable) {
-                    for (auto endp = stl::exchange(ctx.pos, lbeg); ctx.pos != endp; ++ctx.pos) {
+                    for (auto endp = stl::next(stl::exchange(ctx.pos, lbeg)); ctx.pos != endp; ++ctx.pos) {
                         encode_uri_component<uri_encoding_policy::encode_chars>(
                           *ctx.pos,
                           buffer,
@@ -407,6 +407,7 @@ namespace webpp::uri {
                         default: assert(false); stl::unreachable();
                     }
                     continue;
+                default: continue;
             }
             break;
         }
