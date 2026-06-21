@@ -288,6 +288,20 @@ namespace webpp::uri {
             }
         }
 
+        enum struct opaque_cp_type : stl::uint8_t {
+            normal_opaque_path = 0,     // Forbidden/Unicode
+            special_chars      = 0b1U,  // characters: ? % # SPACE
+            encoding_required  = 0b10U, // C0 Control encode sets
+        };
+
+        [[nodiscard]] static consteval stl::uint8_t operator+(opaque_cp_type const code_point) noexcept {
+            return static_cast<stl::uint8_t>(code_point);
+        }
+
+        static constexpr auto opaque_interesting_chars = categorize<stl::uint8_t, 256U>(
+          cat{.set = C0_CONTROL_ENCODE_SET, .value = +opaque_cp_type::encoding_required},
+          cat{.set = u8"?#% ", .value = +opaque_cp_type::special_chars});
+
     } // namespace details
 
     template <URIContext CtxT>
@@ -295,38 +309,91 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
         using enum uri_status;
         using details::ascii_bitmap;
+        using enum details::opaque_cp_type;
         using details::encode_or_validate;
         using details::next_percent_encode;
+        using details::opaque_interesting_chars;
 
         set_flag(ctx.status, opaque_path);
 
         auto buffer = create_buffer(ctx);
-        while (!encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, ascii_bitmap('%', '#', '?'))) {
-            switch (*ctx.pos) {
-                case '?':
-                    clear_queries(ctx.out);
-                    unset_flag(ctx.status, has_non_null_queries);
-                    set(ctx.status, valid_queries);
-                    break;
-                case '#':
-                    clear_fragment(ctx.out);
-                    set(ctx.status, valid_fragment);
-                    break;
-                case '%':
-                    if (!next_percent_encode(ctx, buffer)) {
+        for (;;) {
+            auto const lbeg   = ctx.pos;
+            auto       status = or_all<stl::uint8_t>(opaque_interesting_chars, +special_chars, ctx.pos, ctx.end);
+
+            if ((status & +special_chars) != 0) {
+                assert(ctx.pos != ctx.end);
+                switch (*ctx.pos) {
+                    case '?':
+                        clear_queries(ctx.out);
+                        unset_flag(ctx.status, has_non_null_queries);
+                        set(ctx.status, valid_queries);
+                        break;
+                    case '#':
+                        clear_fragment(ctx.out);
+                        set(ctx.status, valid_fragment);
+                        break;
+                    case '%':
+                        if constexpr (CtxT::is_modifiable) {
+                            if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                                set_warning(ctx.status, invalid_character);
+                            }
+                        } else {
+                            set(ctx.status, modification_required);
+                            return;
+                        }
+                        continue;
+                    case ' ':
+                        // Otherwise, if c is U+0020 SPACE:
+                        //   If remaining starts with U+003F (?) or U+0023 (#), then append "%20" to url’s path.
+                        //   Otherwise, append U+0020 SPACE to url’s path.
+                        if (ctx.pos != ctx.end && (*ctx.pos == '?' || *ctx.pos == '#')) {
+                            if constexpr (CtxT::is_modifiable) {
+                                buffer.push_back('%');
+                                buffer.push_back('2');
+                                buffer.push_back('0');
+                                ++ctx.pos;
+                                continue;
+                            } else {
+                                set(ctx.status, modification_required);
+                                return;
+                            }
+                        } else {
+                            if constexpr (CtxT::is_modifiable) {
+                                buffer.push_back(' ');
+                            } else {
+                                ++ctx.pos;
+                            }
+                        }
+                        break;
+                    [[unlikely]] default:
+                        ++ctx.pos;
                         set_warning(ctx.status, invalid_character);
-                    }
-                    continue;
-                default:
-                    ++ctx.pos;
-                    set_warning(ctx.status, invalid_character);
-                    continue;
+                        continue;
+                }
+
+                status &= ~+special_chars;
             }
-            end_segment(ctx, buffer);
-            details::set_or_append_path(ctx, buffer);
-            clear_segment(ctx, buffer);
-            ++ctx.pos; // it's okay, we're not at the end
-            return;
+
+            switch (status) {
+                [[unlikely]] case +normal_opaque_path:
+                    push_segment(buffer, segment{lbeg, ctx.pos});
+                    break;
+                case +encoding_required:
+                    if constexpr (CtxT::is_modifiable) {
+                        auto pos = lbeg;
+                        encode_uri_component<uri_encoding_policy::encode_chars>(
+                          pos,
+                          ctx.pos,
+                          buffer,
+                          details::C0_CONTROL_ENCODE_SET);
+                    } else {
+                        set(ctx.status, modification_required);
+                        return;
+                    }
+                    break;
+            }
+            break;
         }
         set(ctx.status, valid);
         end_segment(ctx, buffer);

@@ -204,9 +204,7 @@ TYPED_TEST(URITests, ParseURI) {
     EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
     EXPECT_TRUE(uri::has_flags(context.status, uri::uri_status::opaque_path));
     EXPECT_EQ(uri::scheme(context.out), "urn");
-    if constexpr (!TypeParam::is_segregated) {
-        EXPECT_EQ(uri::render_path(context.out), "testing");
-    }
+    EXPECT_EQ(uri::render_path(context), "testing");
 }
 
 TYPED_TEST(URITests, URIParsingWithWarnings) {
@@ -2023,6 +2021,39 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes3) {
     EXPECT_EQ(uri::render_queries(ctx.out), "fox") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(file:////?fox)URL") << details;
+}
+
+// 765 - U+0000 and U+FFFF in various places (11)
+TYPED_TEST(URITests, U0000AndUFfffInVariousPlaces11) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "non-special:x/?\u0000y",
+    "base": null,
+    "hash": "",
+    "host": "",
+    "hostname": "",
+    "href": "non-special:x/?%00y",
+    "password": "",
+    "pathname": "x/",
+    "port": "",
+    "protocol": "non-special:",
+    "search": "?%00y",
+    "username": ""
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(non-special:x/? y)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "non-special") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx.out), "x/") << details;
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(uri::render_queries(ctx.out), "%00y") << details;
+    } else {
+        EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
+    }
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(non-special:x/?%00y)URL") << details;
 }
 
 TYPED_TEST(URITests, FuzzTest1) {

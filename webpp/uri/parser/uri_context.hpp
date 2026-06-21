@@ -449,8 +449,8 @@ namespace webpp::uri::details {
     }
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
-    template <URIContext CtxT, istl::String OutT>
-    [[nodiscard]] constexpr bool next_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
+    template <URIContext CtxT, typename OutT>
+    [[nodiscard]] static constexpr bool next_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)
