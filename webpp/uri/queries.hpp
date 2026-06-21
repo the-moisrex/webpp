@@ -79,20 +79,6 @@ namespace webpp::uri {
     }
 
     /// Only use this in quick tests, this possibly allocates.
-    template <URIComponents CompT, typename StrT = stl::string>
-    [[nodiscard]] static constexpr decltype(auto) render_queries(CompT const& comp, bool add_separators = false) {
-        using enum uri_status;
-        if constexpr (URIStructuredComponents<CompT>) {
-            StrT out;
-            // Delegate to the correct function, faking a valid status
-            render_queries(comp, out, +valid | +has_non_null_queries, add_separators);
-            return out;
-        } else {
-            return queries(comp);
-        }
-    }
-
-    /// Only use this in quick tests, this possibly allocates.
     template <URIContext CtxT, typename StrT = stl::string>
     [[nodiscard]] static constexpr decltype(auto) render_queries(CtxT const& ctx, bool add_separators = false) {
         using enum uri_status;

@@ -345,8 +345,8 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_EQ(uri::username(context.out), "username");
     EXPECT_EQ(uri::password(context.out), "password");
     EXPECT_EQ(uri::port(context.out), "1010");
-    EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
-    EXPECT_EQ(uri::render_queries(context.out), "query1=one");
+    EXPECT_EQ(uri::render_path(context), "/this/is/the/path");
+    EXPECT_EQ(uri::render_queries(context), "query1=one");
     EXPECT_EQ(uri::fragment(context.out), "hash");
     EXPECT_TRUE(uri::has_scheme(context.out));
     EXPECT_TRUE(uri::has_username(context.out));
@@ -365,8 +365,8 @@ TYPED_TEST(URITests, QueriesEnding) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_EQ(uri::hostname(context.out), "example.com");
-    // EXPECT_EQ(uri::render_queries(context.out), "query1");
-    EXPECT_EQ(uri::render_path(context.out), "/this/is/the/path");
+    // EXPECT_EQ(uri::render_queries(context), "query1");
+    EXPECT_EQ(uri::render_path(context), "/this/is/the/path");
     EXPECT_EQ(uri::render_queries(context), "query1=");
 }
 
@@ -454,7 +454,7 @@ TYPED_TEST(URITests, OpaqueHostParser) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(uri::scheme(context.out), "urn");
     EXPECT_EQ(uri::hostname(context.out), "this");
-    EXPECT_EQ(uri::render_path(context.out), "/is/a/path");
+    EXPECT_EQ(uri::render_path(context), "/is/a/path");
 }
 
 TYPED_TEST(URITests, OpaqueHostParserWarning) {
@@ -469,7 +469,7 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(uri::scheme(context.out), "urn");
     EXPECT_EQ(uri::hostname(context.out), "th%is");
-    EXPECT_EQ(uri::render_path(context.out), "/is/a/path");
+    EXPECT_EQ(uri::render_path(context), "/is/a/path");
 }
 
 TYPED_TEST(URITests, InvalidHostCharacter) {
@@ -492,8 +492,8 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(uri::scheme(context.out), "ldap");
     EXPECT_EQ(uri::hostname(context.out), "[2001:db8::7]");
-    EXPECT_EQ(uri::render_path(context.out), "/c=GB");
-    EXPECT_EQ(uri::render_queries(context.out), "objectClass?one");
+    EXPECT_EQ(uri::render_path(context), "/c=GB");
+    EXPECT_EQ(uri::render_queries(context), "objectClass?one");
 }
 
 TYPED_TEST(URITests, OpaqueHostWithCredentials) {
@@ -509,8 +509,8 @@ TYPED_TEST(URITests, OpaqueHostWithCredentials) {
     EXPECT_EQ(uri::username(context.out), "username");
     EXPECT_EQ(uri::password(context.out), "password");
     EXPECT_EQ(uri::port(context.out), "1515");
-    EXPECT_EQ(uri::render_path(context.out), "/c=GB");
-    EXPECT_EQ(uri::render_queries(context.out), "objectClass?one");
+    EXPECT_EQ(uri::render_path(context), "/c=GB");
+    EXPECT_EQ(uri::render_queries(context), "objectClass?one");
 }
 
 TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
@@ -535,7 +535,7 @@ TYPED_TEST(URITests, IPv4AsHost) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
     EXPECT_EQ(uri::scheme(context.out), "https");
     EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, InvalidIPv4AsHost) {
@@ -557,7 +557,7 @@ TYPED_TEST(URITests, PathDot) {
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-    EXPECT_EQ(uri::render_path(context.out), "/one");
+    EXPECT_EQ(uri::render_path(context), "/one");
 }
 
 TYPED_TEST(URITests, PathDotNormalized) {
@@ -568,7 +568,7 @@ TYPED_TEST(URITests, PathDotNormalized) {
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-    EXPECT_EQ(uri::render_path(context.out), "/one");
+    EXPECT_EQ(uri::render_path(context), "/one");
 }
 
 TYPED_TEST(URITests, SkipDotButNotSlash) {
@@ -582,7 +582,7 @@ TYPED_TEST(URITests, SkipDotButNotSlash) {
         EXPECT_TRUE(uri::is_valid(context.status));
         ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out), "/page/");
+        EXPECT_EQ(uri::render_path(context), "/page/");
     }
 }
 
@@ -598,7 +598,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
         EXPECT_TRUE(uri::is_valid(context.status));
         ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out), "//three//");
+        EXPECT_EQ(uri::render_path(context), "//three//");
     }
 }
 
@@ -616,7 +616,7 @@ TYPED_TEST(URITests, Percent2ECheck) {
         ASSERT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
           << to_string(uri::get_warning(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out),
+        EXPECT_EQ(uri::render_path(context),
                   "//zero/three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
     }
 }
@@ -631,7 +631,7 @@ TYPED_TEST(URITests, BackingUpOnEmptySegments) {
     } else {
         EXPECT_TRUE(uri::is_valid(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out), "//");
+        EXPECT_EQ(uri::render_path(context), "//");
     }
 }
 
@@ -645,7 +645,7 @@ TYPED_TEST(URITests, LastEmptySegment) {
     } else {
         EXPECT_TRUE(uri::is_valid(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out), "//a/");
+        EXPECT_EQ(uri::render_path(context), "//a/");
     }
 }
 
@@ -677,7 +677,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
         EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
           << to_string(uri::get_warning(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
-        EXPECT_EQ(uri::render_path(context.out), "//three/");
+        EXPECT_EQ(uri::render_path(context), "//three/");
     }
 }
 
@@ -690,9 +690,9 @@ TYPED_TEST(URITests, DoubleAtSign) {
         EXPECT_FALSE(uri::is_valid(context.status));
     } else {
         EXPECT_EQ(uri::username(context.out), "username%40username");
-        EXPECT_EQ(uri::render_path(context.out), "/");
+        EXPECT_EQ(uri::render_path(context), "/");
         EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
-        EXPECT_EQ(uri::render_queries(context.out), "one==a");
+        EXPECT_EQ(uri::render_queries(context), "one==a");
         EXPECT_EQ(uri::fragment(context.out), "hash");
     }
 }
@@ -705,7 +705,7 @@ TYPED_TEST(URITests, DoubleEqual) {
     if constexpr (!TypeParam::is_modifiable) {
         EXPECT_FALSE(uri::is_valid(context.status));
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/");
+        EXPECT_EQ(uri::render_path(context), "/");
         EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
         EXPECT_EQ(uri::render_queries(context), "one==a&page=====one");
         EXPECT_EQ(uri::fragment(context.out), "hash");
@@ -720,7 +720,7 @@ TYPED_TEST(URITests, EmptyQueryName) {
     if constexpr (!TypeParam::is_modifiable) {
         EXPECT_FALSE(uri::is_valid(context.status));
     } else {
-        EXPECT_EQ(uri::render_path(context.out), "/");
+        EXPECT_EQ(uri::render_path(context), "/");
         EXPECT_EQ(uri::hostname(context.out), "127.0.0.1");
         EXPECT_EQ(uri::render_queries(context), "=a&page=====one");
         EXPECT_EQ(uri::fragment(context.out), "hash");
@@ -734,7 +734,7 @@ TYPED_TEST(URITests, DontGetFooledURI) {
     uri::parse_uri(context);
     EXPECT_EQ(uri::username(context.out), "example.com");
     EXPECT_EQ(uri::password(context.out), "8080");
-    EXPECT_EQ(uri::render_path(context.out), "/");
+    EXPECT_EQ(uri::render_path(context), "/");
     EXPECT_EQ(uri::hostname(context.out), "real.example.org");
 }
 
@@ -746,7 +746,7 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHost) {
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
+        EXPECT_EQ(uri::render_path(context), "/C:/windows");
     } else {
         EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
@@ -760,7 +760,7 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostWithNewLine) {
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
+        EXPECT_EQ(uri::render_path(context), "/C:/windows");
     } else {
         EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
@@ -774,7 +774,7 @@ TYPED_TEST(URITests, WindowsDriveLetterUsed) {
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_used))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
+        EXPECT_EQ(uri::render_path(context), "/C:/windows");
     } else {
         EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
@@ -788,7 +788,7 @@ TYPED_TEST(URITests, WindowsDriveLetterUsedStrict) {
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::reverse_solidus_used))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_segregated || TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(context.out), "/C|/windows");
+        EXPECT_EQ(uri::render_path(context), "/C|/windows");
     } else {
         EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
@@ -802,7 +802,7 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostUppercasedScheme) {
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(context.out), "/C:/windows");
+        EXPECT_EQ(uri::render_path(context), "/C:/windows");
     } else {
         EXPECT_TRUE(has_error(context.status, uri::uri_status::modification_required));
     }
@@ -1023,7 +1023,7 @@ TYPED_TEST(URITests, IPv6WithCredentials) {
     EXPECT_EQ(uri::hostname(context.out), "[::1]");
     EXPECT_EQ(uri::username(context.out), "user");
     EXPECT_EQ(uri::password(context.out), "pass");
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, PortLikePassword) {
@@ -1035,7 +1035,7 @@ TYPED_TEST(URITests, PortLikePassword) {
     EXPECT_FALSE(has_port(context.out));
     EXPECT_EQ(uri::username(context.out), "user");
     EXPECT_EQ(uri::password(context.out), "123");
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, InvlaidPort) {
@@ -1077,7 +1077,7 @@ TYPED_TEST(URITests, FileSchemeBasic) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, FileSchemeWithHost) {
@@ -1091,7 +1091,7 @@ TYPED_TEST(URITests, FileSchemeWithHost) {
     } else {
         EXPECT_EQ(uri::hostname(context.out), "0x7f.1");
     }
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, LocalhostFileScheme) {
@@ -1101,7 +1101,7 @@ TYPED_TEST(URITests, LocalhostFileScheme) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_FALSE(has_hostname(context.out)) << "'localhost' hostname for 'file:' scheme gets removed.";
-    EXPECT_EQ(uri::render_path(context.out), "/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
 }
 
 TYPED_TEST(URITests, LocalhostFileSchemeStrict) {
@@ -1112,7 +1112,7 @@ TYPED_TEST(URITests, LocalhostFileSchemeStrict) {
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_FALSE(has_fragment(context.out)) << "This url doesn't have a hash.";
     EXPECT_FALSE(has_hostname(context.out)) << "localhost for file: scheme gets removed.";
-    EXPECT_EQ(uri::render_path(context.out), "/localhost/page/one");
+    EXPECT_EQ(uri::render_path(context), "/localhost/page/one");
     // todo: should this have a warning too?
 }
 
@@ -1611,10 +1611,10 @@ TYPED_TEST(URITests, NewlinesInURI) {
     EXPECT_EQ(uri::scheme(ctx.out), "http");
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::hostname(ctx.out), "example.org");
-        EXPECT_EQ(uri::render_path(ctx.out), "/");
+        EXPECT_EQ(uri::render_path(ctx), "/");
     } else {
         EXPECT_EQ(uri::hostname(ctx.out), "example\t.\norg");
-        EXPECT_EQ(uri::render_path(ctx.out), "");
+        EXPECT_EQ(uri::render_path(ctx), "");
     }
 }
 
@@ -1624,7 +1624,7 @@ TYPED_TEST(URITests, NewlinesInLocalhost) {
     EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
     EXPECT_EQ(uri::scheme(ctx.out), "file");
     EXPECT_EQ(uri::hostname(ctx.out), "");
-    EXPECT_EQ(uri::render_path(ctx.out), "/localhost/page");
+    EXPECT_EQ(uri::render_path(ctx), "/localhost/page");
 }
 
 TYPED_TEST(URITests, NewlinesInScheme) {
@@ -1775,8 +1775,8 @@ TYPED_TEST(URITests, UnknownSchemesAndTheirHosts2) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "%") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
 }
 
@@ -1793,8 +1793,8 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "//") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "//") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), "file:////") << details;
 }
@@ -1822,8 +1822,8 @@ TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes11) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "a") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(file://a/)URL") << details;
 }
@@ -1855,8 +1855,8 @@ TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat8) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "example.org") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/foo/:foo.com") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/foo/:foo.com") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/foo/:foo.com)URL") << details;
 }
@@ -1916,8 +1916,8 @@ TYPED_TEST(URITests, TestsForTheDistinctPercentEncodeSets2) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "host") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(wss://%20!%22$%&'()*+,-.%3B%3C%3D%3E%40%5B%5D%5E_%60%7B%7C%7D~@host/)URL")
       << details;
@@ -1947,8 +1947,8 @@ TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes8) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "example.org") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/path") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/path") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/path)URL") << details;
 }
@@ -1977,8 +1977,8 @@ TYPED_TEST(URITests, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTre
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "/test") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "/test") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(turn:///test)URL") << details;
 }
@@ -2017,8 +2017,8 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes3) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "//") << details;
-    EXPECT_EQ(uri::render_queries(ctx.out), "fox") << details;
+    EXPECT_EQ(uri::render_path(ctx), "//") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "fox") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), R"URL(file:////?fox)URL") << details;
 }
@@ -2046,9 +2046,9 @@ TYPED_TEST(URITests, U0000AndUFfffInVariousPlaces11) {
     EXPECT_EQ(uri::password(ctx.out), "") << details;
     EXPECT_EQ(uri::hostname(ctx.out), "") << details;
     EXPECT_EQ(uri::port(ctx.out), "") << details;
-    EXPECT_EQ(uri::render_path(ctx.out), "x/") << details;
+    EXPECT_EQ(uri::render_path(ctx), "x/") << details;
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_queries(ctx.out), "%00y") << details;
+        EXPECT_EQ(uri::render_queries(ctx), "%00y") << details;
     } else {
         EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
     }

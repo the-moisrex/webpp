@@ -27,7 +27,7 @@ namespace webpp::uri {
     static constexpr void render_path(
       stl::span<SlugType const>                                  storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool const                                                 is_opaque = false) {
+      bool const                                                 is_opaque) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         if (is_opaque) {
@@ -51,17 +51,15 @@ namespace webpp::uri {
     static constexpr void render_path(
       stl::basic_string_view<CharT> const                        storage,
       stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      [[maybe_unused]] bool                                      is_opaque = false) {
+      [[maybe_unused]] bool                                      is_opaque) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
         out += storage;
     }
 
     template <URIComponents CompT, typename CharT, typename AllocT>
-    static constexpr void render_path(
-      CompT const&                                               comp,
-      stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out,
-      bool                                                       is_opaque = false) {
+    static constexpr void
+    render_path(CompT const& comp, stl::basic_string<CharT, stl::char_traits<CharT>, AllocT>& out, bool is_opaque) {
         if constexpr (URIStructuredComponents<CompT>) {
             using slug_type = typename CompT::seg_type;
             render_path(stl::span<slug_type const>{uri::path(comp)}, out, is_opaque);
@@ -72,7 +70,7 @@ namespace webpp::uri {
 
     /// Only use this in quick tests, this possibly allocates.
     template <URIComponents CompT, typename StrT = stl::string>
-    [[nodiscard]] static constexpr decltype(auto) render_path(CompT const& comp, bool is_opaque = false) {
+    [[nodiscard]] static constexpr decltype(auto) render_path(CompT const& comp, bool is_opaque) {
         if constexpr (URIStructuredComponents<CompT>) {
             using slug_type = typename stl::remove_cvref_t<CompT>::seg_type;
             StrT out;

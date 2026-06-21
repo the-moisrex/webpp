@@ -176,6 +176,12 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << ${testDetails(test)};`;
   }
 
+  result += `
+  if (!uri::is_valid(ctx.status)) {
+    return;
+  }
+  `
+
   // scheme
   if (test.protocol !== undefined) {
     result += `
@@ -226,19 +232,19 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
         // }`;
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(ctx.out), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
+        EXPECT_EQ(uri::render_path(ctx), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
     } else {
         EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
     }`;
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_path(ctx.out), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
+        EXPECT_EQ(uri::render_path(ctx), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
-    EXPECT_EQ(uri::render_path(ctx.out), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::render_path(ctx), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};`;
     }
   }
 
@@ -256,7 +262,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
         // }`;
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_queries(ctx.out), "${escapeForCppString(
+        EXPECT_EQ(uri::render_queries(ctx), "${escapeForCppString(
           test.search.substring(1))}") << ${testDetails(test)};
     } else {
         EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
@@ -264,13 +270,13 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(uri::render_queries(ctx.out), "${escapeForCppString(
+        EXPECT_EQ(uri::render_queries(ctx), "${escapeForCppString(
           test.search.substring(1))}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
-    EXPECT_EQ(uri::render_queries(ctx.out), "${escapeForCppString(
+    EXPECT_EQ(uri::render_queries(ctx), "${escapeForCppString(
         test.search.substring(1))}") << ${testDetails(test)};`;
     }
   }
