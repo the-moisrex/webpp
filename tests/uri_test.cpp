@@ -2056,6 +2056,76 @@ TYPED_TEST(URITests, U0000AndUFfffInVariousPlaces11) {
     EXPECT_EQ(uri::href(ctx), R"URL(non-special:x/?%00y)URL") << details;
 }
 
+// 767 - U+0000 and U+FFFF in various places (13)
+TYPED_TEST(URITests, U0000AndUFfffInVariousPlaces13) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "non-special:￿y",
+    "base": null,
+    "hash": "",
+    "host": "",
+    "hostname": "",
+    "href": "non-special:%EF%BF%BFy",
+    "password": "",
+    "pathname": "%EF%BF%BFy",
+    "port": "",
+    "protocol": "non-special:",
+    "search": "",
+    "username": ""
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(non-special:￿y)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    if (!uri::is_valid(ctx.status)) {
+        return;
+    }
+
+    EXPECT_EQ(uri::scheme(ctx.out), "non-special") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(uri::render_path(ctx), "%EF%BF%BFy") << details;
+    } else {
+        EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
+    }
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(non-special:%EF%BF%BFy)URL") << details;
+}
+
+// 12 - See ../README.md for a description of the format. (12)
+TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat12) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "lolscheme:x x#x x",
+    "base": null,
+    "href": "lolscheme:x x#x%20x",
+    "protocol": "lolscheme:",
+    "username": "",
+    "password": "",
+    "host": "",
+    "hostname": "",
+    "port": "",
+    "pathname": "x x",
+    "search": "",
+    "hash": "#x%20x"
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(lolscheme:x x#x x)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    if (!uri::is_valid(ctx.status)) {
+        return;
+    }
+
+    EXPECT_EQ(uri::scheme(ctx.out), "lolscheme") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "x x") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "x%20x") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(lolscheme:x x#x%20x)URL") << details;
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));

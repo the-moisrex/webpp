@@ -278,6 +278,12 @@ namespace webpp::uri {
         component.append(buffer.beg, buffer.end);
     }
 
+    template <typename IterT, typename Iter>
+    static constexpr void push_segment(segment<IterT>& component, segment<Iter> const& buffer) noexcept(false) {
+        assert(component.end == buffer.beg);
+        component.end = buffer.end;
+    }
+
     // /// String View Components are not modifiable
     // template <typename CompT, typename Iter>
     // static constexpr void push_segment([[maybe_unused]] CompT&               component,
