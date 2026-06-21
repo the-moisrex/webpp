@@ -159,13 +159,16 @@ for (const test of Object.values(jsonData)) {
 TYPED_TEST(URIWhatwgTest, ${testName}) {
     static constexpr auto details = R"JSON-URL(${JSON.stringify(test, null, 4)})JSON-URL";
 `
+  const inputLength = new TextEncoder().encode(test.input).length;
   if (test.base !== null) {
+    // const escaped = escapeForCppString(test.base);
+    const baseLength = new TextEncoder().encode(test.base).length;
     result +=
-      `    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(${test.input})URL", R"URL(${escapeForCppString(test.base)})URL");`;
+      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(${test.input})URL", ${inputLength}}, stl::string_view{R"URL(${test.base})URL", ${baseLength}});`;
   }
   else {
     result +=
-      `    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(${test.input})URL");`;
+      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(${test.input})URL", ${inputLength}});`;
   }
 
   if (test.failure !== undefined) {

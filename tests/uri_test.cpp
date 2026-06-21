@@ -2039,7 +2039,7 @@ TYPED_TEST(URITests, U0000AndUFfffInVariousPlaces11) {
     "search": "?%00y",
     "username": ""
 })JSON-URL";
-    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(non-special:x/? y)URL");
+    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(non-special:x/? y)URL", 17});
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(uri::scheme(ctx.out), "non-special") << details;
     EXPECT_EQ(uri::username(ctx.out), "") << details;
