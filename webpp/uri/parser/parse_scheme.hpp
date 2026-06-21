@@ -463,15 +463,17 @@ namespace webpp::uri {
                 }
 
                 details::set_scheme(ctx);
-                ++ctx.pos;
+                ++ctx.pos; // colon
                 set_flag(ctx.status, scheme_type::not_special);
+
+                // Otherwise, if remaining starts with an U+002F (/), set state to path or authority state and increase
+                // pointer by 1.
                 if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                     // https://url.spec.whatwg.org/#path-or-authority-state
                     if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
                         set(ctx.status, valid_authority);
                         return;
                     }
-                    --ctx.pos; // keep the leading slash for the path parser
                     set(ctx.status, valid_path);
                     return;
                 }
