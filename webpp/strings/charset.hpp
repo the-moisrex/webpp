@@ -952,6 +952,12 @@ namespace webpp {
         return res;
     }
 
+    template <stl::size_t N>
+    [[nodiscard]] static consteval bitmap<N> inverse(bitmap<N> set) noexcept {
+        set.flip();
+        return set;
+    }
+
     template <istl::CharType CharT, stl::size_t N>
     [[nodiscard]] static consteval auto inverse(charset<CharT, N> const& set) noexcept {
         static_assert(sizeof(CharT) <= sizeof(stl::uint8_t),

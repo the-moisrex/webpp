@@ -119,16 +119,6 @@ namespace webpp::uri {
             pop_back_path(ctx);
         }
 
-        /// We don't need to handle dots in a path if the user is asking us not to
-        template <uri_options Options, URIContext CtxT>
-            requires(!Options.handle_dots_in_paths)
-        static constexpr bool handle_dots_in_paths(
-          [[maybe_unused]] CtxT&       ctx,
-          [[maybe_unused]] auto&       buffer,
-          [[maybe_unused]] stl::size_t segment_start = 0) noexcept {
-            return false;
-        }
-
         // Character Category Lookup Table
         static constexpr auto dots_category = []() consteval {
             // NOLINTBEGIN(*-magic-numbers, *-member-init)
@@ -199,51 +189,45 @@ namespace webpp::uri {
         ///
         /// It's possible to have newlines and tabs in between these things
         /// @returns true if we found one or two dots
-        template <uri_options Options, URIContext CtxT>
-            requires(Options.handle_dots_in_paths)
+        template <URIContext CtxT>
         [[nodiscard]] static constexpr bool
-        handle_dots_in_paths(CtxT& ctx, auto& buffer, stl::size_t const segment_start = 0) noexcept(CtxT::is_nothrow) {
-            using stl::begin;
-            using stl::end;
-
-            webpp_static_constexpr bool is_string_buffer   = CtxT::is_modifiable;
-            webpp_static_constexpr bool is_continuous_path = !CtxT::is_segregated && is_string_buffer;
-
-            auto segment_begin = begin(buffer);
-            if constexpr (is_continuous_path) {
-                // For string buffers, `segment_start` points at the beginning of the current segment.
-                auto const safe_segment_start = stl::min(segment_start, buffer.size());
-                segment_begin                 = begin(buffer) + static_cast<stl::ptrdiff_t>(safe_segment_start);
-            }
-
-            switch (dots_count(segment_begin, end(buffer))) {
-                // no dots found:
-                case 0: return false;
-
+        handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator const lbeg, typename CtxT::iterator& lend)
+          noexcept(CtxT::is_nothrow) {
+            switch (dots_count(lbeg, lend)) {
                 // single dot found:
                 case 1: // .
-                    if constexpr (is_continuous_path) {
-                        auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
-                        buffer.resize(seg_start);
-
-
+                    lend = lbeg;
+                    if constexpr (CtxT::is_segregated) {
+                        clear_segment(ctx, buffer);
+                    } else if constexpr (!CtxT::is_modifiable) {
+                        set(ctx.status, uri_status::modification_required);
+                        return true;
+                    } else {
                         // https://url.spec.whatwg.org/#path-state
                         // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
                         // the empty string to url's path."
                         if (buffer.empty() || buffer.back() != '/') {
                             buffer.push_back('/');
                         }
-                    } else {
-                        clear_segment(ctx, buffer);
                     }
                     break;
 
                 // two dots found:
                 case 2: // ..
-                    if constexpr (is_continuous_path) {
+                    lend = lbeg;
+                    if constexpr (CtxT::is_segregated) {
+                        auto const& path = uri::path(ctx.out);
+                        // don't turn "/.." into an empty path
+                        if (path.size() != 1 || !path.front().empty()) [[unlikely]] {
+                            pop_back_path(ctx);
+                        }
+                        clear_segment(ctx, buffer);
+
+                    } else if constexpr (!CtxT::is_modifiable) {
+                        set(ctx.status, uri_status::modification_required);
+                        return true;
+                    } else {
                         // Remove the current ".." segment, then shorten the previous path segment from `buffer`.
-                        auto const seg_start = static_cast<stl::size_t>(stl::distance(begin(buffer), segment_begin));
-                        buffer.resize(seg_start);
 
                         // Keep a lone root slash ("/") while trimming separator before the previous segment.
                         if (buffer.size() > 1U && buffer.back() == '/') {
@@ -263,13 +247,6 @@ namespace webpp::uri {
                         if (buffer.empty() || buffer.back() != '/') {
                             buffer.push_back('/');
                         }
-                    } else {
-                        auto const& path = uri::path(ctx.out);
-                        // don't turn "/.." into a empty path
-                        if (path.size() != 1 || !path.front().empty()) [[unlikely]] {
-                            pop_back_path(ctx);
-                        }
-                        clear_segment(ctx, buffer);
                     }
                     break;
 
@@ -291,7 +268,7 @@ namespace webpp::uri {
         }
 
         enum struct opaque_cp_type : stl::uint8_t {
-            normal_opaque_path = 0,                    // Forbidden/Unicode
+            normal_opaque_path = 0,
             stop_token         = 0b1U,
             special_chars      = 0b10U | stop_token,   // characters: % SPACE
             termination_chars  = 0b100U | stop_token,  // characters: ? #
@@ -310,6 +287,36 @@ namespace webpp::uri {
           cat{.set = C0_CONTROL_ENCODE_SET, .value = +opaque_cp_type::encoding_required},
           cat{.set = u8"?#", .value = +opaque_cp_type::termination_chars},
           cat{.set = u8"% ", .value = +opaque_cp_type::special_chars});
+
+        enum struct path_cp_type : stl::uint8_t {
+            normal_path       = 0,
+            stop_token        = 0b1U,
+            percent_char      = 0b10U | stop_token,       // characters: %
+            dot               = 0b100U,                   // at least one dot in the segment/path
+            encoding_required = 0b1000U | stop_token,     // Path encode sets
+            slash             = 0b10'0000U | stop_token,
+            termination_chars = 0b100'0000U | stop_token, // characters: ? #
+            skip_segment      = 0b1000'0000U,
+        };
+
+        [[nodiscard]] static consteval stl::uint8_t operator+(path_cp_type const code_point) noexcept {
+            return static_cast<stl::uint8_t>(code_point);
+        }
+
+        [[nodiscard]] static consteval stl::uint8_t operator|(path_cp_type const lhs, path_cp_type rhs) noexcept {
+            return static_cast<stl::uint8_t>(+lhs | +rhs);
+        }
+
+        [[nodiscard]] static consteval stl::uint8_t operator|(stl::uint8_t const lhs, path_cp_type rhs) noexcept {
+            return static_cast<stl::uint8_t>(lhs | +rhs);
+        }
+
+        static constexpr auto path_interesting_chars = categorize<stl::uint8_t, 256U>(
+          cat{.set = PATH_ENCODE_SET.except(charset('?', '#')), .value = +path_cp_type::encoding_required},
+          cat{.set = u8"?#", .value = +path_cp_type::termination_chars},
+          cat{.set = u8"%", .value = +path_cp_type::percent_char},
+          cat{.set = u8"/\\", .value = +path_cp_type::slash},
+          cat{.set = u8".", .value = +path_cp_type::dot});
 
     } // namespace details
 
@@ -415,29 +422,28 @@ namespace webpp::uri {
         details::set_or_append_path(ctx, buffer);
     }
 
-    namespace details {
+    // namespace details {
 
-        template <bool isModifiable>
-        static constexpr auto encode_set = isModifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
+    //     template <bool isModifiable>
+    //     static constexpr auto encode_set = isModifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
 
-        // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
-        // Characters such as spaces must be percent-encoded, not dropped.
-        static constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
+    //     // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
+    //     // Characters such as spaces must be percent-encoded, not dropped.
+    //     static constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
 
-        template <bool StateOverride>
-        static constexpr auto path_interesting_chars =
-          !StateOverride ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
+    //     template <bool StateOverride>
+    //     static constexpr auto path_interesting_chars =
+    //       !StateOverride ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
 
-    } // namespace details
+    // } // namespace details
 
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
         using enum uri_status;
-        using details::ascii_bitmap;
-        using details::encode_or_validate;
-        using details::next_percent_encode;
+        using enum details::path_cp_type;
+        using iterator = typename CtxT::iterator;
 
         // attention:
         // we should not check to see if we're at the end of the string because if the path is empty, and
@@ -445,19 +451,17 @@ namespace webpp::uri {
 
         unset_flag(ctx.status, opaque_path);
 
-        if constexpr (!CtxT::is_segregated) {
-            if (ctx.pos == ctx.end || *ctx.pos != '/') {
-                if (ctx.pos != ctx.beg && *stl::prev(ctx.pos) == '/') {
-                    --ctx.pos;
-                } else if constexpr (!CtxT::is_modifiable) {
-                    set(ctx.status, modification_required);
-                    return;
-                }
-            }
-        }
+        // if constexpr (!CtxT::is_segregated) {
+        //     if (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\')) {
+        //         if (ctx.pos != ctx.beg && (*stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\')) {
+        //             --ctx.pos;
+        //         } else if constexpr (!CtxT::is_modifiable) {
+        //             set(ctx.status, modification_required);
+        //             return;
+        //         }
+        //     }
+        // }
 
-        auto        buffer        = create_buffer(ctx);
-        stl::size_t segment_start = 0U;
 
         // Prepend the previous URL's path if the new path is not absolute
         //
@@ -472,76 +476,111 @@ namespace webpp::uri {
         // That means path state must continue from the existing path list, not start from an empty one.
         // Only flat-string mode should copy the existing path into the buffer.
         // In segregated mode, previous segments already live in ctx.out.path.
-        if constexpr (!CtxT::is_segregated) {
-            auto const existing_path = path(ctx.out);
-            if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
+        // if constexpr (!CtxT::is_segregated) {
+        //     auto const existing_path = path(ctx.out);
+        //     if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
+        //         if constexpr (CtxT::is_modifiable) {
+        //             buffer.append(existing_path.begin(), existing_path.end());
+        //             assert(!buffer.empty());
+        //             if (buffer.back() != '/') {
+        //                 buffer.push_back('/');
+        //             }
+        //             // segment_start = buffer.size();
+        //         } else {
+        //             set(ctx.status, modification_required);
+        //             return;
+        //         }
+        //     }
+        // }
+
+
+        auto buffer = create_buffer(ctx);
+        if constexpr (Options.handle_windows_drive_letters) {
+            details::handle_windows_driver_letter(ctx, buffer);
+        }
+
+        for (;;) {
+            iterator const lbeg   = ctx.pos;
+            auto           status = or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
+            iterator       lend   = ctx.pos;
+            auto const     length = static_cast<stl::size_t>(stl::distance(lbeg, lend));
+
+            status &= ~+stop_token;
+
+            // percent encode unicode code points
+            if ((status & +encoding_required) != 0) {
                 if constexpr (CtxT::is_modifiable) {
-                    buffer.append(existing_path.begin(), existing_path.end());
-                    assert(!buffer.empty());
-                    if (buffer.back() != '/') {
-                        buffer.push_back('/');
-                    }
-                    segment_start = buffer.size();
+                    encode_uri_component<uri_encoding_policy::encode_chars>(
+                      lbeg,
+                      ctx.pos,
+                      buffer,
+                      details::PATH_ENCODE_SET);
                 } else {
                     set(ctx.status, modification_required);
                     return;
                 }
             }
-        }
 
-        if constexpr (Options.handle_windows_drive_letters) {
-            details::handle_windows_driver_letter(ctx, buffer);
-        }
-        while (!encode_or_validate(ctx,
-                                   buffer,
-                                   details::encode_set<CtxT::is_modifiable>,
-                                   details::path_interesting_chars<Options.state_override>))
-        {
-            switch (*ctx.pos) {
-                case '\\':
+            // handle dots (full segment is given)
+            else if (
+              Options.handle_dots_in_paths && (status & (dot | percent_char)) != 0 && length <= stl::size("%2e%2e"))
+            {
+                if (details::handle_dots_in_paths(ctx, buffer, lbeg, lend)) [[unlikely]] {
+                    if (has_error(ctx.status)) [[unlikely]] {
+                        return;
+                    }
+                    status |= +skip_segment;
+                }
+            }
+
+            // decode percent encoded path segments
+            if ((status & +percent_char) != 0) {
+                if (*ctx.pos == '%' && !details::next_percent_encode(ctx, buffer)) [[unlikely]] {
+                    set_warning(ctx.status, invalid_character);
+                }
+                continue;
+            }
+
+            // handle path segments
+            if ((status & +slash) != 0) {
+                if (*ctx.pos == '\\') [[unlikely]] {
                     if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, modification_required);
                         return;
                     } else {
                         set_warning(ctx.status, reverse_solidus_used);
                     }
-                    [[fallthrough]];
-                case '/':
-                    if (details::handle_dots_in_paths<Options>(ctx, buffer, segment_start)) {
-                        ++ctx.pos; // ignore character
-                        segment_start = buffer.size();
-                        continue;
-                    }
-                    end_segment(ctx, buffer);
-                    ++ctx.pos;
-                    if constexpr (CtxT::is_segregated) {
-                        push_segment(path(ctx.out), buffer);
-                        clear_segment(ctx, buffer);
-                    } else if constexpr (CtxT::is_modifiable) {
-                        buffer.push_back('/');
-                    }
-                    segment_start = buffer.size();
-                    continue;
-                case '?': set_if<!Options.state_override>(ctx.status, valid_queries); break;
-                case '#': set_if<!Options.state_override>(ctx.status, valid_fragment); break;
-                case '%':
-                    if (!next_percent_encode(ctx, buffer)) {
-                        set_warning(ctx.status, invalid_character);
-                    }
-                    continue;
-                [[unlikely]] default:
-                    if constexpr (!CtxT::is_modifiable) {
-                        set(ctx.status, modification_required);
-                        return;
-                    } else {
-                        set_warning(ctx.status, invalid_character);
-                    }
-                    break;
+                }
+                lend = ctx.pos;
+                ++ctx.pos;
             }
-            break;
+
+            if ((status & +skip_segment) == 0) {
+                end_segment(ctx, buffer);
+                if constexpr (CtxT::is_segregated) {
+                    push_segment(buffer, segment{lbeg, lend});
+                    push_segment(path(ctx.out), buffer);
+                    clear_segment(ctx, buffer);
+                } else if constexpr (CtxT::is_modifiable) {
+                    buffer.push_back('/');
+                    push_segment(buffer, segment{lbeg, lend});
+                }
+            }
+            // handle end of path
+            if ((status & +termination_chars) != 0) {
+                if constexpr (!Options.state_override) {
+                    switch (*ctx.pos) {
+                        case '?': set(ctx.status, valid_queries); break;
+                        case '#': set(ctx.status, valid_fragment); break;
+                        default: assert(false); stl::unreachable();
+                    }
+                }
+                break;
+            }
+            if (ctx.pos == ctx.end) {
+                break;
+            }
         }
-        static_cast<void>(details::handle_dots_in_paths<Options>(ctx, buffer, segment_start));
-        end_segment(ctx, buffer);
 
         // https://url.spec.whatwg.org/#path-state
         // If URL is special, host is not null, and path is empty, append the empty string to path.
@@ -553,7 +592,7 @@ namespace webpp::uri {
             if constexpr (!CtxT::is_segregated) {
                 if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
-                    details::set_or_append_path(ctx, buffer);
+                    set_path(ctx.out, stl::move(buffer));
                 } else {
                     set(ctx.status, modification_required);
                     return;
@@ -561,8 +600,8 @@ namespace webpp::uri {
             } else {
                 push_segment(path(ctx.out), buffer); // buffer is empty, so this adds an empty segment
             }
-        } else {
-            details::set_or_append_path(ctx, buffer);
+        } else if constexpr (!CtxT::is_segregated) {
+            set_path(ctx.out, stl::move(buffer));
         }
 
 
