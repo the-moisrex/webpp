@@ -66,7 +66,7 @@ namespace webpp::uri {
                 if (prev_slash == buffer.npos) {
                     buffer.clear();
                 } else {
-                    buffer.resize(prev_slash + 1U);
+                    buffer.resize(prev_slash);
                 }
             } else {
                 set(ctx.status, uri_status::modification_required);
@@ -178,28 +178,35 @@ namespace webpp::uri {
         [[nodiscard]] static constexpr bool
         handle_dots_in_paths(CtxT& ctx, auto& buffer, typename CtxT::iterator const lbeg, typename CtxT::iterator& lend)
           noexcept(CtxT::is_nothrow) {
+            // https://url.spec.whatwg.org/#path-state
+
+            // if neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string
+            // to url’s path.
+            bool const empty_at_end =
+              lend == ctx.end || (*lend != '/' && !(is_special_scheme(ctx.status) && *lend == '\\'));
+
             switch (dots_count(lbeg, lend)) {
                 // single dot found:
                 case 1: // .
-                    lend = lbeg;
                     if constexpr (CtxT::is_segregated) {
                         clear_segment(ctx, buffer);
+
+                        if (empty_at_end) [[unlikely]] {
+                            push_segment(uri::path(ctx.out), buffer);
+                        }
                     } else if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, uri_status::modification_required);
                         return true;
                     } else {
-                        // https://url.spec.whatwg.org/#path-state
-                        // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
-                        // the empty string to url's path."
-                        if (buffer.empty() || buffer.back() != '/') {
+                        if (empty_at_end) [[unlikely]] {
                             buffer.push_back('/');
                         }
                     }
+                    lend = lbeg;
                     break;
 
                 // two dots found:
                 case 2: // ..
-                    lend = lbeg;
 
                     if constexpr (CtxT::is_segregated) {
                         auto& path = uri::path(ctx.out);
@@ -208,9 +215,8 @@ namespace webpp::uri {
                         shorten_urls_path(ctx, path);
 
                         clear_segment(ctx, buffer);
-                        // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string
-                        // to url’s path.
-                        if (path.empty()) [[unlikely]] {
+
+                        if (empty_at_end) [[unlikely]] {
                             push_segment(path, buffer);
                         }
 
@@ -221,13 +227,11 @@ namespace webpp::uri {
                         // Shorten url’s path.
                         shorten_urls_path(ctx, buffer);
 
-                        // https://url.spec.whatwg.org/#path-state
-                        // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string
-                        // to url’s path.
-                        if (buffer.empty() || buffer.back() != '/') {
+                        if (empty_at_end) [[unlikely]] {
                             buffer.push_back('/');
                         }
                     }
+                    lend = lbeg;
                     break;
 
 
@@ -271,7 +275,7 @@ namespace webpp::uri {
         enum struct path_cp_type : stl::uint8_t {
             normal_path       = 0,
             stop_token        = 0b1U,
-            percent_char      = 0b10U | stop_token,       // characters: %
+            percent_char      = 0b10U,                    // characters: %
             dot               = 0b100U,                   // at least one dot in the segment/path
             encoding_required = 0b1000U,                  // Path encode sets
             slash             = 0b10'0000U | stop_token,
@@ -486,10 +490,26 @@ namespace webpp::uri {
                 }
             }
 
+            // verify percent encoded path segments
+            if ((status & +percent_char) != 0) {
+                assert(lbeg != lend);
+                for (iterator pos = lbeg;;) {
+                    if (*pos == '%') {
+                        if (!next_percent_encode(pos, lend)) [[unlikely]] {
+                            set_warning(ctx.status, invalid_character);
+                        } else {
+                            --pos;
+                        }
+                    }
+                    if (pos == lend) {
+                        break;
+                    }
+                    ++pos;
+                }
+            }
+
             // handle dots (full segment is given)
-            else if (
-              Options.handle_dots_in_paths && (status & (dot | percent_char)) != 0 && length <= stl::size("%2e%2e"))
-            {
+            if (Options.handle_dots_in_paths && (status & (dot | percent_char)) != 0 && length <= stl::size("%2e%2e")) {
                 if (details::handle_dots_in_paths(ctx, buffer, lbeg, lend)) [[unlikely]] {
                     if (has_error(ctx.status)) [[unlikely]] {
                         return;
@@ -498,39 +518,31 @@ namespace webpp::uri {
                 }
             }
 
-            // decode percent encoded path segments
-            if ((status & +percent_char) != 0) {
-                if (*ctx.pos == '%' && !details::next_percent_encode(ctx, buffer)) [[unlikely]] {
-                    set_warning(ctx.status, invalid_character);
-                }
-                continue;
-            }
-
             // handle path segments
             if ((status & +slash) != 0) {
-                if (*ctx.pos == '\\') [[unlikely]] {
+                if (*lend == '\\') [[unlikely]] {
                     if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, modification_required);
                         return;
                     } else {
+                        // If url is special and c is U+005C (\), invalid-reverse-solidus validation error.
                         set_warning(ctx.status, reverse_solidus_used);
                     }
                 }
-                lend = ctx.pos;
                 ++ctx.pos;
             }
 
             // push path segment
             if ((status & +skip_segment) == 0) {
                 end_segment(ctx, buffer);
+
+                // Append buffer to url’s path.
                 if constexpr (CtxT::is_segregated) {
                     push_segment(buffer, segment{lbeg, lend});
                     push_segment(path(ctx.out), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
-                    if (buffer.empty() || buffer.back() != '/') {
-                        buffer.push_back('/');
-                    }
+                    buffer.push_back('/');
                     push_segment(buffer, segment{lbeg, lend});
                 }
             }
@@ -538,8 +550,8 @@ namespace webpp::uri {
             // handle end of path
             if ((status & +termination_chars) != 0) {
                 if constexpr (!Options.state_override) {
-                    assert(*ctx.pos == '#' || *ctx.pos == '?');
-                    set(ctx.status, *ctx.pos == '?' ? valid_queries : valid_fragment);
+                    assert(*lend == '#' || *lend == '?');
+                    set(ctx.status, *lend == '?' ? valid_queries : valid_fragment);
                     ++ctx.pos;
                 }
                 break;
