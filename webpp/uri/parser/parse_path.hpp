@@ -423,6 +423,7 @@ namespace webpp::uri {
 
         auto buffer        = create_buffer(ctx);
         bool first_segment = is_file_scheme(ctx.status);
+        bool last_segment  = false;
         for (;;) {
             iterator const lbeg   = ctx.pos;
             stl::uint8_t   status = 0;
@@ -484,6 +485,9 @@ namespace webpp::uri {
                     }
                 }
                 ++ctx.pos;
+                if (ctx.pos == ctx.end && !stl::exchange(last_segment, true)) {
+                    --ctx.pos;
+                }
             }
 
 
