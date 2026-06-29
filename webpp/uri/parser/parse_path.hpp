@@ -420,54 +420,8 @@ namespace webpp::uri {
 
         unset_flag(ctx.status, opaque_path);
 
-        // if constexpr (!CtxT::is_segregated) {
-        //     if (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\')) {
-        //         if (ctx.pos != ctx.beg && (*stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\')) {
-        //             --ctx.pos;
-        //         } else if constexpr (!CtxT::is_modifiable) {
-        //             set(ctx.status, modification_required);
-        //             return;
-        //         }
-        //     }
-        // }
-
-
-        // Prepend the previous URL's path if the new path is not absolute
-        //
-        // WHATWG URL Standard, path state: "If buffer is a double-dot URL path segment, then ... shorten
-        // url's path" and in the default branch "append buffer to url's path".
-        // https://url.spec.whatwg.org/#path-state
-        //
-        // Also in file state, when resolving against a file base, the algorithm says to clone base's path and
-        // then shorten it before switching to path state (implemented here via details::shorten_urls_path).
-        // https://url.spec.whatwg.org/#file-state
-        //
-        // That means path state must continue from the existing path list, not start from an empty one.
-        // Only flat-string mode should copy the existing path into the buffer.
-        // In segregated mode, previous segments already live in ctx.out.path.
-        // if constexpr (!CtxT::is_segregated) {
-        //     auto const existing_path = path(ctx.out);
-        //     if (!existing_path.empty() && (ctx.pos == ctx.end || (*ctx.pos != '/' && *ctx.pos != '\\'))) {
-        //         if constexpr (CtxT::is_modifiable) {
-        //             buffer.append(existing_path.begin(), existing_path.end());
-        //             assert(!buffer.empty());
-        //             if (buffer.back() != '/') {
-        //                 buffer.push_back('/');
-        //             }
-        //             // segment_start = buffer.size();
-        //         } else {
-        //             set(ctx.status, modification_required);
-        //             return;
-        //         }
-        //     }
-        // }
-
-
-        auto buffer = create_buffer(ctx);
-        if constexpr (Options.handle_windows_drive_letters) {
-            details::handle_windows_driver_letter(ctx, buffer);
-        }
-
+        auto buffer        = create_buffer(ctx);
+        bool first_segment = is_file_scheme(ctx.status);
         for (;;) {
             iterator const lbeg   = ctx.pos;
             auto           status = or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
@@ -532,18 +486,49 @@ namespace webpp::uri {
                 ++ctx.pos;
             }
 
+
             // push path segment
             if ((status & +skip_segment) == 0) {
-                end_segment(ctx, buffer);
+                // handle windows drive letter
+                // todo: we can optimize handling of the windows driver letter by only doing it once outside the loop
+                bool modify_colon = false;
+                if constexpr (Options.handle_windows_drive_letters) {
+                    if (stl::exchange(first_segment, false) && details::is_windows_driver_letter(lbeg, lend))
+                      [[unlikely]]
+                    {
+                        // If url’s scheme is "file", url’s path is empty, and buffer is a Windows drive letter,
+                        // then replace the second code point in buffer with U+003A (:).
+                        modify_colon = true;
+                    }
+                }
 
                 // Append buffer to url’s path.
                 if constexpr (CtxT::is_segregated) {
                     push_segment(buffer, segment{lbeg, lend});
+                    if (modify_colon) [[unlikely]] {
+                        if constexpr (!CtxT::is_modifiable) {
+                            if (*stl::next(lbeg) != ':') [[unlikely]] {
+                                set(ctx.status, modification_required);
+                                return;
+                            }
+                        } else {
+                            buffer.at(1) = ':';
+                        }
+                    }
                     push_segment(path(ctx.out), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
-                    push_segment(buffer, segment{lbeg, lend});
+                    if (modify_colon) [[unlikely]] {
+                        buffer.push_back(*lbeg);
+                        buffer.push_back(':');
+                        push_segment(buffer, segment{stl::next(lbeg, 2), lend});
+                    } else {
+                        push_segment(buffer, segment{lbeg, lend});
+                    }
+                } else if (modify_colon && *stl::next(lbeg) != ':') [[unlikely]] {
+                    set(ctx.status, modification_required);
+                    return;
                 }
             }
 
