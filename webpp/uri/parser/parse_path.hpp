@@ -293,7 +293,7 @@ namespace webpp::uri {
             stop_token        = 0b1U,
             percent_char      = 0b10U | stop_token,       // characters: %
             dot               = 0b100U,                   // at least one dot in the segment/path
-            encoding_required = 0b1000U | stop_token,     // Path encode sets
+            encoding_required = 0b1000U,                  // Path encode sets
             slash             = 0b10'0000U | stop_token,
             termination_chars = 0b100'0000U | stop_token, // characters: ? #
             skip_segment      = 0b1000'0000U,
@@ -422,21 +422,6 @@ namespace webpp::uri {
         details::set_or_append_path(ctx, buffer);
     }
 
-    // namespace details {
-
-    //     template <bool isModifiable>
-    //     static constexpr auto encode_set = isModifiable ? details::PATH_ENCODE_SET : ascii_bitmap();
-
-    //     // Stop on path delimiters and percent signs, but do not treat the encode set as invalid.
-    //     // Characters such as spaces must be percent-encoded, not dropped.
-    //     static constexpr auto interesting_chars_base = ascii_bitmap{'\\', '/', '%'};
-
-    //     template <bool StateOverride>
-    //     static constexpr auto path_interesting_chars =
-    //       !StateOverride ? ascii_bitmap(interesting_chars_base, '#', '?') : interesting_chars_base;
-
-    // } // namespace details
-
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
@@ -555,6 +540,7 @@ namespace webpp::uri {
                 ++ctx.pos;
             }
 
+            // push path segment
             if ((status & +skip_segment) == 0) {
                 end_segment(ctx, buffer);
                 if constexpr (CtxT::is_segregated) {
@@ -566,6 +552,7 @@ namespace webpp::uri {
                     push_segment(buffer, segment{lbeg, lend});
                 }
             }
+
             // handle end of path
             if ((status & +termination_chars) != 0) {
                 if constexpr (!Options.state_override) {
@@ -574,10 +561,12 @@ namespace webpp::uri {
                         case '#': set(ctx.status, valid_fragment); break;
                         default: assert(false); stl::unreachable();
                     }
+                    ++ctx.pos;
                 }
                 break;
             }
             if (ctx.pos == ctx.end) {
+                set(ctx.status, valid);
                 break;
             }
         }
@@ -603,14 +592,6 @@ namespace webpp::uri {
         } else if constexpr (!CtxT::is_segregated) {
             set_path(ctx.out, stl::move(buffer));
         }
-
-
-        // ignore the last "?" or "#" character
-        if (ctx.pos != ctx.end) {
-            ++ctx.pos;
-            return;
-        }
-        set(ctx.status, valid);
     }
 
 } // namespace webpp::uri

@@ -2126,6 +2126,50 @@ TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat12) {
     EXPECT_EQ(uri::href(ctx), R"URL(lolscheme:x x#x%20x)URL") << details;
 }
 
+// 11 - See ../README.md for a description of the format. (11)
+TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat11) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "http://f:21/ b ? d # e ",
+    "base": "http://example.org/foo/bar",
+    "href": "http://f:21/%20b%20?%20d%20#%20e",
+    "origin": "http://f:21",
+    "protocol": "http:",
+    "username": "",
+    "password": "",
+    "host": "f:21",
+    "hostname": "f",
+    "port": "21",
+    "pathname": "/%20b%20",
+    "search": "?%20d%20",
+    "hash": "#%20e"
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(
+      stl::string_view{R"URL(http://f:21/ b ? d # e )URL", 23},
+      stl::string_view{R"URL(http://example.org/foo/bar)URL", 26});
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    if (!uri::is_valid(ctx.status)) {
+        return;
+    }
+
+    EXPECT_EQ(uri::scheme(ctx.out), "http") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "f") << details;
+    EXPECT_EQ(uri::port(ctx.out), "21") << details;
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(uri::render_path(ctx), "/%20b%20") << details;
+    } else {
+        EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
+    }
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(uri::render_queries(ctx), "%20d%20") << details;
+    } else {
+        EXPECT_TRUE(has(ctx.status, uri::uri_status::modification_required));
+    }
+    EXPECT_EQ(uri::fragment(ctx.out), "%20e") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(http://f:21/%20b%20?%20d%20#%20e)URL") << details;
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));
