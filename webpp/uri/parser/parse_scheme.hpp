@@ -386,13 +386,34 @@ namespace webpp::uri {
         }
 
         template <URIContext CtxT>
-        static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
-            // special authority slashes state
-            // (https://url.spec.whatwg.org/#special-authority-slashes-state):
+        static constexpr void special_authority_slashes_state(CtxT& ctx) noexcept {
+            // https://url.spec.whatwg.org/#special-authority-slashes-state
+
+            // If c is U+002F (/) and remaining starts with U+002F (/), then set state to special authority ignore
+            // slashes state and increase pointer by 1.
             if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
+            // Otherwise, special-scheme-missing-following-solidus validation error, set state to special authority
+            // ignore slashes state and decrease pointer by 1.
+            set_warning(ctx.status, uri_status::missing_following_solidus);
+            special_authority_ignore_slashes_state(ctx);
+        }
+
+        template <URIContext CtxT>
+        static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
+            // https://url.spec.whatwg.org/#special-relative-or-authority-state
+
+            // If c is U+002F (/) and remaining starts with U+002F (/), then set state to special authority ignore
+            // slashes state and increase pointer by 1.
+            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
+                special_authority_ignore_slashes_state(ctx);
+                return;
+            }
+
+            // Otherwise, special-scheme-missing-following-solidus validation error, set state to relative state and
+            // decrease pointer by 1.
             set_warning(ctx.status, uri_status::missing_following_solidus);
             relative_state(ctx);
         }
@@ -518,6 +539,7 @@ namespace webpp::uri {
                 // pointer by 1.
                 if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                     // https://url.spec.whatwg.org/#path-or-authority-state
+                    // If c is U+002F (/), then set state to authority state.
                     if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
                         set(ctx.status, valid_authority);
                         return;
@@ -526,6 +548,7 @@ namespace webpp::uri {
                     return;
                 }
 
+                // Otherwise, set url’s path to the empty string and set state to opaque path state.
                 clear_path(ctx.out);
                 set(ctx.status, valid_opaque_path);
                 return;
@@ -535,6 +558,7 @@ namespace webpp::uri {
         ++ctx.pos;
         set_flag(ctx.status, scheme_type::special_scheme);
 
+        // Otherwise, if url is special, base is non-null, and base’s scheme is url’s scheme:
         if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
             if (scheme(ctx.out) == scheme(ctx.base)) {
                 // todo: Assert: base is special (and therefore does not have an opaque path).
@@ -543,11 +567,8 @@ namespace webpp::uri {
             }
         }
 
-        /// https://url.spec.whatwg.org/#special-authority-slashes-state
-        if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
-            set_warning(ctx.status, missing_following_solidus);
-        }
-        details::special_authority_ignore_slashes_state(ctx);
+        // Otherwise, if url is special, set state to special authority slashes state.
+        details::special_authority_slashes_state(ctx);
     }
 
 } // namespace webpp::uri
