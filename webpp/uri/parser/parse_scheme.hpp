@@ -139,8 +139,7 @@ namespace webpp::uri {
 
         template <URIContext CtxT>
         static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            // relative scheme state (https://url.spec.whatwg.org/#relative-state)
-            // https://url.spec.whatwg.org/#relative-slash-state
+            // https://url.spec.whatwg.org/#relative-state
             using enum uri_status;
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
@@ -169,7 +168,6 @@ namespace webpp::uri {
 
 
             // from now on in the algorithms: relative slash state
-            // https://url.spec.whatwg.org/#relative-slash-state
             copy_from_base(ctx);
 
             switch (*ctx.pos) {

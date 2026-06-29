@@ -419,30 +419,29 @@ namespace webpp::uri {
         // we're in a special scheme, we have to add "/" to it
 
         unset_flag(ctx.status, opaque_path);
+        bool const is_special = is_special_scheme(ctx.status);
 
         auto buffer        = create_buffer(ctx);
         bool first_segment = is_file_scheme(ctx.status);
         for (;;) {
             iterator const lbeg   = ctx.pos;
-            auto           status = or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
-            iterator       lend   = ctx.pos;
-            auto const     length = static_cast<stl::size_t>(stl::distance(lbeg, lend));
+            stl::uint8_t   status = 0;
+            for (;;) {
+                status |= or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
 
-            status &= ~+stop_token;
-
-            // percent encode unicode code points
-            if ((status & +encoding_required) != 0) {
-                if constexpr (CtxT::is_modifiable) {
-                    encode_uri_component<uri_encoding_policy::encode_chars>(
-                      lbeg,
-                      ctx.pos,
-                      buffer,
-                      details::PATH_ENCODE_SET);
-                } else {
-                    set(ctx.status, modification_required);
-                    return;
+                // If url is special and c is U+005C (\), ...
+                // todo: this check can be optimized by having another table for non-special URLs
+                if (!is_special && ctx.pos != ctx.end && *ctx.pos == '\\') [[unlikely]] {
+                    status &= static_cast<stl::uint8_t>(~+slash);
+                    ++ctx.pos;
+                    continue;
                 }
+                break;
             }
+            iterator   lend   = ctx.pos;
+            auto const length = static_cast<stl::size_t>(stl::distance(lbeg, lend));
+
+            status &= static_cast<stl::uint8_t>(~+stop_token);
 
             // verify percent encoded path segments
             if ((status & +percent_char) != 0) {
@@ -475,6 +474,7 @@ namespace webpp::uri {
             // handle path segments
             if ((status & +slash) != 0) {
                 if (*lend == '\\') [[unlikely]] {
+                    assert(is_special);
                     if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, modification_required);
                         return;
@@ -502,31 +502,51 @@ namespace webpp::uri {
                     }
                 }
 
+
+                // percent encode unicode code points
+                bool const requires_encoding = (status & +encoding_required) != 0;
+
                 // Append buffer to url’s path.
                 if constexpr (CtxT::is_segregated) {
-                    push_segment(buffer, segment{lbeg, lend});
-                    if (modify_colon) [[unlikely]] {
-                        if constexpr (!CtxT::is_modifiable) {
-                            if (*stl::next(lbeg) != ':') [[unlikely]] {
-                                set(ctx.status, modification_required);
-                                return;
+                    if (requires_encoding) {
+                        encode_uri_component<uri_encoding_policy::encode_chars>(
+                          lbeg,
+                          lend,
+                          buffer,
+                          details::PATH_ENCODE_SET);
+                    } else {
+                        push_segment(buffer, segment{lbeg, lend});
+                        if (modify_colon) [[unlikely]] {
+                            if constexpr (!CtxT::is_modifiable) {
+                                if (*stl::next(lbeg) != ':') [[unlikely]] {
+                                    set(ctx.status, modification_required);
+                                    return;
+                                }
+                            } else {
+                                buffer.at(1) = ':';
                             }
-                        } else {
-                            buffer.at(1) = ':';
                         }
                     }
                     push_segment(path(ctx.out), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
-                    if (modify_colon) [[unlikely]] {
-                        buffer.push_back(*lbeg);
-                        buffer.push_back(':');
-                        push_segment(buffer, segment{stl::next(lbeg, 2), lend});
+                    if (requires_encoding) {
+                        encode_uri_component<uri_encoding_policy::encode_chars>(
+                          lbeg,
+                          lend,
+                          buffer,
+                          details::PATH_ENCODE_SET);
                     } else {
-                        push_segment(buffer, segment{lbeg, lend});
+                        if (modify_colon) [[unlikely]] {
+                            buffer.push_back(*lbeg);
+                            buffer.push_back(':');
+                            push_segment(buffer, segment{stl::next(lbeg, 2), lend});
+                        } else {
+                            push_segment(buffer, segment{lbeg, lend});
+                        }
                     }
-                } else if (modify_colon && *stl::next(lbeg) != ':') [[unlikely]] {
+                } else if ((modify_colon && *stl::next(lbeg) != ':') || requires_encoding) [[unlikely]] {
                     set(ctx.status, modification_required);
                     return;
                 }
@@ -547,25 +567,7 @@ namespace webpp::uri {
             }
         }
 
-        // https://url.spec.whatwg.org/#path-state
-        // If URL is special, host is not null, and path is empty, append the empty string to path.
-        bool is_path_empty = buffer.empty();
-        if constexpr (CtxT::is_segregated) {
-            is_path_empty &= path(ctx.out).empty();
-        }
-        if (is_special_scheme(ctx.status) && has_hostname(ctx.out) && is_path_empty) {
-            if constexpr (!CtxT::is_segregated) {
-                if constexpr (CtxT::is_modifiable) {
-                    buffer.push_back('/');
-                    set_path(ctx.out, stl::move(buffer));
-                } else {
-                    set(ctx.status, modification_required);
-                    return;
-                }
-            } else {
-                push_segment(path(ctx.out), buffer); // buffer is empty, so this adds an empty segment
-            }
-        } else if constexpr (!CtxT::is_segregated) {
+        if constexpr (!CtxT::is_segregated) {
             set_path(ctx.out, stl::move(buffer));
         }
     }

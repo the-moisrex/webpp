@@ -8850,8 +8850,10 @@ TYPED_TEST(URIWhatwgTest, LeadingAndTrailingC0ControlOrSpace1) {
     "search": "",
     "hash": ""
 })JSON-URL";
-    auto const            ctx =
-      this->template parse_from_string<TypeParam>(stl::string_view{R"URL(  http://example.com/  )URL", 28});
+    auto const            ctx     = this->template parse_from_string<TypeParam>(
+      stl::string_view{R"URL(  http://example.com/ 
+ )URL",
+                       28});
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     if (!uri::is_valid(ctx.status)) {
         return;
@@ -11807,7 +11809,10 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuring
     "search": "",
     "username": ""
 })JSON-URL";
-    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(foo://host/)URL", 12});
+    auto const            ctx     = this->template parse_from_string<TypeParam>(
+      stl::string_view{R"URL(foo://ho
+st/)URL",
+                       12});
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     if (!uri::is_valid(ctx.status)) {
         return;
@@ -12441,7 +12446,10 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuri
     "search": "",
     "username": ""
 })JSON-URL";
-    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(http://host/)URL", 13});
+    auto const            ctx     = this->template parse_from_string<TypeParam>(
+      stl::string_view{R"URL(http://ho
+st/)URL",
+                       13});
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     if (!uri::is_valid(ctx.status)) {
         return;
@@ -13434,12 +13442,18 @@ TYPED_TEST(URIWhatwgTest, TabLfCr1) {
 })JSON-URL";
     auto const            ctx     = this->template parse_from_string<TypeParam>(
       stl::string_view{R"URL(h	t
-tp://h	o
-st:9	0
-00/p	a
-th?q	u
-ery#f	r
-ag)URL",
+t
+p://h	o
+s
+t:9	0
+0
+0/p	a
+t
+h?q	u
+e
+ry#f	r
+a
+g)URL",
                        50});
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     if (!uri::is_valid(ctx.status)) {

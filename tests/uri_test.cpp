@@ -2170,6 +2170,53 @@ TYPED_TEST(URITests, SeeReadmeMdForADescriptionOfTheFormat11) {
     EXPECT_EQ(uri::href(ctx), R"URL(http://f:21/%20b%20?%20d%20#%20e)URL") << details;
 }
 
+// 615 - # Non-special-URL path tests (1)
+TYPED_TEST(URITests, NonSpecialUrlPathTests1) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "sc://ñ",
+    "base": null,
+    "href": "sc://%C3%B1",
+    "origin": "null",
+    "protocol": "sc:",
+    "username": "",
+    "password": "",
+    "host": "%C3%B1",
+    "hostname": "%C3%B1",
+    "port": "",
+    "pathname": "",
+    "search": "",
+    "hash": ""
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(sc://ñ)URL", 7});
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    if (!uri::is_valid(ctx.status)) {
+        return;
+    }
+
+    EXPECT_EQ(uri::scheme(ctx.out), "sc") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "%C3%B1") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), R"URL(sc://%C3%B1)URL") << details;
+}
+
+TYPED_TEST(URITests, ForwardSlashesInNonSpecialPaths) {
+    constexpr stl::string_view str = "test://domain/path\\one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid) << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::scheme(context.out), "test");
+    EXPECT_EQ(uri::hostname(context.out), "domain");
+    EXPECT_EQ(uri::render_path(context), "/path\\one");
+}
+
 TYPED_TEST(URITests, FuzzTest1) {
     auto const ctx = this->template fuzz<TypeParam>(R"URL(\012:333333333333333333333333333\012)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));
