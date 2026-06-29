@@ -50,64 +50,49 @@ namespace webpp::uri {
 
         /// Remove the last segment of a path
         template <URIContext CtxT>
-        static constexpr void pop_back_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            using iterator        = typename CtxT::iterator;
-            using difference_type = stl::iter_difference_t<iterator>;
-
-            // remove the last segment as well
+        static constexpr void pop_back_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
+            // remove the last segment
             if constexpr (CtxT::is_segregated) {
-                if (!ctx.out.path.empty()) {
-                    ctx.out.path.pop_back();
+                auto& path = uri::path(ctx.out);
+                if (!path.empty()) {
+                    path.pop_back();
                 }
             } else if constexpr (CtxT::is_modifiable) {
-                auto& out = [&]() -> auto& {
-                    if constexpr (URIHrefContext<CtxT>) {
-                        return ctx.out.href;
-                    } else {
-                        return ctx.out.path;
-                    }
-                }();
-                if (out.empty()) {
+                if (buffer.empty()) {
                     return;
                 }
 
-                stl::size_t slash_loc = 0;
-
-                // find the last slash
-                auto const beg = out.begin();
-                auto       cur = beg + static_cast<difference_type>(out.size() - 1);
-                if (cur != beg) {
-                    ++slash_loc;
-                    --cur;
+                auto const prev_slash = buffer.find_last_of('/');
+                if (prev_slash == buffer.npos) {
+                    buffer.clear();
+                } else {
+                    buffer.resize(prev_slash + 1U);
                 }
-                for (; cur != beg && *cur != '/'; --cur) {
-                    ++slash_loc;
-                }
-                out.erase(out.size() - slash_loc);
+            } else {
+                set(ctx.status, uri_status::modification_required);
             }
         }
 
         // https://url.spec.whatwg.org/#shorten-a-urls-path
         template <URIContext CtxT>
-        static constexpr void shorten_urls_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        static constexpr void shorten_urls_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
             using details::has_normalized_windows_driver_letter;
-            decltype(auto) out_path = path(ctx.out);
 
             // If url's scheme is "file", path size is 1, and path[0] is a normalized Windows
             // drive letter, then return.
-            if (is_file_scheme(scheme(ctx.out))) {
+            if (is_file_scheme(ctx.status)) {
                 // is single normalized drive path
                 bool is_norm = false;
 
                 if constexpr (CtxT::is_segregated) {
-                    if (out_path.size() == 1) {
-                        auto const& segment = out_path.front();
+                    if (buffer.size() == 1) {
+                        auto const& segment = buffer.front();
                         is_norm = segment.size() == 2 && has_normalized_windows_driver_letter(segment.begin());
                     }
-                } else if (out_path.size() == 2) {
-                    is_norm = has_normalized_windows_driver_letter(out_path.begin());
-                } else if (out_path.size() == 3 && out_path.front() == '/') {
-                    is_norm = has_normalized_windows_driver_letter(out_path.begin() + 1);
+                } else if (buffer.size() == 2) {
+                    is_norm = has_normalized_windows_driver_letter(buffer.begin());
+                } else if (buffer.size() == 3 && buffer.front() == '/') {
+                    is_norm = has_normalized_windows_driver_letter(buffer.begin() + 1);
                 }
 
                 if (is_norm) {
@@ -116,7 +101,7 @@ namespace webpp::uri {
             }
 
             // Remove path's last item, if any.
-            pop_back_path(ctx);
+            pop_back_path(ctx, buffer);
         }
 
         // Character Category Lookup Table
@@ -215,35 +200,30 @@ namespace webpp::uri {
                 // two dots found:
                 case 2: // ..
                     lend = lbeg;
+
                     if constexpr (CtxT::is_segregated) {
-                        auto const& path = uri::path(ctx.out);
-                        // don't turn "/.." into an empty path
-                        if (path.size() != 1 || !path.front().empty()) [[unlikely]] {
-                            pop_back_path(ctx);
-                        }
+                        auto& path = uri::path(ctx.out);
+
+                        // Shorten url’s path.
+                        shorten_urls_path(ctx, path);
+
                         clear_segment(ctx, buffer);
+                        // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string
+                        // to url’s path.
+                        if (path.empty()) [[unlikely]] {
+                            push_segment(path, buffer);
+                        }
 
                     } else if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, uri_status::modification_required);
                         return true;
                     } else {
-                        // Remove the current ".." segment, then shorten the previous path segment from `buffer`.
-
-                        // Keep a lone root slash ("/") while trimming separator before the previous segment.
-                        if (buffer.size() > 1U && buffer.back() == '/') {
-                            buffer.pop_back();
-                        }
-
-                        auto const prev_slash = buffer.find_last_of('/');
-                        if (prev_slash == buffer.npos) {
-                            buffer.clear();
-                        } else {
-                            buffer.resize(prev_slash + 1U);
-                        }
+                        // Shorten url’s path.
+                        shorten_urls_path(ctx, buffer);
 
                         // https://url.spec.whatwg.org/#path-state
-                        // "If neither c is U+002F (/), nor url is special and c is U+005C (\), append
-                        // the empty string to url's path."
+                        // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty string
+                        // to url’s path.
                         if (buffer.empty() || buffer.back() != '/') {
                             buffer.push_back('/');
                         }

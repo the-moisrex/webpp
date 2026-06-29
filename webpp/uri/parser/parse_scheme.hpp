@@ -4,7 +4,6 @@
 #define WEBPP_URI_PARSE_SCHEME_HPP
 
 #include "../../common/meta.hpp"
-#include "../../std/utility.hpp"
 #include "../../strings/charset.hpp"
 #include "../../strings/peek.hpp"
 #include "../uri_status.hpp"
@@ -197,7 +196,7 @@ namespace webpp::uri {
             //   - Set state to path state and decrease pointer by 1.
             clear_queries(ctx.out);
             unset_flag(ctx.status, has_non_null_queries);
-            details::shorten_urls_path(ctx);
+            details::shorten_urls_path(ctx, uri::path(ctx.out));
             set(ctx.status, valid_path);
         }
 
@@ -326,10 +325,10 @@ namespace webpp::uri {
                             set_warning(ctx.status, windows_drive_letter_in_relative_url);
                             clear_path(ctx.out);
                         } else {
-                            details::shorten_urls_path(ctx);
+                            details::shorten_urls_path(ctx, uri::path(ctx.out));
                         }
                     } else {
-                        details::shorten_urls_path(ctx);
+                        details::shorten_urls_path(ctx, uri::path(ctx.out));
                     }
 
                     // Set state to path state and decrease pointer by 1.
