@@ -548,7 +548,9 @@ namespace webpp::uri {
                     push_segment(path(ctx.out), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
-                    buffer.push_back('/');
+                    if (buffer.empty() || buffer.back() != '/') {
+                        buffer.push_back('/');
+                    }
                     push_segment(buffer, segment{lbeg, lend});
                 }
             }
@@ -556,11 +558,8 @@ namespace webpp::uri {
             // handle end of path
             if ((status & +termination_chars) != 0) {
                 if constexpr (!Options.state_override) {
-                    switch (*ctx.pos) {
-                        case '?': set(ctx.status, valid_queries); break;
-                        case '#': set(ctx.status, valid_fragment); break;
-                        default: assert(false); stl::unreachable();
-                    }
+                    assert(*ctx.pos == '#' || *ctx.pos == '?');
+                    set(ctx.status, *ctx.pos == '?' ? valid_queries : valid_fragment);
                     ++ctx.pos;
                 }
                 break;

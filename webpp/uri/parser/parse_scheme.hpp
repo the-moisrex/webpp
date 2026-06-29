@@ -61,36 +61,9 @@ namespace webpp::uri {
         }
 
         template <URIContext CtxT>
-        static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-            // relative scheme state (https://url.spec.whatwg.org/#relative-state)
-            // https://url.spec.whatwg.org/#relative-slash-state
+        static constexpr void copy_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
 
-            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                // Assert base's scheme is not file
-                assert(!is_file_scheme(scheme(ctx.base)));
-                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
-            }
-
-            // WHATWG URL Standard, relative state:
-            // "If c is U+002F (/), then set state to relative slash state."
-            // "Otherwise... set url’s username, password, host, port, path, and query to base’s ..."
-            // So we consume the current code point only for slash handling; otherwise it remains
-            // the first code point of the relative path.
-            if (ctx.pos != ctx.end && (*ctx.pos == '/' || (*ctx.pos == '\\' && is_special_scheme(ctx.status)))) {
-                if (*ctx.pos == '\\') [[unlikely]] {
-                    set_warning(ctx.status, reverse_solidus_used);
-                }
-                ++ctx.pos;
-                if (ctx.pos == ctx.end) {
-                    set(ctx.status, valid);
-                    return;
-                }
-            }
-
-
-            // from now on in the algorithms: relative slash state
-            // https://url.spec.whatwg.org/#relative-slash-state
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 set_username(ctx.out, base_component_buffer(ctx, username(ctx.base)));
                 set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
@@ -107,26 +80,121 @@ namespace webpp::uri {
                     set_flag(ctx.status, has_non_null_queries);
                 }
             }
+        }
 
-            if (ctx.pos == ctx.end) {
+        template <URIContext CtxT>
+        static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
+            // https://url.spec.whatwg.org/#special-authority-ignore-slashes-state
+            using enum uri_status;
+
+            for (; ctx.pos != ctx.end; ++ctx.pos) {
+                switch (*ctx.pos) {
+                    case '\\':
+                    case '/':
+                        // Otherwise, special-scheme-missing-following-solidus validation error.
+                        set_warning(ctx.status, missing_following_solidus);
+                        continue;
+                    [[likely]] default:
+                        break;
+                }
+                break;
+            }
+            // If c is neither U+002F (/) nor U+005C (\), then set state to authority state and decrease pointer by 1.
+            set(ctx.status, valid_authority);
+        }
+
+        template <URIContext CtxT>
+        static constexpr void relative_slash_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            // https://url.spec.whatwg.org/#relative-slash-state
+
+            using enum uri_status;
+
+            if (ctx.pos == ctx.end) [[unlikely]] {
                 set(ctx.status, valid);
                 return;
             }
 
+            // If url is special and c is U+002F (/) or U+005C (\), then:
+            if (is_special_scheme(ctx.status) && (*ctx.pos == '/' || *ctx.pos == '\\')) {
+                if (*ctx.pos == '\\') [[unlikely]] {
+                    set_warning(ctx.status, reverse_solidus_used);
+                }
+                ++ctx.pos;
+                // Set state to special authority ignore slashes state.
+                special_authority_ignore_slashes_state(ctx);
+                return;
+            }
+
+            // Otherwise, if c is U+002F (/), then set state to authority state.
+            if (*ctx.pos == '/') {
+                ++ctx.pos;
+                set(ctx.status, valid_authority);
+                return;
+            }
+
+            // Otherwise, set url’s username to base’s username, url’s password to base’s password, url’s host to
+            // base’s host, url’s port to base’s port, state to path state, and then, decrease pointer by 1.
+            copy_from_base(ctx);
+            set(ctx.status, ctx.pos == ctx.end ? valid : valid_path);
+        }
+
+        template <URIContext CtxT>
+        static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            // relative scheme state (https://url.spec.whatwg.org/#relative-state)
+            // https://url.spec.whatwg.org/#relative-slash-state
+            using enum uri_status;
+
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
+                // Assert base's scheme is not file
+                assert(!is_file_scheme(scheme(ctx.base)));
+
+                // Set url’s scheme to base’s scheme.
+                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+            }
+
+            if (ctx.pos == ctx.end) [[unlikely]] {
+                set(ctx.status, valid);
+                return;
+            }
+
+            // If c is U+002F (/), then set state to relative slash state.
+            // Otherwise... set url’s username, password, host, port, path, and query to base’s ...
+            if (*ctx.pos == '/' || (*ctx.pos == '\\' && is_special_scheme(ctx.status))) {
+                if (*ctx.pos == '\\') [[unlikely]] {
+                    set_warning(ctx.status, reverse_solidus_used);
+                }
+                ++ctx.pos;
+                relative_slash_state(ctx);
+                return;
+            }
+
+
+            // from now on in the algorithms: relative slash state
+            // https://url.spec.whatwg.org/#relative-slash-state
+            copy_from_base(ctx);
+
             switch (*ctx.pos) {
                 case '?':
+                    // If c is U+003F (?), then set url’s query to the empty string, and state to query state.
                     clear_queries(ctx.out);
-                    unset_flag(ctx.status, has_non_null_queries);
+                    set_flag(ctx.status, has_non_null_queries);
                     set(ctx.status, valid_queries);
                     ++ctx.pos;
                     return;
                 case '#':
+                    // Otherwise, if c is U+0023 (#), set url’s fragment to the empty string and state to fragment
+                    // state.
                     clear_fragment(ctx.out);
+                    set_flag(ctx.status, has_non_null_fragment);
                     set(ctx.status, valid_fragment);
                     ++ctx.pos;
                     return;
                 default: break;
             }
+            // Otherwise, if c is not the EOF code point:
+            //   - Set url’s query to null.
+            //   - Shorten url’s path.
+            //   - Set state to path state and decrease pointer by 1.
             clear_queries(ctx.out);
             unset_flag(ctx.status, has_non_null_queries);
             details::shorten_urls_path(ctx);
@@ -315,26 +383,6 @@ namespace webpp::uri {
 
             // If base is null, or ..., missing-scheme-non-relative-URL validation error, return failure.
             set(ctx.status, ctx.pos == ctx.end ? empty_string : missing_scheme_non_relative_url);
-        }
-
-        template <URIContext CtxT>
-        static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
-            // special authority ignore slashes state
-            // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
-            using enum uri_status;
-
-            for (; ctx.pos != ctx.end; ++ctx.pos) {
-                switch (*ctx.pos) {
-                    case '\\':
-                    case '/':
-                        set_warning(ctx.status, missing_following_solidus);
-                        continue;
-                    [[likely]] default:
-                        break;
-                }
-                break;
-            }
-            set(ctx.status, valid_authority);
         }
 
         template <URIContext CtxT>
