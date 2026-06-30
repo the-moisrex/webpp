@@ -419,11 +419,11 @@ namespace webpp::uri {
         // we're in a special scheme, we have to add "/" to it
 
         unset_flag(ctx.status, opaque_path);
-        bool const is_special = is_special_scheme(ctx.status);
 
-        auto buffer        = create_buffer(ctx);
-        bool first_segment = is_file_scheme(ctx.status);
-        bool last_segment  = false;
+        bool const is_special    = is_special_scheme(ctx.status);
+        auto       buffer        = create_buffer(ctx);
+        bool       first_segment = is_file_scheme(ctx.status);
+        bool       last_segment  = false;
         for (;;) {
             iterator const lbeg   = ctx.pos;
             stl::uint8_t   status = 0;

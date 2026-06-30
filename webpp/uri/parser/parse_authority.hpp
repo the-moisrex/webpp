@@ -32,10 +32,10 @@ namespace webpp::uri {
             return;
         }
 
-        if (Options.allow_file_hosts && is_file_scheme(ctx.status)) {
-            set(ctx.status, valid_file_host);
-            return;
-        }
+        // if (Options.allow_file_hosts && is_file_scheme(ctx.status)) {
+        //     set(ctx.status, valid_file_host);
+        //     return;
+        // }
 
         // Handle missing host situation:
         // attention: since we have merged the authority and host parsing, it's possible to
@@ -75,10 +75,28 @@ namespace webpp::uri {
 
         using enum uri_status;
 
-        if (ctx.pos == ctx.end) {
-            // Otherwise, if state override is given and url’s host is null, append the empty string to url’s path
-            // For owning/non-segregated components this is represented as a single '/'.
-            if (is_special_scheme(scheme(ctx.out)) && has_flags(ctx.status, has_non_null_host)) {
+        if (is_special_scheme(ctx.status)) [[likely]] {
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    [[unlikely]] case '\\':
+                        set_warning(ctx.status, reverse_solidus_used);
+                        [[fallthrough]];
+                    case '/':
+                        // If c is neither U+002F (/) nor U+005C (\), then decrease pointer by 1.
+                        // Which means we have to ++ctx.pos otherwise.
+                        ++ctx.pos;
+                        break;
+                    default: break;
+                }
+            }
+            set(ctx.status, valid_path);
+            return;
+        }
+
+        if constexpr (Options.state_override) {
+            if (ctx.pos == ctx.end && !has_flags(ctx.status, has_non_null_host)) {
+                // Otherwise, if state override is given and url’s host is null, append the empty string to url’s path
+                // For owning/non-segregated components this is represented as a single '/'.
                 auto buffer = create_buffer(ctx);
                 if constexpr (CtxT::is_segregated) {
                     ++ctx.pos;
@@ -91,24 +109,12 @@ namespace webpp::uri {
                     set(ctx.status, modification_required);
                     return;
                 }
+                set(ctx.status, valid);
+                return;
             }
+        } else if (ctx.pos == ctx.end) {
+            // state override is not give, c is EOF, and the URL is not special.
             set(ctx.status, valid);
-            return;
-        }
-
-        if (is_special_scheme(ctx.status)) [[likely]] {
-            switch (*ctx.pos) {
-                [[unlikely]] case '\\':
-                    set_warning(ctx.status, reverse_solidus_used);
-                    [[fallthrough]];
-                case '/':
-                    // If c is neither U+002F (/) nor U+005C (\), then decrease pointer by 1.
-                    // Which means we have to ++ctx.pos otherwise.
-                    ++ctx.pos;
-                    break;
-                default: break;
-            }
-            set(ctx.status, valid_path);
             return;
         }
 
@@ -121,7 +127,7 @@ namespace webpp::uri {
                         set_flag(ctx.status, has_non_null_queries);
                     }
                     set(ctx.status, valid_queries);
-                    break;
+                    return;
                 case '#':
                     if constexpr (Options.parse_fragment) {
                         ++ctx.pos;
@@ -129,27 +135,16 @@ namespace webpp::uri {
                         set_flag(ctx.status, has_non_null_fragment);
                     }
                     set(ctx.status, valid_fragment);
-                    break;
+                    return;
                 default: break;
             }
-        } else if (!has_flags(ctx.status, has_non_null_host) && ctx.pos == ctx.end) {
-            // Otherwise, if state override is given and url’s host is null, append the empty string to
-            // url’s path.
-            if constexpr (!CtxT::is_modifiable) {
-                set(ctx.status, modification_required);
-            } else if constexpr (CtxT::is_segregated) {
-                push_segment(path(ctx.out), create_buffer(ctx));
-            } else {
-                path(ctx.out).push_back('/');
-            }
-            set(ctx.status, valid);
-            return;
         }
 
-        // if (*ctx.pos == '/') {
-        //     // If c is not U+002F (/), then decrease pointer by 1.
-        //     ++ctx.pos;
-        // }
+        // Otherwise, if c is not the EOF code point:
+        if (*ctx.pos == '/') {
+            // If c is not U+002F (/), then decrease pointer by 1.
+            ++ctx.pos;
+        }
         set(ctx.status, valid_path);
     }
 
