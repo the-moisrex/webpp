@@ -16,8 +16,7 @@ namespace webpp::uri {
         static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
-                case valid:                       // we're done parsing
-                case valid_punycode: return true; // todo?
+                case valid: return true; // we're done parsing
                 case valid_authority: parse_authority<Options>(ctx); break;
                 case valid_hostname:
                 case valid_host: parse_host<Options>(ctx); break;

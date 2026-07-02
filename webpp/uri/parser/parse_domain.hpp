@@ -11,7 +11,7 @@ namespace webpp::uri {
     enum struct domain_name_status : uri_status_type {        // NOLINT(*-enum-size)
         unparsed           = +uri_status::unparsed,           // Not yet parsed
         valid              = +uri_status::valid,              // valid ascii domain name
-        valid_punycode     = +uri_status::valid_punycode,     // valid domain name which is a punycode
+        valid_punycode     = +uri_status::last_valid + 1U,    // valid domain name which is a punycode
         invalid_character  = +uri_status::invalid_character,  // found an invalid character
         too_long           = +uri_status::too_long,           // the domain is too long
         subdomain_too_long = +uri_status::subdomain_too_long, // the subdomain is too long

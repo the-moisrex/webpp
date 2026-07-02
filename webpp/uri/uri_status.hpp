@@ -166,12 +166,11 @@ namespace webpp::uri {
     /// successes are exclusive
     /// errors are exclusive,
     /// warnings are not exclusive,
-    enum struct uri_status : uri_status_type { // NOLINT(*-enum-size)
-        unparsed = 0,                          // not parsed at all
+    enum struct [[nodiscard]] uri_status : uri_status_type {
+        unparsed = 0, // not parsed at all
 
         // success:
-        valid          = valid_bit | 1U, // valid URI
-        valid_punycode = valid_bit | 2U, // valid URI which contains a punycode
+        valid = valid_bit | 1U, // valid URI
 
         // common errors:
         invalid_character = warning_bit >> 0U, // found an invalid URL Unit (code point or percent encoded)
@@ -186,12 +185,12 @@ namespace webpp::uri {
         missing_scheme_non_relative_url = error_bit | 6U,
 
         // host-specific errors:
-        valid_authority           = valid_bit | 3U,
-        valid_host                = valid_bit | 4U,
-        valid_hostname            = valid_bit | 5U,
-        valid_file_host           = valid_bit | 6U,
-        valid_port                = valid_bit | 7U,
-        valid_path_start          = valid_bit | 8U,
+        valid_authority           = valid_bit | 2U,
+        valid_host                = valid_bit | 3U,
+        valid_hostname            = valid_bit | 4U,
+        valid_file_host           = valid_bit | 5U,
+        valid_port                = valid_bit | 6U,
+        valid_path_start          = valid_bit | 7U,
         subdomain_too_long        = error_bit | 7U,  // the subdomain is too long
         dot_at_end                = error_bit | 8U,  // the domain ended unexpectedly
         begin_with_hyphen         = error_bit | 9U,  // the domain cannot start with hyphens
@@ -226,19 +225,19 @@ namespace webpp::uri {
         port_invalid      = error_bit | 20U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                           = valid_bit | 9U,
-        valid_opaque_path                    = valid_bit | 10U,
+        valid_path                           = valid_bit | 8U,
+        valid_opaque_path                    = valid_bit | 9U,
         reverse_solidus_used                 = warning_bit >> 5U,
         windows_drive_letter_used            = warning_bit >> 6U,
         windows_drive_letter_in_relative_url = warning_bit >> 7U,
         windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
-        valid_queries             = valid_bit | 11U,
+        valid_queries             = valid_bit | 10U,
         invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 12U,
+        valid_fragment = valid_bit | 11U,
 
         // API errors:
         setting_hostname_on_opaque_path = error_bit | 22U,
@@ -260,6 +259,10 @@ namespace webpp::uri {
         opaque_path           = flags_bit >> 4U,
         has_non_null_queries  = flags_bit >> 5U,
         has_non_null_fragment = flags_bit >> 6U,
+
+        // aliases:
+        last_valid   = valid_fragment,
+        last_invalid = found_tabs_or_newlines,
     };
 
     [[nodiscard]] static constexpr stl::underlying_type_t<uri_status> operator+(uri_status const status) noexcept {
@@ -276,9 +279,8 @@ namespace webpp::uri {
             case unparsed: return {"The URI is not parsed."};
 
             // success:
-            case valid: return {"Valid URI"};
-            case valid_punycode:
-                return {"Valid URI with unicode domain name which contains punycode"};
+            case valid:
+                return {"Valid URI"};
 
 
                 // common errors:
