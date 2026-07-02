@@ -353,8 +353,6 @@ namespace webpp::uri {
     template <uri_options Options, URIContext CtxT>
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
-        static_assert(Options.allow_file_hosts,
-                      "This function should not be reached if hosts in 'file://' scheme are not allowed.");
         assert(has_flags(ctx.status, file_scheme));
 
         if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
@@ -424,7 +422,7 @@ namespace webpp::uri {
 
         // If state override is given and url’s scheme is "file", then decrease pointer by 1 and set state to file host
         // state.
-        if constexpr (Options.state_override && Options.allow_file_hosts) {
+        if constexpr (Options.state_override) {
             if (is_file_scheme(ctx.status)) {
                 set(ctx.status, valid_file_host);
                 return;

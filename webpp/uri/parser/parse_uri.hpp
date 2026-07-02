@@ -21,14 +21,7 @@ namespace webpp::uri {
                 case valid_authority: parse_authority<Options>(ctx); break;
                 case valid_hostname:
                 case valid_host: parse_host<Options>(ctx); break;
-                case valid_file_host:
-                    if constexpr (Options.allow_file_hosts) {
-                        parse_file_host<Options>(ctx);
-                    } else {
-                        assert(false);
-                        stl::unreachable(); // should be impossible.
-                    }
-                    break;
+                case valid_file_host: parse_file_host<Options>(ctx); break;
                 case valid_port: parse_port<Options>(ctx); break;
                 case valid_path_start: parse_path_start<Options>(ctx); break;
                 case valid_opaque_path: parse_opaque_path(ctx); break;

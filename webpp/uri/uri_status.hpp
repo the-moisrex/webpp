@@ -56,11 +56,6 @@ namespace webpp::uri {
         /// error in WHATWG
         bool allow_invalid_characters = true;
 
-        /// file:// scheme can have hosts in WHATWG, even though not everyone using URL parser would need such
-        /// a feature, so you can disable it now
-        bool allow_file_hosts = true;
-
-
         /// Windows drive letters "C:\" or "file://C|" are allowed in WHATWG; not everybody needs them, so you
         /// can disable handling it here (this doesn't mean you'd get an error if used)
         bool handle_windows_drive_letters = true;
@@ -107,7 +102,6 @@ namespace webpp::uri {
       .allow_multiple_trailing_empty_ipv4_octets = false,
       .allow_ipv4_hex_octal_octets               = false,
       .allow_invalid_characters                  = false,
-      .allow_file_hosts                          = false,
       .handle_windows_drive_letters              = false,
       .ignore_tabs_or_newlines                   = false,
       .handle_dots_in_paths                      = true,
@@ -125,7 +119,6 @@ namespace webpp::uri {
       .allow_multiple_trailing_empty_ipv4_octets = true,
       .allow_ipv4_hex_octal_octets               = true,
       .allow_invalid_characters                  = true,
-      .allow_file_hosts                          = true,
       .handle_windows_drive_letters              = true,
       .ignore_tabs_or_newlines                   = true,
       .handle_dots_in_paths                      = true, // for security reasons, it's enabled in loose too

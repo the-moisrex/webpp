@@ -213,7 +213,7 @@ namespace webpp::uri {
                 case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
                 case '/':
                     ++ctx.pos;
-                    set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
+                    set(ctx.status, valid_file_host);
                     return;
                 default: break;
             }
@@ -337,7 +337,7 @@ namespace webpp::uri {
                 }
             }
 
-            set(ctx.status, Options.allow_file_hosts ? valid_file_host : valid_path);
+            set(ctx.status, valid_file_host);
         }
 
         template <uri_options Options, URIContext CtxT>

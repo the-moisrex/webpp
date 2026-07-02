@@ -33,7 +33,7 @@ namespace webpp::uri {
             return;
         }
 
-        // if (Options.allow_file_hosts && is_file_scheme(ctx.status)) {
+        // if (is_file_scheme(ctx.status)) {
         //     set(ctx.status, valid_file_host);
         //     return;
         // }
