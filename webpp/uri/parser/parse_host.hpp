@@ -103,8 +103,7 @@ namespace webpp::uri {
 
 
 
-        using id_type = stl::uint8_t;
-        enum struct cp_type : id_type {
+        enum struct host_cp_type : stl::uint8_t {
             upper_val     = 0b1U,        // upper case ascii chars
             no_ipv4_val   = 0b10U,       // invalid IPv4 Characters
             no_ipv6_val   = 0b100U,      // invalid IPv6 Characters
@@ -112,27 +111,27 @@ namespace webpp::uri {
             n_val         = 0b1'0000U,   // character n
             dash_val      = 0b10'0000U,  // character -
             special_chars = 0b100'0000U, // characters: / \ ? # %
-            forb_val =
-              static_cast<id_type>(~0U) & static_cast<id_type>(~static_cast<id_type>(0b100'0000U)), // Forbidden/Unicode
-            xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
-            no_ip_val = no_ipv4_val | no_ipv6_val,
+            forb_val      = static_cast<stl::uint8_t>(~0U) &
+                            static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
+            xnd_val       = x_val | n_val | dash_val | no_ipv4_val,
+            no_ip_val     = no_ipv4_val | no_ipv6_val,
         };
 
-        [[nodiscard]] static consteval id_type operator+(cp_type const code_point) noexcept {
-            return static_cast<id_type>(code_point);
+        [[nodiscard]] static consteval stl::uint8_t operator+(host_cp_type const code_point) noexcept {
+            return static_cast<stl::uint8_t>(code_point);
         }
 
         static constexpr auto specials               = charset('/', '\\', '#', '?', '%');
-        static constexpr auto host_interesting_chars = categorize<id_type, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS, .value = +cp_type::forb_val},
-          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +cp_type::forb_val},
-          cat{.set = details::INVALID_IPV4.except(specials), .value = +cp_type::no_ipv4_val},
-          cat{.set = details::INVALID_IPV6.except(specials), .value = +cp_type::no_ipv6_val},
-          cat{.set = UPPER_ALPHA<char8_t>, .value = +cp_type::upper_val},
-          cat{.set = u8"xX", .value = +cp_type::x_val},
-          cat{.set = u8"nN", .value = +cp_type::n_val},
-          cat{.set = u8"/\\?#%", .value = +cp_type::special_chars},
-          cat{.set = u8"-", .value = +cp_type::dash_val});
+        static constexpr auto host_interesting_chars = categorize<stl::uint8_t, 256U>(
+          cat{.set = details::NON_ASCII_CODE_UNITS, .value = +host_cp_type::forb_val},
+          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
+          cat{.set = details::INVALID_IPV4.except(specials), .value = +host_cp_type::no_ipv4_val},
+          cat{.set = details::INVALID_IPV6.except(specials), .value = +host_cp_type::no_ipv6_val},
+          cat{.set = UPPER_ALPHA<char8_t>, .value = +host_cp_type::upper_val},
+          cat{.set = u8"xX", .value = +host_cp_type::x_val},
+          cat{.set = u8"nN", .value = +host_cp_type::n_val},
+          cat{.set = u8"/\\?#%", .value = +host_cp_type::special_chars},
+          cat{.set = u8"-", .value = +host_cp_type::dash_val});
 
         // The above code slows down compile time; so we use this:
         // in GDB:
@@ -220,10 +219,8 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#concept-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
-        using details::cp_type;
         using details::host_interesting_chars;
-        using details::id_type;
-        using enum details::cp_type;
+        using enum details::host_cp_type;
         using iterator = typename CtxT::iterator;
 
         // note: we don't need to check for IPv6 as the first step, we can check later.
@@ -247,7 +244,7 @@ namespace webpp::uri {
         auto           buffer = create_buffer(ctx);
         for (;;) {
             iterator const lbeg   = ctx.pos;
-            auto           status = or_all<id_type>(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
+            auto           status = or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
 
 
             if ((status | +special_chars) == status) {
@@ -280,7 +277,7 @@ namespace webpp::uri {
                 }
             }
 
-            status &= static_cast<id_type>(~+special_chars);
+            status &= static_cast<stl::uint8_t>(~+special_chars);
             switch (status) {
                 case +upper_val:
                     // todo: does a simple to_lower would suffice?

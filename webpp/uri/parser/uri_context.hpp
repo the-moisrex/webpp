@@ -290,6 +290,20 @@ namespace webpp::uri {
     //                                    [[maybe_unused]] segment<Iter> const& buffer) noexcept {
     //     // nothing to do
     // }
+
+
+
+    template <typename Iter>
+    [[nodiscard]] static constexpr bool is_empty(segment<Iter> const& buffer) noexcept {
+        return buffer.beg == buffer.end;
+    }
+
+    template <typename StrT>
+        requires requires(StrT str) { str.empty(); }
+    [[nodiscard]] static constexpr bool is_empty(StrT const& buffer) noexcept {
+        return buffer.empty();
+    }
+
 } // namespace webpp::uri
 
 namespace webpp::uri::details {

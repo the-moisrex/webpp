@@ -194,9 +194,11 @@ namespace webpp::uri {
 
         // host-specific errors:
         valid_authority           = valid_bit | 3U,
-        valid_file_host           = valid_bit | 4U,
-        valid_port                = valid_bit | 5U,
-        valid_path_start          = valid_bit | 6U,
+        valid_host                = valid_bit | 4U,
+        valid_hostname            = valid_bit | 5U,
+        valid_file_host           = valid_bit | 6U,
+        valid_port                = valid_bit | 7U,
+        valid_path_start          = valid_bit | 8U,
         subdomain_too_long        = error_bit | 7U,  // the subdomain is too long
         dot_at_end                = error_bit | 8U,  // the domain ended unexpectedly
         begin_with_hyphen         = error_bit | 9U,  // the domain cannot start with hyphens
@@ -231,19 +233,19 @@ namespace webpp::uri {
         port_invalid      = error_bit | 20U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                           = valid_bit | 7U,
-        valid_opaque_path                    = valid_bit | 8U,
+        valid_path                           = valid_bit | 9U,
+        valid_opaque_path                    = valid_bit | 10U,
         reverse_solidus_used                 = warning_bit >> 5U,
         windows_drive_letter_used            = warning_bit >> 6U,
         windows_drive_letter_in_relative_url = warning_bit >> 7U,
         windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
-        valid_queries             = valid_bit | 9U,
+        valid_queries             = valid_bit | 11U,
         invalid_queries_character = error_bit | 21U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 10U,
+        valid_fragment = valid_bit | 12U,
 
         // API errors:
         setting_hostname_on_opaque_path = error_bit | 22U,
@@ -301,6 +303,8 @@ namespace webpp::uri {
                 return {
                   "Valid scheme that should be followed by an authority "
                   "(a host optionally with username and password or port)."};
+            case valid_host: return {"Valid URI until we reach a valid host."};
+            case valid_hostname: return {"Valid URI until we reach a valid hostname."};
             case valid_file_host: return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
             case valid_path_start:
