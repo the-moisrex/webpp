@@ -19,6 +19,8 @@ namespace webpp::uri {
                 case valid:                       // we're done parsing
                 case valid_punycode: return true; // todo?
                 case valid_authority: parse_authority<Options>(ctx); break;
+                case valid_hostname:
+                case valid_host: parse_host<Options>(ctx); break;
                 case valid_file_host:
                     if constexpr (Options.allow_file_hosts) {
                         parse_file_host<Options>(ctx);

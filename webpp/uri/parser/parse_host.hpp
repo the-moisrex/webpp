@@ -11,6 +11,7 @@
 #include "./uri_components.hpp"
 #include "./uri_context.hpp"
 #include "./windows_drive_letter.hpp"
+#include "special_schemes.hpp"
 
 #include <utility>
 
@@ -121,16 +122,16 @@ namespace webpp::uri {
             return static_cast<stl::uint8_t>(code_point);
         }
 
-        static constexpr auto specials               = charset('/', '\\', '#', '?', '%');
+        static constexpr auto specials               = charset('/', '\\', '#', '?', '%', ':');
         static constexpr auto host_interesting_chars = categorize<stl::uint8_t, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS, .value = +host_cp_type::forb_val},
+          cat{.set = details::NON_ASCII_CODE_UNITS.except(specials), .value = +host_cp_type::forb_val},
           cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
           cat{.set = details::INVALID_IPV4.except(specials), .value = +host_cp_type::no_ipv4_val},
           cat{.set = details::INVALID_IPV6.except(specials), .value = +host_cp_type::no_ipv6_val},
           cat{.set = UPPER_ALPHA<char8_t>, .value = +host_cp_type::upper_val},
           cat{.set = u8"xX", .value = +host_cp_type::x_val},
           cat{.set = u8"nN", .value = +host_cp_type::n_val},
-          cat{.set = u8"/\\?#%", .value = +host_cp_type::special_chars},
+          cat{.set = specials, .value = +host_cp_type::special_chars},
           cat{.set = u8"-", .value = +host_cp_type::dash_val});
 
         // The above code slows down compile time; so we use this:
@@ -165,6 +166,7 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
+        using details::C0_CONTROL_ENCODE_SET;
         using details::encode_or_validate;
         using details::invalid_host_chars;
         using details::next_percent_encode;
@@ -179,7 +181,7 @@ namespace webpp::uri {
         ctx.pos = pos;
 
         auto buffer = create_buffer(ctx);
-        while (!encode_or_validate(ctx, buffer, details::C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
+        while (!encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
             if (details::FORBIDDEN_HOST_CODE_POINTS.contains(*ctx.pos)) [[unlikely]] {
                 set(ctx.status, invalid_host_code_point);
                 return;
@@ -192,12 +194,9 @@ namespace webpp::uri {
             }
             set_warning(ctx.status, invalid_character);
             if constexpr (CtxT::is_modifiable) {
-                encode_uri_component<uri_encoding_policy::encode_chars>(
-                  *ctx.pos,
-                  buffer,
-                  details::C0_CONTROL_ENCODE_SET);
+                encode_uri_component<uri_encoding_policy::encode_chars>(*ctx.pos, buffer, C0_CONTROL_ENCODE_SET);
                 ++ctx.pos;
-            } else if (details::C0_CONTROL_ENCODE_SET.contains(*ctx.pos)) {
+            } else if (C0_CONTROL_ENCODE_SET.contains(*ctx.pos)) {
                 set(ctx.status, modification_required);
                 return;
             } else {
@@ -223,8 +222,6 @@ namespace webpp::uri {
         using enum details::host_cp_type;
         using iterator = typename CtxT::iterator;
 
-        // note: we don't need to check for IPv6 as the first step, we can check later.
-
         // If isOpaque is true, then return the result of opaque-host parsing input.
         if (!is_special_scheme(ctx.status)) {
             opaque_host_parser(ctx, ctx.pos, ctx.end);
@@ -232,11 +229,9 @@ namespace webpp::uri {
         }
 
         // Assert: input is not the empty string.
-        // assert(ctx.pos != ctx.end);
+        assert(ctx.pos != ctx.end);
 
         // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
-
-        // todo: UTF-16 and UTF-32 may contain big invalid code points, this can't check for those
 
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
@@ -245,7 +240,6 @@ namespace webpp::uri {
         for (;;) {
             iterator const lbeg   = ctx.pos;
             auto           status = or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
-
 
             if ((status | +special_chars) == status) {
                 switch (*ctx.pos) {
@@ -266,9 +260,18 @@ namespace webpp::uri {
                         }
                         break;
 
+                    case ':':
+                        // in file-host-state we don't use `:` as a special character
+                        if (is_file_scheme(ctx.status)) {
+                            while (ctx.pos != ctx.end && *ctx.pos == ':') {
+                                ++ctx.pos;
+                                status |= or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
+                            }
+                        }
+                        [[fallthrough]];
                     case '?':
                     case '#':
-                    case '\\':
+                    case '\\': // URL is spececial
                     case '/': break;
                     default:
                         assert(false);
@@ -362,44 +365,135 @@ namespace webpp::uri {
             }
         }
 
-
-        host_parser<Options>(ctx);
-
-        if (has_error(ctx.status)) [[unlikely]] {
+        if (ctx.pos == ctx.end) [[unlikely]] {
+            clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
+            set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
         }
 
-        set(ctx.status, valid_path_start);
+        host_parser<Options>(ctx);
+        if (has_error(ctx.status)) [[unlikely]] {
+            return;
+        }
 
         // if buffer is the empty string, then:
         //   - Set url's host to the empty string.
         //   - If state override is given, then return.
         //   - Set state to path start state.
-        // if (!has_host) [[likely]] {
-        //     clear_hostname(ctx.out);
-        //     set_flag(ctx.status, has_non_null_host);
-        //     set(ctx.status, valid_path_start);
-        //     return;
-        // }
+        if (!has_hostname(ctx.out)) [[unlikely]] {
+            clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
+            set(ctx.status, Options.state_override ? valid : valid_path_start);
+            return;
+        }
 
+        set(ctx.status, valid_path_start);
 
         // If c is the EOF code point, U+002F (/), U+005C (\), U+003F (?), or U+0023 (#), then ...
-        // assert(ctx.pos == ctx.end || *stl::prev(ctx.pos) == '/' || *stl::prev(ctx.pos) == '\\' ||
-        //        *stl::prev(ctx.pos) == '?' || *stl::prev(ctx.pos) == '#');
+        [[maybe_unused]] char const code_point = ctx.pos == ctx.end ? '\0' : *ctx.pos;
+        assert(code_point == '\0' || code_point == '/' || code_point == '\\' || code_point == '?' || code_point == '#');
 
         // If host is "localhost", then set host to the empty string.
         // Empty string != null
-        if (ctx.pos == ctx.end || (has_hostname(ctx.out) && is_localhost_string(hostname(ctx.out)))) {
+        if (ctx.pos == ctx.end || is_localhost_string(hostname(ctx.out))) {
             clear_hostname(ctx.out);
             set_flag(ctx.status, has_non_null_host);
         }
-        if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
-            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-                set_warning(ctx.status, windows_drive_letter_as_host);
-            }
-        }
+        // if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
+        //     if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+        //         set_warning(ctx.status, windows_drive_letter_as_host);
+        //     }
+        // }
     }
 
+    template <uri_options Options, URIContext CtxT>
+    static constexpr void parse_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        // https://url.spec.whatwg.org/#host-state
+        // https://url.spec.whatwg.org/#hostname-state
+        //
+        // host state:
+        //     When it encounters a colon (:) outside of brackets, it accepts it, finalizes parsing the
+        //     host, and transitions to the port state.
+        //     This is because a “host” in a URL can optionally include a port, e.g., example.com:8080.
+        // hostname state:
+        //     If the parser is explicitly running in hostname state via a state
+        //     override(e.g., when modifying just the hostname via an API), and it encounters a colon( :), it returns
+        //     failure. This is because a “hostname” strictly cannot contain a port.
+        using enum uri_status;
+
+        // If state override is given and url’s scheme is "file", then decrease pointer by 1 and set state to file host
+        // state.
+        if constexpr (Options.state_override && Options.allow_file_hosts) {
+            if (is_file_scheme(ctx.status)) {
+                set(ctx.status, valid_file_host);
+                return;
+            }
+        }
+
+        if (ctx.pos != ctx.end) [[likely]] {
+            // we assume the input is a valid hostname, and if it's not, we deal with the consequences later.
+            host_parser<Options>(ctx);
+            if (has_error(ctx.status)) [[unlikely]] {
+                return;
+            }
+        }
+
+        switch (ctx.pos == ctx.end ? '\0' : *ctx.pos) {
+            case ':':
+
+                // If buffer is the empty string, host-missing validation error, return failure.
+                if (!has_hostname(ctx.out)) [[unlikely]] {
+                    set(ctx.status, host_missing);
+                    return;
+                }
+
+                // If state override is given and state override is hostname state, then return failure.
+                if constexpr (Options.state_override) {
+                    if (get_value(ctx.status) == valid_hostname) [[unlikely]] {
+                        set(ctx.status,
+                            is_special_scheme(ctx.status) ? invalid_domain_code_point : invalid_host_code_point);
+                        return;
+                    }
+                }
+
+                ++ctx.pos;
+                set(ctx.status, valid_port);
+                break;
+            case '\\':
+                if (!is_special_scheme(ctx.status)) {
+                    break;
+                }
+                set_warning(ctx.status, reverse_solidus_used);
+                [[fallthrough]];
+            case '/':
+            case '?':
+            case '#':
+            case '\0':
+                // If url is special and buffer is the empty string, host-missing validation error, return failure.
+                if (is_special_scheme(ctx.status) && !has_hostname(ctx.out)) [[unlikely]] {
+                    set(ctx.status, host_missing);
+                    return;
+                }
+
+                // Otherwise, if state override is given, buffer is the empty string, and either url includes
+                // credentials or url’s port is non-null, then return failure.
+                if constexpr (Options.state_override) {
+                    if (!has_hostname(ctx.out) &&
+                        (has_credentials(ctx.out) || has_flags(ctx.status, has_non_null_port))) [[unlikely]]
+                    {
+                        set(ctx.status, host_missing);
+                        return;
+                    }
+                }
+
+                // Set url’s host to host, buffer to the empty string, and state to path start state.
+                // If state override is given, then return.
+                set(ctx.status, Options.state_override ? valid : valid_path_start);
+                break;
+            default: assert(false);
+        }
+    }
 
 } // namespace webpp::uri
 
