@@ -54,6 +54,7 @@ namespace webpp::uri {
                     port_value += static_cast<port_type>(code_unit - '0');
                     if (port_value > max_port_number) [[unlikely]] {
                         set(ctx.status, port_out_of_range);
+                        ctx.pos = beg;
                         return;
                     }
                     continue;
@@ -61,6 +62,7 @@ namespace webpp::uri {
                 case op_break:
                     if (code_unit == '\\' && !is_special_scheme(ctx.status)) [[unlikely]] {
                         set(ctx.status, port_invalid);
+                        ctx.pos = beg;
                         return;
                     }
                     port_end = ctx.pos++; // Save digit end boundary and skip the break character
@@ -76,6 +78,7 @@ namespace webpp::uri {
                         break;
                     } else {
                         set(ctx.status, port_invalid);
+                        ctx.pos = beg;
                         return;
                     }
                 default: assert(false); stl::unreachable();

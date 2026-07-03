@@ -17,7 +17,7 @@ namespace webpp::uri {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
                 case valid: return true; // we're done parsing
-                case valid_authority: parse_authority<Options>(ctx); break;
+                case valid_authority: parse_authority2<Options>(ctx); break;
                 case valid_hostname:
                 case valid_host: parse_host<Options>(ctx); break;
                 case valid_file_host: parse_file_host<Options>(ctx); break;

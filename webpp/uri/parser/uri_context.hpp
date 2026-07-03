@@ -304,6 +304,22 @@ namespace webpp::uri {
         return buffer.empty();
     }
 
+    // template <typename Iter>
+    // [[nodiscard]] static constexpr stl::size_t length(segment<Iter> const& buffer) noexcept {
+    //     return buffer.end - buffer.beg;
+    // }
+
+    // template <typename StrT>
+    //     requires requires(StrT str) { str.size(); }
+    // [[nodiscard]] static constexpr stl::size_t length(StrT const& buffer) noexcept {
+    //     return buffer.size();
+    // }
+
+    template <URIContext CtxT>
+    [[nodiscard]] static constexpr char peek(CtxT const& ctx) noexcept {
+        return ctx.pos == ctx.end ? '\0' : *ctx.pos;
+    }
+
 } // namespace webpp::uri
 
 namespace webpp::uri::details {

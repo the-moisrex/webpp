@@ -6,6 +6,7 @@
 #include "../uri_status.hpp"
 #include "./parse_authority_pieces.hpp"
 #include "./special_schemes.hpp"
+#include "parse_port.hpp"
 #include "uri_components.hpp"
 #include "uri_context.hpp"
 
@@ -77,14 +78,14 @@ namespace webpp::uri {
         using stl::begin;
         using stl::end;
 
-        bool       at_sign_seen = false;
-        auto       username     = create_buffer(ctx);
-        auto       password     = create_buffer(ctx);
-        auto       buffer       = create_buffer(ctx);
-        auto const beg          = ctx.pos;
+        bool at_sign_seen        = false;
+        bool password_token_seen = false;
+        auto username            = create_buffer(ctx);
+        auto password            = create_buffer(ctx);
+        auto buffer              = create_buffer(ctx);
+        auto beg                 = ctx.pos;
         for (;; ++ctx.pos) {
-            char const c_val = ctx.pos != ctx.end ? *ctx.pos : '\0';
-            switch (c_val) {
+            switch (peek(ctx)) {
                 case '@': {
                     // Invalid-credentials validation error.
                     set_warning(ctx.status, contains_credentials);
@@ -105,10 +106,9 @@ namespace webpp::uri {
                     at_sign_seen = true;
 
                     // For each codePoint in buffer:
-                    auto const buf_beg             = begin(buffer);
-                    auto const endp                = end(buffer);
-                    bool       password_token_seen = false;
-                    for (auto pos = beg; pos != endp; ++pos) {
+                    auto const buf_beg = begin(buffer);
+                    auto const endp    = end(buffer);
+                    for (auto pos = buf_beg; pos != endp; ++pos) {
                         // If codePoint is U+003A (:) and passwordTokenSeen is false, then set passwordTokenSeen to true
                         // and continue.
                         if (*pos == ':' && !password_token_seen) {
@@ -135,6 +135,7 @@ namespace webpp::uri {
 
                     // Set buffer to the empty string.
                     clear_segment(ctx, buffer);
+                    beg = ctx.pos + 1;
                     continue;
                 }
                 case '\\':
@@ -159,12 +160,15 @@ namespace webpp::uri {
                     // to host state.
                     ctx.pos = beg;
                     set(ctx.status, valid_host);
+
+                    set_username(ctx.out, stl::move(username));
+                    set_password(ctx.out, stl::move(password));
                     return;
                 default: break;
             }
 
             // Otherwise, append c to buffer.
-            if (CtxT::is_modifiable) {
+            if constexpr (CtxT::is_modifiable) {
                 buffer.push_back(*ctx.pos);
             } else {
                 ++buffer.end;
@@ -184,6 +188,11 @@ namespace webpp::uri {
             return;
         }
 
+        if (!is_special_scheme(ctx.status)) {
+            parse_authority_for_real(ctx);
+            return;
+        }
+
         assert(!has_error(ctx.status));
         auto const beg = ctx.pos;
 
@@ -191,20 +200,45 @@ namespace webpp::uri {
         // rollback, parse the authority, and then try again with the host parser.
         host_parser<Options>(ctx);
 
-        if (!has_error(ctx.status)) [[likely]] {
+        if (has_error(ctx.status)) [[likely]] {
             return;
+        }
+
+        // In authority state:
+        //    Decrease ..., and set state to host state.
+        // and in host-state:
+        //    Otherwise, if c is U+003A (:) ... and state to port state.
+        //    ...  and state to path start state.
+        switch (peek(ctx)) {
+            case ':': // possible password or port
+
+                // let's assume it's a port for now
+                parse_port<Options>(ctx);
+                if (has_error(ctx.status) || peek(ctx) == '@') [[unlikely]] {
+                    // not a valid port, so let's assume it's a password now.
+                    break;
+                }
+                return;
+            case '@': // we definitely did not just parse a hostname
+                break;
+            case '\\': assert(is_special_scheme(ctx.status)); [[fallthrough]];
+            case '/':
+            case '?':
+            case '#': ++ctx.pos; [[fallthrough]];
+            case '\0': set(ctx.status, valid_path_start); return;
+            default: assert(false);
         }
 
         // rollback
         clear_hostname(ctx.out);
+        clear_value(ctx.status);
         set(ctx.status, valid_authority);
         ctx.pos = beg;
 
         // now we parse authority
         parse_authority_for_real(ctx);
 
-        // try again
-        host_parser<Options>(ctx);
+        // we'll try again if needed by going into `valid_hostname` state.
     }
 
     /// Path start state (I like to call it authority end because it's more RFC like to

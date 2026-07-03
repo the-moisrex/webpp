@@ -122,7 +122,7 @@ namespace webpp::uri {
             return static_cast<stl::uint8_t>(code_point);
         }
 
-        static constexpr auto specials               = charset('/', '\\', '#', '?', '%', ':');
+        static constexpr auto specials               = charset('/', '\\', '#', '?', '%', ':', '@');
         static constexpr auto host_interesting_chars = categorize<stl::uint8_t, 256U>(
           cat{.set = details::NON_ASCII_CODE_UNITS.except(specials), .value = +host_cp_type::forb_val},
           cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
@@ -182,28 +182,38 @@ namespace webpp::uri {
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
-            if (details::FORBIDDEN_HOST_CODE_POINTS.contains(*ctx.pos)) [[unlikely]] {
-                set(ctx.status, invalid_host_code_point);
-                return;
+            switch (peek(ctx)) {
+                case '/':
+                case '?':
+                case '#':
+                case '\0': break;
+                case '%':
+                    if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                        set_warning(ctx.status, invalid_character);
+                    }
+                    continue;
+                default:
+                    if (details::FORBIDDEN_HOST_CODE_POINTS.contains(*ctx.pos)) [[unlikely]] {
+                        set(ctx.status, invalid_host_code_point);
+                        return;
+                    }
+                    // set_warning(ctx.status, invalid_character);
+                    if constexpr (CtxT::is_modifiable) {
+                        encode_uri_component<uri_encoding_policy::encode_chars>(
+                          *ctx.pos,
+                          buffer,
+                          C0_CONTROL_ENCODE_SET);
+                        ++ctx.pos;
+                    } else if (C0_CONTROL_ENCODE_SET.contains(*ctx.pos)) {
+                        set(ctx.status, modification_required);
+                        return;
+                    } else {
+                        ++ctx.pos;
+                    }
             }
-            if (*ctx.pos == '%') {
-                if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
-                    set_warning(ctx.status, invalid_character);
-                }
-                continue;
-            }
-            set_warning(ctx.status, invalid_character);
-            if constexpr (CtxT::is_modifiable) {
-                encode_uri_component<uri_encoding_policy::encode_chars>(*ctx.pos, buffer, C0_CONTROL_ENCODE_SET);
-                ++ctx.pos;
-            } else if (C0_CONTROL_ENCODE_SET.contains(*ctx.pos)) {
-                set(ctx.status, modification_required);
-                return;
-            } else {
-                ++ctx.pos;
-            }
+            break;
         }
-        end_segment(ctx, buffer);
+        // end_segment(ctx, buffer);
         set_hostname(ctx.out, stl::move(buffer));
         set_flag(ctx.status, has_non_null_host);
     }
@@ -260,18 +270,32 @@ namespace webpp::uri {
                         }
                         break;
 
+                    case '@':
+                        if (get_value(ctx.status) == valid_authority) [[unlikely]] {
+                            return;
+                        }
+
+                        // pretend it didn't happen and essentially `@` is not an special character
+                        while (ctx.pos != ctx.end && *ctx.pos == '@') {
+                            ++ctx.pos;
+                            status |= or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
+                        }
+                        break;
                     case ':':
                         // in file-host-state we don't use `:` as a special character
                         if (is_file_scheme(ctx.status)) {
+                            // pretend `:` is not an special character
                             while (ctx.pos != ctx.end && *ctx.pos == ':') {
                                 ++ctx.pos;
                                 status |= or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
                             }
                         }
-                        [[fallthrough]];
+                        break;
                     case '?':
                     case '#':
-                    case '\\': // URL is spececial
+                    case '\\': // URL is special
+                        set_warning(ctx.status, reverse_solidus_used);
+                        [[fallthrough]];
                     case '/': break;
                     default:
                         assert(false);
@@ -285,6 +309,8 @@ namespace webpp::uri {
                 case +upper_val:
                     // todo: does a simple to_lower would suffice?
                     break;
+                case +x_val:
+                case +n_val:
                 case 0: // possible IPv4
                     if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
                         return;
@@ -437,7 +463,7 @@ namespace webpp::uri {
             }
         }
 
-        switch (ctx.pos == ctx.end ? '\0' : *ctx.pos) {
+        switch (peek(ctx)) {
             case ':':
 
                 // If buffer is the empty string, host-missing validation error, return failure.
