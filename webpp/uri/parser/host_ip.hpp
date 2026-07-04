@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_HOST_IP_HPP
 #define WEBPP_URI_HOST_IP_HPP
 
+#include "../../ip/inet_ntop.hpp"
 #include "../../ip/inet_pton.hpp"
 #include "../../std/string.hpp"
 #include "../../strings/hex.hpp"
@@ -247,17 +248,11 @@ namespace webpp::uri::details {
         auto                                      buffer = create_buffer(ctx);
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
-        // todo: do we need this check?
-        if (has_hostname(ctx.out)) [[unlikely]] {
-            set(ctx.status, invalid_domain_code_point);
-            return;
-        }
-
         assert(*ctx.pos == '[');
         ++ctx.pos; // first char should be '[' now
 
         switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
-            case inet_pton6_status::valid:
+            [[unlikely]] case inet_pton6_status::valid:
                 set(ctx.status, ipv6_unclosed);
                 break;
             [[likely]] case inet_pton6_status::valid_special:
@@ -279,30 +274,25 @@ namespace webpp::uri::details {
                       });
                     set_hostname(ctx.out, stl::move(buffer));
                 } else {
+                    // verify the rendered ipv6 is the same as the input ipv6
+                    stl::array<char, max_ipv6_str_len + 1> buf; // NOLINT(*-init)
+                    auto const* const                      endp = inet_ntop6(ipv6_bytes.begin(), buf.data());
+                    if (buffer != stl::string_view{buf.data(), endp}) [[unlikely]] {
+                        set(ctx.status, modification_required);
+                        return;
+                    }
+
                     end_segment(ctx, buffer);
                     set_hostname(ctx.out, buffer);
                 }
                 // set_hostname(ctx.out, ipv6_bytes);
                 set_flag(ctx.status, has_non_null_host);
                 ++ctx.pos;
-                if (ctx.pos == ctx.end) {
-                    set(ctx.status, valid_path);
-                    break;
-                }
-                switch (*ctx.pos) {
-                    case '/': set(ctx.status, valid_path); break;
-                    case ':': set(ctx.status, valid_port); break;
-                    case '#': set(ctx.status, valid_fragment); break;
-                    case '?':
-                        set(ctx.status, valid_queries);
-                        break;
-                    [[unlikely]] default:
-                        set(ctx.status, ipv6_char_after_closing);
-                        return;
-                }
-                ++ctx.pos;
+                set(ctx.status, nonspecial_state(peek(ctx), ipv6_char_after_closing));
                 break;
-            default: set(ctx.status, static_cast<uri_status>(error_bit | +ipv6_parsing_result)); break;
+            [[unlikely]] default:
+                set(ctx.status, static_cast<uri_status>(error_bit | +ipv6_parsing_result));
+                break;
         }
     }
 

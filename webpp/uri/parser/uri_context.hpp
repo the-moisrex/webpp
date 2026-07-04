@@ -320,6 +320,36 @@ namespace webpp::uri {
         return ctx.pos == ctx.end ? '\0' : *ctx.pos;
     }
 
+    [[nodiscard]] static constexpr uri_status nonspecial_state(
+      char const code_point,
+      uri_status default_state = uri_status::unparsed) noexcept {
+        using enum uri_status;
+        switch (code_point) {
+            case '\0': return valid;
+            case '/': return valid_path;
+            case ':': return valid_port;
+            case '#': return valid_fragment;
+            case '?': return valid_queries;
+            default: break;
+        }
+        return default_state;
+    }
+
+    [[nodiscard]] static constexpr uri_status special_state(char const code_point,
+                                                            uri_status default_state = uri_status::unparsed) noexcept {
+        using enum uri_status;
+        switch (code_point) {
+            case '\0': return valid;
+            case '\\':
+            case '/': return valid_path;
+            case ':': return valid_port;
+            case '#': return valid_fragment;
+            case '?': return valid_queries;
+            default: break;
+        }
+        return default_state;
+    }
+
 } // namespace webpp::uri
 
 namespace webpp::uri::details {

@@ -162,7 +162,7 @@ namespace webpp::uri {
     } // namespace details
 
     template <URIContext CtxT, typename Iter = typename CtxT::iterator>
-    static constexpr void opaque_host_parser(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
+    static constexpr void opaque_host_parser(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
         using details::ascii_bitmap;
@@ -170,15 +170,6 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::invalid_host_chars;
         using details::next_percent_encode;
-
-        // in opaque hosts, IPv6 should work also; in specs, it's being checked in `host parsing` before
-        // we get into opaque parsing.
-        if (!details::handle_ipv6(ctx, pos, end)) {
-            // either found a valid ipv6, an error occurred, or it's an empty string.
-            return;
-        }
-
-        ctx.pos = pos;
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
@@ -193,6 +184,8 @@ namespace webpp::uri {
                     }
                     continue;
                 default:
+                    // If input contains a forbidden host code point, host-invalid-code-point validation error, return
+                    // failure.
                     if (details::FORBIDDEN_HOST_CODE_POINTS.contains(*ctx.pos)) [[unlikely]] {
                         set(ctx.status, invalid_host_code_point);
                         return;
@@ -232,9 +225,16 @@ namespace webpp::uri {
         using enum details::host_cp_type;
         using iterator = typename CtxT::iterator;
 
+        // If input starts with U+005B ([), then:
+        if (peek(ctx) == '[') {
+            // Return the result of IPv6 parsing input with its leading U+005B ([) and trailing U+005D (]) removed.
+            details::parse_host_ipv6(ctx);
+            return;
+        }
+
         // If isOpaque is true, then return the result of opaque-host parsing input.
         if (!is_special_scheme(ctx.status)) {
-            opaque_host_parser(ctx, ctx.pos, ctx.end);
+            opaque_host_parser(ctx);
             return;
         }
 
@@ -263,7 +263,7 @@ namespace webpp::uri {
                             if (!details::next_percent_encode(ctx, buffer)) [[unlikely]] {
                                 // If host is failure, then return failure.
                                 // `file://example.com%/` was found
-                                set(ctx.status, invalid_host_code_point);
+                                set(ctx.status, invalid_domain_code_point);
                                 return;
                             }
                             continue;
