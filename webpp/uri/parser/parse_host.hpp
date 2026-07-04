@@ -266,6 +266,9 @@ namespace webpp::uri {
                                 set(ctx.status, invalid_domain_code_point);
                                 return;
                             }
+
+                            // If input contains a percent-encoded byte, domain-percent-encoded validation error.
+                            set_warning(ctx.status, domain_percent_encoded);
                             continue;
                         }
                         break;

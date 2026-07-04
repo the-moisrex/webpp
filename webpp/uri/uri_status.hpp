@@ -202,10 +202,11 @@ namespace webpp::uri {
         invalid_domain_code_point = error_bit | 15U, // domain name contains invalid chars
         domain_to_ascii_error     = error_bit | 16U, // domain to ascii process has failed
         contains_credentials      = warning_bit >> 2U,
+        domain_percent_encoded    = warning_bit >> 3U,
 
         // ipv4-specific errors and warnings:
-        ipv4_trailing_empty_octet = warning_bit >> 3U,
-        ipv4_non_decimal_octet    = warning_bit >> 4U,
+        ipv4_trailing_empty_octet = warning_bit >> 4U,
+        ipv4_non_decimal_octet    = warning_bit >> 5U,
 
         // ipv4 and ipv6 errors:
         ip_too_little_octets    = error_bit | +ip_address_status::too_little_octets,
@@ -227,10 +228,10 @@ namespace webpp::uri {
         // path-specific errors/warnings:
         valid_path                           = valid_bit | 8U,
         valid_opaque_path                    = valid_bit | 9U,
-        reverse_solidus_used                 = warning_bit >> 5U,
-        windows_drive_letter_used            = warning_bit >> 6U,
-        windows_drive_letter_in_relative_url = warning_bit >> 7U,
-        windows_drive_letter_as_host         = warning_bit >> 8U,
+        reverse_solidus_used                 = warning_bit >> 6U,
+        windows_drive_letter_used            = warning_bit >> 7U,
+        windows_drive_letter_in_relative_url = warning_bit >> 8U,
+        windows_drive_letter_as_host         = warning_bit >> 9U,
 
         // queries-specific errors/warnings:
         valid_queries             = valid_bit | 10U,
@@ -359,6 +360,10 @@ namespace webpp::uri {
                   "The input has credentials (username or password), it is a deprecated feature of URIs; "
                   "more info: https://url.spec.whatwg.org/#invalid-credentials "
                   "and https://httpwg.org/specs/rfc9110.html#http.userinfo"};
+            case domain_percent_encoded:
+                return {
+                  "The domain name contains percent-encoded parts; "
+                  "more info: https://url.spec.whatwg.org/#domain-percent-encoded"};
 
                 // ipv4 specific warnings/errors:
 
