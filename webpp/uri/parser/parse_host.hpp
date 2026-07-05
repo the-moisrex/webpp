@@ -260,7 +260,7 @@ namespace webpp::uri {
                             return;
                         } else {
                             buffer.append(lbeg, ctx.pos);
-                            if (!details::next_percent_encode(ctx, buffer)) [[unlikely]] {
+                            if (!details::decode_percent_encoded(ctx, buffer)) [[unlikely]] {
                                 // If host is failure, then return failure.
                                 // `file://example.com%/` was found
                                 set(ctx.status, invalid_domain_code_point);

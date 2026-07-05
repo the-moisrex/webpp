@@ -4,6 +4,7 @@
 #define WEBPP_STRING_HEX_HPP
 
 #include "../common/meta.hpp"
+#include "../std/std.hpp"
 
 #include <array>
 #include <cstdint>
