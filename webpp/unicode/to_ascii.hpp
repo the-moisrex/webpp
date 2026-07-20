@@ -579,6 +579,10 @@ namespace webpp::unicode::idna {
     [[nodiscard]] static constexpr to_ascii_status_type to_ascii(Iter spos, Iter const send, StrT& out) {
         using output_char_type      = istl::char_type_of_t<StrT>;
         to_ascii_status_type status = 0;
+
+        // source input must not be inside the buffer itself
+        assert(!istl::is_inside_buffer(spos, out));
+
         istl::resize_and_overwrite(
           out,
           to_ascii_info::max_required_size<output_char_type>(spos, send),
@@ -592,10 +596,31 @@ namespace webpp::unicode::idna {
         return status;
     }
 
+    template <idna_options Options = idna_options{}, istl::String StrT = stl::u8string>
+    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrT& out) {
+        using output_char_type      = istl::char_type_of_t<StrT>;
+        to_ascii_status_type status = 0;
+
+        auto const spos = out.begin();
+        auto const send = out.end();
+        StrT       out2{out.get_allocator()};
+        istl::resize_and_overwrite(
+          out2,
+          to_ascii_info::max_required_size<output_char_type>(spos, send),
+          [&](output_char_type* buf, stl::size_t const max_len) constexpr noexcept {
+              auto const beg = buf;
+              status         = to_ascii<Options>(spos, send, buf, max_len);
+              auto const len = static_cast<stl::size_t>(buf - beg);
+              assert(len <= max_len); // let's not rely on -D_GLIBCXX_ASSERTS or -D_GLIBCXX_DEBUG
+              return len;
+          });
+        out = std::move(out2);
+        return status;
+    }
+
     template <idna_options Options = idna_options{}, istl::StringViewifiable StrVT, istl::String StrT = stl::u8string>
-    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT&& src, StrT& out) {
-        auto const src_v = istl::view(stl::forward<StrVT>(src));
-        return to_ascii<Options>(src_v.begin(), src_v.end(), out);
+    [[nodiscard]] static constexpr to_ascii_status_type to_ascii(StrVT src, StrT& out) {
+        return to_ascii<Options>(istl::begin(src), istl::end(src), out);
     }
 
     [[nodiscard]] static constexpr bool operator==(to_ascii_status_type const lhs, to_ascii_status const rhs) noexcept {
@@ -607,14 +632,24 @@ namespace webpp::unicode::idna {
     }
 
 #ifdef __cpp_lib_expected
-    template <istl::String            OutStrT = stl::u8string,
-              idna_options            Options = idna_options{},
-              istl::StringViewifiable StrT,
-              typename... Args>
-    [[nodiscard]] static constexpr stl::expected<OutStrT, to_ascii_status_type> to_ascii(StrT&& src, Args&&... args) {
-        auto const str = istl::view(stl::forward<StrT>(src));
-        OutStrT    out{stl::forward<Args>(args)...};
-        auto const status = to_ascii<Options>(str.begin(), str.end(), out);
+    template <idna_options Options = idna_options{}>
+    [[nodiscard]] static constexpr auto to_ascii(istl::StringViewifiable auto const str) {
+        using char_type = istl::char_type_of_t<decltype(str)>;
+        using out_str   = stl::basic_string<char_type>;
+        using exp_type  = stl::expected<out_str, to_ascii_status_type>;
+        out_str    out;
+        auto const status = to_ascii<Options>(istl::begin(str), istl::end(str), out);
+        if (is_valid(status)) [[likely]] {
+            return exp_type{out};
+        }
+        return exp_type{stl::unexpected{status}};
+    }
+
+    template <istl::String OStrT, idna_options Options = idna_options{}>
+    [[nodiscard]] static constexpr stl::expected<OStrT, to_ascii_status_type> to_ascii(
+      istl::StringViewifiable auto const str) {
+        OStrT      out;
+        auto const status = to_ascii<Options>(istl::begin(str), istl::end(str), out);
         if (is_valid(status)) [[likely]] {
             return out;
         }

@@ -840,9 +840,9 @@ TEST(BasicIDNATests, ToASCIITest) {
     EXPECT_EQ(to_ascii(u8"..."), u8"..."); // an empty label is invalid
 
     for (auto const invalid : invalids) {
-        EXPECT_EQ(to_ascii(invalid).value_or(u8""), u8"") << invalid;
+        EXPECT_EQ(to_ascii(invalid).value_or(""), "") << invalid;
         string out;
-        EXPECT_FALSE(unicode::idna::is_valid(to_ascii(invalid, out))) << "'" << invalid << "'";
+        EXPECT_FALSE(unicode::idna::is_valid(to_ascii(invalid, out))) << invalid << "\n" << out;
     }
 
     for (auto const [raw, mappedTo] : valids) {
@@ -1968,6 +1968,47 @@ TEST(BasicIDNATests, MaxLengthTest) {
          "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa"
          "\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa\ufdfa")
          .has_value()));
+}
+
+// When the input domain is an ASCII string (beStrict=false), the result is the input lowercased, regardless of
+// Unicode ToASCII's outcome.
+// An ACE ("xn--") label may decode yet still fail IDNA validity criteria and must nevertheless be accepted as-is.
+// https://url.spec.whatwg.org/#concept-domain-to-ascii
+// TEST(BasicIDNATests, AsciiXnCarveout) {
+//     using webpp::unicode::idna::to_ascii;
+
+//     // Bare ACE prefix: the Punycode payload is empty. As opposed to being rejected.
+//     EXPECT_EQ(domain_to_ascii("xn--").value_or(""), "xn--");
+
+//     // ContextJ (C1): xn--ab-j1t decodes to "a\u200Cb" (ZWNJ not preceded by a virama).
+//     EXPECT_EQ(domain_to_ascii("xn--ab-j1t").value_or(""), "xn--ab-j1t");
+
+//     // Decoded label has code points with "mapped" status (enclosed CJK), so the ACE form is non-canonical.
+//     EXPECT_EQ(domain_to_ascii("a.b.c.xn--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
+
+//     // The URL spec's own example: xn--8i7caa decodes to fullwidth "www", whose code points have "mapped" status.
+//     EXPECT_EQ(domain_to_ascii("xn--8i7caa").value_or(""), "xn--8i7caa");
+
+//     // Mixed/upper-case ACE prefixes must be lowercased.
+//     EXPECT_EQ(domain_to_ascii("a.b.c.XN--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
+//     EXPECT_EQ(domain_to_ascii("a.b.c.Xn--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
+//     EXPECT_EQ(domain_to_ascii("EXAMPLE.COM").value_or(""), "example.com");
+
+//     // Idempotency
+//     stl::string const once = domain_to_ascii("xn--ab-j1t").value_or("");
+//     EXPECT_EQ(domain_to_ascii(stl::string_view{once.data(), once.size()}), once);
+// }
+
+// Those go through full UTS#46 validation. Contrast xn--ab-j1t (ASCII, accepted above) with its decoded form "a\u200Cb"
+// supplied directly (non-ASCII, rejected).
+TEST(BasicIDNATests, NonAsciiInputsStillValidated) {
+    using webpp::unicode::idna::to_ascii;
+
+    // ZWNJ (U+200C) without a preceding virama: ContextJ (C1) violation.
+    EXPECT_FALSE(to_ascii("a\u200Cb")) << "non-ASCII ContextJ violation should still fail";
+
+    // LTR label containing an RTL code point: Bidi rule violation.
+    EXPECT_FALSE(to_ascii("a\u05D0")) << "non-ASCII Bidi violation should still fail";
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic, *-use-designated-initializers)

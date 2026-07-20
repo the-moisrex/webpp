@@ -129,6 +129,45 @@ namespace webpp::istl {
         }
     }
 
+    template <StringViewifiable StrT>
+    [[nodiscard]] constexpr auto begin(StrT const str) noexcept {
+        if constexpr (requires { stl::begin(str); }) {
+            return stl::begin(str);
+        } else if constexpr (stl::is_pointer_v<StrT>) {
+            return str;
+        }
+    }
+
+    template <StringViewifiable StrT>
+    [[nodiscard]] constexpr auto end(StrT const str) noexcept {
+        if constexpr (requires { stl::end(str); }) {
+            return stl::end(str);
+        } else if constexpr (stl::is_pointer_v<StrT>) {
+            using char_type = char_type_of_t<StrT>;
+            return stl::next(str, static_cast<stl::ptrdiff_t>(stl::char_traits<char_type>::length(str)));
+        }
+    }
+
+    template <typename Iter, typename StrT>
+    [[nodiscard]] constexpr bool is_inside_buffer(Iter spos, StrT const& out) noexcept {
+        // Check if the iterator can be converted to a raw pointer
+        if constexpr (requires { std::to_address(spos); }) {
+            void const* src_ptr   = std::to_address(spos);
+            void const* out_start = out.data();
+            void const* out_end   = out.data() + out.size();
+
+            // Use std::less and std::less_equal for standard-compliant
+            // comparison of potentially unrelated pointers.
+            stl::less_equal<void const*> leq{};
+            stl::less<void const*>       less{};
+
+            return leq(out_start, src_ptr) && less(src_ptr, out_end);
+        } else {
+            // If it's not a contiguous iterator/pointer, it can't point inside the buffer's memory
+            return false;
+        }
+    }
+
     /**
      * Convert to string view of the specified template type
      * @example

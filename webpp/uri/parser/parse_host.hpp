@@ -90,14 +90,14 @@ namespace webpp::uri {
 
         // A URL code point is an ASCII alphanumeric, "!", "$", "&", "'", "(", ")", "*", "+", ",", "-", ".",
         // "/", ":", ";", "=", "?", "@", "_", "~", or a scalar value greater than U+007F.
-        static constexpr ascii_bitmap ascii_url_code_points{ALPHA_DIGIT<char>, details::SUB_DELIMS<char>};
+        static constexpr ascii_bitmap ascii_url_code_points{ALPHA_DIGIT<char>, SUB_DELIMS<char>};
         static constexpr ascii_bitmap url_code_points_or_percent{
-          details::NON_ASCII_CODE_UNITS,
+          NON_ASCII_CODE_UNITS,
           ascii_bitmap{ascii_url_code_points, '/', ':', '?', '@', '-', '.', '_', '~', '%'}
         };
         static constexpr ascii_bitmap invalid_url_units = ascii_bitmap{}.except(url_code_points_or_percent);
         static constexpr ascii_bitmap invalid_host_chars{
-          details::FORBIDDEN_HOST_CODE_POINTS,
+          FORBIDDEN_HOST_CODE_POINTS,
           invalid_url_units,
           ascii_bitmap{'%'}};
 
@@ -124,10 +124,10 @@ namespace webpp::uri {
 
         static constexpr auto specials               = charset('/', '\\', '#', '?', '%', ':', '@');
         static constexpr auto host_interesting_chars = categorize<stl::uint8_t, 256U>(
-          cat{.set = details::NON_ASCII_CODE_UNITS.except(specials), .value = +host_cp_type::forb_val},
-          cat{.set = details::FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
-          cat{.set = details::INVALID_IPV4.except(specials), .value = +host_cp_type::no_ipv4_val},
-          cat{.set = details::INVALID_IPV6.except(specials), .value = +host_cp_type::no_ipv6_val},
+          cat{.set = NON_ASCII_CODE_UNITS.except(specials), .value = +host_cp_type::forb_val},
+          cat{.set = FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
+          cat{.set = INVALID_IPV4.except(specials), .value = +host_cp_type::no_ipv4_val},
+          cat{.set = INVALID_IPV6.except(specials), .value = +host_cp_type::no_ipv6_val},
           cat{.set = UPPER_ALPHA<char8_t>, .value = +host_cp_type::upper_val},
           cat{.set = u8"xX", .value = +host_cp_type::x_val},
           cat{.set = u8"nN", .value = +host_cp_type::n_val},
@@ -241,32 +241,21 @@ namespace webpp::uri {
         // Assert: input is not the empty string.
         assert(ctx.pos != ctx.end);
 
-        // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
-
         // check all the characters and see what's there and what's not in order to avoid going into the slow
         // path portion of the code which checks for everything and properly converts things to things.
         iterator const sbeg   = ctx.pos;
         auto           buffer = create_buffer(ctx);
         for (;;) {
-            iterator const lbeg   = ctx.pos;
-            auto           status = or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
+            auto status = or_all(host_interesting_chars, +special_chars, ctx.pos, ctx.end);
 
             if ((status | +special_chars) == status) {
                 switch (*ctx.pos) {
-                    case '%':
+                    [[unlikely]] case '%':
                         // handle percent-encoded hosts
                         if constexpr (!CtxT::is_modifiable) {
                             set(ctx.status, modification_required);
                             return;
                         } else {
-                            buffer.append(lbeg, ctx.pos);
-                            if (!details::decode_percent_encoded(ctx, buffer)) [[unlikely]] {
-                                // If host is failure, then return failure.
-                                // `file://example.com%/` was found
-                                set(ctx.status, invalid_domain_code_point);
-                                return;
-                            }
-
                             // If input contains a percent-encoded byte, domain-percent-encoded validation error.
                             set_warning(ctx.status, domain_percent_encoded);
                             continue;
@@ -332,16 +321,17 @@ namespace webpp::uri {
                     break; // forbidden code points
                 [[unlikely]] default:
 
-                    // 'x', 'n' and '-' were found
-                    if ((status & +no_ipv6_val) == 0 && !details::handle_ipv6(ctx, sbeg, ctx.pos)) {
-                        // either found a valid ipv6, an error occurred, or it's an empty string.
-                        return;
-                    }
+                    // if ((status & +no_ipv6_val) == 0 && !details::handle_ipv6(ctx, sbeg, ctx.pos)) {
+                    //     // either found a valid ipv6, an error occurred, or it's an empty string.
+                    //     return;
+                    // }
 
-                    if ((status | +xnd_val) == status && details::starts_with(sbeg, ctx.pos, stl::string_view{"xn-"})) {
-                        // if it starts with `xn-`, then we go the slow path
-                        break;
-                    }
+                    // 'x', 'n' and '-' were found
+                    // if ((status | +xnd_val) == status && details::starts_with(sbeg, ctx.pos,
+                    // stl::string_view{"xn-"})) {
+                    //     // if it starts with `xn-`, then we go the slow path
+                    //     break;
+                    // }
                     break;
             }
             break;
@@ -354,8 +344,33 @@ namespace webpp::uri {
             return;
         }
 
+
+
         // Return asciiDomain.
         if constexpr (CtxT::is_modifiable) {
+            // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
+            if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                istl::resize_and_overwrite(
+                  buffer,
+                  static_cast<stl::size_t>(ctx.pos - sbeg),
+                  [&](char* buf, stl::size_t) noexcept {
+                      auto const* const beg = buf;
+                      for (iterator pos = sbeg; pos != ctx.pos; ++pos) {
+                          if (*ctx.pos != '%') {
+                              *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
+                              continue;
+                          }
+                          if (!details::decode_percent_encoded(pos, ctx.pos, buf)) [[unlikely]] {
+                              // If host is failure, then return failure.
+                              // `file://example.com%/` was found
+                              set(ctx.status, invalid_domain_code_point);
+                              break;
+                          }
+                      }
+                      return buf - beg;
+                  });
+            }
+
             // Let asciiDomain be the result of running domain to ASCII with domain and false.
             auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, buffer);
             if (!is_valid(to_ascii_res)) [[unlikely]] {

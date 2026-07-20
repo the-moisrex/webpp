@@ -509,8 +509,8 @@ namespace webpp::uri::details {
 
     template <typename BufT, typename CharT>
     static constexpr void append(BufT& buffer, CharT const inp_char) noexcept(false) {
-        using char_type = typename BufT::value_type;
         if constexpr (istl::String<BufT>) {
+            using char_type = typename BufT::value_type;
             buffer.push_back(static_cast<char_type>(inp_char));
         }
     }
@@ -528,12 +528,12 @@ namespace webpp::uri::details {
         // NOLINTEND(*-inc-dec-in-conditions)
     }
 
-    template <URIContext CtxT, typename OutT>
-    [[nodiscard]] static constexpr bool decode_percent_encoded(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
-        static_assert(CtxT::is_modifiable, "The output must be modifiable");
+    template <typename Iter, typename OutT>
+    [[nodiscard]] static constexpr bool decode_percent_encoded(Iter& spos, Iter const send, OutT& out) {
+        // static_assert(CtxT::is_modifiable, "The output must be modifiable");
 
-        auto cur = ctx.pos;
-        if (cur++ + 2 > ctx.end) [[unlikely]] {
+        Iter cur = spos;
+        if (cur++ + 2 > send) [[unlikely]] {
             return false;
         }
         auto const ch0 = ascii::hex_digit<stl::int8_t>(*cur);
@@ -543,7 +543,7 @@ namespace webpp::uri::details {
         }
         auto const code_point = static_cast<stl::uint8_t>(ch0 * 10) + ch1;
         append(out, static_cast<char>(code_point));
-        ctx.pos = cur;
+        spos = cur;
         return true;
     }
 
