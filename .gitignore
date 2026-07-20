@@ -17,6 +17,7 @@ CMakeLists.txt.user.*
 # AI stuff
 GEMINI.md
 QWEN.md
+mcp/node_modules/*
 
 # Some weird script
 .flagged
