@@ -14,10 +14,17 @@ CMakeLists.txt.user.*
 .Trash-*/
 .qtcreator
 
-# AI stuff
+# Local AI instructions
 GEMINI.md
 QWEN.md
-CLAUDE.md
+
+# Repository-local MCP dependencies and generated output
+mcp/node_modules/
+mcp/dist/
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
 
 # Some weird script
 .flagged
@@ -151,3 +158,4 @@ crash-*
 # failed patches:
 *.rej
 *.orig
+.DS_Store

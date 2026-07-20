@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "webpp-project": {
+      "command": "npm",
+      "args": [
+        "--prefix",
+        "${CLAUDE_PROJECT_DIR}/mcp",
+        "start"
+      ],
+      "env": {
+        "PROJECT_ROOT": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}
