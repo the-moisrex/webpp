@@ -285,6 +285,8 @@ namespace webpp::unicode::idna {
 
             max_size += 1; // null character
 
+            assert(max_size <= std::numeric_limits<std::uint16_t>::max());
+
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
             // slower.
@@ -413,6 +415,13 @@ namespace webpp::unicode::idna {
         return status;
     }
 
+    namespace details {
+
+        static constexpr auto lowered_ascii =
+          charmap_full{ALL_ASCII<char>.except(UPPER_ALPHA<char>).except(charset{'.'})};
+
+    } // namespace details
+
     /**
      * The ToASCII operation takes a sequence of Unicode code points that
      * make up one label and transforms it into a sequence of code points in
@@ -463,9 +472,6 @@ namespace webpp::unicode::idna {
         assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
         assert(out_len < stl::numeric_limits<stl::uint32_t>::max());
 
-        webpp_static_constexpr auto lower_ascii =
-          charmap_full{ALL_ASCII<char>.except(UPPER_ALPHA<char>).except(charset{'.'})};
-
         // 1. Processing
         // https://www.unicode.org/reports/tr46/#Processing
         // 1.3. Break: Break the string into labels at U+002E (.) FULL STOP
@@ -474,7 +480,7 @@ namespace webpp::unicode::idna {
 
             // we're using char32_t so by accident we won't accept big code points as valid,
             // and also we don't want to have multiple versions of this in the executable and create bloatware.
-            if (lower_ascii.contains(unit)) [[likely]] {
+            if (details::lowered_ascii.contains(unit)) [[likely]] {
                 label_flags |= or_one(to_ascii_info::interesting_characters, unit);
                 // this cast is safe since they're all guaranteed to be ASCII values and can be hold in a char8_t
                 *out++       = static_cast<out_char_type>(*ipos++);

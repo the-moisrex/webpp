@@ -196,6 +196,22 @@ namespace webpp::ascii {
         return details::percent_hex_table<CharT>.data() + (static_cast<std::uint8_t>(code_unit) * 4);
     }
 
+    template <typename Iter>
+    [[nodiscard]] static constexpr std::uint8_t skip_percent_hex(Iter& spos, Iter const send) noexcept {
+        assert(*spos == '%');
+        Iter cur = spos;
+        if (cur++ + 2 > send) [[unlikely]] {
+            return false;
+        }
+        auto const ch0 = ascii::hex_digit<stl::int8_t>(*cur);
+        auto const ch1 = ascii::hex_digit<stl::int8_t>(*++cur);
+        if (ch0 < 0 || ch1 < 0) [[unlikely]] {
+            return false;
+        }
+        spos = cur;
+        return true;
+    }
+
     // NOLINTEND(*-magic-numbers)
 
 } // namespace webpp::ascii

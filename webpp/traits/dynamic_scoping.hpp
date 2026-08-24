@@ -178,7 +178,7 @@ namespace webpp {
      *   {
      *      context_type ctx2;
      *      dynamic_scope scope{context, ctx2};
-     *      // now `context` is pointing to `ctx2` until `lbg_scope` goes out of scope
+     *      // now `context` is pointing to `ctx2` until `scope` goes out of scope
      *   }
      * @endcode
      *

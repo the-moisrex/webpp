@@ -530,8 +530,6 @@ namespace webpp::uri::details {
 
     template <typename Iter, typename OutT>
     [[nodiscard]] static constexpr bool decode_percent_encoded(Iter& spos, Iter const send, OutT& out) {
-        // static_assert(CtxT::is_modifiable, "The output must be modifiable");
-
         Iter cur = spos;
         if (cur++ + 2 > send) [[unlikely]] {
             return false;
@@ -541,7 +539,7 @@ namespace webpp::uri::details {
         if (ch0 < 0 || ch1 < 0) [[unlikely]] {
             return false;
         }
-        auto const code_point = static_cast<stl::uint8_t>(ch0 * 10) + ch1;
+        auto const code_point = static_cast<stl::uint8_t>(ch0 * 16) + ch1;
         append(out, static_cast<char>(code_point));
         spos = cur;
         return true;
