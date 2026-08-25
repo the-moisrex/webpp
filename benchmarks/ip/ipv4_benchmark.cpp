@@ -378,11 +378,11 @@ BENCHMARK(IP_glibc_inet_pton_random);
 
 static void IP_webpp_inet_pton4_random(benchmark::State& state) {
     ipv4_data();
-    std::array<uint8_t, 4> out{};
     for (auto _ : state) {
-        auto const ip  = ipv4_data();
-        auto       src = ip.begin();
-        auto       res = webpp::inet_pton4(src, ip.end(), out.data());
+        auto const             ip  = ipv4_data();
+        auto                   src = ip.begin();
+        std::array<uint8_t, 4> out;
+        auto                   res = webpp::inet_pton4(src, ip.end(), out.data());
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(out);
     }

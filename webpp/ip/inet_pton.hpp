@@ -117,19 +117,19 @@ namespace webpp {
                 return invalid_character;
             }
 
-            auto val = static_cast<unsigned int>(cc1 - '0');
+            auto val = static_cast<stl::uint32_t>(cc1 - '0');
 
             if (src != end && *src >= '0' && *src <= '9') {
                 // Two or three digit octet.
                 if (val == 0) [[unlikely]] {
                     return invalid_leading_zero; // leading zero
                 }
-                val = val * 10U + static_cast<unsigned int>(*src - '0');
+                val = val * 10U + static_cast<stl::uint32_t>(*src - '0');
                 ++src;
 
                 if (src != end && *src >= '0' && *src <= '9') {
                     // Three digit octet.
-                    val = val * 10U + static_cast<unsigned int>(*src - '0');
+                    val = val * 10U + static_cast<stl::uint32_t>(*src - '0');
                     if (val > 255) [[unlikely]] {
                         return invalid_octet_range;
                     }
