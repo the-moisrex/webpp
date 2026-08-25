@@ -211,6 +211,88 @@ namespace webpp::uri {
         set_flag(ctx.status, has_non_null_host);
     }
 
+    namespace details {
+
+        /**
+         * Slow path for host parsing: percent-decode, validate, and convert to ASCII.
+         * Called when the fast path detected percent-encoding or other complex characters
+         * in the host portion of the URL.
+         */
+        template <uri_options Options, URIContext CtxT>
+        static constexpr void host_parser_slow_path(CtxT& ctx, typename CtxT::iterator sbeg, auto& buffer)
+          noexcept(CtxT::is_nothrow) {
+            using enum uri_status;
+            using iterator = typename CtxT::iterator;
+
+            // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
+            if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
+                return;
+            }
+
+            // Return asciiDomain.
+            if constexpr (CtxT::is_modifiable) {
+                // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of
+                // input.
+                if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                    istl::resize_and_overwrite(
+                      buffer,
+                      static_cast<stl::size_t>(ctx.pos - sbeg),
+                      [&](char* buf, stl::size_t) noexcept {
+                          auto const* const beg = buf;
+                          for (iterator pos = sbeg; pos != ctx.pos; ++pos) {
+                              if (*pos != '%') {
+                                  *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
+                                  continue;
+                              }
+                              if (!decode_percent_encoded(pos, ctx.pos, buf)) [[unlikely]] {
+                                  // If host is failure, then return failure.
+                                  // `file://example.com%/` was found
+                                  set(ctx.status, invalid_domain_code_point);
+                                  break;
+                              }
+                          }
+                          return buf - beg;
+                      });
+                    if (has_error(ctx.status)) [[unlikely]] {
+                        return;
+                    }
+                }
+
+                // Let asciiDomain be the result of running domain to ASCII with domain and false.
+                if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                    // The percent-decoded result is in `buffer`, but domain_to_ascii will overwrite it.
+                    // Copy the decoded input first, then pass it as input to domain_to_ascii.
+                    auto const decoded_input = buffer;
+                    auto const to_ascii_res =
+                      idna::domain_to_ascii<Options>(decoded_input.begin(), decoded_input.end(), buffer);
+                    if (!is_valid(to_ascii_res)) [[unlikely]] {
+                        set_error(ctx.status, to_ascii_res);
+                        return;
+                    }
+                } else {
+                    auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, buffer);
+                    if (!is_valid(to_ascii_res)) [[unlikely]] {
+                        set_error(ctx.status, to_ascii_res);
+                        return;
+                    }
+                }
+
+                set_hostname(ctx.out, stl::move(buffer));
+                set_flag(ctx.status, has_non_null_host);
+            } else {
+                // Only validate, no conversion:
+                auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
+                if (!is_valid(ascii_status)) [[unlikely]] {
+                    set(ctx.status, ascii_status);
+                    return;
+                }
+                set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                set_flag(ctx.status, has_non_null_host);
+            }
+        }
+
+    } // namespace details
+
     /**
      * Parse hostname
      * Make sure to use `set_flag(ctx.status, scheme_type::special_scheme)` if the uri is opaque before
@@ -227,7 +309,8 @@ namespace webpp::uri {
 
         // If input starts with U+005B ([), then:
         if (peek(ctx) == '[') {
-            // Return the result of IPv6 parsing input with its leading U+005B ([) and trailing U+005D (]) removed.
+            // Return the result of IPv6 parsing input with its leading U+005B ([) and trailing U+005D (])
+            // removed.
             details::parse_host_ipv6(ctx);
             return;
         }
@@ -251,23 +334,18 @@ namespace webpp::uri {
             if ((status | +special_chars) == status) {
                 switch (*ctx.pos) {
                     [[unlikely]] case '%':
-                        // handle percent-encoded hosts
-                        if constexpr (!CtxT::is_modifiable) {
-                            set(ctx.status, modification_required);
-                            return;
-                        } else {
-                            // If input contains a percent-encoded byte, domain-percent-encoded validation error.
-                            if (ascii::skip_percent_hex(ctx.pos, ctx.end)) {
-                                set_warning(ctx.status, domain_percent_encoded);
-                            } else {
-                                ++ctx.pos;
-                            }
-                            continue;
+                        // Advance past the percent and any following hex digits; lone '%' is also
+                        // skipped so that we make progress.  The slow path handles validation.
+                        set_warning(ctx.status, domain_percent_encoded);
+                        if (!ascii::skip_percent_hex(ctx.pos, ctx.end)) {
+                            ++ctx.pos;
                         }
-                        break;
+                        continue;
 
                     case '@':
                         if (get_value(ctx.status) == valid_authority) [[unlikely]] {
+                            // Clear percent-encoding warning — it belongs to credentials, not the host.
+                            ctx.status &= ~+domain_percent_encoded;
                             return;
                         }
 
@@ -308,6 +386,10 @@ namespace webpp::uri {
                 case +x_val:
                 case +n_val:
                 case 0: // possible IPv4
+                    // If percent-encoding was found, go to the slow path for proper handling
+                    if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                        break;
+                    }
                     if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
                         return;
                     }
@@ -318,6 +400,10 @@ namespace webpp::uri {
                     // fast path:
                     // the host is fully in valid ascii characters already, and also we don't need to check for
                     // ipv4 either, it includes invalid ipv4 characters.
+                    // If percent-encoding was found, go to the slow path for proper handling
+                    if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                        break;
+                    }
                     set_hostname(ctx.out, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
                     return;
@@ -341,58 +427,7 @@ namespace webpp::uri {
             break;
         }
 
-        // slow path:
-
-        // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-        if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
-            return;
-        }
-
-
-
-        // Return asciiDomain.
-        if constexpr (CtxT::is_modifiable) {
-            // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of input.
-            if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
-                istl::resize_and_overwrite(
-                  buffer,
-                  static_cast<stl::size_t>(ctx.pos - sbeg),
-                  [&](char* buf, stl::size_t) noexcept {
-                      auto const* const beg = buf;
-                      for (iterator pos = sbeg; pos != ctx.pos; ++pos) {
-                          if (*pos != '%') {
-                              *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
-                              continue;
-                          }
-                          if (!details::decode_percent_encoded(pos, ctx.pos, buf)) [[unlikely]] {
-                              // If host is failure, then return failure.
-                              // `file://example.com%/` was found
-                              set(ctx.status, invalid_domain_code_point);
-                              break;
-                          }
-                      }
-                      return buf - beg;
-                  });
-            }
-
-            // Let asciiDomain be the result of running domain to ASCII with domain and false.
-            auto const to_ascii_res = idna::domain_to_ascii<Options>(sbeg, ctx.pos, buffer);
-            if (!is_valid(to_ascii_res)) [[unlikely]] {
-                set_error(ctx.status, to_ascii_res);
-                return;
-            }
-            set_hostname(ctx.out, stl::move(buffer));
-            set_flag(ctx.status, has_non_null_host);
-        } else {
-            // Only validate, no conversion:
-            auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
-            if (!is_valid(ascii_status)) [[unlikely]] {
-                set(ctx.status, ascii_status);
-                return;
-            }
-            set_hostname(ctx.out, segment{sbeg, ctx.pos});
-            set_flag(ctx.status, has_non_null_host);
-        }
+        details::host_slow_path<Options>(ctx, sbeg, buffer);
     }
 
     /**
