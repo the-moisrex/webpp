@@ -85,6 +85,23 @@ namespace webpp::uri {
                 }
                 return true;
             }
+            // WHATWG §3.5 "ends in a number checker" only removes ONE trailing empty part
+            // (the empty string after the last '.').  If multiple trailing dots remain,
+            // the checker returns false and the host parser falls through to
+            // "Return asciiDomain" instead of IPv4-parsing it.
+            // When strict mode disallows trailing empty octets and the checker rejected
+            // the host, the ipv4_trailing_empty_octet warning is set.  Convert it to
+            // an error — but only if the host is actually IPv4-like (first char is a
+            // digit).  Purely-dot hosts like "." or ".." and domain-like hosts like
+            // "foo.09.." are valid domains per WHATWG §3.5 and must not be rejected;
+            // the warning there is just a side effect.
+            // https://url.spec.whatwg.org/#concept-ipv4-parser (IPv4-empty-part)
+            // https://url.spec.whatwg.org/#ends-in-a-number-checker
+            if (has_warning(ctx.status, ipv4_trailing_empty_octet)) [[unlikely]] {
+                if (*pos >= '0' && *pos <= '9') {
+                    set(ctx.status, ip_invalid_character);
+                }
+            }
             return false;
         }
 
@@ -427,7 +444,7 @@ namespace webpp::uri {
             break;
         }
 
-        details::host_slow_path<Options>(ctx, sbeg, buffer);
+        details::host_parser_slow_path<Options>(ctx, sbeg, buffer);
     }
 
     /**

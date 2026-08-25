@@ -35,7 +35,9 @@ namespace webpp::uri::details {
         // WHATWG only removes one trailing empty part for this check.
         // If there are still trailing dots after that, then the last component is empty and the host
         // definitely does not end in a number.
-        while (*fin == '.') [[unlikely]] {
+        // When strict mode disallows trailing empty octets, this side-effect warning is converted
+        // to an error by verify_possible_ipv4; but only for IPv4-like hosts (first char is a digit).
+        while (fin != beg && *fin == '.') [[unlikely]] {
             set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
             if (--fin == beg) [[unlikely]] {
                 return false;
