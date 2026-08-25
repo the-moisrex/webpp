@@ -47,7 +47,7 @@ namespace webpp::v1 {
      * @param octets
      */
     constexpr uint8_t to_prefix(istl::StringViewifiable auto&& m_data) noexcept {
-        auto const _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+        auto const _data = std::string_view{stl::forward<decltype(m_data)>(m_data)};
 
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
@@ -131,8 +131,7 @@ namespace webpp::v1 {
         // 253 means the prefix was not valid
         uint8_t _prefix = 255u;
 
-        constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
-            auto const _data       = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+        constexpr void parse(std::string_view _data) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(_data)>;
             using char_type        = typename string_view_type::value_type;
 

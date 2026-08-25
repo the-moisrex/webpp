@@ -47,9 +47,7 @@ namespace webpp::v2 {
     /**
      * Convert string to prefix
      */
-    template <istl::StringViewifiable StrT>
-    constexpr uint8_t to_prefix(StrT&& inp_str) noexcept {
-        auto const              str = istl::string_viewify(stl::forward<StrT>(inp_str));
+    constexpr uint8_t to_prefix(std::string_view str) noexcept {
         stl::array<uint8_t, 4u> bin;
         auto const              res = ::v2::inet_pton4(str.data(), str.data() + str.size(), bin.data());
         switch (res) {
@@ -92,8 +90,7 @@ namespace webpp::v2 {
         // 253 means the prefix was not valid
         uint8_t _prefix = 255u;
 
-        constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
-            auto const              _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+        constexpr void parse(std::string_view _data) noexcept {
             stl::array<uint8_t, 4u> bin;
             auto                    ptr = _data.data();
             auto const              res = inet_pton4(ptr, _data.data() + _data.size(), bin.data(), _prefix);

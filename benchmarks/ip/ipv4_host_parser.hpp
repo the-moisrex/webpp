@@ -228,9 +228,9 @@ namespace webpp::v3 {
                 stl::uint64_t digit  = octet;
                 digit               *= octet_base;
                 if (octet_base == 16) [[unlikely]] {
-                    digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(cur_char);
+                    digit += ascii::hex_digit<stl::uint64_t, true>(cur_char, static_cast<stl::uint64_t>(invalid_num));
                 } else {
-                    digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
+                    digit += ascii::hex_digit<stl::uint64_t, false>(cur_char, static_cast<stl::uint64_t>(invalid_num));
                 }
                 if (digit >= invalid_num) {
                     if (cur_char != '.') [[unlikely]] {
@@ -316,9 +316,9 @@ namespace webpp::v4 {
                     stl::uint64_t digit  = octet;
                     digit               *= octet_base;
                     if (octet_base == 16) [[unlikely]] {
-                        digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(*src);
+                        digit += ascii::hex_digit<stl::uint64_t, true>(*src, static_cast<stl::uint64_t>(invalid_num));
                     } else {
-                        digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(*src);
+                        digit += ascii::hex_digit<stl::uint64_t, false>(*src, static_cast<stl::uint64_t>(invalid_num));
                     }
                     if (digit >= invalid_num) {
                         if (*src == '.') {

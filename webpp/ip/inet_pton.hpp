@@ -56,7 +56,7 @@ namespace webpp {
     namespace details {
         template <typename Iter = char const*, typename CIter = Iter>
         static constexpr int parse_prefix(Iter& src, CIter src_endp) noexcept {
-            if (src == src_endp || *src < '0' || *src > '9') {
+            if (src == src_endp || *src < '0' || *src > '9') [[unlikely]] {
                 return -1;
             }
             int prefix = *src - '0';
@@ -64,11 +64,11 @@ namespace webpp {
             if (src == src_endp) {
                 return prefix;
             }
-            if (*src < '0' || *src > '9') {
+            if (*src < '0' || *src > '9') [[unlikely]] {
                 return -1;
             }
 
-            if (prefix == 0) {
+            if (prefix == 0) [[unlikely]] {
                 return -1;
             }
             prefix *= 10;
@@ -78,7 +78,7 @@ namespace webpp {
             if (src == src_endp) {
                 return prefix;
             }
-            if (*src < '0' || *src > '9') {
+            if (*src < '0' || *src > '9') [[unlikely]] {
                 return -1;
             }
 
@@ -86,7 +86,7 @@ namespace webpp {
             prefix += *src - '0';
 
             ++src;
-            if (src != src_endp) {
+            if (src != src_endp) [[unlikely]] {
                 return -1;
             }
             return prefix;
@@ -97,8 +97,6 @@ namespace webpp {
      * Converts the string representation of an IPv4 into it's network binary format.
      * The output is changed to invalid value when the input is not correct.
      *
-     * This implementation is very similar to the one in glibc, but our version has different side effects.
-     *
      * @returns status of the parsing
      **/
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
@@ -106,44 +104,60 @@ namespace webpp {
     inet_pton4(Iter& src, CIter end, stl::uint8_t* out, CharT special_character = '/') noexcept {
         using enum inet_pton4_status;
 
-        bool saw_digit = false;
-        int  octets    = 0;
-        *out           = 0;
-        while (src != end) {
-            auto const cur_char = *src++;
-            if (cur_char >= '0' && cur_char <= '9') {
-                unsigned int const new_i = *out * 10U + static_cast<unsigned int>(cur_char - '0');
-                if (saw_digit && *out == 0) {
-                    return invalid_leading_zero;
-                }
-                if (new_i > 255) {
-                    return invalid_octet_range;
-                }
-                *out = static_cast<uint8_t>(new_i);
-                if (!saw_digit) {
-                    if (++octets > 4) {
-                        return too_many_octets;
-                    }
-                    saw_digit = true;
-                }
-            } else if (cur_char == '.' && saw_digit) {
-                if (octets == 4) {
-                    return bad_ending;
-                }
-                *++out    = 0;
-                saw_digit = false;
-            } else {
-                --src;
-                if (octets == 4 && cur_char == special_character) {
+        for (std::uint8_t octet = 0; octet != 4U; ++octet) {
+            if (src == end) [[unlikely]] {
+                return too_little_octets;
+            }
+
+            auto const cc1 = *src++;
+            if (cc1 < '0' || cc1 > '9') [[unlikely]] {
+                if (octet == 4 && cc1 == special_character) {
                     return valid_special;
                 }
                 return invalid_character;
             }
+
+            auto val = static_cast<unsigned int>(cc1 - '0');
+
+            if (src != end && *src >= '0' && *src <= '9') {
+                // Two or three digit octet.
+                if (val == 0) [[unlikely]] {
+                    return invalid_leading_zero; // leading zero
+                }
+                val = val * 10U + static_cast<unsigned int>(*src - '0');
+                ++src;
+
+                if (src != end && *src >= '0' && *src <= '9') {
+                    // Three digit octet.
+                    val = val * 10U + static_cast<unsigned int>(*src - '0');
+                    if (val > 255) [[unlikely]] {
+                        return invalid_octet_range;
+                    }
+                    ++src;
+                }
+            }
+
+            *out++ = static_cast<stl::uint8_t>(val);
+
+            if (src == end) {
+                return octet == 3 ? valid : too_little_octets;
+            }
+
+            auto const sep = *src;
+            if (sep == special_character && octet == 3) {
+                return valid_special;
+            }
+            if (sep != '.') [[unlikely]] {
+                return invalid_character;
+            }
+            ++src;
         }
-        if (octets != 4) {
-            return too_little_octets;
+
+        // Four octets consumed but there's more input.
+        if (src != end && *src == special_character) {
+            return valid_special;
         }
-        return valid;
+        return bad_ending;
     }
 
     /**
@@ -157,7 +171,7 @@ namespace webpp {
         if (res == valid_special && *src == prefix_character) {
             ++src;
             int const prefix_tmp = details::parse_prefix(src, end);
-            if (prefix_tmp == -1 || prefix_tmp > 32) {
+            if (prefix_tmp == -1 || prefix_tmp > 32) [[unlikely]] {
                 return invalid_prefix;
             }
             prefix = static_cast<stl::uint8_t>(prefix_tmp);
@@ -183,12 +197,12 @@ namespace webpp {
         stl::uint8_t*             endp      = out + ipv6_byte_count;
 
         // Handling Leading ::
-        if (src == src_endp) {
+        if (src == src_endp) [[unlikely]] {
             return bad_ending;
         }
         if (*src == ':') {
             ++src;
-            if (src == src_endp || *src != ':') {
+            if (src == src_endp || *src != ':') [[unlikely]] {
                 return invalid_colon_usage;
             }
         }
@@ -206,7 +220,7 @@ namespace webpp {
                 }
                 val <<= 4U;
                 val  |= static_cast<unsigned int>(digit);
-                if (val > 0xFFFF) {
+                if (val > 0xFFFF) [[unlikely]] {
                     return invalid_octet_range; // todo: is this if stmt even possible?
                 }
                 ++hex_seen;
@@ -215,16 +229,16 @@ namespace webpp {
             if (cur_char == ':') {
                 current_token = src;
                 if (hex_seen == 0) {
-                    if (colon_ptr != nullptr) {
+                    if (colon_ptr != nullptr) [[unlikely]] {
                         return invalid_colon_usage;
                     }
                     colon_ptr = out;
                     continue;
                 }
-                if (src == src_endp) {
+                if (src == src_endp) [[unlikely]] {
                     return bad_ending;
                 }
-                if (out + uint16_byte_count > endp) {
+                if (out + uint16_byte_count > endp) [[unlikely]] {
                     return invalid_octet_range;
                 }
                 *out++   = static_cast<stl::uint8_t>((val >> 8U) & 0xFFU);
@@ -246,13 +260,17 @@ namespace webpp {
                         hex_seen  = 0;
                         break;
                     }
-                    case inet_pton4_status::bad_ending:
-                    case inet_pton4_status::too_little_octets:
-                    case inet_pton4_status::invalid_leading_zero:
-                    case inet_pton4_status::too_many_octets: return bad_ending;
-                    case inet_pton4_status::invalid_octet_range: return invalid_octet_range;
-                    case inet_pton4_status::invalid_character: return invalid_character;
-                    case inet_pton4_status::invalid_prefix: return invalid_prefix;
+                    [[unlikely]] case inet_pton4_status::bad_ending:
+                    [[unlikely]] case inet_pton4_status::too_little_octets:
+                    [[unlikely]] case inet_pton4_status::invalid_leading_zero:
+                    [[unlikely]] case inet_pton4_status::too_many_octets:
+                        return bad_ending;
+                    [[unlikely]] case inet_pton4_status::invalid_octet_range:
+                        return invalid_octet_range;
+                    [[unlikely]] case inet_pton4_status::invalid_character:
+                        return invalid_character;
+                    [[unlikely]] case inet_pton4_status::invalid_prefix:
+                        return invalid_prefix;
                     default: stl::unreachable();
                 }
                 break; // '\0' or special character was seen by inet_pton4.
@@ -266,7 +284,7 @@ namespace webpp {
             return invalid_character;
         }
         if (hex_seen > 0) {
-            if (out + uint16_byte_count > endp) {
+            if (out + uint16_byte_count > endp) [[unlikely]] {
                 return invalid_octet_range;
             }
             *out++ = static_cast<stl::uint8_t>((val >> 8U) & 0xFFU);
@@ -274,7 +292,7 @@ namespace webpp {
         }
         if (colon_ptr != nullptr) {
             // Replace :: with zeros.
-            if (out == endp) {
+            if (out == endp) [[unlikely]] {
                 // :: would expand to a zero-width field.
                 return bad_ending;
             }
@@ -297,14 +315,13 @@ namespace webpp {
             while (out != colon_ptr) {
                 *--right_ptr = *--out;
             }
-            for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {
-            }
+            for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {}
             out = endp;
         }
-        if (out != endp) {
+        if (out != endp) [[unlikely]] {
             return bad_ending;
         }
-        if (cur_char == special_character) {
+        if (cur_char == special_character) [[unlikely]] {
             return valid_special;
         }
         return valid;
@@ -321,7 +338,7 @@ namespace webpp {
         if (res == valid_special && *src == prefix_character) {
             ++src;
             int const prefix_tmp = details::parse_prefix(src, end);
-            if (prefix_tmp == -1 || prefix_tmp > 128) {
+            if (prefix_tmp == -1 || prefix_tmp > 128) [[unlikely]] {
                 return invalid_prefix;
             }
             prefix = static_cast<stl::uint8_t>(prefix_tmp);
