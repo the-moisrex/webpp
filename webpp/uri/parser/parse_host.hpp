@@ -38,26 +38,26 @@ namespace webpp::uri {
 
         /// @returns should continue parsing or not
         /// @returns false if either found a valid ipv6, an error occurred, or it's an empty string.
-        template <typename Iter, URIContext CtxT>
-        [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
-            using enum uri_status;
-            assert(pos != end);
-            if (*pos != '[') [[likely]] {
-                return true;
-            }
-            if (*stl::prev(end) != ']') [[unlikely]] {
-                set(ctx.status, ipv6_unclosed);
-                return false;
-            }
-            auto const ppos = ctx.pos;
-            auto const pend = ctx.end;
-            ctx.pos         = pos;
-            ctx.end         = end;
-            static_cast<void>(details::parse_host_ipv6(ctx));
-            ctx.pos = ppos;
-            ctx.end = pend;
-            return false;
-        }
+        // template <typename Iter, URIContext CtxT>
+        // [[nodiscard]] static constexpr bool handle_ipv6(CtxT& ctx, Iter pos, Iter end) noexcept(CtxT::is_nothrow) {
+        //     using enum uri_status;
+        //     assert(pos != end);
+        //     if (*pos != '[') [[likely]] {
+        //         return true;
+        //     }
+        //     if (*stl::prev(end) != ']') [[unlikely]] {
+        //         set(ctx.status, ipv6_unclosed);
+        //         return false;
+        //     }
+        //     auto const ppos = ctx.pos;
+        //     auto const pend = ctx.end;
+        //     ctx.pos         = pos;
+        //     ctx.end         = end;
+        //     static_cast<void>(details::parse_host_ipv6(ctx));
+        //     ctx.pos = ppos;
+        //     ctx.end = pend;
+        //     return false;
+        // }
 
         template <uri_options Options, URIContext CtxT, typename Iter = typename CtxT::iterator>
         [[nodiscard]] static constexpr bool verify_possible_ipv4(CtxT& ctx, Iter pos, Iter end)
