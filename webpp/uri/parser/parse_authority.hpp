@@ -90,15 +90,25 @@ namespace webpp::uri {
                     // Invalid-credentials validation error.
                     set_warning(ctx.status, contains_credentials);
 
-                    // If atSignSeen is true, then prepend "%40" to buffer.
+                    // WHATWG authority state, step 1.2:
+                    //   "If atSignSeen is true, then prepend "%40" to buffer."
+                    // https://url.spec.whatwg.org/#authority-state
                     if (at_sign_seen) [[unlikely]] {
                         if constexpr (!CtxT::is_modifiable) {
                             set(ctx.status, modification_required);
                             return;
                         } else {
-                            buffer.push_back('%');
-                            buffer.push_back('4');
-                            buffer.push_back('0');
+                            // Emitting the encoded '@' directly into the current target is equivalent to
+                            // prepending it to `buffer` and avoids an O(n) string prepend:
+                            //   - '%', '4', and '0' are neither U+003A (:) nor in the userinfo percent-encode
+                            //     set, so processing them first through the loop below would append them
+                            //     unchanged to the same target.
+                            //   - The target is chosen before the loop runs, so a ':' still inside `buffer`
+                            //     cannot flip password_token_seen before this "%40" is written.
+                            auto& target = password_token_seen ? password : username;
+                            target.push_back('%');
+                            target.push_back('4');
+                            target.push_back('0');
                         }
                     }
 
