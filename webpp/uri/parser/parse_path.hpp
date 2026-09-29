@@ -503,6 +503,7 @@ namespace webpp::uri {
                         // If url’s scheme is "file", url’s path is empty, and buffer is a Windows drive letter,
                         // then replace the second code point in buffer with U+003A (:).
                         modify_colon = true;
+                        set_warning(ctx.status, windows_drive_letter_used);
                     }
                 }
 

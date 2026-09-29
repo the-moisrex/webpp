@@ -773,6 +773,8 @@ TYPED_TEST(URITests, WindowsDriveLetterUsed) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_used))
       << to_string(uri::get_warning(context.status));
+    EXPECT_FALSE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
+      << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(uri::render_path(context), "/C:/windows");
     } else {
