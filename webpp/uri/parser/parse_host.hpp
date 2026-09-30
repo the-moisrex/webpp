@@ -382,11 +382,11 @@ namespace webpp::uri {
                             }
                         }
                         break;
-                    case '?':
-                    case '#':
                     case '\\': // URL is special
                         set_warning(ctx.status, reverse_solidus_used);
                         [[fallthrough]];
+                    case '?':
+                    case '#':
                     case '/': break;
                     default:
                         assert(false);

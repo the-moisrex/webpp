@@ -37,6 +37,24 @@ TEST(StructuredURITests, AddDotToPath) {
     EXPECT_EQ(url.as_string(), "non-spec:/.//p");
 }
 
+TEST(StructuredURITests, PathEquality) {
+    stl::string const                  first{"page"};
+    stl::string const                  second{"other"};
+    uri::basic_path<stl::string> const lhs{&first, 1};
+    uri::basic_path<stl::string> const same{&first, 1};
+    uri::basic_path<stl::string> const different{&second, 1};
+    EXPECT_TRUE(lhs == same);
+    EXPECT_FALSE(lhs == different);
+}
+
+TEST(StructuredURITests, PathRawStringSize) {
+    uri::basic_path<stl::string> const empty{};
+    EXPECT_EQ(empty.raw_string_size(), stl::size_t{0});
+    stl::string const                  slug{"page"};
+    uri::basic_path<stl::string> const one{&slug, 1};
+    EXPECT_EQ(one.raw_string_size(), stl::size_t{4});
+}
+
 TEST(StructuredURITests, UpdatePassword) {
     uri::uri url{"https://username:password@host:8000/path?query#fragment"};
     // EXPECT_TRUE(url);

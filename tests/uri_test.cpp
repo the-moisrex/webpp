@@ -635,6 +635,27 @@ TYPED_TEST(URITests, BackingUpOnEmptySegments) {
     }
 }
 
+TYPED_TEST(URITests, PortFollowedByDoubleSlashPath) {
+    constexpr stl::string_view str = "http://example.com:8080//foo";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::port(context.out), "8080");
+    EXPECT_EQ(uri::render_path(context), "//foo");
+}
+
+TYPED_TEST(URITests, HostFollowedByQuery) {
+    constexpr stl::string_view str = "http://example.com?query=1";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+    EXPECT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::render_path(context), "/");
+    EXPECT_EQ(uri::render_queries(context), "query=1");
+}
+
 TYPED_TEST(URITests, LastEmptySegment) {
     constexpr stl::string_view str = "http://example.com/.//a/a/a/../../";
 

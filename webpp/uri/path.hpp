@@ -128,6 +128,9 @@ namespace webpp::uri {
          * Get the raw string encoded size
          */
         [[nodiscard]] constexpr stl::size_t raw_string_size() const noexcept {
+            if (this->empty()) {
+                return 0;
+            }
             stl::size_t sum = this->size() - 1;
             for (auto const& slug : *this) {
                 sum += slug.size();
@@ -138,15 +141,15 @@ namespace webpp::uri {
         /// Equality check.
         /// https://url.spec.whatwg.org/#url-equivalence
         /// https://url.spec.whatwg.org/#url-path-serializer
-        [[nodiscard]] constexpr bool operator==(basic_path const inp_str) const noexcept {
+        [[nodiscard]] constexpr bool operator==(basic_path const& inp_str) const noexcept {
             if (inp_str.size() != this->size()) {
                 return false;
             }
             auto       lhs     = this->begin();
             auto const lhs_end = this->end();
-            auto       rhs     = this->begin();
+            auto       rhs     = inp_str.begin();
             for (; lhs != lhs_end; ++lhs, ++rhs) {
-                if (lhs != rhs) {
+                if (*lhs != *rhs) {
                     return false;
                 }
             }

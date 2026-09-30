@@ -65,7 +65,9 @@ namespace webpp::uri {
                         ctx.pos = beg;
                         return;
                     }
-                    port_end = ctx.pos++; // Save digit end boundary and skip the break character
+                    // Save digit end boundary and leave the break character for path start state
+                    // ("Set state to path start state and decrease pointer by 1.")
+                    port_end = ctx.pos;
                     break;
 
                 [[unlikely]] case op_invalid:

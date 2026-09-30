@@ -234,7 +234,7 @@ namespace webpp::uri {
             case '\\': assert(is_special_scheme(ctx.status)); [[fallthrough]];
             case '/':
             case '?':
-            case '#': ++ctx.pos; [[fallthrough]];
+            case '#':
             case '\0': set(ctx.status, valid_path_start); return;
             default: assert(false);
         }
@@ -283,11 +283,9 @@ namespace webpp::uri {
                 // For owning/non-segregated components this is represented as a single '/'.
                 auto buffer = create_buffer(ctx);
                 if constexpr (CtxT::is_segregated) {
-                    ++ctx.pos;
                     push_segment(path(ctx.out), stl::move(buffer));
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
-                    ++ctx.pos;
                     set_path(ctx.out, stl::move(buffer));
                 } else {
                     set(ctx.status, modification_required);
