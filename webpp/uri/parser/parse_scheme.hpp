@@ -59,8 +59,9 @@ namespace webpp::uri {
             }
         }
 
+        /// Copy only the base URL's credentials, host, and port into the output URL.
         template <URIContext CtxT>
-        static constexpr void copy_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        static constexpr void copy_authority_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
@@ -68,13 +69,24 @@ namespace webpp::uri {
                 set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
                 set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                 set_port(ctx.out, base_component_buffer(ctx, port(ctx.base)));
+                if (has_hostname(ctx.base)) {
+                    set_flag(ctx.status, has_non_null_host);
+                }
+            }
+        }
+
+        /// Copy the base URL's credentials, host, port, path, and query into the output URL.
+        template <URIContext CtxT>
+        static constexpr void copy_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            using enum uri_status;
+
+            copy_authority_from_base(ctx);
+
+            if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 set_path(
                   ctx.out,
                   base_component_buffer(ctx, path_view(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
                 set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
-                if (has_hostname(ctx.base)) {
-                    set_flag(ctx.status, has_non_null_host);
-                }
                 if (has_queries(ctx.out)) {
                     set_flag(ctx.status, has_non_null_queries);
                 }
@@ -108,33 +120,31 @@ namespace webpp::uri {
 
             using enum uri_status;
 
-            if (ctx.pos == ctx.end) [[unlikely]] {
-                set(ctx.status, valid);
-                return;
-            }
-
-            // If url is special and c is U+002F (/) or U+005C (\), then:
-            if (is_special_scheme(ctx.status) && (*ctx.pos == '/' || *ctx.pos == '\\')) {
-                if (*ctx.pos == '\\') [[unlikely]] {
-                    set_warning(ctx.status, reverse_solidus_used);
+            if (ctx.pos != ctx.end) {
+                // If url is special and c is U+002F (/) or U+005C (\), then:
+                if (is_special_scheme(ctx.status) && (*ctx.pos == '/' || *ctx.pos == '\\')) {
+                    if (*ctx.pos == '\\') [[unlikely]] {
+                        set_warning(ctx.status, reverse_solidus_used);
+                    }
+                    ++ctx.pos;
+                    // Set state to special authority ignore slashes state.
+                    special_authority_ignore_slashes_state(ctx);
+                    return;
                 }
-                ++ctx.pos;
-                // Set state to special authority ignore slashes state.
-                special_authority_ignore_slashes_state(ctx);
-                return;
+
+                // Otherwise, if c is U+002F (/), then set state to authority state.
+                if (*ctx.pos == '/') {
+                    ++ctx.pos;
+                    set(ctx.status, valid_authority);
+                    return;
+                }
             }
 
-            // Otherwise, if c is U+002F (/), then set state to authority state.
-            if (*ctx.pos == '/') {
-                ++ctx.pos;
-                set(ctx.status, valid_authority);
-                return;
-            }
-
-            // Otherwise, set url’s username to base’s username, url’s password to base’s password, url’s host to
-            // base’s host, url’s port to base’s port, state to path state, and then, decrease pointer by 1.
-            copy_from_base(ctx);
-            set(ctx.status, ctx.pos == ctx.end ? valid : valid_path);
+            // Otherwise (or at EOF), set url’s username to base’s username, url’s password to base’s password,
+            // url’s host to base’s host, url’s port to base’s port, state to path state, and then, decrease
+            // pointer by 1.
+            copy_authority_from_base(ctx);
+            set(ctx.status, valid_path);
         }
 
         template <URIContext CtxT>
@@ -147,7 +157,14 @@ namespace webpp::uri {
                 assert(!is_file_scheme(scheme(ctx.base)));
 
                 // Set url’s scheme to base’s scheme.
-                set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+                auto const base_scheme = scheme(ctx.base);
+                set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
+
+                // Whether a URL is special depends solely on its scheme; since this parser keeps that
+                // information in the status flags, the flags must follow the copied scheme too.
+                if (is_special_scheme(base_scheme)) {
+                    set_flag(ctx.status, scheme_type::special_scheme);
+                }
             }
 
             if (ctx.pos == ctx.end) [[unlikely]] {
@@ -233,6 +250,10 @@ namespace webpp::uri {
                                 details::has_normalized_windows_driver_letter(first_seg.begin())) [[unlikely]]
                             {
                                 if constexpr (CtxT::is_modifiable) {
+                                    if constexpr (!CtxT::is_segregated) {
+                                        // Continuous paths are stored with a leading slash; the path is empty here.
+                                        uri::path(ctx.out).push_back('/');
+                                    }
                                     push_segment(uri::path(ctx.out), first_seg);
                                 } else {
                                     set(ctx.status, modification_required);

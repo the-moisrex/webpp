@@ -1976,6 +1976,47 @@ TYPED_TEST(URITests, SchemeRelativePathStartingWithMultipleSlashes8) {
     EXPECT_EQ(uri::href(ctx), R"URL(http://example.org/path)URL") << details;
 }
 
+// Relative slash state copies only credentials, host, and port from the base URL
+// (never its path or query), and a scheme-relative input starting with backslashes
+// still resolves against the base's special scheme.
+TYPED_TEST(URITests, RelativeSlashStateCopiesAuthorityOnly) {
+    static constexpr auto details1 = R"JSON-URL({
+    "input": "\\\\example.org\\path",
+    "base": "http://other.org/",
+    "href": "http://example.org/path",
+    "pathname": "/path"
+})JSON-URL";
+    auto const            ctx1 =
+      this->template parse_from_string<TypeParam>(R"URL(\\example.org\path)URL", R"URL(http://other.org/)URL");
+    EXPECT_TRUE(uri::is_valid(ctx1.status)) << to_string(uri::get_value(ctx1.status)) << details1;
+    EXPECT_EQ(uri::scheme(ctx1.out), "http") << details1;
+    EXPECT_EQ(uri::username(ctx1.out), "") << details1;
+    EXPECT_EQ(uri::password(ctx1.out), "") << details1;
+    EXPECT_EQ(uri::hostname(ctx1.out), "example.org") << details1;
+    EXPECT_EQ(uri::port(ctx1.out), "") << details1;
+    EXPECT_EQ(uri::render_path(ctx1), "/path") << details1;
+    EXPECT_EQ(uri::render_queries(ctx1), "") << details1;
+    EXPECT_EQ(uri::href(ctx1), R"URL(http://example.org/path)URL") << details1;
+
+    static constexpr auto details2 = R"JSON-URL({
+    "input": "/c",
+    "base": "http://example.org/a/b?x=1",
+    "href": "http://example.org/c",
+    "pathname": "/c",
+    "search": ""
+})JSON-URL";
+    auto const ctx2 = this->template parse_from_string<TypeParam>(R"URL(/c)URL", R"URL(http://example.org/a/b?x=1)URL");
+    EXPECT_TRUE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status)) << details2;
+    EXPECT_EQ(uri::scheme(ctx2.out), "http") << details2;
+    EXPECT_EQ(uri::username(ctx2.out), "") << details2;
+    EXPECT_EQ(uri::password(ctx2.out), "") << details2;
+    EXPECT_EQ(uri::hostname(ctx2.out), "example.org") << details2;
+    EXPECT_EQ(uri::port(ctx2.out), "") << details2;
+    EXPECT_EQ(uri::render_path(ctx2), "/c") << details2;
+    EXPECT_EQ(uri::render_queries(ctx2), "") << details2;
+    EXPECT_EQ(uri::href(ctx2), R"URL(http://example.org/c)URL") << details2;
+}
+
 // 808 - Non-special schemes that some implementations might incorrectly treat as special (32)
 TYPED_TEST(URITests, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial32) {
     static constexpr auto details = R"JSON-URL({

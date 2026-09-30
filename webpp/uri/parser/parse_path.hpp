@@ -420,10 +420,16 @@ namespace webpp::uri {
 
         unset_flag(ctx.status, opaque_path);
 
-        bool const is_special    = is_special_scheme(ctx.status);
-        auto       buffer        = create_buffer(ctx);
-        bool       first_segment = is_file_scheme(ctx.status);
-        bool       last_segment  = false;
+        bool const is_special = is_special_scheme(ctx.status);
+        auto       buffer     = create_buffer(ctx);
+        if constexpr (CtxT::is_modifiable && !CtxT::is_segregated) {
+            // Path state appends to url's path; relative and file states may have already cloned (and
+            // possibly shortened) the base path into it. Segmented mode appends segment by segment and
+            // keeps its own buffer for the current segment only.
+            buffer.append(uri::path(ctx.out));
+        }
+        bool first_segment = is_file_scheme(ctx.status) && uri::path(ctx.out).empty();
+        bool last_segment  = false;
         for (;;) {
             iterator const lbeg   = ctx.pos;
             stl::uint8_t   status = 0;
