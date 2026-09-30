@@ -193,8 +193,19 @@ namespace webpp::uri {
         using enum uri_status;
 
         if (ctx.pos == ctx.end) [[unlikely]] {
-            // If atSignSeen is true and buffer is the empty string, host-missing validation error, return failure.
-            set(ctx.status, host_missing);
+            if (is_special_scheme(ctx.status)) {
+                // Host state: "If url is special and buffer is the empty string, host-missing
+                // validation error, return failure."
+                set(ctx.status, host_missing);
+                return;
+            }
+            // Non-special URL at the EOF code point: the authority state hands over to the host
+            // state, whose host parsing of the empty buffer yields an opaque host of "" (empty
+            // but non-null), followed by the path start state which does nothing at the EOF
+            // code point.
+            clear_hostname(ctx.out);
+            set_flag(ctx.status, has_non_null_host);
+            set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
         }
 

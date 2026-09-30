@@ -59,6 +59,54 @@ namespace webpp::uri {
             }
         }
 
+        /// Whether the base URL's parse status (and therefore its exact flags) is known.
+        /// When only the base's components were provided by the caller, the status stays `unparsed`
+        /// and the component-based heuristics below are used instead.
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool has_base_status(CtxT const& ctx) noexcept {
+            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
+                return false;
+            } else {
+                return get_value(ctx.base_status) != uri_status::unparsed;
+            }
+        }
+
+        /// Checks whether the base URL has an opaque (cannot-be-a-base) path.
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool base_has_opaque_path(CtxT const& ctx) noexcept {
+            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
+                return false;
+            } else if (has_base_status(ctx)) {
+                return has_flags(ctx.base_status, uri_status::opaque_path);
+            } else {
+                return is_opaque_path(ctx.base);
+            }
+        }
+
+        /// Checks whether the base URL's host is non-null (it may still be the empty string).
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool base_has_non_null_host(CtxT const& ctx) noexcept {
+            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
+                return false;
+            } else if (has_base_status(ctx)) {
+                return has_flags(ctx.base_status, uri_status::has_non_null_host);
+            } else {
+                return has_hostname(ctx.base);
+            }
+        }
+
+        /// Checks whether the base URL's query is non-null (it may still be the empty string).
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool base_has_non_null_queries(CtxT const& ctx) noexcept {
+            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
+                return false;
+            } else if (has_base_status(ctx)) {
+                return has_flags(ctx.base_status, uri_status::has_non_null_queries);
+            } else {
+                return has_queries(ctx.base);
+            }
+        }
+
         /// Copy only the base URL's credentials, host, and port into the output URL.
         template <URIContext CtxT>
         static constexpr void copy_authority_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -69,7 +117,7 @@ namespace webpp::uri {
                 set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
                 set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
                 set_port(ctx.out, base_component_buffer(ctx, port(ctx.base)));
-                if (has_hostname(ctx.base)) {
+                if (base_has_non_null_host(ctx)) {
                     set_flag(ctx.status, has_non_null_host);
                 }
             }
@@ -87,7 +135,7 @@ namespace webpp::uri {
                   ctx.out,
                   base_component_buffer(ctx, path_view(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
                 set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
-                if (has_queries(ctx.out)) {
+                if (base_has_non_null_queries(ctx)) {
                     set_flag(ctx.status, has_non_null_queries);
                 }
             }
@@ -168,6 +216,9 @@ namespace webpp::uri {
             }
 
             if (ctx.pos == ctx.end) [[unlikely]] {
+                // WHATWG relative state, step 5.1: clone the base's credentials, host, port,
+                // path, and query before finishing at the EOF code point.
+                copy_from_base(ctx);
                 set(ctx.status, valid);
                 return;
             }
@@ -220,24 +271,25 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#file-slash-state
             using enum uri_status;
 
-            if (ctx.pos == ctx.end) [[unlikely]] {
-                set(ctx.status, valid);
-                return;
-            }
-
             // Our file scheme might have a host for some reason!
-            switch (*ctx.pos) {
-                case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
-                case '/':
-                    ++ctx.pos;
-                    set(ctx.status, valid_file_host);
-                    return;
-                default: break;
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    case '\\': set_warning(ctx.status, reverse_solidus_used); [[fallthrough]];
+                    case '/':
+                        ++ctx.pos;
+                        set(ctx.status, valid_file_host);
+                        return;
+                    default: break;
+                }
             }
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
                     set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+
+                    // File slash state, step 2.1: set url's host to base's host.
+                    set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
+                    set_flag(ctx.status, has_non_null_host);
 
                     if constexpr (Options.handle_windows_drive_letters) {
                         // 2. If the code point substring from pointer to the end of input does not
@@ -264,6 +316,8 @@ namespace webpp::uri {
                     }
                 }
             }
+            // The next state is path state even at the EOF code point, which appends an empty
+            // final segment (rendering as a trailing slash).
             set(ctx.status, valid_path);
         }
 
@@ -282,20 +336,17 @@ namespace webpp::uri {
             clear_hostname(ctx.out);
             set_flag(ctx.status, has_non_null_host);
 
-            if (ctx.pos == ctx.end) [[unlikely]] {
-                set(ctx.status, valid);
-                return;
-            }
-
-            switch (*ctx.pos) {
-                [[unlikely]] case '\\':
-                    set_warning(ctx.status, reverse_solidus_used);
-                    [[fallthrough]];
-                case '/':
-                    ++ctx.pos;
-                    file_slash_state<Options>(ctx);
-                    return;
-                default: break;
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    [[unlikely]] case '\\':
+                        set_warning(ctx.status, reverse_solidus_used);
+                        [[fallthrough]];
+                    case '/':
+                        ++ctx.pos;
+                        file_slash_state<Options>(ctx);
+                        return;
+                    default: break;
+                }
             }
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
@@ -311,6 +362,13 @@ namespace webpp::uri {
                     }
                     if (has_queries(ctx.out)) {
                         set_flag(ctx.status, has_non_null_queries);
+                    }
+
+                    if (ctx.pos == ctx.end) [[unlikely]] {
+                        // File state, step 3.4: none of the branches below apply at the EOF code
+                        // point; the cloned URL is complete as-is (base's fragment is not cloned).
+                        set(ctx.status, valid);
+                        return;
                     }
 
                     // If c is U+003F (?), then set url’s query to the empty string and state to query state.
@@ -358,7 +416,7 @@ namespace webpp::uri {
                 }
             }
 
-            set(ctx.status, valid_file_host);
+            set(ctx.status, ctx.pos == ctx.end ? valid : valid_file_host);
         }
 
         template <uri_options Options, URIContext CtxT>
@@ -369,8 +427,8 @@ namespace webpp::uri {
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 auto const base_scheme = scheme(ctx.base);
 
-                if (ctx.pos != ctx.end && is_opaque_path(ctx.base)) {
-                    if (*ctx.pos == '#') {
+                if (base_has_opaque_path(ctx)) {
+                    if (ctx.pos != ctx.end && *ctx.pos == '#') {
                         // Otherwise, if base has an opaque path and c is U+0023 (#), set url’s scheme to base’s scheme,
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
@@ -378,7 +436,7 @@ namespace webpp::uri {
                         set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base)));
                         set_flag(ctx.status, opaque_path);
                         set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
-                        if (!queries(ctx.out).empty()) {
+                        if (base_has_non_null_queries(ctx)) {
                             set_flag(ctx.status, has_non_null_queries);
                         }
                         clear_fragment(ctx.out);
@@ -386,20 +444,24 @@ namespace webpp::uri {
                         ++ctx.pos;
                         return;
                     }
-                    // ... or base has an opaque path and c is not U+0023 (#), missing-scheme-non-relative-URL
-                    // validation error, return failure.
-                } else if (!is_file_scheme(base_scheme)) {
+                    // ... or base has an opaque path and c is not U+0023 (#) (the EOF code point is not
+                    // U+0023 (#)), missing-scheme-non-relative-URL validation error, return failure.
+                    set(ctx.status, missing_scheme_non_relative_url);
+                    return;
+                }
+
+                if (!is_file_scheme(base_scheme)) {
                     // Otherwise, if base’s scheme is not "file", set state to relative state and decrease pointer by 1.
                     relative_state(ctx);
                     return;
-                } else {
-                    // Otherwise, set state to file state and decrease pointer by 1.
-                    file_state<Options>(ctx);
-                    return;
                 }
+
+                // Otherwise, set state to file state and decrease pointer by 1.
+                file_state<Options>(ctx);
+                return;
             }
 
-            // If base is null, or ..., missing-scheme-non-relative-URL validation error, return failure.
+            // If base is null, missing-scheme-non-relative-URL validation error, return failure.
             set(ctx.status, ctx.pos == ctx.end ? empty_string : missing_scheme_non_relative_url);
         }
 

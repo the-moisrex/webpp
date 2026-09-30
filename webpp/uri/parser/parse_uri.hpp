@@ -151,26 +151,34 @@ namespace webpp::uri {
     }
 
     template <uri_options Options = {}, URIComponents CompT = uri_components_owning<>, URIComponents BaseCompT>
-    static constexpr auto parse_uri(string_view_type_of<CompT> const the_url, BaseCompT&& base_comps) noexcept(false) {
+    static constexpr auto parse_uri(
+      string_view_type_of<CompT> const the_url,
+      BaseCompT&&                      base_comps,
+      uri_status_type const            base_status = +uri_status::unparsed) noexcept(false) {
         using context_type = uri_context<CompT, stl::remove_cvref_t<BaseCompT>>;
         auto context       = create<context_type>(
           the_url.data(),
           the_url.data() + the_url.size(),
           stl::forward<BaseCompT>(base_comps),
-          allocator_from(base_comps));
+          allocator_from(base_comps),
+          base_status);
         parse_uri<Options>(context);
         return context;
     }
 
     /// Owning String
     template <uri_options Options = {}, URIComponents CompT = uri_components_owning<>, URIComponents BaseCompT>
-    static constexpr auto parse_uri(string_type_of<CompT> const& the_url, BaseCompT&& base_comps) noexcept(false) {
+    static constexpr auto parse_uri(
+      string_type_of<CompT> const& the_url,
+      BaseCompT&&                  base_comps,
+      uri_status_type const        base_status = +uri_status::unparsed) noexcept(false) {
         using context_type = uri_context<CompT, stl::remove_cvref_t<BaseCompT>>;
         auto context       = create<context_type>(
           the_url.data(),
           the_url.data() + the_url.size(),
           stl::forward<BaseCompT>(base_comps),
-          allocator_from(the_url));
+          allocator_from(the_url),
+          base_status);
         parse_uri<Options>(context);
         return context;
     }
@@ -186,7 +194,7 @@ namespace webpp::uri {
         auto origin_context = create<uri_context<CompT>>(base_uri.data(), base_uri.data() + base_uri.size());
         parse_uri<Options>(origin_context);
 
-        return parse_uri<Options, CompT>(the_url, stl::move(origin_context.out));
+        return parse_uri<Options, CompT>(the_url, stl::move(origin_context.out), origin_context.status);
     }
 
 } // namespace webpp::uri

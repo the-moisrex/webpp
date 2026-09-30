@@ -42,6 +42,11 @@ namespace webpp::uri {
             { ctx.base } -> stl::convertible_to<istl::nothing_type>;
         };
 
+        // The base's parse status (only available when a base type exists).
+        requires stl::is_void_v<typename stl::remove_cvref_t<T>::base_type> || requires {
+            { ctx.base_status } -> stl::convertible_to<uri_status_type>;
+        };
+
         // Compatibility Check: If base type is modifiable, then component type must be modifiable as well.
         requires(URIModifiableComponents<typename stl::remove_cvref_t<T>::component_type> &&
                  URIModifiableComponents<typename stl::remove_cvref_t<T>::base_type>) ||
@@ -81,7 +86,10 @@ namespace webpp::uri {
         iterator        end{}; // the end of the string
         component_type  out{}; // the output uri components
         base_type       base{};
-        uri_status_type status = +uri_status::unparsed;
+        uri_status_type status      = +uri_status::unparsed;
+        /// The status (including flags such as `opaque_path` and `has_non_null_host`) the base URL
+        /// was parsed with; `unparsed` when only the base's components are known.
+        uri_status_type base_status = +uri_status::unparsed;
     };
 
     /**
@@ -156,14 +164,16 @@ namespace webpp::uri {
       typename CtxT::iterator        beg,
       typename CtxT::iterator        end,
       typename CtxT::base_type&&     base_ctx,
-      allocator_type_of<CtxT> const& inp_alloc = alloc) noexcept(CtxT::is_nothrow) {
+      allocator_type_of<CtxT> const& inp_alloc       = alloc,
+      uri_status_type const          inp_base_status = +uri_status::unparsed) noexcept(CtxT::is_nothrow) {
         CtxT ctx{
-          .beg    = beg,
-          .pos    = beg,
-          .end    = end,
-          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
-          .base   = stl::move(base_ctx),
-          .status = +uri_status::unparsed,
+          .beg         = beg,
+          .pos         = beg,
+          .end         = end,
+          .out         = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
+          .base        = stl::move(base_ctx),
+          .status      = +uri_status::unparsed,
+          .base_status = inp_base_status,
         };
         return ctx;
     }

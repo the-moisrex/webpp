@@ -2017,6 +2017,45 @@ TYPED_TEST(URITests, RelativeSlashStateCopiesAuthorityOnly) {
     EXPECT_EQ(uri::href(ctx2), R"URL(http://example.org/c)URL") << details2;
 }
 
+// Resolving a relative input against a non-special base whose authority/host is empty-but-non-null
+// or whose path is hierarchical must succeed, while an opaque (cannot-be-a-base) base rejects
+// non-fragment inputs, including at the EOF code point.
+TYPED_TEST(URITests, RelativeResolutionAgainstNonSpecialBaseAuthorities) {
+    static constexpr auto details1 = R"JSON-URL({
+    "input": "test.html",
+    "base": "a://",
+    "href": "a:///test.html",
+    "pathname": "/test.html"
+})JSON-URL";
+    auto const            ctx1     = this->template parse_from_string<TypeParam>(R"URL(test.html)URL", R"URL(a://)URL");
+    EXPECT_TRUE(uri::is_valid(ctx1.status)) << to_string(uri::get_value(ctx1.status)) << details1;
+    EXPECT_EQ(uri::scheme(ctx1.out), "a") << details1;
+    EXPECT_EQ(uri::hostname(ctx1.out), "") << details1;
+    EXPECT_EQ(uri::render_path(ctx1), "/test.html") << details1;
+    EXPECT_EQ(uri::href(ctx1), R"URL(a:///test.html)URL") << details1;
+
+    static constexpr auto details2 = R"JSON-URL({
+    "input": "test.html",
+    "base": "a:/b",
+    "href": "a:/test.html",
+    "pathname": "/test.html"
+})JSON-URL";
+    auto const            ctx2     = this->template parse_from_string<TypeParam>(R"URL(test.html)URL", R"URL(a:/b)URL");
+    EXPECT_TRUE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status)) << details2;
+    EXPECT_EQ(uri::scheme(ctx2.out), "a") << details2;
+    EXPECT_EQ(uri::hostname(ctx2.out), "") << details2;
+    EXPECT_EQ(uri::render_path(ctx2), "/test.html") << details2;
+    EXPECT_EQ(uri::href(ctx2), R"URL(a:/test.html)URL") << details2;
+
+    static constexpr auto details3 = R"JSON-URL({
+    "input": "",
+    "base": "a:b",
+    "failure": true
+})JSON-URL";
+    auto const ctx3 = this->template parse_from_string<TypeParam>(stl::string_view{}, stl::string_view{"a:b"});
+    EXPECT_FALSE(uri::is_valid(ctx3.status)) << to_string(uri::get_value(ctx3.status)) << details3;
+}
+
 // 808 - Non-special schemes that some implementations might incorrectly treat as special (32)
 TYPED_TEST(URITests, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial32) {
     static constexpr auto details = R"JSON-URL({
