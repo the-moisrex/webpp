@@ -445,8 +445,10 @@ namespace webpp::uri {
                 }
                 break;
             }
-            iterator   lend   = ctx.pos;
-            auto const length = static_cast<stl::size_t>(stl::distance(lbeg, lend));
+            iterator lend        = ctx.pos;
+            // Captured before handle_dots_in_paths rewinds `lend` to `lbeg` for dot segments.
+            char const stop_char = lend != ctx.end ? *lend : '\0';
+            auto const length    = static_cast<stl::size_t>(stl::distance(lbeg, lend));
 
             status &= static_cast<stl::uint8_t>(~+stop_token);
 
@@ -480,7 +482,7 @@ namespace webpp::uri {
 
             // handle path segments
             if ((status & +slash) != 0) {
-                if (*lend == '\\') [[unlikely]] {
+                if (stop_char == '\\') [[unlikely]] {
                     assert(is_special);
                     if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, modification_required);
@@ -566,8 +568,8 @@ namespace webpp::uri {
             // handle end of path
             if ((status & +termination_chars) != 0) {
                 if constexpr (!Options.state_override) {
-                    assert(*lend == '#' || *lend == '?');
-                    set(ctx.status, *lend == '?' ? valid_queries : valid_fragment);
+                    assert(stop_char == '#' || stop_char == '?');
+                    set(ctx.status, stop_char == '?' ? valid_queries : valid_fragment);
                     ++ctx.pos;
                 }
                 break;

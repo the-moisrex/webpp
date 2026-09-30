@@ -684,6 +684,72 @@ TYPED_TEST(URITests, PercentDecodingInDomains) {
     }
 }
 
+// https://url.spec.whatwg.org/#concept-domain-to-ascii
+// With beStrict=false, an ASCII domain is accepted and lowercased regardless of Unicode ToASCII's outcome,
+// then checked for emptiness and forbidden domain code points.
+TYPED_TEST(URITests, DomainToAsciiAsciiWebCompat) {
+    if constexpr (TypeParam::is_modifiable) {
+        {
+            // An ACE label whose decoded form fails IDNA validity criteria is still accepted as-is.
+            constexpr stl::string_view str     = "https://XN--8i7caa/";
+            auto                       context = this->template get_context<TypeParam>(str);
+            uri::parse_uri(context);
+            EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+            EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid);
+            EXPECT_EQ(uri::hostname(context.out), "xn--8i7caa");
+        }
+        {
+            // Percent-decoded ASCII domain: lowercased, and '!' is not a forbidden domain code point.
+            constexpr stl::string_view str     = "https://WWW.ex%21ample.COM/";
+            auto                       context = this->template get_context<TypeParam>(str);
+            uri::parse_uri(context);
+            EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+            EXPECT_EQ(uri::hostname(context.out), "www.ex!ample.com");
+        }
+        {
+            // Step 8: a percent-decoded backslash is a forbidden domain code point.
+            constexpr stl::string_view str     = "https://ho%5Cst/";
+            auto                       context = this->template get_context<TypeParam>(str);
+            uri::parse_uri(context);
+            EXPECT_FALSE(uri::is_valid(context.status));
+            EXPECT_EQ(uri::get_value(context.status), uri::uri_status::invalid_domain_code_point)
+              << to_string(uri::get_value(context.status));
+        }
+    }
+}
+
+// A dot segment (encoded or raw) immediately followed by a query/fragment must not lose the
+// termination position: handle_dots_in_paths rewinds the segment end when shortening the path.
+TYPED_TEST(URITests, DotSegmentBeforeQueryOrFragment) {
+    {
+        constexpr stl::string_view str     = "https://example.com/aaa/bbb/%2e%2e?query";
+        auto                       context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+        EXPECT_EQ(uri::render_path(context), "/aaa/");
+        EXPECT_EQ(uri::render_queries(context), "query");
+        EXPECT_EQ(uri::href(context), "https://example.com/aaa/?query");
+    }
+    {
+        constexpr stl::string_view str     = "https://example.com/aaa/bbb/../#frag";
+        auto                       context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+        EXPECT_EQ(uri::render_path(context), "/aaa/");
+        EXPECT_EQ(uri::fragment(context.out), "frag");
+        EXPECT_EQ(uri::href(context), "https://example.com/aaa/#frag");
+    }
+    {
+        // Percent-encoded dot segments are recognized per the spec and shorten the path.
+        constexpr stl::string_view str     = "https://example.com/aaa/%2E%2E/bbb";
+        auto                       context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+        EXPECT_EQ(uri::render_path(context), "/bbb");
+        EXPECT_EQ(uri::href(context), "https://example.com/bbb");
+    }
+}
+
 TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
     constexpr stl::string_view str =
       "https://127.0.0.1/.\r.//./one/%2\nE./%\n2e/two/./.\n/\n././%2e\n/%2e/.././three/f\nour/\r%2e%\r2e/"
@@ -1809,7 +1875,10 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
       "\n{\n    \"input\": \"file:\\\\\\\\//\",\n    \"base\": null,\n    \"href\": \"file:////\",\n    \"protocol\": "
       "\"file:\",\n    \"username\": \"\",\n    \"password\": \"\",\n    \"host\": \"\",\n    \"hostname\": \"\",\n    "
       "\"port\": \"\",\n    \"pathname\": \"//\",\n    \"search\": \"\",\n    \"hash\": \"\"\n}";
-    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(file:\\\\//)URL");
+    // WPT #534 input is exactly "file:\\//" (two backslashes); a raw string preserves source
+    // backslashes literally, so four here would be a different URL (see the
+    // FileUrlsWithFourBackslashes regression guard below).
+    auto const ctx = this->template parse_from_string<TypeParam>(R"URL(file:\\//)URL");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
     EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
     EXPECT_EQ(uri::username(ctx.out), "") << details;
@@ -1820,6 +1889,29 @@ TYPED_TEST(URITests, FileUrlsAndManyBackSlashes1) {
     EXPECT_EQ(uri::render_queries(ctx), "") << details;
     EXPECT_EQ(uri::fragment(ctx.out), "") << details;
     EXPECT_EQ(uri::href(ctx), "file:////") << details;
+}
+
+// Regression guard for the c18ef840 raw-string conversion (not a WPT entry): feeding the
+// four-backslash input that the WPT #534 test accidentally used yields a different URL.
+// Verified against the Node/Ada WHATWG reference implementation.
+TYPED_TEST(URITests, FileUrlsWithFourBackslashes) {
+    static constexpr auto details = R"JSON-URL({
+    "input": "file:\\\\\\\\//",
+    "base": null,
+    "href": "file://////",
+    "pathname": "////"
+})JSON-URL";
+    auto const            ctx     = this->template parse_from_string<TypeParam>(R"URL(file:\\\\//)URL");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << details;
+    EXPECT_EQ(uri::scheme(ctx.out), "file") << details;
+    EXPECT_EQ(uri::username(ctx.out), "") << details;
+    EXPECT_EQ(uri::password(ctx.out), "") << details;
+    EXPECT_EQ(uri::hostname(ctx.out), "") << details;
+    EXPECT_EQ(uri::port(ctx.out), "") << details;
+    EXPECT_EQ(uri::render_path(ctx), "////") << details;
+    EXPECT_EQ(uri::render_queries(ctx), "") << details;
+    EXPECT_EQ(uri::fragment(ctx.out), "") << details;
+    EXPECT_EQ(uri::href(ctx), "file://////") << details;
 }
 
 // 831 - Scheme relative path starting with multiple slashes (11)

@@ -130,7 +130,7 @@ namespace webpp::istl {
     }
 
     template <StringViewifiable StrT>
-    [[nodiscard]] constexpr auto begin(StrT const str) noexcept {
+    [[nodiscard]] constexpr auto begin(StrT const& str) noexcept {
         if constexpr (requires { stl::begin(str); }) {
             return stl::begin(str);
         } else if constexpr (stl::is_pointer_v<StrT>) {
@@ -139,7 +139,7 @@ namespace webpp::istl {
     }
 
     template <StringViewifiable StrT>
-    [[nodiscard]] constexpr auto end(StrT const str) noexcept {
+    [[nodiscard]] constexpr auto end(StrT const& str) noexcept {
         if constexpr (requires { stl::end(str); }) {
             return stl::end(str);
         } else if constexpr (stl::is_pointer_v<StrT>) {

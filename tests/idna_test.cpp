@@ -1974,30 +1974,43 @@ TEST(BasicIDNATests, MaxLengthTest) {
 // Unicode ToASCII's outcome.
 // An ACE ("xn--") label may decode yet still fail IDNA validity criteria and must nevertheless be accepted as-is.
 // https://url.spec.whatwg.org/#concept-domain-to-ascii
-// TEST(BasicIDNATests, AsciiXnCarveout) {
-//     using webpp::unicode::idna::to_ascii;
+TEST(BasicIDNATests, AsciiXnCarveout) {
+    auto const domain_to_ascii = [](stl::string_view const inp, stl::string& out) {
+        return uri::idna::domain_to_ascii<uri::standard_uri_parsing_options>(inp.begin(), inp.end(), out);
+    };
 
-//     // Bare ACE prefix: the Punycode payload is empty. As opposed to being rejected.
-//     EXPECT_EQ(domain_to_ascii("xn--").value_or(""), "xn--");
+    stl::string out;
 
-//     // ContextJ (C1): xn--ab-j1t decodes to "a\u200Cb" (ZWNJ not preceded by a virama).
-//     EXPECT_EQ(domain_to_ascii("xn--ab-j1t").value_or(""), "xn--ab-j1t");
+    // Bare ACE prefix: the Punycode payload is empty. As opposed to being rejected.
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("xn--", out))) << out;
+    EXPECT_EQ(out, "xn--");
 
-//     // Decoded label has code points with "mapped" status (enclosed CJK), so the ACE form is non-canonical.
-//     EXPECT_EQ(domain_to_ascii("a.b.c.xn--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
+    // ContextJ (C1): xn--ab-j1t decodes to "a\u200Cb" (ZWNJ not preceded by a virama).
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("xn--ab-j1t", out))) << out;
+    EXPECT_EQ(out, "xn--ab-j1t");
 
-//     // The URL spec's own example: xn--8i7caa decodes to fullwidth "www", whose code points have "mapped" status.
-//     EXPECT_EQ(domain_to_ascii("xn--8i7caa").value_or(""), "xn--8i7caa");
+    // Decoded label has code points with "mapped" status (enclosed CJK), so the ACE form is non-canonical.
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("a.b.c.xn--pokxncvks", out))) << out;
+    EXPECT_EQ(out, "a.b.c.xn--pokxncvks");
 
-//     // Mixed/upper-case ACE prefixes must be lowercased.
-//     EXPECT_EQ(domain_to_ascii("a.b.c.XN--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
-//     EXPECT_EQ(domain_to_ascii("a.b.c.Xn--pokxncvks").value_or(""), "a.b.c.xn--pokxncvks");
-//     EXPECT_EQ(domain_to_ascii("EXAMPLE.COM").value_or(""), "example.com");
+    // The URL spec's own example: xn--8i7caa decodes to fullwidth "www", whose code points have "mapped" status.
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("xn--8i7caa", out))) << out;
+    EXPECT_EQ(out, "xn--8i7caa");
 
-//     // Idempotency
-//     stl::string const once = domain_to_ascii("xn--ab-j1t").value_or("");
-//     EXPECT_EQ(domain_to_ascii(stl::string_view{once.data(), once.size()}), once);
-// }
+    // Mixed/upper-case ACE prefixes must be lowercased.
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("a.b.c.XN--pokxncvks", out))) << out;
+    EXPECT_EQ(out, "a.b.c.xn--pokxncvks");
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("a.b.c.Xn--pokxncvks", out))) << out;
+    EXPECT_EQ(out, "a.b.c.xn--pokxncvks");
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("EXAMPLE.COM", out))) << out;
+    EXPECT_EQ(out, "example.com");
+
+    // Idempotency (the input must not live inside the output buffer)
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii("xn--ab-j1t", out))) << out;
+    stl::string const once = out;
+    EXPECT_TRUE(uri::idna::is_valid(domain_to_ascii(once, out))) << out;
+    EXPECT_EQ(out, once);
+}
 
 // Those go through full UTS#46 validation. Contrast xn--ab-j1t (ASCII, accepted above) with its decoded form "a\u200Cb"
 // supplied directly (non-ASCII, rejected).

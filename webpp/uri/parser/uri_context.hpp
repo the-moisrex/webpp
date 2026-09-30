@@ -522,6 +522,9 @@ namespace webpp::uri::details {
         if constexpr (istl::String<BufT>) {
             using char_type = typename BufT::value_type;
             buffer.push_back(static_cast<char_type>(inp_char));
+        } else if constexpr (stl::is_pointer_v<BufT>) {
+            using char_type = stl::remove_pointer_t<BufT>;
+            *buffer++       = static_cast<char_type>(inp_char);
         }
     }
 

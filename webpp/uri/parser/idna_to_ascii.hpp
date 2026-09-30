@@ -6,6 +6,7 @@
 #include "../../std/string.hpp"
 #include "../../unicode/to_ascii.hpp"
 #include "../uri_status.hpp"
+#include "./constants.hpp"
 
 namespace webpp::uri::idna {
 
@@ -54,23 +55,40 @@ namespace webpp::uri::idna {
             return options;
         };
 
-        auto const prev_len = out.size();
-        auto const status   = unicode::idna::to_ascii<to_ascii_options()>(spos, send, out);
+        // Web++ strict options stand in for the spec's beStrict flag; URL parsing itself always uses
+        // beStrict=false (https://url.spec.whatwg.org/#concept-domain-to-ascii).
+        constexpr bool strict_options = Options.use_std3_ascii_rules || Options.verify_dns_length;
 
-        if constexpr (!be_strict) {
-            // If result is the empty string, domain-to-ASCII validation error, return failure.
-            if (out.size() == prev_len) {
+        if (!strict_options && unicode::is_ascii(spos, send)) {
+            // If domain is an ASCII string, set result to domain, lowercased: when beStrict is false this
+            // happens regardless of Unicode ToASCII's outcome (web compatibility).
+            assert(!istl::is_inside_buffer(spos, out));
+            using out_char_type = istl::char_type_of_t<StrT>;
+            out.clear();
+            for (; spos != send; ++spos) {
+                out.push_back(ascii::to_lower_copy(static_cast<out_char_type>(*spos)));
+            }
+        } else {
+            auto const status = unicode::idna::to_ascii<to_ascii_options()>(spos, send, out);
+            if (!unicode::idna::is_valid(status)) [[unlikely]] {
                 return domain_to_ascii_error;
             }
-
-            // todo:
-            // If result contains a forbidden domain code point, domain-invalid-code-point validation error,
-            // return failure.
-            // if () {
-            //     return invalid_domain_code_point;
-            // }
         }
-        return unicode::idna::is_valid(status) ? valid : domain_to_ascii_error;
+
+        // If result is the empty string, domain-to-ASCII validation error, return failure.
+        if (out.empty()) [[unlikely]] {
+            return domain_to_ascii_error;
+        }
+
+        // If result contains a forbidden domain code point, domain-invalid-code-point validation error,
+        // return failure.
+        for (auto const unit : out) {
+            if (details::FORBIDDEN_DOMAIN_CODE_POINTS.contains(unit)) [[unlikely]] {
+                out.clear();
+                return invalid_domain_code_point;
+            }
+        }
+        return valid;
     }
 
     /**
@@ -95,17 +113,27 @@ namespace webpp::uri::idna {
         auto const status = unicode::idna::validate_domain<to_ascii_options()>(spos, send);
 
         if constexpr (!be_strict) {
-            // If result is the empty string, domain-to-ASCII validation error, return failure.
-            // if (out.size() == prev_len) {
-            //     return domain_to_ascii_error;
-            // }
+            // Web++ strict options stand in for the spec's beStrict flag (same gate as domain_to_ascii).
+            constexpr bool strict_options = Options.use_std3_ascii_rules || Options.verify_dns_length;
 
-            // todo:
+            // If result is the empty string, domain-to-ASCII validation error, return failure.
+            if (spos == send && !strict_options) {
+                return domain_to_ascii_error;
+            }
+
             // If result contains a forbidden domain code point, domain-invalid-code-point validation error,
             // return failure.
-            // if () {
-            //     return invalid_domain_code_point;
-            // }
+            for (auto it = spos; it != send; ++it) {
+                if (details::FORBIDDEN_DOMAIN_CODE_POINTS.contains(*it)) [[unlikely]] {
+                    return invalid_domain_code_point;
+                }
+            }
+
+            // An ASCII domain under non-strict options is accepted as-is (result = domain, lowercased),
+            // regardless of Unicode ToASCII's outcome; only the checks above apply.
+            if (!strict_options && unicode::is_ascii(spos, send)) {
+                return valid;
+            }
         }
         return unicode::idna::is_valid(status) ? valid : domain_to_ascii_error;
     }

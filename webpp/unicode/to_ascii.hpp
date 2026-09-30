@@ -285,8 +285,6 @@ namespace webpp::unicode::idna {
 
             max_size += 1; // null character
 
-            assert(max_size <= std::numeric_limits<std::uint16_t>::max());
-
             // We're not going to apply this since the toASCII function itself may encounter undefined
             // behaviors when we don't reserve enough storage for it, and we don't want to make that algorithm
             // slower.
