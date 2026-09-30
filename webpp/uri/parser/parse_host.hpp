@@ -178,7 +178,7 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <URIContext CtxT, typename Iter = typename CtxT::iterator>
+    template <URIContext CtxT>
     static constexpr void opaque_host_parser(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#concept-opaque-host-parser
         using enum uri_status;
@@ -194,6 +194,8 @@ namespace webpp::uri {
                 case '/':
                 case '?':
                 case '#':
+                // host/port boundary; leave the colon in place so that parse_host can switch to port state
+                case ':':
                 case '\0': break;
                 case '%':
                     if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
