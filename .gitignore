@@ -17,10 +17,7 @@ CMakeLists.txt.user.*
 # Local AI instructions
 GEMINI.md
 QWEN.md
-
-# Repository-local MCP dependencies and generated output
-mcp/node_modules/
-mcp/dist/
+CLAUDE.md
 
 # macOS metadata
 .DS_Store

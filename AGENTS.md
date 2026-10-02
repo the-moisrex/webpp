@@ -34,9 +34,39 @@ Never "fix" code merely to make it agree with stale prose.
 - `sdk/`: the `wpp` and `wsdk` developer tools
 - `cmake/`, `CMakeLists.txt`, and `CMakePresets.json`: build configuration and dependency setup
 - `docs/` and component `README.md` files: project documentation
-- `mcp/`: the repository-local `webpp-project` MCP server for AI assistants
+- `.agents/skills/`: agent skills (`whatwg-url-specs` for the WHATWG URL Standard, `webpp-build-test` for CMake/CTest)
+- `tools/`: developer scripts, including `whatwg-url-specs` for querying the WHATWG URL Standard
+
+Component documentation map (read the closest one for the subsystem you touch):
+
+| Topic | Files |
+| --- | --- |
+| Overview | `README.md`, `webpp/README.md`, `docs/index.md` |
+| HTTP | `webpp/http/README.md`, `webpp/headers/README.md`, `webpp/http/bodies/README.md` |
+| URI | `webpp/uri/README.md` |
+| Unicode | `webpp/unicode/README.md`, `webpp/unicode/details/README.md` |
+| Traits/STL/memory | `webpp/traits/README.md`, `webpp/std/README.md`, `webpp/memory/README.md` |
+| I/O | `webpp/io/README.md` |
+| Storage | `webpp/storage/README.md` |
+| Middleware | `webpp/middleware/README.md` |
+| SDK | `sdk/README.md` |
+| Benchmarks | `benchmarks/README.md` |
 
 When adding or removing a public header, update `ALL_SOURCES_SHORT` in `webpp/CMakeLists.txt`.
+
+## WHATWG URL Standard Lookup
+
+`tools/whatwg-url-specs` fetches, caches, and queries the WHATWG URL Standard. Use it when implementing or reviewing
+standards-sensitive URI/URL behavior instead of relying on memory:
+
+```sh
+tools/whatwg-url-specs list                # section/definition/algorithm tree
+tools/whatwg-url-specs url-parsing         # targeted section or term lookup
+```
+
+It requires `python3`, `beautifulsoup4`, `html5lib`, and `pandoc`; the first run downloads the spec and later runs use
+the cache. The live spec may differ from the snapshot pinned in `webpp/uri/README.md`; the pinned standard and the
+tests win unless the task explicitly updates it. The `whatwg-url-specs` skill documents the full usage.
 
 ## Architecture and Compatibility
 
@@ -69,19 +99,12 @@ When adding or removing a public header, update `ALL_SOURCES_SHORT` in `webpp/CM
 
 ## Required Workflow
 
-Use the repository-local `webpp-project` MCP server when it is available:
-
-1. Call `project_overview`, then `git_status`.
-2. Read the relevant implementation, tests, and component docs. `read_project_docs` and `search_project` are preferred
-   for repository discovery.
-3. Inspect the closest analogous implementation before editing.
-4. Make the smallest coherent change and add or update the closest focused test.
-5. Use `list_cmake_presets`, `run_cmake_configure`, `run_cmake_build`, `run_ctest`, `run_test_target`, or
-   `run_all_tests` for verification.
-6. Finish with `git_status` and `git_diff`, and review every changed line.
-
-If the MCP server is unavailable, use the equivalent local commands and explicitly report that fallback. Never skip
-inspection or verification because the MCP connection is missing.
+1. Read the relevant implementation, tests, and component docs (component doc map above; search with ripgrep or
+   your own search tools).
+2. Inspect the closest analogous implementation before editing.
+3. Make the smallest coherent change and add or update the closest focused test.
+4. Verify with the CMake/CTest commands in Build and Test (the `webpp-build-test` skill documents the details).
+5. Finish with `git status` and `git diff`, and review every changed line.
 
 Preserve pre-existing user changes. Build directories, downloaded dependencies, IDE state, and generated artifacts
 must not be committed.
@@ -109,19 +132,31 @@ ctest --preset tests -R '^test-uri$' --output-on-failure
 ```
 
 `tests/CMakeLists.txt` discovers current test sources, while the focused presets in `CMakePresets.json` are enumerated
-manually and can lag behind. Use MCP `list_test_targets` to detect gaps. MCP `run_test_target` deliberately builds the
-actual CMake target and therefore also works for a current test without a dedicated preset.
+manually and can lag behind. Use the `webpp-build-test` skill's drift check to detect gaps; if a focused preset is
+missing, build the actual CMake target directly:
 
-For the complete unit-test suite, prefer MCP `run_all_tests`; it builds all current `*_test.cpp` targets instead of
-trusting a potentially stale enumeration. The CI-intended preset flow is:
+```sh
+cmake --build build --target test-uri
+ctest --test-dir build -R '^test-uri$' --output-on-failure
+```
+
+For the complete unit-test suite, prefer building all targets derived from current `*_test.cpp` sources instead of
+trusting a potentially stale enumeration:
+
+```sh
+cmake --build build --target $(ls tests/*_test.cpp | sed 's|.*/||; s|_test\.cpp$||; s|_|-|g; s|^|test-|')
+ctest --test-dir build --output-on-failure
+```
+
+The CI-intended preset flow is:
 
 ```sh
 cmake --build --preset tests
 ctest --preset tests --output-on-failure
 ```
 
-If that build preset reports a missing target, do not hide the failure. Use `run_all_tests` (or direct targets from
-`list_test_targets`) and report the preset drift separately.
+If that build preset reports a missing target, do not hide the failure. Use the derived-target commands above and
+report the preset drift separately.
 
 Use the named GCC, Clang, release, examples, or benchmark presets only when relevant to the change. Fuzz targets are
 Clang-only when `FUZZ_TESTS` is enabled. A benchmark run is performance evidence, not a correctness test.
