@@ -107,8 +107,11 @@ namespace webpp {
         stl::uint8_t const* src_ptr = src;
 
 
+        // WHATWG "find the IPv6 address compressed piece index": longestSize starts at 1, so only
+        // zero-runs longer than one piece are compressed (RFC 5952), and the strict comparison
+        // keeps the FIRST longest run on ties.
         int j             = 0;
-        int longest_count = 0;
+        int longest_count = 1;
         int longest_index = -1;
 
         for (int i = 0; i != 8; ++i) {
@@ -152,7 +155,7 @@ namespace webpp {
             // find runs of zeros for :: convention
             if (src[i + i] == 0U && src[i + i + 1] == 0U) {
                 j++;
-                if (j >= longest_count) {
+                if (j > longest_count) {
                     longest_index = i - j + 1;
                     longest_count = j;
                 }
@@ -237,9 +240,11 @@ namespace webpp {
         }
 
         stl::array<int, 9> prefix_sum{}; // fill with zero
-        int                longest_count = 0;
-        int                longest_index = -1;
-        int                current_run   = 0;
+        // Mirror inet_ntop6: longestSize starts at 1 (runs longer than one are compressed) and the
+        // strict comparison keeps the first longest run.
+        int longest_count = 1;
+        int longest_index = -1;
+        int current_run   = 0;
 
         // Step 1: Compute length for each group and prefix sum
         // Step 2: Find the longest run of zero groups
@@ -254,8 +259,6 @@ namespace webpp {
                 if (current_run > longest_count) {
                     longest_count = current_run;
                     longest_index = i - current_run + 1;
-                } else if (current_run == longest_count) {
-                    longest_index = i - current_run + 1; // Prefer later runs
                 }
             } else {
                 // Calculate leading zero nibbles using bit scan operations
@@ -276,7 +279,7 @@ namespace webpp {
 
         // Step 3: Calculate total length based on the longest run
         int total_length = 0;
-        if (longest_count >= 1) {
+        if (longest_index != -1) {
             int const groups_before = longest_index;
             int const groups_after  = 8 - (longest_index + longest_count);
             int const sum_before    = prefix_sum[static_cast<stl::size_t>(longest_index)];

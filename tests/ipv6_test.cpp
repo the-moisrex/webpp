@@ -403,6 +403,37 @@ TEST(IPv6Tests, PureIpv6) {
     EXPECT_NE(sizeof(ipv6), sizeof(pure_ipv6));
 }
 
+// WHATWG URL Standard: "find the IPv6 address compressed piece index":
+//   * only zero-runs longer than 1 piece may be compressed (RFC 5952 section 4.2.2)
+//   * the FIRST longest run wins on ties
+TEST(IPv6Tests, CompressionRules) {
+    struct compression_case {
+        stl::string_view input;
+        stl::string_view expected;
+    };
+
+    constexpr compression_case cases[]{
+      // single 16-bit zero fields must never be compressed
+      {"0:1:0:1:0:1:0:1", "0:1:0:1:0:1:0:1"},
+      {"1:0:1:0:1:0:1:0", "1:0:1:0:1:0:1:0"},
+      {"0:1:2:3:4:5:6:7", "0:1:2:3:4:5:6:7"},
+      // first longest run wins on ties
+      {"0:f:0:0:f:f:0:0",    "0:f::f:f:0:0"},
+      // longest run of 2+ is still compressed
+      {"1:0:0:2:3:4:5:6",    "1::2:3:4:5:6"},
+      {"0:0:1:2:3:4:5:6",   "::1:2:3:4:5:6"},
+      {"1:2:3:4:5:6:0:0",   "1:2:3:4:5:6::"},
+    };
+
+    for (auto const& [input, expected] : cases) {
+        ipv6 const ip6{input};
+        EXPECT_TRUE(ip6.is_valid()) << input;
+        EXPECT_EQ(ip6.ip_string(), expected) << input;
+        EXPECT_EQ(ip6.ip_size(), expected.size()) << input;
+        EXPECT_EQ(inet_ntop6_size(ip6.octets().data()), ip6.ip_string().size()) << input;
+    }
+}
+
 TEST(IPv6Tests, IpSize) {
     for (auto _ip : some_valid_ipv6s) {
         ipv6 const ip6{_ip};
