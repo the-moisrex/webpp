@@ -131,14 +131,14 @@ namespace webpp::uri::details {
     static constexpr ascii_bitmap SPECIAL_QUERIES_ENCODE_SET{QUERIES_ENCODE_SET, '\''};
 
     /// https://url.spec.whatwg.org/#path-percent-encode-set
-    /// query percent-encode set and U+003F (?), U+0060 (`), U+007B ({), and U+007D (}).
-    static constexpr ascii_bitmap PATH_ENCODE_SET{QUERIES_ENCODE_SET, '?', '`', '{', '}'};
+    /// query percent-encode set and U+003F (?), U+005E (^), U+0060 (`), U+007B ({), and U+007D (}).
+    static constexpr ascii_bitmap PATH_ENCODE_SET{QUERIES_ENCODE_SET, '?', '^', '`', '{', '}'};
 
     /// https://url.spec.whatwg.org/#userinfo-percent-encode-set
     /// path percent-encode set and U+002F (/), U+003A (:), U+003B (;), U+003D (=), U+0040 (@), U+005B ([) to
-    /// U+005E (^), inclusive, and U+007C (|).
+    /// U+005D (]), inclusive, and U+007C (|).
     static constexpr ascii_bitmap USER_INFO_ENCODE_SET{
-      ascii_bitmap{PATH_ENCODE_SET, bitmap_range<'[', '^', 256U>()},
+      ascii_bitmap{PATH_ENCODE_SET, bitmap_range<'[', ']', 256U>()},
       '/',
       ':',
       ';',

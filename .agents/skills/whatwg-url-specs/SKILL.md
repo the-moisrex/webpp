@@ -111,6 +111,6 @@ tools/whatwg-url-specs --clean-cache       # drop cached spec (fresh download ne
 
 ## Pinned-standard caveat
 
-`webpp/uri/README.md` pins the URL Standard to a commit snapshot (25 March 2024); this tool reads the **live**
+`webpp/uri/README.md` pins the URL Standard to a commit snapshot (10 September 2026); this tool reads the **live**
 cached spec (<https://url.spec.whatwg.org/>). If live text and the pinned snapshot disagree, the pinned snapshot
 plus the existing tests/implementation win unless the task explicitly updates the pinned standard.
