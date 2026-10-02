@@ -855,6 +855,137 @@ TEST(BasicIDNATests, ToASCIITest) {
     }
 }
 
+TEST(BasicIDNATests, ToASCIINfcGrowth) {
+    using webpp::unicode::idna::to_ascii;
+
+    // The mapping output grows under NFC (stale end-pointer regression): 4 bytes -> 5 bytes.
+    EXPECT_EQ(to_ascii(u8"\u00C0\u0323"), u8"xn--ksa952l");
+    EXPECT_EQ(to_ascii(u8"\u00E0\u0323"), u8"xn--ksa952l");
+    // Largest reachable growth: the mapping output is 4 bytes, the NFC output is 7 bytes.
+    EXPECT_EQ(to_ascii(u8"\u01D5\u0323"), u8"xn--osah215s");
+    // Multi-label input takes the early error path which previously returned
+    // partially written output instead of resetting it.
+    EXPECT_EQ(to_ascii(u8"\u00C0\u0323.com"), u8"xn--ksa952l.com");
+    // ASCII content before the label keeps the encoded label away from the buffer tail.
+    EXPECT_EQ(to_ascii(u8"z\u00C0\u0323"), u8"xn--z-vbb233s");
+}
+
+TEST(BasicIDNATests, ToASCIIMappedFlagSweep) {
+    using webpp::unicode::idna::to_ascii;
+
+    // U+0130 maps to "i" + U+0307; the interesting-character flag must consider every
+    // mapped code point, not only the first one, or the raw non-ASCII label leaks through.
+    EXPECT_EQ(to_ascii(u8"İ"), u8"xn--i-9bb");
+}
+
+TEST(BasicIDNATests, MaxRequiredSizeBoundaries) {
+    using std::u8string;
+    using unicode::idna::to_ascii_info;
+
+    auto const general_bound = [](stl::size_t const len) noexcept {
+        return 432UL * len + 13UL;
+    };
+
+    // Plain ASCII input only needs one code unit per input code unit plus the null character.
+    u8string const plain = u8"hello";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(plain.begin(), plain.end()), plain.size() + 1U);
+    u8string const mixed_case = u8"EXAMPLE.COM";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(mixed_case.begin(), mixed_case.end()), mixed_case.size() + 1U);
+    u8string const empty;
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(empty.begin(), empty.end()), 1U);
+
+    // ACE inputs may expand while their payload is decoded, and non-ASCII inputs may map,
+    // normalize, or Punycode-encode; both must use the general bound.
+    u8string const ace = u8"xn--zca";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(ace.begin(), ace.end()), general_bound(ace.size()));
+    u8string const upper_ace = u8"XN--ZCA";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(upper_ace.begin(), upper_ace.end()),
+              general_bound(upper_ace.size()));
+    u8string const embedded_ace = u8"axn--b";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(embedded_ace.begin(), embedded_ace.end()),
+              general_bound(embedded_ace.size()));
+    u8string const non_ascii = u8"straße.de";
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(non_ascii.begin(), non_ascii.end()),
+              general_bound(non_ascii.size()));
+
+    // adjust_utf_output_size shrinks when the output units are wider than the input units;
+    // the floor keeps the estimate from dropping below the raw input length.
+    EXPECT_EQ(to_ascii_info::max_required_size<char32_t>(ace.begin(), ace.end()), general_bound(ace.size()));
+}
+
+TEST(BasicIDNATests, MappingRatioBoundaries) {
+    using std::u32string;
+    using std::u8string;
+    using unicode::idna::details::max_mapping_factor;
+    using unicode::idna::details::max_mapping_length;
+
+    // U+FDFA has the longest UTS46 mapping: one code point (3 UTF-8 bytes) maps to
+    // 18 code points (33 UTF-8 bytes).
+    constexpr auto fdfa = static_cast<char32_t>(0xFDFA);
+
+    u8string out8;
+    EXPECT_TRUE(unicode::idna::map(fdfa, out8));
+    EXPECT_EQ(out8.size(), max_mapping_length);      // 33 bytes
+    EXPECT_LE(out8.size(), max_mapping_factor * 3U); // the factor bound over the 3 input bytes
+
+    u32string out32;
+    EXPECT_TRUE(unicode::idna::map(fdfa, out32));
+    EXPECT_EQ(out32.size(), max_mapping_factor); // 18 code points
+
+    // The mapping bound scales linearly with the input.
+    u32string fdfas;
+    for (int i = 0; i < 8; ++i) {
+        fdfas += fdfa;
+    }
+    u8string out_repeat;
+    EXPECT_TRUE(unicode::idna::map(fdfas, out_repeat));
+    EXPECT_EQ(out_repeat.size(), max_mapping_length * 8U);
+    EXPECT_GT(out_repeat.size(), fdfas.size());
+}
+
+TEST(BasicIDNATests, ToASCIIFastPathRoundTrip) {
+    using std::u8string;
+    using unicode::idna::is_valid;
+    using unicode::idna::to_ascii;
+    using unicode::idna::to_ascii_info;
+
+    // A maximal-length ASCII domain: the fast path sizes the output buffer to exactly
+    // length + 1, so any off-by-one in the bound would overflow it.
+    u8string domain;
+    for (int i = 0; i < 63; ++i) {
+        domain += u8'a';
+    }
+    domain += u8'.';
+    for (int i = 0; i < 63; ++i) {
+        domain += u8'a';
+    }
+    domain += u8'.';
+    for (int i = 0; i < 63; ++i) {
+        domain += u8'a';
+    }
+    domain += u8'.';
+    for (int i = 0; i < 61; ++i) {
+        domain += u8'a';
+    }
+    EXPECT_EQ(domain.size(), 253U);
+    EXPECT_EQ(to_ascii_info::max_required_size<char8_t>(domain.begin(), domain.end()), domain.size() + 1U);
+
+    u8string out;
+    EXPECT_TRUE(is_valid(to_ascii(domain, out)));
+    EXPECT_EQ(out, domain);
+
+    // Uppercase ASCII is only lowercased, which keeps the fast-path bound exact as well.
+    u8string upper = domain;
+    for (auto& c : upper) {
+        if (c >= u8'A' && c <= u8'Z') {
+            c = static_cast<char8_t>(c + 32);
+        }
+    }
+    u8string out_lower;
+    EXPECT_TRUE(is_valid(to_ascii(upper, out_lower)));
+    EXPECT_EQ(out_lower, domain);
+}
+
 TEST(BasicIDNATests, ToASCIITestBadInput) {
     using std::array;
     using std::string;

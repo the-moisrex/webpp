@@ -258,13 +258,43 @@ namespace webpp::unicode::idna {
             using inp_char_type = stl::iter_value_t<Iter>;
             using details::max_mapping_factor;
 
-            constexpr auto prefix_len = stl::size("xn--"); // 4
+            constexpr auto prefix_len = stl::size("xn--") - 1U; // "xn--" without the null character
 
             // Calculate input length (adjusted for encoding)
             auto const input_len = static_cast<stl::size_t>(send - spos);
 
-            // Start with the adjusted input size
-            stl::size_t max_size = adjust_utf_output_size<inp_char_type, OutCharT>(input_len);
+            // Fast path: plain ASCII input (letters, digits, dots, and hyphens) without an "xn--"
+            // substring is only lowercased by the mapping step; normalization doesn't change it and
+            // Punycode conversion never runs. One input code unit produces exactly one output code
+            // unit, so only the null character is extra.
+            {
+                constexpr stl::size_t ace_pattern_len = 4; // length of "xn--" itself
+                stl::size_t           ace_matches     = 0; // matched case-insensitive "xn--" prefix
+                bool                  plain           = true;
+                for (auto it = spos; it != send; ++it) {
+                    auto const c  = static_cast<stl::uint32_t>(*it);
+                    auto const lc = c | stl::uint32_t{0x20};
+                    if (!((lc >= 'a' && lc <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-')) {
+                        plain = false;
+                        break;
+                    }
+                    if (ace_matches < 2) {
+                        ace_matches = lc == (ace_matches == 0 ? 'x' : 'n') ? ace_matches + 1 : (lc == 'x' ? 1 : 0);
+                    } else {
+                        ace_matches = c == '-' ? ace_matches + 1 : (lc == 'x' ? 1 : 0);
+                    }
+                    if (ace_matches == ace_pattern_len) {
+                        break; // an ACE input may expand while its payload is decoded
+                    }
+                }
+                if (plain && ace_matches != ace_pattern_len) {
+                    return input_len + 1;
+                }
+            }
+
+            // Start with the adjusted input size, but never below the input length itself:
+            // adjust_utf_output_size shrinks when the output code units are wider than the input's.
+            stl::size_t max_size = stl::max(adjust_utf_output_size<inp_char_type, OutCharT>(input_len), input_len);
 
             // 1. Apply Mapping Expansion
             max_size *= max_mapping_factor;
@@ -391,13 +421,18 @@ namespace webpp::unicode::idna {
         // Converts each label with non-ASCII characters into Punycode [RFC3492], and prefixes by “xn--”.
         // This may record an error.
         if (has_flags(flag, non_ascii)) {
+            // NFC (step 1.2) may have grown the label past the pre-normalization 'lcend';
+            // the "xn--" prefix and the punycode output must be placed after the current
+            // (post-normalization) content end, otherwise the prefix overwrites label bytes
+            // and corrupts the punycode input.
+            Iter const content_end     = lend;
             bool const rotate_required = lcbeg == lbeg;
-            Iter       outend          = rotate_required ? lcend : lcbeg;
+            Iter       outend          = rotate_required ? content_end : lcbeg;
             istl::iter_append(outend, 'x', 'n', '-', '-');
 
             if (auto const p_status = punycode_encode(lbeg, lend, outend); p_status == punycode_status::success) {
                 if (rotate_required) {
-                    lend = stl::copy(lcend, outend, lcbeg);
+                    lend = stl::copy(content_end, outend, lcbeg);
                 } else {
                     lend = outend;
                 }
@@ -499,6 +534,13 @@ namespace webpp::unicode::idna {
 
                 if (code_point != U'.') {
                     label_flags |= or_one(to_ascii_info::interesting_characters, code_point);
+                    // Record flags for the whole mapped sequence, not just its first code point:
+                    // a mapping may start with ASCII and continue with non-ASCII (e.g., U+0130
+                    // maps to "i" + U+0307), and the non_ascii flag decides whether NFC and
+                    // punycode encoding run for this label.
+                    for (auto it = c_out; it != out; ++it) {
+                        label_flags |= or_one(to_ascii_info::interesting_characters, *it);
+                    }
                     continue;
                 }
 
