@@ -365,9 +365,74 @@ TYPED_TEST(URITests, QueriesEnding) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_EQ(uri::hostname(context.out), "example.com");
-    // EXPECT_EQ(uri::render_queries(context), "query1");
     EXPECT_EQ(uri::render_path(context), "/this/is/the/path");
     EXPECT_EQ(uri::render_queries(context), "query1=");
+    EXPECT_EQ(uri::href(context), "https://example.com/this/is/the/path?query1=");
+
+    constexpr stl::string_view no_value_str     = "https://example.com/p?query1";
+    auto                       no_value_context = this->template get_context<TypeParam>(no_value_str);
+    uri::parse_uri(no_value_context);
+    EXPECT_TRUE(uri::is_valid(no_value_context.status));
+    EXPECT_EQ(uri::render_queries(no_value_context), "query1");
+
+    constexpr stl::string_view empty_value_str     = "https://example.com/p?=";
+    auto                       empty_value_context = this->template get_context<TypeParam>(empty_value_str);
+    uri::parse_uri(empty_value_context);
+    EXPECT_TRUE(uri::is_valid(empty_value_context.status));
+    EXPECT_EQ(uri::render_queries(empty_value_context), "=");
+
+    constexpr stl::string_view raw_equal_str     = "https://example.com/p?one==&flag=";
+    auto                       raw_equal_context = this->template get_context<TypeParam>(raw_equal_str);
+    uri::parse_uri(raw_equal_context);
+    EXPECT_TRUE(uri::is_valid(raw_equal_context.status));
+    EXPECT_EQ(uri::render_queries(raw_equal_context), "one==&flag=");
+
+    constexpr stl::string_view plain_value_str     = "https://example.com/p?key=value";
+    auto                       plain_value_context = this->template get_context<TypeParam>(plain_value_str);
+    uri::parse_uri(plain_value_context);
+    EXPECT_TRUE(uri::is_valid(plain_value_context.status));
+    EXPECT_EQ(uri::render_queries(plain_value_context), "key=value");
+
+    if constexpr (TypeParam::is_segregated) {
+        auto const& qs = uri::queries(context.out);
+        ASSERT_EQ(qs.size(), 1);
+        EXPECT_EQ(qs[0].first, "query1");
+        EXPECT_EQ(qs[0].second, "=");
+        EXPECT_TRUE(uri::query_has_value(qs[0]));
+        EXPECT_EQ(uri::query_value(qs[0]), "");
+
+        auto const& no_value_qs = uri::queries(no_value_context.out);
+        ASSERT_EQ(no_value_qs.size(), 1);
+        EXPECT_EQ(no_value_qs[0].first, "query1");
+        EXPECT_EQ(no_value_qs[0].second, "");
+        EXPECT_FALSE(uri::query_has_value(no_value_qs[0]));
+        EXPECT_EQ(uri::query_value(no_value_qs[0]), "");
+
+        auto const& empty_value_qs = uri::queries(empty_value_context.out);
+        ASSERT_EQ(empty_value_qs.size(), 1);
+        EXPECT_EQ(empty_value_qs[0].first, "");
+        EXPECT_EQ(empty_value_qs[0].second, "=");
+        EXPECT_TRUE(uri::query_has_value(empty_value_qs[0]));
+        EXPECT_EQ(uri::query_value(empty_value_qs[0]), "");
+
+        auto const& raw_equal_qs = uri::queries(raw_equal_context.out);
+        ASSERT_EQ(raw_equal_qs.size(), 2);
+        EXPECT_EQ(raw_equal_qs[0].first, "one");
+        EXPECT_EQ(raw_equal_qs[0].second, "==");
+        EXPECT_TRUE(uri::query_has_value(raw_equal_qs[0]));
+        EXPECT_EQ(uri::query_value(raw_equal_qs[0]), "=");
+        EXPECT_EQ(raw_equal_qs[1].first, "flag");
+        EXPECT_EQ(raw_equal_qs[1].second, "=");
+        EXPECT_TRUE(uri::query_has_value(raw_equal_qs[1]));
+        EXPECT_EQ(uri::query_value(raw_equal_qs[1]), "");
+
+        auto const& plain_value_qs = uri::queries(plain_value_context.out);
+        ASSERT_EQ(plain_value_qs.size(), 1);
+        EXPECT_EQ(plain_value_qs[0].first, "key");
+        EXPECT_EQ(plain_value_qs[0].second, "=value");
+        EXPECT_TRUE(uri::query_has_value(plain_value_qs[0]));
+        EXPECT_EQ(uri::query_value(plain_value_qs[0]), "value");
+    }
 }
 
 TYPED_TEST(URITests, InvalidSchemes) {
@@ -1201,7 +1266,7 @@ TYPED_TEST(URITests, LocalhostFileSchemeStrict) {
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_FALSE(has_fragment(context.out)) << "This url doesn't have a hash.";
     EXPECT_FALSE(has_hostname(context.out)) << "localhost for file: scheme gets removed.";
-    EXPECT_EQ(uri::render_path(context), "/localhost/page/one");
+    EXPECT_EQ(uri::render_path(context), "/page/one");
     // todo: should this have a warning too?
 }
 

@@ -312,6 +312,9 @@ namespace webpp::uri {
         using pair_type = stl::pair<string_type, string_type>;
 
       public:
+        /// Structured queries: (raw key, encoded value) pairs. The encoded value is empty if and
+        /// only if no '=' separator was present, otherwise it is '=' followed by the raw value;
+        /// use uri::query_value()/uri::query_has_value() to read decoded values.
         using map_type =
           stl::vector<pair_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<pair_type>>;
         using seg_type = string_type;
@@ -941,6 +944,23 @@ namespace webpp::uri {
     template <URIStructuredComponents CompT>
     [[nodiscard]] static constexpr auto& queries(CompT&& comp) noexcept {
         return stl::forward<CompT>(comp).queries;
+    }
+
+    /// True if this structured query pair had a value (i.e., an '=' separator was present).
+    /// The pair's second string is storage-encoded: empty means no separator was present; see
+    /// uri_components_structured::map_type.
+    template <typename PairT>
+    [[nodiscard]] static constexpr bool query_has_value(PairT const& query) noexcept {
+        return !query.second.empty();
+    }
+
+    /// Get the decoded value of a structured query pair (without the '=' separator marker).
+    /// "?key=1" stores ("key", "=1") and returns "1"; "?key" and "?key=" both return an empty
+    /// view, use query_has_value() to tell them apart.
+    template <typename PairT>
+    [[nodiscard]] static constexpr auto query_value(PairT const& query) noexcept {
+        using view_type = stl::basic_string_view<typename PairT::second_type::value_type>;
+        return query.second.empty() ? view_type{} : view_type{query.second}.substr(1);
     }
 
     template <URIOwningComponents CompT>

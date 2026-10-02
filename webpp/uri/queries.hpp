@@ -50,12 +50,8 @@ namespace webpp::uri {
             if constexpr (istl::String<decltype(*pos)>) {
                 out += *pos;
             } else {
-                auto const [name, value]  = *pos;
-                out                      += name;
-                if (!value.empty()) {
-                    out += '=';
-                    out += value;
-                }
+                out += pos->first;
+                out += pos->second;
             }
             if (++pos == storage.end()) {
                 break;

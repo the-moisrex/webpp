@@ -97,7 +97,13 @@ namespace webpp::uri {
         }
     }
 
-    /// Parse into a Structured queries (usually a vector<pair<string, string>>)
+    /// Parse into a Structured queries (usually a vector<pair<string, string>>).
+    /// The pair's second string is storage-encoded: it is empty when no '=' separator was present,
+    /// and otherwise holds '=' followed by the raw value. Keys (first) are always the raw key.
+    /// Examples: "?key" -> ("key", ""), "?key=" -> ("key", "="), "?key=1" -> ("key", "=1"),
+    /// "?key==" -> ("key", "=="), "?=" -> ("", "=").
+    /// Read decoded values with uri::query_value() / uri::query_has_value(); rendering consumes
+    /// the encoding directly (first + second reproduces the raw pair bytes).
     template <uri_options Options, URIContext CtxT>
         requires(Options.parse_queries && CtxT::is_segregated)
     static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -158,6 +164,7 @@ namespace webpp::uri {
                     if (!in_value) {
                         end_segment(ctx, key_buffer);
                         ++ctx.pos;
+                        value_buffer.push_back('=');
                     } else {
                         skip_separator(ctx, value_buffer);
                     }
