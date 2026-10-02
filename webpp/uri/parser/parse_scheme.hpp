@@ -416,7 +416,11 @@ namespace webpp::uri {
                 }
             }
 
-            set(ctx.status, ctx.pos == ctx.end ? valid : valid_file_host);
+            // File state, step 5: "Otherwise, set state to path state, and decrease pointer by 1."
+            // This applies at the EOF code point as well; the pointer adjustment is implicit in
+            // this parser architecture (see the identical pattern in the base-clone branch above);
+            // `parse_path` consumes the current code point next.
+            set(ctx.status, valid_path);
         }
 
         template <uri_options Options, URIContext CtxT>

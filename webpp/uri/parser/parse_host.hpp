@@ -496,7 +496,8 @@ namespace webpp::uri {
 
         // If host is "localhost", then set host to the empty string.
         // Empty string != null
-        if (ctx.pos == ctx.end || is_localhost_string(hostname(ctx.out))) {
+        // The EOF and empty-host cases are already handled by the early returns above.
+        if (is_localhost_string(hostname(ctx.out))) {
             clear_hostname(ctx.out);
             set_flag(ctx.status, has_non_null_host);
         }

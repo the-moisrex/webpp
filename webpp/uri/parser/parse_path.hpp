@@ -569,7 +569,22 @@ namespace webpp::uri {
             if ((status & +termination_chars) != 0) {
                 if constexpr (!Options.state_override) {
                     assert(stop_char == '#' || stop_char == '?');
-                    set(ctx.status, stop_char == '?' ? valid_queries : valid_fragment);
+                    // Path state, steps 6 and 7: set url's query/fragment to the empty string and
+                    // switch state, so an empty query still serializes its '?' (mirrors
+                    // parse_path_start and the opaque-path termination branch above).
+                    if (stop_char == '?') {
+                        if constexpr (Options.parse_queries) {
+                            clear_queries(ctx.out);
+                            set_flag(ctx.status, has_non_null_queries);
+                        }
+                        set(ctx.status, valid_queries);
+                    } else {
+                        if constexpr (Options.parse_fragment) {
+                            clear_fragment(ctx.out);
+                            set_flag(ctx.status, has_non_null_fragment);
+                        }
+                        set(ctx.status, valid_fragment);
+                    }
                     ++ctx.pos;
                 }
                 break;
