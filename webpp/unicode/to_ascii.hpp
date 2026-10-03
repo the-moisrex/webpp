@@ -45,24 +45,23 @@ namespace webpp::unicode::idna {
         unknown            = 0b1U << 10U,
 
         // Validity Criteria errors:
-        validity_nfc_failure   = +validity_criteria_status::nfc_failure << details::validity_criteria_shift,
-        validity_hyphen_34     = +validity_criteria_status::hyphen_34 << details::validity_criteria_shift,
-        validity_hyphen_around = +validity_criteria_status::hyphen_around << details::validity_criteria_shift,
-        validity_ace_found     = +validity_criteria_status::ace_found << details::validity_criteria_shift,
-        validity_dot_found     = +validity_criteria_status::dot_found << details::validity_criteria_shift,
-        validity_combining_mark_at_start =
-          +validity_criteria_status::combining_mark_at_start << details::validity_criteria_shift,
-        validity_requires_mapping_failure =
-          +validity_criteria_status::requires_mapping_failure << details::validity_criteria_shift,
+        validity_nfc_failure             = +validity_criteria_status::nfc_failure << details::validity_criteria_shift,
+        validity_hyphen_34               = +validity_criteria_status::hyphen_34 << details::validity_criteria_shift,
+        validity_hyphen_around           = +validity_criteria_status::hyphen_around << details::validity_criteria_shift,
+        validity_ace_found               = +validity_criteria_status::ace_found << details::validity_criteria_shift,
+        validity_dot_found               = +validity_criteria_status::dot_found << details::validity_criteria_shift,
+        validity_combining_mark_at_start = +validity_criteria_status::combining_mark_at_start
+          << details::validity_criteria_shift,
+        validity_requires_mapping_failure = +validity_criteria_status::requires_mapping_failure
+          << details::validity_criteria_shift,
         validity_joiner_failure = +validity_criteria_status::joiner_failure << details::validity_criteria_shift,
         validity_bidi_failure   = +validity_criteria_status::bidi_failure << details::validity_criteria_shift,
         validity_empty_label    = +validity_criteria_status::empty_label << details::validity_criteria_shift,
         bidi_domain_name = +validity_criteria_status::bidi_domain_name << details::validity_criteria_shift, // not err
 
-        validity_criteria_failure =
-          validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around | validity_ace_found | validity_dot_found |
-          validity_combining_mark_at_start | validity_requires_mapping_failure | validity_joiner_failure |
-          validity_empty_label | validity_bidi_failure,
+        validity_criteria_failure = validity_nfc_failure | validity_hyphen_34 | validity_hyphen_around |
+          validity_ace_found | validity_dot_found | validity_combining_mark_at_start |
+          validity_requires_mapping_failure | validity_joiner_failure | validity_empty_label | validity_bidi_failure,
 
         // All flags (that are not states themselves)
         all_flags = bidi_domain_name,
@@ -490,7 +489,6 @@ namespace webpp::unicode::idna {
         // If VerifyDnsLength is needed, IDNA Mapping will require no more than 254 max size
         // Otherwise, the max size is essentially unlimited or limited by integer overflows.
 
-        auto const    src_length   = stl::distance(ipos, iend);
         auto          status       = +valid;
         OIter const   out_beg      = out;
         auto const    out_end      = stl::next(out, static_cast<diff_type>(out_len));
@@ -502,7 +500,7 @@ namespace webpp::unicode::idna {
         if constexpr (stl::same_as<Iter, OIter>) {
             assert(!(out >= ipos && out < iend));
         }
-        assert(src_length < stl::numeric_limits<stl::uint32_t>::max());
+        assert(stl::distance(ipos, iend) < stl::numeric_limits<stl::uint32_t>::max());
         assert(out_len < stl::numeric_limits<stl::uint32_t>::max());
 
         // 1. Processing
