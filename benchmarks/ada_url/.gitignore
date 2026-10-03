@@ -1,0 +1,3 @@
+# ada checkouts and benchmark output are local artifacts
+.deps/
+results/
