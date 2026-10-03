@@ -171,7 +171,6 @@ set(ALL_SOURCES_SHORT
         uri/parser/idna_to_ascii.hpp
         uri/parser/iiequals.hpp
         uri/parser/parse_authority.hpp
-        uri/parser/parse_authority_pieces.hpp
         uri/parser/parse_credentials.hpp
         uri/parser/parse_domain.hpp
         uri/parser/parse_fragment.hpp

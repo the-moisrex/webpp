@@ -4,7 +4,7 @@
 #define WEBPP_URI_AUTHORITY_HPP
 
 #include "../uri_status.hpp"
-#include "./parse_authority_pieces.hpp"
+#include "./constants.hpp"
 #include "./special_schemes.hpp"
 #include "parse_port.hpp"
 #include "uri_components.hpp"
@@ -15,59 +15,6 @@
  *   https://httpwg.org/specs/rfc9110.html#http.userinfo
  */
 namespace webpp::uri {
-
-    /**
-     * @brief Parse authority part of the URI (credentials, host, and port)
-     * @param ctx Parsing Context containing all the details of the URI and the state of it
-     */
-    template <uri_options Options, URIContext CtxT>
-    static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {
-        // We merged the host parser and authority parser to make it single-pass for most
-        // use cases.
-        // https://url.spec.whatwg.org/#authority-state
-        // https://url.spec.whatwg.org/#host-state
-
-        using enum uri_status;
-
-        if (ctx.pos == ctx.end) [[unlikely]] {
-            set(ctx.status, host_missing);
-            return;
-        }
-
-        // if (is_file_scheme(ctx.status)) {
-        //     set(ctx.status, valid_file_host);
-        //     return;
-        // }
-
-        // Handle missing host situation:
-        // attention: since we have merged the authority and host parsing, it's possible to
-        // have something like "http://username@:8080/" which the host is missing too
-        switch (*ctx.pos) {
-            case ':':
-                if constexpr (!Options.parse_credentials) {
-                    set(ctx.status, host_missing);
-                    return;
-                }
-                break;
-            case '?':
-                if (!is_special_scheme(ctx.status)) {
-                    break;
-                }
-                [[fallthrough]];
-            case '\\':
-            case '/':
-            case '#':
-                if (is_special_scheme(ctx.status)) [[unlikely]] {
-                    set(ctx.status, host_missing);
-                    return;
-                }
-                set(ctx.status, valid);
-                break;
-            default: break;
-        }
-
-        details::parse_authority_pieces<Options>(ctx);
-    }
 
     template <URIContext CtxT>
     static constexpr void parse_authority_for_real(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -195,7 +142,7 @@ namespace webpp::uri {
     }
 
     template <uri_options Options, URIContext CtxT>
-    static constexpr void parse_authority2(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+    static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#authority-state
 
         using enum uri_status;

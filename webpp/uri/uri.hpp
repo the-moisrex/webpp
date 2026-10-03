@@ -7,6 +7,7 @@
 #include "./credentials.hpp"
 #include "./fragment.hpp"
 #include "./host.hpp"
+#include "./parser/parse_credentials.hpp"
 #include "./parser/parse_uri.hpp"
 #include "./parser/uri_components.hpp"
 #include "./path.hpp"
