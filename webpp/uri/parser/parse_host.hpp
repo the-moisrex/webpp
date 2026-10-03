@@ -199,8 +199,7 @@ namespace webpp::uri {
                 case '?':
                 case '#':
                 // host/port boundary; leave the colon in place so that parse_host can switch to port state
-                case ':':
-                case '\0': break;
+                case ':': break;
                 case '%':
                     if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
                         set_warning(ctx.status, invalid_character);

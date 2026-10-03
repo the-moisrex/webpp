@@ -154,10 +154,18 @@ namespace webpp::uri {
                         break;
                     }
                     [[fallthrough]];
+                case '\0':
+                    // Only the real EOF ends the authority scan: a literal U+0000 is appended below like
+                    // any other code point. `peek` reports '\0' for both, and this label is also reached
+                    // by fallthrough from '\\' (where peek is '\\'), hence both checks.
+                    // https://url.spec.whatwg.org/#authority-state
+                    if (ctx.pos != ctx.end && peek(ctx) == '\0') {
+                        break;
+                    }
+                    [[fallthrough]];
                 case '/':
                 case '?':
                 case '#':
-                case '\0':
 
                     // If atSignSeen is true and buffer is the empty string, host-missing validation error, return
                     // failure.
