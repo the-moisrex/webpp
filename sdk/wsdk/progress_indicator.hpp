@@ -4,7 +4,6 @@
 #define WEBPP_PROGRESS_INDICATOR_HPP
 
 #include <webpp/std/string.hpp>
-#include <webpp/std/unordered_map.hpp>
 
 namespace webpp::sdk {
 
