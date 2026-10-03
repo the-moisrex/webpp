@@ -46,7 +46,8 @@ namespace webpp::uri::details {
 
         using enum operation_type;
 
-        assert(fin != ctx.end);
+        // `fin` is the last (dereferenceable) element of the caller's range — either the raw input
+        // slice or the asciiDomain buffer — so it cannot be asserted against `ctx.end` here.
 
         // WHATWG only removes one trailing empty part for this check.
         // If there are still trailing dots after that, then the last component is empty and the host

@@ -240,6 +240,12 @@ namespace webpp::uri {
          * Slow path for host parsing: percent-decode, validate, and convert to ASCII.
          * Called when the fast path detected percent-encoding or other complex characters
          * in the host portion of the URL.
+         *
+         * Follows the host parser's step order (https://url.spec.whatwg.org/#concept-host-parser):
+         * percent-decode (step 5) -> domain to ASCII (step 6) -> if asciiDomain ends in a number,
+         * IPv4 parsing (step 8). The IPv4 check must never run on the raw input: "%30%78%63%30..."
+         * only becomes the IPv4-able "0xc0.0250.01" after percent-decoding, and fullwidth digits only
+         * become ASCII during the domain parser.
          */
         template <uri_options Options, URIContext CtxT>
         static constexpr void host_parser_slow_path(CtxT& ctx, typename CtxT::iterator sbeg, auto& buffer)
@@ -247,15 +253,6 @@ namespace webpp::uri {
             using enum uri_status;
             using iterator = typename CtxT::iterator;
 
-            // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-            if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
-                return;
-            }
-            if (has_error(ctx.status)) [[unlikely]] {
-                return;
-            }
-
-            // Return asciiDomain.
             if constexpr (CtxT::is_modifiable) {
                 // Let domain be the result of running UTF-8 decode without BOM on the percent-decoding of
                 // input.
@@ -303,6 +300,14 @@ namespace webpp::uri {
                     }
                 }
 
+                // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
+                if (verify_possible_ipv4<Options>(ctx, buffer.begin(), buffer.end())) {
+                    return;
+                }
+                if (has_error(ctx.status)) [[unlikely]] {
+                    return;
+                }
+
                 set_hostname(ctx.out, stl::move(buffer));
                 set_flag(ctx.status, has_non_null_host);
             } else {
@@ -312,6 +317,17 @@ namespace webpp::uri {
                     set(ctx.status, ascii_status);
                     return;
                 }
+
+                // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
+                // Without a buffer, the raw input is the best available stand-in for asciiDomain here;
+                // percent-encoded or non-ASCII input cannot be canonicalized without modification anyway.
+                if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
+                    return;
+                }
+                if (has_error(ctx.status)) [[unlikely]] {
+                    return;
+                }
+
                 set_hostname(ctx.out, segment{sbeg, ctx.pos});
                 set_flag(ctx.status, has_non_null_host);
             }
