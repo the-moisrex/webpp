@@ -14,3 +14,7 @@ is not going to be lost after updates thus make the benchmarks faulty and even s
 We try to put the results of those benchmarks on our machines in the README files in each directory
 to make sure even if the benchmarks don't work the way they used to, the results of those benchmarks
 will be preserved.
+
+## webpp vs ada URL comparison
+
+See [`ada_url/`](ada_url/README.md) (issue #437, off by default: `-DWEBPP_URL_COMPARE=ON`).

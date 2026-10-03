@@ -115,3 +115,10 @@ endif ()
 
 # don't compile this if you don't need it
 set_target_properties(${exec_name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+# webpp-vs-ada URL comparison suite (benchmarks/ada_url); off by default because it
+# clones and builds multiple ada versions on first configure.
+option(WEBPP_URL_COMPARE "Build the ada_url URL comparison benchmark executables" OFF)
+if (WEBPP_URL_COMPARE)
+    add_subdirectory(ada_url)
+endif ()

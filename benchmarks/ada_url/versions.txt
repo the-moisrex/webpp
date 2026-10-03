@@ -1,0 +1,6 @@
+# ada refs benchmarked by this suite: one git ref per line, '#' starts a comment.
+# The checkout id of each ref is its CMAKE_MAKE_IDENTIFIER form ("v4.0.0" -> "v4_0_0"),
+# so the CMake side derives the same id from this file.
+main
+v4.0.0
+v2.9.2
