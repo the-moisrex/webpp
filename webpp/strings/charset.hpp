@@ -943,11 +943,11 @@ namespace webpp {
     [[nodiscard]] static consteval charmap<NewLen> inverse(charset<CharT, N> const& set) noexcept {
         charmap<NewLen> res{};
         static_assert(NewLen >= N, "This is not a cutting tool");
-        for (CharT cur = 0; cur < static_cast<CharT>(N); ++cur) {
+        for (stl::size_t cur = 0; cur != NewLen; ++cur) {
             if (set.contains(cur)) {
                 continue;
             }
-            res.set(static_cast<stl::size_t>(cur));
+            res.set(cur);
         }
         return res;
     }

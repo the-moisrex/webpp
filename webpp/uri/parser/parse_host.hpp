@@ -140,9 +140,13 @@ namespace webpp::uri {
         }
 
         static constexpr auto specials               = charset('/', '\\', '#', '?', '%', ':', '@');
+        // Forbidden domain code points (C0 controls, U+007F, ...) that are not forbidden host code points
+        // must not be accepted by the fast path either; the slow path runs the domain parser, which rejects
+        // them (https://url.spec.whatwg.org/#concept-domain-parser).
         static constexpr auto host_interesting_chars = categorize<stl::uint8_t, 256U>(
           cat{.set = NON_ASCII_CODE_UNITS.except(specials), .value = +host_cp_type::forb_val},
           cat{.set = FORBIDDEN_HOST_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
+          cat{.set = FORBIDDEN_DOMAIN_CODE_POINTS.except(specials), .value = +host_cp_type::forb_val},
           cat{.set = INVALID_IPV4.except(specials), .value = +host_cp_type::no_ipv4_val},
           cat{.set = INVALID_IPV6.except(specials), .value = +host_cp_type::no_ipv6_val},
           cat{.set = UPPER_ALPHA<char8_t>, .value = +host_cp_type::upper_val},
@@ -245,6 +249,9 @@ namespace webpp::uri {
 
             // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
             if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
+                return;
+            }
+            if (has_error(ctx.status)) [[unlikely]] {
                 return;
             }
 
@@ -404,6 +411,7 @@ namespace webpp::uri {
                     break;
                 case +x_val:
                 case +n_val:
+                case +no_ip_val:
                 case 0: // possible IPv4
                     // If percent-encoding was found, go to the slow path for proper handling
                     if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
@@ -411,17 +419,6 @@ namespace webpp::uri {
                     }
                     if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
                         return;
-                    }
-                    set_hostname(ctx.out, segment{sbeg, ctx.pos});
-                    set_flag(ctx.status, has_non_null_host);
-                    return;
-                case +no_ip_val:
-                    // fast path:
-                    // the host is fully in valid ascii characters already, and also we don't need to check for
-                    // ipv4 either, it includes invalid ipv4 characters.
-                    // If percent-encoding was found, go to the slow path for proper handling
-                    if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
-                        break;
                     }
                     set_hostname(ctx.out, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
