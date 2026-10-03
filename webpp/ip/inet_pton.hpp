@@ -253,9 +253,19 @@ namespace webpp {
             )
             {
                 src = current_token;
-                switch (inet_pton4(src, src_endp, out)) {
+                // Forward the terminator (']' for hosts, '/' for prefixes) so the embedded
+                // IPv4 parser recognizes the end of the address instead of reporting the terminator
+                // as an invalid character.
+                // https://url.spec.whatwg.org/#concept-ipv6-parser (IPv4 piece, step 6.5)
+                switch (inet_pton4(src, src_endp, out, special_character)) {
                     case inet_pton4_status::valid_special: cur_char = *src; [[fallthrough]];
                     case inet_pton4_status::valid: {
+                        // A trailing U+002E (.) before the terminator is an empty fifth IPv4 part;
+                        // WHATWG IPv6 parser step 6.5 rejects it (IPv4-in-IPv6-invalid-code-point),
+                        // so `http://[::127.0.0.1.]` must fail while `http://[::127.0.0.1]` succeeds.
+                        if (*(src - 1) == '.') [[unlikely]] {
+                            return invalid_character;
+                        }
                         out      += ipv4_byte_count;
                         hex_seen  = 0;
                         break;

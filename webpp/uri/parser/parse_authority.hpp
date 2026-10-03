@@ -229,42 +229,47 @@ namespace webpp::uri {
         // rollback, parse the authority, and then try again with the host parser.
         host_parser<Options>(ctx);
 
-        if (has_error(ctx.status)) [[likely]] {
-            return;
-        }
+        // On a host-parsing failure, fall through to the rollback below instead of surfacing the
+        // error right away: the fast path above assumes the authority is a bare host (optionally
+        // with a port), but the WHATWG authority state consumes credentials before parsing the host
+        // (https://url.spec.whatwg.org/#authority-state), so the error may have been caused by
+        // userinfo characters (e.g. `http://%25DOMAIN:foobar@foodomain.com/`, where `%25DOMAIN` is
+        // the username, not a host). Re-parsing in spec order either recovers the credentials or
+        // re-derives the same host error, so the final result is never worse.
+        if (!has_error(ctx.status)) {
+            // In authority state:
+            //    Decrease ..., and set state to host state.
+            // and in host-state:
+            //    Otherwise, if c is U+003A (:) ... and state to port state.
+            //    ...  and state to path start state.
+            switch (peek(ctx)) {
+                case ':': // possible password or port
 
-        // In authority state:
-        //    Decrease ..., and set state to host state.
-        // and in host-state:
-        //    Otherwise, if c is U+003A (:) ... and state to port state.
-        //    ...  and state to path start state.
-        switch (peek(ctx)) {
-            case ':': // possible password or port
-
-                // let's assume it's a port for now
-                parse_port<Options>(ctx);
-                if (has_error(ctx.status) || peek(ctx) == '@') [[unlikely]] {
-                    // not a valid port, so let's assume it's a password now.
-                    break;
-                }
-                return;
-            case '@': // we definitely did not just parse a hostname
-                break;
-            case '\\': assert(is_special_scheme(ctx.status)); [[fallthrough]];
-            case '/':
-            case '?':
-            case '#':
-            case '\0':
-                // Host state, step 3: "If url is special and buffer is the empty string,
-                // host-missing validation error, return failure." This branch only runs for
-                // special schemes; an empty authority at the entry EOF is handled above.
-                if (!has_hostname(ctx.out)) [[unlikely]] {
-                    set(ctx.status, host_missing);
+                    // let's assume it's a port for now
+                    parse_port<Options>(ctx);
+                    if (has_error(ctx.status) || peek(ctx) == '@') [[unlikely]] {
+                        // not a valid port, so let's assume it's a password now.
+                        break;
+                    }
                     return;
-                }
-                set(ctx.status, valid_path_start);
-                return;
-            default: assert(false);
+                case '@': // we definitely did not just parse a hostname
+                    break;
+                case '\\': assert(is_special_scheme(ctx.status)); [[fallthrough]];
+                case '/':
+                case '?':
+                case '#':
+                case '\0':
+                    // Host state, step 3: "If url is special and buffer is the empty string,
+                    // host-missing validation error, return failure." This branch only runs for
+                    // special schemes; an empty authority at the entry EOF is handled above.
+                    if (!has_hostname(ctx.out)) [[unlikely]] {
+                        set(ctx.status, host_missing);
+                        return;
+                    }
+                    set(ctx.status, valid_path_start);
+                    return;
+                default: assert(false);
+            }
         }
 
         // rollback
