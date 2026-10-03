@@ -261,10 +261,8 @@ namespace webpp::uri::details {
                 set(ctx.status, ipv6_unclosed);
                 break;
             [[likely]] case inet_pton6_status::valid_special:
-                if (*ctx.pos != ']') [[unlikely]] {
-                    set(ctx.status, ipv6_unclosed);
-                    break;
-                }
+                // inet_pton6 returns valid_special only when it stopped on the terminator.
+                assert(*ctx.pos == ']');
                 if constexpr (CtxT::is_modifiable) {
                     // re-generate the IPv6 string
                     istl::resize_and_overwrite(

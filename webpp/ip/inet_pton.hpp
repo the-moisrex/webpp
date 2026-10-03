@@ -7,6 +7,7 @@
 #include "../strings/hex.hpp"
 #include "ip.hpp"
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 
@@ -332,6 +333,7 @@ namespace webpp {
             return bad_ending;
         }
         if (cur_char == special_character) [[unlikely]] {
+            assert(src != src_endp && *src == special_character);
             return valid_special;
         }
         return valid;
