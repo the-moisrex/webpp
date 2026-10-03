@@ -1,0 +1,34 @@
+name: Setup build environment
+description: >-
+  Install the toolchain packages and restore the ccache and CPM source caches.
+  Callers must check out the repository first and should set CCACHE_DIR,
+  CCACHE_MAXSIZE and CPM_SOURCE_CACHE in their job environment.
+
+inputs:
+  cache-key:
+    description: Suffix distinguishing cache namespaces (e.g. the compiler matrix leg).
+    required: false
+    default: default
+
+runs:
+  using: composite
+  steps:
+    - name: Install packages
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ${{ env.APT_PACKAGES }}
+
+    - name: Restore ccache
+      uses: actions/cache@v6
+      with:
+        path: .ccache
+        key: ccache-${{ inputs.cache-key }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: |
+          ccache-${{ inputs.cache-key }}-
+
+    - name: Restore CPM source cache
+      uses: actions/cache@v6
+      with:
+        path: .cpm-cache
+        key: cpm-${{ runner.os }}-${{ hashFiles('cmake/packages/*.cmake', 'cmake/CPM.cmake') }}
+        restore-keys: |
+          cpm-${{ runner.os }}-

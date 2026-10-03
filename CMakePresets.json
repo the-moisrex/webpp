@@ -29,6 +29,17 @@
             }
         },
         {
+            "name": "ci",
+            "inherits": "dev-default",
+            "displayName": "CI",
+            "description": "Continuous Integration build: Ninja generator with a ccache compiler launcher",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+            }
+        },
+        {
             "name": "gcc",
             "displayName": "Debug GCC",
             "description": "Default build using Ninja generator",
@@ -163,6 +174,8 @@
                 "test-async",
                 "test-bodies",
                 "test-cache",
+                "test-cgi-headers",
+                "test-cgi-request",
                 "test-charset",
                 "test-concurrency",
                 "test-const-list",
@@ -172,11 +185,11 @@
                 "test-crypto",
                 "test-domain",
                 "test-dynamic-router",
+                "test-dynamic-scoping",
                 "test-endpoint",
-                "test-extensions",
                 "test-find-str",
                 "test-functional",
-                "test-header-accept-encoding",
+                "test-header-fields",
                 "test-headers",
                 "test-http-parser",
                 "test-idna-all",
@@ -191,6 +204,7 @@
                 "test-logger",
                 "test-memory",
                 "test-meta",
+                "test-middlewares",
                 "test-request",
                 "test-response",
                 "test-router",
@@ -203,15 +217,12 @@
                 "test-structured-uri",
                 "test-time",
                 "test-tokenizer",
-                "test-traits",
                 "test-tuple",
                 "test-type-traits",
-                "test-unicode-algos",
                 "test-unicode",
                 "test-uri-host-authority",
                 "test-uri",
                 "test-uri-whatwg",
-                "test-ustring",
                 "test-utils-casts",
                 "test-utils-strings",
                 "test-utils",
@@ -234,6 +245,16 @@
         {
             "name": "test-cache",
             "targets": "test-cache",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-cgi-headers",
+            "targets": "test-cgi-headers",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-cgi-request",
+            "targets": "test-cgi-request",
             "inherits": "default-build"
         },
         {
@@ -282,13 +303,13 @@
             "inherits": "default-build"
         },
         {
-            "name": "test-endpoint",
-            "targets": "test-endpoint",
+            "name": "test-dynamic-scoping",
+            "targets": "test-dynamic-scoping",
             "inherits": "default-build"
         },
         {
-            "name": "test-extensions",
-            "targets": "test-extensions",
+            "name": "test-endpoint",
+            "targets": "test-endpoint",
             "inherits": "default-build"
         },
         {
@@ -302,8 +323,8 @@
             "inherits": "default-build"
         },
         {
-            "name": "test-header-accept-encoding",
-            "targets": "test-header-accept-encoding",
+            "name": "test-header-fields",
+            "targets": "test-header-fields",
             "inherits": "default-build"
         },
         {
@@ -377,6 +398,11 @@
             "inherits": "default-build"
         },
         {
+            "name": "test-middlewares",
+            "targets": "test-middlewares",
+            "inherits": "default-build"
+        },
+        {
             "name": "test-request",
             "targets": "test-request",
             "inherits": "default-build"
@@ -437,11 +463,6 @@
             "inherits": "default-build"
         },
         {
-            "name": "test-traits",
-            "targets": "test-traits",
-            "inherits": "default-build"
-        },
-        {
             "name": "test-tuple",
             "targets": "test-tuple",
             "inherits": "default-build"
@@ -449,11 +470,6 @@
         {
             "name": "test-type-traits",
             "targets": "test-type-traits",
-            "inherits": "default-build"
-        },
-        {
-            "name": "test-unicode-algos",
-            "targets": "test-unicode-algos",
             "inherits": "default-build"
         },
         {
@@ -474,11 +490,6 @@
         {
             "name": "test-uri-whatwg",
             "targets": "test-uri-whatwg",
-            "inherits": "default-build"
-        },
-        {
-            "name": "test-ustring",
-            "targets": "test-ustring",
             "inherits": "default-build"
         },
         {
@@ -521,9 +532,10 @@
             "targets": [
                 "cgi-hello-world",
                 "cgi-application",
+                "fcgi-hello-world",
                 "json-app",
-                "beast-json",
-                "beast-view"
+                "counter-app",
+                "uri-playground"
             ],
             "inherits": "default-build"
         },
@@ -538,18 +550,23 @@
             "inherits": "default-build"
         },
         {
+            "name": "fcgi-hello-world",
+            "targets": "fcgi-hello-world",
+            "inherits": "default-build"
+        },
+        {
             "name": "json-app",
             "targets": "json-app",
             "inherits": "default-build"
         },
         {
-            "name": "beast-json",
-            "targets": "beast-json",
+            "name": "counter-app",
+            "targets": "counter-app",
             "inherits": "default-build"
         },
         {
-            "name": "beast-view",
-            "targets": "beast-view",
+            "name": "uri-playground",
+            "targets": "uri-playground",
             "inherits": "default-build"
         }
     ],
@@ -560,6 +577,11 @@
             "hidden": true,
             "output": {
                 "outputOnFailure": true
+            },
+            "filter": {
+                "exclude": {
+                    "name": "^(webpp-tests|fuzz-.*)$"
+                }
             },
             "execution": {
                 "noTestsAction": "error",
@@ -576,6 +598,14 @@
         },
         {
             "name": "test-cache",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-cgi-headers",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-cgi-request",
             "inherits": "test-default"
         },
         {
@@ -615,11 +645,11 @@
             "inherits": "test-default"
         },
         {
-            "name": "test-endpoint",
+            "name": "test-dynamic-scoping",
             "inherits": "test-default"
         },
         {
-            "name": "test-extensions",
+            "name": "test-endpoint",
             "inherits": "test-default"
         },
         {
@@ -631,7 +661,7 @@
             "inherits": "test-default"
         },
         {
-            "name": "test-header-accept-encoding",
+            "name": "test-header-fields",
             "inherits": "test-default"
         },
         {
@@ -691,6 +721,10 @@
             "inherits": "test-default"
         },
         {
+            "name": "test-middlewares",
+            "inherits": "test-default"
+        },
+        {
             "name": "test-request",
             "inherits": "test-default"
         },
@@ -739,19 +773,11 @@
             "inherits": "test-default"
         },
         {
-            "name": "test-traits",
-            "inherits": "test-default"
-        },
-        {
             "name": "test-tuple",
             "inherits": "test-default"
         },
         {
             "name": "test-type-traits",
-            "inherits": "test-default"
-        },
-        {
-            "name": "test-unicode-algos",
             "inherits": "test-default"
         },
         {
@@ -768,10 +794,6 @@
         },
         {
             "name": "test-uri-whatwg",
-            "inherits": "test-default"
-        },
-        {
-            "name": "test-ustring",
             "inherits": "test-default"
         },
         {
