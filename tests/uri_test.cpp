@@ -1169,6 +1169,45 @@ TYPED_TEST(URITests, StartingAndEndingWithX) {
     }
 }
 
+// https://url.spec.whatwg.org/#ends-in-a-number-checker
+// A dotless host whose first code point makes the last part fail the ends-in-a-number checker
+// must be parsed as a domain, not rejected by the IPv4 parser.
+TYPED_TEST(URITests, DotlessHostNotEndingWithNumber) {
+    static constexpr std::array<stl::pair<stl::string_view, stl::string_view>, 5> hosts{
+      {
+       {"https://x0/", "x0"},
+       {"https://z9/", "z9"},
+       {"https://e1/", "e1"},
+       {"https://a0/", "a0"},
+       {"https://q123/", "q123"},
+       }
+    };
+
+    for (auto const& [str, host] : hosts) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+        EXPECT_EQ(uri::hostname(context.out), host) << str;
+    }
+}
+
+// The checker's "contains only ASCII digits" branch still routes digit-only hosts to the IPv4
+// parser, which rejects them later (e.g. "9" is not a valid octal digit after the leading "0").
+// https://url.spec.whatwg.org/#ends-in-a-number-checker (see the note on the erroneous input "09")
+TYPED_TEST(URITests, DigitOnlyInvalidIPv4Host) {
+    constexpr stl::string_view strs[]{
+      "https://09/",
+      "https://019/",
+      "https://1.2.09/",
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    }
+}
+
 // TYPED_TEST(URITests, PunnycodeBasic) {
 //     constexpr stl::string_view str = "http://☕.example";
 //

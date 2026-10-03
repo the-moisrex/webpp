@@ -73,10 +73,10 @@ namespace webpp::uri::details {
 
         bool is_hex      = false;
         bool must_be_hex = false;
-        for (auto pos = fin; pos != beg; --pos) {
+        for (auto pos = fin;; --pos) {
             switch (static_cast<operation_type>(or_one(ipv4_interesting_characters, *pos))) {
-                case op_dec: continue;
-                case op_dot: break;
+                case op_dec: break;
+                case op_dot: return !must_be_hex || is_hex;
                 case op_x:
                     // next characters now must be ".0x"
                     // NOLINTNEXTLINE(*-inc-dec-in-conditions)
@@ -84,12 +84,16 @@ namespace webpp::uri::details {
                         return false;
                     }
                     is_hex = true;
-                    break;
-                case op_hex: must_be_hex = true; continue;
+                    return !must_be_hex || is_hex;
+                case op_hex: must_be_hex = true; break;
                 case op_no: return false;
                 default: assert(false); stl::unreachable();
             }
-            break;
+            // Examine the first code point too: the loop must not skip `*beg`, otherwise a dotless
+            // host like "x0" or "e1" is mistaken for a host ending in a number.
+            if (pos == beg) {
+                break;
+            }
         }
 
         // the size and what not will be checked while parsing the IPv4
