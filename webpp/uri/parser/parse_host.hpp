@@ -122,15 +122,15 @@ namespace webpp::uri {
 
 
         enum struct host_cp_type : stl::uint8_t {
-            upper_val     = 0b1U,                                                          // upper case ascii chars
-            no_ipv4_val   = 0b10U,                                                         // invalid IPv4 Characters
-            no_ipv6_val   = 0b100U,                                                        // invalid IPv6 Characters
-            x_val         = 0b1000U,                                                       // character x
-            n_val         = 0b1'0000U,                                                     // character n
-            dash_val      = 0b10'0000U,                                                    // character -
-            special_chars = 0b100'0000U,                                                   // characters: / \ ? # %
+            upper_val     = 0b1U,                                                 // upper case ascii chars
+            no_ipv4_val   = 0b10U,                                                // invalid IPv4 Characters
+            no_ipv6_val   = 0b100U,                                               // invalid IPv6 Characters
+            x_val         = 0b1000U,                                              // character x
+            n_val         = 0b1'0000U,                                            // character n
+            dash_val      = 0b10'0000U,                                           // character -
+            special_chars = 0b100'0000U,                                          // characters: / \ ? # %
             forb_val      = static_cast<stl::uint8_t>(~0U) &
-                       static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
+              static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
             xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
             no_ip_val = no_ipv4_val | no_ipv6_val,
         };
@@ -301,10 +301,7 @@ namespace webpp::uri {
                 }
 
                 // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-                if (verify_possible_ipv4<Options>(ctx, buffer.begin(), buffer.end())) {
-                    return;
-                }
-                if (has_error(ctx.status)) [[unlikely]] {
+                if (verify_possible_ipv4<Options>(ctx, buffer.begin(), buffer.end()) || has_error(ctx.status)) {
                     return;
                 }
 
@@ -321,10 +318,7 @@ namespace webpp::uri {
                 // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
                 // Without a buffer, the raw input is the best available stand-in for asciiDomain here;
                 // percent-encoded or non-ASCII input cannot be canonicalized without modification anyway.
-                if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
-                    return;
-                }
-                if (has_error(ctx.status)) [[unlikely]] {
+                if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
                     return;
                 }
 
