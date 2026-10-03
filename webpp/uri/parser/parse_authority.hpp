@@ -246,7 +246,16 @@ namespace webpp::uri {
             case '/':
             case '?':
             case '#':
-            case '\0': set(ctx.status, valid_path_start); return;
+            case '\0':
+                // Host state, step 3: "If url is special and buffer is the empty string,
+                // host-missing validation error, return failure." This branch only runs for
+                // special schemes; an empty authority at the entry EOF is handled above.
+                if (!has_hostname(ctx.out)) [[unlikely]] {
+                    set(ctx.status, host_missing);
+                    return;
+                }
+                set(ctx.status, valid_path_start);
+                return;
             default: assert(false);
         }
 

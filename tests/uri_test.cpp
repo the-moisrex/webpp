@@ -435,6 +435,30 @@ TYPED_TEST(URITests, QueriesEnding) {
     }
 }
 
+TYPED_TEST(URITests, EmptyFragmentAfterQueries) {
+    constexpr stl::string_view str = "https://example.com/p?#";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_EQ(uri::render_queries(context), "");
+    EXPECT_EQ(uri::fragment(context.out), "");
+    EXPECT_EQ(uri::href(context), "https://example.com/p?#");
+}
+
+TYPED_TEST(URITests, EmptySpecialHostFails) {
+    constexpr stl::array<stl::string_view, 2> strs{
+      "http://?",
+      "http://#",
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::has_error(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    }
+}
+
 TYPED_TEST(URITests, InvalidSchemes) {
     constexpr stl::array<stl::string_view, 5> strs{
       "https::",

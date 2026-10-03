@@ -57,6 +57,9 @@ namespace webpp::uri {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
+                        // Record non-null (but possibly empty) fragment here; the EOF path below
+                        // overwrites our state value with "valid", so parse_fragment may never run.
+                        set_flag(ctx.status, has_non_null_fragment);
                         ++ctx.pos;
                         set(ctx.status, valid_fragment);
                         break;
@@ -143,6 +146,9 @@ namespace webpp::uri {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
                         clear_fragment(ctx.out);
+                        // Record non-null (but possibly empty) fragment here; the EOF path below
+                        // overwrites our state value with "valid", so parse_fragment may never run.
+                        set_flag(ctx.status, has_non_null_fragment);
                         ++ctx.pos;
                         set(ctx.status, valid_fragment);
                         break;
