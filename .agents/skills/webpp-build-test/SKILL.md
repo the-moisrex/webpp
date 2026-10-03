@@ -48,9 +48,10 @@ cmake --preset dev-default
 ```
 
 - `dev-default` inherits `default`: `binaryDir` = `${sourceDir}/build`, Debug, C++23, `WEBPP_DEV=ON`.
-- **`WEBPP_DEV=ON` is required** — it gates `add_subdirectory(tests ...)`. Symptom if the `build/` cache was
-  configured without it: `ctest --test-dir build -N` reports `Total Tests: 0` and no `test-*` targets exist.
-  Fix: re-run `cmake --preset dev-default` (check with `grep WEBPP_DEV build/CMakeCache.txt`).
+- **`WEBPP_DEV=ON` is required** — it gates `add_subdirectory(tests ...)` and the top-level `enable_testing()`.
+  Symptom if the `build/` cache was configured without it: `ctest --test-dir build -N` reports `Total Tests: 0`
+  and no `test-*` targets exist. Fix: re-run `cmake --preset dev-default`
+  (check with `grep WEBPP_DEV build/CMakeCache.txt`).
 
 ## Run one focused test
 
@@ -65,17 +66,22 @@ When it does not (or the preset is stale) — build the target directly in the p
 CTest by the same name (`build/` for `dev-default`):
 
 ```sh
-cmake --build build --target test-uri
+cmake --build build --target test-uri -j $(nproc)
 ctest --test-dir build -R '^test-uri$' --output-on-failure
 ```
 
+Beware: plain `ctest -R` exits `0` when the filter matches nothing, so confirm the run printed the test name or
+check `ctest --test-dir build -N -R '^test-uri$'`. Test presets set `noTestsAction=error`, so `ctest --preset ...`
+exits `8` instead of passing silently.
+
 ## Run the full suite
 
-The `tests` build preset's target list is manually enumerated and can be stale. Prefer deriving targets from
-the sources:
+The `tests` build preset's target list is manually enumerated and can be stale. Prefer deriving targets from the
+sources; `-- -k` keeps make going past targets that fail to compile — report those separately instead of hiding them:
 
 ```sh
-cmake --build build --target $(ls tests/*_test.cpp | sed 's|.*/||; s|_test\.cpp$||; s|_|-|g; s|^|test-|')
+cmake --build build --target $(ls tests/*_test.cpp | sed 's|.*/||; s|_test\.cpp$||; s|_|-|g; s|^|test-|') \
+  -j $(nproc) -- -k
 ctest --test-dir build --output-on-failure
 ```
 

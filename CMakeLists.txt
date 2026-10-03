@@ -126,6 +126,10 @@ add_subdirectory(${LIB_DIR})
 add_subdirectory(${SDK_DIR})
 
 if (WEBPP_DEV)
+    # Enable testing at the top level so `ctest --test-dir build` and the test presets can see the tests
+    # registered in tests/ (enable_testing() there alone only creates build/tests/CTestTestfile.cmake).
+    enable_testing()
+
     add_subdirectory(${TESTS_DIR} EXCLUDE_FROM_ALL)
     add_subdirectory(${BENCHMARKS_DIR} EXCLUDE_FROM_ALL)
     add_subdirectory(${EXAMPLES_DIR} EXCLUDE_FROM_ALL)
