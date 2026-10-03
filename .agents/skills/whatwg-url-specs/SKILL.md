@@ -14,7 +14,9 @@ caches, and queries it so you can read the exact normative steps instead of gues
 1. Reproduce: run the failing focused test (see the `webpp-build-test` skill), note the exact input/output mismatch.
 2. Locate the spec part: find the section/algorithm/state in the map below, or run
    `tools/whatwg-url-specs list` (full tree, ~345 lines) / `tools/whatwg-url-specs --algorithm list` (72 algorithms).
-3. Read the normative text: `tools/whatwg-url-specs <query>` prints it as Markdown.
+3. Read the normative text: query the id of that section/algorithm/state (e.g. `tools/whatwg-url-specs host-state`),
+   then grep the printed Markdown for the sentence you care about. Queries never match step text — see
+   "Finding one specific step" below.
 4. Compare step-by-step with the implementation (`webpp/uri/parser/*.hpp`) and the tests
    (`tests/uri_test.cpp`, `tests/uri_whatwg_test.cpp`, `tests/uri_host_authority_test.cpp`,
    `tests/structured_uri_test.cpp`).
@@ -100,14 +102,49 @@ tools/whatwg-url-specs --verbose ...       # cache/parse progress on stderr
 tools/whatwg-url-specs --clean-cache       # drop cached spec (fresh download next run)
 ```
 
+## Finding one specific step
+
+You cannot quote a normative sentence as a query — queries never match step text (see Matching rules). Recipes:
+
+```sh
+# 1. phrase -> containing id (hyphenate/lowercase first; grep `list` when unsure)
+tools/whatwg-url-specs list | grep -i "host-state"
+tools/whatwg-url-specs host-state                 # dumps that state's steps
+
+# 2. or grep a section dump (`url-parsing` contains nested state steps too);
+#    strip backticks so a verbatim sentence matches the Markdown output
+tools/whatwg-url-specs url-parsing | tr -d '\`' | grep -n "If url is special and buffer is the empty string"
+
+# 3. if the sentence is not in the dumped section, grep the likely one instead
+#    (here: the step lives in the serializer, not in `url-parsing`)
+tools/whatwg-url-specs url-serializer | grep -n "fragment is non-null"
+```
+
+Grep caveats: the Markdown wraps spec concepts in backticks (`` `url` ``), so strip them with `` tr -d '\`' `` before
+grepping a verbatim sentence; and the spec uses a curly apostrophe (`’`), so grep a phrase without an apostrophe
+(or match `’` directly).
+
+| Don't | Do |
+| --- | --- |
+| `tools/whatwg-url-specs url-parsing "If url is special and buffer is the empty string"` (sentence silently ignored) | `` tools/whatwg-url-specs url-parsing \| tr -d '\`' \| grep -n "If url is special and buffer is the empty string" `` |
+| `tools/whatwg-url-specs url-parsing "If url's fragment is non-null"` (ignored, and the step is not in this section) | `tools/whatwg-url-specs url-serializer \| grep -n "fragment is non-null"` |
+| `tools/whatwg-url-specs "host state"` (spaces don't map to hyphens; no match) | `tools/whatwg-url-specs host-state` |
+
 ## Matching rules (so queries return what you expect)
 
+- Queries match **ids, titles, and algorithm names only — never step or sentence text.** A quoted normative sentence
+  (`"If url is special and buffer is the empty string"`) matches nothing; use the recipes above instead.
+- Normalize phrases to ids yourself: lowercase and hyphens (`host state` → `host-state`); when unsure,
+  `tools/whatwg-url-specs list | grep -i <hyphenated-phrase>` finds the id.
 - `https://url.spec.whatwg.org/#some-id` selects that exact id.
 - Plain queries match case-insensitively against ids first, then titles; exact beats fuzzy, so prefer exact ids
   from `list` (`path-state`, not `path state`).
-- Multiple queries in one run are merged and de-duplicated, order preserved.
+- Multiple queries in one run are merged and de-duplicated, order preserved. A query that matches nothing contributes
+  nothing **and the run still exits `0`** — only an all-miss run errors. Confirm the output actually contains the step
+  you wanted (or run one query at a time) instead of trusting the exit code.
 - No query defaults to the `url-parsing` section.
-- Exit `1` + `ERROR: No sections found ...` on stderr = refine the query; exit `0` = found.
+- Exit `1` + `ERROR: No sections found ...` on stderr = refine the query; exit `0` = found (but see the silent-miss
+  rule above).
 
 ## Pinned-standard caveat
 
