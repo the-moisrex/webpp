@@ -38,6 +38,24 @@ function escapeForCppString(str) {
   // });
 }
 
+const BIDI_CHARS = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+
+function utf8HexEscapes(ch) {
+  return Array.from(new TextEncoder().encode(ch), (byte) =>
+    `\\x${byte.toString(16).toUpperCase().padStart(2, '0')}`)
+    .join('');
+}
+
+// Emit `content` as a C++ raw string literal, pulling bidirectional control
+// characters out into adjacent ordinary literals (their UTF-8 bytes as hex
+// escapes) so -Wbidi-chars does not fire, while the runtime bytes, and with
+// them the given byte length, stay identical.
+function cppRawLiteral(delim, content) {
+  const escaped = content.replace(
+    BIDI_CHARS, (ch) => `)${delim}" "${utf8HexEscapes(ch)}" R"${delim}(`);
+  return `R"${delim}(${escaped})${delim}"`;
+}
+
 // Read the JSON file
 const filePath = path.join(__dirname, 'whatwg', 'urltestdata.json');
 const fileData = fs.readFileSync(filePath, 'utf8');
@@ -157,18 +175,18 @@ for (const test of Object.values(jsonData)) {
   result += `
 // ${testNum} - ${reason} (${index})
 TYPED_TEST(URIWhatwgTest, ${testName}) {
-    static constexpr auto details = R"JSON-URL(${JSON.stringify(test, null, 4)})JSON-URL";
+    static constexpr auto details = ${cppRawLiteral('JSON-URL', JSON.stringify(test, null, 4))};
 `
   const inputLength = new TextEncoder().encode(test.input).length;
   if (test.base !== null) {
     // const escaped = escapeForCppString(test.base);
     const baseLength = new TextEncoder().encode(test.base).length;
     result +=
-      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(${test.input})URL", ${inputLength}}, stl::string_view{R"URL(${test.base})URL", ${baseLength}});`;
+      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{${cppRawLiteral('URL', test.input)}, ${inputLength}}, stl::string_view{${cppRawLiteral('URL', test.base)}, ${baseLength}});`;
   }
   else {
     result +=
-      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{R"URL(${test.input})URL", ${inputLength}});`;
+      `    auto const ctx = this->template parse_from_string<TypeParam>(stl::string_view{${cppRawLiteral('URL', test.input)}, ${inputLength}});`;
   }
 
   if (test.failure !== undefined) {
@@ -293,7 +311,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // href
   if (test.href !== undefined) {
     result += `
-    EXPECT_EQ(uri::href(ctx), R"URL(${test.href})URL") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::href(ctx), ${cppRawLiteral('URL', test.href)}) << ${testDetails(test)};`;
   }
 
   // origin??
