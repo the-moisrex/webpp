@@ -1821,6 +1821,59 @@ TYPED_TEST(URITests, EmptyIPv4) {
     // NOLINTEND(*-avoid-c-arrays)
 }
 
+TYPED_TEST(URITests, TooManyIPv4Parts) {
+    // NOLINTBEGIN(*-avoid-c-arrays)
+    static constexpr stl::string_view too_many_parts[]{
+      "1.2.3.4.5.6",     // the fifth part would write past the four-octet buffer
+      "1.2.3.4.5.6.7.8", //
+      "1.2.3.4.5",       // five parts with a non-zero remainder
+      "1.2.3.4.5.",      //
+      "0.0.0.0.0",       // five zero parts still violate "parts > 4"
+      "999.999.999.999.999",
+    };
+    stl::uint8_t ip_octets[4]{};
+
+    for (auto const& _ip : too_many_parts) {
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4<uri::standard_uri_parsing_options>(_ip.begin(), _ip.end(), ip_octets, context);
+
+        EXPECT_FALSE(should_continue) << "ip: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
+                                      << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+                                      << static_cast<int>(ip_octets[3]);
+        EXPECT_FALSE(uri::is_valid(context.status))
+          << "ip: " << _ip << "; " << to_string(uri::get_value(context.status));
+    }
+    // NOLINTEND(*-avoid-c-arrays)
+}
+
+// A failed IPv4 host parse must fail the URL instead of rendering or storing the
+// partially-written octet buffer (which reads uninitialized memory otherwise).
+TYPED_TEST(URITests, FailingIPv4HostParse) {
+    // strict mode disables hex/octal octets, so "0300" is out of range while the
+    // ends-in-a-number check still considers this an IPv4-like host.
+    constexpr stl::string_view strict_str = "http://0300.168.0xF0/";
+    auto                       strict_ctx = this->template get_context<TypeParam>(strict_str);
+    uri::parse_uri<uri::strict_uri_parsing_options>(strict_ctx);
+    EXPECT_FALSE(uri::is_valid(strict_ctx.status)) << to_string(uri::get_value(strict_ctx.status));
+    EXPECT_EQ(uri::uri_status::ip_invalid_octet_range, uri::get_value(strict_ctx.status));
+
+    // under the standard options the same host parses as a valid octal/hex IPv4 address
+    auto hex_ctx = this->template parse_from_string<TypeParam>("http://0300.168.0xF0/");
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_TRUE(uri::is_valid(hex_ctx.status)) << to_string(uri::get_value(hex_ctx.status));
+        EXPECT_EQ(uri::hostname(hex_ctx.out), "192.168.0.240");
+    }
+
+    auto const bad_ctx = this->template parse_from_string<TypeParam>("http://999.999.999.999/");
+    EXPECT_FALSE(uri::is_valid(bad_ctx.status)) << to_string(uri::get_value(bad_ctx.status));
+    EXPECT_EQ(uri::uri_status::ip_invalid_octet_range, uri::get_value(bad_ctx.status));
+
+    auto const six_part_ctx = this->template parse_from_string<TypeParam>("http://1.2.3.4.5.6/");
+    EXPECT_FALSE(uri::is_valid(six_part_ctx.status)) << to_string(uri::get_value(six_part_ctx.status));
+    EXPECT_EQ(uri::uri_status::ip_too_many_octets, uri::get_value(six_part_ctx.status));
+}
+
 TYPED_TEST(URITests, NewlinesInURI) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example\t.\norg");
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));

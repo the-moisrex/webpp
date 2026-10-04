@@ -45,9 +45,13 @@ namespace webpp::uri {
             }
             assert(end > pos);
             if (details::is_possible_ends_with_ipv4<Options>(pos, stl::prev(end), ctx)) {
-                stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
-                if (!details::parse_host_ipv4<Options>(pos, end, ipv4_octets_data.data(), ctx)) {
-                    set_flag(ctx.status, has_non_null_host);
+                stl::array<stl::uint8_t, 4> ipv4_octets_data{};
+                // parse_host_ipv4 always sets an error status when it returns false, and in that
+                // case the octet array is partially written or untouched. Rendering or comparing it
+                // here would read uninitialized memory, so fail instead; the caller propagates the
+                // error through `verify_possible_ipv4(...) || has_error(ctx.status)`.
+                if (!details::parse_host_ipv4<Options>(pos, end, ipv4_octets_data.data(), ctx)) [[unlikely]] {
+                    return false;
                 }
                 if constexpr (CtxT::is_modifiable) {
                     auto buffer = create_buffer(ctx);
@@ -99,15 +103,15 @@ namespace webpp::uri {
 
 
         enum struct host_cp_type : stl::uint8_t {
-            upper_val     = 0b1U,                                                 // upper case ascii chars
-            no_ipv4_val   = 0b10U,                                                // invalid IPv4 Characters
-            no_ipv6_val   = 0b100U,                                               // invalid IPv6 Characters
-            x_val         = 0b1000U,                                              // character x
-            n_val         = 0b1'0000U,                                            // character n
-            dash_val      = 0b10'0000U,                                           // character -
-            special_chars = 0b100'0000U,                                          // characters: / \ ? # %
+            upper_val     = 0b1U,                                                          // upper case ascii chars
+            no_ipv4_val   = 0b10U,                                                         // invalid IPv4 Characters
+            no_ipv6_val   = 0b100U,                                                        // invalid IPv6 Characters
+            x_val         = 0b1000U,                                                       // character x
+            n_val         = 0b1'0000U,                                                     // character n
+            dash_val      = 0b10'0000U,                                                    // character -
+            special_chars = 0b100'0000U,                                                   // characters: / \ ? # %
             forb_val      = static_cast<stl::uint8_t>(~0U) &
-              static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
+                       static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
             xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
             no_ip_val = no_ipv4_val | no_ipv6_val,
         };
@@ -403,7 +407,7 @@ namespace webpp::uri {
                     if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
                         break;
                     }
-                    if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
+                    if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
                         return;
                     }
                     set_hostname(ctx.out, segment{sbeg, ctx.pos});

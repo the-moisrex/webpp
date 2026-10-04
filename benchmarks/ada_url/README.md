@@ -66,6 +66,10 @@ suite flags:
 - The `dev-default` preset injects `_GLIBCXX_DEBUG`/`_GLIBCXX_SANITIZE_VECTOR` etc.
   globally; they land on both sides equally, but absolute times are therefore not
   comparable to a stripped release build.
+- `-DWEBPP_URL_BENCH_SANITIZE=ON` (configure-time option) replaces the suite flags with
+  `-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined` on both sides, links
+  with the sanitizers, and keeps asserts on. It is for finding memory bugs only:
+  **never publish numbers from a sanitize build.**
 
 ## What is measured
 

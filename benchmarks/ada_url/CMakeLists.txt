@@ -63,8 +63,17 @@ foreach (id IN LISTS ADA_URL_IDS)
 endforeach ()
 
 # ---- shared benchmark flags (identical for webpp and ada code inside the exes) ----
-set(ADA_URL_BENCH_FLAGS -O3 -DNDEBUG -ffast-math -ffunction-sections -fdata-sections)
-set(ADA_URL_BENCH_LINK_FLAGS "")
+# Debug-only: build every suite executable with ASan/UBSan (asserts on, no -O3/-DNDEBUG).
+# Never publish numbers from a WEBPP_URL_BENCH_SANITIZE=ON build; flag parity with the
+# published runs is only held in the default (OFF) configuration.
+option(WEBPP_URL_BENCH_SANITIZE "Build the URL comparison benchmarks with ASan/UBSan (debug only)" OFF)
+if (WEBPP_URL_BENCH_SANITIZE)
+    set(ADA_URL_BENCH_FLAGS -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all)
+    set(ADA_URL_BENCH_LINK_FLAGS -fsanitize=address,undefined)
+else ()
+    set(ADA_URL_BENCH_FLAGS -O3 -DNDEBUG -ffast-math -ffunction-sections -fdata-sections)
+    set(ADA_URL_BENCH_LINK_FLAGS "")
+endif ()
 if (IS_GCC OR IS_CLANG)
     list(APPEND ADA_URL_BENCH_LINK_FLAGS -Wl,--gc-sections)
     if (NATIVE_ARCH)

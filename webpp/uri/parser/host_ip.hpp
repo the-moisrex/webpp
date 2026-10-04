@@ -187,6 +187,17 @@ namespace webpp::uri::details {
                     break;
                 }
 
+                // WHATWG IPv4 parser step 4: more than four parts fails before any range
+                // check. The caller's buffer only holds four octets, so recording a fifth
+                // part here would write past it (and later make the octet-filling loop
+                // below non-terminating). A fifth part reaching this line implies a sixth
+                // one too; the final part is handled by the `src == end` break above.
+                // https://url.spec.whatwg.org/#concept-ipv4-parser
+                if (octets == 5) [[unlikely]] {
+                    set(ctx.status, ip_too_many_octets);
+                    return false;
+                }
+
                 // dealing with invalid octet range or invalid characters
                 if (octet > 255) [[unlikely]] {
                     set(ctx.status, ip_invalid_octet_range);
@@ -218,6 +229,15 @@ namespace webpp::uri::details {
                 set(ctx.status, ip_invalid_character);
                 return false;
             }
+        }
+
+        // WHATWG IPv4 parser step 4: five or more parts is a failure even when the last
+        // part is zero (spec: "If parts's size is greater than 4 ... return failure");
+        // without this, e.g. "0.0.0.0.0" would be accepted as "0.0.0.0".
+        // https://url.spec.whatwg.org/#concept-ipv4-parser
+        if (octets > 4) [[unlikely]] {
+            set(ctx.status, ip_too_many_octets);
+            return false;
         }
 
         // the last octet can fill multiple octets
