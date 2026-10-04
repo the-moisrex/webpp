@@ -37,6 +37,7 @@ Checks: >
   -*-math-missing-parentheses,
   -*-readability-todo,
   -*-cognitive-complexity,
+  -misc-static-assert,
 CheckOptions:
   - key: readability-function-cognitive-complexity.Threshold
     value: 50 # default is 25

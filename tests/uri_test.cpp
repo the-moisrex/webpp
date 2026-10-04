@@ -1195,7 +1195,7 @@ TYPED_TEST(URITests, DotlessHostNotEndingWithNumber) {
 // parser, which rejects them later (e.g. "9" is not a valid octal digit after the leading "0").
 // https://url.spec.whatwg.org/#ends-in-a-number-checker (see the note on the erroneous input "09")
 TYPED_TEST(URITests, DigitOnlyInvalidIPv4Host) {
-    constexpr stl::string_view strs[]{
+    constexpr std::array<stl::string_view, 3> strs = {
       "https://09/",
       "https://019/",
       "https://1.2.09/",
