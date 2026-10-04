@@ -335,7 +335,7 @@ namespace webpp::unicode::idna {
      */
     template <idna_options Options, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr to_ascii_status_type
-    label_to_ascii(Iter lbeg, Iter& lend, Iter const& oend, to_ascii_info::flag_type flag) noexcept {
+    label_to_ascii(Iter lbeg, Iter& lend, [[maybe_unused]] Iter const& oend, to_ascii_info::flag_type flag) noexcept {
         using enum to_ascii_status;
         using enum to_ascii_info::flag_types;
         using enum err_policy;
