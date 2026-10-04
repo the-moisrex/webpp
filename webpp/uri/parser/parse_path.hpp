@@ -347,7 +347,7 @@ namespace webpp::uri {
                     return;
                 }
 
-                status &= ~encoding_required | +stop_token;
+                status &= static_cast<stl::uint8_t>(~encoding_required | +stop_token);
             } else {
                 push_segment(buffer, segment{lbeg, ctx.pos});
             }

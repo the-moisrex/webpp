@@ -23,14 +23,14 @@ namespace {
         // ---- ipv4 ----
         add_all("ipv4", "webpp", "pton", inputs::ipv4, [](State& state, auto const& item) {
             for (auto _ : state) {
-                auto const ok = webpp_side::pton4(item.value);
+                auto ok = webpp_side::pton4(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
 
         add_all("ipv4", "webpp", "host_ipv4", inputs::ipv4, [](State& state, auto const& item) {
             for (auto _ : state) {
-                auto const ok = webpp_side::host_ipv4_piece(item.value);
+                auto ok = webpp_side::host_ipv4_piece(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -38,7 +38,7 @@ namespace {
         add_all("ipv4", "webpp", "setter", inputs::ipv4_setter, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_host);
             for (auto _ : state) {
-                auto const status = url.hostname(item.value);
+                auto status = url.hostname(item.value);
                 url.clear_path();
                 benchmark::DoNotOptimize(status);
             }
@@ -47,7 +47,7 @@ namespace {
         add_all("ipv4", "ada", "setter", inputs::ipv4_setter, [](State& state, auto const& item) {
             auto url = ada_side::make_url<ada::url_aggregator>(inputs::base_host);
             for (auto _ : state) {
-                auto const ok = url.set_hostname(item.value);
+                auto ok = url.set_hostname(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -57,7 +57,7 @@ namespace {
         // so it is callable from outside libada.
         add_all("ipv4", "ada", "try_parse_fast", inputs::ipv4, [](State& state, auto const& item) {
             for (auto _ : state) {
-                auto const packed = ada::checkers::try_parse_ipv4_fast(item.value);
+                auto packed = ada::checkers::try_parse_ipv4_fast(item.value);
                 benchmark::DoNotOptimize(packed);
             }
         });
@@ -66,7 +66,7 @@ namespace {
         // ---- ipv6 ----
         add_all("ipv6", "webpp", "pton", inputs::ipv6, [](State& state, auto const& item) {
             for (auto _ : state) {
-                auto const ok = webpp_side::pton6(item.value);
+                auto ok = webpp_side::pton6(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -74,7 +74,7 @@ namespace {
         add_all("ipv6", "webpp", "setter", inputs::ipv6_setter, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_host);
             for (auto _ : state) {
-                auto const status = url.hostname(item.value);
+                auto status = url.hostname(item.value);
                 url.clear_path();
                 benchmark::DoNotOptimize(status);
             }
@@ -83,7 +83,7 @@ namespace {
         add_all("ipv6", "ada", "setter", inputs::ipv6_setter, [](State& state, auto const& item) {
             auto url = ada_side::make_url<ada::url_aggregator>(inputs::base_host);
             for (auto _ : state) {
-                auto const ok = url.set_hostname(item.value);
+                auto ok = url.set_hostname(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -92,7 +92,7 @@ namespace {
         add_all("serialize_ipv4", "webpp", "ntop", inputs::ip4_addresses, [](State& state, auto const& entry) {
             char buffer[32]{};
             for (auto _ : state) {
-                auto const size = webpp_side::ntop4(entry.bytes, buffer);
+                auto size = webpp_side::ntop4(entry.bytes, buffer);
                 benchmark::DoNotOptimize(size);
                 benchmark::DoNotOptimize(buffer);
             }
@@ -110,7 +110,7 @@ namespace {
         add_all("serialize_ipv6", "webpp", "ntop", inputs::ip6_addresses, [](State& state, auto const& entry) {
             char buffer[64]{};
             for (auto _ : state) {
-                auto const size = webpp_side::ntop6(entry.bytes, buffer);
+                auto size = webpp_side::ntop6(entry.bytes, buffer);
                 benchmark::DoNotOptimize(size);
                 benchmark::DoNotOptimize(buffer);
             }
