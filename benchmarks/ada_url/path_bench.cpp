@@ -32,7 +32,7 @@ namespace {
             auto url = webpp_side::make_url(inputs::base_host);
             for (auto _ : state) {
                 url.clear_path();
-                auto const status = url.path(item.value);
+                auto status = url.path(item.value);
                 benchmark::DoNotOptimize(status);
             }
         });
@@ -40,7 +40,7 @@ namespace {
         add_all("path", "ada", "setter", inputs::path_setter, [](State& state, auto const& item) {
             auto url = ada_side::make_url<ada::url_aggregator>(inputs::base_host);
             for (auto _ : state) {
-                auto const ok = url.set_pathname(item.value);
+                auto ok = url.set_pathname(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -56,7 +56,7 @@ namespace {
         add_all("query", "webpp", "setter", inputs::query, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_query);
             for (auto _ : state) {
-                auto const status = url.queries(item.value);
+                auto status = url.queries(item.value);
                 benchmark::DoNotOptimize(status);
             }
         });
@@ -80,7 +80,7 @@ namespace {
         add_all("fragment", "webpp", "setter", inputs::fragment, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_query);
             for (auto _ : state) {
-                auto const status = url.fragment(item.value);
+                auto status = url.fragment(item.value);
                 benchmark::DoNotOptimize(status);
             }
         });
@@ -104,7 +104,7 @@ namespace {
         add_all("port", "webpp", "setter", inputs::port_setter, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_port);
             for (auto _ : state) {
-                auto const status = url.port(item.value);
+                auto status = url.port(item.value);
                 benchmark::DoNotOptimize(status);
             }
         });
@@ -112,7 +112,7 @@ namespace {
         add_all("port", "ada", "setter", inputs::port_setter, [](State& state, auto const& item) {
             auto url = ada_side::make_url<ada::url_aggregator>(inputs::base_port);
             for (auto _ : state) {
-                auto const ok = url.set_port(item.value);
+                auto ok = url.set_port(item.value);
                 benchmark::DoNotOptimize(ok);
             }
         });
@@ -121,8 +121,8 @@ namespace {
         add_all("credentials", "webpp", "setter", inputs::credentials, [](State& state, auto const& item) {
             auto url = webpp_side::make_url(inputs::base_creds);
             for (auto _ : state) {
-                auto const user_status = url.username(item.username);
-                auto const pass_status = url.password(item.password);
+                auto user_status = url.username(item.username);
+                auto pass_status = url.password(item.password);
                 benchmark::DoNotOptimize(user_status);
                 benchmark::DoNotOptimize(pass_status);
             }
@@ -131,8 +131,8 @@ namespace {
         add_all("credentials", "ada", "setter", inputs::credentials, [](State& state, auto const& item) {
             auto url = ada_side::make_url<ada::url_aggregator>(inputs::base_creds);
             for (auto _ : state) {
-                auto const user_ok = url.set_username(item.username);
-                auto const pass_ok = url.set_password(item.password);
+                auto user_ok = url.set_username(item.username);
+                auto pass_ok = url.set_password(item.password);
                 benchmark::DoNotOptimize(user_ok);
                 benchmark::DoNotOptimize(pass_ok);
             }

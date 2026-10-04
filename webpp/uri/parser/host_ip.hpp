@@ -292,7 +292,7 @@ namespace webpp::uri::details {
                     istl::resize_and_overwrite(
                       buffer,
                       max_ipv6_str_len + 3,
-                      [&](auto* buf, stl::size_t const max_len) noexcept {
+                      [&](auto* buf, [[maybe_unused]] stl::size_t const max_len) noexcept {
                           auto const beg = buf;
                           render_ipv6(ipv6_bytes.data(), buf);
                           auto const len = stl::distance(beg, buf);

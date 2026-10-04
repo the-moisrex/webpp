@@ -294,12 +294,12 @@ namespace webpp::unicode {
               stl::random_access_iterator OIter = Iter>
     static constexpr void canonical_decompose(Iter spos, Iter send, OIter& ptr, stl::size_t const max_length) noexcept {
         using enum err_policy;
-        using diff_type     = stl::iter_difference_t<OIter>;
-        using in_char_type  = stl::iter_value_t<Iter>;
-        using out_char_type = stl::iter_value_t<OIter>;
+        using diff_type                      = stl::iter_difference_t<OIter>;
+        using in_char_type [[maybe_unused]]  = stl::iter_value_t<Iter>;
+        using out_char_type [[maybe_unused]] = stl::iter_value_t<OIter>;
 
-        auto const orig_len = static_cast<stl::size_t>(send - spos);
-        auto const ptr_beg  = ptr;
+        [[maybe_unused]] auto const orig_len = static_cast<stl::size_t>(send - spos);
+        [[maybe_unused]] auto const ptr_beg  = ptr;
 
         if constexpr (stl::is_convertible_v<Iter, OIter>) {
             // Output cannot be in between the input, out == spos is okay, it's an inplace decomposition.
@@ -359,7 +359,7 @@ namespace webpp::unicode {
             auto const new_len     = static_cast<size_type>(send - spos);
             auto const skipped_len = static_cast<size_type>(spos - sbeg);
             auto const max_len     = out.size() + adjust_utf_output_size<in_char_type, out_char_type>(skipped_len) +
-                                 decomp_max_required_length<in_char_type, out_char_type>(new_len);
+                                     decomp_max_required_length<in_char_type, out_char_type>(new_len);
 
             istl::resize_and_overwrite(
               out,

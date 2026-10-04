@@ -112,11 +112,11 @@ static std::array<std::string, count> str_array_generator(
     return strs;
 }
 
-static std::vector<int> int_generator(std::size_t size = 10'000) {
+[[maybe_unused]] static std::vector<int> int_generator(std::size_t size = 10'000) {
     std::vector<int> ints;
     ints.reserve(size);
     for (std::size_t i = 0; i < size; i++) {
-        ints.push_back(i);
+        ints.push_back(static_cast<int>(i));
     }
     std::shuffle(ints.begin(), ints.end(), std::mt19937(std::random_device()()));
     return ints;

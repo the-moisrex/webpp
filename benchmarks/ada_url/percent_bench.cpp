@@ -40,7 +40,7 @@ namespace {
         add_all("percent_decode", "webpp", "direct", inputs::percent_decode, [](State& state, auto const& item) {
             std::string out;
             for (auto _ : state) {
-                auto const ok = webpp_side::percent_decode(item.value, out);
+                auto ok = webpp_side::percent_decode(item.value, out);
                 benchmark::DoNotOptimize(ok);
                 benchmark::DoNotOptimize(out);
             }
