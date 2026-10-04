@@ -2568,3 +2568,27 @@ TYPED_TEST(URITests, FuzzTest5) {
       R"URL(\012\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\012\000\000\000\000\000\000\000)URL");
     EXPECT_FALSE(uri::is_valid(ctx.status));
 }
+
+// OOM regression (oom-9a1810f2c320c22fcb62a770468bac4a72896e3c): the path setter used to loop
+// forever on '#' under state override, growing the path one byte per iteration.
+TYPED_TEST(URITests, FuzzTest6) {
+    auto const ctx = this->template fuzz<TypeParam>("#\x03\x46");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
+}
+
+TYPED_TEST(URITests, PathSetterPercentEncodesTerminationChars) {
+    // WHATWG path state: under state override, '?' and '#' are ordinary path characters
+    // percent-encoded with the path percent-encode set; they must not switch to the
+    // query/fragment states and must not hang the parser.
+    uri::uri url = "https://example.org/base";
+    url.path("x#y?z");
+    EXPECT_EQ(url.path(), "/base/x%23y%3Fz");
+    EXPECT_EQ(url.queries(), "");
+    EXPECT_EQ(url.fragment(), "");
+
+    uri::uri url2 = "https://example.org/";
+    url2.path("#\x03\x46");
+    EXPECT_EQ(url2.path(), "//%23%03F");
+    EXPECT_EQ(url2.queries(), "");
+    EXPECT_EQ(url2.fragment(), "");
+}

@@ -302,6 +302,17 @@ namespace webpp::uri {
           cat{.set = u8"/\\", .value = +path_cp_type::slash},
           cat{.set = u8".", .value = +path_cp_type::dot});
 
+        /// Path state with a state override (setters such as `url.path(...)`): WHATWG path state
+        /// only treats '?' and '#' as terminators when the state override is not given; under a
+        /// setter they are ordinary path characters percent-encoded with the path percent-encode
+        /// set (see parse_queries' equivalent handling of '#'). Stopping on them without
+        /// switching states would leave the parsing driver without progress forever.
+        static constexpr auto path_state_override_interesting_chars = categorize<stl::uint8_t, 256U>(
+          cat{.set = PATH_ENCODE_SET, .value = +path_cp_type::encoding_required},
+          cat{.set = u8"%", .value = +path_cp_type::percent_char},
+          cat{.set = u8"/\\", .value = +path_cp_type::slash},
+          cat{.set = u8".", .value = +path_cp_type::dot});
+
     } // namespace details
 
     template <URIContext CtxT>
@@ -434,7 +445,11 @@ namespace webpp::uri {
             iterator const lbeg   = ctx.pos;
             stl::uint8_t   status = 0;
             for (;;) {
-                status |= or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
+                if constexpr (Options.state_override) {
+                    status |= or_all(details::path_state_override_interesting_chars, +stop_token, ctx.pos, ctx.end);
+                } else {
+                    status |= or_all(details::path_interesting_chars, +stop_token, ctx.pos, ctx.end);
+                }
 
                 // If url is special and c is U+005C (\), ...
                 // todo: this check can be optimized by having another table for non-special URLs
@@ -567,7 +582,12 @@ namespace webpp::uri {
 
             // handle end of path
             if ((status & +termination_chars) != 0) {
-                if constexpr (!Options.state_override) {
+                if constexpr (Options.state_override) {
+                    // Unreachable: the state-override scan table never flags '?'/'#' as
+                    // terminators (they are percent-encoded path characters instead). Set a
+                    // terminal status anyway so continue_parsing_uri always makes progress.
+                    set(ctx.status, valid);
+                } else {
                     assert(stop_char == '#' || stop_char == '?');
                     // Path state, steps 6 and 7: set url's query/fragment to the empty string and
                     // switch state, so an empty query still serializes its '?' (mirrors
