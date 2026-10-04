@@ -2629,6 +2629,33 @@ TYPED_TEST(URITests, FuzzTest6) {
     EXPECT_FALSE(uri::is_valid(ctx.status));
 }
 
+// Query-state regression: a query starting with '&' used to call buffer.back() on an empty
+// buffer (assertion failure / OOB read) in the string-based queries parser. The fuzz input
+// "\n&" reaches it after the leading C0 control is trimmed.
+TYPED_TEST(URITests, FuzzTest7) {
+    auto const ctx = this->template fuzz<TypeParam>("\n&");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
+}
+
+TYPED_TEST(URITests, QueryLeadingAmpersand) {
+    // WHATWG query state: a lone '&' is an ordinary query character and must be kept.
+    uri::uri url = "https://example.org/";
+    url.queries("&");
+    EXPECT_EQ(url.queries(), "&");
+
+    auto const ctx = this->template parse_from_string<TypeParam>("https://example.org/?&a=b&&&c");
+    EXPECT_TRUE(uri::is_valid(ctx.status));
+    if constexpr (TypeParam::is_segregated) {
+        // structured queries store pairs; empty segments are dropped
+        EXPECT_EQ(uri::render_queries(ctx), "a=b&c");
+        EXPECT_EQ(uri::href(ctx), "https://example.org/?a=b&c");
+    } else {
+        // runs of '&' still collapse to a single '&'
+        EXPECT_EQ(uri::render_queries(ctx), "&a=b&c");
+        EXPECT_EQ(uri::href(ctx), "https://example.org/?&a=b&c");
+    }
+}
+
 TYPED_TEST(URITests, PathSetterPercentEncodesTerminationChars) {
     // WHATWG path state: under state override, '?' and '#' are ordinary path characters
     // percent-encoded with the path percent-encode set; they must not switch to the

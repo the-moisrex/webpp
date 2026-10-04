@@ -46,7 +46,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '&':
                     // remove things like '&&&&&&' in the queries
-                    if (buffer.back() != '&') [[likely]] {
+                    if (buffer.empty() || buffer.back() != '&') [[likely]] {
                         buffer.push_back('&');
                     } else if constexpr (!CtxT::is_modifiable) {
                         set(ctx.status, modification_required);
