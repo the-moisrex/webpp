@@ -1090,6 +1090,22 @@ TEST(BasicIDNATests, ToASCIITestBadInput) {
     EXPECT_EQ(to_ascii<u32string>(U"\xAD"), U"") << "Soft hyphen should result in empty string";
 }
 
+TEST(BasicIDNATests, ToASCIIFailedPunycodeReencode) {
+    using std::u32string;
+    using std::u8string;
+    using webpp::unicode::idna::to_ascii;
+
+    // "ib9b" is the RFC 3492 punycode of the lone surrogate U+D800: punycode_decode accepts it,
+    // but punycode_encode rejects it (is_code_point_valid), so re-encoding the decoded label fails.
+    EXPECT_EQ((to_ascii<u32string, unicode::idna::loose_idna_options>(U"xn--ib9b").value_or(U"Failed")), U"xn--ib9b")
+      << "When punycode errors are ignored, the original label must be kept without any scratch-region garbage";
+    EXPECT_EQ((to_ascii<u8string, unicode::idna::loose_idna_options>(u8"xn--ib9b").value_or(u8"Failed")), u8"xn--ib9b");
+
+    // The default options report the failed re-encoding instead:
+    EXPECT_FALSE(to_ascii<u32string>(U"xn--ib9b"));
+    EXPECT_FALSE(to_ascii<u8string>(u8"xn--ib9b"));
+}
+
 namespace {
     //----------------------------------------------------------------------------
     // HELPER FUNCTIONS FOR PARSING IdnaTestV2.txt

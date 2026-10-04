@@ -324,6 +324,14 @@ namespace webpp::unicode::idna {
     /**
      * Convert the piece of label into ASCII.
      * This algorithm is only part of ToASCII algorithm, that works on each label, not the whole domain.
+     *
+     * @param lbeg  Begin iterator of the label inside the caller's output buffer.
+     * @param lend  End iterator of the label; advanced to the end of the converted label on return.
+     * @param oend  One-past-the-end of the caller's output buffer. It is only consulted by asserts
+     *              (debug builds and constexpr evaluation); runtime capacity is a caller contract
+     *              backed by to_ascii_info::max_required_size (see the note there on why this
+     *              algorithm itself does not bounds-check).
+     * @param flag  Cached to_ascii_info flags describing the label's content.
      */
     template <idna_options Options, stl::random_access_iterator Iter>
     [[nodiscard]] static constexpr to_ascii_status_type
@@ -437,6 +445,13 @@ namespace webpp::unicode::idna {
                 }
             } else [[unlikely]] {
                 status |= Options.CheckInvalidPunycode ? +p_status : +valid;
+                if (!rotate_required) {
+                    // Re-encoding failed after a successful decode: lbeg/lend still point at the
+                    // temporary decode scratch region (src_label_length * 3 past the label). Keep the
+                    // original "xn--..." label instead (mirrors the decode-failure path above) so the
+                    // caller doesn't treat the scratch gap as part of the output.
+                    lend = lcend;
+                }
             }
 
             // We ran out of space
