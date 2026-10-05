@@ -32,6 +32,11 @@ namespace webpp::uri {
         template <typename CharT = char>
         static constexpr stl::array<CharT, 2> ws_scheme{'w', 's'};
 
+        /// Record the scheme known at compile time.
+        /// Contract: `ctx.pos` points at the `:` that ends the scheme, so the scheme text in the input is
+        /// `[ctx.beg, ctx.pos)`. When the input has no scheme at all (no-scheme state), `ctx.pos` still sits
+        /// at the scheme's start and that range is empty; only modifiable components can store such a
+        /// synthesized scheme.
         template <URIContext CtxT, stl::size_t N>
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
@@ -107,7 +112,22 @@ namespace webpp::uri {
             }
         }
 
+        /// Read-only components only point into the input string, so they cannot adopt the base's scheme,
+        /// authority, or path: doing that would store offsets relative to the base's string while every
+        /// other offset belongs to this URL's string. Returns true when parsing must stop.
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool refuse_base_copy(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            if constexpr (!CtxT::is_modifiable && !stl::is_void_v<typename CtxT::base_type>) {
+                set(ctx.status, uri_status::modification_required);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         /// Copy only the base URL's credentials, host, and port into the output URL.
+        /// Precondition: the calling state already handled refuse_base_copy; checking again here would
+        /// repeat the same decision for every flow that reaches this helper.
         template <URIContext CtxT>
         static constexpr void copy_authority_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
@@ -124,6 +144,7 @@ namespace webpp::uri {
         }
 
         /// Copy the base URL's credentials, host, port, path, and query into the output URL.
+        /// Precondition: the calling state already handled refuse_base_copy.
         template <URIContext CtxT>
         static constexpr void copy_from_base(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
@@ -190,7 +211,7 @@ namespace webpp::uri {
 
             // Otherwise (or at EOF), set url’s username to base’s username, url’s password to base’s password,
             // url’s host to base’s host, url’s port to base’s port, state to path state, and then, decrease
-            // pointer by 1.
+            // pointer by 1. refuse_base_copy is handled once, by relative_state, before this state is entered.
             copy_authority_from_base(ctx);
             set(ctx.status, valid_path);
         }
@@ -199,6 +220,12 @@ namespace webpp::uri {
         static constexpr void relative_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#relative-state
             using enum uri_status;
+
+            // The single refusal check for the whole relative flow: it covers the base scheme copy below and
+            // every copy_from_base / relative_slash_state call made from this state.
+            if (refuse_base_copy(ctx)) [[unlikely]] {
+                return;
+            }
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 // Assert base's scheme is not file
@@ -285,6 +312,9 @@ namespace webpp::uri {
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
+                    if (refuse_base_copy(ctx)) [[unlikely]] {
+                        return;
+                    }
                     set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
 
                     // File slash state, step 2.1: set url's host to base's host.
@@ -301,15 +331,14 @@ namespace webpp::uri {
                             if (first_seg.size() >= 2 &&
                                 details::has_normalized_windows_driver_letter(first_seg.begin())) [[unlikely]]
                             {
+                                // refuse_base_copy above already returned for read-only contexts, so the
+                                // modification-required handling must not be repeated here.
                                 if constexpr (CtxT::is_modifiable) {
                                     if constexpr (!CtxT::is_segregated) {
                                         // Continuous paths are stored with a leading slash; the path is empty here.
                                         uri::path(ctx.out).push_back('/');
                                     }
                                     push_segment(uri::path(ctx.out), first_seg);
-                                } else {
-                                    set(ctx.status, modification_required);
-                                    return;
                                 }
                             }
                         }
@@ -325,11 +354,12 @@ namespace webpp::uri {
         static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
             using enum uri_status;
-            using char_type = typename CtxT::char_type;
 
-            // set scheme to "file"
+            // The scheme text itself is recorded by the callers (parse_scheme's "file" case while ctx.pos
+            // still marks the ':', no_scheme_state while ctx.pos sits at the input start) because this
+            // state is entered with the pointer already past the scheme in one entry and with no scheme in
+            // the input in the other.
             set_flag(ctx.status, scheme_type::file_scheme);
-            details::set_scheme(ctx, details::file_scheme<char_type>);
 
             // Set url’s host to the empty string.
             // Empty string != null
@@ -351,6 +381,9 @@ namespace webpp::uri {
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 if (is_file_scheme(scheme(ctx.base))) {
+                    if (refuse_base_copy(ctx)) [[unlikely]] {
+                        return;
+                    }
                     // Set url’s host to base’s host, url’s path to a clone of base’s path,
                     // and url’s query to base’s query.
                     set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
@@ -433,6 +466,9 @@ namespace webpp::uri {
 
                 if (base_has_opaque_path(ctx)) {
                     if (ctx.pos != ctx.end && *ctx.pos == '#') {
+                        if (refuse_base_copy(ctx)) [[unlikely]] {
+                            return;
+                        }
                         // Otherwise, if base has an opaque path and c is U+0023 (#), set url’s scheme to base’s scheme,
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
@@ -461,6 +497,9 @@ namespace webpp::uri {
                 }
 
                 // Otherwise, set state to file state and decrease pointer by 1.
+                // The input has no scheme to point at, so a read-only context records an empty range here;
+                // only modifiable components can store the synthesized "file".
+                details::set_scheme(ctx, details::file_scheme<typename CtxT::char_type>);
                 file_state<Options>(ctx);
                 return;
             }
@@ -599,6 +638,9 @@ namespace webpp::uri {
                 {
                     return;
                 }
+                // Record the scheme while ctx.pos still marks the ':'; file_state parses from the code
+                // point after it.
+                details::set_scheme(ctx, details::file_scheme<char_type>);
                 ++ctx.pos;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
