@@ -25,19 +25,24 @@ namespace webpp::uri {
         using details::encode_or_validate;
         using details::next_percent_encode;
 
-        set_flag(ctx.status, has_non_null_fragment);
+        // No need to handle ctx.pos == ctx.end since encode_or_validate already checks the bounds.
+        // Also we for relative URLs we need `set_fragment` to set the output even if it's empty.
 
-        if (ctx.pos == ctx.end) {
-            set(ctx.status, valid);
-            return;
-        }
+        set_flag(ctx.status, has_non_null_fragment);
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, details::FRAGMENT_ENCODE_SET, charset('%'))) {
-            if (*ctx.pos == '%' && next_percent_encode(ctx, buffer)) {
-                continue;
+            if (*ctx.pos == '%') {
+                if (next_percent_encode(ctx, buffer)) {
+                    continue;
+                }
+            } else if constexpr (!CtxT::is_modifiable) {
+                // The scan stopped on a character a modifiable context would percent-encode;
+                // a view keeps the input bytes as-is and has nowhere to encode it into.
+                set(ctx.status, modification_required);
+                return;
             }
-            set_warning(ctx.status, invalid_character);
+            [[unlikely]] { set_warning(ctx.status, invalid_character); }
         }
         end_segment(ctx, buffer);
         set_fragment(ctx.out, stl::move(buffer));
