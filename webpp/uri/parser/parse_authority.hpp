@@ -5,10 +5,10 @@
 
 #include "../uri_status.hpp"
 #include "./constants.hpp"
+#include "./parse_port.hpp"
 #include "./special_schemes.hpp"
-#include "parse_port.hpp"
-#include "uri_components.hpp"
-#include "uri_context.hpp"
+#include "./uri_components.hpp"
+#include "./uri_context.hpp"
 
 /**
  * Attention: User infos in URIs are DEPRECATED, but we SHOULD parse it anyway
@@ -63,9 +63,8 @@ namespace webpp::uri {
                     at_sign_seen = true;
 
                     // For each codePoint in buffer:
-                    auto const buf_beg = begin(buffer);
-                    auto const endp    = end(buffer);
-                    for (auto pos = buf_beg; pos != endp; ++pos) {
+                    auto const endp = end(buffer);
+                    for (auto pos = begin(buffer); pos != endp; ++pos) {
                         // If codePoint is U+003A (:) and passwordTokenSeen is false, then set passwordTokenSeen to true
                         // and continue.
                         if (*pos == ':' && !password_token_seen) {
@@ -81,9 +80,12 @@ namespace webpp::uri {
                         if constexpr (CtxT::is_modifiable) {
                             encode_uri_component<encode_chars>(*pos, encoded_buffer, USER_INFO_ENCODE_SET);
                         } else if (!USER_INFO_ENCODE_SET.contains(*pos)) {
-                            // validation-only mode
-                            encoded_buffer.beg = buf_beg;
-                            encoded_buffer.end = pos;
+                            // validation-only mode: the bytes stay where they are, so this part only
+                            // remembers its span, and its first character decides where it starts.
+                            if (is_empty(encoded_buffer)) [[unlikely]] {
+                                encoded_buffer.beg = pos;
+                            }
+                            encoded_buffer.end = stl::next(pos);
                         } else [[unlikely]] {
                             set(ctx.status, modification_required);
                             return;
@@ -244,6 +246,12 @@ namespace webpp::uri {
                 switch (*ctx.pos) {
                     [[unlikely]] case '\\':
                         set_warning(ctx.status, reverse_solidus_used);
+                        if constexpr (!CtxT::is_modifiable) {
+                            // Serialization rewrites '\' to '/' (path state treats it as a segment
+                            // separator), which view-only components cannot store.
+                            set(ctx.status, modification_required);
+                            return;
+                        }
                         [[fallthrough]];
                     case '/':
                         // If c is neither U+002F (/) nor U+005C (\), then decrease pointer by 1.
