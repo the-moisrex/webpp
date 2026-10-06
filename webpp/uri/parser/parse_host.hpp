@@ -48,6 +48,11 @@ namespace webpp::uri {
                 stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
                 if (!details::parse_host_ipv4<Options>(pos, end, ipv4_octets_data.data(), ctx)) {
                     set_flag(ctx.status, has_non_null_host);
+                    // The IPv4 parser already reported the real problem; don't compare or serialize the
+                    // partially written octets, and don't let `modification_required` mask that error.
+                    if (has_error(ctx.status)) [[unlikely]] {
+                        return false;
+                    }
                 }
                 if constexpr (CtxT::is_modifiable) {
                     auto buffer = create_buffer(ctx);
@@ -59,6 +64,9 @@ namespace webpp::uri {
                         set(ctx.status, modification_required);
                         return false;
                     }
+                    // Keep the input bytes: they already are the canonical form.
+                    set_hostname(ctx.out, segment{pos, end});
+                    set_flag(ctx.status, has_non_null_host);
                 }
                 return true;
             }
@@ -74,10 +82,8 @@ namespace webpp::uri {
             // the warning there is just a side effect.
             // https://url.spec.whatwg.org/#concept-ipv4-parser (IPv4-empty-part)
             // https://url.spec.whatwg.org/#ends-in-a-number-checker
-            if (has_warning(ctx.status, ipv4_trailing_empty_octet)) [[unlikely]] {
-                if (*pos >= '0' && *pos <= '9') {
-                    set(ctx.status, ip_invalid_character);
-                }
+            if (has_warning(ctx.status, ipv4_trailing_empty_octet) && *pos >= '0' && *pos <= '9') [[unlikely]] {
+                set(ctx.status, ip_invalid_character);
             }
             return false;
         }
@@ -205,7 +211,7 @@ namespace webpp::uri {
             }
             break;
         }
-        // end_segment(ctx, buffer);
+        end_segment(ctx, buffer);
         set_hostname(ctx.out, stl::move(buffer));
         set_flag(ctx.status, has_non_null_host);
     }
@@ -287,7 +293,7 @@ namespace webpp::uri {
                 // Only validate, no conversion:
                 auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
                 if (!is_valid(ascii_status)) [[unlikely]] {
-                    set(ctx.status, ascii_status);
+                    set_error(ctx.status, ascii_status);
                     return;
                 }
 
