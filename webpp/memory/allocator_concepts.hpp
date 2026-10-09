@@ -118,10 +118,10 @@ namespace webpp {
         /// Return `.get_allocator()` for any type that supports it
         /// Return `get_allocator(obj)` for any type that supports it
         template <typename T>
-            requires(has_allocator<T> || can_get_allocator<T>)
+            requires(has_allocator<stl::remove_cvref_t<T>> || can_get_allocator<T>)
         [[nodiscard]] friend constexpr Allocator decltype(auto) tag_invoke(allocator_from_tag, T&& obj) noexcept {
             // we're not separating them into two functions just in case there's a type that has implemented both
-            if constexpr (has_allocator<T>) {
+            if constexpr (has_allocator<stl::remove_cvref_t<T>>) {
                 return stl::forward<T>(obj).get_allocator();
             } else {
                 return get_allocator(stl::forward<T>(obj));
