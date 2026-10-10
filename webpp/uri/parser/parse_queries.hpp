@@ -46,11 +46,14 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '&':
                     // remove things like '&&&&&&' in the queries
-                    if (buffer.back() != '&') [[likely]] {
+                    if constexpr (!CtxT::is_modifiable) {
+                        // Collapsing a run of "&" would rewrite the input.
+                        if (ctx.pos != ctx.beg && *stl::prev(ctx.pos) == '&') [[unlikely]] {
+                            set(ctx.status, modification_required);
+                            return;
+                        }
+                    } else if (buffer.empty() || buffer.back() != '&') [[likely]] {
                         buffer.push_back('&');
-                    } else if constexpr (!CtxT::is_modifiable) {
-                        set(ctx.status, modification_required);
-                        return;
                     }
                     ++ctx.pos;
                     continue;
@@ -61,6 +64,11 @@ namespace webpp::uri {
                         // overwrites our state value with "valid", so parse_fragment may never run.
                         set_flag(ctx.status, has_non_null_fragment);
                         ++ctx.pos;
+                        if constexpr (URIRelativeComponents<stl::remove_cvref_t<decltype(ctx.out)>>) {
+                            // queries() uses fragment_start to exclude the '#' separator, so an
+                            // empty fragment still has to record where it starts.
+                            set_fragment(ctx.out, segment{ctx.pos, ctx.pos});
+                        }
                         set(ctx.status, valid_fragment);
                         break;
                     } else {
@@ -79,7 +87,12 @@ namespace webpp::uri {
                     }
                     continue;
                 [[unlikely]] default:
-                    if constexpr (Options.allow_invalid_characters) {
+                    if constexpr (!CtxT::is_modifiable) {
+                        // The scan only stops here on a character a modifiable context would
+                        // percent-encode, and a view has nowhere to encode it into.
+                        set(ctx.status, modification_required);
+                        return;
+                    } else if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
                         skip_separator(ctx, buffer);
                         // invalid characters are not errors
