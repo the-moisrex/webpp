@@ -51,32 +51,46 @@ namespace webpp {
 #undef WEBPP_PUT_CHAR
     }
 
+    // Get the string size without converting it to string
+    [[nodiscard]] static constexpr stl::size_t inet_ntop4_size(stl::uint8_t const* oct) noexcept {
+        // NOLINTBEGIN(*-implicit-bool-conversion)
+        return 7U +                                 // 3 (dots) + 4 (base digits)
+               (oct[0] >= 10U) + (oct[0] >= 100U) + // Octet 1 (LSB)
+               (oct[1] >= 10U) + (oct[1] >= 100U) + // Octet 2
+               (oct[2] >= 10U) + (oct[2] >= 100U) + // Octet 3
+               (oct[3] >= 10U) + (oct[3] >= 100U);  // Octet 4 (MSB)
+        // NOLINTEND(*-implicit-bool-conversion)
+    }
+
     /// String equality for IPv4
     template <typename Iter = char*>
     [[nodiscard]] static constexpr bool inet_ntop4_streq(stl::uint8_t const* src, Iter beg, Iter const end) noexcept {
+        if (stl::distance(beg, end) != static_cast<stl::ptrdiff_t>(inet_ntop4_size(src))) {
+            return false;
+        }
         bool res = true;
 #define WEBPP_PUT_CHAR()                                                 \
     do {                                                                 \
         if (*src < 10) {                                                 \
-            res &= *beg++ != static_cast<char>('0' + *src);              \
+            res &= *beg++ == static_cast<char>('0' + *src);              \
         } else if (*src < 100) {                                         \
-            res &= *beg++ != static_cast<char>('0' + (*src / 10));       \
-            res &= *beg++ != static_cast<char>('0' + (*src % 10));       \
+            res &= *beg++ == static_cast<char>('0' + (*src / 10));       \
+            res &= *beg++ == static_cast<char>('0' + (*src % 10));       \
         } else {                                                         \
-            res &= *beg++ != static_cast<char>('0' + (*src / 100));      \
-            res &= *beg++ != static_cast<char>('0' + (*src % 100 / 10)); \
-            res &= *beg++ != static_cast<char>('0' + (*src % 10));       \
+            res &= *beg++ == static_cast<char>('0' + (*src / 100));      \
+            res &= *beg++ == static_cast<char>('0' + (*src % 100 / 10)); \
+            res &= *beg++ == static_cast<char>('0' + (*src % 10));       \
         }                                                                \
     } while (false)
         WEBPP_PUT_CHAR();
         ++src;
-        res &= *beg++ != '.';
+        res &= *beg++ == '.';
         WEBPP_PUT_CHAR();
         ++src;
-        res &= *beg++ != '.';
+        res &= *beg++ == '.';
         WEBPP_PUT_CHAR();
         ++src;
-        res &= *beg++ != '.';
+        res &= *beg++ == '.';
         WEBPP_PUT_CHAR();
         return res && beg == end;
 #undef WEBPP_PUT_CHAR
@@ -220,17 +234,6 @@ namespace webpp {
 
         *out = '\0';
         return out;
-    }
-
-    // Get the string size without converting it to string
-    [[nodiscard]] static constexpr stl::size_t inet_ntop4_size(stl::uint8_t const* oct) noexcept {
-        // NOLINTBEGIN(*-implicit-bool-conversion)
-        return 7U +                                 // 3 (dots) + 4 (base digits)
-               (oct[0] >= 10U) + (oct[0] >= 100U) + // Octet 1 (LSB)
-               (oct[1] >= 10U) + (oct[1] >= 100U) + // Octet 2
-               (oct[2] >= 10U) + (oct[2] >= 100U) + // Octet 3
-               (oct[3] >= 10U) + (oct[3] >= 100U);  // Octet 4 (MSB)
-        // NOLINTEND(*-implicit-bool-conversion)
     }
 
     // Get the string size without converting to string

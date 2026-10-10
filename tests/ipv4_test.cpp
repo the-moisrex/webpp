@@ -217,4 +217,29 @@ TEST(IPv4Tests, PureIpv4) {
     EXPECT_EQ((pure_ipv4{192, 168, 1, 1}), (pure_ipv4{192, 168, 1, 1}));
 }
 
+TEST(IPv4Tests, StrEqual) {
+    constexpr ipv4_octets octets{127, 0, 0, 1};
+    constexpr pure_ipv4   ip{octets};
+
+    // Exact match
+    EXPECT_TRUE(ip.str_equal(stl::string_view{"127.0.0.1"}));
+
+    // Shorter than canonical (e.g., "127.1" renders to "127.0.0.1")
+    EXPECT_FALSE(ip.str_equal(stl::string_view{"127.1"}));
+
+    // Longer than canonical
+    EXPECT_FALSE(ip.str_equal(stl::string_view{"127.0.0.11"}));
+
+    // Wrong character
+    EXPECT_FALSE(ip.str_equal(stl::string_view{"127.0.0.2"}));
+
+    // Short range would be OOB in the old unguarded version
+    constexpr stl::array<char, 5> short_range{'1', '2', '7', '.', '1'};
+    EXPECT_FALSE(ip.str_equal(short_range.begin(), short_range.end()));
+
+    // Exact match with iterator overload
+    constexpr stl::array<char, 9> exact_range{'1', '2', '7', '.', '0', '.', '0', '.', '1'};
+    EXPECT_TRUE(ip.str_equal(exact_range.begin(), exact_range.end()));
+}
+
 // NOLINTEND(*-magic-numbers)
