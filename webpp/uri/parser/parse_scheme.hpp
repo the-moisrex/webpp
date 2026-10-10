@@ -68,48 +68,39 @@ namespace webpp::uri {
         /// When only the base's components were provided by the caller, the status stays `unparsed`
         /// and the component-based heuristics below are used instead.
         template <URIContext CtxT>
+            requires(!stl::is_void_v<typename CtxT::base_type>)
         [[nodiscard]] static constexpr bool has_base_status(CtxT const& ctx) noexcept {
-            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
-                return false;
-            } else {
-                return get_value(ctx.base_status) != uri_status::unparsed;
-            }
+            return get_value(ctx.base_status) != uri_status::unparsed;
         }
 
         /// Checks whether the base URL has an opaque (cannot-be-a-base) path.
         template <URIContext CtxT>
+            requires(!stl::is_void_v<typename CtxT::base_type>)
         [[nodiscard]] static constexpr bool base_has_opaque_path(CtxT const& ctx) noexcept {
-            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
-                return false;
-            } else if (has_base_status(ctx)) {
+            if (has_base_status(ctx)) {
                 return has_flags(ctx.base_status, uri_status::opaque_path);
-            } else {
-                return is_opaque_path(ctx.base);
             }
+            return is_opaque_path(ctx.base);
         }
 
         /// Checks whether the base URL's host is non-null (it may still be the empty string).
         template <URIContext CtxT>
+            requires(!stl::is_void_v<typename CtxT::base_type>)
         [[nodiscard]] static constexpr bool base_has_non_null_host(CtxT const& ctx) noexcept {
-            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
-                return false;
-            } else if (has_base_status(ctx)) {
+            if (has_base_status(ctx)) {
                 return has_flags(ctx.base_status, uri_status::has_non_null_host);
-            } else {
-                return has_hostname(ctx.base);
             }
+            return has_hostname(ctx.base);
         }
 
         /// Checks whether the base URL's query is non-null (it may still be the empty string).
         template <URIContext CtxT>
+            requires(!stl::is_void_v<typename CtxT::base_type>)
         [[nodiscard]] static constexpr bool base_has_non_null_queries(CtxT const& ctx) noexcept {
-            if constexpr (stl::is_void_v<typename CtxT::base_type>) {
-                return false;
-            } else if (has_base_status(ctx)) {
+            if (has_base_status(ctx)) {
                 return has_flags(ctx.base_status, uri_status::has_non_null_queries);
-            } else {
-                return has_queries(ctx.base);
             }
+            return has_queries(ctx.base);
         }
 
         /// Read-only components only point into the input string, so they cannot adopt the base's scheme,
