@@ -93,7 +93,7 @@ namespace webpp::uri {
         render_uri(ctx.out, ctx.status, out);
     }
 
-    template <URIContext CtxT, typename AllocT = allocator_type_of<CtxT>>
+    template <URIContext CtxT, typename AllocT = string_allocator_of<typename CtxT::component_type>>
     [[nodiscard]] static constexpr auto href(CtxT const& ctx) {
         stl::basic_string<typename CtxT::char_type, stl::char_traits<typename CtxT::char_type>, AllocT> out;
         out.reserve(estimated_length(ctx.out));
@@ -109,7 +109,7 @@ namespace webpp::uri {
         using component_type   = CompT;
         using string_type      = typename component_type::string_type;
         using char_type        = typename string_type::value_type;
-        using allocator_type   = allocator_type_of<component_type>;
+        using allocator_type   = string_allocator_of<component_type>;
         using string_view_type = stl::basic_string_view<char_type>;
         using iterator         = typename string_view_type::const_iterator;
 

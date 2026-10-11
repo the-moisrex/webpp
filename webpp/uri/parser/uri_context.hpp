@@ -64,6 +64,9 @@ namespace webpp::uri {
     template <typename T>
     concept URIHrefContext = URIContext<T> && URIHrefComponents<typename T::component_type>;
 
+    template <typename T>
+    concept URIRelativeContext = URIContext<T> && URIRelativeComponents<typename T::component_type>;
+
     /**
      * A class used during parsing a URI
      */
@@ -75,7 +78,6 @@ namespace webpp::uri {
         using seg_type       = typename component_type::seg_type;
         using char_type      = typename component_type::char_type;
         using iterator       = char_type const*;
-        using allocator_type = allocator_type_of<component_type>;
 
         static constexpr bool is_nothrow    = component_type::is_nothrow;
         static constexpr bool is_modifiable = component_type::is_modifiable;
@@ -115,23 +117,26 @@ namespace webpp::uri {
         uri_status_type                          status = +uri_status::unparsed;
     };
 
-    template <typename CompType, typename BaseType>
-    [[nodiscard]] static constexpr decltype(auto) get_allocator(uri_context<CompType, BaseType> const& ctx) noexcept {
-        if constexpr (URIModifiableComponents<CompType>) {
-            return allocator_from(ctx.out);
-        } else if constexpr (URIModifiableComponents<BaseType>) {
-            return allocator_from(ctx.base);
-        } else {
-            static_assert_false(CompType, "No allocator available");
-            // return istl::nothing;
-        }
+    /// Create a URI Context, and initialize it properly (no allocator to thread through)
+    template <URIContext CtxT>
+        requires(!URIModifiableContext<CtxT>)
+    static constexpr CtxT create(typename CtxT::iterator beg, typename CtxT::iterator end) noexcept(CtxT::is_nothrow) {
+        CtxT ctx{
+          .beg    = beg,
+          .pos    = beg,
+          .end    = end,
+          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end),
+          .status = +uri_status::unparsed,
+        };
+        return ctx;
     }
 
     /// Create a URI Context, and initialize it properly
     template <URIModifiableContext CtxT>
-    static constexpr CtxT
-    create(typename CtxT::iterator beg, typename CtxT::iterator end, allocator_type_of<CtxT> const& inp_alloc = alloc)
-      noexcept(CtxT::is_nothrow) {
+    static constexpr CtxT create(
+      typename CtxT::iterator                                 beg,
+      typename CtxT::iterator                                 end,
+      allocator_type_of<typename CtxT::component_type> const& inp_alloc = alloc) noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
@@ -157,39 +162,46 @@ namespace webpp::uri {
         return ctx;
     }
 
-    /// Create a URI Context, and initialize it properly
-    template <URIModifiableContext CtxT>
+    /// Create a URI Context with a base, and initialize it properly.
+    template <URIContext CtxT, typename AllocSrcT>
         requires(!stl::is_void_v<typename CtxT::base_type>)
     static constexpr CtxT create(
-      typename CtxT::iterator        beg,
-      typename CtxT::iterator        end,
-      typename CtxT::base_type&&     base_ctx,
-      allocator_type_of<CtxT> const& inp_alloc       = alloc,
-      uri_status_type const          inp_base_status = +uri_status::unparsed) noexcept(CtxT::is_nothrow) {
-        CtxT ctx{
-          .beg         = beg,
-          .pos         = beg,
-          .end         = end,
-          .out         = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
+      typename CtxT::iterator      beg,
+      typename CtxT::iterator      end,
+      typename CtxT::base_type&&   base_ctx,
+      [[maybe_unused]] AllocSrcT&& alloc_src,
+      uri_status_type const        inp_base_status = +uri_status::unparsed) noexcept(CtxT::is_nothrow) {
+        using component_type = typename CtxT::component_type;
+        return CtxT{
+          .beg = beg,
+          .pos = beg,
+          .end = end,
+          .out =
+            [&] {
+                if constexpr (URIModifiableContext<CtxT>) {
+                    return create(stl::type_identity<component_type>{}, beg, end, allocator_from(alloc_src));
+                } else {
+                    return create(stl::type_identity<component_type>{}, beg, end);
+                }
+            }(),
           .base        = stl::move(base_ctx),
           .status      = +uri_status::unparsed,
           .base_status = inp_base_status,
         };
-        return ctx;
     }
 
     /// Create a new buffer/segment
     template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
-        return seg_type{get_allocator(ctx.out)};
+        return seg_type{allocator_from(ctx.out)};
     }
 
     template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto
     create_buffer(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
-        return seg_type{beg, end, get_allocator(ctx.out)};
+        return seg_type{beg, end, allocator_from(ctx.out)};
     }
 
     /// Create a new buffer (which can be used as a segment)
@@ -383,7 +395,12 @@ namespace webpp::uri::details {
               policy_chars,
               invalid_chars);
         } else {
-            pos = invalid_chars.find_first_in(pos, end);
+            // Read-only buffers only validate. Stop at the first invalid character, and, since there is
+            // nowhere to percent-encode into, also at the first character a modifiable context would
+            // encode; the caller decides whether it can live with that character or not.
+            auto const first_invalid   = invalid_chars.find_first_in(pos, end);
+            auto const first_encodable = policy_chars.find_first_in(pos, end);
+            pos                        = first_invalid < first_encodable ? first_invalid : first_encodable;
             return pos == end;
         }
     }
@@ -412,18 +429,15 @@ namespace webpp::uri::details {
      * @param invalid_chars invalid character or allowed characters depending on the policy
      * @returns successful until the end (== didn't find any invalid chars)
      */
-    template <URIContext CtxT>
-    [[nodiscard]] static constexpr bool encode_or_validate(
-      CtxT&               ctx,
-      istl::String auto&  buffer,
-      CharSet auto const& policy_chars,
-      CharSet auto const& invalid_chars) noexcept(CtxT::is_nothrow) {
+    template <URIContext CtxT, typename BufT>
+    [[nodiscard]] static constexpr bool
+    encode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars, CharSet auto const& invalid_chars)
+      noexcept(CtxT::is_nothrow) {
         return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars, invalid_chars);
     }
 
-    template <URIContext CtxT>
-    [[nodiscard]] static constexpr bool
-    encode_or_validate(CtxT& ctx, istl::String auto& buffer, CharSet auto const& policy_chars)
+    template <URIContext CtxT, typename BufT>
+    [[nodiscard]] static constexpr bool encode_or_validate(CtxT& ctx, BufT& buffer, CharSet auto const& policy_chars)
       noexcept(CtxT::is_nothrow) {
         return encode_or_validate(ctx, buffer, ctx.pos, ctx.end, policy_chars);
     }

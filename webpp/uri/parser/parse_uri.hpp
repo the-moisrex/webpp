@@ -59,12 +59,10 @@ namespace webpp::uri {
             return static_cast<uchar_type>(code_unit) <= ' ';
         }
 
-        /// Remove newlines and tabs from input before doing anything else, or at least validate that we don't have any
-        /// of them in the input.
+        /// Trim the leading/trailing C0 controls, then locate the first ASCII tab or newline left in the
+        /// input. Returns that position, or `ctx.end` when the input is clean.
         template <URIContext CtxT>
-        [[nodiscard]] static constexpr bool preprocess_whitespaces(
-          CtxT&                                       ctx,
-          typename CtxT::component_type::string_type& sanitized) noexcept(CtxT::is_nothrow) {
+        [[nodiscard]] static constexpr typename CtxT::iterator trimmed_input(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-basic-url-parser
             // left trim C0 Control
             while (ctx.beg != ctx.end && is_c0_whitespace(*ctx.beg)) [[unlikely]] {
@@ -77,12 +75,38 @@ namespace webpp::uri {
             }
 
             // check if we have tabs and newlines in between the URL or not
-            auto* src = ctx.beg;
+            auto src = ctx.beg;
             for (; src != ctx.end; ++src) {
                 if (is_tab_or_newline(*src)) [[unlikely]] {
                     break;
                 }
             }
+            return src;
+        }
+
+        /// Remove newlines and tabs from input before doing anything else, or at least validate that we don't have any
+        /// of them in the input.
+        ///
+        /// Read-only contexts have no buffer to drop them into, so the input is only validated and parsing stops.
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool preprocess_whitespaces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            if (trimmed_input(ctx) == ctx.end) [[likely]] {
+                return true;
+            }
+
+            // If input contains any ASCII tab or newline, invalid-URL-unit validation error.
+            set_warning(ctx.status, uri_status::invalid_character);
+            set(ctx.status, uri_status::found_tabs_or_newlines);
+            return false;
+        }
+
+        /// Remove newlines and tabs from input before doing anything else, or at least validate that we don't have any
+        /// of them in the input.
+        template <URIContext CtxT>
+        [[nodiscard]] static constexpr bool preprocess_whitespaces(
+          CtxT&                                       ctx,
+          typename CtxT::component_type::string_type& sanitized) noexcept(CtxT::is_nothrow) {
+            auto const src = trimmed_input(ctx);
 
             if (src == ctx.end) [[likely]] {
                 return true;
@@ -91,37 +115,33 @@ namespace webpp::uri {
             // If input contains any ASCII tab or newline, invalid-URL-unit validation error.
             set_warning(ctx.status, uri_status::invalid_character);
 
-            if constexpr (!CtxT::is_modifiable) {
-                set(ctx.status, uri_status::found_tabs_or_newlines);
-            } else {
-                // Remove all ASCII tab or newline from input.
-                using string_type = typename CtxT::component_type::string_type;
-                using char_type   = typename string_type::value_type;
-                auto const length = static_cast<typename string_type::size_type>(stl::distance(ctx.beg, ctx.end));
-                istl::resize_and_overwrite(
-                  sanitized,
-                  length,
-                  [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
-                      char_type* const start = buf;
-                      // raw copy
-                      for (char_type const* pos = ctx.beg; pos != src;) {
-                          *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
-                      }
+            // Remove all ASCII tab or newline from input.
+            using string_type = typename CtxT::component_type::string_type;
+            using char_type   = typename string_type::value_type;
+            auto const length = static_cast<typename string_type::size_type>(stl::distance(ctx.beg, ctx.end));
+            istl::resize_and_overwrite(
+              sanitized,
+              length,
+              [&](char_type* buf, stl::size_t const /*max_length*/) noexcept {
+                  char_type* const start = buf;
+                  // raw copy
+                  for (char_type const* pos = ctx.beg; pos != src;) {
+                      *buf++ = *pos++; // NOLINT(*-pointer-arithmetic)
+                  }
 
-                      // skip copy: skip new lines and tabs
-                      // don't need to handle C0 Controls here since they're trimmed already
-                      for (char_type const* pos = src; pos != ctx.end; ++pos) {
-                          if (!is_tab_or_newline(*pos)) {
-                              *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
-                          }
+                  // skip copy: skip new lines and tabs
+                  // don't need to handle C0 Controls here since they're trimmed already
+                  for (char_type const* pos = src; pos != ctx.end; ++pos) {
+                      if (!is_tab_or_newline(*pos)) {
+                          *buf++ = *pos; // NOLINT(*-pointer-arithmetic)
                       }
-                      return static_cast<stl::size_t>(buf - start);
-                  });
+                  }
+                  return static_cast<stl::size_t>(buf - start);
+              });
 
-                ctx.beg = sanitized.data();
-                ctx.pos = ctx.beg;
-                ctx.end = ctx.beg + sanitized.size();
-            }
+            ctx.beg = sanitized.data();
+            ctx.pos = ctx.beg;
+            ctx.end = ctx.beg + sanitized.size();
             return false;
         }
     } // namespace details
@@ -129,15 +149,27 @@ namespace webpp::uri {
     template <uri_options Options = {}, URIContext CtxT>
     static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         if constexpr (Options.ignore_tabs_or_newlines) {
-            using string_type = typename CtxT::component_type::string_type;
-            string_type sanitized{get_allocator(ctx)};
-            if (!details::preprocess_whitespaces(ctx, sanitized)) {
-                if (has_error(ctx.status)) [[unlikely]] {
+            if constexpr (CtxT::is_modifiable) {
+                using string_type = typename CtxT::component_type::string_type;
+                string_type sanitized{allocator_from(ctx.out)};
+                if (!details::preprocess_whitespaces(ctx, sanitized)) {
+                    // The sanitized buffer must outlive parsing, so parse before it goes out of scope.
+                    details::continue_parsing_uri<Options>(ctx);
                     return;
                 }
-                details::continue_parsing_uri<Options>(ctx);
-                return;
+            } else {
+                // Read-only contexts keep pointing at the caller's input, so there is nothing to
+                // keep alive here. Tabs/newlines cannot be stripped from a view, so preprocessing
+                // reports found_tabs_or_newlines (an error) and parsing stops.
+                if (!details::preprocess_whitespaces(ctx)) {
+                    return;
+                }
             }
+        }
+        if constexpr (!CtxT::is_modifiable && requires { ctx.out.uri_beg = ctx.beg; }) {
+            // Relative offsets of view-only components are measured from the input start, and
+            // white-space preprocessing may have trimmed `ctx.beg` before we got here.
+            ctx.out.uri_beg = ctx.beg;
         }
         details::continue_parsing_uri<Options>(ctx);
     }
@@ -160,7 +192,7 @@ namespace webpp::uri {
           the_url.data(),
           the_url.data() + the_url.size(),
           stl::forward<BaseCompT>(base_comps),
-          allocator_from(base_comps),
+          base_comps,
           base_status);
         parse_uri<Options>(context);
         return context;
@@ -177,7 +209,7 @@ namespace webpp::uri {
           the_url.data(),
           the_url.data() + the_url.size(),
           stl::forward<BaseCompT>(base_comps),
-          allocator_from(the_url),
+          the_url,
           base_status);
         parse_uri<Options>(context);
         return context;
