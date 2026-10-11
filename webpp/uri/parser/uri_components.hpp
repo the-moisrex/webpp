@@ -980,7 +980,11 @@ namespace webpp::uri {
 
     template <URIComponents CompT, typename Iter>
     static constexpr void set_port(CompT& comp, Iter beg, Iter end) noexcept(CompT::is_nothrow) {
-        set_port(comp, typename CompT::string_type{beg, end});
+        if constexpr (requires { comp.port.assign(beg, end); }) {
+            comp.port.assign(beg, end);
+        } else {
+            set_port(comp, typename CompT::string_type{beg, end});
+        }
     }
 
     template <PortNumberAssignable CompT>

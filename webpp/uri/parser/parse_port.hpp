@@ -111,7 +111,7 @@ namespace webpp::uri {
             while (beg < stl::prev(port_end) && *beg == '0') [[unlikely]] {
                 ++beg;
             }
-            set_port(ctx.comps, create_buffer(ctx, beg, port_end)); // Use port_end here
+            set_port(ctx.comps, beg, port_end);
         }
         set_flag(ctx.status, has_non_null_port);
     }
