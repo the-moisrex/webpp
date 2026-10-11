@@ -28,7 +28,6 @@ namespace webpp::uri {
     concept URIComponents = requires {
         typename stl::remove_cvref_t<T>::seg_type; // segment type (string/string-view/uint32_t/...)
         typename stl::remove_cvref_t<T>::char_type;
-        // requires can_get_allocator<U>;
 
         stl::remove_cvref_t<T>::is_nothrow;
         stl::remove_cvref_t<T>::is_modifiable;
@@ -140,10 +139,10 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_u32 {
-        using seg_type              = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
-        using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
-        using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using char_type             = CharT;
+        using seg_type       = stl::uint32_t; // maximum size of uint32_t is 4GiB of URL
+        using allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
+        using string_type    = stl::basic_string<CharT, stl::char_traits<CharT>, allocator_type>;
+        using char_type      = CharT;
 
         static constexpr seg_type omitted              = stl::numeric_limits<seg_type>::max();
         static constexpr auto     max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -263,12 +262,12 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_href {
-        using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
-        using string_type           = stl::basic_string<CharT, stl::char_traits<CharT>, string_allocator_type>;
-        using string_view_type      = stl::basic_string_view<CharT>;
-        using char_type             = CharT;
-        using size_type             = typename string_type::size_type;
-        using seg_type              = string_view_type;
+        using allocator_type   = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
+        using string_type      = stl::basic_string<CharT, stl::char_traits<CharT>, allocator_type>;
+        using string_view_type = stl::basic_string_view<CharT>;
+        using char_type        = CharT;
+        using size_type        = typename string_type::size_type;
+        using seg_type         = string_view_type;
 
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
         static constexpr bool is_nothrow           = false;
@@ -299,11 +298,11 @@ namespace webpp::uri {
     template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_structured {
       private:
-        using string_allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
+        using allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
 
       public:
         using char_type   = CharT;
-        using string_type = stl::basic_string<char_type, stl::char_traits<CharT>, string_allocator_type>;
+        using string_type = stl::basic_string<char_type, stl::char_traits<CharT>, allocator_type>;
         using size_type   = typename string_type::size_type;
         using vec_type =
           stl::vector<string_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<string_type>>;
@@ -334,9 +333,28 @@ namespace webpp::uri {
         string_type fragment;
     };
 
+    namespace details {
+        /// Allocation decision for materialized strings: owning-shaped components carry their own
+        /// allocator; storage-less components (views) always use the default allocator.
+        template <typename T>
+        struct string_allocator {
+            using type = default_allocator_t<typename T::char_type>;
+        };
+
+        template <typename T>
+            requires requires { typename T::allocator_type; }
+        struct string_allocator<T> {
+            using type = typename T::allocator_type;
+        };
+    } // namespace details
+
+    /// The allocator used for owning strings materialized from this component type (e.g. `href()`).
+    template <URIComponents CompT>
+    using string_allocator_of = typename details::string_allocator<CompT>::type;
+
     template <URIComponents CompT, template <typename, typename, typename> typename StrTempl = stl::basic_string>
     using string_type_of =
-      StrTempl<typename CompT::char_type, stl::char_traits<typename CompT::char_type>, allocator_type_of<CompT>>;
+      StrTempl<typename CompT::char_type, stl::char_traits<typename CompT::char_type>, string_allocator_of<CompT>>;
 
     template <URIComponents CompT, template <typename, typename> typename StrTempl = stl::basic_string_view>
     using string_view_type_of = StrTempl<typename CompT::char_type, stl::char_traits<typename CompT::char_type>>;
@@ -348,7 +366,9 @@ namespace webpp::uri {
     template <typename CompT>
     using comp_iter = typename stl::basic_string_view<typename CompT::char_type>::iterator;
 
-    template <URIComponents CompT>
+    /// Build owning-style components (every member is a string); the other component shapes have
+    /// their own overloads and would not make it through this one's allocator-taking signature.
+    template <URIOwningComponents CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
       [[maybe_unused]] comp_iter<CompT>         beg,
@@ -406,8 +426,7 @@ namespace webpp::uri {
     static constexpr uri_components_u32_view<CharT> create(
       stl::type_identity<uri_components_u32_view<CharT>>,
       typename uri_components_u32_view<CharT>::iterator                  beg,
-      [[maybe_unused]] typename uri_components_u32_view<CharT>::iterator end,
-      [[maybe_unused]] allocator_type_of<uri_components_u32_view<CharT>> alloc = {}) noexcept {
+      [[maybe_unused]] typename uri_components_u32_view<CharT>::iterator end) noexcept {
         return {
           .uri_beg = beg,
         };
@@ -436,8 +455,18 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr stl::size_t length(URIRelativeComponents auto const& components) noexcept {
-        assert(components.uri_beg <= components.uri_end);
-        return static_cast<stl::size_t>(stl::distance(components.uri_beg, components.uri_end));
+        using comp_type = stl::remove_cvref_t<decltype(components)>;
+        if constexpr (stl::same_as<stl::remove_cvref_t<decltype(components.uri_end)>, typename comp_type::seg_type>) {
+            // uri_end is an integer offset (e.g., uri_components_u32_view)
+            if (components.uri_end == comp_type::omitted) {
+                return 0;
+            }
+            return static_cast<stl::size_t>(components.uri_end);
+        } else {
+            // uri_end is an iterator/pointer (original relative components)
+            assert(components.uri_beg <= components.uri_end);
+            return static_cast<stl::size_t>(stl::distance(components.uri_beg, components.uri_end));
+        }
     }
 
     [[nodiscard]] static constexpr stl::size_t length(URIHrefComponents auto const& components) noexcept {
@@ -469,24 +498,29 @@ namespace webpp::uri {
     static constexpr void set_scheme(CompT& comps, segment<comp_iter<CompT>> seg) noexcept {
         comps.uri_beg    = seg.beg;
         comps.scheme_end = static_cast<typename CompT::seg_type>(seg.end - seg.beg);
-        set_min_uri_end(comps.scheme_end);
+        set_min_uri_end(comps, comps.scheme_end);
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_path(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
         comps.authority_end = seg.beg;
-        set_min_uri_end(seg.end);
+        set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_path(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_path(comps,
-                 static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                 static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                 segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                   static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_username(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        if (seg.beg == seg.end) {
+            comps.authority_start = CompT::omitted;
+            return;
+        }
         comps.authority_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
@@ -494,13 +528,18 @@ namespace webpp::uri {
 
     template <URIRelativeComponents CompT>
     static constexpr void set_username(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_username(comps,
-                     static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                     static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                     segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                       static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_password(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        if (seg.beg == seg.end) {
+            comps.password_start = CompT::omitted;
+            return;
+        }
         comps.password_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
@@ -508,13 +547,18 @@ namespace webpp::uri {
 
     template <URIRelativeComponents CompT>
     static constexpr void set_password(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_password(comps,
-                     static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                     static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                     segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                       static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_hostname(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        if (seg.beg == seg.end) {
+            comps.host_start = CompT::omitted;
+            return;
+        }
         comps.host_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
@@ -522,13 +566,18 @@ namespace webpp::uri {
 
     template <URIRelativeComponents CompT>
     static constexpr void set_hostname(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_hostname(comps,
-                     static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                     static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                     segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                       static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_port(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        if (seg.beg == seg.end) {
+            comps.port_start = CompT::omitted;
+            return;
+        }
         comps.port_start = seg.beg;
         set_min_authority_end(comps, seg.end);
         set_min_uri_end(comps, seg.end);
@@ -536,35 +585,42 @@ namespace webpp::uri {
 
     template <URIRelativeComponents CompT>
     static constexpr void set_port(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_port(comps,
-                 static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                 static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                 segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                   static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_queries(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        // An empty-but-present queries (e.g. a trailing '?') still records its start position;
+        // absence is represented by `omitted`, which `clear_queries` sets.
         comps.queries_start = seg.beg;
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_queries(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_queries(comps,
-                    static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                    static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                    segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                      static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_fragment(CompT& comps, segment<typename CompT::seg_type> const seg) noexcept {
+        // An empty-but-present fragment (e.g. a trailing '#') still records its start position so
+        // that `queries()` can stop before the '#'; absence is set by `clear_fragment`.
         comps.fragment_start = seg.beg;
         set_min_uri_end(comps, seg.end);
     }
 
     template <URIRelativeComponents CompT>
     static constexpr void set_fragment(CompT& comps, segment<comp_iter<CompT>> const seg) noexcept {
+        using seg_type = typename CompT::seg_type;
         set_fragment(comps,
-                     static_cast<typename CompT::seg_type>(seg.beg - comps.uri_beg),
-                     static_cast<typename CompT::seg_type>(seg.end - comps.uri_beg));
+                     segment<seg_type>{static_cast<seg_type>(seg.beg - comps.uri_beg),
+                                       static_cast<seg_type>(seg.end - comps.uri_beg)});
     }
 
     template <URIRelativeComponents CompT>
@@ -651,7 +707,7 @@ namespace webpp::uri {
 
     template <URIRelativeComponents CompT>
     [[nodiscard]] static constexpr bool has_credentials(CompT const& comps) noexcept {
-        return comps.authority_start != CompT::omitted;
+        return comps.authority_start != CompT::omitted || comps.password_start != CompT::omitted;
     }
 
     template <URIRelativeComponents CompT>
@@ -690,7 +746,7 @@ namespace webpp::uri {
       uri_components_u32_view<CharT> const&                   comps,
       typename uri_components_u32_view<CharT>::seg_type const pos,
       typename uri_components_u32_view<CharT>::seg_type const length) noexcept {
-        return stl::basic_string_view<CharT>{stl::next(comps.beg, pos), length};
+        return stl::basic_string_view<CharT>{stl::next(comps.uri_beg, pos), length};
     }
 
     template <URIRelativeComponents CompT>
@@ -796,6 +852,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) scheme(CompT&& comps) noexcept {
         return make_view(stl::forward<CompT>(comps).scheme);
     }
@@ -807,6 +864,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) username(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).username);
     }
@@ -818,6 +876,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) password(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).password);
     }
@@ -834,6 +893,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) hostname(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).hostname);
     }
@@ -907,6 +967,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) port(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).port);
     }
@@ -928,6 +989,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(
+          !URIRelativeComponents<stl::remove_cvref_t<CompT>> && !URIStructuredComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr auto& queries(CompT&& comp) noexcept {
         return stl::forward<CompT>(comp).queries;
     }
@@ -976,6 +1039,8 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(
+          !URIRelativeComponents<stl::remove_cvref_t<CompT>> && !URIStructuredComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr auto& path(CompT&& comp) noexcept {
         return stl::forward<CompT>(comp).path;
     }
@@ -1002,6 +1067,7 @@ namespace webpp::uri {
     }
 
     template <URIComponents CompT>
+        requires(!URIRelativeComponents<stl::remove_cvref_t<CompT>>)
     [[nodiscard]] static constexpr decltype(auto) fragment(CompT&& comp) noexcept {
         return make_view(stl::forward<CompT>(comp).fragment);
     }

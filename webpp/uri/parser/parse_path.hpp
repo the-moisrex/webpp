@@ -53,7 +53,7 @@ namespace webpp::uri {
         static constexpr void pop_back_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
             // remove the last segment
             if constexpr (CtxT::is_segregated) {
-                auto& path = uri::path(ctx.out);
+                auto& path = uri::path(ctx.comps);
                 if (!path.empty()) {
                     path.pop_back();
                 }
@@ -75,7 +75,7 @@ namespace webpp::uri {
 
         // https://url.spec.whatwg.org/#shorten-a-urls-path
         template <URIContext CtxT>
-        static constexpr void shorten_urls_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
+        static constexpr void shorten_urls_path(CtxT& ctx, auto&& buffer) noexcept(CtxT::is_nothrow) {
             using details::has_normalized_windows_driver_letter;
 
             // If url's scheme is "file", path size is 1, and path[0] is a normalized Windows
@@ -185,19 +185,27 @@ namespace webpp::uri {
             bool const empty_at_end =
               lend == ctx.end || (*lend != '/' && !(is_special_scheme(ctx.status) && *lend == '\\'));
 
-            switch (dots_count(lbeg, lend)) {
+            auto const dcount = dots_count(lbeg, lend);
+
+            // A read-only, non-segregated context keeps the input bytes as-is, so a dot segment cannot be
+            // rewritten in place; both dot cases stop here instead of repeating that refusal below.
+            if constexpr (!CtxT::is_modifiable && !CtxT::is_segregated) {
+                if (dcount == 1 || dcount == 2) [[unlikely]] {
+                    set(ctx.status, uri_status::modification_required);
+                    return true;
+                }
+            }
+
+            switch (dcount) {
                 // single dot found:
                 case 1: // .
                     if constexpr (CtxT::is_segregated) {
                         clear_segment(ctx, buffer);
 
                         if (empty_at_end) [[unlikely]] {
-                            push_segment(uri::path(ctx.out), buffer);
+                            push_segment(uri::path(ctx.comps), buffer);
                         }
-                    } else if constexpr (!CtxT::is_modifiable) {
-                        set(ctx.status, uri_status::modification_required);
-                        return true;
-                    } else {
+                    } else if constexpr (CtxT::is_modifiable) {
                         if (empty_at_end) [[unlikely]] {
                             buffer.push_back('/');
                         }
@@ -209,7 +217,7 @@ namespace webpp::uri {
                 case 2: // ..
 
                     if constexpr (CtxT::is_segregated) {
-                        auto& path = uri::path(ctx.out);
+                        auto& path = uri::path(ctx.comps);
 
                         // Shorten url’s path.
                         shorten_urls_path(ctx, path);
@@ -220,10 +228,7 @@ namespace webpp::uri {
                             push_segment(path, buffer);
                         }
 
-                    } else if constexpr (!CtxT::is_modifiable) {
-                        set(ctx.status, uri_status::modification_required);
-                        return true;
-                    } else {
+                    } else if constexpr (CtxT::is_modifiable) {
                         // Shorten url’s path.
                         shorten_urls_path(ctx, buffer);
 
@@ -245,9 +250,9 @@ namespace webpp::uri {
         template <URIContext CtxT>
         static constexpr void set_or_append_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_segregated) {
-                push_segment(path(ctx.out), stl::move(buffer));
+                push_segment(path(ctx.comps), stl::move(buffer));
             } else {
-                set_path(ctx.out, stl::move(buffer));
+                set_path(ctx.comps, stl::move(buffer));
             }
         }
 
@@ -352,18 +357,22 @@ namespace webpp::uri {
                 push_segment(buffer, segment{lbeg, ctx.pos});
             }
 
+            // Finalize the view-only buffer while `ctx.pos` still points at the terminator;
+            // the termination branches below advance past '?'/'#'.
+            end_segment(ctx, buffer);
+
             switch (status) {
                 case +termination_chars:
                     assert(ctx.pos != ctx.end);
                     switch (*ctx.pos) {
                         case '?':
-                            clear_queries(ctx.out);
+                            clear_queries(ctx.comps);
                             set_flag(ctx.status, has_non_null_queries);
                             set(ctx.status, valid_queries);
                             ++ctx.pos;
                             break;
                         case '#':
-                            clear_fragment(ctx.out);
+                            clear_fragment(ctx.comps);
                             set_flag(ctx.status, has_non_null_fragment);
                             set(ctx.status, valid_fragment);
                             ++ctx.pos;
@@ -402,6 +411,10 @@ namespace webpp::uri {
                             } else [[likely]] {
                                 if constexpr (CtxT::is_modifiable) {
                                     buffer.push_back(' ');
+                                } else {
+                                    // View-only buffers must stay contiguous with the input, and the
+                                    // space we just skipped is part of the raw path.
+                                    buffer.end = ctx.pos;
                                 }
                                 break;
                             }
@@ -413,7 +426,6 @@ namespace webpp::uri {
             }
             break;
         }
-        end_segment(ctx, buffer);
         details::set_or_append_path(ctx, buffer);
     }
 
@@ -437,9 +449,16 @@ namespace webpp::uri {
             // Path state appends to url's path; relative and file states may have already cloned (and
             // possibly shortened) the base path into it. Segmented mode appends segment by segment and
             // keeps its own buffer for the current segment only.
-            buffer.append(uri::path(ctx.out));
+            buffer.append(uri::path(ctx.comps));
+        } else if constexpr (!CtxT::is_modifiable) {
+            // Path-start state already consumed the leading slash; re-anchor the view so that the
+            // stored path (and therefore `authority_end`) starts at that slash, matching what the
+            // modifiable buffers build with their per-segment '/'.
+            if (buffer.beg != ctx.beg && *stl::prev(buffer.beg) == '/') {
+                --buffer.beg;
+            }
         }
-        bool first_segment = is_file_scheme(ctx.status) && uri::path(ctx.out).empty();
+        bool first_segment = is_file_scheme(ctx.status) && uri::path(ctx.comps).empty();
         bool last_segment  = false;
         for (;;) {
             iterator const lbeg   = ctx.pos;
@@ -500,6 +519,17 @@ namespace webpp::uri {
                 if (stop_char == '\\') [[unlikely]] {
                     assert(is_special);
                     if constexpr (!CtxT::is_modifiable) {
+                        // The serializer rewrites '\' to '/', which a view-only context cannot store.
+                        set_warning(ctx.status, reverse_solidus_used);
+                        // The Windows drive letter quirk would still replace '|' with ':' here;
+                        // report its warning before bailing out with modification_required.
+                        if constexpr (Options.handle_windows_drive_letters) {
+                            if (stl::exchange(first_segment, false) && details::is_windows_driver_letter(lbeg, lend))
+                              [[unlikely]]
+                            {
+                                set_warning(ctx.status, windows_drive_letter_used);
+                            }
+                        }
                         set(ctx.status, modification_required);
                         return;
                     } else {
@@ -536,6 +566,7 @@ namespace webpp::uri {
 
                 // Append buffer to url’s path.
                 if constexpr (CtxT::is_segregated) {
+                    static_assert(CtxT::is_modifiable, "segregated path storage implies modifiable components");
                     if (requires_encoding) {
                         encode_uri_component<uri_encoding_policy::encode_chars>(
                           lbeg,
@@ -545,17 +576,10 @@ namespace webpp::uri {
                     } else {
                         push_segment(buffer, segment{lbeg, lend});
                         if (modify_colon) [[unlikely]] {
-                            if constexpr (!CtxT::is_modifiable) {
-                                if (*stl::next(lbeg) != ':') [[unlikely]] {
-                                    set(ctx.status, modification_required);
-                                    return;
-                                }
-                            } else {
-                                buffer.at(1) = ':';
-                            }
+                            buffer.at(1) = ':';
                         }
                     }
-                    push_segment(path(ctx.out), buffer);
+                    push_segment(path(ctx.comps), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
@@ -580,6 +604,10 @@ namespace webpp::uri {
                 }
             }
 
+            // String buffers track their own length; view-only buffers track how far the path
+            // reaches into the input (this is what feeds `uri_end`/`length`).
+            end_segment(ctx, buffer);
+
             // handle end of path
             if ((status & +termination_chars) != 0) {
                 if constexpr (Options.state_override) {
@@ -594,13 +622,13 @@ namespace webpp::uri {
                     // parse_path_start and the opaque-path termination branch above).
                     if (stop_char == '?') {
                         if constexpr (Options.parse_queries) {
-                            clear_queries(ctx.out);
+                            clear_queries(ctx.comps);
                             set_flag(ctx.status, has_non_null_queries);
                         }
                         set(ctx.status, valid_queries);
                     } else {
                         if constexpr (Options.parse_fragment) {
-                            clear_fragment(ctx.out);
+                            clear_fragment(ctx.comps);
                             set_flag(ctx.status, has_non_null_fragment);
                         }
                         set(ctx.status, valid_fragment);
@@ -616,7 +644,7 @@ namespace webpp::uri {
         }
 
         if constexpr (!CtxT::is_segregated) {
-            set_path(ctx.out, stl::move(buffer));
+            set_path(ctx.comps, stl::move(buffer));
         }
     }
 

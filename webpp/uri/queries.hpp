@@ -82,10 +82,10 @@ namespace webpp::uri {
             using key_type = typename CtxT::component_type::map_type::value_type;
             StrT out;
             // Delegate to the correct function, faking a valid status
-            render_queries(stl::span<key_type const>{queries(ctx.out)}, out, ctx.status, add_separators);
+            render_queries(stl::span<key_type const>{queries(ctx.comps)}, out, ctx.status, add_separators);
             return out;
         } else {
-            return queries(ctx.out);
+            return queries(ctx.comps);
         }
     }
 

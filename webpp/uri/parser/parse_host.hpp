@@ -56,13 +56,16 @@ namespace webpp::uri {
                 if constexpr (CtxT::is_modifiable) {
                     auto buffer = create_buffer(ctx);
                     pure_ipv4{ipv4_octets_data}.to_string(buffer);
-                    set_hostname(ctx.out, stl::move(buffer));
+                    set_hostname(ctx.comps, stl::move(buffer));
                     set_flag(ctx.status, has_non_null_host);
                 } else {
                     if (!pure_ipv4{ipv4_octets_data}.str_equal(pos, end)) [[unlikely]] {
                         set(ctx.status, modification_required);
                         return false;
                     }
+                    // Keep the input bytes: they already are the canonical form.
+                    set_hostname(ctx.comps, segment{pos, end});
+                    set_flag(ctx.status, has_non_null_host);
                 }
                 return true;
             }
@@ -78,10 +81,8 @@ namespace webpp::uri {
             // the warning there is just a side effect.
             // https://url.spec.whatwg.org/#concept-ipv4-parser (IPv4-empty-part)
             // https://url.spec.whatwg.org/#ends-in-a-number-checker
-            if (has_warning(ctx.status, ipv4_trailing_empty_octet)) [[unlikely]] {
-                if (*pos >= '0' && *pos <= '9') {
-                    set(ctx.status, ip_invalid_character);
-                }
+            if (has_warning(ctx.status, ipv4_trailing_empty_octet) && *pos >= '0' && *pos <= '9') [[unlikely]] {
+                set(ctx.status, ip_invalid_character);
             }
             return false;
         }
@@ -103,15 +104,15 @@ namespace webpp::uri {
 
 
         enum struct host_cp_type : stl::uint8_t {
-            upper_val     = 0b1U,                                                          // upper case ascii chars
-            no_ipv4_val   = 0b10U,                                                         // invalid IPv4 Characters
-            no_ipv6_val   = 0b100U,                                                        // invalid IPv6 Characters
-            x_val         = 0b1000U,                                                       // character x
-            n_val         = 0b1'0000U,                                                     // character n
-            dash_val      = 0b10'0000U,                                                    // character -
-            special_chars = 0b100'0000U,                                                   // characters: / \ ? # %
+            upper_val     = 0b1U,                                                 // upper case ascii chars
+            no_ipv4_val   = 0b10U,                                                // invalid IPv4 Characters
+            no_ipv6_val   = 0b100U,                                               // invalid IPv6 Characters
+            x_val         = 0b1000U,                                              // character x
+            n_val         = 0b1'0000U,                                            // character n
+            dash_val      = 0b10'0000U,                                           // character -
+            special_chars = 0b100'0000U,                                          // characters: / \ ? # %
             forb_val      = static_cast<stl::uint8_t>(~0U) &
-                       static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
+              static_cast<stl::uint8_t>(~static_cast<stl::uint8_t>(0b100'0000U)), // Forbidden/Unicode
             xnd_val   = x_val | n_val | dash_val | no_ipv4_val,
             no_ip_val = no_ipv4_val | no_ipv6_val,
         };
@@ -209,8 +210,8 @@ namespace webpp::uri {
             }
             break;
         }
-        // end_segment(ctx, buffer);
-        set_hostname(ctx.out, stl::move(buffer));
+        end_segment(ctx, buffer);
+        set_hostname(ctx.comps, stl::move(buffer));
         set_flag(ctx.status, has_non_null_host);
     }
 
@@ -285,24 +286,28 @@ namespace webpp::uri {
                     return;
                 }
 
-                set_hostname(ctx.out, stl::move(buffer));
+                set_hostname(ctx.comps, stl::move(buffer));
                 set_flag(ctx.status, has_non_null_host);
             } else {
                 // Only validate, no conversion:
-                auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
-                if (!is_valid(ascii_status)) [[unlikely]] {
-                    set(ctx.status, ascii_status);
-                    return;
-                }
-
-                // If asciiDomain ends in a number, then return the result of IPv4 parsing asciiDomain.
-                // Without a buffer, the raw input is the best available stand-in for asciiDomain here;
-                // percent-encoded or non-ASCII input cannot be canonicalized without modification anyway.
+                // If the input ends in a number, IPv4 parsing decides the result. Per the host
+                // parser the domain-to-ASCII step runs first, but an IPv4-like host has no domain
+                // form to verify (and IPv4 parsing reports the meaningful error, such as an
+                // out-of-range octet), so it must not be preempted by the domain check below.
+                // Without a buffer, the raw input is the best available stand-in for asciiDomain
+                // here; percent-encoded or non-ASCII input cannot be canonicalized without
+                // modification anyway.
                 if (verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
                     return;
                 }
 
-                set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                auto const ascii_status = idna::verify_domain_ascii<Options>(sbeg, ctx.pos);
+                if (!is_valid(ascii_status)) [[unlikely]] {
+                    set_error(ctx.status, ascii_status);
+                    return;
+                }
+
+                set_hostname(ctx.comps, segment{sbeg, ctx.pos});
                 set_flag(ctx.status, has_non_null_host);
             }
         }
@@ -410,7 +415,7 @@ namespace webpp::uri {
                     if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
                         return;
                     }
-                    set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                    set_hostname(ctx.comps, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
                     return;
                 [[unlikely]] case +forb_val:
@@ -448,7 +453,7 @@ namespace webpp::uri {
         }
 
         if (ctx.pos == ctx.end) [[unlikely]] {
-            clear_hostname(ctx.out);
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
             set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
@@ -463,8 +468,8 @@ namespace webpp::uri {
         //   - Set url's host to the empty string.
         //   - If state override is given, then return.
         //   - Set state to path start state.
-        if (!has_hostname(ctx.out)) [[unlikely]] {
-            clear_hostname(ctx.out);
+        if (!has_hostname(ctx.comps)) [[unlikely]] {
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
             set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
@@ -479,8 +484,8 @@ namespace webpp::uri {
         // If host is "localhost", then set host to the empty string.
         // Empty string != null
         // The EOF and empty-host cases are already handled by the early returns above.
-        if (is_localhost_string(hostname(ctx.out))) {
-            clear_hostname(ctx.out);
+        if (is_localhost_string(hostname(ctx.comps))) {
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
         }
         // if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
@@ -526,7 +531,7 @@ namespace webpp::uri {
             case ':':
 
                 // If buffer is the empty string, host-missing validation error, return failure.
-                if (!has_hostname(ctx.out)) [[unlikely]] {
+                if (!has_hostname(ctx.comps)) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -554,7 +559,7 @@ namespace webpp::uri {
             case '#':
             case '\0':
                 // If url is special and buffer is the empty string, host-missing validation error, return failure.
-                if (is_special_scheme(ctx.status) && !has_hostname(ctx.out)) [[unlikely]] {
+                if (is_special_scheme(ctx.status) && !has_hostname(ctx.comps)) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -562,8 +567,8 @@ namespace webpp::uri {
                 // Otherwise, if state override is given, buffer is the empty string, and either url includes
                 // credentials or url’s port is non-null, then return failure.
                 if constexpr (Options.state_override) {
-                    if (!has_hostname(ctx.out) &&
-                        (has_credentials(ctx.out) || has_flags(ctx.status, has_non_null_port))) [[unlikely]]
+                    if (!has_hostname(ctx.comps) &&
+                        (has_credentials(ctx.comps) || has_flags(ctx.status, has_non_null_port))) [[unlikely]]
                     {
                         set(ctx.status, host_missing);
                         return;

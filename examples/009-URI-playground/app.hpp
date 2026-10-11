@@ -67,14 +67,14 @@ namespace website {
 
                 auto const parsing_time = duration_cast<nanoseconds>(start - fin).count();
                 doc["parsing-time"]     = parsing_time;
-                doc["scheme"]           = context.out.get_scheme();
-                doc["username"]         = context.out.get_username();
-                doc["password"]         = context.out.get_password();
-                doc["host"]             = context.out.get_hostname();
-                doc["port"]             = context.out.get_port();
-                doc["path"]             = context.out.get_path();
-                doc["queries"]          = context.out.get_queries();
-                doc["fragment"]         = context.out.get_fragment();
+                doc["scheme"]           = context.comps.get_scheme();
+                doc["username"]         = context.comps.get_username();
+                doc["password"]         = context.comps.get_password();
+                doc["host"]             = context.comps.get_hostname();
+                doc["port"]             = context.comps.get_port();
+                doc["path"]             = context.comps.get_path();
+                doc["queries"]          = context.comps.get_queries();
+                doc["fragment"]         = context.comps.get_fragment();
             }
             return doc;
         }

@@ -78,11 +78,11 @@ TYPED_TEST(IDNATests, LabelSeparators) {
     auto const ctx4 = this->template parse_from_string<TypeParam>("http://example｡org");
     EXPECT_TRUE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
 
-    EXPECT_EQ(uri::hostname(ctx1.out), "example.org");
+    EXPECT_EQ(uri::hostname(ctx1.comps), "example.org");
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
-        EXPECT_EQ(uri::hostname(ctx2.out), "example.org");
-        EXPECT_EQ(uri::hostname(ctx3.out), "example.org");
-        EXPECT_EQ(uri::hostname(ctx4.out), "example.org");
+        EXPECT_EQ(uri::hostname(ctx2.comps), "example.org");
+        EXPECT_EQ(uri::hostname(ctx3.comps), "example.org");
+        EXPECT_EQ(uri::hostname(ctx4.comps), "example.org");
     }
 }
 

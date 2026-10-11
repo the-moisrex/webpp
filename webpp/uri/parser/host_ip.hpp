@@ -5,6 +5,7 @@
 
 #include "../../ip/inet_ntop.hpp"
 #include "../../ip/inet_pton.hpp"
+#include "../../std/algorithm.hpp"
 #include "../../std/string.hpp"
 #include "../../strings/hex.hpp"
 #include "./uri_context.hpp"
@@ -274,7 +275,7 @@ namespace webpp::uri::details {
     static constexpr void parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using enum uri_status;
 
-        auto                                      buffer = create_buffer(ctx);
+        auto const                                bracket_pos = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
         assert(*ctx.pos == '[');
@@ -289,6 +290,7 @@ namespace webpp::uri::details {
                 assert(*ctx.pos == ']');
                 if constexpr (CtxT::is_modifiable) {
                     // re-generate the IPv6 string
+                    auto buffer = create_buffer(ctx);
                     istl::resize_and_overwrite(
                       buffer,
                       max_ipv6_str_len + 3,
@@ -299,20 +301,20 @@ namespace webpp::uri::details {
                           assert(len <= static_cast<stl::ptrdiff_t>(max_len));
                           return len;
                       });
-                    set_hostname(ctx.out, stl::move(buffer));
+                    set_hostname(ctx.comps, stl::move(buffer));
                 } else {
-                    // verify the rendered ipv6 is the same as the input ipv6
+                    // verify the rendered ipv6 is the same as the input ipv6 (without the brackets)
+                    auto const                             inner_beg = stl::next(bracket_pos);
                     stl::array<char, max_ipv6_str_len + 1> buf; // NOLINT(*-init)
-                    auto const* const                      endp = inet_ntop6(ipv6_bytes.begin(), buf.data());
-                    if (buffer != stl::string_view{buf.data(), endp}) [[unlikely]] {
+                    auto* const                            endp = inet_ntop6(ipv6_bytes.begin(), buf.data());
+                    if (!stl::equal(inner_beg, ctx.pos, buf.data(), endp)) [[unlikely]] {
                         set(ctx.status, modification_required);
                         return;
                     }
 
-                    end_segment(ctx, buffer);
-                    set_hostname(ctx.out, buffer);
+                    set_hostname(ctx.comps, segment{bracket_pos, stl::next(ctx.pos)});
                 }
-                // set_hostname(ctx.out, ipv6_bytes);
+                // set_hostname(ctx.comps, ipv6_bytes);
                 set_flag(ctx.status, has_non_null_host);
                 ++ctx.pos;
                 set(ctx.status, nonspecial_state(peek(ctx), ipv6_char_after_closing));

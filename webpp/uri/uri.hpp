@@ -90,14 +90,14 @@ namespace webpp::uri {
     static constexpr void href(
       CtxT const&                                                                                      ctx,
       stl::basic_string<typename CtxT::char_type, stl::char_traits<typename CtxT::char_type>, AllocT>& out) {
-        render_uri(ctx.out, ctx.status, out);
+        render_uri(ctx.comps, ctx.status, out);
     }
 
-    template <URIContext CtxT, typename AllocT = allocator_type_of<CtxT>>
+    template <URIContext CtxT, typename AllocT = string_allocator_of<typename CtxT::component_type>>
     [[nodiscard]] static constexpr auto href(CtxT const& ctx) {
         stl::basic_string<typename CtxT::char_type, stl::char_traits<typename CtxT::char_type>, AllocT> out;
-        out.reserve(estimated_length(ctx.out));
-        render_uri(ctx.out, ctx.status, out);
+        out.reserve(estimated_length(ctx.comps));
+        render_uri(ctx.comps, ctx.status, out);
         return out;
     }
 
@@ -109,7 +109,7 @@ namespace webpp::uri {
         using component_type   = CompT;
         using string_type      = typename component_type::string_type;
         using char_type        = typename string_type::value_type;
-        using allocator_type   = allocator_type_of<component_type>;
+        using allocator_type   = string_allocator_of<component_type>;
         using string_view_type = stl::basic_string_view<char_type>;
         using iterator         = typename string_view_type::const_iterator;
 
@@ -143,7 +143,7 @@ namespace webpp::uri {
             auto ctx   = create<context_type>(beg, end, stl::move(components));
             ctx.status = +status | info_of(m_status);
             parse_uri<Options | state_override>(ctx);
-            components = stl::move(ctx.out);
+            components = stl::move(ctx.comps);
             reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
@@ -161,7 +161,7 @@ namespace webpp::uri {
             clear_fragment();
             auto ctx = create<context_type>(beg, end, stl::move(components));
             parse_uri<Options>(ctx);
-            components = stl::move(ctx.out);
+            components = stl::move(ctx.comps);
             m_status   = ctx.status;
         }
 
@@ -536,7 +536,7 @@ namespace webpp::uri {
 
             parse_username<Options | state_override>(ctx);
 
-            components = stl::move(ctx.out);
+            components = stl::move(ctx.comps);
             reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }
@@ -550,7 +550,7 @@ namespace webpp::uri {
 
             parse_password<Options | state_override>(ctx);
 
-            components = stl::move(ctx.out);
+            components = stl::move(ctx.comps);
             reset_flags(m_status, flags_of(ctx.status));
             return m_status;
         }

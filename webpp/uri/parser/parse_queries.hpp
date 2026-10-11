@@ -46,21 +46,29 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '&':
                     // remove things like '&&&&&&' in the queries
-                    if (buffer.empty() || buffer.back() != '&') [[likely]] {
+                    if constexpr (!CtxT::is_modifiable) {
+                        // Collapsing a run of "&" would rewrite the input.
+                        if (ctx.pos != ctx.beg && *stl::prev(ctx.pos) == '&') [[unlikely]] {
+                            set(ctx.status, modification_required);
+                            return;
+                        }
+                    } else if (buffer.empty() || buffer.back() != '&') [[likely]] {
                         buffer.push_back('&');
-                    } else if constexpr (!CtxT::is_modifiable) {
-                        set(ctx.status, modification_required);
-                        return;
                     }
                     ++ctx.pos;
                     continue;
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         // Record non-null (but possibly empty) fragment here; the EOF path below
                         // overwrites our state value with "valid", so parse_fragment may never run.
                         set_flag(ctx.status, has_non_null_fragment);
                         ++ctx.pos;
+                        if constexpr (URIRelativeComponents<stl::remove_cvref_t<decltype(ctx.comps)>>) {
+                            // queries() uses fragment_start to exclude the '#' separator, so an
+                            // empty fragment still has to record where it starts.
+                            set_fragment(ctx.comps, segment{ctx.pos, ctx.pos});
+                        }
                         set(ctx.status, valid_fragment);
                         break;
                     } else {
@@ -79,7 +87,12 @@ namespace webpp::uri {
                     }
                     continue;
                 [[unlikely]] default:
-                    if constexpr (Options.allow_invalid_characters) {
+                    if constexpr (!CtxT::is_modifiable) {
+                        // The scan only stops here on a character a modifiable context would
+                        // percent-encode, and a view has nowhere to encode it into.
+                        set(ctx.status, modification_required);
+                        return;
+                    } else if constexpr (Options.allow_invalid_characters) {
                         set_warning(ctx.status, invalid_character);
                         skip_separator(ctx, buffer);
                         // invalid characters are not errors
@@ -92,7 +105,7 @@ namespace webpp::uri {
             break;
         }
         end_segment(ctx, buffer);
-        set_queries(ctx.out, stl::move(buffer));
+        set_queries(ctx.comps, stl::move(buffer));
         set_flag(ctx.status, has_non_null_queries);
 
         if (ctx.pos == ctx.end) {
@@ -134,7 +147,7 @@ namespace webpp::uri {
         bool  in_value     = false;
         auto  key_buffer   = create_buffer(ctx);
         auto  value_buffer = create_buffer(ctx);
-        auto& out          = queries(ctx.out);
+        auto& out          = queries(ctx.comps);
 
         // find the end of the queries
         while (!encode_or_validate(ctx,
@@ -145,7 +158,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         // Record non-null (but possibly empty) fragment here; the EOF path below
                         // overwrites our state value with "valid", so parse_fragment may never run.
                         set_flag(ctx.status, has_non_null_fragment);

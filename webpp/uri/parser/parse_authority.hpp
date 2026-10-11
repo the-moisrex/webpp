@@ -5,10 +5,10 @@
 
 #include "../uri_status.hpp"
 #include "./constants.hpp"
+#include "./parse_port.hpp"
 #include "./special_schemes.hpp"
-#include "parse_port.hpp"
-#include "uri_components.hpp"
-#include "uri_context.hpp"
+#include "./uri_components.hpp"
+#include "./uri_context.hpp"
 
 /**
  * Attention: User infos in URIs are DEPRECATED, but we SHOULD parse it anyway
@@ -63,9 +63,8 @@ namespace webpp::uri {
                     at_sign_seen = true;
 
                     // For each codePoint in buffer:
-                    auto const buf_beg = begin(buffer);
-                    auto const endp    = end(buffer);
-                    for (auto pos = buf_beg; pos != endp; ++pos) {
+                    auto const endp = end(buffer);
+                    for (auto pos = begin(buffer); pos != endp; ++pos) {
                         // If codePoint is U+003A (:) and passwordTokenSeen is false, then set passwordTokenSeen to true
                         // and continue.
                         if (*pos == ':' && !password_token_seen) {
@@ -81,9 +80,12 @@ namespace webpp::uri {
                         if constexpr (CtxT::is_modifiable) {
                             encode_uri_component<encode_chars>(*pos, encoded_buffer, USER_INFO_ENCODE_SET);
                         } else if (!USER_INFO_ENCODE_SET.contains(*pos)) {
-                            // validation-only mode
-                            encoded_buffer.beg = buf_beg;
-                            encoded_buffer.end = pos;
+                            // validation-only mode: the bytes stay where they are, so this part only
+                            // remembers its span, and its first character decides where it starts.
+                            if (is_empty(encoded_buffer)) [[unlikely]] {
+                                encoded_buffer.beg = pos;
+                            }
+                            encoded_buffer.end = stl::next(pos);
                         } else [[unlikely]] {
                             set(ctx.status, modification_required);
                             return;
@@ -126,8 +128,8 @@ namespace webpp::uri {
                     ctx.pos = beg;
                     set(ctx.status, valid_host);
 
-                    set_username(ctx.out, stl::move(username));
-                    set_password(ctx.out, stl::move(password));
+                    set_username(ctx.comps, stl::move(username));
+                    set_password(ctx.comps, stl::move(password));
                     return;
                 default: break;
             }
@@ -158,7 +160,7 @@ namespace webpp::uri {
             // state, whose host parsing of the empty buffer yields an opaque host of "" (empty
             // but non-null), followed by the path start state which does nothing at the EOF
             // code point.
-            clear_hostname(ctx.out);
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
             set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
@@ -209,7 +211,7 @@ namespace webpp::uri {
                     // Host state, step 3: "If url is special and buffer is the empty string,
                     // host-missing validation error, return failure." This branch only runs for
                     // special schemes; an empty authority at the entry EOF is handled above.
-                    if (!has_hostname(ctx.out)) [[unlikely]] {
+                    if (!has_hostname(ctx.comps)) [[unlikely]] {
                         set(ctx.status, host_missing);
                         return;
                     }
@@ -220,7 +222,7 @@ namespace webpp::uri {
         }
 
         // rollback
-        clear_hostname(ctx.out);
+        clear_hostname(ctx.comps);
         clear_value(ctx.status);
         set(ctx.status, valid_authority);
         ctx.pos = beg;
@@ -244,6 +246,12 @@ namespace webpp::uri {
                 switch (*ctx.pos) {
                     [[unlikely]] case '\\':
                         set_warning(ctx.status, reverse_solidus_used);
+                        if constexpr (!CtxT::is_modifiable) {
+                            // Serialization rewrites '\' to '/' (path state treats it as a segment
+                            // separator), which view-only components cannot store.
+                            set(ctx.status, modification_required);
+                            return;
+                        }
                         [[fallthrough]];
                     case '/':
                         // If c is neither U+002F (/) nor U+005C (\), then decrease pointer by 1.
@@ -263,10 +271,10 @@ namespace webpp::uri {
                 // For owning/non-segregated components this is represented as a single '/'.
                 auto buffer = create_buffer(ctx);
                 if constexpr (CtxT::is_segregated) {
-                    push_segment(path(ctx.out), stl::move(buffer));
+                    push_segment(path(ctx.comps), stl::move(buffer));
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
-                    set_path(ctx.out, stl::move(buffer));
+                    set_path(ctx.comps, stl::move(buffer));
                 } else {
                     set(ctx.status, modification_required);
                     return;
@@ -285,7 +293,7 @@ namespace webpp::uri {
                 case '?':
                     if constexpr (Options.parse_queries) {
                         ++ctx.pos;
-                        clear_queries(ctx.out);
+                        clear_queries(ctx.comps);
                         set_flag(ctx.status, has_non_null_queries);
                     }
                     set(ctx.status, valid_queries);
@@ -293,7 +301,7 @@ namespace webpp::uri {
                 case '#':
                     if constexpr (Options.parse_fragment) {
                         ++ctx.pos;
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         set_flag(ctx.status, has_non_null_fragment);
                     }
                     set(ctx.status, valid_fragment);
