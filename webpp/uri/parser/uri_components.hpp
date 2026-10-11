@@ -982,6 +982,8 @@ namespace webpp::uri {
     static constexpr void set_port(CompT& comp, Iter beg, Iter end) noexcept(CompT::is_nothrow) {
         if constexpr (requires { comp.port.assign(beg, end); }) {
             comp.port.assign(beg, end);
+        } else if constexpr (URIRelativeComponents<CompT>) {
+            set_port(comp, segment{beg, end});
         } else {
             set_port(comp, typename CompT::string_type{beg, end});
         }

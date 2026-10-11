@@ -200,7 +200,7 @@ namespace webpp::uri {
                     // credentials before the host (https://url.spec.whatwg.org/#authority-state), so we
                     // cannot tell a password separator from a port separator here; roll back instead of
                     // deciding on behalf of the authority state.
-                    if (!has_hostname(ctx.out)) [[unlikely]] {
+                    if (!has_hostname(ctx.comps)) [[unlikely]] {
                         break;
                     }
 
