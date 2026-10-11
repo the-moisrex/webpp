@@ -192,6 +192,20 @@ namespace webpp::uri {
             switch (peek(ctx)) {
                 case ':': // possible password or port
 
+                    // `host_parser` stops on the colon. When no host was parsed yet, that colon may be
+                    // the password separator of credentials the authority state still has to consume
+                    // (e.g. `https://:pass@example.com/`), and the WHATWG authority state reads the
+                    // credentials before the host (https://url.spec.whatwg.org/#authority-state), so we
+                    // cannot tell a password separator from a port separator here; roll back instead of
+                    // deciding on behalf of the authority state.
+                    if (!has_hostname(ctx.out)) [[unlikely]] {
+                        break;
+                    }
+
+                    // `host_parser` stops on the colon; the port state starts after it, the same way
+                    // `parse_host` advances past the colon before handing over to the port state.
+                    ++ctx.pos;
+
                     // let's assume it's a port for now
                     parse_port<Options>(ctx);
                     if (has_error(ctx.status) || peek(ctx) == '@') [[unlikely]] {
