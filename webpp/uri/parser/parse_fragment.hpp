@@ -45,7 +45,7 @@ namespace webpp::uri {
             [[unlikely]] { set_warning(ctx.status, invalid_character); }
         }
         end_segment(ctx, buffer);
-        set_fragment(ctx.out, stl::move(buffer));
+        set_fragment(ctx.comps, stl::move(buffer));
         set(ctx.status, valid);
     }
 

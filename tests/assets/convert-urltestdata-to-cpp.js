@@ -113,7 +113,7 @@ struct URIWhatwgTest : testing::Test {
         auto               ctx = uri::parse_uri<uri::standard_uri_parsing_options, component_type>(str, base_str);
         SpecifiedTypeParam out_ctx{};
         out_ctx.status = ctx.status;
-        out_ctx.out    = stl::move(ctx.out);
+        out_ctx.comps    = stl::move(ctx.comps);
         return out_ctx;
     }
 
@@ -188,38 +188,38 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // scheme
   if (test.protocol !== undefined) {
     result += `
-    EXPECT_EQ(uri::scheme(ctx.out), "${escapeForCppString(test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::scheme(ctx.comps), "${escapeForCppString(test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
   }
 
   // username
   if (test.username !== undefined) {
     result += `
-    EXPECT_EQ(uri::username(ctx.out), "${escapeForCppString(test.username)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::username(ctx.comps), "${escapeForCppString(test.username)}") << ${testDetails(test)};`;
   }
 
   // password
   if (test.password !== undefined) {
     result += `
-    EXPECT_EQ(uri::password(ctx.out), "${escapeForCppString(test.password)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::password(ctx.comps), "${escapeForCppString(test.password)}") << ${testDetails(test)};`;
   }
 
   // host
   if (test.host !== undefined) {
     //     result += `
-    // EXPECT_EQ(ctx.out.get_host(), "${escapeForCppString(test.host)}") <<
+    // EXPECT_EQ(ctx.comps.get_host(), "${escapeForCppString(test.host)}") <<
     // ${testDetails(test)};`;
   }
 
   // hostname
   if (test.hostname !== undefined) {
     result += `
-    EXPECT_EQ(uri::hostname(ctx.out), "${escapeForCppString(test.hostname)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::hostname(ctx.comps), "${escapeForCppString(test.hostname)}") << ${testDetails(test)};`;
   }
 
   // port
   if (test.port !== undefined) {
     result += `
-    EXPECT_EQ(uri::port(ctx.out), "${escapeForCppString(test.port)}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::port(ctx.comps), "${escapeForCppString(test.port)}") << ${testDetails(test)};`;
   }
 
   // path
@@ -228,9 +228,9 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       try {
         //     result += `
         // if constexpr (TypeParam::is_modifiable) {
-        //     EXPECT_EQ(uri::path(ctx.out), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
+        //     EXPECT_EQ(uri::path(ctx.comps), "${escapeForCppString(test.pathname)}") << ${testDetails(test)};
         // } else {
-        //     EXPECT_EQ(uri::path(ctx.out), "${escapeForCppString(
+        //     EXPECT_EQ(uri::path(ctx.comps), "${escapeForCppString(
         //       decodeURIComponent(test.pathname))}") << ${testDetails(test)};
         // }`;
         result += `
@@ -257,10 +257,10 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       try {
         //     result += `
         // if constexpr (TypeParam::is_modifiable) {
-        //     EXPECT_EQ(uri::queries(ctx.out), "${escapeForCppString(
+        //     EXPECT_EQ(uri::queries(ctx.comps), "${escapeForCppString(
         //       test.search.substring(1))}") << ${testDetails(test)};
         // } else {
-        //     EXPECT_EQ(uri::queries(ctx.out), "${escapeForCppString(decodeURIComponent(
+        //     EXPECT_EQ(uri::queries(ctx.comps), "${escapeForCppString(decodeURIComponent(
         //         test.search.substring(1)))}") << ${testDetails(test)};
         // }`;
         result += `
@@ -287,7 +287,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // fragment
   if (test.hash !== undefined) {
     result += `
-    EXPECT_EQ(uri::fragment(ctx.out), "${escapeForCppString(test.hash.substring(1))}") << ${testDetails(test)};`;
+    EXPECT_EQ(uri::fragment(ctx.comps), "${escapeForCppString(test.hash.substring(1))}") << ${testDetails(test)};`;
   }
 
   // href
@@ -299,7 +299,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   // origin??
   if (test.origin !== undefined) {
     // result += `
-    // EXPECT_EQ(ctx.out.get_href(), "${
+    // EXPECT_EQ(ctx.comps.get_href(), "${
     //    escapeForCppString(test.href)}") << ${testDetails(test)};`;
   }
 

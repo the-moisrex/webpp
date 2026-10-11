@@ -59,15 +59,15 @@ namespace webpp::uri {
                     continue;
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         // Record non-null (but possibly empty) fragment here; the EOF path below
                         // overwrites our state value with "valid", so parse_fragment may never run.
                         set_flag(ctx.status, has_non_null_fragment);
                         ++ctx.pos;
-                        if constexpr (URIRelativeComponents<stl::remove_cvref_t<decltype(ctx.out)>>) {
+                        if constexpr (URIRelativeComponents<stl::remove_cvref_t<decltype(ctx.comps)>>) {
                             // queries() uses fragment_start to exclude the '#' separator, so an
                             // empty fragment still has to record where it starts.
-                            set_fragment(ctx.out, segment{ctx.pos, ctx.pos});
+                            set_fragment(ctx.comps, segment{ctx.pos, ctx.pos});
                         }
                         set(ctx.status, valid_fragment);
                         break;
@@ -105,7 +105,7 @@ namespace webpp::uri {
             break;
         }
         end_segment(ctx, buffer);
-        set_queries(ctx.out, stl::move(buffer));
+        set_queries(ctx.comps, stl::move(buffer));
         set_flag(ctx.status, has_non_null_queries);
 
         if (ctx.pos == ctx.end) {
@@ -147,7 +147,7 @@ namespace webpp::uri {
         bool  in_value     = false;
         auto  key_buffer   = create_buffer(ctx);
         auto  value_buffer = create_buffer(ctx);
-        auto& out          = queries(ctx.out);
+        auto& out          = queries(ctx.comps);
 
         // find the end of the queries
         while (!encode_or_validate(ctx,
@@ -158,7 +158,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '#':
                     if constexpr (Options.parse_fragment && !Options.state_override) {
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         // Record non-null (but possibly empty) fragment here; the EOF path below
                         // overwrites our state value with "valid", so parse_fragment may never run.
                         set_flag(ctx.status, has_non_null_fragment);

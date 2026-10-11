@@ -281,7 +281,7 @@ namespace webpp::uri::details {
                           assert(len <= static_cast<stl::ptrdiff_t>(max_len));
                           return len;
                       });
-                    set_hostname(ctx.out, stl::move(buffer));
+                    set_hostname(ctx.comps, stl::move(buffer));
                 } else {
                     // verify the rendered ipv6 is the same as the input ipv6 (without the brackets)
                     auto const                             inner_beg = stl::next(bracket_pos);
@@ -292,9 +292,9 @@ namespace webpp::uri::details {
                         return;
                     }
 
-                    set_hostname(ctx.out, segment{bracket_pos, stl::next(ctx.pos)});
+                    set_hostname(ctx.comps, segment{bracket_pos, stl::next(ctx.pos)});
                 }
-                // set_hostname(ctx.out, ipv6_bytes);
+                // set_hostname(ctx.comps, ipv6_bytes);
                 set_flag(ctx.status, has_non_null_host);
                 ++ctx.pos;
                 set(ctx.status, nonspecial_state(peek(ctx), ipv6_char_after_closing));

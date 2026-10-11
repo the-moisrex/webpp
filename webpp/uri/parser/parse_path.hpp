@@ -53,7 +53,7 @@ namespace webpp::uri {
         static constexpr void pop_back_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
             // remove the last segment
             if constexpr (CtxT::is_segregated) {
-                auto& path = uri::path(ctx.out);
+                auto& path = uri::path(ctx.comps);
                 if (!path.empty()) {
                     path.pop_back();
                 }
@@ -203,7 +203,7 @@ namespace webpp::uri {
                         clear_segment(ctx, buffer);
 
                         if (empty_at_end) [[unlikely]] {
-                            push_segment(uri::path(ctx.out), buffer);
+                            push_segment(uri::path(ctx.comps), buffer);
                         }
                     } else if constexpr (CtxT::is_modifiable) {
                         if (empty_at_end) [[unlikely]] {
@@ -217,7 +217,7 @@ namespace webpp::uri {
                 case 2: // ..
 
                     if constexpr (CtxT::is_segregated) {
-                        auto& path = uri::path(ctx.out);
+                        auto& path = uri::path(ctx.comps);
 
                         // Shorten url’s path.
                         shorten_urls_path(ctx, path);
@@ -250,9 +250,9 @@ namespace webpp::uri {
         template <URIContext CtxT>
         static constexpr void set_or_append_path(CtxT& ctx, auto& buffer) noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_segregated) {
-                push_segment(path(ctx.out), stl::move(buffer));
+                push_segment(path(ctx.comps), stl::move(buffer));
             } else {
-                set_path(ctx.out, stl::move(buffer));
+                set_path(ctx.comps, stl::move(buffer));
             }
         }
 
@@ -355,13 +355,13 @@ namespace webpp::uri {
                     assert(ctx.pos != ctx.end);
                     switch (*ctx.pos) {
                         case '?':
-                            clear_queries(ctx.out);
+                            clear_queries(ctx.comps);
                             set_flag(ctx.status, has_non_null_queries);
                             set(ctx.status, valid_queries);
                             ++ctx.pos;
                             break;
                         case '#':
-                            clear_fragment(ctx.out);
+                            clear_fragment(ctx.comps);
                             set_flag(ctx.status, has_non_null_fragment);
                             set(ctx.status, valid_fragment);
                             ++ctx.pos;
@@ -438,7 +438,7 @@ namespace webpp::uri {
             // Path state appends to url's path; relative and file states may have already cloned (and
             // possibly shortened) the base path into it. Segmented mode appends segment by segment and
             // keeps its own buffer for the current segment only.
-            buffer.append(uri::path(ctx.out));
+            buffer.append(uri::path(ctx.comps));
         } else if constexpr (!CtxT::is_modifiable) {
             // Path-start state already consumed the leading slash; re-anchor the view so that the
             // stored path (and therefore `authority_end`) starts at that slash, matching what the
@@ -447,7 +447,7 @@ namespace webpp::uri {
                 --buffer.beg;
             }
         }
-        bool first_segment = is_file_scheme(ctx.status) && uri::path(ctx.out).empty();
+        bool first_segment = is_file_scheme(ctx.status) && uri::path(ctx.comps).empty();
         bool last_segment  = false;
         for (;;) {
             iterator const lbeg   = ctx.pos;
@@ -564,7 +564,7 @@ namespace webpp::uri {
                             buffer.at(1) = ':';
                         }
                     }
-                    push_segment(path(ctx.out), buffer);
+                    push_segment(path(ctx.comps), buffer);
                     clear_segment(ctx, buffer);
                 } else if constexpr (CtxT::is_modifiable) {
                     buffer.push_back('/');
@@ -602,13 +602,13 @@ namespace webpp::uri {
                     // parse_path_start and the opaque-path termination branch above).
                     if (stop_char == '?') {
                         if constexpr (Options.parse_queries) {
-                            clear_queries(ctx.out);
+                            clear_queries(ctx.comps);
                             set_flag(ctx.status, has_non_null_queries);
                         }
                         set(ctx.status, valid_queries);
                     } else {
                         if constexpr (Options.parse_fragment) {
-                            clear_fragment(ctx.out);
+                            clear_fragment(ctx.comps);
                             set_flag(ctx.status, has_non_null_fragment);
                         }
                         set(ctx.status, valid_fragment);
@@ -624,7 +624,7 @@ namespace webpp::uri {
         }
 
         if constexpr (!CtxT::is_segregated) {
-            set_path(ctx.out, stl::move(buffer));
+            set_path(ctx.comps, stl::move(buffer));
         }
     }
 

@@ -27,11 +27,11 @@ namespace webpp::uri {
         if constexpr (Options.parse_credentials) {
             // https://url.spec.whatwg.org/#dom-url-username
             // If this URL cannot have a username/password/port, then return.
-            if (cannot_have_a_username_password_port(ctx.out, ctx.status)) {
+            if (cannot_have_a_username_password_port(ctx.comps, ctx.status)) {
                 return;
             }
 
-            clear_username(ctx.out);
+            clear_username(ctx.comps);
             if (ctx.pos == ctx.end) {
                 return;
             }
@@ -41,7 +41,7 @@ namespace webpp::uri {
 
             auto user_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, user_buffer, details::USER_INFO_ENCODE_SET);
-            set_username(ctx.out, stl::move(user_buffer));
+            set_username(ctx.comps, stl::move(user_buffer));
         }
     }
 
@@ -57,11 +57,11 @@ namespace webpp::uri {
         if constexpr (Options.parse_credentials) {
             // https://url.spec.whatwg.org/#dom-url-password
             // If this URL cannot have a username/password/port, then return.
-            if (cannot_have_a_username_password_port(ctx.out, ctx.status)) {
+            if (cannot_have_a_username_password_port(ctx.comps, ctx.status)) {
                 return;
             }
 
-            clear_password(ctx.out);
+            clear_password(ctx.comps);
             if (ctx.pos == ctx.end) {
                 return;
             }
@@ -71,7 +71,7 @@ namespace webpp::uri {
 
             auto pass_buffer = create_buffer(ctx);
             encode_uri_component<encode_chars>(ctx.pos, ctx.end, pass_buffer, USER_INFO_ENCODE_SET);
-            set_password(ctx.out, stl::move(pass_buffer));
+            set_password(ctx.comps, stl::move(pass_buffer));
         }
     }
 

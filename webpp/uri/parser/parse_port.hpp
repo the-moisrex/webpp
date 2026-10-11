@@ -95,8 +95,8 @@ namespace webpp::uri {
         set(ctx.status, Options.state_override ? valid : valid_path_start);
 
         // it's unsigned, we don't need to check for it being lower than 0
-        if (port_value == known_port(scheme(ctx.out)) && port_value != 0) {
-            clear_port(ctx.out);
+        if (port_value == known_port(scheme(ctx.comps)) && port_value != 0) {
+            clear_port(ctx.comps);
             unset_flag(ctx.status, has_non_null_port);
             return;
         }
@@ -105,13 +105,13 @@ namespace webpp::uri {
 
         // set the port:
         if constexpr (PortNumberAssignable<typename CtxT::component_type>) {
-            set_port(ctx.out, static_cast<stl::uint16_t>(port_value));
+            set_port(ctx.comps, static_cast<stl::uint16_t>(port_value));
         } else {
             // ignoring the leading zeros
             while (beg < stl::prev(port_end) && *beg == '0') [[unlikely]] {
                 ++beg;
             }
-            set_port(ctx.out, create_buffer(ctx, beg, port_end)); // Use port_end here
+            set_port(ctx.comps, create_buffer(ctx, beg, port_end)); // Use port_end here
         }
         set_flag(ctx.status, has_non_null_port);
     }

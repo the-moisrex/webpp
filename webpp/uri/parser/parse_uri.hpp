@@ -151,7 +151,7 @@ namespace webpp::uri {
         if constexpr (Options.ignore_tabs_or_newlines) {
             if constexpr (CtxT::is_modifiable) {
                 using string_type = typename CtxT::component_type::string_type;
-                string_type sanitized{allocator_from(ctx.out)};
+                string_type sanitized{allocator_from(ctx.comps)};
                 if (!details::preprocess_whitespaces(ctx, sanitized)) {
                     // The sanitized buffer must outlive parsing, so parse before it goes out of scope.
                     details::continue_parsing_uri<Options>(ctx);
@@ -166,10 +166,10 @@ namespace webpp::uri {
                 }
             }
         }
-        if constexpr (!CtxT::is_modifiable && requires { ctx.out.uri_beg = ctx.beg; }) {
+        if constexpr (!CtxT::is_modifiable && requires { ctx.comps.uri_beg = ctx.beg; }) {
             // Relative offsets of view-only components are measured from the input start, and
             // white-space preprocessing may have trimmed `ctx.beg` before we got here.
-            ctx.out.uri_beg = ctx.beg;
+            ctx.comps.uri_beg = ctx.beg;
         }
         details::continue_parsing_uri<Options>(ctx);
     }
@@ -226,7 +226,7 @@ namespace webpp::uri {
         auto origin_context = create<uri_context<CompT>>(base_uri.data(), base_uri.data() + base_uri.size());
         parse_uri<Options>(origin_context);
 
-        return parse_uri<Options, CompT>(the_url, stl::move(origin_context.out), origin_context.status);
+        return parse_uri<Options, CompT>(the_url, stl::move(origin_context.comps), origin_context.status);
     }
 
 } // namespace webpp::uri

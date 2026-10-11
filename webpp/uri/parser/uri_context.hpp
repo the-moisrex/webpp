@@ -34,7 +34,7 @@ namespace webpp::uri {
         { ctx.beg } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
         { ctx.pos } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
         { ctx.end } -> stl::convertible_to<typename stl::remove_cvref_t<T>::iterator>;
-        { ctx.out } -> stl::convertible_to<typename stl::remove_cvref_t<T>::component_type>;
+        { ctx.comps } -> stl::convertible_to<typename stl::remove_cvref_t<T>::component_type>;
         ctx.status;
         requires requires {
             { ctx.base } -> stl::convertible_to<typename stl::remove_cvref_t<T>::base_type>;
@@ -83,10 +83,10 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_segregated = component_type::is_segregated;
 
-        iterator        beg{}; // the beginning of the string, not going to change during parsing
-        iterator        pos{}; // current position
-        iterator        end{}; // the end of the string
-        component_type  out{}; // the output uri components
+        iterator        beg{};   // the beginning of the string, not going to change during parsing
+        iterator        pos{};   // current position
+        iterator        end{};   // the end of the string
+        component_type  comps{}; // the parsed uri components
         base_type       base{};
         uri_status_type status      = +uri_status::unparsed;
         /// The status (including flags such as `opaque_path` and `has_non_null_host`) the base URL
@@ -109,10 +109,10 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = component_type::is_modifiable;
         static constexpr bool is_segregated = component_type::is_segregated;
 
-        iterator       beg{}; // the beginning of the string, not going to change during parsing
-        iterator       pos{}; // current position
-        iterator       end{}; // the end of the string
-        component_type out{}; // the output uri components
+        iterator       beg{};   // the beginning of the string, not going to change during parsing
+        iterator       pos{};   // current position
+        iterator       end{};   // the end of the string
+        component_type comps{}; // the parsed uri components
         [[no_unique_address]] istl::nothing_type base   = istl::nothing;
         uri_status_type                          status = +uri_status::unparsed;
     };
@@ -125,7 +125,7 @@ namespace webpp::uri {
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end),
+          .comps  = create(stl::type_identity<typename CtxT::component_type>{}, beg, end),
           .status = +uri_status::unparsed,
         };
         return ctx;
@@ -141,7 +141,7 @@ namespace webpp::uri {
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
+          .comps  = create(stl::type_identity<typename CtxT::component_type>{}, beg, end, inp_alloc),
           .status = +uri_status::unparsed,
         };
         return ctx;
@@ -150,13 +150,13 @@ namespace webpp::uri {
     /// Create a URI Context, and initialize it properly
     template <URIContext CtxT>
     static constexpr CtxT
-    create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::component_type&& out)
+    create(typename CtxT::iterator beg, typename CtxT::iterator end, typename CtxT::component_type&& comps)
       noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
           .end    = end,
-          .out    = stl::move(out),
+          .comps  = stl::move(comps),
           .status = +uri_status::unparsed,
         };
         return ctx;
@@ -176,7 +176,7 @@ namespace webpp::uri {
           .beg = beg,
           .pos = beg,
           .end = end,
-          .out =
+          .comps =
             [&] {
                 if constexpr (URIModifiableContext<CtxT>) {
                     return create(stl::type_identity<component_type>{}, beg, end, allocator_from(alloc_src));
@@ -194,14 +194,14 @@ namespace webpp::uri {
     template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto create_buffer(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
-        return seg_type{allocator_from(ctx.out)};
+        return seg_type{allocator_from(ctx.comps)};
     }
 
     template <URIModifiableContext CtxT>
     [[nodiscard]] static constexpr auto
     create_buffer(CtxT& ctx, typename CtxT::iterator beg, typename CtxT::iterator end) noexcept(CtxT::is_nothrow) {
         using seg_type = typename CtxT::seg_type;
-        return seg_type{beg, end, allocator_from(ctx.out)};
+        return seg_type{beg, end, allocator_from(ctx.comps)};
     }
 
     /// Create a new buffer (which can be used as a segment)

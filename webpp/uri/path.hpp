@@ -83,7 +83,7 @@ namespace webpp::uri {
 
     template <URIContext CtxT, typename StrT = stl::string>
     [[nodiscard]] static constexpr decltype(auto) render_path(CtxT const& ctx) {
-        return render_path(ctx.out, is_opaque(ctx.status));
+        return render_path(ctx.comps, is_opaque(ctx.status));
     }
 
     template <URIComponents CompT>

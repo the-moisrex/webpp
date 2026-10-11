@@ -57,7 +57,7 @@ namespace webpp::uri {
                 if constexpr (CtxT::is_modifiable) {
                     auto buffer = create_buffer(ctx);
                     pure_ipv4{ipv4_octets_data}.to_string(buffer);
-                    set_hostname(ctx.out, stl::move(buffer));
+                    set_hostname(ctx.comps, stl::move(buffer));
                     set_flag(ctx.status, has_non_null_host);
                 } else {
                     if (!pure_ipv4{ipv4_octets_data}.str_equal(pos, end)) [[unlikely]] {
@@ -65,7 +65,7 @@ namespace webpp::uri {
                         return false;
                     }
                     // Keep the input bytes: they already are the canonical form.
-                    set_hostname(ctx.out, segment{pos, end});
+                    set_hostname(ctx.comps, segment{pos, end});
                     set_flag(ctx.status, has_non_null_host);
                 }
                 return true;
@@ -212,7 +212,7 @@ namespace webpp::uri {
             break;
         }
         end_segment(ctx, buffer);
-        set_hostname(ctx.out, stl::move(buffer));
+        set_hostname(ctx.comps, stl::move(buffer));
         set_flag(ctx.status, has_non_null_host);
     }
 
@@ -287,7 +287,7 @@ namespace webpp::uri {
                     return;
                 }
 
-                set_hostname(ctx.out, stl::move(buffer));
+                set_hostname(ctx.comps, stl::move(buffer));
                 set_flag(ctx.status, has_non_null_host);
             } else {
                 // Only validate, no conversion:
@@ -304,7 +304,7 @@ namespace webpp::uri {
                     return;
                 }
 
-                set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                set_hostname(ctx.comps, segment{sbeg, ctx.pos});
                 set_flag(ctx.status, has_non_null_host);
             }
         }
@@ -412,7 +412,7 @@ namespace webpp::uri {
                     if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos)) {
                         return;
                     }
-                    set_hostname(ctx.out, segment{sbeg, ctx.pos});
+                    set_hostname(ctx.comps, segment{sbeg, ctx.pos});
                     set_flag(ctx.status, has_non_null_host);
                     return;
                 [[unlikely]] case +forb_val:
@@ -450,7 +450,7 @@ namespace webpp::uri {
         }
 
         if (ctx.pos == ctx.end) [[unlikely]] {
-            clear_hostname(ctx.out);
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
             set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
@@ -465,8 +465,8 @@ namespace webpp::uri {
         //   - Set url's host to the empty string.
         //   - If state override is given, then return.
         //   - Set state to path start state.
-        if (!has_hostname(ctx.out)) [[unlikely]] {
-            clear_hostname(ctx.out);
+        if (!has_hostname(ctx.comps)) [[unlikely]] {
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
             set(ctx.status, Options.state_override ? valid : valid_path_start);
             return;
@@ -481,8 +481,8 @@ namespace webpp::uri {
         // If host is "localhost", then set host to the empty string.
         // Empty string != null
         // The EOF and empty-host cases are already handled by the early returns above.
-        if (is_localhost_string(hostname(ctx.out))) {
-            clear_hostname(ctx.out);
+        if (is_localhost_string(hostname(ctx.comps))) {
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
         }
         // if constexpr (Options.handle_windows_drive_letters && !Options.state_override) {
@@ -528,7 +528,7 @@ namespace webpp::uri {
             case ':':
 
                 // If buffer is the empty string, host-missing validation error, return failure.
-                if (!has_hostname(ctx.out)) [[unlikely]] {
+                if (!has_hostname(ctx.comps)) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -556,7 +556,7 @@ namespace webpp::uri {
             case '#':
             case '\0':
                 // If url is special and buffer is the empty string, host-missing validation error, return failure.
-                if (is_special_scheme(ctx.status) && !has_hostname(ctx.out)) [[unlikely]] {
+                if (is_special_scheme(ctx.status) && !has_hostname(ctx.comps)) [[unlikely]] {
                     set(ctx.status, host_missing);
                     return;
                 }
@@ -564,8 +564,8 @@ namespace webpp::uri {
                 // Otherwise, if state override is given, buffer is the empty string, and either url includes
                 // credentials or url’s port is non-null, then return failure.
                 if constexpr (Options.state_override) {
-                    if (!has_hostname(ctx.out) &&
-                        (has_credentials(ctx.out) || has_flags(ctx.status, has_non_null_port))) [[unlikely]]
+                    if (!has_hostname(ctx.comps) &&
+                        (has_credentials(ctx.comps) || has_flags(ctx.status, has_non_null_port))) [[unlikely]]
                     {
                         set(ctx.status, host_missing);
                         return;

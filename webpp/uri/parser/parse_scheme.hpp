@@ -41,9 +41,9 @@ namespace webpp::uri {
         constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
           noexcept(CtxT::is_nothrow) {
             if constexpr (CtxT::is_modifiable) {
-                set_scheme(ctx.out, create_buffer(ctx, scheme.begin(), scheme.end()));
+                set_scheme(ctx.comps, create_buffer(ctx, scheme.begin(), scheme.end()));
             } else {
-                set_scheme(ctx.out, create_buffer(ctx, ctx.beg, ctx.pos));
+                set_scheme(ctx.comps, create_buffer(ctx, ctx.beg, ctx.pos));
             }
         }
 
@@ -56,11 +56,11 @@ namespace webpp::uri {
         template <URIContext CtxT>
         constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             if constexpr (!CtxT::is_modifiable) {
-                set_scheme(ctx.out, create_buffer(ctx, ctx.beg, ctx.pos));
+                set_scheme(ctx.comps, create_buffer(ctx, ctx.beg, ctx.pos));
             } else {
                 auto out_str = create_buffer(ctx);
                 ascii::lower_to(out_str, ctx.beg, ctx.pos);
-                set_scheme(ctx.out, stl::move(out_str));
+                set_scheme(ctx.comps, stl::move(out_str));
             }
         }
 
@@ -124,10 +124,10 @@ namespace webpp::uri {
             using enum uri_status;
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-                set_username(ctx.out, base_component_buffer(ctx, username(ctx.base)));
-                set_password(ctx.out, base_component_buffer(ctx, password(ctx.base)));
-                set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
-                set_port(ctx.out, base_component_buffer(ctx, port(ctx.base)));
+                set_username(ctx.comps, base_component_buffer(ctx, username(ctx.base)));
+                set_password(ctx.comps, base_component_buffer(ctx, password(ctx.base)));
+                set_hostname(ctx.comps, base_component_buffer(ctx, hostname(ctx.base)));
+                set_port(ctx.comps, base_component_buffer(ctx, port(ctx.base)));
                 if (base_has_non_null_host(ctx)) {
                     set_flag(ctx.status, has_non_null_host);
                 }
@@ -144,9 +144,9 @@ namespace webpp::uri {
 
             if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
                 set_path(
-                  ctx.out,
+                  ctx.comps,
                   base_component_buffer(ctx, path_view(ctx.base))); // todo: https://infra.spec.whatwg.org/#list-clone
-                set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
+                set_queries(ctx.comps, base_component_buffer(ctx, queries_view(ctx.base)));
                 if (base_has_non_null_queries(ctx)) {
                     set_flag(ctx.status, has_non_null_queries);
                 }
@@ -224,7 +224,7 @@ namespace webpp::uri {
 
                 // Set url’s scheme to base’s scheme.
                 auto const base_scheme = scheme(ctx.base);
-                set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
+                set_scheme(ctx.comps, base_component_buffer(ctx, base_scheme));
 
                 // Whether a URL is special depends solely on its scheme; since this parser keeps that
                 // information in the status flags, the flags must follow the copied scheme too.
@@ -259,7 +259,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '?':
                     // If c is U+003F (?), then set url’s query to the empty string, and state to query state.
-                    clear_queries(ctx.out);
+                    clear_queries(ctx.comps);
                     set_flag(ctx.status, has_non_null_queries);
                     set(ctx.status, valid_queries);
                     ++ctx.pos;
@@ -267,7 +267,7 @@ namespace webpp::uri {
                 case '#':
                     // Otherwise, if c is U+0023 (#), set url’s fragment to the empty string and state to fragment
                     // state.
-                    clear_fragment(ctx.out);
+                    clear_fragment(ctx.comps);
                     set_flag(ctx.status, has_non_null_fragment);
                     set(ctx.status, valid_fragment);
                     ++ctx.pos;
@@ -278,9 +278,9 @@ namespace webpp::uri {
             //   - Set url’s query to null.
             //   - Shorten url’s path.
             //   - Set state to path state and decrease pointer by 1.
-            clear_queries(ctx.out);
+            clear_queries(ctx.comps);
             unset_flag(ctx.status, has_non_null_queries);
-            details::shorten_urls_path(ctx, uri::path(ctx.out));
+            details::shorten_urls_path(ctx, uri::path(ctx.comps));
             set(ctx.status, valid_path);
         }
 
@@ -306,10 +306,10 @@ namespace webpp::uri {
                     if (refuse_base_copy(ctx)) [[unlikely]] {
                         return;
                     }
-                    set_scheme(ctx.out, base_component_buffer(ctx, scheme(ctx.base)));
+                    set_scheme(ctx.comps, base_component_buffer(ctx, scheme(ctx.base)));
 
                     // File slash state, step 2.1: set url's host to base's host.
-                    set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
+                    set_hostname(ctx.comps, base_component_buffer(ctx, hostname(ctx.base)));
                     set_flag(ctx.status, has_non_null_host);
 
                     if constexpr (Options.handle_windows_drive_letters) {
@@ -327,9 +327,9 @@ namespace webpp::uri {
                                 if constexpr (CtxT::is_modifiable) {
                                     if constexpr (!CtxT::is_segregated) {
                                         // Continuous paths are stored with a leading slash; the path is empty here.
-                                        uri::path(ctx.out).push_back('/');
+                                        uri::path(ctx.comps).push_back('/');
                                     }
-                                    push_segment(uri::path(ctx.out), first_seg);
+                                    push_segment(uri::path(ctx.comps), first_seg);
                                 }
                             }
                         }
@@ -354,7 +354,7 @@ namespace webpp::uri {
 
             // Set url’s host to the empty string.
             // Empty string != null
-            clear_hostname(ctx.out);
+            clear_hostname(ctx.comps);
             set_flag(ctx.status, has_non_null_host);
 
             if (ctx.pos != ctx.end) {
@@ -377,14 +377,14 @@ namespace webpp::uri {
                     }
                     // Set url’s host to base’s host, url’s path to a clone of base’s path,
                     // and url’s query to base’s query.
-                    set_hostname(ctx.out, base_component_buffer(ctx, hostname(ctx.base)));
-                    set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base))); // list clone
+                    set_hostname(ctx.comps, base_component_buffer(ctx, hostname(ctx.base)));
+                    set_path(ctx.comps, base_component_buffer(ctx, path_view(ctx.base))); // list clone
                     set_flag(ctx.status, file_scheme);
-                    set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
+                    set_queries(ctx.comps, base_component_buffer(ctx, queries_view(ctx.base)));
                     if (has_hostname(ctx.base)) {
                         set_flag(ctx.status, has_non_null_host);
                     }
-                    if (has_queries(ctx.out)) {
+                    if (has_queries(ctx.comps)) {
                         set_flag(ctx.status, has_non_null_queries);
                     }
 
@@ -400,13 +400,13 @@ namespace webpp::uri {
                     // state.
                     switch (*ctx.pos) {
                         case '?':
-                            clear_queries(ctx.out);
+                            clear_queries(ctx.comps);
                             unset_flag(ctx.status, has_non_null_queries);
                             set(ctx.status, valid_queries);
                             ++ctx.pos;
                             return;
                         case '#':
-                            clear_fragment(ctx.out);
+                            clear_fragment(ctx.comps);
                             set(ctx.status, valid_fragment);
                             ++ctx.pos;
                             return;
@@ -414,7 +414,7 @@ namespace webpp::uri {
                     }
 
                     // Otherwise, if c is not the EOF code point: Set url’s query to null.
-                    clear_queries(ctx.out);
+                    clear_queries(ctx.comps);
                     unset_flag(ctx.status, has_non_null_queries);
 
                     // If the code point substring from pointer to the end of input does not start
@@ -424,12 +424,12 @@ namespace webpp::uri {
                     if constexpr (Options.handle_windows_drive_letters) {
                         if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) [[unlikely]] {
                             set_warning(ctx.status, windows_drive_letter_in_relative_url);
-                            clear_path(ctx.out);
+                            clear_path(ctx.comps);
                         } else {
-                            details::shorten_urls_path(ctx, uri::path(ctx.out));
+                            details::shorten_urls_path(ctx, uri::path(ctx.comps));
                         }
                     } else {
-                        details::shorten_urls_path(ctx, uri::path(ctx.out));
+                        details::shorten_urls_path(ctx, uri::path(ctx.comps));
                     }
 
                     // Set state to path state and decrease pointer by 1.
@@ -463,14 +463,14 @@ namespace webpp::uri {
                         // Otherwise, if base has an opaque path and c is U+0023 (#), set url’s scheme to base’s scheme,
                         // url’s path to base’s path, url’s query to base’s query, url’s fragment to the empty string,
                         // and set state to fragment state.
-                        set_scheme(ctx.out, base_component_buffer(ctx, base_scheme));
-                        set_path(ctx.out, base_component_buffer(ctx, path_view(ctx.base)));
+                        set_scheme(ctx.comps, base_component_buffer(ctx, base_scheme));
+                        set_path(ctx.comps, base_component_buffer(ctx, path_view(ctx.base)));
                         set_flag(ctx.status, opaque_path);
-                        set_queries(ctx.out, base_component_buffer(ctx, queries_view(ctx.base)));
+                        set_queries(ctx.comps, base_component_buffer(ctx, queries_view(ctx.base)));
                         if (base_has_non_null_queries(ctx)) {
                             set_flag(ctx.status, has_non_null_queries);
                         }
-                        clear_fragment(ctx.out);
+                        clear_fragment(ctx.comps);
                         set(ctx.status, valid_fragment);
                         ++ctx.pos;
                         return;
@@ -555,7 +555,7 @@ namespace webpp::uri {
             //
             // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
             if constexpr (!Options.state_override) {
-                clear_scheme(ctx.out);
+                clear_scheme(ctx.comps);
                 details::no_scheme_state<Options>(ctx);
             } else {
                 // otherwise, return failure
@@ -575,7 +575,7 @@ namespace webpp::uri {
         for (;; ++ctx.pos) {
             if (ctx.pos == ctx.end) [[unlikely]] {
                 if constexpr (!Options.state_override) {
-                    clear_scheme(ctx.out);
+                    clear_scheme(ctx.comps);
                     ctx.pos = ctx.beg;
                     details::no_scheme_state<Options>(ctx);
                 } else {
@@ -588,7 +588,7 @@ namespace webpp::uri {
             }
             if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
                 if constexpr (!Options.state_override) {
-                    clear_scheme(ctx.out);
+                    clear_scheme(ctx.comps);
                     ctx.pos = ctx.beg;
                     details::no_scheme_state<Options>(ctx);
                 } else {
@@ -606,7 +606,7 @@ namespace webpp::uri {
         }
 
         // If url’s scheme is "file" and its host is an empty host, then return.
-        if (Options.state_override && is_file_scheme(ctx.status) && has_hostname(ctx.out)) [[unlikely]] {
+        if (Options.state_override && is_file_scheme(ctx.status) && has_hostname(ctx.comps)) [[unlikely]] {
             return;
         }
 
@@ -666,7 +666,7 @@ namespace webpp::uri {
                 }
 
                 // Otherwise, set url’s path to the empty string and set state to opaque path state.
-                clear_path(ctx.out);
+                clear_path(ctx.comps);
                 set(ctx.status, valid_opaque_path);
                 return;
             }
@@ -677,7 +677,7 @@ namespace webpp::uri {
 
         // Otherwise, if url is special, base is non-null, and base’s scheme is url’s scheme:
         if constexpr (!stl::is_void_v<typename CtxT::base_type>) {
-            if (scheme(ctx.out) == scheme(ctx.base)) {
+            if (scheme(ctx.comps) == scheme(ctx.base)) {
                 // todo: Assert: base is special (and therefore does not have an opaque path).
                 details::special_relative_or_authority_state(ctx);
                 return;
