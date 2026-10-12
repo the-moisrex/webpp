@@ -25,6 +25,13 @@ namespace {
             }
         });
 
+        add_all("full_parse", "webpp", "u32_view_standard", inputs::full_parse, [](State& state, auto const& item) {
+            for (auto _ : state) {
+                auto ctx = webpp_side::full_parse_u32_view<webpp_side::standard_opts>(item.value);
+                benchmark::DoNotOptimize(ctx);
+            }
+        });
+
         add_all("full_parse", "webpp", "owning_strict", inputs::full_parse, [](State& state, auto const& item) {
             for (auto _ : state) {
                 auto ctx = webpp_side::full_parse_owning<webpp_side::strict_opts>(item.value);

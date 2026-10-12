@@ -74,9 +74,8 @@ suite flags:
 ## What is measured
 
 - `full_parse` — whole-URL parse + href accessors: webpp `owning_standard`,
-  `owning_strict`, `owning_loose`, `structured_standard` vs ada `url` and
-  `url_aggregator`. webpp's `u32_view` config is excluded: it does not compile at
-  current HEAD (the tests have it commented out for the same reason).
+  `owning_strict`, `owning_loose`, `structured_standard`, `u32_view_standard` vs
+  ada `url` and `url_aggregator`.
 - `scheme`, `host`, `path`, `query`, `fragment`, `port`, `credentials`, `ipv4`,
   `ipv6` — per-piece rows: direct piece parser (webpp only) and the public setter
   (both sides).

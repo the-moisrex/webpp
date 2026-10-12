@@ -56,6 +56,11 @@ namespace bench::webpp_side {
         return ctx;
     }
 
+    template <uri::uri_options Opts>
+    auto full_parse_u32_view(std::string_view const input) {
+        return uri::parse_uri<Opts, uri::uri_components_u32_view<>>(input);
+    }
+
     // ---- piece parsers (fresh context per call) ----
 
     inline auto scheme_piece(std::string_view const input) {
