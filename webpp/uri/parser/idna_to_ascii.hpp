@@ -55,18 +55,20 @@ namespace webpp::uri::idna {
             return options;
         };
 
-        // Web++ strict options stand in for the spec's beStrict flag; URL parsing itself always uses
-        // beStrict=false (https://url.spec.whatwg.org/#concept-domain-to-ascii).
-        constexpr bool strict_options = Options.use_std3_ascii_rules || Options.verify_dns_length;
-
-        if (!strict_options && unicode::is_ascii(spos, send)) {
+        // An ASCII domain is returned lowercased regardless of Unicode ToASCII's outcome (web
+        // compatibility), except when UseSTD3ASCIIRules needs the checks that reject non-STD3
+        // characters (https://url.spec.whatwg.org/#concept-domain-parser).
+        // The DNS length restrictions (uri_options::verify_dns_length) do not apply here either: the
+        // spec maps them to beStrict, which the URL parser never uses, and it explicitly accepts a
+        // trailing dot and the other empty/oversized labels that UTS #46's VerifyDnsLength rejects.
+        if (!Options.use_std3_ascii_rules && unicode::is_ascii(spos, send)) {
             // If domain is an ASCII string, set result to domain, lowercased: when beStrict is false this
             // happens regardless of Unicode ToASCII's outcome (web compatibility).
             assert(!istl::is_inside_buffer(spos, out));
             using out_char_type = istl::char_type_of_t<StrT>;
             out.clear();
-            for (; spos != send; ++spos) {
-                out.push_back(ascii::to_lower_copy(static_cast<out_char_type>(*spos)));
+            for (auto pos = spos; pos != send; ++pos) {
+                out.push_back(ascii::to_lower_copy(static_cast<out_char_type>(*pos)));
             }
         } else {
             auto const status = unicode::idna::to_ascii<to_ascii_options()>(spos, send, out);
@@ -110,14 +112,14 @@ namespace webpp::uri::idna {
             return options;
         };
 
-        auto const status = unicode::idna::validate_domain<to_ascii_options()>(spos, send);
-
-        if constexpr (!be_strict) {
-            // Web++ strict options stand in for the spec's beStrict flag (same gate as domain_to_ascii).
-            constexpr bool strict_options = Options.use_std3_ascii_rules || Options.verify_dns_length;
-
+        // An ASCII domain is accepted as-is (result = domain, lowercased), regardless of Unicode
+        // ToASCII's outcome; only the checks below apply. The same applies to the DNS length
+        // restrictions (uri_options::verify_dns_length): the spec maps them to beStrict, which the
+        // URL parser never uses.
+        // https://url.spec.whatwg.org/#concept-domain-parser
+        if (!Options.use_std3_ascii_rules && unicode::is_ascii(spos, send)) {
             // If result is the empty string, domain-to-ASCII validation error, return failure.
-            if (spos == send && !strict_options) {
+            if (spos == send) [[unlikely]] {
                 return domain_to_ascii_error;
             }
 
@@ -129,12 +131,19 @@ namespace webpp::uri::idna {
                 }
             }
 
-            // An ASCII domain under non-strict options is accepted as-is (result = domain, lowercased),
-            // regardless of Unicode ToASCII's outcome; only the checks above apply.
-            if (!strict_options && unicode::is_ascii(spos, send)) {
-                return valid;
+            return valid;
+        }
+
+        auto const status = unicode::idna::validate_domain<to_ascii_options()>(spos, send);
+
+        // If result contains a forbidden domain code point, domain-invalid-code-point validation error,
+        // return failure.
+        for (auto it = spos; it != send; ++it) {
+            if (details::FORBIDDEN_DOMAIN_CODE_POINTS.contains(*it)) [[unlikely]] {
+                return invalid_domain_code_point;
             }
         }
+
         return unicode::idna::is_valid(status) ? valid : domain_to_ascii_error;
     }
 

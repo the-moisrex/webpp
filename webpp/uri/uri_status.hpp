@@ -87,6 +87,13 @@ namespace webpp::uri {
 
         /// The length of the domain name, excluding the root label and its dot, is from 1 to 253, but
         /// we don't verify that in WHATWG because it's a DNS limitation, not a URI limitation.
+        ///
+        /// The URI Standard's host parser always calls the domain parser with beStrict=false, so this
+        /// option (a stand-in for that flag) does not apply to ASCII domains: they are lowercased
+        /// regardless of Unicode ToASCII's outcome, and the root label, empty labels, and oversized
+        /// labels are all accepted. It is verified where Unicode ToASCII actually runs, i.e. domains
+        /// that are not ASCII, or ASCII domains when use_std3_ascii_rules is enabled.
+        /// https://url.spec.whatwg.org/#concept-domain-parser
         bool verify_dns_length = false;
 
         /// This will prevent parsing the next state of the parser

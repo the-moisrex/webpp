@@ -1268,6 +1268,47 @@ TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
     }
 }
 
+// A trailing dot is valid: the domain parser lowercases an ASCII domain and returns it as-is, and
+// the "ends in a number" checker only strips the single empty trailing part.
+// The ipv4_trailing_empty_octet warning is pre-existing behavior of the ends-in-a-number check.
+// https://url.spec.whatwg.org/#concept-domain-parser
+TYPED_TEST(URITests, TrailingDotHost) {
+    constexpr stl::string_view str = "https://example.com./";
+
+    auto standard_context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::standard_uri_parsing_options>(standard_context);
+    EXPECT_TRUE(uri::is_valid(standard_context.status))
+      << str << "\n"
+      << to_string(uri::get_value(standard_context.status));
+    EXPECT_EQ(uri::hostname(standard_context.comps), "example.com.") << str;
+
+    auto strict_context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::strict_uri_parsing_options>(strict_context);
+    EXPECT_TRUE(uri::is_valid(strict_context.status))
+      << str << "\n"
+      << to_string(uri::get_value(strict_context.status));
+    EXPECT_EQ(uri::hostname(strict_context.comps), "example.com.") << str;
+
+    auto loose_context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::loose_uri_parsing_options>(loose_context);
+    EXPECT_TRUE(uri::is_valid(loose_context.status)) << str << "\n" << to_string(uri::get_value(loose_context.status));
+    EXPECT_EQ(uri::hostname(loose_context.comps), "example.com.") << str;
+}
+
+// An empty label anywhere in an ASCII host is accepted: the URL Standard's domain parser lowercases
+// an ASCII domain without running ToASCII, so neither the trailing root label nor any other empty
+// label is an error. The same applies to uri_options::verify_dns_length, which the spec maps to
+// beStrict (never used by the URL parser).
+// https://url.spec.whatwg.org/#concept-domain-parser
+TYPED_TEST(URITests, TrailingDotHostWithEmptyLabels) {
+    constexpr stl::string_view str = "https://example..com./";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::strict_uri_parsing_options>(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::hostname(context.comps), "example..com.") << str;
+}
+
 TYPED_TEST(URITests, IPv4EndingWithX) {
     constexpr stl::string_view str = "https://127.0.0.0x/";
 

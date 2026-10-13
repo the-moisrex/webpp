@@ -379,6 +379,10 @@ namespace webpp::uri {
                     case ':':
                         // in file-host-state we don't use `:` as a special character
                         if (is_file_scheme(ctx.status)) {
+                            // The colons are part of the host here, and a colon is a forbidden domain
+                            // code point, so the host cannot be used as-is: mark it as forbidden to
+                            // keep it on the slow path, where the domain parser rejects it.
+                            status |= +forb_val;
                             // pretend `:` is not an special character
                             while (ctx.pos != ctx.end && *ctx.pos == ':') {
                                 ++ctx.pos;
@@ -400,37 +404,38 @@ namespace webpp::uri {
             }
 
             status &= static_cast<stl::uint8_t>(~+special_chars);
-            switch (status) {
-                case +upper_val:
-                    // todo: does a simple to_lower would suffice?
-                    break;
-                case +x_val:
-                case +n_val:
-                case +no_ip_val:
-                case 0: // possible IPv4
-                    // If percent-encoding was found, go to the slow path for proper handling
-                    if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
-                        break;
-                    }
-                    if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
-                        return;
-                    }
-                    set_hostname(ctx.comps, segment{sbeg, ctx.pos});
-                    set_flag(ctx.status, has_non_null_host);
-                    return;
-                [[unlikely]] case +forb_val:
-                    break; // forbidden code points
-                [[unlikely]] default:
 
-                    // 'x', 'n' and '-' were found
-                    // if ((status | +xnd_val) == status && details::starts_with(sbeg, ctx.pos,
-                    // stl::string_view{"xn-"})) {
-                    //     // if it starts with `xn-`, then we go the slow path
-                    //     break;
-                    // }
-                    break;
+            // Categories that already make a valid hostname: lower-case ASCII letters, digits, dots,
+            // hyphens, "x"/"n", and any character that is not valid in an IPv4/IPv6 address.
+            // The `special_chars` category is masked out above, so everything else left needs the
+            // slow path:
+            //   - +upper_val: upper-case ASCII letters, which must be lowercased first;
+            //   - +forb_val:  forbidden host/domain code points and non-ASCII code units, which the
+            //                 domain parser has to reject or punycode-encode (its value covers the
+            //                 +upper_val bit, so a single test is enough for both).
+            // The domain parser lowercases an ASCII domain and returns it as-is, without running
+            // ToASCII, so such hosts need neither the IDNA pipeline nor the temporary buffer.
+            // https://url.spec.whatwg.org/#concept-domain-parser
+            constexpr auto hostname_as_is = static_cast<stl::uint8_t>(+x_val | +n_val | +dash_val | +no_ip_val);
+            if ((status & static_cast<stl::uint8_t>(~hostname_as_is)) != 0) [[unlikely]] {
+                break;
             }
-            break;
+
+            // If percent-encoding was found, go to the slow path for proper handling
+            if (has_warning(ctx.status, domain_percent_encoded)) [[unlikely]] {
+                break;
+            }
+
+            // Possible IPv4 (or a host ending in a number); verify_possible_ipv4 sets the hostname
+            // itself when the host turns out to be an IPv4 address.
+            if (details::verify_possible_ipv4<Options>(ctx, sbeg, ctx.pos) || has_error(ctx.status)) {
+                return;
+            }
+
+            // A plain domain: the input is already the lowercased hostname.
+            set_hostname(ctx.comps, segment{sbeg, ctx.pos});
+            set_flag(ctx.status, has_non_null_host);
+            return;
         }
 
         details::host_parser_slow_path<Options>(ctx, sbeg, buffer);
