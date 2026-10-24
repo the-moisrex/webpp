@@ -170,9 +170,9 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using details::C0_CONTROL_ENCODE_SET;
+        using details::copy_percent_encoded;
         using details::encode_or_validate;
         using details::invalid_host_chars;
-        using details::next_percent_encode;
 
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, C0_CONTROL_ENCODE_SET, invalid_host_chars)) {
@@ -183,7 +183,7 @@ namespace webpp::uri {
                 // host/port boundary; leave the colon in place so that parse_host can switch to port state
                 case ':': break;
                 case '%':
-                    if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                    if (!copy_percent_encoded(ctx, buffer)) [[unlikely]] {
                         set_warning(ctx.status, invalid_character);
                     }
                     continue;

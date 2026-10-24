@@ -147,7 +147,7 @@ namespace webpp::uri {
         static constexpr seg_type omitted              = stl::numeric_limits<seg_type>::max();
         static constexpr auto     max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
         static constexpr bool     is_nothrow           = true;
-        static constexpr bool     is_modifiable        = false;
+        static constexpr bool     is_modifiable        = true;
         static constexpr bool     is_segregated        = false;
 
         // Source:
@@ -297,13 +297,11 @@ namespace webpp::uri {
      */
     template <istl::CharType CharT = char, Allocator AllocT = default_allocator_t<CharT>>
     struct [[nodiscard]] uri_components_structured {
-      private:
-        using allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
-
       public:
-        using char_type   = CharT;
-        using string_type = stl::basic_string<char_type, stl::char_traits<CharT>, allocator_type>;
-        using size_type   = typename string_type::size_type;
+        using allocator_type = typename stl::allocator_traits<AllocT>::template rebind_alloc<CharT>;
+        using char_type      = CharT;
+        using string_type    = stl::basic_string<char_type, stl::char_traits<CharT>, allocator_type>;
+        using size_type      = typename string_type::size_type;
         using vec_type =
           stl::vector<string_type, typename stl::allocator_traits<AllocT>::template rebind_alloc<string_type>>;
 
@@ -369,44 +367,52 @@ namespace webpp::uri {
     /// Build owning-style components (every member is a string); the other component shapes have
     /// their own overloads and would not make it through this one's allocator-taking signature.
     template <URIOwningComponents CompT>
+        requires can_get_allocator<CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
-      [[maybe_unused]] comp_iter<CompT>         beg,
-      [[maybe_unused]] comp_iter<CompT>         end,
-      [[maybe_unused]] allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
+      [[maybe_unused]] comp_iter<CompT>           beg,
+      [[maybe_unused]] comp_iter<CompT>           end,
+      [[maybe_unused]] string_allocator_of<CompT> alloc) noexcept(CompT::is_nothrow) {
         using seg_type   = typename CompT::seg_type;
-        using alloc_type = allocator_type_of<CompT>;
-        if constexpr (requires { typename CompT::allocator_type; } || stl::constructible_from<seg_type, alloc_type>) {
-            return CompT{
-              .scheme   = seg_type{alloc},
-              .username = seg_type{alloc},
-              .password = seg_type{alloc},
-              .hostname = seg_type{alloc},
-              .port     = seg_type{alloc},
-              .path     = seg_type{alloc},
-              .queries  = seg_type{alloc},
-              .fragment = seg_type{alloc},
-            };
-        } else {
-            return CompT{
-              .scheme   = seg_type{},
-              .username = seg_type{},
-              .password = seg_type{},
-              .hostname = seg_type{},
-              .port     = seg_type{},
-              .path     = seg_type{},
-              .queries  = seg_type{},
-              .fragment = seg_type{},
-            };
-        }
+        using alloc_type = string_allocator_of<CompT>;
+        static_assert(
+          requires { typename CompT::allocator_type; } || stl::constructible_from<seg_type, alloc_type>,
+          "Must support allocator");
+        return CompT{
+          .scheme   = seg_type{alloc},
+          .username = seg_type{alloc},
+          .password = seg_type{alloc},
+          .hostname = seg_type{alloc},
+          .port     = seg_type{alloc},
+          .path     = seg_type{alloc},
+          .queries  = seg_type{alloc},
+          .fragment = seg_type{alloc},
+        };
+    }
+
+    template <URIOwningComponents CompT>
+    static constexpr CompT
+    create(stl::type_identity<CompT>, [[maybe_unused]] comp_iter<CompT> beg, [[maybe_unused]] comp_iter<CompT> end)
+      noexcept(CompT::is_nothrow) {
+        using seg_type = typename CompT::seg_type;
+        return CompT{
+          .scheme   = seg_type{},
+          .username = seg_type{},
+          .password = seg_type{},
+          .hostname = seg_type{},
+          .port     = seg_type{},
+          .path     = seg_type{},
+          .queries  = seg_type{},
+          .fragment = seg_type{},
+        };
     }
 
     template <URIStructuredComponents CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
-      [[maybe_unused]] comp_iter<CompT>         beg,
-      [[maybe_unused]] comp_iter<CompT>         end,
-      [[maybe_unused]] allocator_type_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
+      [[maybe_unused]] comp_iter<CompT>           beg,
+      [[maybe_unused]] comp_iter<CompT>           end,
+      [[maybe_unused]] string_allocator_of<CompT> alloc = {}) noexcept(CompT::is_nothrow) {
         using seg_type = typename CompT::seg_type;
         using vec_type = typename CompT::vec_type;
         using map_type = typename CompT::map_type;
@@ -435,22 +441,28 @@ namespace webpp::uri {
     template <URIHrefComponents CompT>
     static constexpr CompT create(
       stl::type_identity<CompT>,
-      [[maybe_unused]] comp_iter<CompT> beg,
-      [[maybe_unused]] comp_iter<CompT> end,
-      allocator_type_of<CompT>          alloc = {}) noexcept {
+      [[maybe_unused]] comp_iter<CompT>           beg,
+      [[maybe_unused]] comp_iter<CompT>           end,
+      [[maybe_unused]] string_allocator_of<CompT> alloc = {}) noexcept {
         using component_type = CompT;
         using string_type    = typename component_type::string_type;
         return {.href = string_type{alloc}};
     }
 
+    /// The allocator that the components' strings are using; only defined for components that have one
     template <URIComponents CompT>
+        requires(
+          requires(CompT const& comps) {
+              { comps.href.get_allocator() } -> Allocator;
+          } ||
+          requires(CompT const& comps) {
+              { comps.scheme.get_allocator() } -> Allocator;
+          })
     [[nodiscard]] static constexpr decltype(auto) get_allocator(CompT const& comps) noexcept {
         if constexpr (requires { comps.href.get_allocator(); }) {
             return comps.href.get_allocator();
-        } else if constexpr (requires { comps.scheme.get_allocator(); }) {
-            return comps.scheme.get_allocator();
         } else {
-            static_assert_false(CompT, "This component don't have allocator");
+            return comps.scheme.get_allocator();
         }
     }
 

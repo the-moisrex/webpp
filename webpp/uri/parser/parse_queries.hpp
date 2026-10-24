@@ -25,8 +25,8 @@ namespace webpp::uri {
         using enum uri_status;
         using enum uri_encoding_policy;
         using details::ascii_bitmap;
+        using details::copy_percent_encoded;
         using details::encode_or_validate;
-        using details::next_percent_encode;
         using details::skip_separator;
 
         if (ctx.pos == ctx.end) {
@@ -77,7 +77,7 @@ namespace webpp::uri {
                     }
                     break;
                 case '%':
-                    if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                    if (!copy_percent_encoded(ctx, buffer)) [[unlikely]] {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {
@@ -128,8 +128,8 @@ namespace webpp::uri {
         using enum uri_status;
         using enum uri_encoding_policy;
         using details::ascii_bitmap;
+        using details::copy_percent_encoded;
         using details::encode_or_validate;
-        using details::next_percent_encode;
         using details::skip_separator;
 
         if (ctx.pos == ctx.end) {
@@ -170,7 +170,7 @@ namespace webpp::uri {
                         stl::unreachable();
                     }
                 case '%':
-                    if (!next_percent_encode(ctx, !in_value ? key_buffer : value_buffer)) [[unlikely]] {
+                    if (!copy_percent_encoded(ctx, !in_value ? key_buffer : value_buffer)) [[unlikely]] {
                         if constexpr (Options.allow_invalid_characters) {
                             set_warning(ctx.status, invalid_character);
                         } else {

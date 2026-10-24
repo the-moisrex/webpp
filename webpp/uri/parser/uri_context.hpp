@@ -134,9 +134,9 @@ namespace webpp::uri {
     /// Create a URI Context, and initialize it properly
     template <URIModifiableContext CtxT>
     static constexpr CtxT create(
-      typename CtxT::iterator                                 beg,
-      typename CtxT::iterator                                 end,
-      allocator_type_of<typename CtxT::component_type> const& inp_alloc = alloc) noexcept(CtxT::is_nothrow) {
+      typename CtxT::iterator                                   beg,
+      typename CtxT::iterator                                   end,
+      string_allocator_of<typename CtxT::component_type> const& inp_alloc = alloc) noexcept(CtxT::is_nothrow) {
         CtxT ctx{
           .beg    = beg,
           .pos    = beg,
@@ -542,9 +542,10 @@ namespace webpp::uri::details {
         }
     }
 
-    /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
+    /// Check if the next 2 characters are valid percent encoded ascii-hex digits, and copy them to the
+    /// output as-is (percent-encoding is preserved, not decoded).
     template <URIContext CtxT, typename OutT>
-    [[nodiscard]] static constexpr bool next_percent_encode(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
+    [[nodiscard]] static constexpr bool copy_percent_encoded(CtxT& ctx, OutT& out) noexcept(CtxT::is_nothrow) {
         using ascii::is_hex_digit;
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)

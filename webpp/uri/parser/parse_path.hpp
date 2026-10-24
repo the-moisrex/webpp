@@ -326,8 +326,8 @@ namespace webpp::uri {
         using enum uri_status;
         using details::ascii_bitmap;
         using enum details::opaque_cp_type;
+        using details::copy_percent_encoded;
         using details::encode_or_validate;
-        using details::next_percent_encode;
         using details::opaque_interesting_chars;
 
         set_flag(ctx.status, opaque_path);
@@ -386,7 +386,7 @@ namespace webpp::uri {
                     switch (*ctx.pos) {
                         case '%':
                             if constexpr (CtxT::is_modifiable) {
-                                if (!next_percent_encode(ctx, buffer)) [[unlikely]] {
+                                if (!copy_percent_encoded(ctx, buffer)) [[unlikely]] {
                                     set_warning(ctx.status, invalid_character);
                                 }
                             } else {
@@ -491,7 +491,7 @@ namespace webpp::uri {
                 assert(lbeg != lend);
                 for (iterator pos = lbeg;;) {
                     if (*pos == '%') {
-                        if (!next_percent_encode(pos, lend)) [[unlikely]] {
+                        if (!validate_percent_encoded(pos, lend)) [[unlikely]] {
                             set_warning(ctx.status, invalid_character);
                         } else {
                             --pos;

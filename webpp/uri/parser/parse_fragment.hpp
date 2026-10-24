@@ -22,8 +22,8 @@ namespace webpp::uri {
     static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using enum uri_status;
+        using details::copy_percent_encoded;
         using details::encode_or_validate;
-        using details::next_percent_encode;
 
         // No need to handle ctx.pos == ctx.end since encode_or_validate already checks the bounds.
         // Also we for relative URLs we need `set_fragment` to set the output even if it's empty.
@@ -33,7 +33,7 @@ namespace webpp::uri {
         auto buffer = create_buffer(ctx);
         while (!encode_or_validate(ctx, buffer, details::FRAGMENT_ENCODE_SET, charset('%'))) {
             if (*ctx.pos == '%') {
-                if (next_percent_encode(ctx, buffer)) {
+                if (copy_percent_encoded(ctx, buffer)) {
                     continue;
                 }
             } else if constexpr (!CtxT::is_modifiable) {
